@@ -45,23 +45,23 @@ export default function Evangelisation() {
     if (!selectedCellule) return alert("Sélectionne une cellule !");
     const cellule = cellules.find((c) => String(c.id) === selectedCellule);
     if (!cellule) return alert("Cellule introuvable !");
-
     if (toSend.length === 0) return alert("Sélectionne au moins un contact !");
 
-    // Envoyer tous les contacts à la fois
-    let messages = toSend.map((member) => {
-      return `👋 Salut ${cellule.responsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\nVoici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${member.telephone || "—"}\n- 📲 WhatsApp: Oui\n- 🏙 Ville : ${member.ville || "—"}\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n`;
-    }).join("\n----------------------\n");
+    // Construire le message pour tous les contacts cochés dans un seul bloc
+    let message = "";
+    toSend.forEach((member, index) => {
+      message += `👋 Salut ${cellule.responsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\nVoici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${member.telephone || "—"}\n- 📲 WhatsApp: ${checkedContacts[member.id] ? "Oui" : "Non"}\n- 🏙 Ville : ${member.ville || "—"}\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires: ${member.infos_supplementaires || "—"}\n`;
+
+      if (index < toSend.length - 1) message += "----------------------\n\n";
+    });
+
+    message += "\nMerci pour ton cœur ❤ et son amour ✨";
 
     const phone = cellule.telephone.replace(/\D/g, "");
-    window.open(
-      `https://wa.me/${phone}?text=${encodeURIComponent(messages)}`,
-      "_blank"
-    );
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
 
-    // Retirer les contacts envoyés de la page
-    const remaining = contacts.filter((c) => !checkedContacts[c.id]);
-    setContacts(remaining);
+    // Retirer les contacts envoyés de la liste et réinitialiser les checkboxes
+    setContacts(prev => prev.filter(c => !checkedContacts[c.id]));
     setCheckedContacts({});
   };
 
@@ -125,13 +125,13 @@ export default function Evangelisation() {
                 className={`bg-white rounded-lg shadow-md p-2 flex flex-col items-center transition-all duration-500 ease-in-out cursor-pointer overflow-hidden w-full max-w-xs mx-auto`}
               >
                 <div className="flex flex-col items-center">
-                  <h2 className="font-bold text-gray-800 text-sm sm:text-base mb-1 text-center">
+                  <h2 className="font-bold text-gray-800 text-base mb-1 text-center">
                     {member.prenom} {member.nom}
                   </h2>
-                  <p className="text-xs text-gray-600 mb-1 text-center">
+                  <p className="text-sm text-gray-600 mb-1 text-center">
                     📱 {member.telephone || "—"}
                   </p>
-                  <label className="flex items-center gap-2 text-xs mb-1">
+                  <label className="flex items-center gap-2 text-sm mb-1">
                     <input
                       type="checkbox"
                       checked={checkedContacts[member.id] || false}
@@ -148,8 +148,9 @@ export default function Evangelisation() {
                   {isOpen ? "Fermer" : "Détails"}
                 </button>
 
+                {/* Section détails centrée et ajustée */}
                 <div
-                  className={`text-xs text-gray-700 mt-1 w-full text-center transition-all duration-500 ease-in-out ${
+                  className={`text-sm text-gray-700 mt-1 w-full text-center transition-all duration-500 ease-in-out ${
                     isOpen ? "max-h-96" : "max-h-0"
                   } overflow-hidden`}
                 >
@@ -205,6 +206,7 @@ export default function Evangelisation() {
         </div>
       )}
 
+      {/* Pop-up details table */}
       {popupContact && (
         <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50 p-4">
           <div className="bg-white rounded-lg p-5 max-w-md w-full relative text-center transition-all duration-500 ease-in-out">

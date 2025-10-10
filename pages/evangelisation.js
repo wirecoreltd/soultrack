@@ -1,14 +1,5 @@
 // pages/evangelisation.js
 "use client";
-
-import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
-import Image from "next/image";
-
-export default function Evangelisation() {
-  const [contacts, setContacts] = useState([]);
-  const [cellules, setCellules] = useState([]);// pages/evangelisation.js
-"use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";

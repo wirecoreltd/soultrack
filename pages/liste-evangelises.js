@@ -1,3 +1,4 @@
+//pages//liste-evangelises
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import { useRouter } from "next/router";
@@ -8,9 +9,9 @@ export default function ListeEvangelises() {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchEvangelises = async () => {
       const { data, error } = await supabase
-        .from("membres")
+        .from("evangelises")
         .select("*")
         .order("created_at", { ascending: false });
 
@@ -20,7 +21,7 @@ export default function ListeEvangelises() {
       setLoading(false);
     };
 
-    fetchData();
+    fetchEvangelises();
   }, []);
 
   return (
@@ -43,7 +44,7 @@ export default function ListeEvangelises() {
           <p className="text-center text-gray-500">Chargement...</p>
         ) : evangelises.length === 0 ? (
           <p className="text-center text-gray-500">
-            Aucune personne évangélisée pour le moment.
+            Aucune personne évangélisée enregistrée pour le moment.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -60,18 +61,18 @@ export default function ListeEvangelises() {
                 </tr>
               </thead>
               <tbody>
-                {evangelises.map((e) => (
-                  <tr key={e.id} className="hover:bg-indigo-50">
-                    <td className="p-3 border-b">{e.prenom}</td>
-                    <td className="p-3 border-b">{e.nom}</td>
-                    <td className="p-3 border-b">{e.telephone}</td>
+                {evangelises.map((p) => (
+                  <tr key={p.id} className="hover:bg-indigo-50">
+                    <td className="p-3 border-b">{p.prenom}</td>
+                    <td className="p-3 border-b">{p.nom}</td>
+                    <td className="p-3 border-b">{p.telephone}</td>
                     <td className="p-3 border-b text-center">
-                      {e.is_whatsapp ? "✅" : "❌"}
+                      {p.is_whatsapp ? "✅" : "❌"}
                     </td>
-                    <td className="p-3 border-b">{e.ville}</td>
-                    <td className="p-3 border-b">{e.besoin}</td>
+                    <td className="p-3 border-b">{p.ville}</td>
+                    <td className="p-3 border-b">{p.besoin}</td>
                     <td className="p-3 border-b text-gray-500 text-sm">
-                      {new Date(e.created_at).toLocaleDateString()}
+                      {new Date(p.created_at).toLocaleDateString()}
                     </td>
                   </tr>
                 ))}

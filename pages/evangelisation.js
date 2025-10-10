@@ -52,7 +52,7 @@ export default function Evangelisation() {
         member.telephone || "—"
       }\n- 📲 WhatsApp: ${checkedContacts[member.id] ? "Oui" : "Non"}\n- 🏙 Ville : ${
         member.ville || "—"
-      }\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires : ${
+      }\n- 🙏 Besoin: ${member.besoin || "—"}\n- 📝 Infos supplémentaires: ${
         member.infos_supplementaires || "—"
       }\n\nMerci pour ton cœur ❤ et son amour ✨`;
       window.open(
@@ -119,10 +119,8 @@ export default function Evangelisation() {
             return (
               <div
                 key={member.id}
-                className={`bg-white rounded-lg shadow-md p-2 flex flex-col items-center transition-all duration-500 ease-in-out cursor-pointer overflow-hidden
-                  ${isOpen ? "h-auto sm:col-span-2 md:col-span-3" : "h-40 w-full max-w-xs mx-auto"}`}
+                className={`bg-white rounded-lg shadow-md p-2 flex flex-col items-center transition-all duration-500 ease-in-out cursor-pointer overflow-hidden w-full max-w-xs mx-auto`}
               >
-                {/* Nom et téléphone */}
                 <div className="flex flex-col items-center">
                   <h2 className="font-bold text-gray-800 text-sm sm:text-base mb-1 text-center">
                     {member.prenom} {member.nom}
@@ -130,8 +128,6 @@ export default function Evangelisation() {
                   <p className="text-xs text-gray-600 mb-1 text-center">
                     📱 {member.telephone || "—"}
                   </p>
-
-                  {/* Case à cocher */}
                   <label className="flex items-center gap-2 text-xs mb-1">
                     <input
                       type="checkbox"
@@ -142,7 +138,6 @@ export default function Evangelisation() {
                   </label>
                 </div>
 
-                {/* Bouton Détails */}
                 <button
                   onClick={() => toggleDetails(member.id)}
                   className="text-blue-500 underline mb-1"
@@ -150,16 +145,15 @@ export default function Evangelisation() {
                   {isOpen ? "Fermer" : "Détails"}
                 </button>
 
-                {/* Section détails centrée */}
+                {/* Section détails centrée et ajustée */}
                 <div
-                  className={`text-xs text-gray-700 mt-1 w-full text-center transition-all duration-500 ease-in-out overflow-hidden ${
+                  className={`text-xs text-gray-700 mt-1 w-full text-center transition-all duration-500 ease-in-out ${
                     isOpen ? "max-h-96" : "max-h-0"
-                  }`}
+                  } overflow-hidden`}
                 >
                   {isOpen && (
                     <>
-                      <p>📲 WhatsApp: {checkedContacts[member.id] ? "Oui" : "Non"}</p>
-                      <p>📱 Téléphone: {member.telephone || "—"}</p>
+                      <p>📲 WhatsApp: {checkedContacts[member.id] ? "Oui" : "Non"}</p>                      
                       <p>🏙 Ville: {member.ville || "—"}</p>
                       <p>🙏 Besoin: {member.besoin || "—"}</p>
                       <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>

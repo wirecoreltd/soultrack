@@ -40,7 +40,7 @@ export default function EvangelisationHub() {
 
         {/* Liste des évangélisés */}
         <Link
-          href="/evangelisation"
+          href="/liste-evangelises"
           className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
         >
           <div className="text-5xl mb-2">👥</div>

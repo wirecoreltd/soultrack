@@ -43,19 +43,23 @@ export default function Evangelisation() {
   const sendWhatsapp = () => {
     const toSend = contacts.filter((c) => checkedContacts[c.id]);
     if (!selectedCellule) return alert("Sélectionne une cellule !");
-    const cellule = cellules.find((c) => String(c.id) === selectedCellule);
+    const cellule = cellules.find((c) => c.id === parseInt(selectedCellule));
     if (!cellule) return alert("Cellule introuvable !");
-    if (toSend.length === 0) return alert("Sélectionne au moins un contact !");
 
     toSend.forEach((member) => {
       const phone = cellule.telephone.replace(/\D/g, "");
-      const message = `👋 Salut ${cellule.responsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\nVoici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${member.telephone || "—"}\n- 📲 WhatsApp: ${checkedContacts[member.id] ? "Oui" : "Non"}\n- 🏙 Ville : ${member.ville || "—"}\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n\nMerci pour ton cœur ❤ et son amour ✨`;
-      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+      const message = `👋 Salut ${cellule.responsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\nVoici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${
+        member.telephone || "—"
+      }\n- 📲 WhatsApp: ${checkedContacts[member.id] ? "Oui" : "Non"}\n- 🏙 Ville : ${
+        member.ville || "—"
+      }\n- 🙏 Besoin: ${member.besoin || "—"}\n- 📝 Infos supplémentaires: ${
+        member.infos_supplementaires || "—"
+      }\n\nMerci pour ton cœur ❤ et son amour ✨`;
+      window.open(
+        `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
+        "_blank"
+      );
     });
-
-    // Supprimer les contacts envoyés
-    setContacts((prev) => prev.filter((c) => !checkedContacts[c.id]));
-    setCheckedContacts({});
   };
 
   return (
@@ -74,6 +78,7 @@ export default function Evangelisation() {
         Chaque personne a une valeur infinie...
       </p>
 
+      {/* Menu déroulant cellules */}
       <div className="mb-4 w-full max-w-md flex flex-col sm:flex-row gap-2">
         <select
           value={selectedCellule}
@@ -98,6 +103,7 @@ export default function Evangelisation() {
         )}
       </div>
 
+      {/* Toggle card/table */}
       <p
         className="text-orange-500 cursor-pointer mb-4"
         onClick={() => setView(view === "card" ? "table" : "card")}
@@ -105,74 +111,84 @@ export default function Evangelisation() {
         Visuel
       </p>
 
+      {/* --- CARDS VIEW --- */}
       {view === "card" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 w-full max-w-5xl">
           {contacts.map((member) => {
             const isOpen = detailsOpen[member.id];
             return (
               <div
                 key={member.id}
-                className={`bg-white rounded-xl shadow-md p-3 flex flex-col items-center transition-all duration-500 ease-in-out cursor-pointer overflow-hidden
-                  ${isOpen ? "h-auto sm:col-span-2 md:col-span-3" : "h-52 w-full max-w-xs mx-auto"}`}
+                className={`bg-white rounded-lg shadow-md p-2 flex flex-col items-center transition-all duration-500 ease-in-out cursor-pointer overflow-hidden w-full max-w-xs mx-auto`}
               >
-                <h2 className="font-bold text-gray-800 text-lg mb-1">
-                  {member.prenom} {member.nom}
-                </h2>
-                <p className="text-base text-gray-600 mb-2">📱 {member.telephone || "—"}</p>
-
-                <label className="mb-2 flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={checkedContacts[member.id] || false}
-                    onChange={() => handleCheck(member.id)}
-                  />
-                  Envoyer par WhatsApp
-                </label>
+                <div className="flex flex-col items-center">
+                  <h2 className="font-bold text-gray-800 text-sm sm:text-base mb-1 text-center">
+                    {member.prenom} {member.nom}
+                  </h2>
+                  <p className="text-xs text-gray-600 mb-1 text-center">
+                    📱 {member.telephone || "—"}
+                  </p>
+                  <label className="flex items-center gap-2 text-xs mb-1">
+                    <input
+                      type="checkbox"
+                      checked={checkedContacts[member.id] || false}
+                      onChange={() => handleCheck(member.id)}
+                    />
+                    WhatsApp
+                  </label>
+                </div>
 
                 <button
                   onClick={() => toggleDetails(member.id)}
-                  className="text-blue-500 underline mb-2"
+                  className="text-blue-500 underline mb-1"
                 >
-                  {isOpen ? "Fermer détails" : "Détails"}
+                  {isOpen ? "Fermer" : "Détails"}
                 </button>
 
-                {isOpen && (
-                  <div className="text-base text-gray-700 mt-2 w-full text-center border-t pt-2">
-                    <p>📲 WhatsApp: {checkedContacts[member.id] ? "Oui" : "Non"}</p>
-                    <p>📱 Téléphone: {member.telephone || "—"}</p>
-                    <p>🏙 Ville: {member.ville || "—"}</p>
-                    <p>🙏 Besoin: {member.besoin || "—"}</p>
-                    <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>
-                  </div>
-                )}
+                {/* Section détails centrée et ajustée */}
+                <div
+                  className={`text-xs text-gray-700 mt-1 w-full text-center transition-all duration-500 ease-in-out ${
+                    isOpen ? "max-h-96" : "max-h-0"
+                  } overflow-hidden`}
+                >
+                  {isOpen && (
+                    <>
+                      <p>📲 WhatsApp: {checkedContacts[member.id] ? "Oui" : "Non"}</p>                      
+                      <p>🏙 Ville: {member.ville || "—"}</p>
+                      <p>🙏 Besoin: {member.besoin || "—"}</p>
+                      <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>
+                    </>
+                  )}
+                </div>
               </div>
             );
           })}
         </div>
       ) : (
+        /* --- TABLE VIEW --- */
         <div className="w-full max-w-5xl overflow-x-auto">
-          <table className="min-w-full bg-white rounded-xl text-center">
+          <table className="min-w-full bg-white rounded-lg text-center">
             <thead>
               <tr className="bg-gray-200">
-                <th className="py-2 px-4">Prénom</th>
-                <th className="py-2 px-4">Nom</th>
-                <th className="py-2 px-4">Envoyer WhatsApp</th>
-                <th className="py-2 px-4">Détails</th>
+                <th className="py-2 px-3">Prénom</th>
+                <th className="py-2 px-3">Nom</th>
+                <th className="py-2 px-3">Envoyer WhatsApp</th>
+                <th className="py-2 px-3">Détails</th>
               </tr>
             </thead>
             <tbody>
               {contacts.map((member) => (
                 <tr key={member.id} className="border-b">
-                  <td className="py-2 px-4">{member.prenom}</td>
-                  <td className="py-2 px-4">{member.nom}</td>
-                  <td className="py-2 px-4">
+                  <td className="py-2 px-3">{member.prenom}</td>
+                  <td className="py-2 px-3">{member.nom}</td>
+                  <td className="py-2 px-3">
                     <input
                       type="checkbox"
                       checked={checkedContacts[member.id] || false}
                       onChange={() => handleCheck(member.id)}
                     />
                   </td>
-                  <td className="py-2 px-4">
+                  <td className="py-2 px-3">
                     <button
                       onClick={() => setPopupContact(member)}
                       className="text-blue-500 underline"
@@ -187,9 +203,10 @@ export default function Evangelisation() {
         </div>
       )}
 
+      {/* Pop-up details table */}
       {popupContact && (
         <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full relative">
+          <div className="bg-white rounded-lg p-5 max-w-md w-full relative text-center transition-all duration-500 ease-in-out">
             <button
               onClick={() => setPopupContact(null)}
               className="absolute top-2 right-2 font-bold text-gray-600"

@@ -1,203 +1,220 @@
-// pages/evangelisation.js
+=// pages/evangelisation.js
 
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import supabase from "../lib/supabaseClient";
 
 export default function Evangelisation() {
-  const [contacts, setContacts] = useState([]);
+  const [evangelises, setEvangelises] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [selectedCellules, setSelectedCellules] = useState({});
   const [detailsOpen, setDetailsOpen] = useState({});
-  const [view, setView] = useState("card"); // card ou table
+  const [view, setView] = useState("card"); // 'card' ou 'table'
 
   useEffect(() => {
-    fetchContacts();
+    fetchEvangelises();
     fetchCellules();
   }, []);
 
-  const fetchContacts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("evangelises")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      setContacts(data || []);
-    } catch (err) {
-      console.error("Erreur fetchContacts:", err.message);
-      setContacts([]);
-    }
+  const fetchEvangelises = async () => {
+    const { data, error } = await supabase
+      .from("evangelises")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) console.error("Erreur fetch evangelises:", error);
+    else setEvangelises(data || []);
   };
 
   const fetchCellules = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("cellules")
-        .select("id, cellule, responsable, telephone");
-      if (error) throw error;
-      setCellules(data || []);
-    } catch (err) {
-      console.error("Erreur fetchCellules:", err.message);
-      setCellules([]);
-    }
+    const { data, error } = await supabase
+      .from("cellules")
+      .select("*")
+      .order("cellule");
+    if (error) console.error("Erreur fetch cellules:", error);
+    else setCellules(data || []);
   };
 
-  // Fonction pour envoyer un ou plusieurs contacts
-  const sendWhatsapp = async (contactIds) => {
-    for (let id of contactIds) {
-      const member = contacts.find((c) => c.id === id);
-      const celluleId = selectedCellules[id];
-      const cellule = cellules.find((c) => c.id === celluleId);
+  const sendWhatsapp = async (member) => {
+    const cellule = cellules.find((c) => c.id === selectedCellules[member.id]);
+    if (!cellule) return alert("Cellule introuvable.");
+    const phone = cellule.telephone.replace(/\D/g, "");
+    if (!phone) return alert("Numéro de la cellule invalide.");
 
-      if (!cellule) return alert("Cellule introuvable.");
-      if (!cellule.telephone) return alert("Numéro de la cellule introuvable.");
+    const message = `👋 Salut ${cellule.responsable},
 
-      const phone = cellule.telephone.replace(/\D/g, "");
-      if (!phone) return alert("Numéro de la cellule invalide.");
+🙏 Dieu nous a envoyé une nouvelle âme à suivre.
+Voici ses infos :
 
-      const message = `👋 Salut ${cellule.responsable},\n\n🙏 Nous avons reçu une nouvelle personne à suivre :\n\n- Nom: ${member.prenom} ${member.nom}\n- Téléphone: ${member.telephone || "—"}\n- Ville: ${member.ville || "—"}\n- Besoin: ${member.besoin || "—"}\n- Infos: ${member.infos_supplementaires || "—"}\n\nMerci 🙏`;
+- 👤 Nom : ${member.prenom} ${member.nom}
+- 📱 Téléphone : ${member.telephone || "—"}
+- 🏙 Ville : ${member.ville || "—"}
+- 🙏 Besoin : ${member.besoin || "—"}
+- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}
 
-      const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+Merci pour ton cœur ❤ et son amour ✨`;
 
-      // Ouvrir WhatsApp
-      window.open(waUrl, "_blank");
+    // ouvrir WhatsApp
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
 
-      // Enregistrer dans suivis_des_evangelises
-      try {
-        const { error } = await supabase
-          .from("suivis_des_evangelises")
-          .insert([
-            {
-              prenom: member.prenom,
-              nom: member.nom,
-              telephone: member.telephone,
-              is_whatsapp: true,
-              ville: member.ville,
-              besoin: member.besoin,
-              infos_supplementaires: member.infos_supplementaires,
-              cellule_id: cellule.id,
-              responsable_cellule: cellule.responsable,
-            },
-          ]);
-        if (error) throw error;
-      } catch (err) {
-        console.error("Erreur insert suivi:", err.message);
-      }
-    }
+    // enregistrer dans suivis_des_evangelises
+    const { error } = await supabase
+      .from("suivis_des_evangelises")
+      .insert([
+        {
+          prenom: member.prenom,
+          nom: member.nom,
+          telephone: member.telephone,
+          is_whatsapp: true,
+          ville: member.ville,
+          besoin: member.besoin,
+          infos_supplementaires: member.infos_supplementaires,
+          cellule_id: cellule.id,
+          responsable_cellule: cellule.responsable,
+        },
+      ]);
+    if (error) return console.error("Erreur suivi:", error);
 
-    // Retirer les contacts envoyés de la liste
-    setContacts((prev) => prev.filter((c) => !contactIds.includes(c.id)));
+    // retirer de la liste
+    setEvangelises((prev) => prev.filter((m) => m.id !== member.id));
   };
-
-  // Vérifie si au moins un contact a une cellule sélectionnée
-  const canSend = Object.values(selectedCellules).some((v) => v);
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-b from-blue-600 to-blue-300">
-      <h1 className="text-4xl font-bold text-white mb-6">Évangélisation</h1>
+    <div className="min-h-screen p-6 bg-gradient-to-b from-blue-400 to-blue-200">
+      <h1 className="text-4xl font-bold mb-6 text-center text-white">Évangélisation</h1>
 
-      {/* Toggle Card/Table */}
-      <button
-        className="mb-4 px-4 py-2 rounded-lg bg-white font-semibold"
-        onClick={() => setView(view === "card" ? "table" : "card")}
-      >
-        {view === "card" ? "Voir en Table" : "Voir en Cards"}
-      </button>
+      <div className="flex justify-center mb-4">
+        <button
+          className="px-4 py-2 bg-white rounded-lg shadow"
+          onClick={() => setView(view === "card" ? "table" : "card")}
+        >
+          Voir en {view === "card" ? "Table" : "Card"}
+        </button>
+      </div>
 
       {view === "card" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl">
-          {contacts.map((c) => (
-            <div
-              key={c.id}
-              className="bg-white rounded-2xl shadow-md p-4 flex flex-col justify-between"
-            >
-              <div className="flex justify-between items-center mb-2">
-                <h2 className="font-bold text-lg">{c.prenom} {c.nom}</h2>
-              </div>
-
-              <p className="mb-1">📱 {c.telephone || "—"}</p>
-              <p className="mb-2 text-sm font-medium">{c.ville || "—"}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {evangelises.map((member) => (
+            <div key={member.id} className="bg-white p-4 rounded-xl shadow">
+              <h2 className="font-bold text-lg mb-2">{member.prenom} {member.nom}</h2>
+              <p>📱 {member.telephone || "—"}</p>
 
               <button
-                className="text-blue-500 underline mb-2"
-                onClick={() => setDetailsOpen((prev) => ({ ...prev, [c.id]: !prev[c.id] }))}
+                className="mt-2 text-blue-500 underline"
+                onClick={() => setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))}
               >
-                {detailsOpen[c.id] ? "Fermer détails" : "Détails"}
+                {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
               </button>
 
-              {detailsOpen[c.id] && (
-                <div className="text-sm text-gray-700 space-y-1 mb-2">
-                  <p>Ville: {c.ville || "—"} | Besoin: {c.besoin || "—"} | Infos: {c.infos_supplementaires || "—"}</p>
+              {detailsOpen[member.id] && (
+                <div className="mt-2 p-2 bg-gray-50 rounded">
+                  <div className="grid grid-cols-4 gap-4 mb-2 font-medium text-sm">
+                    <div>Prénom</div>
+                    <div>Nom</div>
+                    <div>Téléphone</div>
+                    <div>WhatsApp</div>
+                  </div>
+                  <div className="grid grid-cols-4 gap-4 mb-2 text-sm">
+                    <div>{member.prenom}</div>
+                    <div>{member.nom}</div>
+                    <div>{member.telephone || "—"}</div>
+                    <div>{member.is_whatsapp ? "Oui" : "Non"}</div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 mb-2 text-sm">
+                    <div>Ville: {member.ville || "—"}</div>
+                    <div>Besoin: {member.besoin || "—"}</div>
+                    <div>Infos: {member.infos_supplementaires || "—"}</div>
+                  </div>
+
                   <select
-                    value={selectedCellules[c.id] || ""}
-                    onChange={(e) =>
-                      setSelectedCellules((prev) => ({ ...prev, [c.id]: e.target.value }))
-                    }
-                    className="border rounded-lg w-full mt-1 px-2 py-1"
+                    value={selectedCellules[member.id] || ""}
+                    onChange={(e) => setSelectedCellules((prev) => ({ ...prev, [member.id]: e.target.value }))}
+                    className="border rounded px-2 py-1 w-full mb-2 text-sm"
                   >
                     <option value="">-- Sélectionner cellule --</option>
-                    {cellules.map((cell) => (
-                      <option key={cell.id} value={cell.id}>
-                        {cell.cellule} ({cell.responsable})
+                    {cellules.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.cellule} ({c.responsable})
                       </option>
                     ))}
                   </select>
+
+                  {selectedCellules[member.id] && (
+                    <button
+                      onClick={() => sendWhatsapp(member)}
+                      className="mt-2 w-full py-2 bg-green-500 text-white rounded-lg font-bold"
+                    >
+                      Envoyer
+                    </button>
+                  )}
                 </div>
               )}
             </div>
           ))}
         </div>
       ) : (
-        <div className="w-full max-w-6xl overflow-x-auto bg-white rounded-xl shadow-md">
-          <table className="min-w-full table-auto">
+        <div className="overflow-x-auto bg-white rounded-xl p-2 shadow">
+          <table className="min-w-full text-sm">
             <thead className="bg-gray-200">
               <tr>
-                <th className="py-2 px-4 text-left">Prénom</th>
-                <th className="py-2 px-4 text-left">Nom</th>
-                <th className="py-2 px-4 text-left">Téléphone</th>
-                <th className="py-2 px-4 text-left">Ville / Besoin / Infos</th>
-                <th className="py-2 px-4 text-left">Cellule</th>
+                <th className="p-2">Prénom</th>
+                <th className="p-2">Nom</th>
+                <th className="p-2">Téléphone</th>
+                <th className="p-2">WhatsApp</th>
+                <th className="p-2">Détails</th>
               </tr>
             </thead>
             <tbody>
-              {contacts.map((c) => (
-                <tr key={c.id} className="border-b hover:bg-gray-50">
-                  <td className="py-2 px-4">{c.prenom}</td>
-                  <td className="py-2 px-4">{c.nom}</td>
-                  <td className="py-2 px-4">{c.telephone || "—"}</td>
-                  <td className="py-2 px-4">
-                    Ville: {c.ville || "—"} | Besoin: {c.besoin || "—"} | Infos: {c.infos_supplementaires || "—"}
-                  </td>
-                  <td className="py-2 px-4">
-                    <select
-                      value={selectedCellules[c.id] || ""}
-                      onChange={(e) =>
-                        setSelectedCellules((prev) => ({ ...prev, [c.id]: e.target.value }))
-                      }
-                      className="border rounded-lg w-full px-2 py-1"
+              {evangelises.map((member) => (
+                <tr key={member.id} className="border-b">
+                  <td className="p-2">{member.prenom}</td>
+                  <td className="p-2">{member.nom}</td>
+                  <td className="p-2">{member.telephone || "—"}</td>
+                  <td className="p-2">{member.is_whatsapp ? "Oui" : "Non"}</td>
+                  <td className="p-2">
+                    <button
+                      className="text-blue-500 underline"
+                      onClick={() => setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))}
                     >
-                      <option value="">-- Sélectionner cellule --</option>
-                      {cellules.map((cell) => (
-                        <option key={cell.id} value={cell.id}>
-                          {cell.cellule} ({cell.responsable})
-                        </option>
-                      ))}
-                    </select>
+                      {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+                    </button>
+
+                    {detailsOpen[member.id] && (
+                      <div className="mt-2 p-2 bg-gray-50 rounded">
+                        <div className="grid grid-cols-3 gap-4 mb-2 text-sm">
+                          <div>Ville: {member.ville || "—"}</div>
+                          <div>Besoin: {member.besoin || "—"}</div>
+                          <div>Infos: {member.infos_supplementaires || "—"}</div>
+                        </div>
+
+                        <select
+                          value={selectedCellules[member.id] || ""}
+                          onChange={(e) => setSelectedCellules((prev) => ({ ...prev, [member.id]: e.target.value }))}
+                          className="border rounded px-2 py-1 w-full mb-2 text-sm"
+                        >
+                          <option value="">-- Sélectionner cellule --</option>
+                          {cellules.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.cellule} ({c.responsable})
+                            </option>
+                          ))}
+                        </select>
+
+                        {selectedCellules[member.id] && (
+                          <button
+                            onClick={() => sendWhatsapp(member)}
+                            className="mt-2 w-full py-2 bg-green-500 text-white rounded-lg font-bold"
+                          >
+                            Envoyer
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      )}
-
-      {canSend && (
-        <button
-          className="mt-4 px-6 py-2 rounded-xl bg-gradient-to-r from-green-400 via-green-500 to-green-600 text-white font-bold hover:opacity-90"
-          onClick={() => sendWhatsapp(Object.keys(selectedCellules).filter((id) => selectedCellules[id]))}
-        >
-          Envoyer WhatsApp
-        </button>
       )}
     </div>
   );

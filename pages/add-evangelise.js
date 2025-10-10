@@ -1,6 +1,6 @@
 // pages/add-evangelise.js
 import { useState } from "react";
-import supabase from "../lib/supabaseClient"; // <- chemin corrigé
+import supabase from "../lib/supabaseClient"; // connexion Supabase
 import { useRouter } from "next/router";
 
 export default function AddEvangelise() {
@@ -30,11 +30,14 @@ export default function AddEvangelise() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { data, error } = await supabase.from("membres").insert([formData]);
+      // 🔹 On insère maintenant dans la table "evangelises"
+      const { data, error } = await supabase.from("evangelises").insert([formData]);
       if (error) throw error;
+
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
+      // Réinitialiser le formulaire
       setFormData({
         nom: "",
         prenom: "",
@@ -46,7 +49,7 @@ export default function AddEvangelise() {
         besoin: "",
       });
     } catch (err) {
-      alert(err.message);
+      alert("Erreur : " + err.message);
     }
   };
 
@@ -165,12 +168,10 @@ export default function AddEvangelise() {
                   nom: "",
                   prenom: "",
                   telephone: "",
-                  email: "",
                   ville: "",
                   statut: "evangelisé",
                   infos_supplementaires: "",
                   is_whatsapp: false,
-                  how_came: "",
                   besoin: "",
                 })
               }

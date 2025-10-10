@@ -1,96 +1,91 @@
 // pages/suivis-evangelisation.js
 
-import { useState, useEffect } from "react";
-import { supabase } from "../utils/supabaseClient"; // ✅ chemin corrigé
-import { Card, CardContent } from "../components/ui/card"; // ✅ chemin corrigé
-import { Button } from "../components/ui/button"; // ✅ chemin corrigé
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabaseClient";
 
 export default function SuivisEvangelisation() {
-  const [suivis, setSuivis] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [contacts, setContacts] = useState([]);
 
   useEffect(() => {
     fetchSuivis();
   }, []);
 
   const fetchSuivis = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("suivis_des_evangelises")
-      .select(`
-        id,
-        prenom,
-        nom,
-        telephone,
-        ville,
-        besoin,
-        infos_supplementaires,
-        cellules (cellule)
-      `);
+    try {
+      const { data, error } = await supabase
+        .from("suivis_des_evangelises")
+        .select(`
+          id,
+          prenom,
+          nom,
+          telephone,
+          is_whatsapp,
+          ville,
+          besoin,
+          infos_supplementaires,
+          cellule_id,
+          responsable_cellule,
+          date_suivi
+        `)
+        .order("date_suivi", { ascending: false });
 
-    if (error) {
-      console.error("Erreur lors du chargement :", error);
-    } else {
-      setSuivis(data);
+      if (error) throw error;
+      setContacts(data || []);
+    } catch (err) {
+      console.error("Erreur fetchSuivis:", err.message);
+      setContacts([]);
     }
-    setLoading(false);
   };
 
-  if (loading) {
-    return <p className="text-center mt-10">Chargement des suivis...</p>;
-  }
-
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-center mb-6">
-        Suivis des Évangélisés
-      </h1>
+    <div className="min-h-screen p-6 flex flex-col items-center bg-gradient-to-b from-blue-600 to-blue-300">
+      <h1 className="text-4xl font-bold text-white mb-6">Suivis des Évangélisés</h1>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full border border-gray-200 text-left">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="py-2 px-4 border-b">Prénom</th>
-              <th className="py-2 px-4 border-b">Nom</th>
-              <th className="py-2 px-4 border-b">Cellule</th>
-              <th className="py-2 px-4 border-b">Détails</th>
-            </tr>
-          </thead>
-          <tbody>
-            {suivis.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50">
-                <td className="py-2 px-4 border-b">{item.prenom}</td>
-                <td className="py-2 px-4 border-b">{item.nom}</td>
-                <td className="py-2 px-4 border-b">
-                  {item.cellules?.cellule || "Non défini"}
-                </td>
-                <td className="py-2 px-4 border-b">
-                  <details>
-                    <summary className="cursor-pointer text-blue-600">
-                      Voir plus
-                    </summary>
-                    <div className="mt-2 text-sm text-gray-700">
-                      <p>
-                        <strong>Téléphone :</strong> {item.telephone || "N/A"}
-                      </p>
-                      <p>
-                        <strong>Ville :</strong> {item.ville || "N/A"}
-                      </p>
-                      <p>
-                        <strong>Besoin :</strong> {item.besoin || "N/A"}
-                      </p>
-                      <p>
-                        <strong>Infos :</strong>{" "}
-                        {item.infos_supplementaires || "N/A"}
-                      </p>
-                    </div>
-                  </details>
-                </td>
+      {contacts.length === 0 ? (
+        <p className="text-white text-lg">Aucun contact suivi pour le moment.</p>
+      ) : (
+        <div className="w-full max-w-6xl overflow-x-auto bg-white rounded-xl shadow-md">
+          <table className="min-w-full table-auto">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="py-3 px-4 text-left">Prénom</th>
+                <th className="py-3 px-4 text-left">Nom</th>
+                <th className="py-3 px-4 text-left">Téléphone</th>
+                <th className="py-3 px-4 text-left">WhatsApp</th>
+                <th className="py-3 px-4 text-left">Ville</th>
+                <th className="py-3 px-4 text-left">Besoin</th>
+                <th className="py-3 px-4 text-left">Infos supplémentaires</th>
+                <th className="py-3 px-4 text-left">Cellule</th>
+                <th className="py-3 px-4 text-left">Responsable</th>
+                <th className="py-3 px-4 text-left">Date du suivi</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {contacts.map((c) => (
+                <tr key={c.id} className="border-b hover:bg-gray-50">
+                  <td className="py-2 px-4">{c.prenom}</td>
+                  <td className="py-2 px-4">{c.nom}</td>
+                  <td className="py-2 px-4">{c.telephone || "—"}</td>
+                  <td className="py-2 px-4">{c.is_whatsapp ? "✅" : "❌"}</td>
+                  <td className="py-2 px-4">{c.ville || "—"}</td>
+                  <td className="py-2 px-4">{c.besoin || "—"}</td>
+                  <td className="py-2 px-4">{c.infos_supplementaires || "—"}</td>
+                  <td className="py-2 px-4">{c.cellule_id || "—"}</td>
+                  <td className="py-2 px-4">{c.responsable_cellule || "—"}</td>
+                  <td className="py-2 px-4">{c.date_suivi ? new Date(c.date_suivi).toLocaleString("fr-FR") : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <button
+        onClick={() => window.history.back()}
+        className="mt-6 px-6 py-2 rounded-xl bg-gradient-to-r from-green-400 via-green-500 to-green-600 text-white font-bold hover:opacity-90"
+      >
+        ← Retour
+      </button>
     </div>
   );
 }

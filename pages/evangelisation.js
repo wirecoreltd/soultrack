@@ -2,14 +2,16 @@
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
+import Image from "next/image";
 
 export default function Evangelisation() {
   const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState("");
-  const [checkedContacts, setCheckedContacts] = useState({});
   const [detailsOpen, setDetailsOpen] = useState({});
-  const [view, setView] = useState("card"); // 'card' ou 'table'
+  const [checkedContacts, setCheckedContacts] = useState({});
+  const [view, setView] = useState("card");
+  const [popupContact, setPopupContact] = useState(null);
 
   useEffect(() => {
     fetchContacts();
@@ -17,184 +19,131 @@ export default function Evangelisation() {
   }, []);
 
   const fetchContacts = async () => {
-    const { data, error } = await supabase
-      .from("suivis_des_evangelises")
-      .select("*")
-      .order("date_suivi", { ascending: false });
-    if (error) console.error(error);
-    else setContacts(data || []);
+    const { data, error } = await supabase.from("evangelises").select("*").order("created_at", { ascending: false });
+    if (!error) setContacts(data || []);
   };
 
   const fetchCellules = async () => {
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("*")
-      .order("ville");
-    if (error) console.error(error);
-    else setCellules(data || []);
+    const { data, error } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
+    if (!error) setCellules(data || []);
   };
 
-  const toggleCheck = (id) => {
-    setCheckedContacts((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
+  const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const sendWhatsApp = async () => {
-    if (!selectedCellule) return;
-    const cellule = cellules.find((c) => c.id === selectedCellule);
-    if (!cellule) return;
+  const handleCheck = (id) => setCheckedContacts(prev => ({ ...prev, [id]: !prev[id] }));
 
-    const contactsToSend = contacts.filter((c) => checkedContacts[c.id]);
-    contactsToSend.forEach((c) => {
-      const waUrl = `https://wa.me/${cellule.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
-        `👋 Salut ${cellule.responsable},
-
-🙏 Dieu nous a envoyé une nouvelle âme à suivre.
-Voici ses infos :
-
-- 👤 Nom : ${c.prenom} ${c.nom}
-- 📱 Téléphone : ${c.telephone || "—"}
-- 📲 WhatsApp : ${c.is_whatsapp ? "Oui" : "Non"}
-- 🏙 Ville : ${c.ville || "—"}
-- 🙏 Besoin : ${c.besoin || "—"}
-- 📝 Infos supplémentaires : ${c.infos_supplementaires || "—"}
-
-Merci pour ton cœur ❤ et son amour ✨`
-      )}`;
-      window.open(waUrl, "_blank");
+  const sendWhatsapp = () => {
+    const toSend = contacts.filter(c => checkedContacts[c.id]);
+    if (!selectedCellule) return alert("Sélectionne une cellule !");
+    const cellule = cellules.find(c => c.id === parseInt(selectedCellule));
+    if (!cellule) return alert("Cellule introuvable !");
+    
+    toSend.forEach(member => {
+      const phone = cellule.telephone.replace(/\D/g, "");
+      const message = `👋 Salut ${cellule.responsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\nVoici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${member.telephone || "—"}\n- 📲 WhatsApp: ${checkedContacts[member.id] ? "Oui" : "Non"}\n- 🏙 Ville : ${member.ville || "—"}\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n\nMerci pour ton cœur ❤ et son amour ✨`;
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
     });
-
-    // Optionnel: décocher après envoi
-    setCheckedContacts({});
-  };
-
-  const toggleDetails = (id) => {
-    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-sky-300 p-4">
-      <h1 className="text-4xl text-white font-bold text-center mb-4">Évangélisation</h1>
+    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-blue-800 to-cyan-400">
+      <button onClick={() => window.history.back()} className="self-start mb-4 text-white font-semibold hover:text-gray-200">← Retour</button>
+      <Image src="/logo.png" alt="Logo" width={80} height={80} className="mb-3"/>
+      <h1 className="text-5xl font-handwriting text-white text-center mb-2">Évangélisation</h1>
+      <p className="text-center text-white text-lg mb-4 font-handwriting-light">Chaque personne a une valeur infinie...</p>
 
-      {/* Menu déroulant cellule */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4">
+      {/* Menu déroulant cellules */}
+      <div className="mb-4 w-full max-w-md flex flex-col sm:flex-row gap-2">
         <select
           value={selectedCellule}
           onChange={(e) => setSelectedCellule(e.target.value)}
-          className="border rounded-lg px-4 py-2 w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="border rounded-lg px-4 py-2 w-full"
         >
           <option value="">-- Sélectionner cellule --</option>
-          {cellules.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.cellule} ({c.responsable})
-            </option>
-          ))}
+          {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>)}
         </select>
 
         {selectedCellule && (
           <button
-            onClick={sendWhatsApp}
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition"
+            onClick={sendWhatsapp}
+            className="bg-green-500 text-white font-bold px-4 py-2 rounded-lg"
           >
-            Envoyer WhatsApp
+            Envoyer par WhatsApp
           </button>
         )}
-
-        <button
-          className="text-white underline"
-          onClick={() => setView(view === "card" ? "table" : "card")}
-        >
-          Voir {view === "card" ? "Table" : "Cards"}
-        </button>
       </div>
 
-      {/* Cards */}
-      {view === "card" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 justify-items-center">
-          {contacts.map((c) => (
-            <div
-              key={c.id}
-              className={`bg-white rounded-xl shadow-md p-4 w-64 transition-all ${
-                detailsOpen[c.id] ? "h-auto" : "aspect-square"
-              }`}
-            >
-              <p className="font-semibold text-lg">{c.prenom} {c.nom}</p>
-              <p>📱 {c.telephone || "—"}</p>
-              <button
-                className="text-blue-500 underline mt-2"
-                onClick={() => toggleDetails(c.id)}
-              >
-                {detailsOpen[c.id] ? "Fermer détails" : "Détails"}
-              </button>
+      {/* Toggle card/table */}
+      <p className="text-orange-500 cursor-pointer mb-4" onClick={() => setView(view==="card"?"table":"card")}>Visuel</p>
 
-              {detailsOpen[c.id] && (
-                <div className="mt-2 space-y-1">
-                  <p>📲 WhatsApp: {c.is_whatsapp ? "Oui" : "Non"}</p>
-                  <p>🏙 Ville: {c.ville || "—"}</p>
-                  <p>🙏 Besoin: {c.besoin || "—"}</p>
-                  <p>📝 Infos supplémentaires: {c.infos_supplementaires || "—"}</p>
-                  <label className="flex items-center gap-2 mt-2">
-                    <input
-                      type="checkbox"
-                      checked={checkedContacts[c.id] || false}
-                      onChange={() => toggleCheck(c.id)}
-                    />
-                    Envoyer par WhatsApp
-                  </label>
+      {view === "card" ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full max-w-5xl">
+          {contacts.map(member => (
+            <div
+              key={member.id}
+              className={`bg-white rounded-xl shadow-md p-4 flex flex-col justify-start items-center transition-all duration-300 ${detailsOpen[member.id] ? "w-full sm:col-span-2 md:col-span-3" : "aspect-square"}`}
+            >
+              <h2 className="font-bold text-gray-800 mb-1">{member.prenom} {member.nom}</h2>
+              <p className="text-sm text-gray-600 mb-2">📱 {member.telephone || "—"}</p>
+              
+              <label className="mb-2 flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={checkedContacts[member.id]||false} onChange={() => handleCheck(member.id)} />
+                Envoyer par WhatsApp
+              </label>
+
+              <button onClick={() => toggleDetails(member.id)} className="text-blue-500 underline mb-2">{detailsOpen[member.id] ? "Fermer détails" : "Détails"}</button>
+
+              {detailsOpen[member.id] && (
+                <div className="text-sm text-gray-700 mt-2 w-full">
+                  <p>📲 WhatsApp: {checkedContacts[member.id] ? "Oui" : "Non"}</p>
+                  <p>🏙 Ville: {member.ville || "—"}</p>
+                  <p>🙏 Besoin: {member.besoin || "—"}</p>
+                  <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>
                 </div>
               )}
             </div>
           ))}
         </div>
       ) : (
-        // Table
-        <div className="overflow-x-auto">
+        <div className="w-full max-w-5xl overflow-x-auto">
           <table className="min-w-full bg-white rounded-xl text-center">
             <thead>
               <tr className="bg-gray-200">
                 <th className="py-2 px-4">Prénom</th>
                 <th className="py-2 px-4">Nom</th>
-                <th className="py-2 px-4">Téléphone</th>
+                <th className="py-2 px-4">Envoyer WhatsApp</th>
                 <th className="py-2 px-4">Détails</th>
               </tr>
             </thead>
             <tbody>
-              {contacts.map((c) => (
-                <tr key={c.id} className="border-b">
-                  <td className="py-2 px-4">{c.prenom}</td>
-                  <td className="py-2 px-4">{c.nom}</td>
-                  <td className="py-2 px-4">{c.telephone || "—"}</td>
+              {contacts.map(member => (
+                <tr key={member.id} className="border-b">
+                  <td className="py-2 px-4">{member.prenom}</td>
+                  <td className="py-2 px-4">{member.nom}</td>
                   <td className="py-2 px-4">
-                    <button
-                      className="text-blue-500 underline"
-                      onClick={() => toggleDetails(c.id)}
-                    >
-                      {detailsOpen[c.id] ? "Fermer détails" : "Détails"}
-                    </button>
-
-                    {detailsOpen[c.id] && (
-                      <div className="mt-2 text-left space-y-1">
-                        <p>📲 WhatsApp: {c.is_whatsapp ? "Oui" : "Non"}</p>
-                        <p>🏙 Ville: {c.ville || "—"}</p>
-                        <p>🙏 Besoin: {c.besoin || "—"}</p>
-                        <p>📝 Infos supplémentaires: {c.infos_supplementaires || "—"}</p>
-                        <label className="flex items-center gap-2 mt-2">
-                          <input
-                            type="checkbox"
-                            checked={checkedContacts[c.id] || false}
-                            onChange={() => toggleCheck(c.id)}
-                          />
-                          Envoyer par WhatsApp
-                        </label>
-                      </div>
-                    )}
+                    <input type="checkbox" checked={checkedContacts[member.id]||false} onChange={() => handleCheck(member.id)} />
+                  </td>
+                  <td className="py-2 px-4">
+                    <button onClick={() => setPopupContact(member)} className="text-blue-500 underline">Voir détails</button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Pop-up details table */}
+      {popupContact && (
+        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full relative">
+            <button onClick={() => setPopupContact(null)} className="absolute top-2 right-2 font-bold text-gray-600">X</button>
+            <h2 className="text-lg font-bold mb-2">{popupContact.prenom} {popupContact.nom}</h2>
+            <p>📲 WhatsApp: {checkedContacts[popupContact.id] ? "Oui" : "Non"}</p>
+            <p>🏙 Ville: {popupContact.ville || "—"}</p>
+            <p>🙏 Besoin: {popupContact.besoin || "—"}</p>
+            <p>📝 Infos supplémentaires: {popupContact.infos_supplementaires || "—"}</p>
+          </div>
         </div>
       )}
     </div>

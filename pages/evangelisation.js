@@ -46,20 +46,23 @@ export default function Evangelisation() {
     const cellule = cellules.find((c) => String(c.id) === selectedCellule);
     if (!cellule) return alert("Cellule introuvable !");
 
-    toSend.forEach((member) => {
-      const phone = cellule.telephone.replace(/\D/g, "");
-      const message = `👋 Salut ${cellule.responsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\nVoici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${
-        member.telephone || "—"
-      }\n- 📲 WhatsApp: ${checkedContacts[member.id] ? "Oui" : "Non"}\n- 🏙 Ville : ${
-        member.ville || "—"
-      }\n- 🙏 Besoin: ${member.besoin || "—"}\n- 📝 Infos supplémentaires: ${
-        member.infos_supplementaires || "—"
-      }\n\nMerci pour ton cœur ❤ et son amour ✨`;
-      window.open(
-        `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
-        "_blank"
-      );
-    });
+    if (toSend.length === 0) return alert("Sélectionne au moins un contact !");
+
+    // Envoyer tous les contacts à la fois
+    let messages = toSend.map((member) => {
+      return `👋 Salut ${cellule.responsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\nVoici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${member.telephone || "—"}\n- 📲 WhatsApp: Oui\n- 🏙 Ville : ${member.ville || "—"}\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n`;
+    }).join("\n----------------------\n");
+
+    const phone = cellule.telephone.replace(/\D/g, "");
+    window.open(
+      `https://wa.me/${phone}?text=${encodeURIComponent(messages)}`,
+      "_blank"
+    );
+
+    // Retirer les contacts envoyés de la page
+    const remaining = contacts.filter((c) => !checkedContacts[c.id]);
+    setContacts(remaining);
+    setCheckedContacts({});
   };
 
   return (
@@ -145,7 +148,6 @@ export default function Evangelisation() {
                   {isOpen ? "Fermer" : "Détails"}
                 </button>
 
-                {/* Section détails centrée et ajustée */}
                 <div
                   className={`text-xs text-gray-700 mt-1 w-full text-center transition-all duration-500 ease-in-out ${
                     isOpen ? "max-h-96" : "max-h-0"
@@ -203,7 +205,6 @@ export default function Evangelisation() {
         </div>
       )}
 
-      {/* Pop-up details table */}
       {popupContact && (
         <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50 p-4">
           <div className="bg-white rounded-lg p-5 max-w-md w-full relative text-center transition-all duration-500 ease-in-out">

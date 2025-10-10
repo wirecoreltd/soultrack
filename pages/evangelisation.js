@@ -41,20 +41,15 @@ export default function Evangelisation() {
     setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const sendWhatsapp = () => {
-    const toSend = contacts.filter((c) => checkedContacts[c.id]);
     if (!selectedCellule) return alert("Sélectionne une cellule !");
     const cellule = cellules.find((c) => c.id === parseInt(selectedCellule));
     if (!cellule) return alert("Cellule introuvable !");
 
+    const toSend = contacts.filter((c) => checkedContacts[c.id]);
+
     toSend.forEach((member) => {
       const phone = cellule.telephone.replace(/\D/g, "");
-      const message = `👋 Salut ${cellule.responsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\nVoici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${
-        member.telephone || "—"
-      }\n- 📲 WhatsApp: ${checkedContacts[member.id] ? "Oui" : "Non"}\n- 🏙 Ville : ${
-        member.ville || "—"
-      }\n- 🙏 Besoin: ${member.besoin || "—"}\n- 📝 Infos supplémentaires: ${
-        member.infos_supplementaires || "—"
-      }\n\nMerci pour ton cœur ❤ et son amour ✨`;
+      const message = `👋 Salut ${cellule.responsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\nVoici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${member.telephone || "—"}\n- 📲 WhatsApp: ${checkedContacts[member.id] ? "Oui" : "Non"}\n- 🏙 Ville : ${member.ville || "—"}\n- 🙏 Besoin: ${member.besoin || "—"}\n- 📝 Infos supplémentaires: ${member.infos_supplementaires || "—"}\n\nMerci pour ton cœur ❤ et son amour ✨`;
       window.open(
         `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
         "_blank"
@@ -70,7 +65,7 @@ export default function Evangelisation() {
       >
         ← Retour
       </button>
-      <Image src="/logo.png" alt="Logo" width={80} height={80} className="mb-3" />
+      <Image src="/soul.logo.png" alt="Logo" width={80} height={80} className="mb-3" />
       <h1 className="text-5xl font-handwriting text-white text-center mb-2">
         Évangélisation
       </h1>
@@ -119,16 +114,16 @@ export default function Evangelisation() {
             return (
               <div
                 key={member.id}
-                className={`bg-white rounded-lg shadow-md p-2 flex flex-col items-center transition-all duration-500 ease-in-out cursor-pointer overflow-hidden w-full max-w-xs mx-auto`}
+                className={`bg-white rounded-lg shadow-md p-3 flex flex-col items-center transition-all duration-500 ease-in-out cursor-pointer overflow-hidden w-full max-w-xs mx-auto`}
               >
                 <div className="flex flex-col items-center">
-                  <h2 className="font-bold text-gray-800 text-sm sm:text-base mb-1 text-center">
+                  <h2 className="font-bold text-gray-800 text-base sm:text-lg mb-1 text-center">
                     {member.prenom} {member.nom}
                   </h2>
-                  <p className="text-xs text-gray-600 mb-1 text-center">
+                  <p className="text-sm sm:text-base text-gray-600 mb-1 text-center">
                     📱 {member.telephone || "—"}
                   </p>
-                  <label className="flex items-center gap-2 text-xs mb-1">
+                  <label className="flex items-center gap-2 text-sm mb-1">
                     <input
                       type="checkbox"
                       checked={checkedContacts[member.id] || false}
@@ -145,9 +140,9 @@ export default function Evangelisation() {
                   {isOpen ? "Fermer" : "Détails"}
                 </button>
 
-                {/* Section détails centrée et ajustée */}
+                {/* Section détails centrée et compacte */}
                 <div
-                  className={`text-xs text-gray-700 mt-1 w-full text-center transition-all duration-500 ease-in-out ${
+                  className={`text-sm text-gray-700 mt-1 w-full text-center transition-all duration-500 ease-in-out ${
                     isOpen ? "max-h-96" : "max-h-0"
                   } overflow-hidden`}
                 >

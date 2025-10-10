@@ -1,6 +1,6 @@
 // pages/add-evangelise.js
 import { useState } from "react";
-import supabase from "../lib/supabaseClient"; // connexion Supabase
+import supabase from "../lib/supabaseClient";
 import { useRouter } from "next/router";
 
 export default function AddEvangelise() {
@@ -30,14 +30,31 @@ export default function AddEvangelise() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // 🔹 On insère maintenant dans la table "evangelises"
-      const { data, error } = await supabase.from("evangelises").insert([formData]);
-      if (error) throw error;
+      // ✅ INSERTION dans la table "evangelises" au lieu de "membres"
+      const { data, error } = await supabase.from("evangelises").insert([
+        {
+          nom: formData.nom,
+          prenom: formData.prenom,
+          telephone: formData.telephone,
+          ville: formData.ville,
+          statut: formData.statut,
+          infos_supplementaires: formData.infos_supplementaires,
+          is_whatsapp: formData.is_whatsapp,
+          besoin: formData.besoin,
+        },
+      ]);
 
+      if (error) {
+        console.error("Erreur Supabase :", error);
+        alert("Erreur Supabase : " + error.message);
+        return;
+      }
+
+      console.log("Insertion réussie :", data);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
-      // Réinitialiser le formulaire
+      // Reset du formulaire
       setFormData({
         nom: "",
         prenom: "",
@@ -49,7 +66,8 @@ export default function AddEvangelise() {
         besoin: "",
       });
     } catch (err) {
-      alert("Erreur : " + err.message);
+      console.error("Erreur inattendue :", err);
+      alert(err.message);
     }
   };
 
@@ -120,7 +138,9 @@ export default function AddEvangelise() {
               onChange={handleChange}
               className="h-5 w-5"
             />
-            <label className="text-gray-700 font-medium">Ce numéro a WhatsApp</label>
+            <label className="text-gray-700 font-medium">
+              Ce numéro a WhatsApp
+            </label>
           </div>
 
           {/* Ville */}
@@ -137,7 +157,9 @@ export default function AddEvangelise() {
 
           {/* Besoin */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Besoin de la personne</label>
+            <label className="block text-gray-700 font-medium mb-1">
+              Besoin de la personne
+            </label>
             <textarea
               name="besoin"
               value={formData.besoin}
@@ -149,7 +171,9 @@ export default function AddEvangelise() {
 
           {/* Infos supplémentaires */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
+            <label className="block text-gray-700 font-medium mb-1">
+              Informations supplémentaires
+            </label>
             <textarea
               name="infos_supplementaires"
               value={formData.infos_supplementaires}

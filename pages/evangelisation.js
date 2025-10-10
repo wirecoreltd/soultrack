@@ -43,14 +43,18 @@ export default function Evangelisation() {
   const sendWhatsapp = () => {
     const toSend = contacts.filter((c) => checkedContacts[c.id]);
     if (!selectedCellule) return alert("Sélectionne une cellule !");
-    const cellule = cellules.find(
-      (c) => c.id === parseInt(selectedCellule)
-    );
+    const cellule = cellules.find((c) => c.id === parseInt(selectedCellule));
     if (!cellule) return alert("Cellule introuvable !");
 
     toSend.forEach((member) => {
       const phone = cellule.telephone.replace(/\D/g, "");
-      const message = `👋 Salut ${cellule.responsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\nVoici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${member.telephone || "—"}\n- 📲 WhatsApp: ${checkedContacts[member.id] ? "Oui" : "Non"}\n- 🏙 Ville : ${member.ville || "—"}\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n\nMerci pour ton cœur ❤ et son amour ✨`;
+      const message = `👋 Salut ${cellule.responsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\nVoici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${
+        member.telephone || "—"
+      }\n- 📲 WhatsApp: ${checkedContacts[member.id] ? "Oui" : "Non"}\n- 🏙 Ville : ${
+        member.ville || "—"
+      }\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires : ${
+        member.infos_supplementaires || "—"
+      }\n\nMerci pour ton cœur ❤ et son amour ✨`;
       window.open(
         `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
         "_blank"
@@ -59,27 +63,27 @@ export default function Evangelisation() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6 bg-gradient-to-br from-blue-800 to-cyan-400">
+    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-blue-800 to-cyan-400">
       <button
         onClick={() => window.history.back()}
-        className="self-start mb-3 text-white font-semibold hover:text-gray-200"
+        className="self-start mb-4 text-white font-semibold hover:text-gray-200"
       >
         ← Retour
       </button>
-      <Image src="/logo.png" alt="Logo" width={70} height={70} className="mb-2"/>
-      <h1 className="text-4xl sm:text-5xl font-handwriting text-white text-center mb-1">
+      <Image src="/logo.png" alt="Logo" width={80} height={80} className="mb-3" />
+      <h1 className="text-5xl font-handwriting text-white text-center mb-2">
         Évangélisation
       </h1>
-      <p className="text-center text-white text-base sm:text-lg mb-3 font-handwriting-light">
+      <p className="text-center text-white text-lg mb-4 font-handwriting-light">
         Chaque personne a une valeur infinie...
       </p>
 
       {/* Menu déroulant cellules */}
-      <div className="mb-3 w-full max-w-md flex flex-col sm:flex-row gap-2">
+      <div className="mb-4 w-full max-w-md flex flex-col sm:flex-row gap-2">
         <select
           value={selectedCellule}
           onChange={(e) => setSelectedCellule(e.target.value)}
-          className="border rounded-lg px-3 py-2 w-full"
+          className="border rounded-lg px-4 py-2 w-full"
         >
           <option value="">-- Sélectionner cellule --</option>
           {cellules.map((c) => (
@@ -92,7 +96,7 @@ export default function Evangelisation() {
         {selectedCellule && (
           <button
             onClick={sendWhatsapp}
-            className="bg-green-500 text-white font-semibold px-3 py-2 rounded-lg w-full sm:w-auto text-center"
+            className="bg-green-500 text-white font-bold px-4 py-2 rounded-lg"
           >
             Envoyer par WhatsApp
           </button>
@@ -101,7 +105,7 @@ export default function Evangelisation() {
 
       {/* Toggle card/table */}
       <p
-        className="text-orange-500 cursor-pointer mb-3"
+        className="text-orange-500 cursor-pointer mb-4"
         onClick={() => setView(view === "card" ? "table" : "card")}
       >
         Visuel
@@ -109,52 +113,59 @@ export default function Evangelisation() {
 
       {/* --- CARDS VIEW --- */}
       {view === "card" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 w-full max-w-5xl">
           {contacts.map((member) => {
             const isOpen = detailsOpen[member.id];
             return (
               <div
                 key={member.id}
-                className={`bg-white rounded-lg shadow-md p-3 flex flex-col items-center transition-all duration-400 ease-in-out cursor-pointer overflow-hidden
-                  ${isOpen ? "h-auto sm:col-span-2 md:col-span-3" : "h-48 w-full max-w-xs mx-auto"}`}
+                className={`bg-white rounded-lg shadow-md p-2 flex flex-col items-center transition-all duration-500 ease-in-out cursor-pointer overflow-hidden
+                  ${isOpen ? "h-auto sm:col-span-2 md:col-span-3" : "h-40 w-full max-w-xs mx-auto"}`}
               >
                 {/* Nom et téléphone */}
                 <div className="flex flex-col items-center">
-                  <h2 className="font-bold text-gray-800 text-base sm:text-lg mb-1">
+                  <h2 className="font-bold text-gray-800 text-sm sm:text-base mb-1 text-center">
                     {member.prenom} {member.nom}
                   </h2>
-                  <p className="text-sm text-gray-600 mb-1">
+                  <p className="text-xs text-gray-600 mb-1 text-center">
                     📱 {member.telephone || "—"}
                   </p>
 
                   {/* Case à cocher */}
-                  <label className="flex items-center gap-2 text-sm mb-2">
+                  <label className="flex items-center gap-2 text-xs mb-1">
                     <input
                       type="checkbox"
                       checked={checkedContacts[member.id] || false}
                       onChange={() => handleCheck(member.id)}
                     />
-                    Envoyer par WhatsApp
+                    WhatsApp
                   </label>
                 </div>
 
                 {/* Bouton Détails */}
                 <button
                   onClick={() => toggleDetails(member.id)}
-                  className="text-blue-500 underline mb-2"
+                  className="text-blue-500 underline mb-1"
                 >
-                  {isOpen ? "Fermer détails" : "Détails"}
+                  {isOpen ? "Fermer" : "Détails"}
                 </button>
 
-                {/* Section détails affichée uniquement quand ouverte */}
-                {isOpen && (
-                  <div className="text-sm text-gray-700 mt-2 w-full border-t pt-2">
-                    <p>📲 WhatsApp: {checkedContacts[member.id] ? "Oui" : "Non"}</p>
-                    <p>🏙 Ville: {member.ville || "—"}</p>
-                    <p>🙏 Besoin: {member.besoin || "—"}</p>
-                    <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>
-                  </div>
-                )}
+                {/* Section détails centrée */}
+                <div
+                  className={`text-xs text-gray-700 mt-1 w-full text-center transition-all duration-500 ease-in-out overflow-hidden ${
+                    isOpen ? "max-h-96" : "max-h-0"
+                  }`}
+                >
+                  {isOpen && (
+                    <>
+                      <p>📲 WhatsApp: {checkedContacts[member.id] ? "Oui" : "Non"}</p>
+                      <p>📱 Téléphone: {member.telephone || "—"}</p>
+                      <p>🏙 Ville: {member.ville || "—"}</p>
+                      <p>🙏 Besoin: {member.besoin || "—"}</p>
+                      <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>
+                    </>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -201,7 +212,7 @@ export default function Evangelisation() {
       {/* Pop-up details table */}
       {popupContact && (
         <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50 p-4">
-          <div className="bg-white rounded-lg p-5 max-w-md w-full relative">
+          <div className="bg-white rounded-lg p-5 max-w-md w-full relative text-center transition-all duration-500 ease-in-out">
             <button
               onClick={() => setPopupContact(null)}
               className="absolute top-2 right-2 font-bold text-gray-600"
@@ -212,6 +223,7 @@ export default function Evangelisation() {
               {popupContact.prenom} {popupContact.nom}
             </h2>
             <p>📲 WhatsApp: {checkedContacts[popupContact.id] ? "Oui" : "Non"}</p>
+            <p>📱 Téléphone: {popupContact.telephone || "—"}</p>
             <p>🏙 Ville: {popupContact.ville || "—"}</p>
             <p>🙏 Besoin: {popupContact.besoin || "—"}</p>
             <p>📝 Infos supplémentaires: {popupContact.infos_supplementaires || "—"}</p>

@@ -1,45 +1,43 @@
 // pages/evangelisation.js
-import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
+import { useState, useEffect } from "react";
+import { supabase } from "../utils/supabaseClient";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function Evangelisation() {
   const [evangelises, setEvangelises] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState("");
-  const [viewMode, setViewMode] = useState("table");
-  const [checkedIds, setCheckedIds] = useState([]);
+  const [selectedContacts, setSelectedContacts] = useState([]);
+  const [view, setView] = useState("table");
 
-  // 🔹 Charger les données
+  // 🔹 Charger les données au montage
   useEffect(() => {
     fetchEvangelises();
     fetchCellules();
   }, []);
 
-  const fetchEvangelises = async () => {
-    const { data, error } = await supabase
-      .from("evangelises")
-      .select("*")
-      .order("id", { ascending: false });
+  async function fetchEvangelises() {
+    const { data, error } = await supabase.from("evangelises").select("*");
+    if (error) console.error("Erreur récupération évangélisés :", error);
+    else setEvangelises(data || []);
+  }
 
-    if (!error) setEvangelises(data);
-  };
+  async function fetchCellules() {
+    const { data, error } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
+    if (error) console.error("Erreur récupération cellules :", error);
+    else setCellules(data || []);
+  }
 
-  const fetchCellules = async () => {
-    const { data, error } = await supabase.from("cellules").select("id, nom, responsable, telephone");
-    if (!error) setCellules(data || []);
-  };
-
-  // 🔹 Cocher / décocher
-  const handleCheck = (id) => {
-    setCheckedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+  function toggleContactSelection(id) {
+    setSelectedContacts((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
-  };
+  }
 
-  // 🔹 Envoi WhatsApp
-  const handleSendWhatsapp = async () => {
+  async function handleSendWhatsApp() {
     if (!selectedCellule) {
-      alert("Veuillez sélectionner une cellule avant d’envoyer.");
+      alert("Sélectionne d’abord une cellule.");
       return;
     }
 
@@ -49,142 +47,163 @@ export default function Evangelisation() {
       return;
     }
 
-    const contactsToSend = evangelises.filter((e) => checkedIds.includes(e.id));
-
-    // Insérer dans la table suivis_des_evangelises
-    for (const ev of contactsToSend) {
-      await supabase.from("suivis_des_evangelises").insert([
-        {
-          prenom: ev.prenom,
-          nom: ev.nom,
-          telephone: ev.telephone,
-          is_whatsapp: ev.is_whatsapp,
-          ville: ev.ville,
-          besoin: ev.besoin,
-          infos_supplementaires: ev.infos_supplementaires,
-          comment: ev.comment,
-          cellule_id: selectedCellule,
-          responsable_cellule: cellule.responsable,
-        },
-      ]);
-    }
-
-    // Supprimer de la table evangelises
-    await supabase.from("evangelises").delete().in("id", checkedIds);
-
-    // Message WhatsApp
-    const contactsText = contactsToSend
-      .map(
-        (ev) =>
-          `👤 Nom : ${ev.prenom} ${ev.nom}\n📱 Téléphone : ${ev.telephone}\n🏙 Ville : ${ev.ville || "—"}\n🙏 Besoin : ${ev.besoin || "—"}\n📝 Infos supplémentaires : ${ev.infos_supplementaires || "—"}`
-      )
-      .join("\n\n");
-
-    const message = encodeURIComponent(
-      `👋 Salut ${cellule.responsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\nVoici ses infos :\n\n${contactsText}\n\nMerci pour ton cœur ❤ et ton amour ✨`
+    const contactsToSend = evangelises.filter((e) =>
+      selectedContacts.includes(e.id)
     );
 
-    window.open(`https://wa.me/${cellule.telephone}?text=${message}`, "_blank");
+    if (contactsToSend.length === 0) {
+      alert("Aucun contact sélectionné.");
+      return;
+    }
 
-    // Mise à jour de l’affichage
-    setEvangelises((prev) => prev.filter((e) => !checkedIds.includes(e.id)));
-    setCheckedIds([]);
-  };
+    // 🔹 Envoi vers suivis_des_evangelises
+    const inserts = contactsToSend.map((contact) => ({
+      prenom: contact.prenom,
+      nom: contact.nom,
+      telephone: contact.telephone,
+      is_whatsapp: contact.is_whatsapp,
+      ville: contact.ville,
+      besoin: contact.besoin,
+      infos_supplementaires: contact.infos_supplementaires,
+      cellule_id: cellule.id,
+      responsable_cellule: cellule.responsable,
+    }));
+
+    const { error: insertError } = await supabase
+      .from("suivis_des_evangelises")
+      .insert(inserts);
+
+    if (insertError) {
+      console.error("Erreur insertion suivis :", insertError);
+      alert("Erreur lors de l’envoi vers la table suivis.");
+      return;
+    }
+
+    // 🔹 Suppression de la table evangelises
+    const { error: deleteError } = await supabase
+      .from("evangelises")
+      .delete()
+      .in("id", selectedContacts);
+
+    if (deleteError) {
+      console.error("Erreur suppression :", deleteError);
+      alert("Erreur lors de la suppression des contacts.");
+      return;
+    }
+
+    // 🔹 Message WhatsApp automatique
+    const baseUrl = "https://wa.me/";
+    contactsToSend.forEach((contact) => {
+      const message = encodeURIComponent(
+        `👋 Salut ${cellule.responsable},
+
+🙏 Dieu nous a envoyé une nouvelle âme à suivre.
+Voici ses infos :
+
+👤 Nom : ${contact.prenom} ${contact.nom}
+📱 Téléphone : ${contact.telephone}
+🏙 Ville : ${contact.ville || "—"}
+🙏 Besoin : ${contact.besoin || "—"}
+📝 Infos supplémentaires : ${contact.infos_supplementaires || "—"}
+
+Merci pour ton cœur ❤ et ton amour ✨`
+      );
+
+      window.open(`${baseUrl}${cellule.telephone}?text=${message}`, "_blank");
+    });
+
+    // 🔹 Nettoyage local
+    setEvangelises((prev) =>
+      prev.filter((e) => !selectedContacts.includes(e.id))
+    );
+    setSelectedContacts([]);
+    alert("Contacts envoyés avec succès !");
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 p-6">
-      <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-4">
-        Liste des personnes évangélisées
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6 text-center">
+        Liste des Évangélisés
       </h1>
 
-      {/* Menu déroulant cellule */}
+      {/* 🔹 Sélecteur de cellule */}
       <div className="flex justify-center mb-6">
         <select
           value={selectedCellule}
           onChange={(e) => setSelectedCellule(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-400"
+          className="border border-gray-400 rounded p-2 w-72 text-center"
         >
-          <option value="">Sélectionner une cellule...</option>
+          <option value="">— Sélectionner une cellule —</option>
           {cellules.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.nom} ({c.responsable})
+              {c.cellule}
             </option>
           ))}
         </select>
       </div>
 
-      {/* Bouton WhatsApp (affiché seulement si une cellule est sélectionnée) */}
+      {/* 🔹 Bouton WhatsApp visible seulement si une cellule est sélectionnée */}
       {selectedCellule && (
         <div className="flex justify-center mb-6">
-          <button
-            onClick={handleSendWhatsapp}
-            className="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-3 rounded-2xl shadow-md transition-all duration-200"
+          <Button
+            onClick={handleSendWhatsApp}
+            className="bg-green-500 hover:bg-green-600 text-white px-6"
           >
             📤 Envoyer par WhatsApp
-          </button>
+          </Button>
         </div>
       )}
 
-      {/* Changement d’affichage */}
-      <div className="flex justify-center mb-6">
-        <div className="flex gap-4">
-          <button
-            onClick={() => setViewMode("table")}
-            className={`px-4 py-2 rounded-xl ${
-              viewMode === "table"
-                ? "bg-indigo-600 text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
-          >
-            Mode Table
-          </button>
-          <button
-            onClick={() => setViewMode("cards")}
-            className={`px-4 py-2 rounded-xl ${
-              viewMode === "cards"
-                ? "bg-indigo-600 text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
-          >
-            Mode Cartes
-          </button>
-        </div>
+      {/* 🔹 Boutons de vue */}
+      <div className="flex justify-center gap-4 mb-4">
+        <Button
+          variant={view === "card" ? "default" : "outline"}
+          onClick={() => setView("card")}
+        >
+          Vue carte
+        </Button>
+        <Button
+          variant={view === "table" ? "default" : "outline"}
+          onClick={() => setView("table")}
+        >
+          Vue tableau
+        </Button>
       </div>
 
-      {/* TABLE VIEW */}
-      {viewMode === "table" && (
+      {/* 🔹 Vue table */}
+      {view === "table" && (
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200 rounded-xl shadow-lg">
-            <thead>
-              <tr className="bg-indigo-600 text-white text-left">
-                <th className="p-3 text-center">✔</th>
-                <th className="p-3 text-center">Prénom</th>
-                <th className="p-3 text-center">Nom</th>
-                <th className="p-3 text-center">Téléphone</th>
-                <th className="p-3 text-center">WhatsApp</th>
-                <th className="p-3 text-center">Détails</th>
+          <table className="min-w-full border border-gray-300 text-center">
+            <thead className="bg-gray-200">
+              <tr>
+                <th></th>
+                <th>Prénom</th>
+                <th>Nom</th>
+                <th>Téléphone</th>
+                <th>WhatsApp</th>
+                <th>Détails</th>
               </tr>
             </thead>
             <tbody>
               {evangelises.map((e) => (
-                <tr key={e.id} className="border-t text-center">
-                  <td className="p-3">
+                <tr key={e.id} className="border-b">
+                  <td>
                     <input
                       type="checkbox"
-                      checked={checkedIds.includes(e.id)}
-                      onChange={() => handleCheck(e.id)}
+                      checked={selectedContacts.includes(e.id)}
+                      onChange={() => toggleContactSelection(e.id)}
                     />
                   </td>
-                  <td className="p-3">{e.prenom}</td>
-                  <td className="p-3">{e.nom}</td>
-                  <td className="p-3">{e.telephone}</td>
-                  <td className="p-3">
-                    {e.is_whatsapp ? "Oui" : "Non"}
-                  </td>
-                  <td className="p-3 text-sm text-gray-600 text-left">
-                    <div><strong>Ville :</strong> {e.ville || "—"}</div>
-                    <div><strong>Besoin :</strong> {e.besoin || "—"}</div>
-                    <div><strong>Infos :</strong> {e.infos_supplementaires || "—"}</div>
+                  <td>{e.prenom}</td>
+                  <td>{e.nom}</td>
+                  <td>{e.telephone}</td>
+                  <td>{e.is_whatsapp ? "Oui" : "Non"}</td>
+                  <td className="text-left p-2">
+                    <div className="text-sm leading-tight">
+                      <strong>Ville :</strong> {e.ville || "—"} <br />
+                      <strong>Besoin :</strong> {e.besoin || "—"} <br />
+                      <strong>Infos :</strong> {e.infos_supplementaires || "—"}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -193,39 +212,42 @@ export default function Evangelisation() {
         </div>
       )}
 
-      {/* CARDS VIEW */}
-      {viewMode === "cards" && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* 🔹 Vue card */}
+      {view === "card" && (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {evangelises.map((e) => (
-            <div
+            <Card
               key={e.id}
-              className="bg-white p-5 rounded-2xl shadow-lg border relative"
+              className={`p-4 border ${
+                selectedContacts.includes(e.id)
+                  ? "border-green-500"
+                  : "border-gray-300"
+              }`}
             >
-              <input
-                type="checkbox"
-                checked={checkedIds.includes(e.id)}
-                onChange={() => handleCheck(e.id)}
-                className="absolute top-3 right-3"
-              />
-              <h2 className="text-xl font-bold text-indigo-700">
-                {e.prenom} {e.nom}
-              </h2>
-              <p className="text-gray-700 mt-1">
-                📱 {e.telephone} ({e.is_whatsapp ? "WhatsApp" : "Non"})
-              </p>
-              <p className="text-gray-600 mt-2">
-                🏙 <strong>Ville :</strong> {e.ville || "—"}
-              </p>
-              <p className="text-gray-600">
-                🙏 <strong>Besoin :</strong> {e.besoin || "—"}
-              </p>
-              <p className="text-gray-600">
-                📝 <strong>Infos :</strong> {e.infos_supplementaires || "—"}
-              </p>
-            </div>
+              <CardContent>
+                <div className="flex justify-between items-center mb-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedContacts.includes(e.id)}
+                    onChange={() => toggleContactSelection(e.id)}
+                  />
+                  <h3 className="text-lg font-bold">
+                    {e.prenom} {e.nom}
+                  </h3>
+                </div>
+                <p className="text-sm">
+                  📞 {e.telephone} <br />
+                  💬 WhatsApp : {e.is_whatsapp ? "Oui" : "Non"} <br />
+                  🏙 Ville : {e.ville || "—"} <br />
+                  🙏 Besoin : {e.besoin || "—"} <br />
+                  📝 Infos : {e.infos_supplementaires || "—"}
+                </p>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
     </div>
   );
 }
+

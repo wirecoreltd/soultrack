@@ -1,6 +1,7 @@
 // pages/suivis-evangelises.js
 import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
+import { supabase } from "../utils/supabaseClient";
+import { Card } from "@/components/ui/card";
 
 export default function SuivisEvangelises() {
   const [suivis, setSuivis] = useState([]);
@@ -9,62 +10,68 @@ export default function SuivisEvangelises() {
     fetchSuivis();
   }, []);
 
-  const fetchSuivis = async () => {
+  async function fetchSuivis() {
     const { data, error } = await supabase
       .from("suivis_des_evangelises")
-      .select(
-        `id, prenom, nom, telephone, is_whatsapp, ville, besoin, infos_supplementaires, cellule_id, responsable_cellule, date_suivi,
-        cellules (nom)`
-      )
-      .order("date_suivi", { ascending: false });
+      .select(`
+        id,
+        prenom,
+        nom,
+        ville,
+        besoin,
+        infos_supplementaires,
+        cellule_id,
+        responsable_cellule,
+        date_suivi,
+        cellules(cellule)
+      `);
 
     if (error) {
-      console.error("Erreur chargement:", error);
-      return;
+      console.error("Erreur récupération suivis :", error);
+    } else {
+      setSuivis(data || []);
     }
-    setSuivis(data);
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 p-6">
-      <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-6">
-        Suivis des évangélisés
+    <div className="p-6">
+      <h1 className="text-2xl font-bold text-center mb-6">
+        Suivis des Évangélisés
       </h1>
 
       {suivis.length === 0 ? (
-        <p className="text-center text-gray-500 italic mt-10">
-          Aucune personne en suivi pour le moment.
+        <p className="text-center text-gray-600">
+          Aucun contact suivi pour le moment.
         </p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200 rounded-xl shadow-lg">
-            <thead>
-              <tr className="bg-indigo-600 text-white text-center">
-                <th className="p-3">Prénom</th>
-                <th className="p-3">Nom</th>
-                <th className="p-3">Cellule</th>
-                <th className="p-3">Détails</th>
+          <table className="min-w-full border border-gray-300 text-center">
+            <thead className="bg-gray-200">
+              <tr>
+                <th>Prénom</th>
+                <th>Nom</th>
+                <th>Cellule</th>
+                <th>Détails</th>
               </tr>
             </thead>
             <tbody>
               {suivis.map((s) => (
-                <tr key={s.id} className="border-t text-center hover:bg-indigo-50 transition">
-                  <td className="p-3 font-semibold text-indigo-700">{s.prenom}</td>
-                  <td className="p-3 font-semibold text-indigo-700">{s.nom}</td>
-                  <td className="p-3 text-gray-700">
-                    {s.cellules?.nom || "—"} <br />
-                    <span className="text-sm text-gray-500 italic">
-                      {s.responsable_cellule || ""}
-                    </span>
+                <tr key={s.id} className="border-b hover:bg-gray-50">
+                  <td className="py-2">{s.prenom}</td>
+                  <td className="py-2">{s.nom}</td>
+                  <td className="py-2">
+                    {s.cellules?.cellule || "Non attribuée"}
                   </td>
-                  <td className="p-3 text-left text-gray-600 text-sm">
-                    <div><strong>📱 Téléphone :</strong> {s.telephone}</div>
-                    <div><strong>💬 WhatsApp :</strong> {s.is_whatsapp ? "Oui" : "Non"}</div>
-                    <div><strong>🏙 Ville :</strong> {s.ville || "—"}</div>
-                    <div><strong>🙏 Besoin :</strong> {s.besoin || "—"}</div>
-                    <div><strong>📝 Infos :</strong> {s.infos_supplementaires || "—"}</div>
-                    <div className="mt-2 text-xs text-gray-400 italic">
-                      Date : {new Date(s.date_suivi).toLocaleString("fr-FR")}
+                  <td className="text-left p-3 text-sm">
+                    <div className="leading-tight">
+                      <strong>Ville :</strong> {s.ville || "—"} <br />
+                      <strong>Besoin :</strong> {s.besoin || "—"} <br />
+                      <strong>Infos :</strong>{" "}
+                      {s.infos_supplementaires || "—"} <br />
+                      <strong>Responsable :</strong>{" "}
+                      {s.responsable_cellule || "—"} <br />
+                      <strong>Date du suivi :</strong>{" "}
+                      {new Date(s.date_suivi).toLocaleDateString("fr-FR")}
                     </div>
                   </td>
                 </tr>

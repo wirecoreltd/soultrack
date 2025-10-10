@@ -1,5 +1,4 @@
 // pages/suivis-evangelisation.js
-
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
@@ -72,7 +71,9 @@ export default function SuivisEvangelisation() {
                   <td className="py-2 px-4">{c.infos_supplementaires || "—"}</td>
                   <td className="py-2 px-4">{c.cellule_id || "—"}</td>
                   <td className="py-2 px-4">{c.responsable_cellule || "—"}</td>
-                  <td className="py-2 px-4">{c.date_suivi ? new Date(c.date_suivi).toLocaleString("fr-FR") : "—"}</td>
+                  <td className="py-2 px-4">
+                    {c.date_suivi ? new Date(c.date_suivi).toLocaleString("fr-FR") : "—"}
+                  </td>
                 </tr>
               ))}
             </tbody>

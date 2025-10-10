@@ -1,117 +1,125 @@
 // pages/evangelisation.js
-"use client";
-import { useEffect, useState } from "react";
+
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function Evangelisation() {
-  const [members, setMembers] = useState([]);
-  const [detailsOpen, setDetailsOpen] = useState({});
-  const [selectedContacts, setSelectedContacts] = useState({});
+  const [evangelises, setEvangelises] = useState([]);
+  const [viewMode, setViewMode] = useState("cards");
+  const [openDetailId, setOpenDetailId] = useState(null);
 
   useEffect(() => {
-    fetchMembers();
+    fetchEvangelises();
   }, []);
 
-  const fetchMembers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("membres")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      setMembers(data || []);
-    } catch (err) {
-      console.error(err);
-      setMembers([]);
-    }
-  };
+  async function fetchEvangelises() {
+    const { data, error } = await supabase.from("evangelises").select("*");
+    if (error) console.error(error);
+    else setEvangelises(data || []);
+  }
 
   const toggleDetails = (id) => {
-    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const handleCheckbox = (id) => {
-    setSelectedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const sendWhatsapp = () => {
-    const contactsToSend = members.filter((m) => selectedContacts[m.id]);
-    contactsToSend.forEach((member) => {
-      const message = `👋 Salut Charlotte Bavajee,
-
-🙏 Dieu nous a envoyé une nouvelle âme à suivre.
-Voici ses infos :
-
-- 👤 Nom : ${member.prenom} ${member.nom}
-- 📱 Téléphone : ${member.telephone || "—"}
-- 📲 WhatsApp: Oui
-- 🏙 Ville : ${member.ville || "—"}
-- 🙏 Besoin : ${member.besoin || "—"}
-- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}
-
-Merci pour ton cœur ❤ et son amour ✨`;
-      const waUrl = `https://wa.me/${member.telephone}?text=${encodeURIComponent(message)}`;
-      window.open(waUrl, "_blank");
-    });
+    setOpenDetailId(openDetailId === id ? null : id);
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-purple-700 to-blue-300">
-      <h1 className="text-5xl font-bold text-white mb-6">Évangélisation</h1>
-
-      {/* Bouton WhatsApp si au moins un contact sélectionné */}
-      {Object.values(selectedContacts).some((v) => v) && (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">Évangélisation</h1>
         <button
-          onClick={sendWhatsapp}
-          className="mb-4 px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow-md"
+          onClick={() =>
+            setViewMode(viewMode === "cards" ? "table" : "cards")
+          }
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
         >
-          Envoyer WhatsApp
+          Voir en {viewMode === "cards" ? "Table" : "Cards"}
         </button>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-6xl">
-        {members.map((member) => (
-          <div
-            key={member.id}
-            className={`bg-white rounded-xl shadow-md transition-all duration-300 cursor-pointer relative`}
-            style={{
-              minHeight: detailsOpen[member.id] ? "300px" : "150px",
-              padding: "16px",
-            }}
-          >
-            <h2 className="text-lg font-bold mb-2">{member.prenom} {member.nom}</h2>
-            <p className="text-sm mb-2">📱 {member.telephone || "—"}</p>
-
-            {/* Case à cocher pour envoyer par WhatsApp */}
-            <label className="flex items-center mb-2">
-              <input
-                type="checkbox"
-                checked={selectedContacts[member.id] || false}
-                onChange={() => handleCheckbox(member.id)}
-                className="mr-2"
-              />
-              Envoyer par WhatsApp
-            </label>
-
-            <button
-              onClick={() => toggleDetails(member.id)}
-              className="text-blue-500 underline mb-2"
-            >
-              {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-            </button>
-
-            {/* Détails */}
-            {detailsOpen[member.id] && (
-              <div className="mt-2 text-sm text-gray-700 space-y-1">
-                <p>📲 WhatsApp: Oui/Non</p>
-                <p>🏙 Ville: {member.ville || "—"}</p>
-                <p>🙏 Besoin: {member.besoin || "—"}</p>
-                <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>
-              </div>
-            )}
-          </div>
-        ))}
       </div>
+
+      {viewMode === "cards" ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {evangelises.map((e) => (
+            <div
+              key={e.id}
+              className={`${
+                openDetailId === e.id
+                  ? "h-auto p-4"
+                  : "aspect-square p-3"
+              } bg-white shadow rounded-2xl border border-gray-200 transition-all duration-300 hover:shadow-lg flex flex-col justify-between`}
+            >
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800">
+                  {e.prenom} {e.nom}
+                </h2>
+                <p className="text-sm text-gray-600">📱 {e.telephone}</p>
+              </div>
+
+              {openDetailId === e.id && (
+                <div className="mt-3 border-t pt-2 text-sm text-gray-700 space-y-1">
+                  <p>
+                    <strong>WhatsApp:</strong> {e.is_whatsapp ? "Oui" : "Non"}
+                  </p>
+                  <p>
+                    <strong>Ville:</strong> {e.ville || "—"}
+                  </p>
+                  <p>
+                    <strong>Besoin:</strong> {e.besoin || "—"}
+                  </p>
+                  <p>
+                    <strong>Infos supplémentaires:</strong>{" "}
+                    {e.infos_supplementaires || "—"}
+                  </p>
+                </div>
+              )}
+
+              <button
+                onClick={() => toggleDetails(e.id)}
+                className="mt-4 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+              >
+                {openDetailId === e.id ? "Fermer les détails" : "Détails"}
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="overflow-x-auto bg-white shadow rounded-xl border border-gray-200 p-4">
+          <table className="min-w-full text-sm text-left text-gray-700">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-4 py-2">Prénom</th>
+                <th className="px-4 py-2">Nom</th>
+                <th className="px-4 py-2">Téléphone</th>
+                <th className="px-4 py-2">Détails</th>
+              </tr>
+            </thead>
+            <tbody>
+              {evangelises.map((e) => (
+                <tr key={e.id} className="border-b hover:bg-gray-50">
+                  <td className="px-4 py-2">{e.prenom}</td>
+                  <td className="px-4 py-2">{e.nom}</td>
+                  <td className="px-4 py-2">{e.telephone}</td>
+                  <td className="px-4 py-2">
+                    <button
+                      onClick={() => toggleDetails(e.id)}
+                      className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                    >
+                      {openDetailId === e.id ? "Fermer" : "Détails"}
+                    </button>
+                    {openDetailId === e.id && (
+                      <div className="mt-2 text-gray-700 text-xs border-t pt-1">
+                        <p>📲 WhatsApp: {e.is_whatsapp ? "Oui" : "Non"}</p>
+                        <p>🏙 Ville: {e.ville || "—"}</p>
+                        <p>🙏 Besoin: {e.besoin || "—"}</p>
+                        <p>📝 Infos supplémentaires: {e.infos_supplementaires || "—"}</p>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

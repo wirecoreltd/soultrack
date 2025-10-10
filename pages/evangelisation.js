@@ -42,7 +42,7 @@ export default function Evangelisation() {
 
   const sendWhatsapp = () => {
     if (!selectedCellule) return alert("Sélectionne une cellule !");
-    const cellule = cellules.find((c) => c.id === parseInt(selectedCellule));
+    const cellule = cellules.find((c) => String(c.id) === selectedCellule);
     if (!cellule) return alert("Cellule introuvable !");
 
     const toSend = contacts.filter((c) => checkedContacts[c.id]);

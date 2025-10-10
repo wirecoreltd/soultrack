@@ -2,150 +2,116 @@
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
 
 export default function Evangelisation() {
-  const [contacts, setContacts] = useState([]);
-  const [cellules, setCellules] = useState([]);
-  const [selectedCellule, setSelectedCellule] = useState("");
+  const [members, setMembers] = useState([]);
   const [detailsOpen, setDetailsOpen] = useState({});
-  const [checkedContacts, setCheckedContacts] = useState({});
-  const [view, setView] = useState("card");
-  const [popupContact, setPopupContact] = useState(null);
+  const [selectedContacts, setSelectedContacts] = useState({});
 
   useEffect(() => {
-    fetchContacts();
-    fetchCellules();
+    fetchMembers();
   }, []);
 
-  const fetchContacts = async () => {
-    const { data, error } = await supabase.from("evangelises").select("*").order("created_at", { ascending: false });
-    if (!error) setContacts(data || []);
+  const fetchMembers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("membres")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setMembers(data || []);
+    } catch (err) {
+      console.error(err);
+      setMembers([]);
+    }
   };
 
-  const fetchCellules = async () => {
-    const { data, error } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
-    if (!error) setCellules(data || []);
+  const toggleDetails = (id) => {
+    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
-
-  const handleCheck = (id) => setCheckedContacts(prev => ({ ...prev, [id]: !prev[id] }));
+  const handleCheckbox = (id) => {
+    setSelectedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const sendWhatsapp = () => {
-    const toSend = contacts.filter(c => checkedContacts[c.id]);
-    if (!selectedCellule) return alert("Sélectionne une cellule !");
-    const cellule = cellules.find(c => c.id === parseInt(selectedCellule));
-    if (!cellule) return alert("Cellule introuvable !");
-    
-    toSend.forEach(member => {
-      const phone = cellule.telephone.replace(/\D/g, "");
-      const message = `👋 Salut ${cellule.responsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\nVoici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${member.telephone || "—"}\n- 📲 WhatsApp: ${checkedContacts[member.id] ? "Oui" : "Non"}\n- 🏙 Ville : ${member.ville || "—"}\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n\nMerci pour ton cœur ❤ et son amour ✨`;
-      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+    const contactsToSend = members.filter((m) => selectedContacts[m.id]);
+    contactsToSend.forEach((member) => {
+      const message = `👋 Salut Charlotte Bavajee,
+
+🙏 Dieu nous a envoyé une nouvelle âme à suivre.
+Voici ses infos :
+
+- 👤 Nom : ${member.prenom} ${member.nom}
+- 📱 Téléphone : ${member.telephone || "—"}
+- 📲 WhatsApp: Oui
+- 🏙 Ville : ${member.ville || "—"}
+- 🙏 Besoin : ${member.besoin || "—"}
+- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}
+
+Merci pour ton cœur ❤ et son amour ✨`;
+      const waUrl = `https://wa.me/${member.telephone}?text=${encodeURIComponent(message)}`;
+      window.open(waUrl, "_blank");
     });
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-blue-800 to-cyan-400">
-      <button onClick={() => window.history.back()} className="self-start mb-4 text-white font-semibold hover:text-gray-200">← Retour</button>
-      <Image src="/logo.png" alt="Logo" width={80} height={80} className="mb-3"/>
-      <h1 className="text-5xl font-handwriting text-white text-center mb-2">Évangélisation</h1>
-      <p className="text-center text-white text-lg mb-4 font-handwriting-light">Chaque personne a une valeur infinie...</p>
+    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-purple-700 to-blue-300">
+      <h1 className="text-5xl font-bold text-white mb-6">Évangélisation</h1>
 
-      {/* Menu déroulant cellules */}
-      <div className="mb-4 w-full max-w-md flex flex-col sm:flex-row gap-2">
-        <select
-          value={selectedCellule}
-          onChange={(e) => setSelectedCellule(e.target.value)}
-          className="border rounded-lg px-4 py-2 w-full"
+      {/* Bouton WhatsApp si au moins un contact sélectionné */}
+      {Object.values(selectedContacts).some((v) => v) && (
+        <button
+          onClick={sendWhatsapp}
+          className="mb-4 px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow-md"
         >
-          <option value="">-- Sélectionner cellule --</option>
-          {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>)}
-        </select>
+          Envoyer WhatsApp
+        </button>
+      )}
 
-        {selectedCellule && (
-          <button
-            onClick={sendWhatsapp}
-            className="bg-green-500 text-white font-bold px-4 py-2 rounded-lg"
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-6xl">
+        {members.map((member) => (
+          <div
+            key={member.id}
+            className={`bg-white rounded-xl shadow-md transition-all duration-300 cursor-pointer relative`}
+            style={{
+              minHeight: detailsOpen[member.id] ? "300px" : "150px",
+              padding: "16px",
+            }}
           >
-            Envoyer par WhatsApp
-          </button>
-        )}
-      </div>
+            <h2 className="text-lg font-bold mb-2">{member.prenom} {member.nom}</h2>
+            <p className="text-sm mb-2">📱 {member.telephone || "—"}</p>
 
-      {/* Toggle card/table */}
-      <p className="text-orange-500 cursor-pointer mb-4" onClick={() => setView(view==="card"?"table":"card")}>Visuel</p>
+            {/* Case à cocher pour envoyer par WhatsApp */}
+            <label className="flex items-center mb-2">
+              <input
+                type="checkbox"
+                checked={selectedContacts[member.id] || false}
+                onChange={() => handleCheckbox(member.id)}
+                className="mr-2"
+              />
+              Envoyer par WhatsApp
+            </label>
 
-      {view === "card" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full max-w-5xl">
-          {contacts.map(member => (
-            <div
-              key={member.id}
-              className={`bg-white rounded-xl shadow-md p-4 flex flex-col justify-start items-center transition-all duration-300 ${detailsOpen[member.id] ? "w-full sm:col-span-2 md:col-span-3" : "aspect-square"}`}
+            <button
+              onClick={() => toggleDetails(member.id)}
+              className="text-blue-500 underline mb-2"
             >
-              <h2 className="font-bold text-gray-800 mb-1">{member.prenom} {member.nom}</h2>
-              <p className="text-sm text-gray-600 mb-2">📱 {member.telephone || "—"}</p>
-              
-              <label className="mb-2 flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={checkedContacts[member.id]||false} onChange={() => handleCheck(member.id)} />
-                Envoyer par WhatsApp
-              </label>
+              {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+            </button>
 
-              <button onClick={() => toggleDetails(member.id)} className="text-blue-500 underline mb-2">{detailsOpen[member.id] ? "Fermer détails" : "Détails"}</button>
-
-              {detailsOpen[member.id] && (
-                <div className="text-sm text-gray-700 mt-2 w-full">
-                  <p>📲 WhatsApp: {checkedContacts[member.id] ? "Oui" : "Non"}</p>
-                  <p>🏙 Ville: {member.ville || "—"}</p>
-                  <p>🙏 Besoin: {member.besoin || "—"}</p>
-                  <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="w-full max-w-5xl overflow-x-auto">
-          <table className="min-w-full bg-white rounded-xl text-center">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="py-2 px-4">Prénom</th>
-                <th className="py-2 px-4">Nom</th>
-                <th className="py-2 px-4">Envoyer WhatsApp</th>
-                <th className="py-2 px-4">Détails</th>
-              </tr>
-            </thead>
-            <tbody>
-              {contacts.map(member => (
-                <tr key={member.id} className="border-b">
-                  <td className="py-2 px-4">{member.prenom}</td>
-                  <td className="py-2 px-4">{member.nom}</td>
-                  <td className="py-2 px-4">
-                    <input type="checkbox" checked={checkedContacts[member.id]||false} onChange={() => handleCheck(member.id)} />
-                  </td>
-                  <td className="py-2 px-4">
-                    <button onClick={() => setPopupContact(member)} className="text-blue-500 underline">Voir détails</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Pop-up details table */}
-      {popupContact && (
-        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full relative">
-            <button onClick={() => setPopupContact(null)} className="absolute top-2 right-2 font-bold text-gray-600">X</button>
-            <h2 className="text-lg font-bold mb-2">{popupContact.prenom} {popupContact.nom}</h2>
-            <p>📲 WhatsApp: {checkedContacts[popupContact.id] ? "Oui" : "Non"}</p>
-            <p>🏙 Ville: {popupContact.ville || "—"}</p>
-            <p>🙏 Besoin: {popupContact.besoin || "—"}</p>
-            <p>📝 Infos supplémentaires: {popupContact.infos_supplementaires || "—"}</p>
+            {/* Détails */}
+            {detailsOpen[member.id] && (
+              <div className="mt-2 text-sm text-gray-700 space-y-1">
+                <p>📲 WhatsApp: Oui/Non</p>
+                <p>🏙 Ville: {member.ville || "—"}</p>
+                <p>🙏 Besoin: {member.besoin || "—"}</p>
+                <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }

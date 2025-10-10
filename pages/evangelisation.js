@@ -1,4 +1,4 @@
-//pages/evangelisation.js
+// pages/evangelisation.js
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -6,11 +6,9 @@ import supabase from "../lib/supabaseClient";
 export default function ListEvangelises() {
   const [evangelises, setEvangelises] = useState([]);
   const [cellules, setCellules] = useState([]);
+  const [selectedCellule, setSelectedCellule] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
-  const [selectedCellules, setSelectedCellules] = useState({});
-  const [selectedForWhatsapp, setSelectedForWhatsapp] = useState({});
-  const [view, setView] = useState("card"); // card ou table
-  const [filterCellule, setFilterCellule] = useState("");
+  const [whatsappSelected, setWhatsappSelected] = useState({});
 
   useEffect(() => {
     fetchEvangelises();
@@ -18,204 +16,160 @@ export default function ListEvangelises() {
   }, []);
 
   const fetchEvangelises = async () => {
-    const { data, error } = await supabase
-      .from("evangelises")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) console.error(error);
-    else setEvangelises(data || []);
+    try {
+      const { data, error } = await supabase
+        .from("evangelises")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setEvangelises(data || []);
+    } catch (err) {
+      console.error("Erreur fetchEvangelises:", err.message);
+      setEvangelises([]);
+    }
   };
 
   const fetchCellules = async () => {
-    const { data, error } = await supabase.from("cellules").select("*");
-    if (error) console.error(error);
-    else setCellules(data || []);
+    try {
+      const { data, error } = await supabase
+        .from("cellules")
+        .select("*")
+        .order("cellule", { ascending: true });
+      if (error) throw error;
+      setCellules(data || []);
+    } catch (err) {
+      console.error("Erreur fetchCellules:", err.message);
+      setCellules([]);
+    }
   };
 
-  const handleWhatsappCheckbox = (id, checked) => {
-    setSelectedForWhatsapp((prev) => ({ ...prev, [id]: checked }));
+  const getBorderColor = (ev) => {
+    return "#34A853"; // couleur fixe pour évangélisés
   };
 
-  const sendWhatsapp = (celluleId) => {
-    const cellule = cellules.find((c) => String(c.id) === String(celluleId));
+  const handleCheckbox = (id) => {
+    setWhatsappSelected((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const sendWhatsapp = async () => {
+    if (!selectedCellule) return alert("Sélectionnez une cellule.");
+
+    const cellule = cellules.find((c) => c.id === Number(selectedCellule));
     if (!cellule) return alert("Cellule introuvable.");
 
-    const selectedContacts = evangelises.filter(
-      (e) => selectedForWhatsapp[e.id] === true
-    );
-    if (selectedContacts.length === 0) return alert("Aucun contact sélectionné.");
+    const toSend = evangelises.filter((ev) => whatsappSelected[ev.id]);
+    if (!toSend.length) return alert("Aucun contact sélectionné.");
 
-    selectedContacts.forEach((contact) => {
-      const phone = cellule.telephone.replace(/\D/g, "");
-      if (!phone) return;
-
+    for (let ev of toSend) {
       const message = `👋 Salut ${cellule.responsable},
 
 🙏 Dieu nous a envoyé une nouvelle âme à suivre.
 Voici ses infos :
 
-- 👤 Nom : ${contact.prenom} ${contact.nom}
-- 📱 Téléphone : ${contact.telephone || "—"}
-- 🏙 Ville : ${contact.ville || "—"}
-- 🙏 Besoin : ${contact.besoin || "—"}
-- 📝 Infos supplémentaires : ${contact.infos_supplementaires || "—"}
-- 💬 Comment est-il venu ? : ${contact.comment || "—"}
+- 👤 Nom : ${ev.prenom} ${ev.nom}
+- 📱 Téléphone : ${ev.telephone || "—"}
+- 🏙 Ville : ${ev.ville || "—"}
+- 🙏 Besoin : ${ev.besoin || "—"}
+- 📝 Infos supplémentaires : ${ev.infos_supplementaires || "—"}
+- 💬 Comment est-il venu ? : ${ev.comment || "—"}
 
 Merci pour ton cœur ❤ et son amour ✨`;
 
-      const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-      window.open(waUrl, "_blank");
-    });
+      // ouverture WhatsApp
+      const phone = cellule.telephone.replace(/\D/g, "");
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+
+      // insérer dans suivis_des_evangelises
+      try {
+        const { error: insertError } = await supabase
+          .from("suivis_des_evangelises")
+          .insert([{
+            prenom: ev.prenom,
+            nom: ev.nom,
+            telephone: ev.telephone,
+            whatsapp: ev.is_whatsapp,
+            ville: ev.ville,
+            besoin: ev.besoin,
+            infos_supplementaires: ev.infos_supplementaires,
+            comment: ev.comment,
+            cellule_id: cellule.id,
+            responsable_cellule: cellule.responsable,
+            date_suivi: new Date()
+          }]);
+        if (insertError) throw insertError;
+
+        // supprimer de evangelises
+        const { error: delError } = await supabase
+          .from("evangelises")
+          .delete()
+          .eq("id", ev.id);
+        if (delError) throw delError;
+
+      } catch (err) {
+        console.error("Erreur envoi/suivi:", err.message);
+        alert("Erreur lors de l'envoi du contact.");
+      }
+    }
+
+    // rafraîchir la liste
+    fetchEvangelises();
+    setWhatsappSelected({});
   };
 
-  const filteredEvangelises = filterCellule
-    ? evangelises.filter((e) => String(e.cellule_id) === filterCellule)
-    : evangelises;
-
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-b from-indigo-100 to-indigo-50">
-      <h1 className="text-3xl font-bold mb-4 text-center text-indigo-700">
-        Liste des évangélisés
-      </h1>
-
-      {/* Toggle Table / Card */}
-      <p
-        className="text-right mb-4 cursor-pointer text-indigo-600 underline"
-        onClick={() => setView(view === "card" ? "table" : "card")}
-      >
-        {view === "card" ? "Afficher en tableau" : "Afficher en cartes"}
-      </p>
+    <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-6">Évangélisés</h1>
 
       {/* Filtre cellule */}
-      <div className="mb-4">
+      <div className="w-full max-w-md mb-6 flex justify-center">
         <select
-          value={filterCellule}
-          onChange={(e) => setFilterCellule(e.target.value)}
-          className="border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          value={selectedCellule}
+          onChange={(e) => setSelectedCellule(e.target.value)}
+          className="border rounded-lg px-4 py-2 text-gray-700 shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
         >
-          <option value="">-- Filtrer par cellule --</option>
+          <option value="">-- Sélectionner cellule --</option>
           {cellules.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.cellule} ({c.responsable})
-            </option>
+            <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>
           ))}
         </select>
       </div>
 
-      {view === "card" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEvangelises.map((ev) => (
-            <div
-              key={ev.id}
-              className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300"
-            >
-              <h2 className="text-lg font-bold mb-1">{ev.prenom} {ev.nom}</h2>
-              <p>📱 {ev.telephone || "—"}</p>
-              <p>🏙 {ev.ville || "—"}</p>
+      {/* Liste cartes */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
+        {evangelises.map((ev) => (
+          <div key={ev.id} className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 border-t-4 relative" style={{ borderTopColor: getBorderColor(ev) }}>
+            <h2 className="text-lg font-bold text-gray-800 mb-2">{ev.prenom} {ev.nom}</h2>
+            <p className="text-sm text-gray-600 mb-1">📱 {ev.telephone || "—"} {ev.is_whatsapp ? "(WhatsApp)" : ""}</p>
+            <p className="text-sm text-gray-700 mb-1">🏙 {ev.ville || "—"}</p>
 
-              <p
-                className="mt-2 text-blue-500 underline cursor-pointer"
-                onClick={() =>
-                  setDetailsOpen((prev) => ({ ...prev, [ev.id]: !prev[ev.id] }))
-                }
-              >
-                {detailsOpen[ev.id] ? "Fermer détails" : "Détails"}
-              </p>
+            <p className="mt-2 text-blue-500 underline cursor-pointer" onClick={() => setDetailsOpen((prev) => ({ ...prev, [ev.id]: !prev[ev.id] }))}>
+              {detailsOpen[ev.id] ? "Fermer détails" : "Détails"}
+            </p>
 
-              {detailsOpen[ev.id] && (
-                <div className="mt-2 text-sm text-gray-700 space-y-1">
-                  <p>🙏 Besoin : {ev.besoin || "—"}</p>
-                  <p>📝 Infos supplémentaires : {ev.infos_supplementaires || "—"}</p>
-                  <p>💬 Comment est-il venu ? : {ev.comment || "—"}</p>
-                  <label className="flex items-center gap-2 mt-2">
-                    <input
-                      type="checkbox"
-                      checked={selectedForWhatsapp[ev.id] || false}
-                      onChange={(e) =>
-                        handleWhatsappCheckbox(ev.id, e.target.checked)
-                      }
-                    />
-                    Envoyer par WhatsApp
-                  </label>
+            {detailsOpen[ev.id] && (
+              <div className="mt-2 text-sm text-gray-700 space-y-1">
+                <p>Besoin : {ev.besoin || "—"}</p>
+                <p>Infos supplémentaires : {ev.infos_supplementaires || "—"}</p>
+                <p>Comment est-il venu ? : {ev.comment || "—"}</p>
+
+                <div className="flex items-center gap-2 mt-2">
+                  <input type="checkbox" checked={whatsappSelected[ev.id] || false} onChange={() => handleCheckbox(ev.id)} className="h-5 w-5"/>
+                  <label>Envoyer par WhatsApp</label>
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <table className="min-w-full bg-white rounded-xl shadow-md">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="py-2 px-4">Prénom</th>
-              <th className="py-2 px-4">Nom</th>
-              <th className="py-2 px-4">Ville</th>
-              <th className="py-2 px-4">Détails</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredEvangelises.map((ev) => (
-              <tr key={ev.id} className="border-b">
-                <td className="py-2 px-4">{ev.prenom}</td>
-                <td className="py-2 px-4">{ev.nom}</td>
-                <td className="py-2 px-4">{ev.ville || "—"}</td>
-                <td className="py-2 px-4">
-                  <p
-                    className="text-blue-500 underline cursor-pointer"
-                    onClick={() =>
-                      setDetailsOpen((prev) => ({ ...prev, [ev.id]: !prev[ev.id] }))
-                    }
-                  >
-                    {detailsOpen[ev.id] ? "Fermer" : "Détails"}
-                  </p>
-
-                  {detailsOpen[ev.id] && (
-                    <div className="mt-2 text-sm text-gray-700 space-y-1">
-                      <p>📱 {ev.telephone || "—"}</p>
-                      <p>🙏 Besoin : {ev.besoin || "—"}</p>
-                      <p>📝 Infos supplémentaires : {ev.infos_supplementaires || "—"}</p>
-                      <p>💬 Comment est-il venu ? : {ev.comment || "—"}</p>
-                      <label className="flex items-center gap-2 mt-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedForWhatsapp[ev.id] || false}
-                          onChange={(e) =>
-                            handleWhatsappCheckbox(ev.id, e.target.checked)
-                          }
-                        />
-                        Envoyer par WhatsApp
-                      </label>
-                    </div>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      {/* Bouton WhatsApp global */}
-      <div className="mt-4 flex gap-2 items-center">
-        <select
-          value={filterCellule}
-          onChange={(e) => setFilterCellule(e.target.value)}
-          className="border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-        >
-          <option value="">-- Sélectionner cellule pour WhatsApp --</option>
-          {cellules.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.cellule} ({c.responsable})
-            </option>
-          ))}
-        </select>
-
-        <button
-          className="py-2 px-4 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600"
-          onClick={() => sendWhatsapp(filterCellule)}
-          disabled={!filterCellule}
-        >
-          Envoyer WhatsApp
-        </button>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
+
+      {selectedCellule && Object.values(whatsappSelected).some(v => v) && (
+        <button
+          onClick={sendWhatsapp}
+          className="mt-6 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+        >
+          Envoyer WhatsApp au responsable
+        </button>
+      )}
     </div>
   );
 }

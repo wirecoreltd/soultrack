@@ -9,6 +9,8 @@ export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
   const [detailsOpen, setDetailsOpen] = useState({});
   const [loading, setLoading] = useState(true);
+  const [statusChanges, setStatusChanges] = useState({});
+  const [updating, setUpdating] = useState({});
 
   useEffect(() => {
     fetchSuivis();
@@ -32,6 +34,34 @@ export default function SuivisEvangelisation() {
 
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const handleStatusChange = (id, value) => {
+    setStatusChanges((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const updateStatus = async (id) => {
+    const newStatus = statusChanges[id];
+    if (!newStatus) return;
+
+    setUpdating((prev) => ({ ...prev, [id]: true }));
+
+    const { error } = await supabase
+      .from("suivis_des_evangelises")
+      .update({ status_suivis_evangelise: newStatus })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Erreur de mise à jour :", error.message);
+    } else {
+      setSuivis((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, status_suivis_evangelise: newStatus } : item
+        )
+      );
+    }
+
+    setUpdating((prev) => ({ ...prev, [id]: false }));
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-purple-700 to-indigo-500">
@@ -84,9 +114,43 @@ export default function SuivisEvangelisation() {
                   👑 Responsable : {item.responsable_cellule || "—"}
                 </p>
 
+                {/* Menu déroulant statut */}
+                <div className="w-full mt-2">
+                  <label className="text-gray-700 text-sm">📋 Statut du suivi :</label>
+                  <select
+                    value={statusChanges[item.id] ?? item.status_suivis_evangelise ?? ""}
+                    onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                    className="w-full border rounded-md px-2 py-1 text-sm mt-1"
+                  >
+                    <option value="">-- Choisir un statut --</option>
+                    <option value="En cours">🕊 En cours</option>
+                    <option value="Actif">🔥 Actif</option>
+                    <option value="Veut venir à l’église">⛪ Veut venir à l’église</option>
+                    <option value="Veut venir à la famille d’impact">
+                      👨‍👩‍👧‍👦 Veut venir à la famille d’impact
+                    </option>
+                    <option value="Veut être visité">🏡 Veut être visité</option>
+                    <option value="Ne souhaite pas continuer">🚫 Ne souhaite pas continuer</option>
+                  </select>
+                </div>
+
+                {/* Bouton mettre à jour */}
+                <button
+                  onClick={() => updateStatus(item.id)}
+                  disabled={updating[item.id]}
+                  className={`mt-2 w-full text-white font-semibold py-1 rounded-md transition ${
+                    updating[item.id]
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }`}
+                >
+                  {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
+                </button>
+
+                {/* Détails */}
                 <button
                   onClick={() => toggleDetails(item.id)}
-                  className="text-blue-500 underline text-sm"
+                  className="text-blue-500 underline text-sm mt-3"
                 >
                   {isOpen ? "Fermer" : "Voir détails"}
                 </button>
@@ -96,7 +160,8 @@ export default function SuivisEvangelisation() {
                     <p>🏙 Ville : {item.ville || "—"}</p>
                     <p>🙏 Besoin : {item.besoin || "—"}</p>
                     <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
-                    <p>📅 Date du suivi :{" "}
+                    <p>
+                      📅 Date du suivi :{" "}
                       {new Date(item.date_suivi).toLocaleDateString("fr-FR", {
                         day: "2-digit",
                         month: "long",

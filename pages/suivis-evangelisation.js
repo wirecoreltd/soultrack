@@ -126,7 +126,7 @@ export default function SuivisEvangelisation() {
                 </p>
 
                 <p className="text-sm text-gray-700 mb-1">
-                  🕊 Cellule : {item.cellules?.cellule || "Non attribuée"}
+                  {item.cellules?.cellule || "Non attribuée"}
                 </p>
 
                 <p className="text-sm text-gray-700 mb-2">
@@ -201,7 +201,7 @@ export default function SuivisEvangelisation() {
 
                     {/* Date du suivi */}
                     <p className="mt-2">
-                      📅 Date du suivi :{" "}
+                      📅 Envoyé du suivi :{" "}
                       {new Date(item.date_suivi).toLocaleDateString("fr-FR", {
                         day: "2-digit",
                         month: "long",

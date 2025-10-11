@@ -123,7 +123,7 @@ export default function SuivisEvangelisation() {
                 </p>
 
                 <p className="text-sm text-gray-700 mb-1">
-                  🕊 Cellule : {item.cellule || "—"}
+                  🕊 Cellule : {item.cellule_id || "—"}
                 </p>
 
                 <p className="text-sm text-gray-700 mb-2">

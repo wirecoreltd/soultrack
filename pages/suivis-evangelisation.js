@@ -21,7 +21,10 @@ export default function SuivisEvangelisation() {
     setLoading(true);
     const { data, error } = await supabase
       .from("suivis_des_evangelises")
-      .select("*")
+      .select(`
+        *,
+        cellules:cellule_id (cellule)
+      `)
       .order("date_suivi", { ascending: false });
 
     if (error) {
@@ -123,7 +126,7 @@ export default function SuivisEvangelisation() {
                 </p>
 
                 <p className="text-sm text-gray-700 mb-1">
-                  🕊 Cellule : {item.cellule_id || "—"}
+                  🕊 Cellule : {item.cellules?.cellule || "Non attribuée"}
                 </p>
 
                 <p className="text-sm text-gray-700 mb-2">

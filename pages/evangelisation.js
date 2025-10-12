@@ -11,7 +11,7 @@ export default function Evangelisation() {
   const [selectedCellule, setSelectedCellule] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [checkedContacts, setCheckedContacts] = useState({});
-  const [view, setView] = useState("card");
+  const [view, setView] = useState("card"); // ✅ Vue par défaut : cartes
 
   useEffect(() => {
     fetchContacts();
@@ -46,7 +46,6 @@ export default function Evangelisation() {
     if (!cellule) return alert("Cellule introuvable !");
     if (toSend.length === 0) return alert("Aucun contact sélectionné !");
 
-    // --- 1️⃣ Enregistrer dans la table "suivis_des_evangelises"
     const now = new Date().toISOString();
     const suivisData = toSend.map((member) => ({
       prenom: member.prenom,
@@ -71,7 +70,6 @@ export default function Evangelisation() {
       return;
     }
 
-    // --- 2️⃣ Envoi WhatsApp
     const groups = [];
     for (let i = 0; i < toSend.length; i += 10) {
       groups.push(toSend.slice(i, i + 10));
@@ -106,7 +104,6 @@ export default function Evangelisation() {
       );
     });
 
-    // --- 3️⃣ Supprimer les contacts envoyés de la table "evangelises"
     const idsToDelete = toSend.map((c) => c.id);
     const { error: deleteError } = await supabase
       .from("evangelises")
@@ -117,13 +114,13 @@ export default function Evangelisation() {
       console.error("Erreur lors de la suppression :", deleteError.message);
     }
 
-    // --- 4️⃣ Mettre à jour la vue
     setContacts((prev) => prev.filter((c) => !checkedContacts[c.id]));
     setCheckedContacts({});
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-blue-800 to-cyan-400">
+      {/* Retour */}
       <button
         onClick={() => window.history.back()}
         className="self-start mb-4 text-white font-semibold hover:text-gray-200"
@@ -131,6 +128,7 @@ export default function Evangelisation() {
         ← Retour
       </button>
 
+      {/* Logo */}
       <Image src="/logo.png" alt="Logo" width={80} height={80} className="mb-3" />
 
       <h1 className="text-5xl font-handwriting text-white text-center mb-2">
@@ -140,6 +138,30 @@ export default function Evangelisation() {
       <p className="text-center text-white text-lg mb-4 font-handwriting-light">
         Chaque personne a une valeur infinie...
       </p>
+
+      {/* ✅ Toggle Vue */}
+      <div className="flex items-center gap-3 mb-4">
+        <button
+          onClick={() => setView("card")}
+          className={`px-4 py-2 rounded-lg font-semibold ${
+            view === "card"
+              ? "bg-white text-blue-700 shadow-md"
+              : "bg-blue-600 text-white"
+          }`}
+        >
+          Vue cartes
+        </button>
+        <button
+          onClick={() => setView("table")}
+          className={`px-4 py-2 rounded-lg font-semibold ${
+            view === "table"
+              ? "bg-white text-blue-700 shadow-md"
+              : "bg-blue-600 text-white"
+          }`}
+        >
+          Vue table
+        </button>
+      </div>
 
       {/* Sélecteur de cellule */}
       <div className="mb-4 w-full max-w-md flex flex-col sm:flex-row gap-2">
@@ -167,7 +189,7 @@ export default function Evangelisation() {
       </div>
 
       {/* Vue cartes */}
-      {view === "card" ? (
+      {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 w-full max-w-5xl">
           {contacts.map((member) => {
             const isOpen = detailsOpen[member.id];
@@ -209,7 +231,10 @@ export default function Evangelisation() {
                     <>
                       <p>🏙 Ville: {member.ville || "—"}</p>
                       <p>🙏 Besoin: {member.besoin || "—"}</p>
-                      <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>
+                      <p>
+                        📝 Infos supplémentaires:{" "}
+                        {member.infos_supplementaires || "—"}
+                      </p>
                     </>
                   )}
                 </div>
@@ -217,7 +242,45 @@ export default function Evangelisation() {
             );
           })}
         </div>
-      ) : null}
+      )}
+
+      {/* Vue table */}
+      {view === "table" && (
+        <table className="w-full max-w-5xl bg-white rounded-lg shadow-md text-sm mt-4">
+          <thead className="bg-blue-600 text-white">
+            <tr>
+              <th className="p-2">Sélection</th>
+              <th className="p-2">Nom</th>
+              <th className="p-2">Téléphone</th>
+              <th className="p-2">Ville</th>
+              <th className="p-2">Besoin</th>
+              <th className="p-2">Infos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {contacts.map((member) => (
+              <tr key={member.id} className="border-b hover:bg-gray-100">
+                <td className="text-center">
+                  <input
+                    type="checkbox"
+                    checked={checkedContacts[member.id] || false}
+                    onChange={() => handleCheck(member.id)}
+                  />
+                </td>
+                <td className="p-2 text-gray-800">
+                  {member.prenom} {member.nom}
+                </td>
+                <td className="p-2">{member.telephone || "—"}</td>
+                <td className="p-2">{member.ville || "—"}</td>
+                <td className="p-2">{member.besoin || "—"}</td>
+                <td className="p-2">
+                  {member.infos_supplementaires || "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }

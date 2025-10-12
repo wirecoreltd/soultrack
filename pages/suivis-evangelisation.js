@@ -17,13 +17,24 @@ export default function SuivisEvangelisation() {
     fetchSuivis();
   }, []);
 
+  // ✅ Correction 1 : bien sélectionner toutes les colonnes nécessaires
   const fetchSuivis = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("suivis_des_evangelises")
       .select(`
-        *,
-        cellules:cellule_id (cellule)
+        id,
+        prenom,
+        nom,
+        telephone,
+        cellule_id,
+        responsable_cellule,
+        ville,
+        besoin,
+        infos_supplementaires,
+        date_suivi,
+        status_suivis_evangelise,
+        commentaire_evangelises
       `)
       .order("date_suivi", { ascending: false });
 
@@ -32,16 +43,6 @@ export default function SuivisEvangelisation() {
       setSuivis([]);
     } else {
       setSuivis(data || []);
-
-      // 🟢 Initialise les commentaires et statuts existants
-      const initialStatus = {};
-      const initialComments = {};
-      data.forEach((item) => {
-        initialStatus[item.id] = item.status_suivis_evangelise || "";
-        initialComments[item.id] = item.commentaire_evangelises || "";
-      });
-      setStatusChanges(initialStatus);
-      setCommentChanges(initialComments);
     }
     setLoading(false);
   };
@@ -57,9 +58,12 @@ export default function SuivisEvangelisation() {
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
   };
 
+  // ✅ Correction 2 : mise à jour + rechargement automatique après update
   const updateStatus = async (id) => {
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
+
+    if (!newStatus && !newComment) return;
 
     setUpdating((prev) => ({ ...prev, [id]: true }));
 
@@ -74,18 +78,8 @@ export default function SuivisEvangelisation() {
     if (error) {
       console.error("Erreur de mise à jour :", error.message);
     } else {
-      // 🟢 Met à jour localement sans effacer les champs
-      setSuivis((prev) =>
-        prev.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                status_suivis_evangelise: newStatus,
-                commentaire_evangelises: newComment,
-              }
-            : item
-        )
-      );
+      // 🔁 Recharger automatiquement les données depuis la base
+      await fetchSuivis();
     }
 
     setUpdating((prev) => ({ ...prev, [id]: false }));
@@ -135,7 +129,7 @@ export default function SuivisEvangelisation() {
                 </p>
 
                 <p className="text-sm text-gray-700 mb-1">
-                  🕊 Cellule : {item.cellules?.cellule || "Non attribuée"}
+                  🕊 Cellule : {item.cellule_id || "—"}
                 </p>
 
                 <p className="text-sm text-gray-700 mb-2">
@@ -162,7 +156,11 @@ export default function SuivisEvangelisation() {
                         💬 Commentaire :
                       </label>
                       <textarea
-                        value={commentChanges[item.id] || ""}
+                        value={
+                          commentChanges[item.id] ??
+                          item.commentaire_evangelises ??
+                          ""
+                        }
                         onChange={(e) =>
                           handleCommentChange(item.id, e.target.value)
                         }
@@ -178,7 +176,11 @@ export default function SuivisEvangelisation() {
                         📋 Statut du suivi :
                       </label>
                       <select
-                        value={statusChanges[item.id] || ""}
+                        value={
+                          statusChanges[item.id] ??
+                          item.status_suivis_evangelise ??
+                          ""
+                        }
                         onChange={(e) =>
                           handleStatusChange(item.id, e.target.value)
                         }

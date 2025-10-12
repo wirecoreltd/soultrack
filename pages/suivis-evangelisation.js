@@ -58,7 +58,7 @@ export default function SuivisEvangelisation() {
     const { error } = await supabase
       .from("suivis_des_evangelises")
       .update({
-        status_suivis_evangelise: newStatus,
+        status_suivis_evangelises: newStatus, // ✅ correction ici
         commentaire_evangelises: newComment,
       })
       .eq("id", id);
@@ -71,8 +71,10 @@ export default function SuivisEvangelisation() {
           item.id === id
             ? {
                 ...item,
-                status_suivis_evangelise: newStatus ?? item.status_suivis_evangelise,
-                commentaire_evangelises: newComment ?? item.commentaire_evangelises,
+                status_suivis_evangelises:
+                  newStatus ?? item.status_suivis_evangelises, // ✅ correction ici
+                commentaire_evangelises:
+                  newComment ?? item.commentaire_evangelises,
               }
             : item
         )
@@ -175,7 +177,7 @@ export default function SuivisEvangelisation() {
                       <select
                         value={
                           statusChanges[item.id] ??
-                          item.status_suivis_evangelise ??
+                          item.status_suivis_evangelises ?? // ✅ correction ici
                           ""
                         }
                         onChange={(e) =>

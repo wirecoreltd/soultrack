@@ -17,12 +17,16 @@ export default function SuivisEvangelisation() {
     fetchSuivis();
   }, []);
 
+  // ✅ On récupère explicitement les champs commentaire et statut
   const fetchSuivis = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("suivis_des_evangelises")
       .select(`
-        *,
+        id, prenom, nom, telephone, ville, besoin, infos_supplementaires,
+        responsable_cellule, date_suivi,
+        commentaire_evangelises, status_suivis_evangelise,
+        cellule_id,
         cellules:cellule_id (cellule)
       `)
       .order("date_suivi", { ascending: false });
@@ -47,6 +51,7 @@ export default function SuivisEvangelisation() {
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
   };
 
+  // ✅ Après mise à jour, on recharge la donnée actualisée
   const updateStatus = async (id) => {
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
@@ -66,17 +71,8 @@ export default function SuivisEvangelisation() {
     if (error) {
       console.error("Erreur de mise à jour :", error.message);
     } else {
-      setSuivis((prev) =>
-        prev.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                status_suivis_evangelise: newStatus ?? item.status_suivis_evangelise,
-                commentaire_evangelises: newComment ?? item.commentaire_evangelises,
-              }
-            : item
-        )
-      );
+      // 🔄 Recharge automatique des données pour afficher les valeurs réelles
+      await fetchSuivis();
     }
 
     setUpdating((prev) => ({ ...prev, [id]: false }));
@@ -103,7 +99,6 @@ export default function SuivisEvangelisation() {
         Voici les personnes confiées pour le suivi spirituel 🌱
       </p>
 
-      {/* Contenu */}
       {loading ? (
         <p className="text-white">Chargement en cours...</p>
       ) : suivis.length === 0 ? (
@@ -126,14 +121,13 @@ export default function SuivisEvangelisation() {
                 </p>
 
                 <p className="text-sm text-gray-700 mb-1">
-                  {item.cellules?.cellule || "Non attribuée"}
+                  🕊 Cellule : {item.cellules?.cellule || "Non attribuée"}
                 </p>
 
                 <p className="text-sm text-gray-700 mb-2">
                   👑 Responsable : {item.responsable_cellule || "—"}
                 </p>
 
-                {/* Détails */}
                 <button
                   onClick={() => toggleDetails(item.id)}
                   className="text-blue-500 underline text-sm mt-1"
@@ -147,7 +141,7 @@ export default function SuivisEvangelisation() {
                     <p>🙏 Besoin : {item.besoin || "—"}</p>
                     <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
 
-                    {/* Champ commentaire */}
+                    {/* Commentaire */}
                     <div className="mt-2">
                       <label className="text-gray-700 text-sm">
                         💬 Commentaire :
@@ -167,7 +161,7 @@ export default function SuivisEvangelisation() {
                       ></textarea>
                     </div>
 
-                    {/* Menu déroulant statut */}
+                    {/* Statut */}
                     <div className="mt-2">
                       <label className="text-gray-700 text-sm">
                         📋 Statut du suivi :
@@ -199,9 +193,9 @@ export default function SuivisEvangelisation() {
                       </select>
                     </div>
 
-                    {/* Date du suivi */}
+                    {/* Date */}
                     <p className="mt-2">
-                      📅 Envoyé du suivi :{" "}
+                      📅 Date du suivi :{" "}
                       {new Date(item.date_suivi).toLocaleDateString("fr-FR", {
                         day: "2-digit",
                         month: "long",
@@ -209,7 +203,6 @@ export default function SuivisEvangelisation() {
                       })}
                     </p>
 
-                    {/* Bouton mise à jour */}
                     <button
                       onClick={() => updateStatus(item.id)}
                       disabled={updating[item.id]}
@@ -219,9 +212,7 @@ export default function SuivisEvangelisation() {
                           : "bg-blue-600 hover:bg-blue-700"
                       }`}
                     >
-                      {updating[item.id]
-                        ? "Mise à jour..."
-                        : "Mettre à jour"}
+                      {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
                     </button>
                   </div>
                 )}

@@ -17,24 +17,13 @@ export default function SuivisEvangelisation() {
     fetchSuivis();
   }, []);
 
-  // ✅ Correction 1 : bien sélectionner toutes les colonnes nécessaires
   const fetchSuivis = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("suivis_des_evangelises")
       .select(`
-        id,
-        prenom,
-        nom,
-        telephone,
-        cellule_id,
-        responsable_cellule,
-        ville,
-        besoin,
-        infos_supplementaires,
-        date_suivi,
-        status_suivis_evangelise,
-        commentaire_evangelises
+        *,
+        cellules:cellule_id (cellule)
       `)
       .order("date_suivi", { ascending: false });
 
@@ -58,7 +47,6 @@ export default function SuivisEvangelisation() {
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
   };
 
-  // ✅ Correction 2 : mise à jour + rechargement automatique après update
   const updateStatus = async (id) => {
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
@@ -78,8 +66,17 @@ export default function SuivisEvangelisation() {
     if (error) {
       console.error("Erreur de mise à jour :", error.message);
     } else {
-      // 🔁 Recharger automatiquement les données depuis la base
-      await fetchSuivis();
+      setSuivis((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                status_suivis_evangelise: newStatus ?? item.status_suivis_evangelise,
+                commentaire_evangelises: newComment ?? item.commentaire_evangelises,
+              }
+            : item
+        )
+      );
     }
 
     setUpdating((prev) => ({ ...prev, [id]: false }));
@@ -110,7 +107,9 @@ export default function SuivisEvangelisation() {
       {loading ? (
         <p className="text-white">Chargement en cours...</p>
       ) : suivis.length === 0 ? (
-        <p className="text-white text-lg italic">Aucun contact suivi pour le moment.</p>
+        <p className="text-white text-lg italic">
+          Aucun contact suivi pour le moment.
+        </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
           {suivis.map((item) => {
@@ -129,7 +128,7 @@ export default function SuivisEvangelisation() {
                 </p>
 
                 <p className="text-sm text-gray-700 mb-1">
-                  🕊 Cellule : {item.cellule_id || "—"}
+                  🕊 Cellule : {item.cellules?.cellule || "—"}
                 </p>
 
                 <p className="text-sm text-gray-700 mb-2">
@@ -152,9 +151,7 @@ export default function SuivisEvangelisation() {
 
                     {/* Champ commentaire */}
                     <div className="mt-2">
-                      <label className="text-gray-700 text-sm">
-                        💬 Commentaire :
-                      </label>
+                      <label className="text-gray-700 text-sm">💬 Commentaire :</label>
                       <textarea
                         value={
                           commentChanges[item.id] ??
@@ -189,9 +186,7 @@ export default function SuivisEvangelisation() {
                         <option value="">-- Choisir un statut --</option>
                         <option value="En cours">🕊 En cours</option>
                         <option value="Actif">🔥 Actif</option>
-                        <option value="Veut venir à l’église">
-                          ⛪ Veut venir à l’église
-                        </option>
+                        <option value="Veut venir à l’église">⛪ Veut venir à l’église</option>
                         <option value="Veut venir à la famille d’impact">
                           👨‍👩‍👧‍👦 Veut venir à la famille d’impact
                         </option>
@@ -222,9 +217,7 @@ export default function SuivisEvangelisation() {
                           : "bg-blue-600 hover:bg-blue-700"
                       }`}
                     >
-                      {updating[item.id]
-                        ? "Mise à jour..."
-                        : "Mettre à jour"}
+                      {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
                     </button>
                   </div>
                 )}

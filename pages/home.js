@@ -137,6 +137,7 @@ export default function Home() {
             label="Envoyer l'appli – Nouveau membre"
             type="ajouter_membre"
             buttonColor="from-[#09203F] to-[#537895]"
+            userId={profile.id} // <- passe directement le userId depuis le profil
           />
         )}
 
@@ -145,6 +146,7 @@ export default function Home() {
             label="Envoyer l'appli – Évangélisé"
             type="ajouter_evangelise"
             buttonColor="from-[#09203F] to-[#537895]"
+            userId={profile.id}
           />
         )}
 

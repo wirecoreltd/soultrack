@@ -26,7 +26,7 @@ export default function ListMembers() {
       if (error) throw error;
       setMembers(data || []);
     } catch (err) {
-      console.error("Exception fetchMembers:", err.message);
+      console.error("Exception fetchMembers:", err?.message || err);
       setMembers([]);
     }
   };
@@ -39,19 +39,25 @@ export default function ListMembers() {
       if (error) throw error;
       setCellules(data || []);
     } catch (err) {
-      console.error("Exception fetchCellules:", err.message);
+      console.error("Exception fetchCellules:", err?.message || err);
       setCellules([]);
     }
   };
 
   const handleChangeStatus = async (id, newStatus) => {
     try {
-      await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
+      const { data, error } = await supabase
+        .from("membres")
+        .update({ statut: newStatus })
+        .eq("id", id)
+        .select();
+      if (error) throw error;
       setMembers((prev) =>
         prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
       );
     } catch (err) {
-      console.error("Erreur update statut:", err.message);
+      console.error("Erreur update statut:", err?.message || err);
+      alert("Erreur lors de la mise à jour du statut : " + (err?.message || err));
     }
   };
 
@@ -75,13 +81,13 @@ export default function ListMembers() {
 
   const countFiltered = filteredMembers.length;
 
-  // ---- sendWhatsapp : ouverture WhatsApp + update statut + insertion suivi ----
+  // ---- sendWhatsapp : ouverture WhatsApp + update statut + insertion suivi (logs) ----
   const sendWhatsapp = async (celluleId, member) => {
     const cellule = cellules.find((c) => String(c.id) === String(celluleId));
     if (!cellule) return alert("Cellule introuvable.");
     if (!cellule.telephone) return alert("Numéro de la cellule introuvable.");
 
-    const phone = cellule.telephone.replace(/\D/g, "");
+    const phone = String(cellule.telephone).replace(/\D/g, "");
     if (!phone) return alert("Numéro de la cellule invalide.");
 
     const message = `👋 Salut ${cellule.responsable},
@@ -101,56 +107,76 @@ Merci pour ton cœur ❤ et son amour ✨`;
     const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     const prevStatus = member.statut;
 
-    // ✅ Mise à jour optimiste
+    // Mise à jour optimiste locale (pour l'UX)
     setMembers((prev) =>
-      prev.map((m) =>
-        m.id === member.id ? { ...m, statut: "actif" } : m
-      )
+      prev.map((m) => (m.id === member.id ? { ...m, statut: "actif" } : m))
     );
 
-    // ✅ Ouvrir WhatsApp
+    // Ouvrir WhatsApp (ne bloque pas)
     try {
       window.open(waUrl, "_blank");
     } catch (err) {
       console.error("Erreur ouverture WhatsApp:", err);
     }
 
+    // === Opérations serveur : 1) update membre, 2) insert suivi ===
     try {
-      // ✅ 1. Mise à jour du statut
-      const { error: updateError } = await supabase
+      // 1) Mettre à jour le membre en base (et récupérer la ligne mise à jour)
+      console.log("[sendWhatsapp] Tentative update membre.id =", member.id);
+      const { data: updatedMemberData, error: updateError } = await supabase
         .from("membres")
         .update({ statut: "actif" })
-        .eq("id", member.id);
+        .eq("id", member.id)
+        .select()
+        .maybeSingle();
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        // Log détaillé et on continue (NE PAS rollback automatiquement)
+        console.error("[sendWhatsapp] updateError:", updateError);
+        alert("Erreur mise à jour membre : " + (updateError.message || JSON.stringify(updateError)));
+        // On laisse le membre en 'actif' côté UI (optimistique), mais signale l'erreur
+      } else {
+        console.log("[sendWhatsapp] membre mis à jour en base :", updatedMemberData);
+      }
 
-      // ✅ 2. Insertion dans suivis_membres
-      const { error: insertError } = await supabase.from("suivis_membres").insert([
-        {
-          membre_id: member.id,
-          prenom: member.prenom,
-          nom: member.nom,
-          telephone: member.telephone,
-          besoin: member.besoin,
-          cellule_id: cellule.id,
-          cellule_nom: cellule.cellule,
-          responsable: cellule.responsable,
-          statut: "actif",
-          created_at: new Date(),
-        },
-      ]);
+      // 2) Insérer le suivi dans suivis_membres (on utilise select() pour voir la réponse)
+      const suiviPayload = {
+        membre_id: member.id,
+        prenom: member.prenom || null,
+        nom: member.nom || null,
+        telephone: member.telephone || null,
+        besoin: member.besoin || null,
+        cellule_id: cellule.id || null,
+        cellule_nom: cellule.cellule || null,
+        responsable: cellule.responsable || null,
+        statut: "envoye",
+        created_at: new Date(),
+      };
 
-      if (insertError) throw insertError;
-      console.log("✅ Suivi ajouté dans la base !");
+      console.log("[sendWhatsapp] Données suivis envoyées :", suiviPayload);
+
+      const { data: insertData, error: insertError } = await supabase
+        .from("suivis_membres")
+        .insert([suiviPayload])
+        .select();
+
+      if (insertError) {
+        // IMPORTANT : on ne fait plus de rollback automatique ici pour ne pas perdre le statut "actif" côté UI
+        console.error("[sendWhatsapp] insertError suivis_membres :", insertError);
+        alert(
+          "Erreur lors de l'enregistrement du suivi en base : " +
+            (insertError.message || JSON.stringify(insertError)) +
+            "\n(Le membre est resté 'actif' localement.)"
+        );
+      } else {
+        console.log("[sendWhatsapp] Suivi inséré :", insertData);
+      }
     } catch (err) {
-      // rollback si erreur
-      setMembers((prev) =>
-        prev.map((m) =>
-          m.id === member.id ? { ...m, statut: prevStatus } : m
-        )
-      );
-      console.error("Erreur Supabase:", err);
-      alert("Erreur lors de la mise à jour ou de l’enregistrement du suivi.");
+      // Erreur inattendue
+      console.error("[sendWhatsapp] Exception :", err?.message || err);
+      // rollback local seulement si besoin — ici on décide de garder l'état actif pour UX
+      // setMembers(prev => prev.map(m => m.id === member.id ? { ...m, statut: prevStatus } : m));
+      alert("Erreur lors de la mise à jour ou de l'enregistrement du suivi : " + (err?.message || err));
     }
   };
   // ---- fin sendWhatsapp ----
@@ -226,7 +252,7 @@ Merci pour ton cœur ❤ et son amour ✨`;
                     className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4 relative"
                     style={{ borderTopColor: getBorderColor(member), minHeight: "200px" }}
                   >
-                    {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
+                    { (member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
                       <span className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded text-xs">Nouveau</span>
                     )}
                     <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
@@ -390,17 +416,24 @@ Merci pour ton cœur ❤ et son amour ✨`;
                       className="text-blue-500 underline cursor-pointer"
                       onClick={() => setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))}
                     >
-                      {detailsOpen[member.id] ? "Fermer" : "Ouvrir"}
+                      {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                     </p>
+
                     {detailsOpen[member.id] && (
                       <div className="mt-2 text-sm text-gray-700 space-y-1">
-                        <p>📱 {member.telephone}</p>
-                        <p>Besoin : {member.besoin}</p>
-                        <p>Infos : {member.infos_supplementaires}</p>
+                        <p><strong>Prénom:</strong> {member.prenom}</p>
+                        <p><strong>Nom:</strong> {member.nom}</p>
+                        <p><strong>Statut:</strong> {member.statut}</p>
+                        <p><strong>Téléphone:</strong> {member.telephone || "—"}</p>
+
+                        <p><strong>Besoin:</strong> {member.besoin || "—"}</p>
+                        <p><strong>Infos supplémentaires:</strong> {member.infos_supplementaires || "—"}</p>
+                        <p><strong>Comment est-il venu ?</strong> {member.comment || "—"}</p>
+                        <p><strong>Cellule:</strong></p>
                         <select
                           value={selectedCellules[member.id] || ""}
                           onChange={(e) => setSelectedCellules((prev) => ({ ...prev, [member.id]: e.target.value }))}
-                          className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
+                          className="border rounded-lg px-2 py-1 text-sm w-full"
                         >
                           <option value="">-- Sélectionner cellule --</option>
                           {cellules.map((c) => (
@@ -409,6 +442,7 @@ Merci pour ton cœur ❤ et son amour ✨`;
                             </option>
                           ))}
                         </select>
+
                         {selectedCellules[member.id] && (
                           <button
                             onClick={() => sendWhatsapp(selectedCellules[member.id], member)}
@@ -429,10 +463,14 @@ Merci pour ton cœur ❤ et son amour ✨`;
 
       <button
         onClick={scrollToTop}
-        className="fixed bottom-4 right-4 bg-blue-500 text-white p-3 rounded-full shadow-lg hover:bg-blue-600 transition"
+        className="fixed bottom-5 right-5 text-white text-2xl font-bold"
       >
-        ⬆️
+        ↑
       </button>
+
+      <p className="mt-6 mb-6 text-center text-white text-lg font-handwriting-light">
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
+      </p>
     </div>
   );
 }

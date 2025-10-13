@@ -148,6 +148,11 @@ export default function Home() {
             label="Envoyer l’appli – Nouveau membre"
             buttonColor="from-[#09203F] to-[#537895]"
           />
+          <SendAppLink
+    label="Envoyer l’appli – Évangélisé"
+    buttonColor="from-purple-400 to-pink-400"
+    type="evangelise"
+  />    
         )}
 
         {/* Ancien bouton : suivi / lien token */}

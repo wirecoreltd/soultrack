@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
-import BoutonEnvoyer from "@/components/BoutonEnvoyer"; // ✅ nouveau bouton séparé
+import BoutonEnvoyer from "../components/BoutonEnvoyer"; // ✅ nouveau bouton séparé
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);

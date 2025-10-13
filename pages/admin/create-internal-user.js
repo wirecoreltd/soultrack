@@ -2,11 +2,28 @@
 "use client";
 
 import { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
-import bcrypt from "bcryptjs";
 import supabase from "../../lib/supabaseClient";
+import { useRouter } from "next/router";
+
+// Générateur UUID simple
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+// Hash mot de passe SHA-256
+async function hashPassword(password) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 export default function CreateInternalUser() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -14,8 +31,8 @@ export default function CreateInternalUser() {
     role: "ResponsableIntegration",
     responsable: "",
   });
-
-  const [success, setSuccess] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,23 +41,32 @@ export default function CreateInternalUser() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    if (!formData.username || !formData.email || !formData.password) {
+      setErrorMsg("Tous les champs obligatoires doivent être remplis.");
+      return;
+    }
 
     try {
-      // Hash du mot de passe
-      const passwordHash = bcrypt.hashSync(formData.password, 10);
+      const id = generateUUID();
+      const password_hash = await hashPassword(formData.password);
 
-      const { data, error } = await supabase.from("profiles").insert([{
-        id: uuidv4(),
-        username: formData.username,
-        email: formData.email,
-        password_hash: passwordHash,
-        role: formData.role,
-        responsable: formData.responsable || null
-      }]);
+      const { data, error } = await supabase
+        .from("profiles")
+        .insert([{
+          id,
+          username: formData.username,
+          email: formData.email,
+          password_hash,
+          role: formData.role,
+          responsable: formData.responsable || null,
+        }]);
 
       if (error) throw error;
 
-      setSuccess(true);
+      setSuccessMsg(`Utilisateur "${formData.username}" créé avec succès !`);
       setFormData({
         username: "",
         email: "",
@@ -48,10 +74,8 @@ export default function CreateInternalUser() {
         role: "ResponsableIntegration",
         responsable: "",
       });
-
-      setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      alert("Erreur : " + err.message);
+      setErrorMsg(err.message);
     }
   };
 
@@ -62,8 +86,14 @@ export default function CreateInternalUser() {
           Créer un utilisateur interne
         </h1>
 
+        {errorMsg && (
+          <div className="text-red-600 font-semibold text-center mb-3">{errorMsg}</div>
+        )}
+        {successMsg && (
+          <div className="text-green-600 font-semibold text-center mb-3">{successMsg}</div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Username */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Nom d'utilisateur</label>
             <input
@@ -71,12 +101,11 @@ export default function CreateInternalUser() {
               name="username"
               value={formData.username}
               onChange={handleChange}
+              className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
-          {/* Email */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Email</label>
             <input
@@ -84,12 +113,11 @@ export default function CreateInternalUser() {
               name="email"
               value={formData.email}
               onChange={handleChange}
+              className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
-          {/* Password */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Mot de passe</label>
             <input
@@ -97,27 +125,25 @@ export default function CreateInternalUser() {
               name="password"
               value={formData.password}
               onChange={handleChange}
+              className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
-          {/* Role */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Rôle</label>
             <select
               name="role"
               value={formData.role}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
             >
-              <option value="ResponsableIntegration">ResponsableIntegration</option>
-              <option value="ResponsableEvangelisation">ResponsableEvangelisation</option>
               <option value="Admin">Admin</option>
+              <option value="ResponsableIntegration">Responsable Integration</option>
+              <option value="ResponsableEvangelisation">Responsable Evangelisation</option>
             </select>
           </div>
 
-          {/* Responsable */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Responsable (optionnel)</label>
             <input
@@ -125,25 +151,17 @@ export default function CreateInternalUser() {
               name="responsable"
               value={formData.responsable}
               onChange={handleChange}
-              placeholder="Nom du responsable"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
-          {/* Bouton créer */}
           <button
             type="submit"
-            className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
           >
             Créer l'utilisateur
           </button>
         </form>
-
-        {success && (
-          <div className="text-green-600 font-semibold text-center mt-3">
-            ✅ Utilisateur créé avec succès !
-          </div>
-        )}
       </div>
     </div>
   );

@@ -15,9 +15,9 @@ export default function Home() {
 
   useEffect(() => {
     const loadProfile = async () => {
-      // Récupération du userId depuis Supabase Auth directement
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const userId = localStorage.getItem("userId");
+
+      if (!userId) {
         router.push("/login");
         return;
       }
@@ -25,10 +25,11 @@ export default function Home() {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", user.id)
+        .eq("id", userId)
         .single();
 
       if (error || !data) {
+        localStorage.clear();
         router.push("/login");
         return;
       }
@@ -40,8 +41,8 @@ export default function Home() {
     loadProfile();
   }, [router]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    localStorage.clear();
     router.push("/login");
   };
 
@@ -58,7 +59,7 @@ export default function Home() {
         background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
       }}
     >
-      {/* Bouton Déconnexion */}
+      {/* Bouton Déconnexion en haut à droite */}
       <button
         onClick={handleLogout}
         className="absolute top-4 right-4 bg-white/20 text-white px-4 py-2 rounded-xl font-semibold shadow-sm hover:bg-white/30 transition"
@@ -78,8 +79,8 @@ export default function Home() {
 
       {/* Sous-titre */}
       <div className="mt-1 mb-2 text-center text-white text-lg font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons, nous grandissons,
-        et nous partageons l’amour de Christ dans chaque action ❤️
+        Chaque personne a une valeur infinie. Ensemble, nous avançons, nous
+        grandissons, et nous partageons l’amour de Christ dans chaque action ❤️
       </div>
 
       {/* Liens selon le rôle */}
@@ -117,17 +118,24 @@ export default function Home() {
               </div>
             </Link>
 
-            {profile.role === "Admin" && (
-  <Link href="/admin/create-internal-user" className="flex-1 min-w-[250px]">
-    <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-purple-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-      <div className="text-4xl mb-1">➕</div>
-      <div className="text-lg font-bold text-gray-800 text-center">
-        Créer utilisateur interne
-      </div>
-    </div>
-  </Link>
-)}
+            <Link href="/admin/create-user" className="flex-1 min-w-[250px]">
+              <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
+                <div className="text-4xl mb-1">🧑‍💻</div>
+                <div className="text-lg font-bold text-gray-800 text-center">
+                  Créer un utilisateur
+                </div>
+              </div>
+            </Link>
 
+            {/* Nouveau bouton : Créer utilisateur interne */}
+            <Link href="/admin/create-internal-user" className="flex-1 min-w-[250px]">
+              <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-purple-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
+                <div className="text-4xl mb-1">➕</div>
+                <div className="text-lg font-bold text-gray-800 text-center">
+                  Créer utilisateur interne
+                </div>
+              </div>
+            </Link>
           </>
         )}
       </div>
@@ -157,7 +165,6 @@ export default function Home() {
             label="Voir / Copier liens…"
             type="voir_copier"
             buttonColor="from-[#005AA7] to-[#FFFDE4]"
-            userId={profile.id}
           />
         )}
       </div>
@@ -169,3 +176,4 @@ export default function Home() {
     </div>
   );
 }
+

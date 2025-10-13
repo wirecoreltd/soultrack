@@ -10,10 +10,9 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
   const handleSendLink = async () => {
     setLoading(true);
     try {
-      // Vérification du userId
       if (!userId) throw new Error("Utilisateur non connecté");
 
-      // 1️⃣ Récupérer le token existant pour cet utilisateur et type
+      // 1️⃣ Récupérer le token existant
       const { data: tokenData, error: tokenError } = await supabase
         .from("access_tokens")
         .select("*")
@@ -28,9 +27,9 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
 
       console.log("Token récupéré :", tokenData.token);
 
-      // 2️⃣ Créer le suivi (ajuste le nom de ta table si besoin)
+      // 2️⃣ Créer le suivi
       const { data: suiviData, error: suiviError } = await supabase
-        .from("suivis") // <-- remplace par ta table réelle
+        .from("suivis") // <-- adapte le nom de ta table
         .insert([
           {
             user_id: userId,
@@ -47,7 +46,7 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
 
       console.log("Suivi créé avec succès :", suiviData);
 
-      // 3️⃣ Générer le lien WhatsApp
+      // 3️⃣ Envoyer le lien via WhatsApp
       const link = `${window.location.origin}/access/${tokenData.token}`;
       console.log("Lien WhatsApp généré :", link);
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`, "_blank");

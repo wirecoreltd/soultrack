@@ -1,93 +1,161 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
+
+import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [info, setInfo] = useState(""); // messages utilisateurs
+  const [user, setUser] = useState(null);
 
+  // Récupère la session utilisateur si présente et écoute les changements d'auth
   useEffect(() => {
-    // 🔹 Vérifie si l'utilisateur est déjà connecté
-    const checkSession = async () => {
+    let mounted = true;
+
+    const getSession = async () => {
       const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        // ✅ Session déjà active, redirection
-        router.push("/list-members");
-      }
+      if (!mounted) return;
+      setUser(data?.session?.user ?? null);
     };
-    checkSession();
-  }, [router]);
+
+    getSession();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      mounted = false;
+      if (listener?.subscription) listener.subscription.unsubscribe();
+    };
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setInfo("");
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      setError(error.message);
+      if (error) {
+        setInfo(error.message);
+      } else {
+        // on recharge la session côté client (sécurise la persistance)
+        await supabase.auth.getSession();
+        setInfo("Connexion réussie.");
+        setEmail("");
+        setPassword("");
+      }
+    } catch (err) {
+      console.error("Erreur login:", err);
+      setInfo("Erreur inattendue lors de la connexion.");
+    } finally {
       setLoading(false);
-      return;
     }
+  };
 
-    // 🔹 Recharge la session pour être sûr que le client la garde
-    await supabase.auth.getSession();
-
-    // ✅ Redirection après login réussi
-    router.push("/list-members");
-    setLoading(false);
+  const handleSignOut = async () => {
+    setLoading(true);
+    setInfo("");
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        setInfo(error.message);
+      } else {
+        setInfo("Déconnecté.");
+        setUser(null);
+      }
+    } catch (err) {
+      console.error("Erreur signOut:", err);
+      setInfo("Erreur lors de la déconnexion.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <form
-        onSubmit={handleLogin}
-        className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md"
-      >
-        <h1 className="text-2xl font-semibold text-center mb-6 text-gray-800">
-          Connexion
-        </h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-6">
+        <h1 className="text-2xl font-semibold mb-4 text-center">Connexion</h1>
 
-        {error && (
-          <p className="bg-red-100 text-red-700 p-2 rounded mb-4 text-sm">
-            {error}
+        {/* Affichage info / session */}
+        <div className="mb-4">
+          {user ? (
+            <div className="text-sm bg-green-50 border border-green-100 p-3 rounded">
+              <p className="font-medium">Session active</p>
+              <p>Utilisateur : {user.email ?? user.id}</p>
+              <p className="text-xs text-gray-500">ID : {user.id}</p>
+              <button
+                onClick={handleSignOut}
+                disabled={loading}
+                className="mt-3 w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded"
+              >
+                {loading ? "Déconnexion..." : "Se déconnecter"}
+              </button>
+            </div>
+          ) : (
+            <div className="text-sm bg-yellow-50 border border-yellow-100 p-3 rounded">
+              <p className="font-medium">Aucune session active</p>
+              <p className="text-xs text-gray-500">Connecte-toi ci-dessous.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Message d'info ou d'erreur */}
+        {info && (
+          <p
+            className={`mb-4 text-sm p-2 rounded ${
+              info.toLowerCase().includes("erreur") ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700"
+            }`}
+          >
+            {info}
           </p>
         )}
 
-        <label className="block mb-2 text-gray-700">Email</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full p-2 border rounded-md mb-4"
-        />
+        {/* Formulaire login (toujours accessible) */}
+        <form onSubmit={handleLogin} className="space-y-3">
+          <label className="block text-sm font-medium text-gray-700">Email</label>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+            placeholder="email@example.com"
+          />
 
-        <label className="block mb-2 text-gray-700">Mot de passe</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="w-full p-2 border rounded-md mb-6"
-        />
+          <label className="block text-sm font-medium text-gray-700">Mot de passe</label>
+          <input
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+            placeholder="Mot de passe"
+          />
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
-        >
-          {loading ? "Connexion..." : "Se connecter"}
-        </button>
-      </form>
+          <div className="flex items-center justify-between">
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded"
+            >
+              {loading ? "Connexion..." : "Se connecter"}
+            </button>
+          </div>
+        </form>
+
+        <p className="mt-4 text-xs text-gray-500">
+          Tu peux rester sur cette page même si tu es déjà connecté — pas de redirection automatique.
+        </p>
+      </div>
     </div>
   );
 }

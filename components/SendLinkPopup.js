@@ -8,60 +8,42 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
   const [loading, setLoading] = useState(false);
 
   const handleSendLink = async () => {
+    if (!userId) return;
+
     setLoading(true);
 
     try {
-      console.log("=== Début SendLinkPopup ===");
-      console.log("User ID :", userId, "Type :", type);
-
-      if (!userId) throw new Error("Utilisateur non connecté");
-
-      // 1️⃣ Vérifier le token existant
-      const { data: tokenData, error: tokenError } = await supabase
+      // Récupérer le token existant pour ce userId et type
+      const { data: tokenData } = await supabase
         .from("access_tokens")
         .select("*")
         .eq("user_id", userId)
         .eq("access_type", type)
         .single();
 
-      console.log("Token récupéré :", tokenData);
-      console.log("Erreur token :", tokenError);
-
-      if (tokenError || !tokenData) {
-        throw new Error("Token non trouvé pour cet utilisateur et type");
+      if (!tokenData) {
+        alert("Aucun token trouvé pour cet utilisateur et ce type");
+        return;
       }
 
-      // 2️⃣ Créer le suivi
-      const suiviInsert = {
-        user_id: userId,
-        token: tokenData.token,
-        created_at: new Date(),
-      };
-
-      console.log("Insertion suivi :", suiviInsert);
-
-      const { data: suiviData, error: suiviError } = await supabase
+      // Créer le suivi
+      await supabase
         .from("suivis")
-        .insert([suiviInsert])
-        .select();
+        .upsert(
+          {
+            user_id: userId,
+            token: tokenData.token,
+            created_at: new Date(),
+          },
+          { onConflict: ["token", "user_id"] }
+        );
 
-      console.log("Suivi créé :", suiviData);
-      console.log("Erreur suivi :", suiviError);
-
-      if (suiviError) throw suiviError;
-
-      // 3️⃣ Générer le lien WhatsApp
+      // Générer lien WhatsApp
       const link = `${window.location.origin}/access/${tokenData.token}`;
-      console.log("Lien WhatsApp :", link);
-
-      // Ouvrir WhatsApp
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`, "_blank");
-
-      alert("Lien envoyé avec succès !");
-
     } catch (err) {
-      console.error("=== Erreur SendLinkPopup ===", err);
-      alert(`Erreur lors de l'envoi du lien et création du suivi : ${err.message}`);
+      console.error("Erreur SendLinkPopup :", err);
+      alert("Erreur lors de l'envoi du lien et création du suivi.");
     } finally {
       setLoading(false);
     }

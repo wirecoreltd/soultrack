@@ -2,7 +2,7 @@
 
 "use client";
 import { useState } from "react";
-import supabase from "@/lib/supabaseClient";
+import supabase from "../lib/supabaseClient";
 
 export default function BoutonEnvoyer({ membre, cellule }) {
   const [loading, setLoading] = useState(false);

@@ -6,62 +6,65 @@ import supabase from "@/lib/supabaseClient";
 
 export default function BoutonEnvoyer({ membre, cellule }) {
   const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
+  const [message, setMessage] = useState("");
 
-  const handleSend = async () => {
-    if (!membre || !cellule) {
-      alert("Informations du membre ou de la cellule manquantes.");
-      return;
-    }
-
+  const handleEnvoyer = async () => {
+    if (!membre || !cellule) return;
     setLoading(true);
+    setMessage("");
+
     try {
-      // ✅ insérer le suivi dans la table suivis_membres
-      const { error } = await supabase.from("suivis_membres").insert([
+      // ✅ Vérifie si l'utilisateur est connecté
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Utilisateur non connecté");
+
+      // ✅ Mise à jour du statut du membre
+      const { error: updateError } = await supabase
+        .from("membres")
+        .update({ statut: "actif" })
+        .eq("id", membre.id);
+
+      if (updateError) throw updateError;
+
+      // ✅ Insertion dans suivis_membres
+      const { error: insertError } = await supabase.from("suivis_membres").insert([
         {
           membre_id: membre.id,
           prenom: membre.prenom,
           nom: membre.nom,
           telephone: membre.telephone,
           besoin: membre.besoin,
-          infos_supplementaires: membre.infos_supplementaires,
           cellule_id: cellule.id,
           cellule_nom: cellule.cellule,
           responsable: cellule.responsable,
-          statut: "envoye",
-          statut_membre: membre.statut,
+          statut: "actif",
         },
       ]);
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
-      // ✅ marquer le membre comme "actif"
-      await supabase.from("membres").update({ statut: "actif" }).eq("id", membre.id);
-
-      // ✅ retour visuel
-      setDone(true);
-      setTimeout(() => setDone(false), 3000);
+      setMessage("✅ Contact envoyé et suivi créé !");
     } catch (err) {
-      console.error("Erreur lors de l'envoi :", err);
-      alert("Erreur lors de l'envoi du membre.");
+      console.error("Erreur envoi :", err.message);
+      setMessage("❌ Erreur : " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <button
-      onClick={handleSend}
-      disabled={loading || done}
-      className={`mt-2 w-full py-2 rounded-xl text-white font-bold transition ${
-        done
-          ? "bg-green-500 cursor-default"
-          : loading
-          ? "bg-gray-400 cursor-wait"
-          : "bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:opacity-90"
-      }`}
-    >
-      {done ? "✅ Envoyé" : loading ? "Envoi..." : "📤 Envoyer"}
-    </button>
+    <div className="mt-2">
+      <button
+        onClick={handleEnvoyer}
+        disabled={loading}
+        className={`px-4 py-2 rounded-lg text-white transition ${
+          loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
+        }`}
+      >
+        {loading ? "Envoi..." : "📤 Envoyer vers suivis"}
+      </button>
+      {message && <p className="text-sm mt-1 text-gray-700">{message}</p>}
+    </div>
   );
 }
+

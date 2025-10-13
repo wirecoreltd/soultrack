@@ -65,7 +65,7 @@ export default function LoginPage() {
       localStorage.setItem("userRole", role);
 
       // 4) Redirection vers la page home
-      router.push("/home");
+      router.push("/index");
     } catch (err) {
       console.error("Erreur inattendue:", err);
       setError("Erreur inattendue");

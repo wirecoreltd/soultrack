@@ -242,7 +242,7 @@ export default function Evangelisation() {
                     />
                   </td>
                   <td
-                    onClick={() => setDetailsOpen({ [member.id]: true })}
+                    onClick={() => toggleDetails(member.id)}
                     className="text-blue-200 underline text-center cursor-pointer"
                   >
                     Détails
@@ -253,16 +253,15 @@ export default function Evangelisation() {
           </table>
 
           {/* Popup */}
-          {Object.keys(detailsOpen).length > 0 && (() => {
-            const memberId = Object.keys(detailsOpen)[0];
-            const member = contacts.find((m) => m.id == memberId);
-            if (!member) return null;
-
-            return (
-              <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
+          {contacts.map((member) =>
+            detailsOpen[member.id] ? (
+              <div
+                key={member.id}
+                className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50"
+              >
                 <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl p-6 w-80 text-white text-sm relative">
                   <button
-                    onClick={() => setDetailsOpen({})}
+                    onClick={() => toggleDetails(member.id)}
                     className="absolute top-2 right-3 text-white/80 hover:text-white text-lg"
                   >
                     ✖
@@ -284,8 +283,8 @@ export default function Evangelisation() {
                   </div>
                 </div>
               </div>
-            );
-          })()}
+            ) : null
+          )}
         </div>
       )}
     </div>

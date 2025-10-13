@@ -6,7 +6,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import SendLinkPopup from "../components/SendLinkPopup";
 import SendAppLink from "../components/SendAppLink";
 
 export default function Home() {
@@ -60,7 +59,7 @@ export default function Home() {
         background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
       }}
     >
-      {/* Bouton Déconnexion */}
+      {/* Bouton Déconnexion en haut à droite */}
       <button
         onClick={handleLogout}
         className="absolute top-4 right-4 bg-white/20 text-white px-4 py-2 rounded-xl font-semibold shadow-sm hover:bg-white/30 transition"
@@ -142,45 +141,29 @@ export default function Home() {
 
       {/* Liens rapides */}
       <div className="flex flex-col gap-3 mt-4 w-full max-w-md">
-        {/* Nouveau bouton : envoyer le lien d’appli WhatsApp */}
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <SendAppLink
             label="Envoyer l’appli – Nouveau membre"
             buttonColor="from-[#09203F] to-[#537895]"
+            type="member"
           />
-          <SendAppLink
-    label="Envoyer l’appli – Évangélisé"
-    buttonColor="from-purple-400 to-pink-400"
-    type="evangelise"
-  />    
         )}
 
-        {/* Ancien bouton : suivi / lien token */}
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <SendLinkPopup
+          <SendAppLink
             label="Envoyer l’appli – Évangélisé"
-            type="ajouter_evangelise"
             buttonColor="from-[#09203F] to-[#537895]"
-            userId={profile.id}
-          />
-        )}
-
-        {profile.role === "Admin" && (
-          <SendLinkPopup
-            label="Voir / Copier liens…"
-            type="voir_copier"
-            buttonColor="from-[#005AA7] to-[#FFFDE4]"
+            type="evangelise"
           />
         )}
       </div>
 
       {/* Verset biblique */}
       <div className="mt-4 mb-2 text-center text-white text-lg font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs.  
-        <br />
-        <span className="font-semibold">1 Corinthiens 12:14 ❤️</span>
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
       </div>
     </div>
   );
 }
+
 

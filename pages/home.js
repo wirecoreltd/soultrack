@@ -6,7 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import SendAppLink from "../components/SendAppLink";
+import SendAppLink from "../components/SendAppLink"; // Nouveau membre
+import SendAppLinkEvangelise from "../components/SendAppLinkEvangelise"; // Évangélisé
 
 export default function Home() {
   const router = useRouter();
@@ -59,7 +60,7 @@ export default function Home() {
         background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
       }}
     >
-      {/* Bouton Déconnexion en haut à droite */}
+      {/* Bouton Déconnexion */}
       <button
         onClick={handleLogout}
         className="absolute top-4 right-4 bg-white/20 text-white px-4 py-2 rounded-xl font-semibold shadow-sm hover:bg-white/30 transition"
@@ -139,21 +140,29 @@ export default function Home() {
         )}
       </div>
 
-      {/* Liens rapides */}
+      {/* Liens rapides - boutons d'envoi */}
       <div className="flex flex-col gap-3 mt-4 w-full max-w-md">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <SendAppLink
-            label="Envoyer l’appli – Nouveau membre"
+            label="Envoyer l'appli – Nouveau membre"
             buttonColor="from-[#09203F] to-[#537895]"
-            type="member"
+            userId={profile.id}
           />
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <SendAppLink
-            label="Envoyer l’appli – Évangélisé"
+          <SendAppLinkEvangelise
+            label="Envoyer l'appli – Évangélisé"
             buttonColor="from-[#09203F] to-[#537895]"
-            type="evangelise"
+            userId={profile.id}
+          />
+        )}
+
+        {profile.role === "Admin" && (
+          <SendAppLink
+            label="Voir / Copier liens…"
+            buttonColor="from-[#005AA7] to-[#FFFDE4]"
+            userId={profile.id}
           />
         )}
       </div>
@@ -165,5 +174,3 @@ export default function Home() {
     </div>
   );
 }
-
-

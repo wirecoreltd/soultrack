@@ -75,7 +75,7 @@ export default function ListMembers() {
 
   const countFiltered = filteredMembers.length;
 
-  // ---- CHANGEMENT UNIQUE : sendWhatsapp optimiste + update supabase ----
+  // ---- sendWhatsapp : ouverture WhatsApp + update statut + insertion suivi ----
   const sendWhatsapp = async (celluleId, member) => {
     const cellule = cellules.find((c) => String(c.id) === String(celluleId));
     if (!cellule) return alert("Cellule introuvable.");
@@ -98,48 +98,64 @@ Voici ses infos :
 
 Merci pour ton cœur ❤ et son amour ✨`;
 
-    // numéro WhatsApp
     const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-
-    // Status actuel (pour rollback si besoin)
     const prevStatus = member.statut;
 
-    // 1) mise à jour optimiste dans le state pour faire disparaître le tag "Nouveau"
-    setMembers((prev) => prev.map((m) => (m.id === member.id ? { ...m, statut: "actif" } : m)));
+    // ✅ Mise à jour optimiste
+    setMembers((prev) =>
+      prev.map((m) =>
+        m.id === member.id ? { ...m, statut: "actif" } : m
+      )
+    );
 
-    // 2) ouvrir WhatsApp (ne bloque pas)
+    // ✅ Ouvrir WhatsApp
     try {
       window.open(waUrl, "_blank");
     } catch (err) {
       console.error("Erreur ouverture WhatsApp:", err);
     }
 
-    // 3) mettre à jour en base (vraie sauvegarde)
     try {
-      const { error } = await supabase
+      // ✅ 1. Mise à jour du statut
+      const { error: updateError } = await supabase
         .from("membres")
         .update({ statut: "actif" })
         .eq("id", member.id);
 
-      if (error) {
-        // rollback du state si erreur
-        setMembers((prev) => prev.map((m) => (m.id === member.id ? { ...m, statut: prevStatus } : m)));
-        console.error("Erreur Supabase update statut:", error);
-        alert("Erreur lors de la mise à jour du statut sur le serveur.");
-      } else {
-        // facultatif : on peut nettoyer la sélection de cellule pour ce membre
-        // setSelectedCellules(prev => ({ ...prev, [member.id]: "" }));
-      }
+      if (updateError) throw updateError;
+
+      // ✅ 2. Insertion dans suivis_membres
+      const { error: insertError } = await supabase.from("suivis_membres").insert([
+        {
+          membre_id: member.id,
+          prenom: member.prenom,
+          nom: member.nom,
+          telephone: member.telephone,
+          besoin: member.besoin,
+          cellule_id: cellule.id,
+          cellule_nom: cellule.cellule,
+          responsable: cellule.responsable,
+          statut: "actif",
+          created_at: new Date(),
+        },
+      ]);
+
+      if (insertError) throw insertError;
+      console.log("✅ Suivi ajouté dans la base !");
     } catch (err) {
-      // rollback si exception
-      setMembers((prev) => prev.map((m) => (m.id === member.id ? { ...m, statut: prevStatus } : m)));
-      console.error("Exception lors update statut:", err);
-      alert("Erreur lors de la mise à jour du statut.");
+      // rollback si erreur
+      setMembers((prev) =>
+        prev.map((m) =>
+          m.id === member.id ? { ...m, statut: prevStatus } : m
+        )
+      );
+      console.error("Erreur Supabase:", err);
+      alert("Erreur lors de la mise à jour ou de l’enregistrement du suivi.");
     }
   };
-  // ---- fin changement unique ----
+  // ---- fin sendWhatsapp ----
 
-  // Séparer nouveaux et anciens (utilisé pour affichage card)
+  // Séparer nouveaux et anciens
   const nouveaux = filteredMembers.filter(
     (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
   );
@@ -210,7 +226,7 @@ Merci pour ton cœur ❤ et son amour ✨`;
                     className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4 relative"
                     style={{ borderTopColor: getBorderColor(member), minHeight: "200px" }}
                   >
-                    { (member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
+                    {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
                       <span className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded text-xs">Nouveau</span>
                     )}
                     <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
@@ -374,24 +390,17 @@ Merci pour ton cœur ❤ et son amour ✨`;
                       className="text-blue-500 underline cursor-pointer"
                       onClick={() => setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))}
                     >
-                      {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+                      {detailsOpen[member.id] ? "Fermer" : "Ouvrir"}
                     </p>
-
                     {detailsOpen[member.id] && (
                       <div className="mt-2 text-sm text-gray-700 space-y-1">
-                        <p><strong>Prénom:</strong> {member.prenom}</p>
-                        <p><strong>Nom:</strong> {member.nom}</p>
-                        <p><strong>Statut:</strong> {member.statut}</p>
-                        <p><strong>Téléphone:</strong> {member.telephone || "—"}</p>
-
-                        <p><strong>Besoin:</strong> {member.besoin || "—"}</p>
-                        <p><strong>Infos supplémentaires:</strong> {member.infos_supplementaires || "—"}</p>
-                        <p><strong>Comment est-il venu ?</strong> {member.comment || "—"}</p>
-                        <p><strong>Cellule:</strong></p>
+                        <p>📱 {member.telephone}</p>
+                        <p>Besoin : {member.besoin}</p>
+                        <p>Infos : {member.infos_supplementaires}</p>
                         <select
                           value={selectedCellules[member.id] || ""}
                           onChange={(e) => setSelectedCellules((prev) => ({ ...prev, [member.id]: e.target.value }))}
-                          className="border rounded-lg px-2 py-1 text-sm w-full"
+                          className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
                         >
                           <option value="">-- Sélectionner cellule --</option>
                           {cellules.map((c) => (
@@ -400,7 +409,6 @@ Merci pour ton cœur ❤ et son amour ✨`;
                             </option>
                           ))}
                         </select>
-
                         {selectedCellules[member.id] && (
                           <button
                             onClick={() => sendWhatsapp(selectedCellules[member.id], member)}
@@ -421,14 +429,10 @@ Merci pour ton cœur ❤ et son amour ✨`;
 
       <button
         onClick={scrollToTop}
-        className="fixed bottom-5 right-5 text-white text-2xl font-bold"
+        className="fixed bottom-4 right-4 bg-blue-500 text-white p-3 rounded-full shadow-lg hover:bg-blue-600 transition"
       >
-        ↑
+        ⬆️
       </button>
-
-      <p className="mt-6 mb-6 text-center text-white text-lg font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
-      </p>
     </div>
   );
 }

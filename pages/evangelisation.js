@@ -207,8 +207,7 @@ export default function Evangelisation() {
                     <p>🏙 Ville: {member.ville || "—"}</p>
                     <p>🙏 Besoin: {member.besoin || "—"}</p>
                     <p>
-                      📝 Infos supplémentaires:{" "}
-                      {member.infos_supplementaires || "—"}
+                      📝 Infos supplémentaires: {member.infos_supplementaires || "—"}
                     </p>
                   </div>
                 )}
@@ -232,10 +231,7 @@ export default function Evangelisation() {
             </thead>
             <tbody>
               {contacts.map((member) => (
-                <tr
-                  key={member.id}
-                  className="hover:bg-white/10 transition-all"
-                >
+                <tr key={member.id} className="hover:bg-white/10 transition-all">
                   <td className="p-3">{member.prenom}</td>
                   <td className="p-3">{member.nom}</td>
                   <td className="text-center">
@@ -246,46 +242,50 @@ export default function Evangelisation() {
                     />
                   </td>
                   <td
-                    onClick={() => toggleDetails(member.id)}
+                    onClick={() => setDetailsOpen({ [member.id]: true })}
                     className="text-blue-200 underline text-center cursor-pointer"
                   >
-                    {detailsOpen[member.id] ? "Fermer" : "Détails"}
+                    Détails
                   </td>
-
-                  {/* ✅ Popup Glassmorphism */}
-                  {detailsOpen[member.id] && (
-                    <td colSpan="4">
-                      <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
-                        <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl p-6 w-80 text-white text-sm relative">
-                          <button
-                            onClick={() => toggleDetails(member.id)}
-                            className="absolute top-2 right-3 text-white/80 hover:text-white text-lg"
-                          >
-                            ✖
-                          </button>
-                          <h3 className="text-lg font-bold mb-3 text-center">
-                            {member.prenom} {member.nom}
-                          </h3>
-                          <p>📱 Téléphone : {member.telephone || "—"}</p>
-                          <p>🏙 Ville : {member.ville || "—"}</p>
-                          <p>🙏 Besoin : {member.besoin || "—"}</p>
-                          <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
-                          <div className="flex items-center gap-2 mt-3">
-                            <input
-                              type="checkbox"
-                              checked={checkedContacts[member.id] || false}
-                              onChange={() => handleCheck(member.id)}
-                            />
-                            <span>WhatsApp</span>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  )}
                 </tr>
               ))}
             </tbody>
           </table>
+
+          {/* Popup */}
+          {Object.keys(detailsOpen).length > 0 && (() => {
+            const memberId = Object.keys(detailsOpen)[0];
+            const member = contacts.find((m) => m.id == memberId);
+            if (!member) return null;
+
+            return (
+              <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
+                <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl p-6 w-80 text-white text-sm relative">
+                  <button
+                    onClick={() => setDetailsOpen({})}
+                    className="absolute top-2 right-3 text-white/80 hover:text-white text-lg"
+                  >
+                    ✖
+                  </button>
+                  <h3 className="text-lg font-bold mb-3 text-center">
+                    {member.prenom} {member.nom}
+                  </h3>
+                  <p>📱 Téléphone : {member.telephone || "—"}</p>
+                  <p>🏙 Ville : {member.ville || "—"}</p>
+                  <p>🙏 Besoin : {member.besoin || "—"}</p>
+                  <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
+                  <div className="flex items-center gap-2 mt-3">
+                    <input
+                      type="checkbox"
+                      checked={checkedContacts[member.id] || false}
+                      onChange={() => handleCheck(member.id)}
+                    />
+                    <span>WhatsApp</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

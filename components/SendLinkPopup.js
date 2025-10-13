@@ -4,42 +4,33 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function SendLinkPopup({ label, type, buttonColor, userId }) {
+export default function SendLinkPopup({ label, buttonColor }) {
   const [loading, setLoading] = useState(false);
 
-  const handleSendLink = async () => {
-    if (!userId) return;
+  // Valeurs que tu m’as donné
+  const userId = "58eff16c-f480-4c73-a6e0-aa4423d2069d";
+  const token = "33dd234f-8146-4818-976c-af7bfdcefe95";
 
+  const handleSendLink = async () => {
     setLoading(true);
 
     try {
-      // Récupérer le token existant pour ce userId et type
-      const { data: tokenData } = await supabase
-        .from("access_tokens")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("access_type", type)
-        .single();
-
-      if (!tokenData) {
-        alert("Aucun token trouvé pour cet utilisateur et ce type");
-        return;
-      }
-
-      // Créer le suivi
-      await supabase
+      // Créer le suivi si pas déjà existant
+      const { error } = await supabase
         .from("suivis")
         .upsert(
           {
             user_id: userId,
-            token: tokenData.token,
+            token: token,
             created_at: new Date(),
           },
-          { onConflict: ["token", "user_id"] }
+          { onConflict: ["user_id", "token"] }
         );
 
-      // Générer lien WhatsApp
-      const link = `${window.location.origin}/access/${tokenData.token}`;
+      if (error) throw error;
+
+      // Générer le lien WhatsApp
+      const link = `${window.location.origin}/access/${token}`;
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`, "_blank");
     } catch (err) {
       console.error("Erreur SendLinkPopup :", err);
@@ -59,3 +50,4 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
     </button>
   );
 }
+

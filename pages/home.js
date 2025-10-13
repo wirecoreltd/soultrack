@@ -143,7 +143,7 @@ export default function Home() {
       {/* Liens rapides / boutons envoyer l'appli */}
       <div className="flex flex-col gap-3 mt-4 w-full max-w-md">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <SendAppLinkPopup
+          <SendLinkPopup
             label="Envoyer l'appli – Nouveau membre"
             type="ajouter_membre"
             buttonColor="from-[#09203F] to-[#537895]"

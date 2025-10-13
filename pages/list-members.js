@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
-import BoutonEnvoyer from "../components/BoutonEnvoyer"; // ✅ nouveau bouton séparé
+import BoutonEnvoyer from "../components/BoutonEnvoyer";
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
@@ -27,7 +27,7 @@ export default function ListMembers() {
       if (error) throw error;
       setMembers(data || []);
     } catch (err) {
-      console.error("Exception fetchMembers:", err.message);
+      console.error("Erreur fetchMembers:", err.message);
       setMembers([]);
     }
   };
@@ -40,7 +40,7 @@ export default function ListMembers() {
       if (error) throw error;
       setCellules(data || []);
     } catch (err) {
-      console.error("Exception fetchCellules:", err.message);
+      console.error("Erreur fetchCellules:", err.message);
       setCellules([]);
     }
   };
@@ -103,8 +103,7 @@ export default function ListMembers() {
         SoulTrack
       </h1>
       <p className="text-center text-white text-lg mb-2 font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons, grandissons et
-        partageons l’amour de Christ dans chaque action ❤️
+        Chaque personne a une valeur infinie. Ensemble, nous avançons, grandissons et partageons l’amour de Christ ❤️
       </p>
 
       <p
@@ -134,18 +133,11 @@ export default function ListMembers() {
       </div>
 
       {view === "card" ? (
-        <div className="w-full max-w-5xl">
+        <div className="w-full max-w-5xl space-y-10">
+          {/* ✅ NOUVEAUX */}
           {nouveaux.length > 0 && (
-            <div className="mb-4">
-              <p className="text-white mb-2">
-                contact venu le{" "}
-                {new Date().toLocaleDateString("fr-FR", {
-                  weekday: "long",
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </p>
+            <div>
+              <p className="text-white mb-2 text-xl">🆕 Nouveaux contacts</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {nouveaux.map((member) => (
                   <div
@@ -156,37 +148,10 @@ export default function ListMembers() {
                       minHeight: "200px",
                     }}
                   >
-                    {(member.statut === "visiteur" ||
-                      member.statut === "veut rejoindre ICC") && (
-                      <span className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded text-xs">
-                        Nouveau
-                      </span>
-                    )}
                     <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
-                      {member.prenom} {member.nom}{" "}
-                      {member.star && (
-                        <span className="ml-1 text-yellow-400">⭐</span>
-                      )}
-                      <select
-                        value={member.statut}
-                        onChange={(e) =>
-                          handleChangeStatus(member.id, e.target.value)
-                        }
-                        className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                      >
-                        <option value="veut rejoindre ICC">
-                          Veut rejoindre ICC
-                        </option>
-                        <option value="visiteur">Visiteur</option>
-                        <option value="a déjà mon église">
-                          A déjà mon église
-                        </option>
-                        <option value="evangelisé">Evangelisé</option>
-                        <option value="actif">Actif</option>
-                        <option value="ancien">Ancien</option>
-                      </select>
+                      {member.prenom} {member.nom}
+                      {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
                     </h2>
-
                     <p className="text-sm text-gray-600 mb-1">
                       📱 {member.telephone || "—"}
                     </p>
@@ -206,21 +171,14 @@ export default function ListMembers() {
                         }))
                       }
                     >
-                      {detailsOpen[member.id]
-                        ? "Fermer détails"
-                        : "Détails"}
+                      {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                     </p>
 
                     {detailsOpen[member.id] && (
                       <div className="mt-2 text-sm text-gray-700 space-y-1">
                         <p>Besoin : {member.besoin || "—"}</p>
-                        <p>
-                          Infos supplémentaires :{" "}
-                          {member.infos_supplementaires || "—"}
-                        </p>
-                        <p>
-                          Comment est-il venu ? : {member.comment || "—"}
-                        </p>
+                        <p>Infos : {member.infos_supplementaires || "—"}</p>
+                        <p>Comment venu : {member.comment || "—"}</p>
                         <p className="text-green-600">Cellule :</p>
                         <select
                           value={selectedCellules[member.id] || ""}
@@ -245,13 +203,44 @@ export default function ListMembers() {
                             membre={member}
                             cellule={cellules.find(
                               (c) =>
-                                String(c.id) ===
-                                String(selectedCellules[member.id])
+                                String(c.id) === String(selectedCellules[member.id])
                             )}
                           />
                         )}
                       </div>
                     )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ✅ ANCIENS */}
+          {anciens.length > 0 && (
+            <div>
+              <p className="text-white mb-2 text-xl">👥 Membres existants</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {anciens.map((member) => (
+                  <div
+                    key={member.id}
+                    className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between border-t-4 relative"
+                    style={{
+                      borderTopColor: getBorderColor(member),
+                      minHeight: "200px",
+                    }}
+                  >
+                    <h2 className="text-lg font-bold text-gray-800 mb-1">
+                      {member.prenom} {member.nom}
+                    </h2>
+                    <p className="text-sm text-gray-600 mb-1">
+                      📱 {member.telephone || "—"}
+                    </p>
+                    <p
+                      className="text-sm font-semibold"
+                      style={{ color: getBorderColor(member) }}
+                    >
+                      {member.statut || "—"}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -268,11 +257,7 @@ export default function ListMembers() {
       >
         ↑
       </button>
-
-      <p className="mt-6 mb-6 text-center text-white text-lg font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1
-        Corinthiens 12:14 ❤️
-      </p>
     </div>
   );
 }
+

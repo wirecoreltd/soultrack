@@ -6,7 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import SendAppLinkPopup from "../components/SendAppLinkPopup";
+import SendAppLinkPopup from "../components/SendAppLinkPopup"; // Nouveau membre
+import SendAppLinkEvangelise from "../components/SendAppLinkEvangelise"; // Évangélisé
 
 export default function Home() {
   const router = useRouter();
@@ -139,21 +140,23 @@ export default function Home() {
         )}
       </div>
 
-      {/* Boutons Envoyer l'appli */}
+      {/* Liens rapides / boutons envoyer l'appli */}
       <div className="flex flex-col gap-3 mt-4 w-full max-w-md">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <SendAppLinkPopup
             label="Envoyer l'appli – Nouveau membre"
             type="ajouter_membre"
-            token="58eff16c-f480-4c73-a6e0-aa4423d2069d"
+            buttonColor="from-[#09203F] to-[#537895]"
+            userId={profile.id}
           />
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <SendAppLinkPopup
+          <SendAppLinkEvangelise
             label="Envoyer l'appli – Évangélisé"
             type="ajouter_evangelise"
-            token="33dd234f-8146-4818-976c-af7bfdcefe95"
+            buttonColor="from-[#09203F] to-[#537895]"
+            userId={profile.id}
           />
         )}
       </div>
@@ -165,5 +168,3 @@ export default function Home() {
     </div>
   );
 }
-
-

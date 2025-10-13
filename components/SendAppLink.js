@@ -3,9 +3,9 @@
 
 import { useState } from "react";
 
-export default function SendAppLinkPopup({ label, type, defaultNumber = "+2305xxxxxx" }) {
+export default function SendAppLinkPopup({ label, type }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState(defaultNumber);
+  const [phoneNumber, setPhoneNumber] = useState(""); // vide par défaut
   const [loading, setLoading] = useState(false);
 
   // Définir le lien selon le type
@@ -16,6 +16,11 @@ export default function SendAppLinkPopup({ label, type, defaultNumber = "+2305xx
   };
 
   const handleSend = () => {
+    if (!phoneNumber) {
+      alert("Veuillez saisir un numéro de téléphone.");
+      return;
+    }
+
     setLoading(true);
     try {
       const whatsappLink = `https://api.whatsapp.com/send?phone=${phoneNumber.replace(/\D/g, '')}&text=${encodeURIComponent(getLink())}`;
@@ -50,6 +55,7 @@ export default function SendAppLinkPopup({ label, type, defaultNumber = "+2305xx
               type="text"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="Saisir le numéro ici"
               className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 text-center focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
 

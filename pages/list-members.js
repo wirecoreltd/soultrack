@@ -26,7 +26,7 @@ export default function ListMembers() {
       if (error) throw error;
       setMembers(data || []);
     } catch (err) {
-      console.error("Exception fetchMembers:", err?.message || err);
+      console.error("Exception fetchMembers:", err.message);
       setMembers([]);
     }
   };
@@ -39,25 +39,19 @@ export default function ListMembers() {
       if (error) throw error;
       setCellules(data || []);
     } catch (err) {
-      console.error("Exception fetchCellules:", err?.message || err);
+      console.error("Exception fetchCellules:", err.message);
       setCellules([]);
     }
   };
 
   const handleChangeStatus = async (id, newStatus) => {
     try {
-      const { data, error } = await supabase
-        .from("membres")
-        .update({ statut: newStatus })
-        .eq("id", id)
-        .select();
-      if (error) throw error;
+      await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
       setMembers((prev) =>
         prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
       );
     } catch (err) {
-      console.error("Erreur update statut:", err?.message || err);
-      alert("Erreur lors de la mise à jour du statut : " + (err?.message || err));
+      console.error("Erreur update statut:", err.message);
     }
   };
 
@@ -81,13 +75,13 @@ export default function ListMembers() {
 
   const countFiltered = filteredMembers.length;
 
-  // ---- sendWhatsapp : ouverture WhatsApp + update statut + insertion suivi (logs) ----
+  // ---- CHANGEMENT UNIQUE : sendWhatsapp optimiste + update supabase ----
   const sendWhatsapp = async (celluleId, member) => {
     const cellule = cellules.find((c) => String(c.id) === String(celluleId));
     if (!cellule) return alert("Cellule introuvable.");
     if (!cellule.telephone) return alert("Numéro de la cellule introuvable.");
 
-    const phone = String(cellule.telephone).replace(/\D/g, "");
+    const phone = cellule.telephone.replace(/\D/g, "");
     if (!phone) return alert("Numéro de la cellule invalide.");
 
     const message = `👋 Salut ${cellule.responsable},
@@ -104,84 +98,48 @@ Voici ses infos :
 
 Merci pour ton cœur ❤ et son amour ✨`;
 
+    // numéro WhatsApp
     const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+    // Status actuel (pour rollback si besoin)
     const prevStatus = member.statut;
 
-    // Mise à jour optimiste locale (pour l'UX)
-    setMembers((prev) =>
-      prev.map((m) => (m.id === member.id ? { ...m, statut: "actif" } : m))
-    );
+    // 1) mise à jour optimiste dans le state pour faire disparaître le tag "Nouveau"
+    setMembers((prev) => prev.map((m) => (m.id === member.id ? { ...m, statut: "actif" } : m)));
 
-    // Ouvrir WhatsApp (ne bloque pas)
+    // 2) ouvrir WhatsApp (ne bloque pas)
     try {
       window.open(waUrl, "_blank");
     } catch (err) {
       console.error("Erreur ouverture WhatsApp:", err);
     }
 
-    // === Opérations serveur : 1) update membre, 2) insert suivi ===
+    // 3) mettre à jour en base (vraie sauvegarde)
     try {
-      // 1) Mettre à jour le membre en base (et récupérer la ligne mise à jour)
-      console.log("[sendWhatsapp] Tentative update membre.id =", member.id);
-      const { data: updatedMemberData, error: updateError } = await supabase
+      const { error } = await supabase
         .from("membres")
         .update({ statut: "actif" })
-        .eq("id", member.id)
-        .select()
-        .maybeSingle();
+        .eq("id", member.id);
 
-      if (updateError) {
-        // Log détaillé et on continue (NE PAS rollback automatiquement)
-        console.error("[sendWhatsapp] updateError:", updateError);
-        alert("Erreur mise à jour membre : " + (updateError.message || JSON.stringify(updateError)));
-        // On laisse le membre en 'actif' côté UI (optimistique), mais signale l'erreur
+      if (error) {
+        // rollback du state si erreur
+        setMembers((prev) => prev.map((m) => (m.id === member.id ? { ...m, statut: prevStatus } : m)));
+        console.error("Erreur Supabase update statut:", error);
+        alert("Erreur lors de la mise à jour du statut sur le serveur.");
       } else {
-        console.log("[sendWhatsapp] membre mis à jour en base :", updatedMemberData);
-      }
-
-      // 2) Insérer le suivi dans suivis_membres (on utilise select() pour voir la réponse)
-      const suiviPayload = {
-        membre_id: member.id,
-        prenom: member.prenom || null,
-        nom: member.nom || null,
-        telephone: member.telephone || null,
-        besoin: member.besoin || null,
-        cellule_id: cellule.id || null,
-        cellule_nom: cellule.cellule || null,
-        responsable: cellule.responsable || null,
-        statut: "envoye",
-        created_at: new Date(),
-      };
-
-      console.log("[sendWhatsapp] Données suivis envoyées :", suiviPayload);
-
-      const { data: insertData, error: insertError } = await supabase
-        .from("suivis_membres")
-        .insert([suiviPayload])
-        .select();
-
-      if (insertError) {
-        // IMPORTANT : on ne fait plus de rollback automatique ici pour ne pas perdre le statut "actif" côté UI
-        console.error("[sendWhatsapp] insertError suivis_membres :", insertError);
-        alert(
-          "Erreur lors de l'enregistrement du suivi en base : " +
-            (insertError.message || JSON.stringify(insertError)) +
-            "\n(Le membre est resté 'actif' localement.)"
-        );
-      } else {
-        console.log("[sendWhatsapp] Suivi inséré :", insertData);
+        // facultatif : on peut nettoyer la sélection de cellule pour ce membre
+        // setSelectedCellules(prev => ({ ...prev, [member.id]: "" }));
       }
     } catch (err) {
-      // Erreur inattendue
-      console.error("[sendWhatsapp] Exception :", err?.message || err);
-      // rollback local seulement si besoin — ici on décide de garder l'état actif pour UX
-      // setMembers(prev => prev.map(m => m.id === member.id ? { ...m, statut: prevStatus } : m));
-      alert("Erreur lors de la mise à jour ou de l'enregistrement du suivi : " + (err?.message || err));
+      // rollback si exception
+      setMembers((prev) => prev.map((m) => (m.id === member.id ? { ...m, statut: prevStatus } : m)));
+      console.error("Exception lors update statut:", err);
+      alert("Erreur lors de la mise à jour du statut.");
     }
   };
-  // ---- fin sendWhatsapp ----
+  // ---- fin changement unique ----
 
-  // Séparer nouveaux et anciens
+  // Séparer nouveaux et anciens (utilisé pour affichage card)
   const nouveaux = filteredMembers.filter(
     (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
   );

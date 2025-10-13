@@ -2,7 +2,6 @@
 "use client";
 
 import { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 import supabase from "../../lib/supabaseClient";
 
 export default function CreateInternalUser() {
@@ -22,40 +21,48 @@ export default function CreateInternalUser() {
 
     setLoading(true);
     try {
-      // 1️⃣ Créer l'utilisateur
-      const newUserId = uuidv4();
-      const { error: userError } = await supabase
+      // 1️⃣ Créer l'utilisateur (Supabase génère automatiquement l'ID)
+      const { data: newUser, error: userError } = await supabase
         .from("profiles")
         .insert([
           {
-            id: newUserId,
             username,
             email,
             role,
             phone_number: phone,
           },
-        ]);
+        ])
+        .select()
+        .single(); // récupère l’utilisateur créé avec ID généré
 
       if (userError) throw userError;
 
-      // 2️⃣ Générer un token pour cet utilisateur
-      const newToken = uuidv4();
-      const { error: tokenError } = await supabase
+      const newUserId = newUser.id;
+
+      // 2️⃣ Générer un token unique pour cet utilisateur
+      const newToken = crypto.randomUUID(); // token côté client
+
+      const { data: tokenData, error: tokenError } = await supabase
         .from("access_tokens")
         .insert([
           {
             profile_id: newUserId,
             user_id: newUserId,
             token: newToken,
-            access_type: role === "ResponsableIntegration" ? "ajouter_membre" : "ajouter_evangelise",
+            access_type:
+              role === "ResponsableIntegration"
+                ? "ajouter_membre"
+                : "ajouter_evangelise",
             expires_at: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), // +7 jours
           },
-        ]);
+        ])
+        .select()
+        .single();
 
       if (tokenError) throw tokenError;
 
       setUserId(newUserId);
-      setToken(newToken);
+      setToken(tokenData.token);
       alert("Utilisateur créé avec succès ! 🎉");
     } catch (err) {
       console.error("Erreur création utilisateur :", err);
@@ -69,7 +76,7 @@ export default function CreateInternalUser() {
     if (!userId || !token) return;
 
     try {
-      // Créer le suivi
+      // Créer le suivi (table suivis)
       const { error } = await supabase
         .from("suivis")
         .upsert(
@@ -79,9 +86,12 @@ export default function CreateInternalUser() {
 
       if (error) throw error;
 
-      // Ouvrir WhatsApp
+      // Ouvrir WhatsApp avec le lien
       const link = `${window.location.origin}/access/${token}`;
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`, "_blank");
+      window.open(
+        `https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`,
+        "_blank"
+      );
     } catch (err) {
       console.error("Erreur envoi lien :", err);
       alert("Erreur lors de l'envoi du lien !");
@@ -120,7 +130,9 @@ export default function CreateInternalUser() {
           className="border px-3 py-2 rounded-md w-full"
         >
           <option value="ResponsableIntegration">ResponsableIntegration</option>
-          <option value="ResponsableEvangelisation">ResponsableEvangelisation</option>
+          <option value="ResponsableEvangelisation">
+            ResponsableEvangelisation
+          </option>
           <option value="Admin">Admin</option>
         </select>
 
@@ -144,3 +156,4 @@ export default function CreateInternalUser() {
     </div>
   );
 }
+

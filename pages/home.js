@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 import SendLinkPopup from "../components/SendLinkPopup";
+import SendAppLink from "../components/SendAppLink";
 
 export default function Home() {
   const router = useRouter();
@@ -59,7 +60,7 @@ export default function Home() {
         background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
       }}
     >
-      {/* Bouton Déconnexion en haut à droite */}
+      {/* Bouton Déconnexion */}
       <button
         onClick={handleLogout}
         className="absolute top-4 right-4 bg-white/20 text-white px-4 py-2 rounded-xl font-semibold shadow-sm hover:bg-white/30 transition"
@@ -127,7 +128,6 @@ export default function Home() {
               </div>
             </Link>
 
-            {/* Nouveau bouton : Créer utilisateur interne */}
             <Link href="/admin/create-internal-user" className="flex-1 min-w-[250px]">
               <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-purple-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
                 <div className="text-4xl mb-1">➕</div>
@@ -142,18 +142,18 @@ export default function Home() {
 
       {/* Liens rapides */}
       <div className="flex flex-col gap-3 mt-4 w-full max-w-md">
+        {/* Nouveau bouton : envoyer le lien d’appli WhatsApp */}
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <SendLinkPopup
-            label="Envoyer l'appli – Nouveau membre"
-            type="ajouter_membre"
+          <SendAppLink
+            label="Envoyer l’appli – Nouveau membre"
             buttonColor="from-[#09203F] to-[#537895]"
-            userId={profile.id}
           />
         )}
 
+        {/* Ancien bouton : suivi / lien token */}
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
           <SendLinkPopup
-            label="Envoyer l'appli – Évangélisé"
+            label="Envoyer l’appli – Évangélisé"
             type="ajouter_evangelise"
             buttonColor="from-[#09203F] to-[#537895]"
             userId={profile.id}
@@ -171,7 +171,9 @@ export default function Home() {
 
       {/* Verset biblique */}
       <div className="mt-4 mb-2 text-center text-white text-lg font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs.  
+        <br />
+        <span className="font-semibold">1 Corinthiens 12:14 ❤️</span>
       </div>
     </div>
   );

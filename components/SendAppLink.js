@@ -1,37 +1,34 @@
-// components/SendAppLink.js
+// components/SendAppLinkPopup.js
 "use client";
 
 import { useState } from "react";
 
-export default function SendAppLinkPopup({ label, type }) {
+export default function SendAppLinkPopup({ label, type, token }) {
   const [isOpen, setIsOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Détermine le lien selon le type
+  // Détermine le lien selon le type et ajoute le token
   const getLink = () => {
-    switch (type) {
-      case "ajouter_membre":
-        return `${window.location.origin}/add-member`;
-      case "ajouter_evangelise":
-        return `${window.location.origin}/add-evangelise`;
-      default:
-        return window.location.origin;
-    }
+    let path = "/";
+    if (type === "ajouter_membre") path = "/add-member";
+    if (type === "ajouter_evangelise") path = "/add-evangelise";
+
+    return `${window.location.origin}${path}?token=${token}`;
   };
 
   const handleSend = () => {
     setLoading(true);
     try {
-      let whatsappLink = "";
       const linkToSend = getLink();
+      let whatsappLink = "";
 
       if (phoneNumber.trim() === "") {
         // Champ vide → ouvrir WhatsApp pour choisir un contact
         whatsappLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(linkToSend)}`;
       } else {
         // Numéro saisi → envoie directement
-        const sanitizedNumber = phoneNumber.replace(/\D/g, ""); // supprime tout sauf chiffres
+        const sanitizedNumber = phoneNumber.replace(/\D/g, "");
         whatsappLink = `https://api.whatsapp.com/send?phone=${sanitizedNumber}&text=${encodeURIComponent(linkToSend)}`;
       }
 

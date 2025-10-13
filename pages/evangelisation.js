@@ -11,7 +11,7 @@ export default function Evangelisation() {
   const [selectedCellule, setSelectedCellule] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [checkedContacts, setCheckedContacts] = useState({});
-  const [view, setView] = useState("card"); // ✅ Vue par défaut : cartes
+  const [view, setView] = useState("card");
 
   useEffect(() => {
     fetchContacts();
@@ -119,11 +119,11 @@ export default function Evangelisation() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-blue-800 to-cyan-400">
+    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-blue-800 to-cyan-400 text-white">
       {/* Retour */}
       <button
         onClick={() => window.history.back()}
-        className="self-start mb-4 text-white font-semibold hover:text-gray-200"
+        className="self-start mb-4 font-semibold hover:text-gray-200"
       >
         ← Retour
       </button>
@@ -131,44 +131,18 @@ export default function Evangelisation() {
       {/* Logo */}
       <Image src="/logo.png" alt="Logo" width={80} height={80} className="mb-3" />
 
-      <h1 className="text-5xl font-handwriting text-white text-center mb-2">
-        Évangélisation
-      </h1>
+      <h1 className="text-5xl font-handwriting text-center mb-2">Évangélisation</h1>
 
-      <p className="text-center text-white text-lg mb-4 font-handwriting-light">
+      <p className="text-center text-lg mb-4 font-handwriting-light">
         Chaque personne a une valeur infinie...
       </p>
 
-      {/* ✅ Toggle Vue */}
-      <div className="flex items-center gap-3 mb-4">
-        <button
-          onClick={() => setView("card")}
-          className={`px-4 py-2 rounded-lg font-semibold ${
-            view === "card"
-              ? "bg-white text-blue-700 shadow-md"
-              : "bg-blue-600 text-white"
-          }`}
-        >
-          Vue cartes
-        </button>
-        <button
-          onClick={() => setView("table")}
-          className={`px-4 py-2 rounded-lg font-semibold ${
-            view === "table"
-              ? "bg-white text-blue-700 shadow-md"
-              : "bg-blue-600 text-white"
-          }`}
-        >
-          Vue table
-        </button>
-      </div>
-
-      {/* Sélecteur de cellule */}
-      <div className="mb-4 w-full max-w-md flex flex-col sm:flex-row gap-2">
+      {/* Sélecteur cellule */}
+      <div className="mb-2 w-full max-w-md flex flex-col sm:flex-row gap-2">
         <select
           value={selectedCellule}
           onChange={(e) => setSelectedCellule(e.target.value)}
-          className="border rounded-lg px-4 py-2 w-full"
+          className="border rounded-lg px-4 py-2 w-full text-gray-800"
         >
           <option value="">-- Sélectionner cellule --</option>
           {cellules.map((c) => (
@@ -181,12 +155,20 @@ export default function Evangelisation() {
         {selectedCellule && (
           <button
             onClick={sendWhatsapp}
-            className="bg-green-500 text-white font-bold px-4 py-2 rounded-lg"
+            className="bg-green-500 text-white font-bold px-4 py-2 rounded-lg shadow-lg hover:bg-green-600 transition-all"
           >
             Envoyer par WhatsApp
           </button>
         )}
       </div>
+
+      {/* ✅ Toggle Vue (texte cliquable) */}
+      <p
+        onClick={() => setView(view === "card" ? "table" : "card")}
+        className="cursor-pointer text-sm text-blue-200 underline hover:text-white mb-4"
+      >
+        {view === "card" ? "Changer en vue table" : "Changer en vue carte"}
+      </p>
 
       {/* Vue cartes */}
       {view === "card" && (
@@ -196,48 +178,40 @@ export default function Evangelisation() {
             return (
               <div
                 key={member.id}
-                className="bg-white rounded-lg shadow-md p-2 flex flex-col items-center transition-all duration-500 ease-in-out cursor-pointer overflow-hidden w-full max-w-xs mx-auto"
+                className="bg-white/20 backdrop-blur-md rounded-2xl shadow-lg p-3 flex flex-col items-center transition-all duration-500 ease-in-out overflow-hidden w-full max-w-xs mx-auto border border-white/30"
               >
-                <div className="flex flex-col items-center">
-                  <h2 className="font-bold text-gray-800 text-sm sm:text-base mb-1 text-center">
-                    {member.prenom} {member.nom}
-                  </h2>
-                  <p className="text-xs text-gray-600 mb-1 text-center">
-                    📱 {member.telephone || "—"}
-                  </p>
-                  <label className="flex items-center gap-2 text-xs mb-1">
-                    <input
-                      type="checkbox"
-                      checked={checkedContacts[member.id] || false}
-                      onChange={() => handleCheck(member.id)}
-                    />
-                    WhatsApp
-                  </label>
-                </div>
+                <h2 className="font-bold text-white text-base mb-1 text-center">
+                  {member.prenom} {member.nom}
+                </h2>
+                <p className="text-xs text-white/80 mb-1 text-center">
+                  📱 {member.telephone || "—"}
+                </p>
+                <label className="flex items-center gap-2 text-xs mb-1">
+                  <input
+                    type="checkbox"
+                    checked={checkedContacts[member.id] || false}
+                    onChange={() => handleCheck(member.id)}
+                  />
+                  WhatsApp
+                </label>
 
                 <button
                   onClick={() => toggleDetails(member.id)}
-                  className="text-blue-500 underline mb-1"
+                  className="text-blue-200 underline text-sm"
                 >
                   {isOpen ? "Fermer" : "Détails"}
                 </button>
 
-                <div
-                  className={`text-xs text-gray-700 mt-1 w-full text-center transition-all duration-500 ease-in-out ${
-                    isOpen ? "max-h-96" : "max-h-0"
-                  } overflow-hidden`}
-                >
-                  {isOpen && (
-                    <>
-                      <p>🏙 Ville: {member.ville || "—"}</p>
-                      <p>🙏 Besoin: {member.besoin || "—"}</p>
-                      <p>
-                        📝 Infos supplémentaires:{" "}
-                        {member.infos_supplementaires || "—"}
-                      </p>
-                    </>
-                  )}
-                </div>
+                {isOpen && (
+                  <div className="text-xs text-white/90 mt-2 w-full text-center transition-all duration-500">
+                    <p>🏙 Ville: {member.ville || "—"}</p>
+                    <p>🙏 Besoin: {member.besoin || "—"}</p>
+                    <p>
+                      📝 Infos supplémentaires:{" "}
+                      {member.infos_supplementaires || "—"}
+                    </p>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -246,40 +220,73 @@ export default function Evangelisation() {
 
       {/* Vue table */}
       {view === "table" && (
-        <table className="w-full max-w-5xl bg-white rounded-lg shadow-md text-sm mt-4">
-          <thead className="bg-blue-600 text-white">
-            <tr>
-              <th className="p-2">Sélection</th>
-              <th className="p-2">Nom</th>
-              <th className="p-2">Téléphone</th>
-              <th className="p-2">Ville</th>
-              <th className="p-2">Besoin</th>
-              <th className="p-2">Infos</th>
-            </tr>
-          </thead>
-          <tbody>
-            {contacts.map((member) => (
-              <tr key={member.id} className="border-b hover:bg-gray-100">
-                <td className="text-center">
-                  <input
-                    type="checkbox"
-                    checked={checkedContacts[member.id] || false}
-                    onChange={() => handleCheck(member.id)}
-                  />
-                </td>
-                <td className="p-2 text-gray-800">
-                  {member.prenom} {member.nom}
-                </td>
-                <td className="p-2">{member.telephone || "—"}</td>
-                <td className="p-2">{member.ville || "—"}</td>
-                <td className="p-2">{member.besoin || "—"}</td>
-                <td className="p-2">
-                  {member.infos_supplementaires || "—"}
-                </td>
+        <div className="w-full max-w-5xl overflow-x-auto mt-4">
+          <table className="w-full bg-white/20 backdrop-blur-md rounded-2xl shadow-lg border border-white/30 text-sm">
+            <thead className="bg-white/10 text-blue-100">
+              <tr>
+                <th className="p-3 text-left">Prénom</th>
+                <th className="p-3 text-left">Nom</th>
+                <th className="p-3 text-center">WhatsApp</th>
+                <th className="p-3 text-center">Détails</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {contacts.map((member) => (
+                <tr
+                  key={member.id}
+                  className="hover:bg-white/10 transition-all"
+                >
+                  <td className="p-3">{member.prenom}</td>
+                  <td className="p-3">{member.nom}</td>
+                  <td className="text-center">
+                    <input
+                      type="checkbox"
+                      checked={checkedContacts[member.id] || false}
+                      onChange={() => handleCheck(member.id)}
+                    />
+                  </td>
+                  <td
+                    onClick={() => toggleDetails(member.id)}
+                    className="text-blue-200 underline text-center cursor-pointer"
+                  >
+                    {detailsOpen[member.id] ? "Fermer" : "Détails"}
+                  </td>
+
+                  {/* ✅ Popup Glassmorphism */}
+                  {detailsOpen[member.id] && (
+                    <td colSpan="4">
+                      <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
+                        <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl p-6 w-80 text-white text-sm relative">
+                          <button
+                            onClick={() => toggleDetails(member.id)}
+                            className="absolute top-2 right-3 text-white/80 hover:text-white text-lg"
+                          >
+                            ✖
+                          </button>
+                          <h3 className="text-lg font-bold mb-3 text-center">
+                            {member.prenom} {member.nom}
+                          </h3>
+                          <p>📱 Téléphone : {member.telephone || "—"}</p>
+                          <p>🏙 Ville : {member.ville || "—"}</p>
+                          <p>🙏 Besoin : {member.besoin || "—"}</p>
+                          <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
+                          <div className="flex items-center gap-2 mt-3">
+                            <input
+                              type="checkbox"
+                              checked={checkedContacts[member.id] || false}
+                              onChange={() => handleCheck(member.id)}
+                            />
+                            <span>WhatsApp</span>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

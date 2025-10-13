@@ -9,22 +9,29 @@ export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
   const [detailsOpen, setDetailsOpen] = useState({});
   const [loading, setLoading] = useState(true);
-  const [statusChanges, setStatusChanges] = useState({});
-  const [commentChanges, setCommentChanges] = useState({});
-  const [updating, setUpdating] = useState({});
+  const [vueTable, setVueTable] = useState(false);
+  const [popupData, setPopupData] = useState(null);
+  const [cellules, setCellules] = useState({});
 
   useEffect(() => {
+    fetchCellules();
     fetchSuivis();
   }, []);
+
+  const fetchCellules = async () => {
+    const { data, error } = await supabase.from("cellules").select("id, cellule");
+    if (!error && data) {
+      const map = {};
+      data.forEach((c) => (map[c.id] = c.cellule));
+      setCellules(map);
+    }
+  };
 
   const fetchSuivis = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("suivis_des_evangelises")
-      .select(`
-        *,
-        cellules:cellule_id (cellule)
-      `)
+      .select("*")
       .order("date_suivi", { ascending: false });
 
     if (error) {
@@ -36,52 +43,18 @@ export default function SuivisEvangelisation() {
     setLoading(false);
   };
 
-  const toggleDetails = (id) =>
+  const toggleDetails = (id) => {
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
-
-  const handleStatusChange = (id, value) => {
-    setStatusChanges((prev) => ({ ...prev, [id]: value }));
   };
 
-  const handleCommentChange = (id, value) => {
-    setCommentChanges((prev) => ({ ...prev, [id]: value }));
-  };
+  const toggleVue = () => setVueTable((prev) => !prev);
 
-  const updateStatus = async (id) => {
-    const newStatus = statusChanges[id];
-    const newComment = commentChanges[id];
-
-    if (!newStatus && !newComment) return;
-
-    setUpdating((prev) => ({ ...prev, [id]: true }));
-
-    const { error } = await supabase
+  const handleWhatsAppChange = async (id, checked) => {
+    await supabase
       .from("suivis_des_evangelises")
-      .update({
-        status_suivis_evangelises: newStatus, // ✅ correction ici
-        commentaire_evangelises: newComment,
-      })
+      .update({ whatsapp: checked })
       .eq("id", id);
-
-    if (error) {
-      console.error("Erreur de mise à jour :", error.message);
-    } else {
-      setSuivis((prev) =>
-        prev.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                status_suivis_evangelises:
-                  newStatus ?? item.status_suivis_evangelises, // ✅ correction ici
-                commentaire_evangelises:
-                  newComment ?? item.commentaire_evangelises,
-              }
-            : item
-        )
-      );
-    }
-
-    setUpdating((prev) => ({ ...prev, [id]: false }));
+    fetchSuivis();
   };
 
   return (
@@ -101,18 +74,64 @@ export default function SuivisEvangelisation() {
         Suivis des Évangélisés
       </h1>
 
-      <p className="text-center text-white text-lg mb-6 font-handwriting-light">
+      <p className="text-center text-white text-lg mb-4 font-handwriting-light">
         Voici les personnes confiées pour le suivi spirituel 🌱
       </p>
 
-      {/* Contenu */}
+      {/* Toggle vue */}
+      <p
+        onClick={toggleVue}
+        className="text-white underline cursor-pointer mb-6 hover:text-gray-200"
+      >
+        Changer de vue
+      </p>
+
       {loading ? (
         <p className="text-white">Chargement en cours...</p>
       ) : suivis.length === 0 ? (
         <p className="text-white text-lg italic">
           Aucun contact suivi pour le moment.
         </p>
+      ) : vueTable ? (
+        /* Vue Table */
+        <div className="w-full max-w-5xl overflow-x-auto">
+          <table className="w-full bg-white rounded-2xl shadow-lg">
+            <thead className="bg-purple-600 text-white">
+              <tr>
+                <th className="p-3 text-left">Prénom</th>
+                <th className="p-3 text-left">Nom</th>
+                <th className="p-3 text-center">WhatsApp</th>
+                <th className="p-3 text-center">Détails</th>
+              </tr>
+            </thead>
+            <tbody>
+              {suivis.map((item) => (
+                <tr key={item.id} className="border-b hover:bg-gray-100">
+                  <td className="p-3">{item.prenom}</td>
+                  <td className="p-3">{item.nom}</td>
+                  <td className="p-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={item.whatsapp || false}
+                      onChange={(e) =>
+                        handleWhatsAppChange(item.id, e.target.checked)
+                      }
+                      className="cursor-pointer"
+                    />
+                  </td>
+                  <td
+                    className="p-3 text-blue-600 underline text-center cursor-pointer"
+                    onClick={() => setPopupData(item)}
+                  >
+                    Détails
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
+        /* Vue Cards */
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
           {suivis.map((item) => {
             const isOpen = detailsOpen[item.id];
@@ -130,77 +149,26 @@ export default function SuivisEvangelisation() {
                 </p>
 
                 <p className="text-sm text-gray-700 mb-1">
-                  🕊 Cellule : {item.cellules?.cellule || "—"}
+                  🕊 Cellule : {cellules[item.cellule_id] || "—"}
                 </p>
 
                 <p className="text-sm text-gray-700 mb-2">
                   👑 Responsable : {item.responsable_cellule || "—"}
                 </p>
 
-                {/* Détails */}
                 <button
                   onClick={() => toggleDetails(item.id)}
-                  className="text-blue-500 underline text-sm mt-1"
+                  className="text-blue-500 underline text-sm"
                 >
                   {isOpen ? "Fermer" : "Voir détails"}
                 </button>
 
                 {isOpen && (
-                  <div className="text-gray-600 text-sm text-center mt-2 space-y-2 w-full">
+                  <div className="text-gray-600 text-sm text-center mt-2 space-y-1">
                     <p>🏙 Ville : {item.ville || "—"}</p>
                     <p>🙏 Besoin : {item.besoin || "—"}</p>
                     <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
-
-                    {/* Champ commentaire */}
-                    <div className="mt-2">
-                      <label className="text-gray-700 text-sm">💬 Commentaire :</label>
-                      <textarea
-                        value={
-                          commentChanges[item.id] ??
-                          item.commentaire_evangelises ??
-                          ""
-                        }
-                        onChange={(e) =>
-                          handleCommentChange(item.id, e.target.value)
-                        }
-                        rows={2}
-                        className="w-full border rounded-md px-2 py-1 text-sm mt-1 resize-none"
-                        placeholder="Ajouter un commentaire..."
-                      ></textarea>
-                    </div>
-
-                    {/* Menu déroulant statut */}
-                    <div className="mt-2">
-                      <label className="text-gray-700 text-sm">
-                        📋 Statut du suivi :
-                      </label>
-                      <select
-                        value={
-                          statusChanges[item.id] ??
-                          item.status_suivis_evangelises ?? // ✅ correction ici
-                          ""
-                        }
-                        onChange={(e) =>
-                          handleStatusChange(item.id, e.target.value)
-                        }
-                        className="w-full border rounded-md px-2 py-1 text-sm mt-1"
-                      >
-                        <option value="">-- Choisir un statut --</option>
-                        <option value="En cours">🕊 En cours</option>
-                        <option value="Actif">🔥 Actif</option>
-                        <option value="Veut venir à l’église">⛪ Veut venir à l’église</option>
-                        <option value="Veut venir à la famille d’impact">
-                          👨‍👩‍👧‍👦 Veut venir à la famille d’impact
-                        </option>
-                        <option value="Veut être visité">🏡 Veut être visité</option>
-                        <option value="Ne souhaite pas continuer">
-                          🚫 Ne souhaite pas continuer
-                        </option>
-                      </select>
-                    </div>
-
-                    {/* Date du suivi */}
-                    <p className="mt-2">
+                    <p>
                       📅 Date du suivi :{" "}
                       {new Date(item.date_suivi).toLocaleDateString("fr-FR", {
                         day: "2-digit",
@@ -208,24 +176,54 @@ export default function SuivisEvangelisation() {
                         year: "numeric",
                       })}
                     </p>
-
-                    {/* Bouton mise à jour */}
-                    <button
-                      onClick={() => updateStatus(item.id)}
-                      disabled={updating[item.id]}
-                      className={`mt-2 w-full text-white font-semibold py-1 rounded-md transition ${
-                        updating[item.id]
-                          ? "bg-gray-400 cursor-not-allowed"
-                          : "bg-blue-600 hover:bg-blue-700"
-                      }`}
-                    >
-                      {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
-                    </button>
                   </div>
                 )}
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Popup Détails */}
+      {popupData && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white rounded-2xl p-6 shadow-2xl w-full max-w-md relative">
+            <button
+              onClick={() => setPopupData(null)}
+              className="absolute top-2 right-3 text-gray-500 hover:text-gray-800 text-xl"
+            >
+              ✕
+            </button>
+            <h2 className="text-xl font-bold text-center mb-4">
+              👤 {popupData.prenom} {popupData.nom}
+            </h2>
+            <div className="text-gray-700 space-y-2">
+              <p>📞 Téléphone : {popupData.telephone || "—"}</p>
+              <p>🕊 Cellule : {cellules[popupData.cellule_id] || "—"}</p>
+              <p>👑 Responsable : {popupData.responsable_cellule || "—"}</p>
+              <p>🏙 Ville : {popupData.ville || "—"}</p>
+              <p>🙏 Besoin : {popupData.besoin || "—"}</p>
+              <p>📝 Infos : {popupData.infos_supplementaires || "—"}</p>
+              <p>
+                📅 Date du suivi :{" "}
+                {new Date(popupData.date_suivi).toLocaleDateString("fr-FR", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </p>
+              <label className="flex items-center space-x-2 mt-3">
+                <input
+                  type="checkbox"
+                  checked={popupData.whatsapp || false}
+                  onChange={(e) =>
+                    handleWhatsAppChange(popupData.id, e.target.checked)
+                  }
+                />
+                <span>Contact WhatsApp</span>
+              </label>
+            </div>
+          </div>
         </div>
       )}
     </div>

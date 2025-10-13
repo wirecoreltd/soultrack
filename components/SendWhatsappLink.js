@@ -1,137 +1,69 @@
-//SendWhatsappLink.js
+// components/SendLinkPopup.js
 "use client";
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function SendWhatsappLink({ type, label, buttonColor = "bg-green-500" }) {
-  const [showPopup, setShowPopup] = useState(false);
-  const [phone, setPhone] = useState("");
-  const [sending, setSending] = useState(false);
-  const [token, setToken] = useState(null);
+export default function SendLinkPopup({ label, type, buttonColor }) {
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (type === "voir_copier") return;
+  const handleSendLink = async () => {
+    setLoading(true);
+    try {
+      // Récupérer l'userId depuis localStorage ou props selon ton cas
+      const userId = localStorage.getItem("userId");
+      if (!userId) throw new Error("Utilisateur non connecté");
 
-    const fetchToken = async () => {
+      // Générer un token UUID unique
+      const token = crypto.randomUUID();
+
+      // Définir expiration du lien (ici 24h)
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      // Insérer le token dans Supabase
       const { data, error } = await supabase
         .from("access_tokens")
-        .select("token")
-        .eq("access_type", type)
-        .limit(1)
-        .single();
+        .insert([
+          {
+            user_id: userId,
+            token,
+            access_type: type,
+            expires_at: expiresAt,
+          },
+        ])
+        .select();
 
-      if (!error && data) setToken(data.token);
-    };
-
-    fetchToken();
-  }, [type]);
-
-  const handleSend = async () => {
-    if (!phone) return alert("Veuillez saisir un numéro WhatsApp.");
-
-    setSending(true);
-
-    try {
-      // ✅ Crée le membre s'il n'existe pas
-      const { data: existingMember } = await supabase
-        .from("membres")
-        .select("*")
-        .eq("telephone", phone.trim())
-        .single();
-
-      let memberId;
-      if (!existingMember) {
-        const { data: newMember, error: insertError } = await supabase
-          .from("membres")
-          .insert([{ telephone: phone.trim(), statut: "visiteur", created_at: new Date() }])
-          .select()
-          .single();
-        if (insertError) throw insertError;
-        memberId = newMember.id;
-      } else {
-        memberId = existingMember.id;
+      if (error) {
+        console.error("Erreur insertion access_token:", error);
+        throw error;
       }
 
-      // ✅ Crée un suivi "envoye"
-      await supabase.from("suivis_membres").insert([
-        { membre_id: memberId, statut: "envoye", created_at: new Date() },
-      ]);
+      console.log("Token créé avec succès:", data[0]);
 
-      // ✅ Préparer le message WhatsApp
-      let message;
-      if (type === "ajouter_membre") {
-        message = `Voici le lien pour ajouter un nouveau membre : 👉 ${window.location.origin}/access/${token}`;
-      } else if (type === "ajouter_evangelise") {
-        message = `Voici le lien pour ajouter un nouveau évangélisé : 👉 ${window.location.origin}/access/${token}`;
-      } else {
-        message = `Voici le lien : 👉 ${window.location.origin}/access/${token || type}`;
-      }
+      // Construire le lien à envoyer
+      const link = `${window.location.origin}/access/${token}`;
+      console.log("Lien généré:", link);
 
-      const waUrl = `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
-      window.open(waUrl, "_blank");
+      // Ici tu peux envoyer le lien via WhatsApp ou autre méthode
+      // Exemple simple :
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`, "_blank");
 
-      setPhone("");
-      setShowPopup(false);
+      alert("Lien envoyé avec succès !");
     } catch (err) {
-      console.error("Erreur envoi WhatsApp :", err);
-      alert("Erreur lors de l'envoi du lien et création du suivi.");
+      console.error("Erreur lors de l'envoi du lien et création du suivi:", err);
+      alert("Erreur lors de l'envoi du lien et création du suivi. Voir console pour détails.");
     } finally {
-      setSending(false);
+      setLoading(false);
     }
   };
 
-  if ((type === "ajouter_membre" || type === "ajouter_evangelise") && !token) {
-    return (
-      <button
-        className={`w-full py-3 rounded-2xl text-white font-bold ${buttonColor} cursor-not-allowed`}
-        disabled
-      >
-        {label} - Token introuvable
-      </button>
-    );
-  }
-
   return (
-    <div className="w-full">
-      <button
-        onClick={() => setShowPopup(true)}
-        className={`w-full py-3 rounded-2xl text-white font-bold ${buttonColor} transition-all duration-200`}
-      >
-        {label}
-      </button>
-
-      {showPopup && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-lg flex flex-col gap-4">
-            <h3 className="text-lg font-bold text-center">{label}</h3>
-            <p className="text-sm text-gray-700 text-center mb-2">
-              Saisir le numéro WhatsApp avec indicatif (laisser vide pour choisir un contact existant)
-            </p>
-            <input
-              type="tel"
-              placeholder="+230XXXXXXXX"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="border rounded-xl px-3 py-2 w-full text-center"
-            />
-            <div className="flex justify-end gap-2 mt-2">
-              <button
-                onClick={() => setShowPopup(false)}
-                className="px-4 py-2 rounded-xl bg-gray-300 text-gray-800 font-bold"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleSend}
-                disabled={sending}
-                className="px-4 py-2 rounded-xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
-              >
-                {sending ? "Envoi..." : "Envoyer"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    <button
+      onClick={handleSendLink}
+      className={`w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r ${buttonColor} hover:opacity-90 transition`}
+      disabled={loading}
+    >
+      {loading ? "Envoi..." : label}
+    </button>
   );
 }

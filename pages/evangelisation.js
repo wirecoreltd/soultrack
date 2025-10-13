@@ -119,7 +119,7 @@ export default function Evangelisation() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-orange-500 to-yellow-300 text-white">
+    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-blue-800 to-cyan-400 text-white">
       <button
         onClick={() => window.history.back()}
         className="self-start mb-4 font-semibold hover:text-gray-200"
@@ -216,7 +216,7 @@ export default function Evangelisation() {
       {/* Vue table */}
       {view === "table" && (
         <div className="w-full max-w-5xl overflow-x-auto mt-4 relative">
-          <table className="w-full bg-gradient-to-tr from-orange-300/50 via-yellow-200/30 to-pink-200/20 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 text-sm">
+          <table className="w-full bg-gradient-to-tr from-orange-400/30 via-yellow-200/20 to-pink-300/20 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 text-sm">
             <thead className="bg-yellow-200/40 text-gray-900">
               <tr>
                 <th className="p-3 text-left">Prénom</th>

@@ -119,7 +119,7 @@ export default function Evangelisation() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-blue-800 to-cyan-400 text-white">
+    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-orange-500 to-yellow-300 text-white">
       <button
         onClick={() => window.history.back()}
         className="self-start mb-4 font-semibold hover:text-gray-200"
@@ -161,7 +161,7 @@ export default function Evangelisation() {
 
       <p
         onClick={() => setView(view === "card" ? "table" : "card")}
-        className="cursor-pointer text-sm text-yellow-200 underline hover:text-white mb-4"
+        className="cursor-pointer text-sm text-yellow-100 underline hover:text-white mb-4"
       >
         {view === "card" ? "Changer en vue table" : "Changer en vue carte"}
       </p>
@@ -174,7 +174,7 @@ export default function Evangelisation() {
             return (
               <div
                 key={member.id}
-                className="bg-gradient-to-tr from-orange-400/40 via-yellow-300/30 to-pink-400/30 backdrop-blur-md rounded-2xl shadow-lg p-3 flex flex-col items-center transition-all duration-500 ease-in-out overflow-hidden w-full max-w-xs mx-auto border border-white/30"
+                className="bg-gradient-to-tr from-orange-400/60 via-yellow-200/30 to-pink-300/30 backdrop-blur-md rounded-2xl shadow-lg p-3 flex flex-col items-center transition-all duration-500 ease-in-out overflow-hidden w-full max-w-xs mx-auto border border-white/20"
               >
                 <h2 className="font-bold text-white text-base mb-1 text-center">
                   {member.prenom} {member.nom}
@@ -216,8 +216,8 @@ export default function Evangelisation() {
       {/* Vue table */}
       {view === "table" && (
         <div className="w-full max-w-5xl overflow-x-auto mt-4 relative">
-          <table className="w-full bg-gradient-to-tr from-orange-400/30 via-yellow-300/20 to-pink-400/20 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 text-sm">
-            <thead className="bg-yellow-200/20 text-gray-900">
+          <table className="w-full bg-gradient-to-tr from-orange-300/50 via-yellow-200/30 to-pink-200/20 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 text-sm">
+            <thead className="bg-yellow-200/40 text-gray-900">
               <tr>
                 <th className="p-3 text-left">Prénom</th>
                 <th className="p-3 text-left">Nom</th>
@@ -227,7 +227,7 @@ export default function Evangelisation() {
             </thead>
             <tbody>
               {contacts.map((member) => (
-                <tr key={member.id} className="hover:bg-yellow-200/30 transition-all">
+                <tr key={member.id} className="hover:bg-yellow-200/50 transition-all">
                   <td className="p-3">{member.prenom}</td>
                   <td className="p-3">{member.nom}</td>
                   <td className="text-center">
@@ -255,7 +255,7 @@ export default function Evangelisation() {
                 key={member.id}
                 className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
               >
-                <div className="bg-gradient-to-tr from-orange-400/40 via-yellow-300/30 to-pink-400/40 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-6 w-80 text-gray-900 text-sm relative">
+                <div className="bg-gradient-to-tr from-orange-400/60 via-yellow-200/40 to-pink-300/30 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-6 w-80 text-gray-900 text-sm relative">
                   <button
                     onClick={() => toggleDetails(member.id)}
                     className="absolute top-3 right-3 text-sm text-orange-600 hover:text-orange-700 underline"

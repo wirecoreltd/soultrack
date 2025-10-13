@@ -1,100 +1,73 @@
-//components/SendAppLink.js
-
+// components/SendAppLinkPopup.js
 "use client";
 
 import { useState } from "react";
 
-export default function SendAppLink({ label, buttonColor, linkType }) {
-  const [manual, setManual] = useState(false);
-  const [phone, setPhone] = useState("");
-  const [popupOpen, setPopupOpen] = useState(false);
+export default function SendAppLinkPopup({ label, type, defaultNumber = "+2305xxxxxx" }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState(defaultNumber);
+  const [loading, setLoading] = useState(false);
 
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const page = linkType === "membre" ? "add-member" : "add-evangelise";
-  const link = `${baseUrl}/${page}`;
-
-  const handleOpenWhatsApp = () => {
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`, "_blank");
-    setPopupOpen(false);
+  // Définir le lien selon le type
+  const getLink = () => {
+    if (type === "ajouter_membre") return `${window.location.origin}/add-member`;
+    if (type === "ajouter_evangelise") return `${window.location.origin}/add-evangelise`;
+    return window.location.origin;
   };
 
-  const handleSendManual = () => {
-    if (!phone) return alert("Veuillez entrer un numéro valide avec l’indicatif, ex: +2305XXXXXXX");
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(link)}`, "_blank");
-    setPhone("");
-    setManual(false);
-    setPopupOpen(false);
+  const handleSend = () => {
+    setLoading(true);
+    try {
+      const whatsappLink = `https://api.whatsapp.com/send?phone=${phoneNumber.replace(/\D/g, '')}&text=${encodeURIComponent(getLink())}`;
+      window.open(whatsappLink, "_blank");
+      setIsOpen(false);
+    } catch (err) {
+      console.error("Erreur en envoyant le lien :", err);
+      alert("Erreur lors de l'envoi du lien.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <>
-      {/* Bouton principal pour ouvrir le popup */}
       <button
-        onClick={() => setPopupOpen(true)}
-        className={`w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r ${buttonColor} hover:opacity-90 transition`}
+        onClick={() => setIsOpen(true)}
+        className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#09203F] to-[#537895] hover:opacity-90 transition"
       >
         {label}
       </button>
 
-      {/* Popup */}
-      {popupOpen && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl flex flex-col gap-4 relative">
-            
-            {/* Fermer le popup */}
-            <button
-              onClick={() => { setPopupOpen(false); setManual(false); setPhone(""); }}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 font-bold"
-            >
-              ✕
-            </button>
-
-            <h2 className="text-xl font-bold text-center">{label}</h2>
-            <p className="text-sm text-gray-600 text-center">
-              Cliquez sur "Envoyer" si le contact figure déjà dans votre liste WhatsApp.
+      {isOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm relative">
+            <h2 className="text-xl font-bold mb-3 text-center">{label}</h2>
+            <p className="text-gray-600 mb-4 text-center">
+              Cliquez sur <strong>Envoyer</strong> si le contact figure déjà dans votre liste WhatsApp.
             </p>
 
-            {/* Bouton pour ouvrir WhatsApp avec les contacts */}
-            <button
-              onClick={handleOpenWhatsApp}
-              className="w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold shadow-md transition"
-            >
-              Envoyer
-            </button>
+            <input
+              type="text"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 text-center focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
 
-            {/* Option pour numéro manuel */}
-            {!manual ? (
+            <div className="flex justify-between gap-4">
               <button
-                onClick={() => setManual(true)}
-                className="w-full py-2 text-sm text-gray-700 underline"
+                onClick={() => setIsOpen(false)}
+                className="flex-1 py-2 bg-gray-300 hover:bg-gray-400 rounded-lg font-semibold transition"
               >
-                Saisir un numéro manuellement
+                Annuler
               </button>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <input
-                  type="text"
-                  placeholder="+2305XXXXXXX"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="border p-2 rounded-lg text-center"
-                />
-                <div className="flex gap-2 justify-center">
-                  <button
-                    onClick={handleSendManual}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
-                  >
-                    Envoyer
-                  </button>
-                  <button
-                    onClick={() => { setManual(false); setPhone(""); }}
-                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg"
-                  >
-                    Annuler
-                  </button>
-                </div>
-              </div>
-            )}
+              <button
+                onClick={handleSend}
+                disabled={loading}
+                className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition"
+              >
+                {loading ? "Envoi..." : "Envoyer"}
+              </button>
+            </div>
           </div>
         </div>
       )}

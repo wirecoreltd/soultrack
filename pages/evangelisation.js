@@ -162,7 +162,7 @@ export default function Evangelisation() {
         )}
       </div>
 
-      {/* ✅ Toggle Vue (texte cliquable) */}
+      {/* Toggle Vue */}
       <p
         onClick={() => setView(view === "card" ? "table" : "card")}
         className="cursor-pointer text-sm text-blue-200 underline hover:text-white mb-4"
@@ -219,7 +219,7 @@ export default function Evangelisation() {
 
       {/* Vue table */}
       {view === "table" && (
-        <div className="w-full max-w-5xl overflow-x-auto mt-4">
+        <div className="w-full max-w-5xl overflow-x-auto mt-4 relative">
           <table className="w-full bg-white/20 backdrop-blur-md rounded-2xl shadow-lg border border-white/30 text-sm">
             <thead className="bg-white/10 text-blue-100">
               <tr>
@@ -259,14 +259,14 @@ export default function Evangelisation() {
                 key={member.id}
                 className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50"
               >
-                <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl p-6 w-80 text-white text-sm relative">
+                <div className="bg-white/30 backdrop-blur-xl border border-white/40 rounded-2xl shadow-2xl p-6 w-80 text-gray-900 text-sm relative">
                   <button
                     onClick={() => toggleDetails(member.id)}
-                    className="absolute top-2 right-3 text-white/80 hover:text-white text-lg"
+                    className="absolute top-3 right-3 text-sm text-gray-700 hover:text-gray-900 underline"
                   >
-                    ✖
+                    Fermer
                   </button>
-                  <h3 className="text-lg font-bold mb-3 text-center">
+                  <h3 className="text-lg font-bold mb-3 text-center text-white">
                     {member.prenom} {member.nom}
                   </h3>
                   <p>📱 Téléphone : {member.telephone || "—"}</p>

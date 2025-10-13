@@ -1,70 +1,85 @@
 ///components/BoutonEnvoyer.js
-
 "use client";
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function BoutonEnvoyer({ membre, cellule }) {
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [sent, setSent] = useState(false);
 
-  const handleEnvoyer = async () => {
-    if (!membre || !cellule) return;
+  const handleSend = async () => {
+    // Vérifier la session utilisateur
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      console.error("Erreur de session:", sessionError.message);
+      alert("Erreur de session Supabase");
+      return;
+    }
+
+    if (!session) {
+      alert("❌ Erreur : utilisateur non connecté");
+      return;
+    }
+
+    if (!cellule) {
+      alert("⚠️ Sélectionne une cellule avant d’envoyer !");
+      return;
+    }
+
     setLoading(true);
-    setMessage("");
 
     try {
-      // ✅ Vérifie si l'utilisateur est connecté
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Utilisateur non connecté");
-
-      // ✅ Mise à jour du statut du membre
-      const { error: updateError } = await supabase
-        .from("membres")
-        .update({ statut: "actif" })
-        .eq("id", membre.id);
-
-      if (updateError) throw updateError;
-
-      // ✅ Insertion dans suivis_membres
-      const { error: insertError } = await supabase.from("suivis_membres").insert([
+      // Insertion dans la table suivis_membres
+      const { error } = await supabase.from("suivis_membres").insert([
         {
           membre_id: membre.id,
+          cellule_id: cellule.id,
           prenom: membre.prenom,
           nom: membre.nom,
           telephone: membre.telephone,
+          statut_membre: membre.statut,
           besoin: membre.besoin,
-          cellule_id: cellule.id,
+          infos_supplementaires: membre.infos_supplementaires,
           cellule_nom: cellule.cellule,
           responsable: cellule.responsable,
-          statut: "actif",
+          statut: "envoye",
+          created_at: new Date().toISOString(),
         },
       ]);
 
-      if (insertError) throw insertError;
-
-      setMessage("✅ Contact envoyé et suivi créé !");
+      if (error) {
+        console.error("Erreur insertion :", error);
+        alert("❌ Erreur lors de l’envoi vers le suivi");
+      } else {
+        alert(`✅ ${membre.prenom} ${membre.nom} a été envoyé vers ${cellule.cellule}`);
+        setSent(true);
+      }
     } catch (err) {
-      console.error("Erreur envoi :", err.message);
-      setMessage("❌ Erreur : " + err.message);
-    } finally {
-      setLoading(false);
+      console.error("Exception lors de l’envoi :", err.message);
+      alert("Erreur inattendue lors de l’envoi");
     }
+
+    setLoading(false);
   };
 
   return (
-    <div className="mt-2">
-      <button
-        onClick={handleEnvoyer}
-        disabled={loading}
-        className={`px-4 py-2 rounded-lg text-white transition ${
-          loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
-        }`}
-      >
-        {loading ? "Envoi..." : "📤 Envoyer vers suivis"}
-      </button>
-      {message && <p className="text-sm mt-1 text-gray-700">{message}</p>}
-    </div>
+    <button
+      onClick={handleSend}
+      disabled={loading || sent}
+      className={`mt-3 w-full py-2 rounded-lg text-white font-semibold transition duration-300 ${
+        sent
+          ? "bg-green-500 cursor-not-allowed"
+          : loading
+          ? "bg-gray-400 cursor-wait"
+          : "bg-indigo-600 hover:bg-indigo-700"
+      }`}
+    >
+      {sent ? "✅ Envoyé" : loading ? "⏳ Envoi..." : "📤 Envoyer vers suivis"}
+    </button>
   );
 }
 

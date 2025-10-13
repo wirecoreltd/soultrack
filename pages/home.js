@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import SendAppLinkPopup from "../components/SendAppLinkPopup";
+import SendLinkPopup from "../components/SendLinkPopup";
 
 export default function Home() {
   const router = useRouter();
@@ -142,7 +142,7 @@ export default function Home() {
       {/* Boutons “Envoyer l'appli” avec popup */}
       <div className="flex flex-col gap-3 mt-4 w-full max-w-md">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <SendAppLinkPopup
+          <SendLinkPopup
             label="Envoyer l'appli – Nouveau membre"
             type="ajouter_membre"
             buttonColor="from-[#09203F] to-[#537895]"
@@ -151,7 +151,7 @@ export default function Home() {
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <SendAppLinkPopup
+          <SendLinkPopup
             label="Envoyer l'appli – Évangélisé"
             type="ajouter_evangelise"
             buttonColor="from-[#09203F] to-[#537895]"

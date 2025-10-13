@@ -1,124 +1,93 @@
-//pages/login.js
 "use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-
-// Fonction de hash (identique à celle du create-internal-user)
-async function hashPassword(password) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-}
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    // 🔹 Vérifie si l'utilisateur est déjà connecté
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        // ✅ Session déjà active, redirection
+        router.push("/list-members");
+      }
+    };
+    checkSession();
+  }, [router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    setError("");
 
-    try {
-      // 1️⃣ Vérifier si l'utilisateur existe
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("email", email)
-        .single();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-      if (error || !profile) {
-        setError("Utilisateur introuvable");
-        setLoading(false);
-        return;
-      }
-
-      // 2️⃣ Comparer le mot de passe hashé
-      const hashed = await hashPassword(password);
-      if (hashed !== profile.password_hash) {
-        setError("Mot de passe incorrect");
-        setLoading(false);
-        return;
-      }
-
-      // 3️⃣ Stocker les infos de session
-      localStorage.setItem("userId", profile.id);
-      localStorage.setItem("username", profile.username);
-      localStorage.setItem("role", profile.role);
-
-      // 4️⃣ Redirection vers Home
-      router.push("/home");
-    } catch (err) {
-      console.error(err);
-      setError("Erreur inattendue lors de la connexion");
-    } finally {
+    if (error) {
+      setError(error.message);
       setLoading(false);
+      return;
     }
+
+    // 🔹 Recharge la session pour être sûr que le client la garde
+    await supabase.auth.getSession();
+
+    // ✅ Redirection après login réussi
+    router.push("/list-members");
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
-      <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
-        {/* Titre avec logo responsive */}
-        <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <img
-            src="/logo.png"
-            alt="Logo SoulTrack"
-            className="w-12 h-12 object-contain"
-          />
-          SoulTrack
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <form
+        onSubmit={handleLogin}
+        className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md"
+      >
+        <h1 className="text-2xl font-semibold text-center mb-6 text-gray-800">
+          Connexion
         </h1>
 
-        {/* Message de bienvenue */}
-        <p className="text-center text-gray-700 mb-6">
-          Bienvenue sur SoulTrack !<br />
-          Une plateforme pour garder le contact, organiser les visites,
-          et soutenir chaque membre dans sa vie spirituelle.
-        </p>
+        {error && (
+          <p className="bg-red-100 text-red-700 p-2 rounded mb-4 text-sm">
+            {error}
+          </p>
+        )}
 
-        {/* Formulaire login */}
-        <form onSubmit={handleLogin} className="flex flex-col w-full gap-4">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
-            required
-          />
+        <label className="block mb-2 text-gray-700">Email</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="w-full p-2 border rounded-md mb-4"
+        />
 
-          <input
-            type="password"
-            placeholder="Mot de passe"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
-            required
-          />
+        <label className="block mb-2 text-gray-700">Mot de passe</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="w-full p-2 border rounded-md mb-6"
+        />
 
-          {error && <p className="text-red-500 text-center">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
-          >
-            {loading ? "Connexion..." : "Se connecter"}
-          </button>
-        </form>
-
-        {/* Texte biblique sous le bouton */}
-        <p className="text-center italic font-semibold mt-4 text-green-600">
-          "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
-        </p>
-      </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+        >
+          {loading ? "Connexion..." : "Se connecter"}
+        </button>
+      </form>
     </div>
   );
 }

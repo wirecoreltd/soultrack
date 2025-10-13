@@ -6,8 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import SendAppLink from "../components/SendAppLink";
-import SendAppLinkEvangelise from "../components/SendAppLinkEvangelise";
+import SendAppLinkPopup from "../components/SendAppLinkPopup";
 
 export default function Home() {
   const router = useRouter();
@@ -17,6 +16,7 @@ export default function Home() {
   useEffect(() => {
     const loadProfile = async () => {
       const userId = localStorage.getItem("userId");
+
       if (!userId) {
         router.push("/login");
         return;
@@ -55,7 +55,9 @@ export default function Home() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-between p-6 gap-2 relative"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+      style={{
+        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
+      }}
     >
       {/* Bouton Déconnexion */}
       <button
@@ -137,14 +139,22 @@ export default function Home() {
         )}
       </div>
 
-      {/* Liens rapides – boutons WhatsApp */}
+      {/* Boutons Envoyer l'appli */}
       <div className="flex flex-col gap-3 mt-4 w-full max-w-md">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <SendAppLink label="Envoyer l'appli – Nouveau membre" linkPage="add-member" />
+          <SendAppLinkPopup
+            label="Envoyer l'appli – Nouveau membre"
+            type="ajouter_membre"
+            token="58eff16c-f480-4c73-a6e0-aa4423d2069d"
+          />
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <SendAppLinkEvangelise />
+          <SendAppLinkPopup
+            label="Envoyer l'appli – Évangélisé"
+            type="ajouter_evangelise"
+            token="33dd234f-8146-4818-976c-af7bfdcefe95"
+          />
         )}
       </div>
 
@@ -155,4 +165,5 @@ export default function Home() {
     </div>
   );
 }
+
 

@@ -1,46 +1,48 @@
 //pages/suivis-membres.js
 "use client";
-
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "../lib/supabaseClient";
 
-export default function SuivisMembresPage() {
+export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  // 🧩 Charger les suivis existants
+  // --- récupérer les suivis existants ---
   const fetchSuivis = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("suivis_membres")
-        .select("*")
-        .order("created_at", { ascending: false });
+    const { data, error } = await supabase
+      .from("suivis_membres")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Erreur chargement suivis:", error);
-      } else {
-        setSuivis(data || []);
-      }
-    } catch (err) {
-      console.error("Exception fetchSuivis:", err);
-    } finally {
-      setLoading(false);
+    if (error) {
+      console.error("Erreur lors du chargement des suivis:", error.message);
+      return;
     }
+    setSuivis(data || []);
   };
 
-  // ⚡ Realtime listener
+  // --- écouter les changements en temps réel ---
   useEffect(() => {
     fetchSuivis();
 
     const channel = supabase
-      .channel("suivis-membres-realtime")
+      .channel("realtime_suivis_membres")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "suivis_membres" },
+        { event: "*", schema: "public", table: "suivis_membres" },
         (payload) => {
-          console.log("📡 Nouveau suivi reçu:", payload.new);
-          setSuivis((prev) => [payload.new, ...prev]);
+          console.log("🟢 Realtime event:", payload);
+          setSuivis((prev) => {
+            if (payload.eventType === "INSERT") {
+              return [payload.new, ...prev];
+            } else if (payload.eventType === "UPDATE") {
+              return prev.map((s) =>
+                s.id === payload.new.id ? payload.new : s
+              );
+            } else if (payload.eventType === "DELETE") {
+              return prev.filter((s) => s.id !== payload.old.id);
+            }
+            return prev;
+          });
         }
       )
       .subscribe();
@@ -50,56 +52,57 @@ export default function SuivisMembresPage() {
     };
   }, []);
 
-  // 💄 UI
-  if (loading) return <p className="text-center mt-8">Chargement des suivis...</p>;
-
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold mb-4">Suivis des membres</h1>
+    <div
+      className="min-h-screen p-6 flex flex-col items-center"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+    >
+      <button
+        onClick={() => window.history.back()}
+        className="self-start mb-4 text-white font-semibold hover:text-gray-200"
+      >
+        ← Retour
+      </button>
+
+      <h1 className="text-4xl sm:text-5xl font-handwriting text-white mb-4 text-center">
+        Suivis des Membres
+      </h1>
 
       {suivis.length === 0 ? (
-        <p className="text-gray-500">Aucun suivi enregistré pour le moment.</p>
+        <p className="text-white text-lg italic">
+          Aucun suivi pour le moment...
+        </p>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {suivis.map((s) => (
-            <Card key={s.id} className="shadow-md border rounded-2xl">
-              <CardHeader>
-                <CardTitle>
-                  {s.prenom} {s.nom}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p>
-                  <strong>Téléphone :</strong> {s.telephone || "—"}
-                </p>
-                <p>
-                  <strong>Besoin :</strong> {s.besoin || "—"}
-                </p>
-                <p>
-                  <strong>Cellule :</strong> {s.cellule_nom || "—"}
-                </p>
-                <p>
-                  <strong>Responsable :</strong> {s.responsable || "—"}
-                </p>
-                <p>
-                  <strong>Statut :</strong>{" "}
-                  <span
-                    className={`px-2 py-1 rounded-md text-white ${
-                      s.statut === "actif"
-                        ? "bg-green-600"
-                        : s.statut === "inactif"
-                        ? "bg-gray-500"
-                        : "bg-yellow-500"
-                    }`}
-                  >
-                    {s.statut}
-                  </span>
-                </p>
-                <p className="text-sm text-gray-500 mt-2">
-                  {new Date(s.created_at).toLocaleString("fr-FR")}
-                </p>
-              </CardContent>
-            </Card>
+            <div
+              key={s.id}
+              className="bg-white rounded-2xl shadow-md p-4 border-t-4 border-blue-500 flex flex-col justify-between"
+              style={{ minHeight: "200px" }}
+            >
+              <h2 className="text-lg font-bold text-gray-800 mb-2">
+                {s.prenom} {s.nom}
+              </h2>
+              <p className="text-sm text-gray-600 mb-1">
+                📱 {s.telephone || "—"}
+              </p>
+              <p className="text-sm text-gray-700 mb-1">
+                🙏 Besoin : {s.besoin || "—"}
+              </p>
+              <p className="text-sm text-gray-700 mb-1">
+                🏠 Cellule : {s.cellule_nom || "—"}
+              </p>
+              <p className="text-sm text-gray-700 mb-1">
+                👤 Responsable : {s.responsable || "—"}
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                ⏰ Ajouté le{" "}
+                {new Date(s.created_at).toLocaleString("fr-FR", {
+                  dateStyle: "short",
+                  timeStyle: "short",
+                })}
+              </p>
+            </div>
           ))}
         </div>
       )}

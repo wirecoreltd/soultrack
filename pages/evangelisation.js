@@ -120,7 +120,6 @@ export default function Evangelisation() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-blue-800 to-cyan-400 text-white">
-      {/* Retour */}
       <button
         onClick={() => window.history.back()}
         className="self-start mb-4 font-semibold hover:text-gray-200"
@@ -128,7 +127,6 @@ export default function Evangelisation() {
         ← Retour
       </button>
 
-      {/* Logo */}
       <Image src="/logo.png" alt="Logo" width={80} height={80} className="mb-3" />
 
       <h1 className="text-5xl font-handwriting text-center mb-2">Évangélisation</h1>
@@ -137,7 +135,6 @@ export default function Evangelisation() {
         Chaque personne a une valeur infinie...
       </p>
 
-      {/* Sélecteur cellule */}
       <div className="mb-2 w-full max-w-md flex flex-col sm:flex-row gap-2">
         <select
           value={selectedCellule}
@@ -162,10 +159,9 @@ export default function Evangelisation() {
         )}
       </div>
 
-      {/* Toggle Vue */}
       <p
         onClick={() => setView(view === "card" ? "table" : "card")}
-        className="cursor-pointer text-sm text-blue-200 underline hover:text-white mb-4"
+        className="cursor-pointer text-sm text-yellow-200 underline hover:text-white mb-4"
       >
         {view === "card" ? "Changer en vue table" : "Changer en vue carte"}
       </p>
@@ -178,12 +174,12 @@ export default function Evangelisation() {
             return (
               <div
                 key={member.id}
-                className="bg-white/20 backdrop-blur-md rounded-2xl shadow-lg p-3 flex flex-col items-center transition-all duration-500 ease-in-out overflow-hidden w-full max-w-xs mx-auto border border-white/30"
+                className="bg-gradient-to-tr from-orange-400/40 via-yellow-300/30 to-pink-400/30 backdrop-blur-md rounded-2xl shadow-lg p-3 flex flex-col items-center transition-all duration-500 ease-in-out overflow-hidden w-full max-w-xs mx-auto border border-white/30"
               >
                 <h2 className="font-bold text-white text-base mb-1 text-center">
                   {member.prenom} {member.nom}
                 </h2>
-                <p className="text-xs text-white/80 mb-1 text-center">
+                <p className="text-xs text-white/95 mb-1 text-center">
                   📱 {member.telephone || "—"}
                 </p>
                 <label className="flex items-center gap-2 text-xs mb-1">
@@ -197,13 +193,13 @@ export default function Evangelisation() {
 
                 <button
                   onClick={() => toggleDetails(member.id)}
-                  className="text-blue-200 underline text-sm"
+                  className="text-yellow-100 underline text-sm"
                 >
                   {isOpen ? "Fermer" : "Détails"}
                 </button>
 
                 {isOpen && (
-                  <div className="text-xs text-white/90 mt-2 w-full text-center transition-all duration-500">
+                  <div className="text-xs text-white/95 mt-2 w-full text-center transition-all duration-500">
                     <p>🏙 Ville: {member.ville || "—"}</p>
                     <p>🙏 Besoin: {member.besoin || "—"}</p>
                     <p>
@@ -220,8 +216,8 @@ export default function Evangelisation() {
       {/* Vue table */}
       {view === "table" && (
         <div className="w-full max-w-5xl overflow-x-auto mt-4 relative">
-          <table className="w-full bg-white/20 backdrop-blur-md rounded-2xl shadow-lg border border-white/30 text-sm">
-            <thead className="bg-white/10 text-blue-100">
+          <table className="w-full bg-gradient-to-tr from-orange-400/30 via-yellow-300/20 to-pink-400/20 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 text-sm">
+            <thead className="bg-yellow-200/20 text-gray-900">
               <tr>
                 <th className="p-3 text-left">Prénom</th>
                 <th className="p-3 text-left">Nom</th>
@@ -231,7 +227,7 @@ export default function Evangelisation() {
             </thead>
             <tbody>
               {contacts.map((member) => (
-                <tr key={member.id} className="hover:bg-white/10 transition-all">
+                <tr key={member.id} className="hover:bg-yellow-200/30 transition-all">
                   <td className="p-3">{member.prenom}</td>
                   <td className="p-3">{member.nom}</td>
                   <td className="text-center">
@@ -243,7 +239,7 @@ export default function Evangelisation() {
                   </td>
                   <td
                     onClick={() => toggleDetails(member.id)}
-                    className="text-blue-200 underline text-center cursor-pointer"
+                    className="text-orange-600 underline text-center cursor-pointer"
                   >
                     Détails
                   </td>
@@ -257,12 +253,12 @@ export default function Evangelisation() {
             detailsOpen[member.id] ? (
               <div
                 key={member.id}
-                className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50"
+                className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
               >
-                <div className="bg-white/30 backdrop-blur-xl border border-white/40 rounded-2xl shadow-2xl p-6 w-80 text-gray-900 text-sm relative">
+                <div className="bg-gradient-to-tr from-orange-400/40 via-yellow-300/30 to-pink-400/40 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-6 w-80 text-gray-900 text-sm relative">
                   <button
                     onClick={() => toggleDetails(member.id)}
-                    className="absolute top-3 right-3 text-sm text-gray-700 hover:text-gray-900 underline"
+                    className="absolute top-3 right-3 text-sm text-orange-600 hover:text-orange-700 underline"
                   >
                     Fermer
                   </button>

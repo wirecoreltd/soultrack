@@ -1,49 +1,56 @@
 //components/SendAppLink.js
-
 "use client";
 
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
-import { v4 as uuidv4 } from "uuid";
+
+// Générateur simple de token unique sans 'uuid'
+function generateToken() {
+  return "token-" + Math.random().toString(36).substring(2, 15)
+    + Math.random().toString(36).substring(2, 15);
+}
 
 export default function SendAppLink({ label, buttonColor, type }) {
   const [loading, setLoading] = useState(false);
-
-  // ID de l'utilisateur connecté (plus tard à récupérer depuis le localStorage)
-  const userId = "58eff16c-f480-4c73-a6e0-aa4423d2069d";
 
   const handleSendLink = async () => {
     setLoading(true);
 
     try {
-      // Génération d’un token unique à chaque envoi
-      const token = uuidv4();
+      // Récupère l'utilisateur connecté
+      const userId = localStorage.getItem("userId");
+      if (!userId) {
+        alert("Utilisateur non connecté !");
+        setLoading(false);
+        return;
+      }
 
-      // Création du suivi
-      const { error } = await supabase.from("suivis").insert([
-        {
-          user_id: userId,
-          token,
-          created_at: new Date(),
-          type: type, // on garde une trace du type : membre ou evangelise
-        },
-      ]);
+      // Génère un token unique
+      const token = generateToken();
+
+      // Enregistre dans la table 'suivis'
+      const { error } = await supabase.from("suivis").insert({
+        user_id: userId,
+        token: token,
+        created_at: new Date(),
+        type: type === "evangelise" ? "evangelisation" : "membre"
+      });
 
       if (error) throw error;
 
-      // Définir le bon lien selon le type
-      const pagePath =
+      // Détermine le lien selon le type
+      const linkPath =
         type === "evangelise" ? `/add-evangelise/${token}` : `/access/${token}`;
+      const fullLink = `${window.location.origin}${linkPath}`;
 
-      // Envoi du lien par WhatsApp
-      const link = `${window.location.origin}${pagePath}`;
+      // Ouvre WhatsApp avec le lien
       window.open(
-        `https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`,
+        `https://api.whatsapp.com/send?text=${encodeURIComponent(fullLink)}`,
         "_blank"
       );
     } catch (err) {
       console.error("Erreur SendAppLink :", err);
-      alert("Erreur lors de l'envoi du lien et création du suivi.");
+      alert("Erreur lors de l’envoi du lien et création du suivi.");
     } finally {
       setLoading(false);
     }
@@ -59,3 +66,4 @@ export default function SendAppLink({ label, buttonColor, type }) {
     </button>
   );
 }
+

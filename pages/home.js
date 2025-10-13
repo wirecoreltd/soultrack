@@ -2,16 +2,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import SendLinkPopup from "../components/SendLinkPopup";
 
 export default function Home() {
   const router = useRouter();
   const [profile, setProfile] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+
+  // États pour afficher les popups
+  const [showPopup, setShowPopup] = useState(null); // "nouveau" | "evangelise" | null
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -46,20 +48,36 @@ export default function Home() {
     router.push("/login");
   };
 
+  const handleSendApp = (type) => {
+    setShowPopup(type); // ouvre le popup
+    setPhoneNumber(""); // reset du champ
+  };
+
+  const sendWhatsApp = (type) => {
+    const token = type === "nouveau"
+      ? "58eff16c-f480-4c73-a6e0-aa4423d2069d"
+      : "33dd234f-8146-4818-976c-af7bfdcefe95";
+
+    const link = `${window.location.origin}/${type === "nouveau" ? "add-member" : "add-evangelise"}?token=${token}`;
+
+    const url = phoneNumber
+      ? `https://api.whatsapp.com/send?phone=${encodeURIComponent(phoneNumber)}&text=${encodeURIComponent(link)}`
+      : `https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`;
+
+    window.open(url, "_blank");
+    setShowPopup(null);
+  };
+
   if (loadingProfile) {
-    return (
-      <p className="text-center mt-10 text-gray-600">Chargement du profil...</p>
-    );
+    return <p className="text-center mt-10 text-gray-600">Chargement du profil...</p>;
   }
 
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-between p-6 gap-2 relative"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* Bouton Déconnexion */}
+      {/* Déconnexion */}
       <button
         onClick={handleLogout}
         className="absolute top-4 right-4 bg-white/20 text-white px-4 py-2 rounded-xl font-semibold shadow-sm hover:bg-white/30 transition"
@@ -83,82 +101,70 @@ export default function Home() {
         grandissons, et nous partageons l’amour de Christ dans chaque action ❤️
       </div>
 
-      {/* Cartes navigation selon rôle */}
+      {/* Boutons principaux */}
       <div className="flex flex-col md:flex-row flex-wrap gap-3 justify-center w-full max-w-5xl mt-2">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <Link href="/membres-hub" className="flex-1 min-w-[250px]">
-            <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-              <div className="text-4xl mb-1">👤</div>
-              <div className="text-lg font-bold text-gray-800 text-center">
-                Suivis des membres
-              </div>
+          <button
+            onClick={() => handleSendApp("nouveau")}
+            className="flex-1 min-w-[250px] h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200"
+          >
+            <div className="text-4xl mb-1">👤</div>
+            <div className="text-lg font-bold text-gray-800 text-center">
+              Envoyer l'appli – Nouveau membre
             </div>
-          </Link>
+          </button>
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <Link href="/evangelisation-hub" className="flex-1 min-w-[250px]">
-            <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-              <div className="text-4xl mb-1">🙌</div>
-              <div className="text-lg font-bold text-gray-800 text-center">
-                Évangélisation
-              </div>
+          <button
+            onClick={() => handleSendApp("evangelise")}
+            className="flex-1 min-w-[250px] h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200"
+          >
+            <div className="text-4xl mb-1">🙌</div>
+            <div className="text-lg font-bold text-gray-800 text-center">
+              Envoyer l'appli – Évangélisé
             </div>
-          </Link>
-        )}
-
-        {profile.role === "Admin" && (
-          <>
-            <Link href="/rapport" className="flex-1 min-w-[250px]">
-              <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-                <div className="text-4xl mb-1">📊</div>
-                <div className="text-lg font-bold text-gray-800 text-center">
-                  Rapport
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/admin/create-user" className="flex-1 min-w-[250px]">
-              <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-                <div className="text-4xl mb-1">🧑‍💻</div>
-                <div className="text-lg font-bold text-gray-800 text-center">
-                  Créer un utilisateur
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/admin/create-internal-user" className="flex-1 min-w-[250px]">
-              <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-purple-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-                <div className="text-4xl mb-1">➕</div>
-                <div className="text-lg font-bold text-gray-800 text-center">
-                  Créer utilisateur interne
-                </div>
-              </div>
-            </Link>
-          </>
+          </button>
         )}
       </div>
 
-      {/* Boutons “Envoyer l'appli” avec popup */}
-      <div className="flex flex-col gap-3 mt-4 w-full max-w-md">
-        {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <SendLinkPopup
-            label="Envoyer l'appli – Nouveau membre"
-            type="ajouter_membre"
-            buttonColor="from-[#09203F] to-[#537895]"
-            token="58eff16c-f480-4c73-a6e0-aa4423d2069d"
-          />
-        )}
+      {/* Popup d'envoi */}
+      {showPopup && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-lg flex flex-col gap-4">
+            <h2 className="text-xl font-bold text-gray-800 text-center">
+              {showPopup === "nouveau" ? "Envoyer l'appli – Nouveau membre" : "Envoyer l'appli – Évangélisé"}
+            </h2>
+            <p className="text-center text-gray-600 text-sm">
+              Cliquez sur "Envoyer" si le contact figure déjà dans votre liste WhatsApp,
+              ou saisissez un numéro manuellement.
+            </p>
 
-        {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <SendLinkPopup
-            label="Envoyer l'appli – Évangélisé"
-            type="ajouter_evangelise"
-            buttonColor="from-[#09203F] to-[#537895]"
-            token="33dd234f-8146-4818-976c-af7bfdcefe95"
-          />
-        )}
-      </div>
+            <input
+              type="text"
+              placeholder="Saisir le numéro manuellement (ex: +2305xxxxxx)"
+              className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-blue-500 focus:ring-2 focus:ring-blue-200 transition"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+            />
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => sendWhatsApp(showPopup)}
+                className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              >
+                Envoyer
+              </button>
+              <button
+                onClick={() => setShowPopup(null)}
+                className="flex-1 py-3 bg-gray-400 hover:bg-gray-500 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Verset biblique */}
       <div className="mt-4 mb-2 text-center text-white text-lg font-handwriting-light">

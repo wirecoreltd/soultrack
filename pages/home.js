@@ -117,14 +117,17 @@ export default function Home() {
               </div>
             </Link>
 
-            <Link href="/admin/create-user" className="flex-1 min-w-[250px]">
-              <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-                <div className="text-4xl mb-1">🧑‍💻</div>
-                <div className="text-lg font-bold text-gray-800 text-center">
-                  Créer un utilisateur
-                </div>
-              </div>
-            </Link>
+            {profile.role === "Admin" && (
+  <Link href="/admin/create-internal-user" className="flex-1 min-w-[250px]">
+    <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-purple-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
+      <div className="text-4xl mb-1">➕</div>
+      <div className="text-lg font-bold text-gray-800 text-center">
+        Créer utilisateur interne
+      </div>
+    </div>
+  </Link>
+)}
+
           </>
         )}
       </div>

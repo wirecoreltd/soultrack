@@ -142,18 +142,7 @@ export default function CreateInternalUser() {
               <option value="ResponsableIntegration">Responsable Integration</option>
               <option value="ResponsableEvangelisation">Responsable Evangelisation</option>
             </select>
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Responsable (optionnel)</label>
-            <input
-              type="text"
-              name="responsable"
-              value={formData.responsable}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-          </div>
+          </div>          
 
           <button
             type="submit"

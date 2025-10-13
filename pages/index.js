@@ -2,15 +2,22 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/router";
 import Image from "next/image";
 import SendLinkPopup from "../components/SendLinkPopup";
 
 export default function HomePage() {
+  const router = useRouter();
+
   // Pour la démo, on peut simuler un profil Admin
   const [profile] = useState({
     role: "Admin",
   });
+
+  // Fonction utilitaire pour redirection programmatique
+  const handleRedirect = (path) => {
+    router.push(path);
+  };
 
   return (
     <div
@@ -36,44 +43,50 @@ export default function HomePage() {
       {/* Cartes principales */}
       <div className="flex flex-col md:flex-row flex-wrap gap-3 justify-center w-full max-w-5xl mt-2">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <Link href="/membres-hub" className="flex-1 min-w-[250px]">
-            <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-              <div className="text-4xl mb-1">👤</div>
-              <div className="text-lg font-bold text-gray-800 text-center">
-                Suivis des membres
-              </div>
+          <div
+            className="flex-1 min-w-[250px] w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+            onClick={() => handleRedirect("/membres-hub")}
+          >
+            <div className="text-4xl mb-1">👤</div>
+            <div className="text-lg font-bold text-gray-800 text-center">
+              Suivis des membres
             </div>
-          </Link>
+          </div>
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <Link href="/evangelisation-hub" className="flex-1 min-w-[250px]">
-            <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-              <div className="text-4xl mb-1">🙌</div>
-              <div className="text-lg font-bold text-gray-800 text-center">
-                Évangélisation
-              </div>
+          <div
+            className="flex-1 min-w-[250px] w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+            onClick={() => handleRedirect("/evangelisation-hub")}
+          >
+            <div className="text-4xl mb-1">🙌</div>
+            <div className="text-lg font-bold text-gray-800 text-center">
+              Évangélisation
             </div>
-          </Link>
+          </div>
         )}
 
         {profile.role === "Admin" && (
           <>
-            <Link href="/rapport" className="flex-1 min-w-[250px]">
-              <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-                <div className="text-4xl mb-1">📊</div>
-                <div className="text-lg font-bold text-gray-800 text-center">Rapport</div>
+            <div
+              className="flex-1 min-w-[250px] w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+              onClick={() => handleRedirect("/rapport")}
+            >
+              <div className="text-4xl mb-1">📊</div>
+              <div className="text-lg font-bold text-gray-800 text-center">
+                Rapport
               </div>
-            </Link>
+            </div>
 
-            <Link href="/admin/create-internal-user" className="flex-1 min-w-[250px]">
-              <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-                <div className="text-4xl mb-1">🧑‍💻</div>
-                <div className="text-lg font-bold text-gray-800 text-center">
-                  Créer un utilisateur
-                </div>
+            <div
+              className="flex-1 min-w-[250px] w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+              onClick={() => handleRedirect("/admin/create-internal-user")}
+            >
+              <div className="text-4xl mb-1">🧑‍💻</div>
+              <div className="text-lg font-bold text-gray-800 text-center">
+                Créer un utilisateur
               </div>
-            </Link>
+            </div>
           </>
         )}
       </div>

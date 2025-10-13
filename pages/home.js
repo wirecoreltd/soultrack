@@ -6,8 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import SendAppLink from "../components/SendAppLink"; // Nouveau membre
-import SendAppLinkEvangelise from "../components/SendAppLinkEvangelise"; // Évangélisé
+import SendAppLink from "../components/SendAppLink";
+import SendAppLinkEvangelise from "../components/SendAppLinkEvangelise";
 
 export default function Home() {
   const router = useRouter();
@@ -17,7 +17,6 @@ export default function Home() {
   useEffect(() => {
     const loadProfile = async () => {
       const userId = localStorage.getItem("userId");
-
       if (!userId) {
         router.push("/login");
         return;
@@ -56,9 +55,7 @@ export default function Home() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-between p-6 gap-2 relative"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
       {/* Bouton Déconnexion */}
       <button
@@ -140,30 +137,14 @@ export default function Home() {
         )}
       </div>
 
-      {/* Liens rapides - boutons d'envoi */}
+      {/* Liens rapides – boutons WhatsApp */}
       <div className="flex flex-col gap-3 mt-4 w-full max-w-md">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <SendAppLink
-            label="Envoyer l'appli – Nouveau membre"
-            buttonColor="from-[#09203F] to-[#537895]"
-            userId={profile.id}
-          />
+          <SendAppLink label="Envoyer l'appli – Nouveau membre" linkPage="add-member" />
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <SendAppLinkEvangelise
-            label="Envoyer l'appli – Évangélisé"
-            buttonColor="from-[#09203F] to-[#537895]"
-            userId={profile.id}
-          />
-        )}
-
-        {profile.role === "Admin" && (
-          <SendAppLink
-            label="Voir / Copier liens…"
-            buttonColor="from-[#005AA7] to-[#FFFDE4]"
-            userId={profile.id}
-          />
+          <SendAppLinkEvangelise />
         )}
       </div>
 
@@ -174,3 +155,4 @@ export default function Home() {
     </div>
   );
 }
+

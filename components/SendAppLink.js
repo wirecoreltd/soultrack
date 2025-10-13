@@ -1,31 +1,43 @@
-// components/SendAppLinkPopup.js
+// components/SendAppLink.js
 "use client";
 
 import { useState } from "react";
 
 export default function SendAppLinkPopup({ label, type }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState(""); // vide par défaut
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Définir le lien selon le type
+  // Détermine le lien selon le type
   const getLink = () => {
-    if (type === "ajouter_membre") return `${window.location.origin}/add-member`;
-    if (type === "ajouter_evangelise") return `${window.location.origin}/add-evangelise`;
-    return window.location.origin;
+    switch (type) {
+      case "ajouter_membre":
+        return `${window.location.origin}/add-member`;
+      case "ajouter_evangelise":
+        return `${window.location.origin}/add-evangelise`;
+      default:
+        return window.location.origin;
+    }
   };
 
   const handleSend = () => {
-    if (!phoneNumber) {
-      alert("Veuillez saisir un numéro de téléphone.");
-      return;
-    }
-
     setLoading(true);
     try {
-      const whatsappLink = `https://api.whatsapp.com/send?phone=${phoneNumber.replace(/\D/g, '')}&text=${encodeURIComponent(getLink())}`;
+      let whatsappLink = "";
+      const linkToSend = getLink();
+
+      if (phoneNumber.trim() === "") {
+        // Champ vide → ouvrir WhatsApp pour choisir un contact
+        whatsappLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(linkToSend)}`;
+      } else {
+        // Numéro saisi → envoie directement
+        const sanitizedNumber = phoneNumber.replace(/\D/g, ""); // supprime tout sauf chiffres
+        whatsappLink = `https://api.whatsapp.com/send?phone=${sanitizedNumber}&text=${encodeURIComponent(linkToSend)}`;
+      }
+
       window.open(whatsappLink, "_blank");
       setIsOpen(false);
+      setPhoneNumber("");
     } catch (err) {
       console.error("Erreur en envoyant le lien :", err);
       alert("Erreur lors de l'envoi du lien.");
@@ -39,39 +51,37 @@ export default function SendAppLinkPopup({ label, type }) {
       <button
         onClick={() => setIsOpen(true)}
         className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#09203F] to-[#537895] hover:opacity-90 transition"
+        disabled={loading}
       >
-        {label}
+        {loading ? "Envoi..." : label}
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm relative">
-            <h2 className="text-xl font-bold mb-3 text-center">{label}</h2>
-            <p className="text-gray-600 mb-4 text-center">
-              Cliquez sur <strong>Envoyer</strong> si le contact figure déjà dans votre liste WhatsApp.
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-lg flex flex-col gap-4">
+            <h2 className="text-xl font-bold text-gray-800">{label}</h2>
+            <p className="text-gray-600 text-sm">
+              Cliquez sur "Envoyer" si le contact figure déjà dans votre liste WhatsApp.
             </p>
-
             <input
               type="text"
+              placeholder="Saisir un numéro manuellement"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
-              placeholder="Saisir le numéro ici"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 text-center focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="border border-gray-300 rounded-xl p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
-
-            <div className="flex justify-between gap-4">
+            <div className="flex justify-between gap-3 mt-2">
               <button
                 onClick={() => setIsOpen(false)}
-                className="flex-1 py-2 bg-gray-300 hover:bg-gray-400 rounded-lg font-semibold transition"
+                className="flex-1 py-2 bg-gray-300 text-gray-800 font-semibold rounded-xl hover:bg-gray-400 transition"
               >
                 Annuler
               </button>
               <button
                 onClick={handleSend}
-                disabled={loading}
-                className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition"
+                className="flex-1 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition"
               >
-                {loading ? "Envoi..." : "Envoyer"}
+                Envoyer
               </button>
             </div>
           </div>

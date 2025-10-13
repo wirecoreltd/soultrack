@@ -1,159 +1,150 @@
-//pages/admin/create-internal-user.js
+// pages/admin/create-internal-user.js
 "use client";
 
 import { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+import bcrypt from "bcryptjs";
 import supabase from "../../lib/supabaseClient";
 
 export default function CreateInternalUser() {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState("ResponsableIntegration");
-  const [phone, setPhone] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [token, setToken] = useState(null);
-  const [userId, setUserId] = useState(null);
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    role: "ResponsableIntegration",
+    responsable: "",
+  });
 
-  const handleCreateUser = async () => {
-    if (!username || !email || !phone) {
-      alert("Remplis tous les champs !");
-      return;
-    }
+  const [success, setSuccess] = useState(false);
 
-    setLoading(true);
-    try {
-      // 1️⃣ Créer l'utilisateur (Supabase génère automatiquement l'ID)
-      const { data: newUser, error: userError } = await supabase
-        .from("profiles")
-        .insert([
-          {
-            username,
-            email,
-            role,
-            phone_number: phone,
-          },
-        ])
-        .select()
-        .single(); // récupère l’utilisateur créé avec ID généré
-
-      if (userError) throw userError;
-
-      const newUserId = newUser.id;
-
-      // 2️⃣ Générer un token unique pour cet utilisateur
-      const newToken = crypto.randomUUID(); // token côté client
-
-      const { data: tokenData, error: tokenError } = await supabase
-        .from("access_tokens")
-        .insert([
-          {
-            profile_id: newUserId,
-            user_id: newUserId,
-            token: newToken,
-            access_type:
-              role === "ResponsableIntegration"
-                ? "ajouter_membre"
-                : "ajouter_evangelise",
-            expires_at: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), // +7 jours
-          },
-        ])
-        .select()
-        .single();
-
-      if (tokenError) throw tokenError;
-
-      setUserId(newUserId);
-      setToken(tokenData.token);
-      alert("Utilisateur créé avec succès ! 🎉");
-    } catch (err) {
-      console.error("Erreur création utilisateur :", err);
-      alert("Erreur lors de la création de l'utilisateur !");
-    } finally {
-      setLoading(false);
-    }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
-  const handleSendLink = async () => {
-    if (!userId || !token) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
     try {
-      // Créer le suivi (table suivis)
-      const { error } = await supabase
-        .from("suivis")
-        .upsert(
-          { user_id: userId, token: token, created_at: new Date() },
-          { onConflict: ["user_id", "token"] }
-        );
+      // Hash du mot de passe
+      const passwordHash = bcrypt.hashSync(formData.password, 10);
+
+      const { data, error } = await supabase.from("profiles").insert([{
+        id: uuidv4(),
+        username: formData.username,
+        email: formData.email,
+        password_hash: passwordHash,
+        role: formData.role,
+        responsable: formData.responsable || null
+      }]);
 
       if (error) throw error;
 
-      // Ouvrir WhatsApp avec le lien
-      const link = `${window.location.origin}/access/${token}`;
-      window.open(
-        `https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`,
-        "_blank"
-      );
+      setSuccess(true);
+      setFormData({
+        username: "",
+        email: "",
+        password: "",
+        role: "ResponsableIntegration",
+        responsable: "",
+      });
+
+      setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      console.error("Erreur envoi lien :", err);
-      alert("Erreur lors de l'envoi du lien !");
+      alert("Erreur : " + err.message);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start p-6 gap-4 bg-gray-50">
-      <h1 className="text-3xl font-bold">Créer un utilisateur interne</h1>
+    <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
+        <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-6">
+          Créer un utilisateur interne
+        </h1>
 
-      <div className="flex flex-col gap-3 w-full max-w-md bg-white p-6 rounded-xl shadow-md">
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="border px-3 py-2 rounded-md w-full"
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border px-3 py-2 rounded-md w-full"
-        />
-        <input
-          type="text"
-          placeholder="Téléphone"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          className="border px-3 py-2 rounded-md w-full"
-        />
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          className="border px-3 py-2 rounded-md w-full"
-        >
-          <option value="ResponsableIntegration">ResponsableIntegration</option>
-          <option value="ResponsableEvangelisation">
-            ResponsableEvangelisation
-          </option>
-          <option value="Admin">Admin</option>
-        </select>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Username */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Nom d'utilisateur</label>
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+          </div>
 
-        <button
-          onClick={handleCreateUser}
-          disabled={loading}
-          className="bg-blue-600 text-white py-2 rounded-md font-semibold hover:bg-blue-700 transition"
-        >
-          {loading ? "Création..." : "Créer utilisateur"}
-        </button>
+          {/* Email */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+          </div>
 
-        {token && (
+          {/* Password */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Mot de passe</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+          </div>
+
+          {/* Role */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Rôle</label>
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            >
+              <option value="ResponsableIntegration">ResponsableIntegration</option>
+              <option value="ResponsableEvangelisation">ResponsableEvangelisation</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+
+          {/* Responsable */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Responsable (optionnel)</label>
+            <input
+              type="text"
+              name="responsable"
+              value={formData.responsable}
+              onChange={handleChange}
+              placeholder="Nom du responsable"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+          </div>
+
+          {/* Bouton créer */}
           <button
-            onClick={handleSendLink}
-            className="bg-green-600 text-white py-2 rounded-md font-semibold hover:bg-green-700 transition"
+            type="submit"
+            className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
           >
-            Envoyer le lien WhatsApp
+            Créer l'utilisateur
           </button>
+        </form>
+
+        {success && (
+          <div className="text-green-600 font-semibold text-center mt-3">
+            ✅ Utilisateur créé avec succès !
+          </div>
         )}
       </div>
     </div>
   );
 }
-

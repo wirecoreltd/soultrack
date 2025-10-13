@@ -6,7 +6,8 @@ import supabase from "../../lib/supabaseClient";
 export default function CreateUser() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    username: "",
+    prenom: "",
+    nom: "",
     email: "",
     password: "",
     role: "ResponsableIntegration",
@@ -22,24 +23,31 @@ export default function CreateUser() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // 🔥 ICI on appelle la fonction SQL create_user
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
 
-    const { error } = await supabase.from("profiles").insert([
-      {
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
-        role: formData.role,
-      },
-    ]);
+    const { data, error } = await supabase.rpc("create_user", {
+      p_email: formData.email,
+      p_password: formData.password,
+      p_prenom: formData.prenom,
+      p_nom: formData.nom,
+      p_role: formData.role,
+    });
 
     if (error) {
-      setMessage("❌ Erreur lors de la création de l'utilisateur.");
+      console.error(error);
+      setMessage("❌ Erreur : " + error.message);
     } else {
-      setMessage("✅ Utilisateur créé avec succès !");
-      setFormData({ username: "", email: "", password: "", role: "ResponsableIntegration" });
+      setMessage(data); // la fonction renvoie le message du SQL
+      setFormData({
+        prenom: "",
+        nom: "",
+        email: "",
+        password: "",
+        role: "ResponsableIntegration",
+      });
     }
   };
 
@@ -50,16 +58,27 @@ export default function CreateUser() {
         background: "linear-gradient(135deg, #09203F 0%, #537895 100%)",
       }}
     >
-      <h1 className="text-3xl text-white font-bold mb-6">Créer un utilisateur</h1>
+      <h1 className="text-3xl text-white font-bold mb-6">
+        Créer un utilisateur
+      </h1>
 
       <form
         onSubmit={handleSubmit}
         className="bg-white p-6 rounded-2xl shadow-md w-96 flex flex-col gap-4"
       >
         <input
-          name="username"
-          placeholder="Nom d'utilisateur"
-          value={formData.username}
+          name="prenom"
+          placeholder="Prénom"
+          value={formData.prenom}
+          onChange={handleChange}
+          required
+          className="border border-gray-300 rounded-lg px-3 py-2"
+        />
+
+        <input
+          name="nom"
+          placeholder="Nom"
+          value={formData.nom}
           onChange={handleChange}
           required
           className="border border-gray-300 rounded-lg px-3 py-2"
@@ -91,8 +110,12 @@ export default function CreateUser() {
           onChange={handleChange}
           className="border border-gray-300 rounded-lg px-3 py-2"
         >
-          <option value="ResponsableIntegration">Responsable Intégration</option>
-          <option value="ResponsableEvangelisation">Responsable Évangélisation</option>
+          <option value="ResponsableIntegration">
+            Responsable Intégration
+          </option>
+          <option value="ResponsableEvangelisation">
+            Responsable Évangélisation
+          </option>
           <option value="Admin">Admin</option>
         </select>
 

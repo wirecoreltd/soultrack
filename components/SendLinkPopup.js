@@ -4,17 +4,16 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function SendLinkPopup({ label, type, buttonColor }) {
+export default function SendLinkPopup({ label, type, buttonColor, userId }) {
   const [loading, setLoading] = useState(false);
 
   const handleSendLink = async () => {
     setLoading(true);
     try {
-      // Récupérer l'userId depuis localStorage
-      const userId = localStorage.getItem("userId");
+      // Vérification du userId
       if (!userId) throw new Error("Utilisateur non connecté");
 
-      // 1️⃣ Récupérer le token existant
+      // 1️⃣ Récupérer le token existant pour cet utilisateur et type
       const { data: tokenData, error: tokenError } = await supabase
         .from("access_tokens")
         .select("*")
@@ -29,9 +28,9 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
 
       console.log("Token récupéré :", tokenData.token);
 
-      // 2️⃣ Créer le suivi si nécessaire (ajuste le nom de ta table de suivi)
+      // 2️⃣ Créer le suivi (ajuste le nom de ta table si besoin)
       const { data: suiviData, error: suiviError } = await supabase
-        .from("suivis") // <-- remplace par ta table réelle si besoin
+        .from("suivis") // <-- remplace par ta table réelle
         .insert([
           {
             user_id: userId,
@@ -48,7 +47,7 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
 
       console.log("Suivi créé avec succès :", suiviData);
 
-      // 3️⃣ Envoyer le lien via WhatsApp
+      // 3️⃣ Générer le lien WhatsApp
       const link = `${window.location.origin}/access/${tokenData.token}`;
       console.log("Lien WhatsApp généré :", link);
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`, "_blank");

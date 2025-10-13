@@ -1,4 +1,4 @@
-//pages/home.js
+// pages/home.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,9 +15,9 @@ export default function Home() {
 
   useEffect(() => {
     const loadProfile = async () => {
-      const userId = localStorage.getItem("userId");
-
-      if (!userId) {
+      // Récupération du userId depuis Supabase Auth directement
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
         router.push("/login");
         return;
       }
@@ -25,11 +25,10 @@ export default function Home() {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", userId)
+        .eq("id", user.id)
         .single();
 
       if (error || !data) {
-        localStorage.clear();
         router.push("/login");
         return;
       }
@@ -41,8 +40,8 @@ export default function Home() {
     loadProfile();
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.clear();
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     router.push("/login");
   };
 
@@ -59,7 +58,7 @@ export default function Home() {
         background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
       }}
     >
-      {/* Bouton Déconnexion en haut à droite */}
+      {/* Bouton Déconnexion */}
       <button
         onClick={handleLogout}
         className="absolute top-4 right-4 bg-white/20 text-white px-4 py-2 rounded-xl font-semibold shadow-sm hover:bg-white/30 transition"
@@ -137,7 +136,7 @@ export default function Home() {
             label="Envoyer l'appli – Nouveau membre"
             type="ajouter_membre"
             buttonColor="from-[#09203F] to-[#537895]"
-            userId={profile.id} // <- passe directement le userId depuis le profil
+            userId={profile.id}
           />
         )}
 
@@ -155,6 +154,7 @@ export default function Home() {
             label="Voir / Copier liens…"
             type="voir_copier"
             buttonColor="from-[#005AA7] to-[#FFFDE4]"
+            userId={profile.id}
           />
         )}
       </div>

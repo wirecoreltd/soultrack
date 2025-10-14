@@ -1,3 +1,5 @@
+//pages/admin/create-user.js
+
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
@@ -15,32 +17,60 @@ export default function CreateUser() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const role = localStorage.getItem("role");
-    if (role !== "Admin") router.push("/login");
+    const role = localStorage.getItem("userRole");
+    if (role !== "admin") router.push("/login");
   }, [router]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 🔥 ICI on appelle la fonction SQL create_user
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
 
-    const { data, error } = await supabase.rpc("create_user", {
-      p_email: formData.email,
-      p_password: formData.password,
-      p_prenom: formData.prenom,
-      p_nom: formData.nom,
-      p_role: formData.role,
-    });
+    try {
+      // 1️⃣ Vérifie si l'email existe déjà
+      const { data: existingUser, error: existingError } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("email", formData.email)
+        .maybeSingle();
 
-    if (error) {
-      console.error(error);
-      setMessage("❌ Erreur : " + error.message);
-    } else {
-      setMessage(data); // la fonction renvoie le message du SQL
+      if (existingError) throw existingError;
+
+      if (existingUser) {
+        setMessage("❌ Cet email existe déjà.");
+        return;
+      }
+
+      // 2️⃣ Hash le mot de passe via RPC (on utilise la même logique que login)
+      const { data: hashResult, error: hashError } = await supabase.rpc(
+        "hash_password",
+        { p_password: formData.password }
+      );
+
+      if (hashError) throw hashError;
+
+      const password_hash = Array.isArray(hashResult)
+        ? hashResult[0]
+        : hashResult;
+
+      // 3️⃣ Insère le nouvel utilisateur
+      const { error: insertError } = await supabase.from("profiles").insert([
+        {
+          email: formData.email,
+          password_hash: password_hash,
+          prenom: formData.prenom,
+          nom: formData.nom,
+          role: formData.role,
+        },
+      ]);
+
+      if (insertError) throw insertError;
+
+      // 4️⃣ Succès
+      setMessage("✅ Utilisateur créé avec succès !");
       setFormData({
         prenom: "",
         nom: "",
@@ -48,6 +78,9 @@ export default function CreateUser() {
         password: "",
         role: "ResponsableIntegration",
       });
+    } catch (err) {
+      console.error(err);
+      setMessage("❌ Erreur : " + err.message);
     }
   };
 
@@ -110,13 +143,9 @@ export default function CreateUser() {
           onChange={handleChange}
           className="border border-gray-300 rounded-lg px-3 py-2"
         >
-          <option value="ResponsableIntegration">
-            Responsable Intégration
-          </option>
-          <option value="ResponsableEvangelisation">
-            Responsable Évangélisation
-          </option>
-          <option value="Admin">Admin</option>
+          <option value="ResponsableIntegration">Responsable Intégration</option>
+          <option value="ResponsableEvangelisation">Responsable Évangélisation</option>
+          <option value="admin">Admin</option>
         </select>
 
         {message && (

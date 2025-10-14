@@ -17,7 +17,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // 1) Recherche du profil par email
+      // 1️⃣ Recherche du profil par email
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -30,8 +30,7 @@ export default function LoginPage() {
         return;
       }
 
-      // 2) Appel du RPC verify_password
-      //    ATTENTION: ton RPC doit renvoyer un tableau avec un champ `verify` (true/false)
+      // 2️⃣ Vérification du mot de passe via la fonction SQL
       const { data: checkPassword, error: rpcError } = await supabase.rpc(
         "verify_password",
         {
@@ -47,9 +46,10 @@ export default function LoginPage() {
         return;
       }
 
-      // `checkPassword` peut être un tableau; on vérifie le premier élément
       const verified =
-        Array.isArray(checkPassword) && checkPassword[0] && checkPassword[0].verify === true;
+        Array.isArray(checkPassword) &&
+        checkPassword[0] &&
+        checkPassword[0].verify === true;
 
       if (!verified) {
         setError("Mot de passe incorrect");
@@ -57,14 +57,25 @@ export default function LoginPage() {
         return;
       }
 
-      // 3) Connexion réussie -> persister l'info côté client
-      // Stocke l'id et le role pour que /home et le reste de l'app sachent qui est connecté
-      localStorage.setItem("userId", profile.id);
-      // suppose que ta table profiles contient un champ "role" (ex: "admin" / "user")
-      const role = profile.role || "user";
-      localStorage.setItem("userRole", role);
+      // 3️⃣ Normalisation du rôle pour éviter les erreurs
+      const role = (profile.role || "Membre").trim().toLowerCase();
 
-      // 4) Redirection vers la page home
+      // Mapping pour correspondre à /lib/accessControl.js
+      const formattedRole =
+        role === "admin"
+          ? "Admin"
+          : role === "responsableintegration"
+          ? "ResponsableIntegration"
+          : role === "responsable évangélisation" ||
+            role === "responsableevangelisation"
+          ? "ResponsableEvangelisation"
+          : "Membre";
+
+      // 4️⃣ Sauvegarde locale pour usage global
+      localStorage.setItem("userId", profile.id);
+      localStorage.setItem("userRole", formattedRole);
+
+      // 5️⃣ Redirection vers la page d'accueil
       router.push("/index");
     } catch (err) {
       console.error("Erreur inattendue:", err);
@@ -77,7 +88,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
       <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
-        {/* Titre avec logo responsive */}
+        {/* Titre avec logo */}
         <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
           <img
             src="/logo.png"
@@ -90,7 +101,8 @@ export default function LoginPage() {
         {/* Message de bienvenue */}
         <p className="text-center text-gray-700 mb-6">
           Bienvenue sur SoulTrack !<br />
-          Une plateforme pour garder le contact, organiser les visites, et soutenir chaque membre dans sa vie spirituelle.
+          Une plateforme pour garder le contact, organiser les visites,
+          et soutenir chaque membre dans sa vie spirituelle.
         </p>
 
         {/* Formulaire login */}
@@ -126,7 +138,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Texte biblique sous le bouton */}
+        {/* Texte biblique */}
         <p className="text-center italic font-semibold mt-4 text-green-600">
           "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
         </p>

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import SendLinkPopup from "../components/SendLinkPopup";
-import LogoutLink from "../components/LogoutLink";
+import LogoutLink from "../components/LogoutLink"; // ✅ on l’importe ici
 import { canAccessPage } from "../lib/accessControl";
 
 export default function HomePage() {
@@ -20,7 +20,6 @@ export default function HomePage() {
       return;
     }
 
-    // Vérifie l'accès à la page via accessControl.js
     const canAccess = canAccessPage(storedRole, "/index");
     if (!canAccess) {
       alert("⛔ Accès non autorisé !");
@@ -38,39 +37,26 @@ export default function HomePage() {
     router.push(path);
   };
 
-  // 🟢🟢🟢 DÉBUT DE LA PARTIE DÉCONNEXION
-  const handleLogout = () => {
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userRole");
-    router.push("/login");
-  };
-  // 🔴🔴🔴 FIN DE LA PARTIE DÉCONNEXION
-
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-between p-6 gap-2"
+      className="min-h-screen relative flex flex-col items-center justify-between p-6 gap-2"
       style={{
         background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
       }}
     >
+      {/* 🔵 Texte Déconnexion en haut à droite */}
+      <LogoutLink />
+
       {/* Logo */}
       <div className="mt-1">
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
       </div>
 
-      {/* Titre + Déconnexion */}
+      {/* Titre */}
       <div className="flex flex-col items-center mt-2">
         <h1 className="text-5xl sm:text-5xl font-handwriting text-white text-center">
           SoulTrack
         </h1>
-
-        {/* 🔵 Texte cliquable de déconnexion */}
-        <p
-          onClick={handleLogout}
-          className="text-sm text-white mt-2 cursor-pointer hover:underline"
-        >
-          Se déconnecter
-        </p>
       </div>
 
       {/* Message d’intro */}
@@ -159,7 +145,8 @@ export default function HomePage() {
 
       {/* Verset */}
       <div className="mt-4 mb-2 text-center text-white text-lg font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1
+        Corinthiens 12:14 ❤️
       </div>
     </div>
   );

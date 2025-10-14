@@ -1,4 +1,4 @@
-///components/BoutonEnvoyer.js
+//components/BoutonEnvoyer.js
 "use client";
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -8,7 +8,6 @@ export default function BoutonEnvoyer({ membre, cellule }) {
   const [sent, setSent] = useState(false);
 
   const handleSend = async () => {
-    // Vérifier la session utilisateur
     const {
       data: { session },
       error: sessionError,
@@ -33,7 +32,7 @@ export default function BoutonEnvoyer({ membre, cellule }) {
     setLoading(true);
 
     try {
-      // Insertion dans la table suivis_membres
+      // Insertion dans suivis_membres
       const { error } = await supabase.from("suivis_membres").insert([
         {
           membre_id: membre.id,
@@ -51,15 +50,23 @@ export default function BoutonEnvoyer({ membre, cellule }) {
         },
       ]);
 
-      if (error) {
-        console.error("Erreur insertion :", error);
-        alert("❌ Erreur lors de l’envoi vers le suivi");
-      } else {
-        alert(`✅ ${membre.prenom} ${membre.nom} a été envoyé vers ${cellule.cellule}`);
-        setSent(true);
+      if (error) throw error;
+
+      // 🔹 Si visiteur ou veut rejoindre ICC → devient "actif"
+      if (
+        membre.statut === "visiteur" ||
+        membre.statut === "veut rejoindre ICC"
+      ) {
+        await supabase
+          .from("membres")
+          .update({ statut: "actif" })
+          .eq("id", membre.id);
       }
+
+      alert(`✅ ${membre.prenom} ${membre.nom} a été envoyé vers ${cellule.cellule}`);
+      setSent(true);
     } catch (err) {
-      console.error("Exception lors de l’envoi :", err.message);
+      console.error("Erreur lors de l’envoi :", err.message);
       alert("Erreur inattendue lors de l’envoi");
     }
 
@@ -70,7 +77,7 @@ export default function BoutonEnvoyer({ membre, cellule }) {
     <button
       onClick={handleSend}
       disabled={loading || sent}
-      className={`mt-3 w-full py-2 rounded-lg text-white font-semibold transition duration-300 ${
+      className={`mt-2 w-full py-2 rounded-lg text-white font-semibold transition duration-300 ${
         sent
           ? "bg-green-500 cursor-not-allowed"
           : loading

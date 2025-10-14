@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import SendLinkPopup from "../components/SendLinkPopup";
+import LogoutLink from "../components/LogoutLink";
 import { canAccessPage } from "../lib/accessControl";
 
 export default function HomePage() {

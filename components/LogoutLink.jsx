@@ -1,4 +1,4 @@
-//components/LogoutLink.js
+//components/LogoutLink.js //
 "use client";
 
 import { useRouter } from "next/router";

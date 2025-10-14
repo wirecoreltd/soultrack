@@ -1,6 +1,7 @@
 /* pages/membres-hub.js */
 import Link from "next/link";
 import Image from "next/image";
+import LogoutLink from "../components/LogoutLink"; // ✅ on l’importe ici
 import { useRouter } from "next/router";
 
 export default function MembresHub() {

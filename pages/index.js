@@ -1,4 +1,4 @@
-//pages/index.js - Home page
+//pages/index.js - Home page//
 "use client";
 
 import { useEffect, useState } from "react";

@@ -1,32 +1,66 @@
-// pages/index.js
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import SendLinkPopup from "../components/SendLinkPopup";
+import { canAccessPage } from "../lib/accessControl";
 
 export default function HomePage() {
   const router = useRouter();
+  const [profile, setProfile] = useState({ role: null });
 
-  // Pour la démo, on peut simuler un profil Admin
-  const [profile] = useState({
-    role: "Admin",
-  });
+  // ✅ Vérifie si l'utilisateur est connecté et a accès à la page
+  useEffect(() => {
+    const userId = localStorage.getItem("userId");
+    const userRole = localStorage.getItem("userRole");
+    const userEmail = localStorage.getItem("userEmail");
 
-  // Fonction utilitaire pour redirection programmatique
+    if (!userId || !userRole) {
+      router.push("/login");
+      return;
+    }
+
+    if (!canAccessPage(userRole, "/index")) {
+      alert("⛔ Accès non autorisé !");
+      router.push("/login");
+      return;
+    }
+
+    setProfile({ id: userId, role: userRole, email: userEmail });
+  }, [router]);
+
   const handleRedirect = (path) => {
     router.push(path);
   };
 
+  /* 🧩 DÉBUT DU CODE DE DÉCONNEXION — À COPIER SUR TES AUTRES PAGES */
+  const handleLogout = () => {
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userEmail");
+    router.push("/login");
+  };
+  /* 🧩 FIN DU CODE DE DÉCONNEXION */
+  
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-between p-6 gap-2"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+      style={{
+        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
+      }}
     >
       {/* Logo */}
-      <div className="mt-1">
+      <div className="mt-1 flex items-center justify-between w-full max-w-5xl">
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
+
+        {/* 🧩 Texte cliquable pour déconnexion */}
+        <p
+          onClick={handleLogout}
+          className="text-white text-sm cursor-pointer hover:underline ml-auto"
+        >
+          Déconnexion
+        </p>
       </div>
 
       {/* Titre */}
@@ -36,13 +70,14 @@ export default function HomePage() {
 
       {/* Message */}
       <div className="mt-1 mb-2 text-center text-white text-lg font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons, nous grandissons,
-        et nous partageons l’amour de Christ dans chaque action ❤️
+        Chaque personne a une valeur infinie. Ensemble, nous avançons, nous
+        grandissons, et nous partageons l’amour de Christ dans chaque action ❤️
       </div>
 
       {/* Cartes principales */}
       <div className="flex flex-col md:flex-row flex-wrap gap-3 justify-center w-full max-w-5xl mt-2">
-        {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
+        {(profile.role === "ResponsableIntegration" ||
+          profile.role === "Admin") && (
           <div
             className="flex-1 min-w-[250px] w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
             onClick={() => handleRedirect("/membres-hub")}
@@ -54,7 +89,8 @@ export default function HomePage() {
           </div>
         )}
 
-        {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
+        {(profile.role === "ResponsableEvangelisation" ||
+          profile.role === "Admin") && (
           <div
             className="flex-1 min-w-[250px] w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
             onClick={() => handleRedirect("/evangelisation-hub")}
@@ -93,7 +129,8 @@ export default function HomePage() {
 
       {/* Boutons popup */}
       <div className="flex flex-col gap-3 mt-4 w-full max-w-md">
-        {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
+        {(profile.role === "ResponsableIntegration" ||
+          profile.role === "Admin") && (
           <SendLinkPopup
             label="Envoyer l'appli – Nouveau membre"
             type="ajouter_membre"
@@ -101,7 +138,8 @@ export default function HomePage() {
           />
         )}
 
-        {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
+        {(profile.role === "ResponsableEvangelisation" ||
+          profile.role === "Admin") && (
           <SendLinkPopup
             label="Envoyer l'appli – Évangélisé"
             type="ajouter_evangelise"
@@ -120,7 +158,8 @@ export default function HomePage() {
 
       {/* Verset */}
       <div className="mt-4 mb-2 text-center text-white text-lg font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1
+        Corinthiens 12:14 ❤️
       </div>
     </div>
   );

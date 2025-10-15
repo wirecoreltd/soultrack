@@ -137,15 +137,7 @@ export default function SuivisEvangelisation() {
       <p className="text-center text-white text-lg mb-6 font-handwriting-light">
         Voici les personnes confiées pour le suivi spirituel 🌱
       </p>
-
-      {/* ... tout le reste du code est inchangé ... */}
-    </div>
-  );
-}
-
-
-
-
+  
       {/* Contenu */}
       {loading ? (
         <p className="text-white">Chargement en cours...</p>

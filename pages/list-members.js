@@ -81,6 +81,7 @@ export default function ListMembers() {
 
   const statusOptions = [
     "actif",
+    "Integrer",
     "ancien",
     "veut rejoindre ICC",
     "visiteur",

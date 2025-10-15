@@ -1,4 +1,4 @@
-// pages/list-members.js
+// pages/list-members.js (stable + filtre et recherche intégrés)
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -11,6 +11,7 @@ import { fr } from "date-fns/locale";
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
   const [filter, setFilter] = useState("");
+  const [searchName, setSearchName] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
   const [selectedCellules, setSelectedCellules] = useState({});
@@ -88,9 +89,14 @@ export default function ListMembers() {
     "a déjà mon église",
   ];
 
-  const filteredMembers = filter
-    ? allMembersOrdered.filter((m) => m.statut === filter)
-    : allMembersOrdered;
+  // Filtre combiné : statut + recherche par nom
+  const filteredMembers = allMembersOrdered.filter((m) => {
+    const matchStatut = filter ? m.statut === filter : true;
+    const matchName = searchName
+      ? `${m.prenom} ${m.nom}`.toLowerCase().includes(searchName.toLowerCase())
+      : true;
+    return matchStatut && matchName;
+  });
 
   const totalCount = filteredMembers.length;
 
@@ -122,7 +128,7 @@ export default function ListMembers() {
         Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
       </p>
 
-      {/* Filtre + compteur + toggle */}
+      {/* Filtre + recherche + compteur + toggle */}
       <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">
         <div className="flex items-center space-x-2 mb-2 sm:mb-0">
           <select
@@ -135,6 +141,15 @@ export default function ListMembers() {
               <option key={s}>{s}</option>
             ))}
           </select>
+
+          <input
+            type="text"
+            placeholder="Rechercher par nom..."
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+            className="px-3 py-2 rounded-lg border text-sm"
+          />
+
           <span className="text-white text-sm">({totalCount})</span>
         </div>
 
@@ -149,131 +164,94 @@ export default function ListMembers() {
       {/* === VUE CARTE === */}
       {view === "card" ? (
         <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
-          {/* Section Nouveaux */}
-          {nouveaux.length > 0 && (
-            <div>
-              <p className="text-white text-lg mb-2 ml-1">
-                💖 Bien aimé venu le {formatDate(nouveaux[0].created_at)}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {nouveaux.map((m) => (
-                  <div
-                    key={m.id}
-                    className="bg-white p-3 rounded-xl shadow-md hover:shadow-xl transition duration-200 border-l-4"
-                    style={{ borderLeftColor: getBorderColor(m) }}
-                  >
-                    <div className="flex justify-between items-center mb-1">
-                      <span
-                        className="text-sm font-semibold"
-                        style={{ color: getBorderColor(m) }}
-                      >
-                        {m.star ? "⭐ S.T.A.R" : m.statut}
-                      </span>
-                      <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full ml-2">
-                        Nouveau
-                      </span>
-                    </div>
-
-                    <div className="text-lg font-bold text-gray-800">
-                      {m.prenom} {m.nom}
-                    </div>
-
-                    <p className="text-sm text-gray-600 mb-2">
-                      📱 {m.telephone || "—"}
-                    </p>
-
-                    <select
-                      value={m.statut}
-                      onChange={(e) =>
-                        handleChangeStatus(m.id, e.target.value)
-                      }
-                      className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
-                    >
-                      {statusOptions.map((s) => (
-                        <option key={s}>{s}</option>
-                      ))}
-                    </select>
-
-                    {/* Bouton Détails pour tous */}
-                    <p
-                      className="text-blue-500 underline cursor-pointer text-sm"
-                      onClick={() =>
-                        setPopupMember(m)
-                      }
-                    >
-                      Détails
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Section Membres existants */}
-          {anciens.length > 0 && (
-            <div className="mt-8">
-              <h3 className="text-white text-lg mb-3 font-semibold">
+          {filteredMembers.map((m) => (
+            <div
+              key={m.id}
+              className="bg-white p-3 rounded-xl shadow-md hover:shadow-xl transition duration-200 border-l-4"
+              style={{ borderLeftColor: getBorderColor(m) }}
+            >
+              <div className="flex justify-between items-center mb-1">
                 <span
-                  style={{
-                    background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                    WebkitBackgroundClip: "text",
-                    color: "transparent",
-                  }}
+                  className="text-sm font-semibold"
+                  style={{ color: getBorderColor(m) }}
                 >
-                  Membres existants
+                  {m.star ? "⭐ S.T.A.R" : m.statut}
                 </span>
-                <span className="ml-2 w-3/4 inline-block h-px bg-gradient-to-r from-blue-500 to-gray-400"></span>
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {anciens.map((m) => (
-                  <div
-                    key={m.id}
-                    className="bg-white p-3 rounded-xl shadow-md border-l-4 transition duration-200"
-                    style={{ borderLeftColor: getBorderColor(m) }}
-                  >
-                    <div className="flex justify-between items-center mb-1">
-                      <span
-                        className="text-sm font-semibold"
-                        style={{ color: getBorderColor(m) }}
-                      >
-                        {m.star ? "⭐ S.T.A.R" : m.statut}
-                      </span>
-                    </div>
-
-                    <div className="text-lg font-bold text-gray-800">
-                      {m.prenom} {m.nom}
-                    </div>
-
-                    <p className="text-sm text-gray-600 mb-2">
-                      📱 {m.telephone || "—"}
-                    </p>
-
-                    <select
-                      value={m.statut}
-                      onChange={(e) =>
-                        handleChangeStatus(m.id, e.target.value)
-                      }
-                      className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
-                    >
-                      {statusOptions.map((s) => (
-                        <option key={s}>{s}</option>
-                      ))}
-                    </select>
-
-                    {/* Bouton Détails pour tous */}
-                    <p
-                      className="text-blue-500 underline cursor-pointer text-sm"
-                      onClick={() =>
-                        setPopupMember(m)
-                      }
-                    >
-                      Détails
-                    </p>
-                  </div>
-                ))}
+                {m.statut === "visiteur" || m.statut === "veut rejoindre ICC" ? (
+                  <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full ml-2">
+                    Nouveau
+                  </span>
+                ) : null}
               </div>
+
+              <div className="text-lg font-bold text-gray-800">
+                {m.prenom} {m.nom}
+              </div>
+
+              <p className="text-sm text-gray-600 mb-2">
+                📱 {m.telephone || "—"}
+              </p>
+
+              <select
+                value={m.statut}
+                onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
+              >
+                {statusOptions.map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </select>
+
+              <p
+                className="text-blue-500 underline cursor-pointer text-sm"
+                onClick={() =>
+                  setDetailsOpen((prev) => ({
+                    ...prev,
+                    [m.id]: !prev[m.id],
+                  }))
+                }
+              >
+                {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
+              </p>
+
+              {detailsOpen[m.id] && (
+                <div className="mt-2 text-sm text-gray-700 space-y-1 transition-all duration-200">
+                  <p>Besoin : {m.besoin || "—"}</p>
+                  <p>Infos : {m.infos_supplementaires || "—"}</p>
+                  <p>Comment venu : {m.comment || "—"}</p>
+
+                  <p className="text-green-600 font-semibold mt-2">Cellule :</p>
+                  <select
+                    value={selectedCellules[m.id] || ""}
+                    onChange={(e) =>
+                      setSelectedCellules((prev) => ({
+                        ...prev,
+                        [m.id]: e.target.value,
+                      }))
+                    }
+                    className="border rounded-lg px-2 py-1 text-sm w-full"
+                  >
+                    <option value="">-- Sélectionner cellule --</option>
+                    {cellules.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.cellule} ({c.responsable})
+                      </option>
+                    ))}
+                  </select>
+
+                  {selectedCellules[m.id] && (
+                    <BoutonEnvoyer
+                      membre={m}
+                      cellule={cellules.find(
+                        (c) => String(c.id) === String(selectedCellules[m.id])
+                      )}
+                      onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                    />
+                  )}
+                </div>
+              )}
             </div>
-          )}
+          ))}
         </div>
       ) : (
         // === VUE TABLE ===
@@ -281,25 +259,28 @@ export default function ListMembers() {
           <table className="w-full text-sm text-left text-gray-700">
             <thead className="bg-indigo-600 text-white text-sm uppercase">
               <tr>
-                <th className="px-4 py-2">Nom complet</th>
-                <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Statut</th>
-                <th className="px-4 py-2">Détails</th>
+                <th className="px-4 py-2 w-1/4">Nom complet</th>
+                <th className="px-4 py-2 w-1/4">Téléphone</th>
+                <th className="px-4 py-2 w-1/4">Statut</th>
+                <th className="px-4 py-2 w-1/4">Détails</th>
               </tr>
             </thead>
             <tbody>
-              {allMembersOrdered.map((m) => (
+              {filteredMembers.map((m) => (
                 <tr key={m.id} className="bg-white border-b transition duration-200">
                   <td className="px-4 py-2 border-l-4 rounded-l-lg" style={{ borderLeftColor: getBorderColor(m) }}>
-                    {m.prenom} {m.nom}
+                    {m.prenom} {m.nom}{" "}
+                    {m.statut === "visiteur" || m.statut === "veut rejoindre ICC" && (
+                      <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full ml-1">
+                        Nouveau
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-2">{m.telephone}</td>
                   <td className="px-4 py-2">
                     <select
                       value={m.statut}
-                      onChange={(e) =>
-                        handleChangeStatus(m.id, e.target.value)
-                      }
+                      onChange={(e) => handleChangeStatus(m.id, e.target.value)}
                       className="border rounded-md px-2 py-1 text-sm w-full"
                     >
                       {statusOptions.map((s) => (
@@ -386,7 +367,8 @@ export default function ListMembers() {
                 <BoutonEnvoyer
                   membre={popupMember}
                   cellule={cellules.find(
-                    (c) => String(c.id) === String(selectedCellules[popupMember.id])
+                    (c) =>
+                      String(c.id) === String(selectedCellules[popupMember.id])
                   )}
                   onStatusUpdate={handleStatusUpdateFromEnvoyer}
                 />

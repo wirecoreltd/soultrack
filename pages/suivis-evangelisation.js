@@ -1,4 +1,3 @@
-// pages/suivis-evangelisation.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -17,32 +16,20 @@ export default function SuivisEvangelisation() {
     fetchSuivis();
   }, []);
 
-  // ✅ Nouvelle version de fetchSuivis()
-const fetchSuivis = async () => {
-  setLoading(true);
+  // ✅ Nouvelle version avec filtrage correct des statuts
+  const fetchSuivis = async () => {
+    setLoading(true);
 
-  const { data, error } = await supabase
-    .from("suivis_des_evangelises")
-    .select(`
-      *,
-      cellules:cellule_id (cellule)
-    `)
-    // ✅ Inclure les statuts vides ou nuls et exclure "Integrer" et "Venu à l’église"
-    .or(
-      'status_suivis_evangelises.is.null,status_suivis_evangelises.eq.,and(status_suivis_evangelises.neq.Integrer,status_suivis_evangelises.neq."Venu à l’église")'
-    )
-    .order("date_suivi", { ascending: false });
-
-  if (error) {
-    console.error("Erreur de chargement :", error.message);
-    setSuivis([]);
-  } else {
-    setSuivis(data || []);
-  }
-
-  setLoading(false);
-};
-
+    const { data, error } = await supabase
+      .from("suivis_des_evangelises")
+      .select(`
+        *,
+        cellules:cellule_id (cellule)
+      `)
+      .or(
+        'status_suivis_evangelises.is.null,status_suivis_evangelises.eq.,and(status_suivis_evangelises.neq.Integrer,status_suivis_evangelises.neq."Venu à l’église")'
+      )
+      .order("date_suivi", { ascending: false });
 
     if (error) {
       console.error("Erreur de chargement :", error.message);
@@ -64,7 +51,7 @@ const fetchSuivis = async () => {
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
   };
 
-  // 🟢 MODIFICATION 2 : ajout du transfert vers "membres"
+  // ✅ Transfert vers table membres si statut = "Integrer" ou "Venu à l’église"
   const updateStatus = async (id) => {
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
@@ -73,7 +60,7 @@ const fetchSuivis = async () => {
 
     setUpdating((prev) => ({ ...prev, [id]: true }));
 
-    // Récupération de la ligne actuelle
+    // Récupérer les infos actuelles
     const { data: currentData, error: fetchError } = await supabase
       .from("suivis_des_evangelises")
       .select("*")
@@ -86,7 +73,7 @@ const fetchSuivis = async () => {
       return;
     }
 
-    // Mise à jour du statut
+    // Mettre à jour le statut
     const { error: updateError } = await supabase
       .from("suivis_des_evangelises")
       .update({
@@ -101,7 +88,7 @@ const fetchSuivis = async () => {
       return;
     }
 
-    // 🔹 Si statut = "Integrer" ou "Venu à l’église", transfert vers membres
+    // ✅ Si statut = "Integrer" ou "Venu à l’église" → transfert vers membres
     if (["Integrer", "Venu à l’église"].includes(newStatus)) {
       const { error: insertError } = await supabase.from("membres").insert([
         {
@@ -123,16 +110,15 @@ const fetchSuivis = async () => {
       if (insertError) {
         console.error("Erreur insertion membre :", insertError.message);
       } else {
-        // Supprimer le contact de la table suivis
+        // Supprime le contact transféré
         await supabase.from("suivis_des_evangelises").delete().eq("id", id);
       }
     }
 
     setUpdating((prev) => ({ ...prev, [id]: false }));
-    fetchSuivis(); // Rafraîchit la liste
+    fetchSuivis(); // Rafraîchit la liste après MAJ
   };
 
-  // ⬇️ le reste du code reste IDENTIQUE
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-purple-700 to-indigo-500">
       {/* Retour */}
@@ -143,6 +129,7 @@ const fetchSuivis = async () => {
         ← Retour
       </button>
 
+      {/* Logo */}
       <Image src="/logo.png" alt="Logo" width={80} height={80} className="mb-3" />
 
       <h1 className="text-4xl font-handwriting text-white text-center mb-3">
@@ -152,7 +139,7 @@ const fetchSuivis = async () => {
       <p className="text-center text-white text-lg mb-6 font-handwriting-light">
         Voici les personnes confiées pour le suivi spirituel 🌱
       </p>
-  
+
       {/* Contenu */}
       {loading ? (
         <p className="text-white">Chargement en cours...</p>
@@ -199,7 +186,7 @@ const fetchSuivis = async () => {
                     <p>🙏 Besoin : {item.besoin || "—"}</p>
                     <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
 
-                    {/* Champ commentaire */}
+                    {/* Commentaire */}
                     <div className="mt-2">
                       <label className="text-gray-700 text-sm">💬 Commentaire :</label>
                       <textarea
@@ -217,7 +204,7 @@ const fetchSuivis = async () => {
                       ></textarea>
                     </div>
 
-                    {/* Menu déroulant statut */}
+                    {/* Statut */}
                     <div className="mt-2">
                       <label className="text-gray-700 text-sm">
                         📋 Statut du suivi :
@@ -225,7 +212,7 @@ const fetchSuivis = async () => {
                       <select
                         value={
                           statusChanges[item.id] ??
-                          item.status_suivis_evangelises ?? // ✅ correction ici
+                          item.status_suivis_evangelises ??
                           ""
                         }
                         onChange={(e) =>
@@ -247,7 +234,7 @@ const fetchSuivis = async () => {
                       </select>
                     </div>
 
-                    {/* Date du suivi */}
+                    {/* Date */}
                     <p className="mt-2">
                       📅 Date du suivi :{" "}
                       {new Date(item.date_suivi).toLocaleDateString("fr-FR", {

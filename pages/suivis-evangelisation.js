@@ -188,7 +188,7 @@ export default function SuivisEvangelisation() {
                         <option value="">-- Choisir un statut --</option>
                         <option value="En cours">🕊 En cours</option>
                         <option value="Integrer">🔥 Intégrer</option>
-                        <option value="Veut venir à l’église">⛪ Veut venir à l’église</option>
+                        <option value="Venu à l’église">⛪ Venu à l’église</option>
                         <option value="Veut venir à la famille d’impact">
                           👨‍👩‍👧‍👦 Veut venir à la famille d’impact
                         </option>

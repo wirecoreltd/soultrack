@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import BoutonEnvoyer from "../components/BoutonEnvoyer";
 import LogoutLink from "../components/LogoutLink";
-import { supabase } from "../utils/supabaseClient";
+import supabase from "../lib/supabaseClient";
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);

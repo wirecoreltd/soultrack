@@ -1,5 +1,4 @@
 //components/BoutonEnvoyer.js
-
 "use client";
 
 import { useState } from "react";
@@ -34,7 +33,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate }) {
     setLoading(true);
 
     try {
-      // Insertion dans suivis_membres
+      // 🔹 Enregistrer dans Supabase
       const { error } = await supabase.from("suivis_membres").insert([
         {
           membre_id: membre.id,
@@ -54,7 +53,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate }) {
 
       if (error) throw error;
 
-      // 🔹 Si "visiteur" ou "veut rejoindre ICC" → devient "actif"
+      // 🔄 Mise à jour du statut du membre
       if (
         membre.statut === "visiteur" ||
         membre.statut === "veut rejoindre ICC"
@@ -64,14 +63,41 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate }) {
           .update({ statut: "actif" })
           .eq("id", membre.id);
 
-        // 🔄 Met à jour immédiatement dans l’état local
         if (onStatusUpdate) onStatusUpdate(membre.id, "actif");
       }
 
-      alert(
-        `✅ ${membre.prenom} ${membre.nom} a été envoyé au responsable ${cellule.responsable}`
-      );
+      // ✅ Message WhatsApp
+      const message = `
+👋 Salut ${cellule.responsable},
+
+🙏 Dieu nous a envoyé de nouvelles âmes à suivre.
+Voici leurs infos :
+
+- 👤 Nom : ${membre.prenom || ""} ${membre.nom || ""}
+- 📱 Téléphone : ${membre.telephone || "—"}
+- 📲 WhatsApp : Oui
+- 🏙 Ville : ${membre.ville || "—"}
+- 🙏 Besoin : ${membre.besoin || "—"}
+- 📝 Infos supplémentaires : ${membre.infos_supplementaires || "—"}
+
+🙏 Merci pour ton cœur ❤ et ton amour ✨
+      `;
+
+      const sanitizedPhone = cellule.telephone
+        ? cellule.telephone.replace(/\D/g, "")
+        : null;
+
+      if (sanitizedPhone) {
+        const whatsappURL = `https://wa.me/${sanitizedPhone}?text=${encodeURIComponent(
+          message.trim()
+        )}`;
+        window.open(whatsappURL, "_blank");
+      } else {
+        alert("⚠️ Aucun numéro WhatsApp trouvé pour ce responsable.");
+      }
+
       setSent(true);
+      alert(`✅ ${membre.prenom} ${membre.nom} a été envoyé au responsable ${cellule.responsable}`);
     } catch (err) {
       console.error("Erreur lors de l’envoi :", err.message);
       alert("Erreur inattendue lors de l’envoi");

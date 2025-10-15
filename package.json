@@ -8,14 +8,15 @@
     "start": "next start"
   },
   "dependencies": {
-  "next": "13.4.12",
-  "react": "18.2.0",
-  "react-dom": "18.2.0",
-  "@supabase/supabase-js": "^2.33.0",
-  "framer-motion": "^10.12.16",
-  "tailwindcss": "^3.3.3",
-  "autoprefixer": "^10.4.15",
-  "postcss": "^8.4.21",
-  "react-icons": "^4.12.0"
+    "next": "13.4.12",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "@supabase/supabase-js": "^2.33.0",
+    "framer-motion": "^10.12.16",
+    "tailwindcss": "^3.3.3",
+    "autoprefixer": "^10.4.15",
+    "postcss": "^8.4.21",
+    "react-icons": "^4.12.0",
+    "date-fns": "^3.6.0"
   }
 }

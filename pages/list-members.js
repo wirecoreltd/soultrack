@@ -11,7 +11,6 @@ import { fr } from "date-fns/locale";
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
   const [filter, setFilter] = useState("");
-  const [search, setSearch] = useState(""); // 🔹 Recherche libre
   const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
   const [selectedCellules, setSelectedCellules] = useState({});
@@ -71,6 +70,15 @@ export default function ListMembers() {
     }
   };
 
+  const nouveaux = members.filter(
+    (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
+  );
+  const anciens = members.filter(
+    (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
+  );
+
+  const allMembersOrdered = [...nouveaux, ...anciens];
+
   const statusOptions = [
     "actif",
     "Integrer",
@@ -80,21 +88,9 @@ export default function ListMembers() {
     "a déjà mon église",
   ];
 
-  // 🔹 Filtrage par statut + recherche libre par nom
-  const filteredMembers = members.filter((m) => {
-    const matchesStatus = filter ? m.statut === filter : true;
-    const matchesSearch = search
-      ? `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase())
-      : true;
-    return matchesStatus && matchesSearch;
-  });
-
-  const nouveaux = filteredMembers.filter(
-    (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
-  );
-  const anciens = filteredMembers.filter(
-    (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
-  );
+  const filteredMembers = filter
+    ? allMembersOrdered.filter((m) => m.statut === filter)
+    : allMembersOrdered;
 
   const totalCount = filteredMembers.length;
 
@@ -126,9 +122,9 @@ export default function ListMembers() {
         Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
       </p>
 
-      {/* Filtre + Recherche + compteur + toggle */}
-      <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4 space-y-2 sm:space-y-0">
-        <div className="flex items-center space-x-2">
+      {/* Filtre + compteur + toggle */}
+      <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">
+        <div className="flex items-center space-x-2 mb-2 sm:mb-0">
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -139,13 +135,6 @@ export default function ListMembers() {
               <option key={s}>{s}</option>
             ))}
           </select>
-          <input
-            type="text"
-            placeholder="Recherche par nom..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="px-3 py-2 rounded-lg border text-sm"
-          />
           <span className="text-white text-sm">({totalCount})</span>
         </div>
 
@@ -205,10 +194,12 @@ export default function ListMembers() {
                       ))}
                     </select>
 
-                    {/* Bouton Détails */}
+                    {/* Bouton Détails pour tous */}
                     <p
                       className="text-blue-500 underline cursor-pointer text-sm"
-                      onClick={() => setPopupMember(m)}
+                      onClick={() =>
+                        setPopupMember(m)
+                      }
                     >
                       Détails
                     </p>
@@ -269,10 +260,12 @@ export default function ListMembers() {
                       ))}
                     </select>
 
-                    {/* Bouton Détails */}
+                    {/* Bouton Détails pour tous */}
                     <p
                       className="text-blue-500 underline cursor-pointer text-sm"
-                      onClick={() => setPopupMember(m)}
+                      onClick={() =>
+                        setPopupMember(m)
+                      }
                     >
                       Détails
                     </p>
@@ -284,9 +277,9 @@ export default function ListMembers() {
         </div>
       ) : (
         // === VUE TABLE ===
-        <div className="w-full max-w-5xl bg-white rounded-xl shadow-lg overflow-x-auto transition duration-200">
-          <table className="w-full text-sm text-left text-gray-700">
-            <thead className="bg-indigo-600 text-white text-sm uppercase">
+        <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
+          <table className="w-full text-sm text-left text-gray-700 border-separate border-spacing-0 rounded-md overflow-hidden shadow-lg bg-white">
+            <thead className="bg-indigo-600 text-white text-sm uppercase rounded-t-md">
               <tr>
                 <th className="px-4 py-2">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
@@ -295,9 +288,21 @@ export default function ListMembers() {
               </tr>
             </thead>
             <tbody>
-              {filteredMembers.map((m) => (
-                <tr key={m.id} className="bg-white border-b transition duration-200">
-                  <td className="px-4 py-2 border-l-4 rounded-l-lg" style={{ borderLeftColor: getBorderColor(m) }}>
+              {allMembersOrdered.map((m, index) => (
+                <tr
+                  key={m.id}
+                  className={`bg-white transition duration-200 ${
+                    index === 0
+                      ? "rounded-tl-md rounded-tr-md"
+                      : index === allMembersOrdered.length - 1
+                      ? "rounded-bl-md rounded-br-md"
+                      : ""
+                  }`}
+                >
+                  <td
+                    className="px-4 py-2 border-l-4"
+                    style={{ borderLeftColor: getBorderColor(m) }}
+                  >
                     {m.prenom} {m.nom}
                   </td>
                   <td className="px-4 py-2">{m.telephone}</td>

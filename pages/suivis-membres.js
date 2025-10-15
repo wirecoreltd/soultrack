@@ -159,7 +159,7 @@ export default function SuivisMembres() {
                 {isOpen && (
                   <div className="text-gray-600 text-sm text-center mt-2 space-y-2 w-full">
                     <p>🙏 Besoin : {item.besoin || "—"}</p>
-                    <p>🧩 Comment venu : {item.how.came || "—"}</p>
+                    <p>🧩 Comment venu : {item.venu || "—"}</p>
                     <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
                     <div className="mt-2">
                       <label className="text-gray-700 text-sm">💬 Commentaire :</label>

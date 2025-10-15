@@ -208,7 +208,7 @@ export default function ListMembers() {
                       <div className="mt-2 text-sm text-gray-700 space-y-1 transition-all duration-200">
                         <p>Besoin : {m.besoin || "—"}</p>
                         <p>Infos : {m.infos_supplementaires || "—"}</p>
-                        <p>Comment venu : {m.how_came || "—"}</p>
+                        <p>Comment venu : {m.venu || "—"}</p>
 
                         <p className="text-green-600 font-semibold mt-2">
                           Cellule :

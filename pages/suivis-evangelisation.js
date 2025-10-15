@@ -17,6 +17,7 @@ export default function SuivisEvangelisation() {
     fetchSuivis();
   }, []);
 
+  // 🟢 MODIFICATION 1 : on filtre les statuts "Integrer" et "Venu à l’église"
   const fetchSuivis = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -25,6 +26,7 @@ export default function SuivisEvangelisation() {
         *,
         cellules:cellule_id (cellule)
       `)
+      .not("status_suivis_evangelises", "in", '("Integrer","Venu à l’église")')
       .order("date_suivi", { ascending: false });
 
     if (error) {
@@ -47,6 +49,7 @@ export default function SuivisEvangelisation() {
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
   };
 
+  // 🟢 MODIFICATION 2 : ajout du transfert vers "membres"
   const updateStatus = async (id) => {
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
@@ -55,35 +58,66 @@ export default function SuivisEvangelisation() {
 
     setUpdating((prev) => ({ ...prev, [id]: true }));
 
-    const { error } = await supabase
+    // Récupération de la ligne actuelle
+    const { data: currentData, error: fetchError } = await supabase
+      .from("suivis_des_evangelises")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) {
+      console.error("Erreur récupération :", fetchError.message);
+      setUpdating((prev) => ({ ...prev, [id]: false }));
+      return;
+    }
+
+    // Mise à jour du statut
+    const { error: updateError } = await supabase
       .from("suivis_des_evangelises")
       .update({
-        status_suivis_evangelises: newStatus, // ✅ correction ici
+        status_suivis_evangelises: newStatus,
         commentaire_evangelises: newComment,
       })
       .eq("id", id);
 
-    if (error) {
-      console.error("Erreur de mise à jour :", error.message);
-    } else {
-      setSuivis((prev) =>
-        prev.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                status_suivis_evangelises:
-                  newStatus ?? item.status_suivis_evangelises, // ✅ correction ici
-                commentaire_evangelises:
-                  newComment ?? item.commentaire_evangelises,
-              }
-            : item
-        )
-      );
+    if (updateError) {
+      console.error("Erreur mise à jour :", updateError.message);
+      setUpdating((prev) => ({ ...prev, [id]: false }));
+      return;
+    }
+
+    // 🔹 Si statut = "Integrer" ou "Venu à l’église", transfert vers membres
+    if (["Integrer", "Venu à l’église"].includes(newStatus)) {
+      const { error: insertError } = await supabase.from("membres").insert([
+        {
+          nom: currentData.nom,
+          prenom: currentData.prenom,
+          telephone: currentData.telephone,
+          email: currentData.email,
+          statut: newStatus,
+          venu: newStatus === "Venu à l’église" ? "Oui" : null,
+          besoin: currentData.besoin,
+          ville: currentData.ville,
+          formation: currentData.formation,
+          evangeliste_nom: currentData.evangeliste_nom,
+          comment: newComment || currentData.commentaire_evangelises,
+          responsable_suivi: currentData.responsable_cellule,
+        },
+      ]);
+
+      if (insertError) {
+        console.error("Erreur insertion membre :", insertError.message);
+      } else {
+        // Supprimer le contact de la table suivis
+        await supabase.from("suivis_des_evangelises").delete().eq("id", id);
+      }
     }
 
     setUpdating((prev) => ({ ...prev, [id]: false }));
+    fetchSuivis(); // Rafraîchit la liste
   };
 
+  // ⬇️ le reste du code reste IDENTIQUE
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-purple-700 to-indigo-500">
       {/* Retour */}
@@ -94,7 +128,6 @@ export default function SuivisEvangelisation() {
         ← Retour
       </button>
 
-      {/* Logo */}
       <Image src="/logo.png" alt="Logo" width={80} height={80} className="mb-3" />
 
       <h1 className="text-4xl font-handwriting text-white text-center mb-3">
@@ -104,6 +137,14 @@ export default function SuivisEvangelisation() {
       <p className="text-center text-white text-lg mb-6 font-handwriting-light">
         Voici les personnes confiées pour le suivi spirituel 🌱
       </p>
+
+      {/* ... tout le reste du code est inchangé ... */}
+    </div>
+  );
+}
+
+
+
 
       {/* Contenu */}
       {loading ? (

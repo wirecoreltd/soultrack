@@ -1,13 +1,13 @@
-//components/BoutonEnvoyer.js
 "use client";
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate }) {
+export default function BoutonEnvoyer({ membre, cellule, onStatutChange }) {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
   const handleSend = async () => {
+    // Vérifie la session utilisateur
     const {
       data: { session },
       error: sessionError,
@@ -32,7 +32,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate }) {
     setLoading(true);
 
     try {
-      // Insertion dans suivis_membres
+      // 🔹 Insertion dans la table suivis_membres
       const { error } = await supabase.from("suivis_membres").insert([
         {
           membre_id: membre.id,
@@ -50,25 +50,33 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate }) {
         },
       ]);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur insertion :", error);
+        alert("❌ Erreur lors de l’envoi vers le suivi");
+      } else {
+        // 🔹 Si le membre est "visiteur" ou "veut rejoindre ICC", on le rend "actif"
+        if (
+          membre.statut === "visiteur" ||
+          membre.statut === "veut rejoindre ICC"
+        ) {
+          const { error: updateError } = await supabase
+            .from("membres")
+            .update({ statut: "actif" })
+            .eq("id", membre.id);
 
-      // 🔹 Si visiteur ou veut rejoindre ICC → devient "actif"
-      if (
-        membre.statut === "visiteur" ||
-        membre.statut === "veut rejoindre ICC"
-      ) {
-        await supabase
-          .from("membres")
-          .update({ statut: "actif" })
-          .eq("id", membre.id);
+          if (updateError) {
+            console.error("Erreur mise à jour statut:", updateError.message);
+          } else {
+            // 🔹 Mise à jour dynamique du state parent
+            onStatutChange?.(membre.id, "actif");
+          }
+        }
 
-        if (onStatusUpdate) onStatusUpdate(membre.id, "actif");
+        alert(`✅ ${membre.prenom} ${membre.nom} a été envoyé au responsable ${cellule.responsable}`);
+        setSent(true);
       }
-
-      alert(`✅ ${membre.prenom} ${membre.nom} a été envoyé vers ${cellule.cellule}`);
-      setSent(true);
     } catch (err) {
-      console.error("Erreur lors de l’envoi :", err.message);
+      console.error("Exception lors de l’envoi :", err.message);
       alert("Erreur inattendue lors de l’envoi");
     }
 
@@ -79,17 +87,15 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate }) {
     <button
       onClick={handleSend}
       disabled={loading || sent}
-      className={`mt-2 w-full py-2 rounded-lg text-white font-semibold transition duration-300 ${
+      className={`mt-3 w-full py-2 rounded-lg text-white font-semibold transition duration-300 ${
         sent
           ? "bg-green-500 cursor-not-allowed"
           : loading
           ? "bg-gray-400 cursor-wait"
-          : "bg-indigo-600 hover:bg-indigo-700"
+          : "bg-sky-500 hover:bg-sky-600"
       }`}
     >
-      {sent ? "✅ Envoyé" : loading ? "⏳ Envoi..." : "📤 Envoyer vers suivis"}
+      {sent ? "✅ Envoyé" : loading ? "⏳ Envoi..." : "📤 Envoyer au responsable"}
     </button>
   );
 }
-
-

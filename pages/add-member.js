@@ -155,8 +155,8 @@ export default function AddMember() {
           <div>
             <label className="block text-gray-700 font-medium mb-1">Comment est-il venu ?</label>
             <select
-              name="how_came"
-              value={formData.how_came}
+              name="venu"
+              value={formData.venu}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             >

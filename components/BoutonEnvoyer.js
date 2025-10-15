@@ -3,7 +3,7 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function BoutonEnvoyer({ membre, cellule }) {
+export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate }) {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -61,6 +61,8 @@ export default function BoutonEnvoyer({ membre, cellule }) {
           .from("membres")
           .update({ statut: "actif" })
           .eq("id", membre.id);
+
+        if (onStatusUpdate) onStatusUpdate(membre.id, "actif");
       }
 
       alert(`✅ ${membre.prenom} ${membre.nom} a été envoyé vers ${cellule.cellule}`);
@@ -89,4 +91,5 @@ export default function BoutonEnvoyer({ membre, cellule }) {
     </button>
   );
 }
+
 

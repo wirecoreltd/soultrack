@@ -1,391 +1,191 @@
 // pages/list-members.js
 "use client";
+
 import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
-import Image from "next/image";
+import { motion } from "framer-motion";
 import BoutonEnvoyer from "../components/BoutonEnvoyer";
 import LogoutLink from "../components/LogoutLink";
+import { supabase } from "../utils/supabaseClient";
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
-  const [filter, setFilter] = useState("");
-  const [detailsOpen, setDetailsOpen] = useState({});
-  const [cellules, setCellules] = useState([]);
-  const [selectedCellules, setSelectedCellules] = useState({});
-  const [view, setView] = useState("card");
-  const [popupMember, setPopupMember] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchMembers();
-    fetchCellules();
   }, []);
 
-  const fetchMembers = async () => {
-    const { data, error } = await supabase
-      .from("membres")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) console.error("Erreur fetchMembers:", error.message);
-    setMembers(data || []);
-  };
-
-  const fetchCellules = async () => {
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("id, cellule, responsable, telephone");
-    if (error) console.error("Erreur fetchCellules:", error.message);
-    setCellules(data || []);
-  };
-
-  const handleChangeStatus = async (id, newStatus) => {
-    try {
-      await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
-      setMembers((prev) =>
-        prev.map((m) =>
-          m.id === id ? { ...m, statut: newStatus } : m
-        )
-      );
-    } catch (err) {
-      console.error("Erreur update statut:", err.message);
+  async function fetchMembers() {
+    const { data, error } = await supabase.from("members").select("*");
+    if (!error) {
+      // 🔹 On trie : visiteurs et "veut rejoindre ICC" d'abord
+      const sorted = [...data].sort((a, b) => {
+        const order = { visiteur: 1, "veut rejoindre ICC": 2, actif: 3, star: 4 };
+        return (order[a.status] || 99) - (order[b.status] || 99);
+      });
+      setMembers(sorted);
     }
-  };
+    setLoading(false);
+  }
 
-  const handleStatusUpdateFromEnvoyer = (id, newStatus) => {
+  async function updateStatus(id, newStatus) {
+    await supabase.from("members").update({ status: newStatus }).eq("id", id);
     setMembers((prev) =>
-      prev.map((m) =>
-        m.id === id ? { ...m, statut: newStatus } : m
-      )
+      prev.map((m) => (m.id === id ? { ...m, status: newStatus } : m))
     );
-  };
+  }
 
-  const getBorderColor = (member) => {
-    if (member.star) return "#FBC02D";
-    if (member.statut === "actif") return "#4285F4";
-    if (member.statut === "a déjà mon église") return "#EA4335";
-    if (member.statut === "ancien") return "#999999";
-    if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
-      return "#34A853";
-    return "#ccc";
-  };
+  function getColorByStatus(status) {
+    switch (status) {
+      case "visiteur":
+        return "#3B82F6"; // bleu
+      case "veut rejoindre ICC":
+        return "#60A5FA"; // bleu clair
+      case "actif":
+        return "#10B981"; // vert
+      case "star":
+        return "#FBBF24"; // jaune
+      default:
+        return "#9CA3AF"; // gris
+    }
+  }
 
-  const filteredMembers = members.filter((m) => {
-    if (!filter) return true;
-    if (filter === "star") return m.star === true;
-    return m.statut === filter;
-  });
-
-  const nouveaux = filteredMembers.filter(
-    (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
-  );
-  const anciens = filteredMembers.filter(
-    (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
-  );
-
-  const statusOptions = [
-    "actif",
-    "ancien",
-    "veut rejoindre ICC",
-    "visiteur",
-    "a déjà mon église",
-  ];
-
-  // 💖 Formatage date dernier membre venu
-  const getFormattedDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("fr-FR", {
+  function formatDate(dateStr) {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("fr-FR", {
       weekday: "long",
       day: "numeric",
       month: "long",
       year: "numeric",
     });
-  };
+  }
 
-  const latestNewMember = nouveaux.length > 0 ? nouveaux[0] : null;
+  const newMembers = members.filter(
+    (m) => m.status === "visiteur" || m.status === "veut rejoindre ICC"
+  );
+  const existingMembers = members.filter(
+    (m) => m.status === "actif" || m.status === "star"
+  );
+
+  const latestDate =
+    newMembers.length > 0
+      ? formatDate(
+          newMembers.reduce(
+            (a, b) => (new Date(a.created_at) > new Date(b.created_at) ? a : b)
+          ).created_at
+        )
+      : null;
+
+  if (loading) return <p className="text-center mt-6">Chargement...</p>;
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
-      <div className="flex justify-between w-full max-w-5xl items-center mb-4">
-        <button
-          onClick={() => window.history.back()}
-          className="flex items-center text-white font-semibold hover:text-gray-200"
-        >
-          ← Retour
-        </button>
-
-        {/* ✅ Logout bouton stylé */}
-        <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
+    <div className="min-h-screen bg-gray-100 py-6 px-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Liste des membres</h1>
+        <LogoutLink />
       </div>
 
-      <div className="mt-2 mb-2">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
-      </div>
-
-      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">
-        SoulTrack
-      </h1>
-
-      <p className="text-center text-white text-lg mb-2 font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
-      </p>
-
-      <p
-        className="self-end text-orange-500 cursor-pointer mb-4"
-        onClick={() => setView(view === "card" ? "table" : "card")}
-      >
-        {view === "card" ? "Vue Table" : "Vue Carte"}
-      </p>
-
-      {/* === FILTRES === */}
-      <div className="flex flex-col md:flex-row items-center gap-4 mb-4 w-full max-w-md">
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="border rounded-lg px-4 py-2 text-gray-700 shadow-sm w-full focus:ring-2 focus:ring-indigo-400"
-        >
-          <option value="">-- Filtrer par statut --</option>
-          {statusOptions.map((s) => (
-            <option key={s}>{s}</option>
-          ))}
-          <option value="star">⭐ Star</option>
-        </select>
-        <span className="text-white italic text-opacity-80">
-          Résultats: {filteredMembers.length}
-        </span>
-      </div>
-
-      {/* === VUE CARTE === */}
-      {view === "card" ? (
-        <div className="w-full max-w-5xl space-y-8">
-          {latestNewMember && (
-            <p className="text-white text-xl mb-4 text-center">
-              💖 Bien aimé venu le{" "}
-              {getFormattedDate(latestNewMember.created_at)}
-            </p>
-          )}
-
-          {[{ title: "🆕 Nouveaux contacts", list: nouveaux },
-            { title: "👥 Membres existants", list: anciens }].map(
-            ({ title, list }) =>
-              list.length > 0 && (
-                <div key={title}>
-                  <p className="text-white mb-2 text-xl">{title}</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {list.map((member) => (
-                      <div
-                        key={member.id}
-                        className="bg-white p-3 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 border-t-4 flex flex-col justify-between"
-                        style={{ borderTopColor: getBorderColor(member) }}
-                      >
-                        {/* === Nom + Statut === */}
-                        <div className="flex justify-between items-start mb-1">
-                          <div className="flex flex-col break-words">
-                            <span className="text-sm font-semibold text-gray-600 mb-1">
-                              {member.star
-                                ? "⭐ S.T.A.R"
-                                : member.statut || "—"}
-                            </span>
-                            <span className="text-lg font-bold text-gray-800 leading-tight">
-                              {member.prenom}
-                            </span>
-                            <span className="text-lg font-bold text-gray-800 leading-tight">
-                              {member.nom}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* === Téléphone + Sélecteur statut === */}
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="text-sm text-gray-600">
-                            📱 {member.telephone || "—"}
-                          </p>
-                          <select
-                            value={member.statut}
-                            onChange={(e) =>
-                              handleChangeStatus(member.id, e.target.value)
-                            }
-                            className="border rounded-md px-2 py-1 text-xs text-gray-700"
-                          >
-                            {statusOptions.map((s) => (
-                              <option key={s} value={s}>
-                                {s}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        {/* === Détails === */}
-                        <p
-                          className="text-blue-500 underline cursor-pointer text-sm mt-1"
-                          onClick={() =>
-                            setDetailsOpen((prev) => ({
-                              ...prev,
-                              [member.id]: !prev[member.id],
-                            }))
-                          }
-                        >
-                          {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-                        </p>
-
-                        {detailsOpen[member.id] && (
-                          <div className="mt-2 text-sm text-gray-700 space-y-1">
-                            <p>Besoin : {member.besoin || "—"}</p>
-                            <p>Infos : {member.infos_supplementaires || "—"}</p>
-                            <p>Comment venu : {member.comment || "—"}</p>
-                            <p className="text-green-600 font-semibold">Cellule :</p>
-                            <select
-                              value={selectedCellules[member.id] || ""}
-                              onChange={(e) =>
-                                setSelectedCellules((prev) => ({
-                                  ...prev,
-                                  [member.id]: e.target.value,
-                                }))
-                              }
-                              className="border rounded-lg px-2 py-1 text-sm w-full"
-                            >
-                              <option value="">-- Sélectionner cellule --</option>
-                              {cellules.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {c.cellule} ({c.responsable})
-                                </option>
-                              ))}
-                            </select>
-
-                            {selectedCellules[member.id] && (
-                              <BoutonEnvoyer
-                                membre={member}
-                                cellule={cellules.find(
-                                  (c) =>
-                                    String(c.id) ===
-                                    String(selectedCellules[member.id])
-                                )}
-                                onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                              />
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+      {/* 💖 Section nouveaux membres */}
+      {newMembers.length > 0 && (
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4 text-pink-600">
+            💖 Bien aimé venu le {latestDate}
+          </h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {newMembers.map((member) => {
+              const color = getColorByStatus(member.status);
+              return (
+                <motion.div
+                  key={member.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2 }}
+                  className="bg-white shadow rounded-xl p-4 relative"
+                  style={{ borderTop: `6px solid ${color}` }}
+                >
+                  {/* Statut en haut à gauche */}
+                  <div className="absolute top-2 left-4 text-sm font-semibold"
+                       style={{ color }}>
+                    {member.status === "star" ? "⭐ S.T.A.R" : member.status}
                   </div>
-                </div>
-              )
-          )}
-        </div>
-      ) : (
-        /* === VUE TABLE === */
-        <div className="w-full max-w-5xl bg-white rounded-xl shadow-lg overflow-x-auto">
-          <table className="w-full text-sm text-left text-gray-700">
-            <thead className="bg-indigo-600 text-white text-sm uppercase">
-              <tr>
-                <th className="px-4 py-2">Nom complet</th>
-                <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Statut</th>
-                <th className="px-4 py-2">Détails</th>
+
+                  {/* Nom */}
+                  <h3 className="text-lg font-bold mt-6 break-words">
+                    {member.prenom}
+                    <br />
+                    {member.nom}
+                  </h3>
+
+                  {/* Téléphone + bouton */}
+                  <div className="flex justify-between items-center mt-4">
+                    <p className="text-gray-700">{member.telephone}</p>
+                    <BoutonEnvoyer
+                      label="📤 Envoyer au responsable"
+                      onClick={() => updateStatus(member.id, "actif")}
+                      color="blue"
+                    />
+                  </div>
+
+                  {/* Tag nouveau */}
+                  {(member.status === "visiteur" ||
+                    member.status === "veut rejoindre ICC") && (
+                    <span className="absolute top-2 right-4 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                      Nouveau
+                    </span>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* 🧍 Membres existants */}
+      <section>
+        <h2 className="text-xl font-semibold mb-4 text-green-700">
+          Membres existants
+        </h2>
+        <div className="overflow-x-auto bg-white shadow rounded-xl">
+          <table className="min-w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-200 text-left text-sm font-semibold">
+                <th className="p-3">Nom complet</th>
+                <th className="p-3">Téléphone</th>
+                <th className="p-3">Statut</th>
+                <th className="p-3">Action</th>
               </tr>
             </thead>
             <tbody>
-              {filteredMembers.map((m) => (
-                <tr key={m.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-2 font-semibold">
-                    {m.star ? "⭐ " : ""}
-                    {m.prenom} {m.nom}
-                  </td>
-                  <td className="px-4 py-2">{m.telephone}</td>
-                  <td className="px-4 py-2">
-                    <select
-                      value={m.statut}
-                      onChange={(e) =>
-                        handleChangeStatus(m.id, e.target.value)
-                      }
-                      className="border rounded-md px-2 py-1 text-sm"
-                    >
-                      {statusOptions.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="px-4 py-2">
-                    <button
-                      onClick={() => setPopupMember(m)}
-                      className="text-blue-600 underline text-sm"
-                    >
-                      Détails
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {existingMembers.map((m) => {
+                const color = getColorByStatus(m.status);
+                const bgColor = `${color}20`; // fond léger
+                return (
+                  <tr
+                    key={m.id}
+                    style={{ backgroundColor: bgColor }}
+                    className="border-b last:border-none"
+                  >
+                    <td className="p-3 font-medium">
+                      {m.prenom} {m.nom}
+                    </td>
+                    <td className="p-3">{m.telephone}</td>
+                    <td className="p-3 font-semibold" style={{ color }}>
+                      {m.status === "star" ? "⭐ S.T.A.R" : m.status}
+                    </td>
+                    <td className="p-3">
+                      <BoutonEnvoyer
+                        label="📤 Envoyer au responsable"
+                        onClick={() => updateStatus(m.id, "actif")}
+                        color="green"
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
-      )}
-
-      {/* ✅ POPUP DÉTAILS TABLE */}
-      {popupMember && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
-            <button
-              onClick={() => setPopupMember(null)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
-            >
-              ✖
-            </button>
-            <h2 className="text-xl font-bold mb-2 text-indigo-700">
-              {popupMember.prenom} {popupMember.nom}
-            </h2>
-            <p className="text-gray-700 text-sm mb-1">
-              📱 {popupMember.telephone || "—"}
-            </p>
-            <p className="text-sm text-gray-700 mb-2">
-              Statut :{" "}
-              <span
-                style={{ color: getBorderColor(popupMember) }}
-                className="font-semibold"
-              >
-                {popupMember.star ? "⭐ S.T.A.R" : popupMember.statut}
-              </span>
-            </p>
-            <p className="text-sm text-gray-700 mb-1">
-              Besoin : {popupMember.besoin || "—"}
-            </p>
-            <p className="text-sm text-gray-700 mb-1">
-              Infos : {popupMember.infos_supplementaires || "—"}
-            </p>
-            <p className="text-sm text-gray-700 mb-3">
-              Comment venu : {popupMember.comment || "—"}
-            </p>
-            <select
-              value={selectedCellules[popupMember.id] || ""}
-              onChange={(e) =>
-                setSelectedCellules((prev) => ({
-                  ...prev,
-                  [popupMember.id]: e.target.value,
-                }))}
-              className="border rounded-lg px-3 py-2 text-sm w-full mb-3"
-            >
-              <option value="">-- Sélectionner cellule --</option>
-              {cellules.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.cellule} ({c.responsable})
-                </option>
-              ))}
-            </select>
-
-            {selectedCellules[popupMember.id] && (
-              <BoutonEnvoyer
-                membre={popupMember}
-                cellule={cellules.find(
-                  (c) => String(c.id) === String(selectedCellules[popupMember.id])
-                )}
-                onStatusUpdate={handleStatusUpdateFromEnvoyer}
-              />
-            )}
-          </div>
-        </div>
-      )}
+      </section>
     </div>
   );
 }

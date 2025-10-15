@@ -17,18 +17,32 @@ export default function SuivisEvangelisation() {
     fetchSuivis();
   }, []);
 
-  // 🟢 MODIFICATION 1 : on filtre les statuts "Integrer" et "Venu à l’église"
-  const fetchSuivis = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("suivis_des_evangelises")
-      .select(`
-        *,
-         cellules:cellule_id (cellule)
-  `)
-  .neq("status_suivis_evangelises", "Integrer")
-  .neq("status_suivis_evangelises", "Venu à l’église")
-  .order("date_suivi", { ascending: false });
+  // ✅ Nouvelle version de fetchSuivis()
+const fetchSuivis = async () => {
+  setLoading(true);
+
+  const { data, error } = await supabase
+    .from("suivis_des_evangelises")
+    .select(`
+      *,
+      cellules:cellule_id (cellule)
+    `)
+    // ✅ Inclure les statuts vides ou nuls et exclure "Integrer" et "Venu à l’église"
+    .or(
+      'status_suivis_evangelises.is.null,status_suivis_evangelises.eq.,and(status_suivis_evangelises.neq.Integrer,status_suivis_evangelises.neq."Venu à l’église")'
+    )
+    .order("date_suivi", { ascending: false });
+
+  if (error) {
+    console.error("Erreur de chargement :", error.message);
+    setSuivis([]);
+  } else {
+    setSuivis(data || []);
+  }
+
+  setLoading(false);
+};
+
 
     if (error) {
       console.error("Erreur de chargement :", error.message);

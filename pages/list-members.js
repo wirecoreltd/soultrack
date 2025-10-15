@@ -288,22 +288,21 @@ export default function ListMembers() {
               </tr>
             </thead>
             <tbody>
-              {allMembersOrdered.map((m, index) => (
+              {allMembersOrdered.map((m) => (
                 <tr
                   key={m.id}
-                  className={`bg-white transition duration-200 ${
-                    index === 0
-                      ? "rounded-tl-md rounded-tr-md"
-                      : index === allMembersOrdered.length - 1
-                      ? "rounded-bl-md rounded-br-md"
-                      : ""
-                  }`}
+                  className="bg-white transition duration-200 rounded-lg mb-1"
                 >
                   <td
-                    className="px-4 py-2 border-l-4"
+                    className="px-4 py-2 border-l-4 rounded-l-md"
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
                     {m.prenom} {m.nom}
+                    {(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && (
+                      <span className="ml-2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
+                        Nouveau
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-2">{m.telephone}</td>
                   <td className="px-4 py-2">
@@ -319,7 +318,7 @@ export default function ListMembers() {
                       ))}
                     </select>
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-2 rounded-r-md">
                     <button
                       onClick={() => setPopupMember(m)}
                       className="text-blue-600 underline text-sm"

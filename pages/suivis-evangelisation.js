@@ -24,10 +24,11 @@ export default function SuivisEvangelisation() {
       .from("suivis_des_evangelises")
       .select(`
         *,
-        cellules:cellule_id (cellule)
-      `)
-      .not("status_suivis_evangelises", "in", '("Integrer","Venu à l’église")')
-      .order("date_suivi", { ascending: false });
+         cellules:cellule_id (cellule)
+  `)
+  .neq("status_suivis_evangelises", "Integrer")
+  .neq("status_suivis_evangelises", "Venu à l’église")
+  .order("date_suivi", { ascending: false });
 
     if (error) {
       console.error("Erreur de chargement :", error.message);

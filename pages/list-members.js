@@ -1,4 +1,4 @@
-// ✅ pages/list-members.js (version avec détails + filtre "Integrer" + coins arrondis)
+// ✅ pages/list-members.js (avec les 3 modifications demandées)
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -151,118 +151,68 @@ export default function ListMembers() {
       {/* === VUE CARTE === */}
       {view === "card" ? (
         <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
-          {[...nouveaux, ...anciens].length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredMembers.map((m) => (
-                <div
-                  key={m.id}
-                  className="bg-white p-3 rounded-xl shadow-md hover:shadow-xl transition duration-200 border-l-4"
-                  style={{ borderLeftColor: getBorderColor(m) }}
-                >
-                  <div className="flex justify-between items-center mb-1">
-                    <span
-                      className="text-sm font-semibold"
-                      style={{ color: getBorderColor(m) }}
-                    >
-                      {m.star ? "⭐ S.T.A.R" : m.statut}
-                    </span>
-                  </div>
-
-                  <div className="text-lg font-bold text-gray-800">
-                    {m.prenom} {m.nom}
-                  </div>
-
-                  <p className="text-sm text-gray-600 mb-2">
-                    📱 {m.telephone || "—"}
-                  </p>
-
-                  <select
-                    value={m.statut}
-                    onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                    className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
+          {/* Membres (tous, avec bouton Détails) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredMembers.map((m) => (
+              <div
+                key={m.id}
+                className="bg-white p-3 rounded-xl shadow-md hover:shadow-xl transition duration-200 border-l-4"
+                style={{ borderLeftColor: getBorderColor(m) }}
+              >
+                <div className="flex justify-between items-center mb-1">
+                  <span
+                    className="text-sm font-semibold"
+                    style={{ color: getBorderColor(m) }}
                   >
-                    {statusOptions.map((s) => (
-                      <option key={s}>{s}</option>
-                    ))}
-                  </select>
-
-                  {/* ✅ Détails sur toutes les cartes */}
-                  <p
-                    className="text-blue-500 underline cursor-pointer text-sm"
-                    onClick={() =>
-                      setDetailsOpen((prev) => ({
-                        ...prev,
-                        [m.id]: !prev[m.id],
-                      }))
-                    }
-                  >
-                    {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
-                  </p>
-
-                  {detailsOpen[m.id] && (
-                    <div className="mt-2 text-sm text-gray-700 space-y-1 transition-all duration-200">
-                      <p>Besoin : {m.besoin || "—"}</p>
-                      <p>Infos : {m.infos_supplementaires || "—"}</p>
-                      <p>Comment venu : {m.venu || "—"}</p>
-
-                      <p className="text-green-600 font-semibold mt-2">
-                        Cellule :
-                      </p>
-                      <select
-                        value={selectedCellules[m.id] || ""}
-                        onChange={(e) =>
-                          setSelectedCellules((prev) => ({
-                            ...prev,
-                            [m.id]: e.target.value,
-                          }))
-                        }
-                        className="border rounded-lg px-2 py-1 text-sm w-full"
-                      >
-                        <option value="">-- Sélectionner cellule --</option>
-                        {cellules.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.cellule} ({c.responsable})
-                          </option>
-                        ))}
-                      </select>
-
-                      {selectedCellules[m.id] && (
-                        <BoutonEnvoyer
-                          membre={m}
-                          cellule={cellules.find(
-                            (c) =>
-                              String(c.id) === String(selectedCellules[m.id])
-                          )}
-                          onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                        />
-                      )}
-                    </div>
-                  )}
+                    {m.star ? "⭐ S.T.A.R" : m.statut}
+                  </span>
                 </div>
-              ))}
-            </div>
-          )}
+
+                <div className="text-lg font-bold text-gray-800">
+                  {m.prenom} {m.nom}
+                </div>
+
+                <p className="text-sm text-gray-600 mb-2">
+                  📱 {m.telephone || "—"}
+                </p>
+
+                <select
+                  value={m.statut}
+                  onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                  className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
+                >
+                  {statusOptions.map((s) => (
+                    <option key={s}>{s}</option>
+                  ))}
+                </select>
+
+                <p
+                  className="text-blue-500 underline cursor-pointer text-sm"
+                  onClick={() => setPopupMember(m)}
+                >
+                  Détails
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         // === VUE TABLE ===
         <div className="w-full max-w-5xl bg-white rounded-xl shadow-lg overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left text-gray-700">
-            <thead className="bg-indigo-600 text-white text-sm uppercase rounded-t-xl">
+            <thead className="bg-indigo-600 text-white text-sm uppercase">
               <tr>
-                <th className="px-4 py-2 rounded-tl-xl w-1/4">Nom complet</th>
+                <th className="px-4 py-2 w-1/4 rounded-l-lg">Nom complet</th>
                 <th className="px-4 py-2 w-1/4">Téléphone</th>
                 <th className="px-4 py-2 w-1/4">Statut</th>
-                <th className="px-4 py-2 rounded-tr-xl w-1/4">Détails</th>
+                <th className="px-4 py-2 w-1/4 rounded-r-lg">Détails</th>
               </tr>
             </thead>
             <tbody>
-              {filteredMembers.map((m, i) => (
-                <tr
-                  key={m.id}
-                  className="bg-white border-b transition duration-200 hover:bg-gray-50"
-                >
+              {filteredMembers.map((m) => (
+                <tr key={m.id} className="bg-white border-b transition duration-200">
                   <td
-                    className="px-4 py-2 border-l-4 rounded-l-xl"
+                    className="px-4 py-2 border-l-4 rounded-l-lg"
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
                     {m.prenom} {m.nom}
@@ -271,9 +221,7 @@ export default function ListMembers() {
                   <td className="px-4 py-2">
                     <select
                       value={m.statut}
-                      onChange={(e) =>
-                        handleChangeStatus(m.id, e.target.value)
-                      }
+                      onChange={(e) => handleChangeStatus(m.id, e.target.value)}
                       className="border rounded-md px-2 py-1 text-sm w-full"
                     >
                       {statusOptions.map((s) => (
@@ -281,7 +229,7 @@ export default function ListMembers() {
                       ))}
                     </select>
                   </td>
-                  <td className="px-4 py-2 rounded-r-xl">
+                  <td className="px-4 py-2 rounded-r-lg">
                     <button
                       onClick={() => setPopupMember(m)}
                       className="text-blue-600 underline text-sm"
@@ -335,37 +283,6 @@ export default function ListMembers() {
             <p className="text-sm text-gray-700 mb-3">
               Comment venu : {popupMember.comment || "—"}
             </p>
-
-            <p className="text-green-600 font-semibold mt-2">Cellule :</p>
-            <select
-              value={selectedCellules[popupMember.id] || ""}
-              onChange={(e) =>
-                setSelectedCellules((prev) => ({
-                  ...prev,
-                  [popupMember.id]: e.target.value,
-                }))
-              }
-              className="border rounded-lg px-2 py-1 text-sm w-full"
-            >
-              <option value="">-- Sélectionner cellule --</option>
-              {cellules.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.cellule} ({c.responsable})
-                </option>
-              ))}
-            </select>
-
-            {selectedCellules[popupMember.id] && (
-              <div className="mt-3">
-                <BoutonEnvoyer
-                  membre={popupMember}
-                  cellule={cellules.find(
-                    (c) => String(c.id) === String(selectedCellules[popupMember.id])
-                  )}
-                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                />
-              </div>
-            )}
           </div>
         </div>
       )}

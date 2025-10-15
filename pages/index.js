@@ -1,253 +1,166 @@
-// pages/list-members.js
-import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { motion } from "framer-motion";
-import { FiFilter, FiList, FiGrid, FiSend } from "react-icons/fi";
+//pages/index.js - Home page
+"use client";
 
-export default function ListMembers() {
-  const [members, setMembers] = useState([]);
-  const [view, setView] = useState("card");
-  const [selectedMember, setSelectedMember] = useState(null);
-  const [statusFilter, setStatusFilter] = useState("Tous");
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import Image from "next/image";
+import SendLinkPopup from "../components/SendLinkPopup";
+import LogoutLink from "../components/LogoutLink";
+import { canAccessPage } from "../lib/accessControl";
+
+export default function HomePage() {
+  const router = useRouter();
+  const [role, setRole] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchMembers();
-  }, []);
+    const storedRole = localStorage.getItem("userRole");
+    if (!storedRole) {
+      router.push("/login");
+      return;
+    }
 
-  async function fetchMembers() {
-    const { data } = await supabase.from("membres").select("*").order("created_at", { ascending: true });
-    setMembers(data || []);
-  }
+    // Vérifie l'accès à la page via accessControl.js
+    const canAccess = canAccessPage(storedRole, "/index");
+    if (!canAccess) {
+      alert("⛔ Accès non autorisé !");
+      router.push("/login");
+      return;
+    }
 
-  const filteredMembers =
-    statusFilter === "Tous" ? members : members.filter((m) => m.status === statusFilter);
+    setRole(storedRole);
+    setLoading(false);
+  }, [router]);
 
-  const nouveaux = filteredMembers.filter(
-    (m) => m.status === "visiteur" || m.status === "veut rejoindre icc"
-  );
-  const anciens = filteredMembers.filter(
-    (m) => m.status !== "visiteur" && m.status !== "veut rejoindre icc"
-  );
+  if (loading) return <div className="text-center mt-20">Chargement...</div>;
 
-  const dateVisite =
-    nouveaux.length > 0
-      ? `💖 Bien aimé venu le ${format(new Date(), "EEEE d MMMM yyyy", { locale: fr })}`
-      : null;
-
-  const colorMap = {
-    visiteur: "#3B82F6",
-    "veut rejoindre icc": "#60A5FA",
-    membre: "#22C55E",
-    serviteur: "#F59E0B",
-    partenaire: "#8B5CF6",
+  const handleRedirect = (path) => {
+    router.push(path);
   };
 
+  // 🟢🟢🟢 DÉBUT DE LA PARTIE DÉCONNEXION
+  const handleLogout = () => {
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userRole");
+    router.push("/login");
+  };
+  // 🔴🔴🔴 FIN DE LA PARTIE DÉCONNEXION
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <FiFilter className="text-gray-500" />
-          <select
-            className="border rounded-lg px-3 py-1 text-gray-700"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option>Tous</option>
-            <option>visiteur</option>
-            <option>veut rejoindre icc</option>
-            <option>membre</option>
-            <option>serviteur</option>
-            <option>partenaire</option>
-          </select>
-          <span className="text-gray-500 text-sm">{filteredMembers.length} membres</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => setView("table")}>
-            <FiList className={`text-xl ${view === "table" ? "text-blue-500" : "text-gray-400"}`} />
-          </button>
-          <button onClick={() => setView("card")}>
-            <FiGrid className={`text-xl ${view === "card" ? "text-blue-500" : "text-gray-400"}`} />
-          </button>
-        </div>
+    <div
+      className="min-h-screen flex flex-col items-center justify-between p-6 gap-2"
+      style={{
+        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
+      }}
+    >
+      {/* Logo */}
+      <div className="mt-1">
+        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
       </div>
 
-      {view === "card" ? (
-        <div className="space-y-6">
-          {dateVisite && (
-            <div className="text-gray-700 text-sm font-medium ml-1 mb-1">{dateVisite}</div>
-          )}
+      {/* Titre + Déconnexion */}
+      <div className="flex flex-col items-center mt-2">
+        <h1 className="text-5xl sm:text-5xl font-handwriting text-white text-center">
+          SoulTrack
+        </h1>
 
-          <div className="grid md:grid-cols-3 gap-4">
-            {nouveaux.map((m) => (
-              <motion.div
-                key={m.id}
-                className="bg-white rounded-2xl shadow-md border-l-4"
-                style={{ borderColor: colorMap[m.status] }}
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="p-4 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md">
-                      Nouveau
-                    </span>
-                    <span className="text-sm font-semibold text-gray-600 capitalize">
-                      {m.status}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900">{m.full_name}</h3>
-                  <p className="text-gray-600">{m.phone}</p>
-                  <div className="pt-2 border-t text-right">
-                    <button
-                      className="text-blue-600 hover:underline text-sm"
-                      onClick={() => setSelectedMember(m)}
-                    >
-                      Détails
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+        {/* 🔵 Texte cliquable de déconnexion */}
+        <p
+          onClick={handleLogout}
+          className="text-sm text-white mt-2 cursor-pointer hover:underline"
+        >
+          Se déconnecter
+        </p>
+      </div>
 
-          {nouveaux.length > 0 && (
-            <div className="flex items-center my-4">
-              <span className="text-sm font-medium text-gray-500 tracking-wide bg-gradient-to-r from-blue-400 to-gray-300 text-transparent bg-clip-text">
-                Membres existants
-              </span>
-              <div className="flex-grow h-px bg-gradient-to-r from-blue-400 to-gray-300 ml-2"></div>
+      {/* Message d’intro */}
+      <div className="mt-1 mb-2 text-center text-white text-lg font-handwriting-light">
+        Chaque personne a une valeur infinie. Ensemble, nous avançons, nous
+        grandissons, et nous partageons l’amour de Christ dans chaque action ❤️
+      </div>
+
+      {/* Cartes principales */}
+      <div className="flex flex-col md:flex-row flex-wrap gap-3 justify-center w-full max-w-5xl mt-2">
+        {(role === "ResponsableIntegration" || role === "Admin") && (
+          <div
+            className="flex-1 min-w-[250px] w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+            onClick={() => handleRedirect("/membres-hub")}
+          >
+            <div className="text-4xl mb-1">👤</div>
+            <div className="text-lg font-bold text-gray-800 text-center">
+              Suivis des membres
             </div>
-          )}
-
-          <div className="grid md:grid-cols-3 gap-4">
-            {anciens.map((m) => (
-              <motion.div
-                key={m.id}
-                className="bg-white rounded-2xl shadow-md border-l-4"
-                style={{ borderColor: colorMap[m.status] }}
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="p-4 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-semibold text-gray-600 capitalize">
-                      {m.status}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900">{m.full_name}</h3>
-                  <p className="text-gray-600">{m.phone}</p>
-                  <div className="pt-2 border-t text-right">
-                    <button
-                      className="text-green-600 hover:underline text-sm flex items-center gap-1"
-                      onClick={() => setSelectedMember(m)}
-                    >
-                      <FiSend /> Détails
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
           </div>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {dateVisite && (
-            <div className="text-gray-700 text-sm font-medium">{dateVisite}</div>
-          )}
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="text-left text-gray-600 bg-gray-50">
-                <th className="p-3">Nom complet</th>
-                <th className="p-3">Téléphone</th>
-                <th className="p-3">Statut</th>
-                <th className="p-3 text-center">Cellule</th>
-                <th className="p-3">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {nouveaux.map((m) => (
-                <tr
-                  key={m.id}
-                  className="border-b bg-white hover:bg-gray-50 transition-all duration-200"
-                >
-                  <td className="p-3 border-l-4" style={{ borderColor: colorMap[m.status] }}>
-                    {m.full_name}
-                  </td>
-                  <td className="p-3">{m.phone}</td>
-                  <td className="p-3">
-                    <span className="text-sm text-blue-600 font-medium capitalize">
-                      {m.status}
-                    </span>
-                    <span className="ml-2 text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md">
-                      Nouveau
-                    </span>
-                  </td>
-                  <td className="p-3 text-center">
-                    <select className="border rounded-lg px-2 py-1 text-sm text-gray-700">
-                      <option>Choisir</option>
-                      <option>Cellule A</option>
-                      <option>Cellule B</option>
-                      <option>Cellule C</option>
-                    </select>
-                  </td>
-                  <td className="p-3 text-right">
-                    <button
-                      className="text-green-600 hover:underline text-sm flex items-center gap-1 mx-auto"
-                      onClick={() => setSelectedMember(m)}
-                    >
-                      <FiSend /> Détails
-                    </button>
-                  </td>
-                </tr>
-              ))}
+        )}
 
-              {nouveaux.length > 0 && (
-                <tr>
-                  <td colSpan="5" className="pt-4 pb-2">
-                    <div className="flex items-center">
-                      <span className="text-sm font-medium text-gray-500 tracking-wide bg-gradient-to-r from-blue-400 to-gray-300 text-transparent bg-clip-text">
-                        Membres existants
-                      </span>
-                      <div className="flex-grow h-px bg-gradient-to-r from-blue-400 to-gray-300 ml-2"></div>
-                    </div>
-                  </td>
-                </tr>
-              )}
+        {(role === "ResponsableEvangelisation" || role === "Admin") && (
+          <div
+            className="flex-1 min-w-[250px] w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+            onClick={() => handleRedirect("/evangelisation-hub")}
+          >
+            <div className="text-4xl mb-1">🙌</div>
+            <div className="text-lg font-bold text-gray-800 text-center">
+              Évangélisation
+            </div>
+          </div>
+        )}
 
-              {anciens.map((m) => (
-                <tr
-                  key={m.id}
-                  className="border-b bg-white hover:bg-gray-50 transition-all duration-200"
-                >
-                  <td className="p-3 border-l-4" style={{ borderColor: colorMap[m.status] }}>
-                    {m.full_name}
-                  </td>
-                  <td className="p-3">{m.phone}</td>
-                  <td className="p-3 capitalize text-gray-700 font-medium">{m.status}</td>
-                  <td className="p-3 text-center">
-                    <select className="border rounded-lg px-2 py-1 text-sm text-gray-700">
-                      <option>Choisir</option>
-                      <option>Cellule A</option>
-                      <option>Cellule B</option>
-                      <option>Cellule C</option>
-                    </select>
-                  </td>
-                  <td className="p-3 text-right">
-                    <button
-                      className="text-green-600 hover:underline text-sm flex items-center gap-1 mx-auto"
-                      onClick={() => setSelectedMember(m)}
-                    >
-                      <FiSend /> Détails
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+        {role === "Admin" && (
+          <>
+            <div
+              className="flex-1 min-w-[250px] w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+              onClick={() => handleRedirect("/rapport")}
+            >
+              <div className="text-4xl mb-1">📊</div>
+              <div className="text-lg font-bold text-gray-800 text-center">
+                Rapport
+              </div>
+            </div>
+
+            <div
+              className="flex-1 min-w-[250px] w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+              onClick={() => handleRedirect("/admin/create-internal-user")}
+            >
+              <div className="text-4xl mb-1">🧑‍💻</div>
+              <div className="text-lg font-bold text-gray-800 text-center">
+                Créer un utilisateur
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Boutons popup */}
+      <div className="flex flex-col gap-3 mt-4 w-full max-w-md">
+        {(role === "ResponsableIntegration" || role === "Admin") && (
+          <SendLinkPopup
+            label="Envoyer l'appli – Nouveau membre"
+            type="ajouter_membre"
+            buttonColor="from-[#09203F] to-[#537895]"
+          />
+        )}
+
+        {(role === "ResponsableEvangelisation" || role === "Admin") && (
+          <SendLinkPopup
+            label="Envoyer l'appli – Évangélisé"
+            type="ajouter_evangelise"
+            buttonColor="from-[#09203F] to-[#537895]"
+          />
+        )}
+
+        {role === "Admin" && (
+          <SendLinkPopup
+            label="Voir / Copier liens…"
+            type="voir_copier"
+            buttonColor="from-[#005AA7] to-[#FFFDE4]"
+          />
+        )}
+      </div>
+
+      {/* Verset */}
+      <div className="mt-4 mb-2 text-center text-white text-lg font-handwriting-light">
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
+      </div>
     </div>
   );
 }

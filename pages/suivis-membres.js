@@ -1,4 +1,3 @@
-//pages/suivis-membres.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -13,7 +12,7 @@ export default function SuivisMembres() {
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
   const [view, setView] = useState("card");
-  const [message, setMessage] = useState(null); // succès / erreur visible à l'écran
+  const [message, setMessage] = useState(null);
 
   useEffect(() => {
     fetchSuivis();
@@ -106,7 +105,6 @@ export default function SuivisMembres() {
       className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* Header */}
       <div className="flex justify-between w-full max-w-5xl items-center mb-4">
         <button
           onClick={() => window.history.back()}
@@ -153,7 +151,7 @@ export default function SuivisMembres() {
                 key={item.id}
                 className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl"
               >
-                {/* Bande colorée en haut */}
+                {/* Bande colorée intégrée en haut */}
                 <div
                   className="rounded-t-2xl"
                   style={{
@@ -167,11 +165,14 @@ export default function SuivisMembres() {
                   </h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
+                  <p className="text-sm text-gray-700 mb-1">
+                    📋 Statut Suivis : {item.statut_suivis || "—"}
+                  </p>
                   <button
                     onClick={() => toggleDetails(item.id)}
                     className="text-orange-500 underline text-sm mt-1"
                   >
-                    Détails
+                    {isOpen ? "Fermer détails" : "Détails"}
                   </button>
 
                   {isOpen && (
@@ -182,6 +183,7 @@ export default function SuivisMembres() {
                       <p>🏙 Ville : {item.ville || "—"}</p>
                       <p>🕊 Statut : {item.statut || "—"}</p>
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
+                      <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
                       <div>
                         <label className="text-black text-sm">BESOIN :</label>
                         <select
@@ -196,7 +198,6 @@ export default function SuivisMembres() {
                           <option value="La Famille">La Famille</option>
                         </select>
                       </div>
-                      <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
                       <div>
                         <label className="text-black text-sm">📋 Statut Suivis :</label>
                         <select
@@ -269,7 +270,7 @@ export default function SuivisMembres() {
                       onClick={() => toggleDetails(item.id)}
                       className="text-orange-500 underline text-sm"
                     >
-                      Détails
+                      {detailsOpen[item.id] ? "Fermer détails" : "Détails"}
                     </button>
 
                     {detailsOpen[item.id] && (
@@ -293,6 +294,7 @@ export default function SuivisMembres() {
                           <p className="text-black text-sm mb-1">🏙 Ville : {item.ville || "—"}</p>
                           <p className="text-black text-sm mb-1">🕊 Statut : {item.statut || "—"}</p>
                           <p className="text-black text-sm mb-1">🧩 Comment est-il venu : {item.venu || "—"}</p>
+                          <p className="text-black text-sm mb-1">📝 Infos : {item.infos_supplementaires || "—"}</p>
                           <div>
                             <label className="text-black text-sm">BESOIN :</label>
                             <select
@@ -307,7 +309,6 @@ export default function SuivisMembres() {
                               <option value="La Famille">La Famille</option>
                             </select>
                           </div>
-                          <p className="text-black text-sm mb-1">📝 Infos : {item.infos_supplementaires || "—"}</p>
                           <div>
                             <label className="text-black text-sm">📋 Statut Suivis :</label>
                             <select

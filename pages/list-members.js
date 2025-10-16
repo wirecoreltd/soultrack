@@ -11,12 +11,12 @@ import { fr } from "date-fns/locale";
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
   const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
   const [selectedCellules, setSelectedCellules] = useState({});
   const [view, setView] = useState("card");
   const [popupMember, setPopupMember] = useState(null);
-  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetchMembers();
@@ -89,12 +89,19 @@ export default function ListMembers() {
     "a déjà mon église",
   ];
 
-  const filteredMembers = allMembersOrdered.filter(
-    (m) =>
-      (!filter || m.statut === filter) &&
-      (!search ||
-        m.nom.toLowerCase().includes(search.toLowerCase()) ||
-        m.prenom.toLowerCase().includes(search.toLowerCase()))
+  const filteredMembers = allMembersOrdered.filter((m) => {
+    const matchesStatus = filter ? m.statut === filter : true;
+    const matchesSearch = search
+      ? `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase())
+      : true;
+    return matchesStatus && matchesSearch;
+  });
+
+  const nouveauxFiltres = filteredMembers.filter(
+    (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
+  );
+  const anciensFiltres = filteredMembers.filter(
+    (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
   );
 
   const totalCount = filteredMembers.length;
@@ -127,9 +134,9 @@ export default function ListMembers() {
         Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
       </p>
 
-      {/* Filtre + compteur + recherche + toggle */}
-      <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">
-        <div className="flex items-center space-x-2 mb-2 sm:mb-0">
+      {/* Filtres */}
+      <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4 space-y-2 sm:space-y-0 sm:space-x-2">
+        <div className="flex items-center space-x-2">
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -142,9 +149,9 @@ export default function ListMembers() {
           </select>
           <input
             type="text"
-            placeholder="🔍 Rechercher par nom..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            placeholder="🔍 Rechercher par nom..."
             className="px-3 py-2 rounded-lg border text-sm text-black"
           />
           <span className="text-white text-sm">({totalCount})</span>
@@ -158,116 +165,86 @@ export default function ListMembers() {
         </button>
       </div>
 
-      {/* === VUE TABLE === */}
-      {view === "table" && (
-        <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
-          <table className="w-full text-sm text-left text-gray-700 border-separate border-spacing-0">
-            <thead className="bg-gray-200 text-gray-700 text-sm uppercase rounded-t-lg">
-              <tr>
-                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-                <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Statut</th>
-                <th className="px-4 py-2 rounded-tr-lg">Détails</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-blue-200">
-              {/* Nouveaux */}
-              {nouveaux.length > 0 && (
-                <>
-                  <tr>
-                    <td
-                      colSpan="4"
-                      className="text-white font-semibold py-2"
+      {/* === Vue Carte === */}
+      {view === "card" ? (
+        <div className="w-full max-w-5xl">
+          {/* 💖 Nouveaux */}
+          {nouveauxFiltres.length > 0 && (
+            <>
+              <h3 className="text-white font-semibold text-lg mb-3">
+                💖 Bien aimé venu le{" "}
+                {formatDate(nouveauxFiltres[0].created_at)}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                {nouveauxFiltres.map((m) => (
+                  <div
+                    key={m.id}
+                    className="bg-white/40 rounded-2xl p-4 shadow-md text-white border-l-4 hover:scale-[1.02] transition-transform"
+                    style={{ borderLeftColor: getBorderColor(m) }}
+                  >
+                    <h3 className="font-semibold text-lg">
+                      {m.prenom} {m.nom}
+                    </h3>
+                    <p className="text-sm opacity-90">
+                      {m.telephone || "—"}
+                    </p>
+                    <p className="text-sm italic opacity-80">{m.statut}</p>
+                    <button
+                      onClick={() => setPopupMember(m)}
+                      className="mt-2 text-orange-400 hover:text-orange-300 underline text-sm"
                     >
-                      💖 Bien aimé venu le{" "}
-                      {formatDate(nouveaux[0].created_at)}
-                    </td>
-                  </tr>
-                  {nouveaux.map((m) => (
-                    <tr key={m.id} className="hover:bg-white/10 transition">
-                      <td className="px-4 py-2 text-white">
-                        {m.prenom} {m.nom}
-                      </td>
-                      <td className="px-4 py-2 text-white">{m.telephone}</td>
-                      <td className="px-4 py-2">
-                        <select
-                          value={m.statut}
-                          onChange={(e) =>
-                            handleChangeStatus(m.id, e.target.value)
-                          }
-                          className="border rounded-md px-2 py-1 text-sm w-full text-black"
-                        >
-                          {statusOptions.map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-4 py-2">
-                        <button
-                          onClick={() => setPopupMember(m)}
-                          className="text-orange-500 underline text-sm font-semibold"
-                        >
-                          Détails
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </>
-              )}
+                      Détails
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
 
-              {/* Membres existants */}
-              {anciens.length > 0 && (
-                <>
-                  <tr>
-                    <td
-                      colSpan="4"
-                      className="text-transparent bg-clip-text font-semibold py-2"
-                      style={{
-                        background:
-                          "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                        WebkitBackgroundClip: "text",
-                      }}
+          {/* Membres existants */}
+          {anciensFiltres.length > 0 && (
+            <>
+              <h3
+                className="text-lg mb-3 font-semibold"
+                style={{
+                  background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                  WebkitBackgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                Membres existants
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {anciensFiltres.map((m) => (
+                  <div
+                    key={m.id}
+                    className="bg-white/40 rounded-2xl p-4 shadow-md text-white border-l-4 hover:scale-[1.02] transition-transform"
+                    style={{ borderLeftColor: getBorderColor(m) }}
+                  >
+                    <h3 className="font-semibold text-lg">
+                      {m.prenom} {m.nom}
+                    </h3>
+                    <p className="text-sm opacity-90">
+                      {m.telephone || "—"}
+                    </p>
+                    <p className="text-sm italic opacity-80">{m.statut}</p>
+                    <button
+                      onClick={() => setPopupMember(m)}
+                      className="mt-2 text-orange-400 hover:text-orange-300 underline text-sm"
                     >
-                      Membres existants ———————————————
-                    </td>
-                  </tr>
-                  {anciens.map((m) => (
-                    <tr key={m.id} className="hover:bg-white/10 transition">
-                      <td className="px-4 py-2 text-white">
-                        {m.prenom} {m.nom}
-                      </td>
-                      <td className="px-4 py-2 text-white">{m.telephone}</td>
-                      <td className="px-4 py-2">
-                        <select
-                          value={m.statut}
-                          onChange={(e) =>
-                            handleChangeStatus(m.id, e.target.value)
-                          }
-                          className="border rounded-md px-2 py-1 text-sm w-full text-black"
-                        >
-                          {statusOptions.map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-4 py-2">
-                        <button
-                          onClick={() => setPopupMember(m)}
-                          className="text-orange-500 underline text-sm font-semibold"
-                        >
-                          Détails
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </>
-              )}
-            </tbody>
-          </table>
+                      Détails
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
+      ) : (
+        <></>
       )}
 
-      {/* ✅ Popup Détails */}
+      {/* Popup Détails */}
       {popupMember && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
@@ -331,7 +308,8 @@ export default function ListMembers() {
                 <BoutonEnvoyer
                   membre={popupMember}
                   cellule={cellules.find(
-                    (c) => String(c.id) === String(selectedCellules[popupMember.id])
+                    (c) =>
+                      String(c.id) === String(selectedCellules[popupMember.id])
                   )}
                   onStatusUpdate={handleStatusUpdateFromEnvoyer}
                 />

@@ -140,7 +140,7 @@ export default function ListMembers() {
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="px-3 py-2 rounded-lg border text-sm"
+            className="px-3 py-2 rounded-lg border text-sm text-black"
           >
             <option value="">Tous les statuts</option>
             {statusOptions.map((s) => (
@@ -152,7 +152,7 @@ export default function ListMembers() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="🔍 Rechercher par nom..."
-            className="px-3 py-2 rounded-lg border text-sm"
+            className="px-3 py-2 rounded-lg border text-sm text-black"
           />
           <span className="text-white text-sm">({totalCount})</span>
         </div>
@@ -183,7 +183,7 @@ export default function ListMembers() {
                   <tr>
                     <td
                       colSpan="4"
-                      className="py-2 text-indigo-200 font-medium border-b border-blue-300"
+                      className="py-2 text-white font-medium border-b border-blue-300"
                     >
                       💖 Bien aimé venu le{" "}
                       {formatDate(nouveauxFiltres[0].created_at)}
@@ -207,7 +207,7 @@ export default function ListMembers() {
                           onChange={(e) =>
                             handleChangeStatus(m.id, e.target.value)
                           }
-                          className="border rounded-md px-2 py-1 text-sm w-full"
+                          className="border rounded-md px-2 py-1 text-sm w-full text-black"
                         >
                           {statusOptions.map((s) => (
                             <option key={s}>{s}</option>
@@ -267,7 +267,7 @@ export default function ListMembers() {
                           onChange={(e) =>
                             handleChangeStatus(m.id, e.target.value)
                           }
-                          className="border rounded-md px-2 py-1 text-sm w-full"
+                          className="border rounded-md px-2 py-1 text-sm w-full text-black"
                         >
                           {statusOptions.map((s) => (
                             <option key={s}>{s}</option>
@@ -289,7 +289,30 @@ export default function ListMembers() {
             </tbody>
           </table>
         </div>
-      ) : null}
+      ) : (
+        // ✅ réaffichage cartes
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6 w-full max-w-5xl">
+          {filteredMembers.map((m) => (
+            <div
+              key={m.id}
+              className="bg-white/10 rounded-2xl p-4 shadow-md text-white border-l-4"
+              style={{ borderLeftColor: getBorderColor(m) }}
+            >
+              <h3 className="font-semibold text-lg">
+                {m.prenom} {m.nom}
+              </h3>
+              <p className="text-sm opacity-90">{m.telephone || "—"}</p>
+              <p className="text-sm italic opacity-80">{m.statut}</p>
+              <button
+                onClick={() => setPopupMember(m)}
+                className="mt-2 text-orange-400 hover:text-orange-300 underline text-sm"
+              >
+                Détails
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ✅ Popup Détails */}
       {popupMember && (
@@ -314,7 +337,7 @@ export default function ListMembers() {
                 onChange={(e) =>
                   handleChangeStatus(popupMember.id, e.target.value)
                 }
-                className="ml-2 border rounded-md px-2 py-1 text-sm"
+                className="ml-2 border rounded-md px-2 py-1 text-sm text-black"
               >
                 {statusOptions.map((s) => (
                   <option key={s}>{s}</option>
@@ -340,7 +363,7 @@ export default function ListMembers() {
                   [popupMember.id]: e.target.value,
                 }))
               }
-              className="border rounded-lg px-2 py-1 text-sm w-full"
+              className="border rounded-lg px-2 py-1 text-sm w-full text-black"
             >
               <option value="">-- Sélectionner cellule --</option>
               {cellules.map((c) => (

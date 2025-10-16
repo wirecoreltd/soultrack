@@ -1,3 +1,5 @@
+//pages/suivis-membres.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,11 +9,11 @@ import Image from "next/image";
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [detailsOpen, setDetailsOpen] = useState({});
   const [statusChanges, setStatusChanges] = useState({});
   const [commentChanges, setCommentChanges] = useState({});
+  const [besoinChanges, setBesoinChanges] = useState({});
   const [updating, setUpdating] = useState({});
-  const [message, setMessage] = useState(null); // succès / erreur visible à l'écran
+  const [message, setMessage] = useState(null);
   const [view, setView] = useState("card");
   const [popupMember, setPopupMember] = useState(null);
 
@@ -44,21 +46,22 @@ export default function SuivisMembres() {
     }
   };
 
-  const toggleDetails = (id) =>
-    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
-
   const handleStatusChange = (id, value) =>
     setStatusChanges((prev) => ({ ...prev, [id]: value }));
 
   const handleCommentChange = (id, value) =>
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
+  const handleBesoinChange = (id, value) =>
+    setBesoinChanges((prev) => ({ ...prev, [id]: value }));
+
   const updateSuivi = async (id) => {
     setMessage(null);
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
+    const newBesoin = besoinChanges[id];
 
-    if (!newStatus && !newComment) {
+    if (!newStatus && !newComment && !newBesoin) {
       setMessage({ type: "info", text: "Aucun changement détecté." });
       return;
     }
@@ -66,22 +69,10 @@ export default function SuivisMembres() {
     setUpdating((prev) => ({ ...prev, [id]: true }));
 
     try {
-      const { data: currentData, error: fetchError } = await supabase
-        .from("suivis_membres")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (fetchError) {
-        console.error("Erreur récupération (fetch current) :", fetchError);
-        setMessage({ type: "error", text: `Impossible de récupérer l'entrée : ${fetchError.message}` });
-        setUpdating((prev) => ({ ...prev, [id]: false }));
-        return;
-      }
-
       const payload = {};
       if (newStatus) payload["statut_suivis"] = newStatus;
       if (newComment) payload["commentaire"] = newComment;
+      if (newBesoin) payload["besoin"] = newBesoin;
       payload["updated_at"] = new Date();
 
       const { data: updatedData, error: updateError } = await supabase
@@ -120,6 +111,15 @@ export default function SuivisMembres() {
     if (m.statut_suivis === "inactif") return "#EA4335";
     return "#ccc";
   };
+
+  const besoinOptions = [
+    "",
+    "Finances",
+    "Santé",
+    "Travail",
+    "Les Enfants",
+    "La Famille",
+  ];
 
   return (
     <div
@@ -172,30 +172,28 @@ export default function SuivisMembres() {
         <p className="text-white text-lg italic">Aucun membre en suivi pour le moment.</p>
       ) : view === "card" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
-          {suivis.map((item) => {
-            const isOpen = detailsOpen[item.id];
-            return (
-              <div
-                key={item.id}
-                className={`bg-white rounded-2xl shadow-lg p-4 flex flex-col items-center transition-all duration-300 hover:shadow-2xl border-t-4`}
-                style={{ borderTopColor: getBorderColor(item) }}
-              >
-                <h2 className="font-bold text-gray-800 text-base text-center mb-1">
-                  👤 {item.prenom} {item.nom}
-                </h2>
-                <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">🕊 : {item.cellule_nom || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">👑 Responsable : {item.responsable || "—"}</p>
+          {suivis.map((m) => (
+            <div
+              key={m.id}
+              className={`bg-white rounded-2xl shadow-lg p-4 flex flex-col items-center transition-all duration-300 hover:shadow-2xl border-l-4`}
+              style={{ borderLeftColor: getBorderColor(m) }}
+            >
+              <h2 className="font-bold text-gray-800 text-base text-center mb-1">
+                👤 {m.prenom} {m.nom}
+              </h2>
+              <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
+              <p className="text-sm text-gray-700 mb-1">💬 WhatsApp : {m.whatsapp || "—"}</p>
+              <p className="text-sm text-gray-700 mb-1">📍 Ville : {m.ville || "—"}</p>
+              <p className="text-sm text-gray-700 mb-1">🏷 Statut : {m.statut || "—"}</p>
 
-                <button
-                  onClick={() => setPopupMember(item)}
-                  className="text-orange-400 text-sm underline mt-2"
-                >
-                  Détails
-                </button>
-              </div>
-            );
-          })}
+              <button
+                onClick={() => setPopupMember(m)}
+                className="text-orange-400 text-sm underline mt-2"
+              >
+                Détails
+              </button>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
@@ -246,15 +244,32 @@ export default function SuivisMembres() {
             <h2 className="text-xl font-bold mb-2 text-indigo-700">
               {popupMember.prenom} {popupMember.nom}
             </h2>
-            <p className="text-gray-700 text-sm mb-1">📱 {popupMember.telephone || "—"}</p>
+            <p className="text-gray-700 text-sm mb-1">📞 {popupMember.telephone || "—"}</p>
+            <p className="text-gray-700 text-sm mb-1">💬 WhatsApp : {popupMember.whatsapp || "—"}</p>
+            <p className="text-gray-700 text-sm mb-1">📍 Ville : {popupMember.ville || "—"}</p>
+            <p className="text-gray-700 text-sm mb-1">🏷 Statut : {popupMember.statut || "—"}</p>
+            <p className="text-gray-700 text-sm mb-1">🧩 Comment est-il venu : {popupMember.venu || "—"}</p>
+            <p className="text-gray-700 text-sm mb-1">📝 Infos : {popupMember.infos_supplementaires || "—"}</p>
 
-            {/* Menu déroulant statut */}
-            <p className="text-sm text-gray-700 mb-2">
-              Statut suivi :
+            <div className="mt-2">
+              <label className="text-gray-700 text-sm">🎯 Besoin :</label>
+              <select
+                value={besoinChanges[popupMember.id] ?? popupMember.besoin ?? ""}
+                onChange={(e) => handleBesoinChange(popupMember.id, e.target.value)}
+                className="w-full border rounded-md px-2 py-1 text-sm mt-1"
+              >
+                {besoinOptions.map((b) => (
+                  <option key={b} value={b}>{b || "-- Sélectionner --"}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mt-2">
+              <label className="text-gray-700 text-sm">📋 Statut suivi :</label>
               <select
                 value={statusChanges[popupMember.id] ?? popupMember.statut_suivis ?? ""}
                 onChange={(e) => handleStatusChange(popupMember.id, e.target.value)}
-                className="ml-2 border rounded-md px-2 py-1 text-sm w-full"
+                className="w-full border rounded-md px-2 py-1 text-sm mt-1"
               >
                 <option value="">-- Sélectionner --</option>
                 <option value="actif">✅ Actif</option>
@@ -262,17 +277,6 @@ export default function SuivisMembres() {
                 <option value="suivi terminé">🏁 Terminé</option>
                 <option value="inactif">❌ Inactif</option>
               </select>
-            </p>
-
-            <div className="mt-2">
-              <label className="text-gray-700 text-sm">💬 Commentaire :</label>
-              <textarea
-                value={commentChanges[popupMember.id] ?? popupMember.commentaire ?? ""}
-                onChange={(e) => handleCommentChange(popupMember.id, e.target.value)}
-                rows={2}
-                className="w-full border rounded-md px-2 py-1 text-sm mt-1 resize-none"
-                placeholder="Ajouter un commentaire..."
-              ></textarea>
             </div>
 
             <button

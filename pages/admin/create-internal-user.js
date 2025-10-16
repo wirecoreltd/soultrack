@@ -3,19 +3,23 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import supabase from "../../lib/supabaseClient";
 import { canAccessPage } from "../../lib/accessControl";
+import bcrypt from "bcryptjs"; // ⚙️ npm install bcryptjs
 
 export default function CreateInternalUserPage() {
   const router = useRouter();
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
-    name: "",
+    prenom: "",
+    nom: "",
     email: "",
-    role: "ResponsableIntegration",
+    password: "",
+    role: "Membre",
   });
 
-  // 🧩 Vérification d’accès (basée sur router.pathname)
+  // 🧩 Vérification d’accès
   useEffect(() => {
     const storedRole = localStorage.getItem("userRole");
     if (!storedRole) {
@@ -36,19 +40,54 @@ export default function CreateInternalUserPage() {
 
   if (loading) return <div className="text-center mt-20">Chargement...</div>;
 
-  // 🔁 Gestion du formulaire
+  // 🔁 Gestion des inputs
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  // 💾 Création utilisateur
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Ici, tu appelles ton API ou backend pour créer un utilisateur
-    console.log("Nouvel utilisateur :", formData);
+    try {
+      // 1️⃣ Vérifie si l’email existe déjà
+      const { data: existingUser, error: existingError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", formData.email)
+        .single();
 
-    alert(`✅ Utilisateur "${formData.name}" créé avec succès !`);
-    router.push("/"); // Retour à l’accueil
+      if (existingUser) {
+        alert("⚠️ Cet email est déjà utilisé !");
+        return;
+      }
+
+      // 2️⃣ Hachage du mot de passe
+      const hashedPassword = await bcrypt.hash(formData.password, 10);
+
+      // 3️⃣ Insertion dans la table Supabase
+      const { data, error } = await supabase.from("profiles").insert([
+        {
+          email: formData.email,
+          password_hash: hashedPassword,
+          prenom: formData.prenom,
+          nom: formData.nom,
+          role: formData.role,
+        },
+      ]);
+
+      if (error) {
+        console.error("Erreur Supabase:", error);
+        alert("❌ Erreur lors de la création de l’utilisateur !");
+        return;
+      }
+
+      alert(`✅ Utilisateur "${formData.prenom} ${formData.nom}" créé avec succès !`);
+      router.push("/");
+    } catch (err) {
+      console.error("Erreur inattendue:", err);
+      alert("❌ Une erreur inattendue s’est produite");
+    }
   };
 
   // 🔴 Déconnexion
@@ -75,12 +114,26 @@ export default function CreateInternalUserPage() {
       >
         <div>
           <label className="block text-gray-700 font-semibold mb-1">
-            Nom complet
+            Prénom
           </label>
           <input
             type="text"
-            name="name"
-            value={formData.name}
+            name="prenom"
+            value={formData.prenom}
+            onChange={handleChange}
+            required
+            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+        </div>
+
+        <div>
+          <label className="block text-gray-700 font-semibold mb-1">
+            Nom
+          </label>
+          <input
+            type="text"
+            name="nom"
+            value={formData.nom}
             onChange={handleChange}
             required
             className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -103,20 +156,28 @@ export default function CreateInternalUserPage() {
 
         <div>
           <label className="block text-gray-700 font-semibold mb-1">
-            Rôle
+            Mot de passe
           </label>
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+        </div>
+
+        <div>
+          <label className="block text-gray-700 font-semibold mb-1">Rôle</label>
           <select
             name="role"
             value={formData.role}
             onChange={handleChange}
             className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
-            <option value="ResponsableIntegration">
-              Responsable Intégration
-            </option>
-            <option value="ResponsableEvangelisation">
-              Responsable Évangélisation
-            </option>
+            <option value="ResponsableIntegration">Responsable Intégration</option>
+            <option value="ResponsableEvangelisation">Responsable Évangélisation</option>
             <option value="Membre">Membre</option>
           </select>
         </div>
@@ -145,4 +206,3 @@ export default function CreateInternalUserPage() {
     </div>
   );
 }
-

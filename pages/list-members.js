@@ -1,3 +1,4 @@
+// pages/list-members.js
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -73,6 +74,15 @@ export default function ListMembers() {
     }
   };
 
+  const nouveaux = members.filter(
+    (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
+  );
+  const anciens = members.filter(
+    (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
+  );
+
+  const allMembersOrdered = [...nouveaux, ...anciens];
+
   const statusOptions = [
     "actif",
     "Integrer",
@@ -82,15 +92,13 @@ export default function ListMembers() {
     "a déjà mon église",
   ];
 
-  // ✅ Filtrage et recherche combinés
-  const filteredMembers = members
-    .filter((m) => (filter ? m.statut === filter : true))
-    .filter(
-      (m) =>
-        `${m.prenom} ${m.nom}`
-          .toLowerCase()
-          .includes(search.trim().toLowerCase())
-    );
+  const filteredMembers = allMembersOrdered.filter((m) => {
+    const matchStatus = filter ? m.statut === filter : true;
+    const matchSearch = search
+      ? `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase())
+      : true;
+    return matchStatus && matchSearch;
+  });
 
   const totalCount = filteredMembers.length;
 
@@ -122,7 +130,7 @@ export default function ListMembers() {
         Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
       </p>
 
-      {/* Filtre + recherche + compteur + toggle */}
+      {/* 🔎 Filtre + recherche + compteur + toggle */}
       <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4 space-y-2 sm:space-y-0">
         <div className="flex items-center space-x-2">
           <select
@@ -135,13 +143,15 @@ export default function ListMembers() {
               <option key={s}>{s}</option>
             ))}
           </select>
+
           <input
             type="text"
-            placeholder="Rechercher un nom..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            placeholder="🔍 Rechercher par nom..."
             className="px-3 py-2 rounded-lg border text-sm w-48"
           />
+
           <span className="text-white text-sm">({totalCount})</span>
         </div>
 
@@ -153,58 +163,69 @@ export default function ListMembers() {
         </button>
       </div>
 
-      {/* === Vue Carte === */}
+      {/* === VUE CARTE === */}
       {view === "card" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-5xl">
-          {filteredMembers.map((m) => {
-            const open = detailsOpen[m.id];
-            return (
-              <div
-                key={m.id}
-                onClick={() => toggleDetails(m.id)}
-                className={`bg-white p-3 rounded-xl shadow-md border-l-4 transition-all duration-300 cursor-pointer ${
-                  open ? "scale-105 shadow-2xl" : "hover:shadow-xl"
-                }`}
-                style={{ borderLeftColor: getBorderColor(m) }}
-              >
-                <div className="flex justify-between items-center mb-1">
-                  <span
-                    className="text-sm font-semibold"
-                    style={{ color: getBorderColor(m) }}
-                  >
-                    {m.star ? "⭐ S.T.A.R" : m.statut}
-                  </span>
-                </div>
-
-                <div className="text-lg font-bold text-gray-800">
-                  {m.prenom} {m.nom}
-                </div>
-
-                <p className="text-sm text-gray-600 mb-2">
-                  📱 {m.telephone || "—"}
-                </p>
-
-                {open && (
-                  <div className="mt-2 text-sm text-gray-700 space-y-2">
-                    <p>📅 Inscrit : {formatDate(m.created_at)}</p>
-                    <p>🙏 Besoin : {m.besoin || "—"}</p>
-                    <p>💬 Infos : {m.infos_supplementaires || "—"}</p>
-                    <p>📍 Comment venu : {m.comment || "—"}</p>
-
-                    <select
-                      value={m.statut}
-                      onChange={(e) =>
-                        handleChangeStatus(m.id, e.target.value)
-                      }
-                      className="border rounded-md px-2 py-1 text-xs text-gray-700 w-full"
+        <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
+          {filteredMembers.length === 0 && (
+            <p className="text-white text-lg text-center italic">
+              Aucun membre trouvé.
+            </p>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredMembers.map((m) => {
+              const open = detailsOpen[m.id];
+              return (
+                <div
+                  key={m.id}
+                  className={`bg-white p-4 rounded-xl shadow-md border-l-4 transition-all duration-300 ${
+                    open ? "h-auto" : "overflow-hidden"
+                  }`}
+                  style={{
+                    borderLeftColor: getBorderColor(m),
+                  }}
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <span
+                      className="text-sm font-semibold"
+                      style={{ color: getBorderColor(m) }}
                     >
-                      {statusOptions.map((s) => (
-                        <option key={s}>{s}</option>
-                      ))}
-                    </select>
+                      {m.star ? "⭐ S.T.A.R" : m.statut}
+                    </span>
+                  </div>
 
-                    <div>
-                      <p className="font-semibold text-indigo-700 mt-2">
+                  <div className="text-lg font-bold text-gray-800">
+                    {m.prenom} {m.nom}
+                  </div>
+
+                  <p className="text-sm text-gray-600 mb-2">
+                    📱 {m.telephone || "—"}
+                  </p>
+
+                  <select
+                    value={m.statut}
+                    onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                    className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
+                  >
+                    {statusOptions.map((s) => (
+                      <option key={s}>{s}</option>
+                    ))}
+                  </select>
+
+                  <p
+                    className="text-blue-500 underline cursor-pointer text-sm"
+                    onClick={() => toggleDetails(m.id)}
+                  >
+                    {open ? "Fermer détails" : "Détails"}
+                  </p>
+
+                  {open && (
+                    <div className="mt-2 text-sm text-gray-700 space-y-1">
+                      <p>🗓 Arrivé : {formatDate(m.created_at)}</p>
+                      <p>🙏 Besoin : {m.besoin || "—"}</p>
+                      <p>ℹ️ Infos : {m.infos_supplementaires || "—"}</p>
+                      <p>💬 Comment venu : {m.comment || "—"}</p>
+
+                      <p className="text-green-600 font-semibold mt-2">
                         Cellule :
                       </p>
                       <select
@@ -224,8 +245,9 @@ export default function ListMembers() {
                           </option>
                         ))}
                       </select>
+
                       {selectedCellules[m.id] && (
-                        <div className="mt-2">
+                        <div className="mt-3">
                           <BoutonEnvoyer
                             membre={m}
                             cellule={cellules.find(
@@ -237,14 +259,14 @@ export default function ListMembers() {
                         </div>
                       )}
                     </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       ) : (
-        // Vue Table
+        // === VUE TABLE ===
         <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left text-gray-700 border-separate border-spacing-0 rounded-md overflow-hidden shadow-lg bg-white">
             <thead className="bg-indigo-600 text-white text-sm uppercase rounded-t-md">
@@ -252,16 +274,14 @@ export default function ListMembers() {
                 <th className="px-4 py-2">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
                 <th className="px-4 py-2">Statut</th>
+                <th className="px-4 py-2">Détails</th>
               </tr>
             </thead>
             <tbody>
               {filteredMembers.map((m) => (
-                <tr
-                  key={m.id}
-                  className="bg-white transition duration-200 rounded-lg mb-1"
-                >
+                <tr key={m.id} className="bg-white transition duration-200">
                   <td
-                    className="px-4 py-2 border-l-4 rounded-l-md"
+                    className="px-4 py-2 border-l-4"
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
                     {m.prenom} {m.nom}
@@ -279,6 +299,14 @@ export default function ListMembers() {
                         <option key={s}>{s}</option>
                       ))}
                     </select>
+                  </td>
+                  <td className="px-4 py-2">
+                    <button
+                      onClick={() => toggleDetails(m.id)}
+                      className="text-blue-600 underline text-sm"
+                    >
+                      {detailsOpen[m.id] ? "Fermer" : "Détails"}
+                    </button>
                   </td>
                 </tr>
               ))}

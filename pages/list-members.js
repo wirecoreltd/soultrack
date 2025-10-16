@@ -237,54 +237,61 @@ export default function ListMembers() {
               )}
 
               {/* Section anciens */}
-              {anciensFiltres.length > 0 && (
-                <>
-                  <tr>
-                    <td
-                      colSpan="4"
-                      className="text-indigo-600 font-semibold py-3 text-center border-t"
-                    >
-                      Membres existants ————————————
-                    </td>
-                  </tr>
+{anciensFiltres.length > 0 && (
+  <>
+    <tr>
+      <td colSpan="4" className="py-3 text-left border-t">
+        <h3 className="text-lg mb-1 font-semibold">
+          <span
+            style={{
+              background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+              WebkitBackgroundClip: "text",
+              color: "transparent",
+            }}
+          >
+            Membres existants
+          </span>
+          <span className="ml-2 w-3/4 inline-block h-px bg-gradient-to-r from-blue-500 to-gray-400"></span>
+        </h3>
+      </td>
+    </tr>
 
-                  {anciensFiltres.map((m) => (
-                    <tr
-                      key={m.id}
-                      className="border-b hover:bg-gray-50 transition duration-150"
-                    >
-                      <td
-                        className="px-4 py-2 border-l-4 rounded-l-md"
-                        style={{ borderLeftColor: getBorderColor(m) }}
-                      >
-                        {m.prenom} {m.nom}
-                      </td>
-                      <td className="px-4 py-2">{m.telephone}</td>
-                      <td className="px-4 py-2">
-                        <select
-                          value={m.statut}
-                          onChange={(e) =>
-                            handleChangeStatus(m.id, e.target.value)
-                          }
-                          className="border rounded-md px-2 py-1 text-sm w-full"
-                        >
-                          {statusOptions.map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-4 py-2">
-                        <button
-                          onClick={() => setPopupMember(m)}
-                          className="text-blue-600 underline text-sm"
-                        >
-                          Détails
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </>
-              )}
+    {anciensFiltres.map((m) => (
+      <tr
+        key={m.id}
+        className="border-b hover:bg-gray-50 transition duration-150"
+      >
+        <td
+          className="px-4 py-2 border-l-4 rounded-l-md"
+          style={{ borderLeftColor: getBorderColor(m) }}
+        >
+          {m.prenom} {m.nom}
+        </td>
+        <td className="px-4 py-2">{m.telephone}</td>
+        <td className="px-4 py-2">
+          <select
+            value={m.statut}
+            onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+            className="border rounded-md px-2 py-1 text-sm w-full"
+          >
+            {statusOptions.map((s) => (
+              <option key={s}>{s}</option>
+            ))}
+          </select>
+        </td>
+        <td className="px-4 py-2">
+          <button
+            onClick={() => setPopupMember(m)}
+            className="text-blue-600 underline text-sm"
+          >
+            Détails
+          </button>
+        </td>
+      </tr>
+    ))}
+  </>
+)}
+
             </tbody>
           </table>
         </div>

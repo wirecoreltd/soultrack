@@ -90,13 +90,6 @@ export default function ListMembers() {
     filter ? anciens.filter((m) => m.statut === filter) : anciens
   );
 
-  const allMembersOrdered = [...nouveaux, ...anciens];
-  const filteredMembers = filterBySearch(
-    filter
-      ? allMembersOrdered.filter((m) => m.statut === filter)
-      : allMembersOrdered
-  );
-
   const statusOptions = [
     "actif",
     "Integrer",
@@ -106,7 +99,7 @@ export default function ListMembers() {
     "a déjà mon église",
   ];
 
-  const totalCount = filteredMembers.length;
+  const totalCount = nouveauxFiltres.length + anciensFiltres.length;
 
   return (
     <div
@@ -150,7 +143,6 @@ export default function ListMembers() {
             ))}
           </select>
 
-          {/* 🔍 Recherche par nom */}
           <input
             type="text"
             value={search}
@@ -173,13 +165,11 @@ export default function ListMembers() {
       {/* === VUE CARTE === */}
       {view === "card" ? (
         <>
-          {/* Les cartes s’affichent inchangées */}
           <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
             {nouveauxFiltres.length > 0 && (
               <div>
                 <p className="text-white text-lg mb-2 ml-1">
-                  💖 Bien aimé venu le{" "}
-                  {formatDate(nouveauxFiltres[0].created_at)}
+                  💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {nouveauxFiltres.map((m) => (
@@ -231,6 +221,7 @@ export default function ListMembers() {
                 </div>
               </div>
             )}
+
             {anciensFiltres.length > 0 && (
               <div className="mt-8">
                 <h3 className="text-white text-lg mb-3 font-semibold">
@@ -307,13 +298,64 @@ export default function ListMembers() {
               </tr>
             </thead>
             <tbody>
-              {[...nouveauxFiltres, ...anciensFiltres].map((m, i) => (
-                <tr
-                  key={m.id}
-                  className="border-b border-blue-300 hover:bg-white/10 transition duration-150"
-                >
+              {/* Ligne texte “💖 Bien aimé venu le …” */}
+              {nouveauxFiltres.length > 0 && (
+                <tr>
+                  <td colSpan={4} className="px-4 py-2 text-blue-400 font-semibold">
+                    💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+                  </td>
+                </tr>
+              )}
+
+              {/* Lignes nouveaux membres */}
+              {nouveauxFiltres.map((m) => (
+                <tr key={m.id} className="border-b border-blue-300 hover:bg-white/10 transition duration-150">
                   <td
-                    className="px-4 py-2 border-l-4 rounded-l-md"
+                    className="px-4 py-2 border-l-4"
+                    style={{ borderLeftColor: getBorderColor(m) }}
+                  >
+                    {m.prenom} {m.nom}{" "}
+                    <span className="ml-2 text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">
+                      Nouveau
+                    </span>
+                  </td>
+                  <td className="px-4 py-2">{m.telephone}</td>
+                  <td className="px-4 py-2">
+                    <select
+                      value={m.statut}
+                      onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                      className="border rounded-md px-2 py-1 text-sm w-full text-gray-800"
+                    >
+                      {statusOptions.map((s) => (
+                        <option key={s}>{s}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-4 py-2">
+                    <button
+                      onClick={() => setPopupMember(m)}
+                      className="text-orange-400 underline text-sm"
+                    >
+                      Détails
+                    </button>
+                  </td>
+                </tr>
+              ))}
+
+              {/* Ligne séparatrice “Membres existants------” */}
+              {anciensFiltres.length > 0 && (
+                <tr>
+                  <td colSpan={4} className="px-4 py-2 text-white font-semibold">
+                    Membres existants------
+                  </td>
+                </tr>
+              )}
+
+              {/* Lignes anciens membres */}
+              {anciensFiltres.map((m) => (
+                <tr key={m.id} className="border-b border-blue-300 hover:bg-white/10 transition duration-150">
+                  <td
+                    className="px-4 py-2 border-l-4"
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
                     {m.prenom} {m.nom}

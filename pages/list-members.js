@@ -1,4 +1,5 @@
 // pages/list-members.js
+// pages/list-members.js
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -90,6 +91,13 @@ export default function ListMembers() {
     filter ? anciens.filter((m) => m.statut === filter) : anciens
   );
 
+  const allMembersOrdered = [...nouveaux, ...anciens];
+  const filteredMembers = filterBySearch(
+    filter
+      ? allMembersOrdered.filter((m) => m.statut === filter)
+      : allMembersOrdered
+  );
+
   const statusOptions = [
     "actif",
     "Integrer",
@@ -99,7 +107,7 @@ export default function ListMembers() {
     "a déjà mon église",
   ];
 
-  const totalCount = nouveauxFiltres.length + anciensFiltres.length;
+  const totalCount = filteredMembers.length;
 
   return (
     <div
@@ -143,6 +151,7 @@ export default function ListMembers() {
             ))}
           </select>
 
+          {/* 🔍 Recherche par nom */}
           <input
             type="text"
             value={search}
@@ -169,7 +178,8 @@ export default function ListMembers() {
             {nouveauxFiltres.length > 0 && (
               <div>
                 <p className="text-white text-lg mb-2 ml-1">
-                  💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+                  💖 Bien aimé venu le{" "}
+                  {formatDate(nouveauxFiltres[0].created_at)}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {nouveauxFiltres.map((m) => (
@@ -221,7 +231,6 @@ export default function ListMembers() {
                 </div>
               </div>
             )}
-
             {anciensFiltres.length > 0 && (
               <div className="mt-8">
                 <h3 className="text-white text-lg mb-3 font-semibold">
@@ -298,10 +307,10 @@ export default function ListMembers() {
               </tr>
             </thead>
             <tbody>
-              {/* Ligne texte “💖 Bien aimé venu le …” */}
+              {/* Ligne texte “💖 Bien aimé venu le …” en blanc */}
               {nouveauxFiltres.length > 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-2 text-blue-400 font-semibold">
+                  <td colSpan={4} className="px-4 py-2 text-white font-semibold">
                     💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
                   </td>
                 </tr>
@@ -309,7 +318,10 @@ export default function ListMembers() {
 
               {/* Lignes nouveaux membres */}
               {nouveauxFiltres.map((m) => (
-                <tr key={m.id} className="border-b border-blue-300 hover:bg-white/10 transition duration-150">
+                <tr
+                  key={m.id}
+                  className="border-b border-blue-300 hover:bg-white/10 transition duration-150"
+                >
                   <td
                     className="px-4 py-2 border-l-4"
                     style={{ borderLeftColor: getBorderColor(m) }}
@@ -342,18 +354,30 @@ export default function ListMembers() {
                 </tr>
               ))}
 
-              {/* Ligne séparatrice “Membres existants------” */}
+              {/* Ligne séparatrice “Membres existants------” avec dégradé */}
               {anciensFiltres.length > 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-2 text-white font-semibold">
-                    Membres existants------
+                  <td colSpan={4} className="px-4 py-2 font-semibold">
+                    <span
+                      style={{
+                        background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                        WebkitBackgroundClip: "text",
+                        color: "transparent",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Membres existants------
+                    </span>
                   </td>
                 </tr>
               )}
 
               {/* Lignes anciens membres */}
               {anciensFiltres.map((m) => (
-                <tr key={m.id} className="border-b border-blue-300 hover:bg-white/10 transition duration-150">
+                <tr
+                  key={m.id}
+                  className="border-b border-gray-400 hover:bg-white/10 transition duration-150"
+                >
                   <td
                     className="px-4 py-2 border-l-4"
                     style={{ borderLeftColor: getBorderColor(m) }}
@@ -463,3 +487,4 @@ export default function ListMembers() {
     </div>
   );
 }
+

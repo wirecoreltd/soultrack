@@ -1,363 +1,204 @@
-// pages/list-members.js
 "use client";
+
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
-import BoutonEnvoyer from "../components/BoutonEnvoyer";
-import LogoutLink from "../components/LogoutLink";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 
-export default function ListMembers() {
-  const [members, setMembers] = useState([]);
-  const [filter, setFilter] = useState("");
-  const [search, setSearch] = useState("");
+export default function SuivisMembres() {
+  const [suivis, setSuivis] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState({});
-  const [cellules, setCellules] = useState([]);
-  const [selectedCellules, setSelectedCellules] = useState({});
-  const [view, setView] = useState("card");
-  const [popupMember, setPopupMember] = useState(null);
+  const [statusChanges, setStatusChanges] = useState({});
+  const [commentChanges, setCommentChanges] = useState({});
+  const [updating, setUpdating] = useState({});
 
   useEffect(() => {
-    fetchMembers();
-    fetchCellules();
+    fetchSuivis();
+
+    // 🔁 Écoute en temps réel les changements sur la table suivis_membres
+    const channel = supabase
+      .channel("suivis_membres_changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "suivis_membres" },
+        (payload) => {
+          console.log("🔁 Changement détecté :", payload);
+          fetchSuivis();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  const fetchMembers = async () => {
+  const fetchSuivis = async () => {
+    setLoading(true);
     const { data, error } = await supabase
-      .from("membres")
+      .from("suivis_membres")
       .select("*")
       .order("created_at", { ascending: false });
-    if (!error && data) setMembers(data);
-  };
 
-  const fetchCellules = async () => {
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("id, cellule, responsable, telephone");
-    if (!error && data) setCellules(data);
-  };
-
-  const handleChangeStatus = async (id, newStatus) => {
-    await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
-    setMembers((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
-    );
-  };
-
-  const handleStatusUpdateFromEnvoyer = (id, newStatus) => {
-    setMembers((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
-    );
-  };
-
-  const getBorderColor = (m) => {
-    if (m.star) return "#FBC02D";
-    if (m.statut === "actif") return "#4285F4";
-    if (m.statut === "a déjà mon église") return "#EA4335";
-    if (m.statut === "Integrer") return "#FFA500";
-    if (m.statut === "ancien") return "#999999";
-    if (m.statut === "veut rejoindre ICC" || m.statut === "visiteur")
-      return "#34A853";
-    return "#ccc";
-  };
-
-  const formatDate = (dateStr) => {
-    try {
-      const date = new Date(dateStr);
-      return format(date, "EEEE d MMMM yyyy", { locale: fr });
-    } catch {
-      return "";
+    if (error) {
+      console.error("Erreur chargement suivis :", error.message);
+      setSuivis([]);
+    } else {
+      setSuivis(data || []);
     }
+    setLoading(false);
   };
 
-  const nouveaux = members.filter(
-    (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
-  );
-  const anciens = members.filter(
-    (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
-  );
+  const toggleDetails = (id) =>
+    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  const searchFilter = (list) =>
-    list.filter(
-      (m) =>
-        m.nom.toLowerCase().includes(search.toLowerCase()) ||
-        m.prenom.toLowerCase().includes(search.toLowerCase())
-    );
+  const handleStatusChange = (id, value) =>
+    setStatusChanges((prev) => ({ ...prev, [id]: value }));
 
-  const nouveauxFiltres = searchFilter(
-    filter ? nouveaux.filter((m) => m.statut === filter) : nouveaux
-  );
-  const anciensFiltres = searchFilter(
-    filter ? anciens.filter((m) => m.statut === filter) : anciens
-  );
+  const handleCommentChange = (id, value) =>
+    setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
-  const allMembersOrdered = [...nouveaux, ...anciens];
+  const updateSuivi = async (id) => {
+    const newStatus = statusChanges[id];
+    const newComment = commentChanges[id];
+    if (!newStatus && !newComment) return;
 
-  const statusOptions = [
-    "actif",
-    "Integrer",
-    "ancien",
-    "veut rejoindre ICC",
-    "visiteur",
-    "a déjà mon église",
-  ];
+    setUpdating((prev) => ({ ...prev, [id]: true }));
 
-  const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
+    // ✅ Correction : on utilise le champ "statut_suivis"
+    const { data, error } = await supabase
+      .from("suivis_membres")
+      .update({
+        statut_suivis: newStatus ?? undefined,
+        commentaire: newComment ?? undefined,
+        updated_at: new Date(),
+      })
+      .eq("id", id)
+      .select(); // <-- permet de récupérer la ligne mise à jour
+
+    if (error) {
+      console.error("Erreur mise à jour :", error.message);
+    } else if (data && data.length > 0) {
+      const updatedItem = data[0];
+      setSuivis((prev) =>
+        prev.map((item) => (item.id === id ? updatedItem : item))
+      );
+    }
+
+    setUpdating((prev) => ({ ...prev, [id]: false }));
+  };
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
-      {/* Header */}
-      <div className="flex justify-between w-full max-w-5xl items-center mb-4">
-        <button
-          onClick={() => window.history.back()}
-          className="flex items-center text-white font-semibold hover:text-gray-200"
-        >
-          ← Retour
-        </button>
-        <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
-      </div>
+    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-emerald-700 to-teal-500">
+      {/* Retour */}
+      <button
+        onClick={() => window.history.back()}
+        className="self-start mb-4 text-white font-semibold hover:text-gray-200"
+      >
+        ← Retour
+      </button>
 
       {/* Logo */}
-      <div className="mt-2 mb-2">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
-      </div>
+      <Image src="/logo.png" alt="Logo" width={80} height={80} className="mb-3" />
 
-      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">
-        SoulTrack
+      <h1 className="text-4xl font-handwriting text-white text-center mb-3">
+        Suivis des Membres
       </h1>
-      <p className="text-center text-white text-lg mb-2 font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
+
+      <p className="text-center text-white text-lg mb-6 font-handwriting-light">
+        Liste des membres envoyés pour suivi 💬
       </p>
 
-      {/* Filtre + recherche + compteur + toggle */}
-      <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">
-        <div className="flex items-center space-x-2 mb-2 sm:mb-0">
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="px-3 py-2 rounded-lg border text-sm text-black"
-          >
-            <option value="">Tous les statuts</option>
-            {statusOptions.map((s) => (
-              <option key={s}>{s}</option>
-            ))}
-          </select>
-          <input
-            type="text"
-            placeholder="🔍 Rechercher par nom..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="px-3 py-2 rounded-lg border text-sm text-black"
-          />
-          <span className="text-white text-sm">({totalCount})</span>
-        </div>
-
-        <button
-          onClick={() => setView(view === "card" ? "table" : "card")}
-          className="text-white text-sm underline hover:text-gray-200"
-        >
-          {view === "card" ? "Vue Table" : "Vue Carte"}
-        </button>
-      </div>
-
-      {/* === VUE TABLE === */}
-      {view === "table" && (
-        <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
-          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-lg">
-              <tr>
-                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-                <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Statut</th>
-                <th className="px-4 py-2 rounded-tr-lg">Détails</th>
-              </tr>
-            </thead>
-            <tbody>
-              {nouveauxFiltres.length > 0 && (
-                <>
-                  <tr>
-                    <td
-                      colSpan="4"
-                      className="py-3 text-left text-white font-semibold"
-                    >
-                      💖 Bien aimé venu le{" "}
-                      {formatDate(nouveauxFiltres[0].created_at)}
-                    </td>
-                  </tr>
-                  {nouveauxFiltres.map((m) => (
-                    <tr
-                      key={m.id}
-                      className="border-b border-blue-300 hover:bg-white/10 transition duration-150"
-                    >
-                      <td
-                        className="px-4 py-2 border-l-4 rounded-l-md"
-                        style={{ borderLeftColor: getBorderColor(m) }}
-                      >
-                        {m.prenom} {m.nom}
-                      </td>
-                      <td className="px-4 py-2">{m.telephone}</td>
-                      <td className="px-4 py-2">
-                        <select
-                          value={m.statut}
-                          onChange={(e) =>
-                            handleChangeStatus(m.id, e.target.value)
-                          }
-                          className="border rounded-md px-2 py-1 text-sm w-full text-gray-800"
-                        >
-                          {statusOptions.map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-4 py-2">
-                        <button
-                          onClick={() => setPopupMember(m)}
-                          className="text-orange-400 underline text-sm font-semibold"
-                        >
-                          Détails
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </>
-              )}
-
-              {anciensFiltres.length > 0 && (
-                <>
-                  <tr>
-                    <td colSpan="4" className="py-3 text-left">
-                      <h3 className="text-lg mb-1 font-semibold">
-                        <span
-                          style={{
-                            background:
-                              "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                            WebkitBackgroundClip: "text",
-                            color: "transparent",
-                          }}
-                        >
-                          Membres existants
-                        </span>
-                        <span className="ml-2 w-3/4 inline-block h-px bg-gradient-to-r from-blue-500 to-gray-400"></span>
-                      </h3>
-                    </td>
-                  </tr>
-                  {anciensFiltres.map((m) => (
-                    <tr
-                      key={m.id}
-                      className="border-b border-blue-300 hover:bg-white/10 transition duration-150"
-                    >
-                      <td
-                        className="px-4 py-2 border-l-4 rounded-l-md"
-                        style={{ borderLeftColor: getBorderColor(m) }}
-                      >
-                        {m.prenom} {m.nom}
-                      </td>
-                      <td className="px-4 py-2">{m.telephone}</td>
-                      <td className="px-4 py-2">
-                        <select
-                          value={m.statut}
-                          onChange={(e) =>
-                            handleChangeStatus(m.id, e.target.value)
-                          }
-                          className="border rounded-md px-2 py-1 text-sm w-full text-gray-800"
-                        >
-                          {statusOptions.map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-4 py-2">
-                        <button
-                          onClick={() => setPopupMember(m)}
-                          className="text-orange-400 underline text-sm font-semibold"
-                        >
-                          Détails
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* ✅ Popup Détails */}
-      {popupMember && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
-            <button
-              onClick={() => setPopupMember(null)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
-            >
-              ✖
-            </button>
-            <h2 className="text-xl font-bold mb-2 text-indigo-700">
-              {popupMember.prenom} {popupMember.nom}
-            </h2>
-            <p className="text-gray-700 text-sm mb-1">
-              📱 {popupMember.telephone || "—"}
-            </p>
-            <p className="text-sm text-gray-700 mb-2">
-              Statut :
-              <select
-                value={popupMember.statut}
-                onChange={(e) =>
-                  handleChangeStatus(popupMember.id, e.target.value)
-                }
-                className="ml-2 border rounded-md px-2 py-1 text-sm"
+      {loading ? (
+        <p className="text-white">Chargement...</p>
+      ) : suivis.length === 0 ? (
+        <p className="text-white text-lg italic">
+          Aucun membre en suivi pour le moment.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
+          {suivis.map((item) => {
+            const isOpen = detailsOpen[item.id];
+            return (
+              <div
+                key={item.id}
+                className="bg-white rounded-2xl shadow-lg p-4 flex flex-col items-center transition-all duration-300 hover:shadow-2xl"
               >
-                {statusOptions.map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
-            </p>
-            <p className="text-sm text-gray-700 mb-1">
-              Besoin : {popupMember.besoin || "—"}
-            </p>
-            <p className="text-sm text-gray-700 mb-1">
-              Infos : {popupMember.infos_supplementaires || "—"}
-            </p>
-            <p className="text-sm text-gray-700 mb-3">
-              Comment venu : {popupMember.comment || "—"}
-            </p>
+                <h2 className="font-bold text-gray-800 text-base text-center mb-1">
+                  👤 {item.prenom} {item.nom}
+                </h2>
+                <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
+                <p className="text-sm text-gray-700 mb-1">
+                  🕊 : {item.cellule_nom || "—"}
+                </p>
+                <p className="text-sm text-gray-700 mb-1">
+                  👑 Responsable : {item.responsable || "—"}
+                </p>
+                <p className="text-sm text-gray-700 mb-1">
+                  📅 Créé le :{" "}
+                  {new Date(item.created_at).toLocaleDateString("fr-FR", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </p>
 
-            <p className="text-green-600 font-semibold mt-2">Cellule :</p>
-            <select
-              value={selectedCellules[popupMember.id] || ""}
-              onChange={(e) =>
-                setSelectedCellules((prev) => ({
-                  ...prev,
-                  [popupMember.id]: e.target.value,
-                }))
-              }
-              className="border rounded-lg px-2 py-1 text-sm w-full"
-            >
-              <option value="">-- Sélectionner cellule --</option>
-              {cellules.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.cellule} ({c.responsable})
-                </option>
-              ))}
-            </select>
+                {/* Bouton voir détails */}
+                <button
+                  onClick={() => toggleDetails(item.id)}
+                  className="text-blue-500 underline text-sm mt-1"
+                >
+                  {isOpen ? "Fermer" : "Voir détails"}
+                </button>
 
-            {selectedCellules[popupMember.id] && (
-              <div className="mt-3">
-                <BoutonEnvoyer
-                  membre={popupMember}
-                  cellule={cellules.find(
-                    (c) => String(c.id) === String(selectedCellules[popupMember.id])
-                  )}
-                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                />
+                {isOpen && (
+                  <div className="text-gray-600 text-sm text-center mt-2 space-y-2 w-full">
+                    <p>🙏 Besoin : {item.besoin || "—"}</p>
+                    <p>🧩 Comment venu : {item.venu || "—"}</p>
+                    <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
+
+                    <div className="mt-2">
+                      <label className="text-gray-700 text-sm">💬 Commentaire :</label>
+                      <textarea
+                        value={commentChanges[item.id] ?? item.commentaire ?? ""}
+                        onChange={(e) => handleCommentChange(item.id, e.target.value)}
+                        rows={2}
+                        className="w-full border rounded-md px-2 py-1 text-sm mt-1 resize-none"
+                        placeholder="Ajouter un commentaire..."
+                      ></textarea>
+                    </div>
+
+                    <div className="mt-2">
+                      <label className="text-gray-700 text-sm">📋 Statut suivi :</label>
+                      <select
+                        value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
+                        onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                        className="w-full border rounded-md px-2 py-1 text-sm mt-1"
+                      >
+                        <option value="">-- Choisir un statut --</option>
+                        <option value="actif">✅ Actif</option>
+                        <option value="en attente">🕓 En attente</option>
+                        <option value="suivi terminé">🏁 Terminé</option>
+                        <option value="inactif">❌ Inactif</option>
+                      </select>
+                    </div>
+
+                    <button
+                      onClick={() => updateSuivi(item.id)}
+                      disabled={updating[item.id]}
+                      className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+                        updating[item.id]
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-green-600 hover:bg-green-700"
+                      }`}
+                    >
+                      {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            );
+          })}
         </div>
       )}
     </div>

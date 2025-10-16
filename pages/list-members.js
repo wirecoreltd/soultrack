@@ -364,7 +364,7 @@ export default function ListMembers() {
                         fontWeight: "bold",
                       }}
                     >
-                      Membres existants------
+                      Membres existants _________________________
                     </span>
                   </td>
                 </tr>

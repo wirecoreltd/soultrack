@@ -20,7 +20,6 @@ export default function HomePage() {
       return;
     }
 
-    // Vérifie l'accès à la page via accessControl.js
     const canAccess = canAccessPage(storedRole, "/index");
     if (!canAccess) {
       alert("⛔ Accès non autorisé !");
@@ -38,39 +37,26 @@ export default function HomePage() {
     router.push(path);
   };
 
-  // 🟢🟢🟢 DÉBUT DE LA PARTIE DÉCONNEXION
-  const handleLogout = () => {
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userRole");
-    router.push("/login");
-  };
-  // 🔴🔴🔴 FIN DE LA PARTIE DÉCONNEXION
-
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-between p-6 gap-2"
+      className="relative min-h-screen flex flex-col items-center justify-between p-6 gap-2"
       style={{
         background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
       }}
     >
+      {/* 🔵 Bouton de déconnexion en haut à droite */}
+      <LogoutLink />
+
       {/* Logo */}
       <div className="mt-1">
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
       </div>
 
-      {/* Titre + Déconnexion */}
+      {/* Titre */}
       <div className="flex flex-col items-center mt-2">
         <h1 className="text-5xl sm:text-5xl font-handwriting text-white text-center">
           SoulTrack
         </h1>
-
-        {/* 🔵 Texte cliquable de déconnexion */}
-        <p
-          onClick={handleLogout}
-          className="text-sm text-white mt-2 cursor-pointer hover:underline"
-        >
-          Se déconnecter
-        </p>
       </div>
 
       {/* Message d’intro */}

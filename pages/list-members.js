@@ -1,5 +1,4 @@
 // pages/list-members.js
-// pages/list-members.js
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -151,7 +150,6 @@ export default function ListMembers() {
             ))}
           </select>
 
-          {/* 🔍 Recherche par nom */}
           <input
             type="text"
             value={search}
@@ -178,8 +176,7 @@ export default function ListMembers() {
             {nouveauxFiltres.length > 0 && (
               <div>
                 <p className="text-white text-lg mb-2 ml-1">
-                  💖 Bien aimé venu le{" "}
-                  {formatDate(nouveauxFiltres[0].created_at)}
+                  💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {nouveauxFiltres.map((m) => (
@@ -316,11 +313,13 @@ export default function ListMembers() {
                 </tr>
               )}
 
-              {/* Lignes nouveaux membres */}
-              {nouveauxFiltres.map((m) => (
+              {/* Lignes nouveaux membres avec séparation horizontale */}
+              {nouveauxFiltres.map((m, index) => (
                 <tr
                   key={m.id}
-                  className="border-b border-blue-300 hover:bg-white/10 transition duration-150"
+                  className={`${
+                    index < nouveauxFiltres.length - 1 ? "border-b border-gray-400" : ""
+                  } hover:bg-white/10 transition duration-150`}
                 >
                   <td
                     className="px-4 py-2 border-l-4"
@@ -354,7 +353,7 @@ export default function ListMembers() {
                 </tr>
               ))}
 
-              {/* Ligne séparatrice “Membres existants------” avec dégradé */}
+              {/* Ligne séparatrice “Membres existants------” style carte */}
               {anciensFiltres.length > 0 && (
                 <tr>
                   <td colSpan={4} className="px-4 py-2 font-semibold">
@@ -372,11 +371,13 @@ export default function ListMembers() {
                 </tr>
               )}
 
-              {/* Lignes anciens membres */}
-              {anciensFiltres.map((m) => (
+              {/* Lignes anciens membres avec séparation horizontale */}
+              {anciensFiltres.map((m, index) => (
                 <tr
                   key={m.id}
-                  className="border-b border-gray-400 hover:bg-white/10 transition duration-150"
+                  className={`${
+                    index < anciensFiltres.length - 1 ? "border-b border-gray-400" : ""
+                  } hover:bg-white/10 transition duration-150`}
                 >
                   <td
                     className="px-4 py-2 border-l-4"
@@ -411,7 +412,7 @@ export default function ListMembers() {
         </div>
       )}
 
-      {/* ✅ Popup Détails (inchangé) */}
+      {/* ✅ Popup Détails */}
       {popupMember && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">

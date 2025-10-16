@@ -5,7 +5,16 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../../lib/supabaseClient";
 import { canAccessPage } from "../../lib/accessControl";
-import bcrypt from "bcryptjs"; // ⚙️ npm install bcryptjs
+
+// 🧮 Fonction pour hasher le mot de passe (compatible navigateur)
+async function hashPassword(password) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  return hashHex;
+}
 
 export default function CreateInternalUserPage() {
   const router = useRouter();
@@ -40,7 +49,6 @@ export default function CreateInternalUserPage() {
 
   if (loading) return <div className="text-center mt-20">Chargement...</div>;
 
-  // 🔁 Gestion des inputs
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -51,7 +59,7 @@ export default function CreateInternalUserPage() {
 
     try {
       // 1️⃣ Vérifie si l’email existe déjà
-      const { data: existingUser, error: existingError } = await supabase
+      const { data: existingUser } = await supabase
         .from("profiles")
         .select("id")
         .eq("email", formData.email)
@@ -62,11 +70,11 @@ export default function CreateInternalUserPage() {
         return;
       }
 
-      // 2️⃣ Hachage du mot de passe
-      const hashedPassword = await bcrypt.hash(formData.password, 10);
+      // 2️⃣ Hachage du mot de passe (SHA-256)
+      const hashedPassword = await hashPassword(formData.password);
 
-      // 3️⃣ Insertion dans la table Supabase
-      const { data, error } = await supabase.from("profiles").insert([
+      // 3️⃣ Insertion dans Supabase
+      const { error } = await supabase.from("profiles").insert([
         {
           email: formData.email,
           password_hash: hashedPassword,
@@ -90,7 +98,6 @@ export default function CreateInternalUserPage() {
     }
   };
 
-  // 🔴 Déconnexion
   const handleLogout = () => {
     localStorage.removeItem("userId");
     localStorage.removeItem("userRole");
@@ -206,3 +213,4 @@ export default function CreateInternalUserPage() {
     </div>
   );
 }
+

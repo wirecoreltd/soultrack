@@ -1,3 +1,4 @@
+// pages/suivis-membres.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -149,14 +150,13 @@ export default function SuivisMembres() {
             return (
               <div
                 key={item.id}
-                className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl"
+                className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
               >
-                {/* Bande colorée intégrée en haut */}
+                {/* ✅ Bande colorée collée à l'intérieur du haut */}
                 <div
-                  className="rounded-t-2xl"
+                  className="w-full h-[6px] rounded-t-2xl"
                   style={{
                     backgroundColor: getBorderColor(item),
-                    height: "4px",
                   }}
                 />
                 <div className="p-4 flex flex-col items-center">
@@ -241,6 +241,7 @@ export default function SuivisMembres() {
           })}
         </div>
       ) : (
+        // Vue Table identique
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">

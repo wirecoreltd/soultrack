@@ -12,6 +12,7 @@ export default function ListMembers() {
   const [members, setMembers] = useState([]);
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
+  const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
   const [selectedCellules, setSelectedCellules] = useState({});
   const [view, setView] = useState("card");
@@ -77,22 +78,7 @@ export default function ListMembers() {
     (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
   );
 
-  const filterBySearch = (list) =>
-    list.filter((m) =>
-      `${(m.prenom || "")} ${(m.nom || "")}`.toLowerCase().includes(search.toLowerCase())
-    );
-
-  const nouveauxFiltres = filterBySearch(
-    filter ? nouveaux.filter((m) => m.statut === filter) : nouveaux
-  );
-  const anciensFiltres = filterBySearch(
-    filter ? anciens.filter((m) => m.statut === filter) : anciens
-  );
-
   const allMembersOrdered = [...nouveaux, ...anciens];
-  const filteredMembers = filterBySearch(
-    filter ? allMembersOrdered.filter((m) => m.statut === filter) : allMembersOrdered
-  );
 
   const statusOptions = [
     "actif",
@@ -103,23 +89,22 @@ export default function ListMembers() {
     "a déjà mon église",
   ];
 
-  const totalCount = filteredMembers.length;
+  const filteredMembers = allMembersOrdered.filter((m) => {
+    const matchesStatus = filter ? m.statut === filter : true;
+    const matchesSearch = search
+      ? `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase())
+      : true;
+    return matchesStatus && matchesSearch;
+  });
 
-  // --- helper pour ouvrir WhatsApp (ouvre dans un nouvel onglet) ---
-  const openWhatsApp = (phone, member) => {
-    if (!phone) return;
-    // nettoie le numéro : garde chiffres et + si présents
-    const cleaned = String(phone).replace(/[^\d+]/g, "");
-    const msgParts = [
-      `Bonjour ${member.prenom || ""} ${member.nom || ""},`,
-      `Nous vous contactons depuis ICC / SoulTrack.`,
-      "",
-      `Si tu veux, on peut en discuter par téléphone.`,
-    ];
-    const text = encodeURIComponent(msgParts.join(" "));
-    const url = `https://wa.me/${cleaned}?text=${text}`;
-    window.open(url, "_blank");
-  };
+  const nouveauxFiltres = filteredMembers.filter(
+    (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
+  );
+  const anciensFiltres = filteredMembers.filter(
+    (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
+  );
+
+  const totalCount = filteredMembers.length;
 
   return (
     <div
@@ -149,9 +134,9 @@ export default function ListMembers() {
         Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
       </p>
 
-      {/* Filtre + recherche + compteur + toggle */}
-      <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">
-        <div className="flex items-center space-x-2 mb-2 sm:mb-0">
+      {/* Filtres */}
+      <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4 space-y-2 sm:space-y-0 sm:space-x-2">
+        <div className="flex items-center space-x-2">
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -162,15 +147,13 @@ export default function ListMembers() {
               <option key={s}>{s}</option>
             ))}
           </select>
-
           <input
             type="text"
-            placeholder="🔍 Rechercher par nom..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            placeholder="🔍 Rechercher par nom..."
             className="px-3 py-2 rounded-lg border text-sm text-black"
           />
-
           <span className="text-white text-sm">({totalCount})</span>
         </div>
 
@@ -182,247 +165,86 @@ export default function ListMembers() {
         </button>
       </div>
 
-      {/* === VUE CARTE === */}
+      {/* === Vue Carte === */}
       {view === "card" ? (
-        <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
-          {/* Nouveaux */}
+        <div className="w-full max-w-5xl">
+          {/* 💖 Nouveaux */}
           {nouveauxFiltres.length > 0 && (
-            <div>
-              <p className="text-white text-lg mb-2 ml-1">
-                💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <>
+              <h3 className="text-white font-semibold text-lg mb-3">
+                💖 Bien aimé venu le{" "}
+                {formatDate(nouveauxFiltres[0].created_at)}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                 {nouveauxFiltres.map((m) => (
                   <div
                     key={m.id}
-                    className="bg-white p-3 rounded-xl shadow-md hover:shadow-xl transition duration-200 border-l-4"
+                    className="bg-white/40 rounded-2xl p-4 shadow-md text-white border-l-4 hover:scale-[1.02] transition-transform"
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
-                    <div className="flex justify-between items-center mb-1">
-                      <span
-                        className="text-sm font-semibold"
-                        style={{ color: getBorderColor(m) }}
-                      >
-                        {m.star ? "⭐ S.T.A.R" : m.statut}
-                      </span>
-                      <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full ml-2">
-                        Nouveau
-                      </span>
-                    </div>
-
-                    <div className="text-lg font-bold text-gray-800">
+                    <h3 className="font-semibold text-lg">
                       {m.prenom} {m.nom}
-                    </div>
-
-                    <p className="text-sm text-gray-600 mb-2">
-                      📱 {m.telephone || "—"}{" "}
-                      {m.is_whatsapp ? (
-                        <span className="ml-2 text-xs text-green-600">WhatsApp: Oui</span>
-                      ) : (
-                        <span className="ml-2 text-xs text-gray-500">WhatsApp: Non</span>
-                      )}
+                    </h3>
+                    <p className="text-sm opacity-90">
+                      {m.telephone || "—"}
                     </p>
-
-                    <p className="text-sm text-gray-700 mb-1">
-                      🏙 Ville : {m.ville || "—"}
-                    </p>
-
-                    <p className="text-sm text-gray-700 mb-1">
-                      📝 Comment : {m.comment || "—"}
-                    </p>
-
-                    <p className="text-sm text-gray-700 mb-1">
-                      🙏 Besoin : {m.besoin || "—"}
-                    </p>
-
-                    <p className="text-sm text-gray-700 mb-2">
-                      ℹ️ Infos : {m.infos_supplementaires || "—"}
-                    </p>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setPopupMember(m)}
-                        className="px-3 py-1 bg-orange-400 text-white rounded-md text-sm"
-                      >
-                        Détails
-                      </button>
-
-                      <button
-                        onClick={() => openWhatsApp(m.telephone, m)}
-                        disabled={!m.telephone}
-                        className={`px-3 py-1 rounded-md text-sm ${
-                          m.telephone ? "bg-green-500 text-white" : "bg-gray-300 text-gray-600 cursor-not-allowed"
-                        }`}
-                      >
-                        Ouvrir WhatsApp
-                      </button>
-                    </div>
+                    <p className="text-sm italic opacity-80">{m.statut}</p>
+                    <button
+                      onClick={() => setPopupMember(m)}
+                      className="mt-2 text-orange-400 hover:text-orange-300 underline text-sm"
+                    >
+                      Détails
+                    </button>
                   </div>
                 ))}
               </div>
-            </div>
+            </>
           )}
 
           {/* Membres existants */}
           {anciensFiltres.length > 0 && (
-            <div className="mt-8">
-              <h3 className="text-white text-lg mb-3 font-semibold">
-                <span
-                  style={{
-                    background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                    WebkitBackgroundClip: "text",
-                    color: "transparent",
-                  }}
-                >
-                  Membres existants
-                </span>
-                <span className="ml-2 w-3/4 inline-block h-px bg-gradient-to-r from-blue-500 to-gray-400"></span>
+            <>
+              <h3
+                className="text-lg mb-3 font-semibold"
+                style={{
+                  background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                  WebkitBackgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                Membres existants
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {anciensFiltres.map((m) => (
                   <div
                     key={m.id}
-                    className="bg-white p-3 rounded-xl shadow-md border-l-4 transition duration-200"
+                    className="bg-white/40 rounded-2xl p-4 shadow-md text-white border-l-4 hover:scale-[1.02] transition-transform"
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
-                    <div className="text-lg font-bold text-gray-800">
+                    <h3 className="font-semibold text-lg">
                       {m.prenom} {m.nom}
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">
-                      📱 {m.telephone || "—"}{" "}
-                      {m.is_whatsapp ? (
-                        <span className="ml-2 text-xs text-green-600">WhatsApp: Oui</span>
-                      ) : (
-                        <span className="ml-2 text-xs text-gray-500">WhatsApp: Non</span>
-                      )}
+                    </h3>
+                    <p className="text-sm opacity-90">
+                      {m.telephone || "—"}
                     </p>
-                    <p className="text-sm text-gray-700 mb-1">🏙 Ville : {m.ville || "—"}</p>
-                    <p className="text-sm text-gray-700 mb-1">📝 Comment : {m.comment || "—"}</p>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setPopupMember(m)}
-                        className="px-3 py-1 bg-orange-400 text-white rounded-md text-sm"
-                      >
-                        Détails
-                      </button>
-
-                      <button
-                        onClick={() => openWhatsApp(m.telephone, m)}
-                        disabled={!m.telephone}
-                        className={`px-3 py-1 rounded-md text-sm ${
-                          m.telephone ? "bg-green-500 text-white" : "bg-gray-300 text-gray-600 cursor-not-allowed"
-                        }`}
-                      >
-                        Ouvrir WhatsApp
-                      </button>
-                    </div>
+                    <p className="text-sm italic opacity-80">{m.statut}</p>
+                    <button
+                      onClick={() => setPopupMember(m)}
+                      className="mt-2 text-orange-400 hover:text-orange-300 underline text-sm"
+                    >
+                      Détails
+                    </button>
                   </div>
                 ))}
               </div>
-            </div>
+            </>
           )}
         </div>
       ) : (
-        // === VUE TABLE ===
-        <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
-          <table className="w-full text-sm text-left text-white">
-            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
-              <tr>
-                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-                <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Statut</th>
-                <th className="px-4 py-2 rounded-tr-lg">Détails</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* section Nouveaux avec ligne spéciale */}
-              {nouveauxFiltres.length > 0 && (
-                <>
-                  <tr>
-                    <td colSpan="4" className="py-3 text-left text-white font-semibold">
-                      💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-                    </td>
-                  </tr>
-
-                  {nouveauxFiltres.map((m) => (
-                    <tr key={m.id} className="border-b border-blue-300 hover:bg-white/10">
-                      <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>
-                        {m.prenom} {m.nom}
-                        <span className="ml-2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">Nouveau</span>
-                      </td>
-                      <td className="px-4 py-2">{m.telephone}</td>
-                      <td className="px-4 py-2">
-                        <select
-                          value={m.statut}
-                          onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                          className="border rounded-md px-2 py-1 text-sm w-full text-gray-800"
-                        >
-                          {statusOptions.map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-4 py-2">
-                        <button onClick={() => setPopupMember(m)} className="text-orange-400 underline text-sm">
-                          Détails
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </>
-              )}
-
-              {/* section Membres existants */}
-              {anciensFiltres.length > 0 && (
-                <>
-                  <tr>
-                    <td colSpan="4" className="py-3 text-left">
-                      <h3 className="text-lg mb-1 font-semibold">
-                        <span
-                          style={{
-                            background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                            WebkitBackgroundClip: "text",
-                            color: "transparent",
-                          }}
-                        >
-                          Membres existants
-                        </span>
-                        <span className="ml-2 w-3/4 inline-block h-px bg-gradient-to-r from-blue-500 to-gray-400"></span>
-                      </h3>
-                    </td>
-                  </tr>
-                  {anciensFiltres.map((m) => (
-                    <tr key={m.id} className="border-b border-blue-300 hover:bg-white/10">
-                      <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>
-                        {m.prenom} {m.nom}
-                      </td>
-                      <td className="px-4 py-2">{m.telephone}</td>
-                      <td className="px-4 py-2">
-                        <select
-                          value={m.statut}
-                          onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                          className="border rounded-md px-2 py-1 text-sm w-full text-gray-800"
-                        >
-                          {statusOptions.map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-4 py-2">
-                        <button onClick={() => setPopupMember(m)} className="text-orange-400 underline text-sm">
-                          Détails
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <></>
       )}
 
-      {/* ✅ Popup Détails (COMPLET avec tous les champs + envoi WhatsApp + envoi cellule) */}
+      {/* Popup Détails */}
       {popupMember && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
@@ -432,41 +254,36 @@ export default function ListMembers() {
             >
               ✖
             </button>
-
             <h2 className="text-xl font-bold mb-2 text-indigo-700">
               {popupMember.prenom} {popupMember.nom}
             </h2>
-
             <p className="text-gray-700 text-sm mb-1">
-              📱 Téléphone : {popupMember.telephone || "—"}
+              📱 {popupMember.telephone || "—"}
+            </p>
+            <p className="text-sm text-gray-700 mb-2">
+              Statut :
+              <select
+                value={popupMember.statut}
+                onChange={(e) =>
+                  handleChangeStatus(popupMember.id, e.target.value)
+                }
+                className="ml-2 border rounded-md px-2 py-1 text-sm text-black"
+              >
+                {statusOptions.map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </select>
+            </p>
+            <p className="text-sm text-gray-700 mb-1">
+              Besoin : {popupMember.besoin || "—"}
+            </p>
+            <p className="text-sm text-gray-700 mb-1">
+              Infos : {popupMember.infos_supplementaires || "—"}
+            </p>
+            <p className="text-sm text-gray-700 mb-3">
+              Comment venu : {popupMember.comment || "—"}
             </p>
 
-            <p className="text-gray-700 text-sm mb-1">
-              💬 WhatsApp : {popupMember.is_whatsapp ? "Oui" : "Non"}
-            </p>
-
-            <p className="text-gray-700 text-sm mb-1">
-              🏙 Ville : {popupMember.ville || "—"}
-            </p>
-
-            <p className="text-gray-700 text-sm mb-1">
-              📋 Statut :{" "}
-              <span className="font-semibold">{popupMember.statut || "—"}</span>
-            </p>
-
-            <p className="text-gray-700 text-sm mb-1">
-              ❓ Comment est-il venu : {popupMember.comment || "—"}
-            </p>
-
-            <p className="text-gray-700 text-sm mb-1">
-              🙏 Besoin : {popupMember.besoin || "—"}
-            </p>
-
-            <p className="text-gray-700 text-sm mb-2">
-              ℹ️ Infos : {popupMember.infos_supplementaires || "—"}
-            </p>
-
-            {/* Cellule + Bouton Envoyer */}
             <p className="text-green-600 font-semibold mt-2">Cellule :</p>
             <select
               value={selectedCellules[popupMember.id] || ""}
@@ -476,7 +293,7 @@ export default function ListMembers() {
                   [popupMember.id]: e.target.value,
                 }))
               }
-              className="border rounded-lg px-2 py-1 text-sm w-full mb-3"
+              className="border rounded-lg px-2 py-1 text-sm w-full text-black"
             >
               <option value="">-- Sélectionner cellule --</option>
               {cellules.map((c) => (
@@ -487,40 +304,17 @@ export default function ListMembers() {
             </select>
 
             {selectedCellules[popupMember.id] && (
-              <div className="mt-1">
+              <div className="mt-3">
                 <BoutonEnvoyer
                   membre={popupMember}
                   cellule={cellules.find(
-                    (c) => String(c.id) === String(selectedCellules[popupMember.id])
+                    (c) =>
+                      String(c.id) === String(selectedCellules[popupMember.id])
                   )}
                   onStatusUpdate={handleStatusUpdateFromEnvoyer}
                 />
               </div>
             )}
-
-            {/* Actions rapides */}
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={() => openWhatsApp(popupMember.telephone, popupMember)}
-                disabled={!popupMember.telephone}
-                className={`px-4 py-2 rounded-md text-sm ${
-                  popupMember.telephone ? "bg-green-500 text-white" : "bg-gray-300 text-gray-600 cursor-not-allowed"
-                }`}
-              >
-                Ouvrir WhatsApp
-              </button>
-
-              <button
-                onClick={() => {
-                  // focus sur select cellule (si voulu) ou fermer popup
-                  // on garde simple : fermer popup pour reprise rapide
-                  setPopupMember(null);
-                }}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm"
-              >
-                OK
-              </button>
-            </div>
           </div>
         </div>
       )}

@@ -14,23 +14,6 @@ export default function SuivisMembres() {
 
   useEffect(() => {
     fetchSuivis();
-
-    // 🔁 Écoute en temps réel les changements sur la table suivis_membres
-    const channel = supabase
-      .channel("suivis_membres_changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "suivis_membres" },
-        (payload) => {
-          console.log("🔁 Changement détecté :", payload);
-          fetchSuivis();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   const fetchSuivis = async () => {
@@ -58,6 +41,7 @@ export default function SuivisMembres() {
   const handleCommentChange = (id, value) =>
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
+  // ✅ Nouvelle version de mise à jour persistante
   const updateSuivi = async (id) => {
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
@@ -65,25 +49,35 @@ export default function SuivisMembres() {
 
     setUpdating((prev) => ({ ...prev, [id]: true }));
 
-    // ✅ Correction : on utilise le champ "statut_suivis"
-    const { data, error } = await supabase
+    // 🟢 1. Récupérer la ligne actuelle
+    const { data: currentData, error: fetchError } = await supabase
+      .from("suivis_membres")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) {
+      console.error("Erreur récupération :", fetchError.message);
+      setUpdating((prev) => ({ ...prev, [id]: false }));
+      return;
+    }
+
+    // 🟢 2. Mettre à jour la ligne dans Supabase
+    const { error: updateError } = await supabase
       .from("suivis_membres")
       .update({
-        statut_suivis: newStatus ?? undefined,
-        commentaire: newComment ?? undefined,
+        statut_suivis: newStatus ?? currentData.statut_suivis,
+        commentaire: newComment ?? currentData.commentaire,
         updated_at: new Date(),
       })
-      .eq("id", id)
-      .select(); // <-- permet de récupérer la ligne mise à jour
+      .eq("id", id);
 
-    if (error) {
-      console.error("Erreur mise à jour :", error.message);
-    } else if (data && data.length > 0) {
-      const updatedItem = data[0];
-      setSuivis((prev) =>
-        prev.map((item) => (item.id === id ? updatedItem : item))
-      );
+    if (updateError) {
+      console.error("Erreur mise à jour :", updateError.message);
     }
+
+    // 🟢 3. Rafraîchir la liste depuis la base
+    await fetchSuivis();
 
     setUpdating((prev) => ({ ...prev, [id]: false }));
   };
@@ -160,8 +154,12 @@ export default function SuivisMembres() {
                     <div className="mt-2">
                       <label className="text-gray-700 text-sm">💬 Commentaire :</label>
                       <textarea
-                        value={commentChanges[item.id] ?? item.commentaire ?? ""}
-                        onChange={(e) => handleCommentChange(item.id, e.target.value)}
+                        value={
+                          commentChanges[item.id] ?? item.commentaire ?? ""
+                        }
+                        onChange={(e) =>
+                          handleCommentChange(item.id, e.target.value)
+                        }
                         rows={2}
                         className="w-full border rounded-md px-2 py-1 text-sm mt-1 resize-none"
                         placeholder="Ajouter un commentaire..."
@@ -172,7 +170,9 @@ export default function SuivisMembres() {
                       <label className="text-gray-700 text-sm">📋 Statut suivi :</label>
                       <select
                         value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
-                        onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                        onChange={(e) =>
+                          handleStatusChange(item.id, e.target.value)
+                        }
                         className="w-full border rounded-md px-2 py-1 text-sm mt-1"
                       >
                         <option value="">-- Choisir un statut --</option>

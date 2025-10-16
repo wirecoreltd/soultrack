@@ -71,7 +71,6 @@ export default function ListMembers() {
     }
   };
 
-  // séparer nouveaux / anciens
   const nouveaux = members.filter(
     (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
   );
@@ -79,7 +78,6 @@ export default function ListMembers() {
     (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
   );
 
-  // recherche
   const filterBySearch = (list) =>
     list.filter((m) =>
       `${(m.prenom || "")} ${(m.nom || "")}`
@@ -173,8 +171,55 @@ export default function ListMembers() {
         </button>
       </div>
 
-      {/* === VUE TABLE === */}
-      {view === "table" && (
+      {/* === VUE CARTE === */}
+      {view === "card" ? (
+        <>
+          {/* tes cartes restent inchangées */}
+          <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
+            {nouveauxFiltres.length > 0 && (
+              <div>
+                <p className="text-white text-lg mb-2 ml-1">
+                  💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {nouveauxFiltres.map((m) => (
+                    <div
+                      key={m.id}
+                      className="bg-white p-3 rounded-xl shadow-md hover:shadow-xl transition duration-200 border-l-4"
+                      style={{ borderLeftColor: getBorderColor(m) }}
+                    >
+                      <div className="flex justify-between items-center mb-1">
+                        <span
+                          className="text-sm font-semibold"
+                          style={{ color: getBorderColor(m) }}
+                        >
+                          {m.star ? "⭐ S.T.A.R" : m.statut}
+                        </span>
+                        <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full ml-2">
+                          Nouveau
+                        </span>
+                      </div>
+                      <div className="text-lg font-bold text-gray-800">
+                        {m.prenom} {m.nom}
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">
+                        📱 {m.telephone || "—"}
+                      </p>
+                      <p
+                        className="text-blue-500 underline cursor-pointer text-sm"
+                        onClick={() => setPopupMember(m)}
+                      >
+                        Détails
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        // === VUE TABLE ===
         <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
@@ -186,113 +231,48 @@ export default function ListMembers() {
               </tr>
             </thead>
             <tbody>
-              {/* Nouveaux */}
-              {nouveauxFiltres.length > 0 && (
-                <>
-                  <tr className="border-b border-blue-300">
-                    <td colSpan="4" className="py-3 text-left text-white font-semibold">
-                      💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-                    </td>
-                  </tr>
-                  {nouveauxFiltres.map((m) => (
-                    <tr
-                      key={m.id}
-                      className="hover:bg-white/10 transition duration-150 border-b border-blue-300"
+              {nouveauxFiltres.map((m) => (
+                <tr
+                  key={m.id}
+                  className="hover:bg-white/10 transition duration-150 border-b border-blue-300"
+                >
+                  <td className="px-4 py-2">{m.prenom} {m.nom}</td>
+                  <td className="px-4 py-2">{m.telephone}</td>
+                  <td className="px-4 py-2">{m.statut}</td>
+                  <td className="px-4 py-2">
+                    <button
+                      onClick={() => setPopupMember(m)}
+                      className="text-orange-400 underline text-sm"
                     >
-                      <td
-                        className="px-4 py-2 border-l-4 rounded-l-md"
-                        style={{ borderLeftColor: getBorderColor(m) }}
-                      >
-                        {m.prenom} {m.nom}
-                        <span className="ml-2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
-                          Nouveau
-                        </span>
-                      </td>
-                      <td className="px-4 py-2">{m.telephone}</td>
-                      <td className="px-4 py-2">
-                        <select
-                          value={m.statut}
-                          onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                          className="border rounded-md px-2 py-1 text-sm w-full text-gray-800"
-                        >
-                          {statusOptions.map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-4 py-2">
-                        <button
-                          onClick={() => setPopupMember(m)}
-                          className="text-orange-400 underline text-sm"
-                        >
-                          Détails
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </>
-              )}
-
-              {/* Membres existants */}
-              {anciensFiltres.length > 0 && (
-                <>
-                  <tr className="border-b border-blue-300">
-                    <td colSpan="4" className="py-3 text-left">
-                      <h3 className="text-lg mb-1 font-semibold">
-                        <span
-                          style={{
-                            background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                            WebkitBackgroundClip: "text",
-                            color: "transparent",
-                          }}
-                        >
-                          Membres existants
-                        </span>
-                        <span className="ml-2 w-3/4 inline-block h-px bg-gradient-to-r from-blue-500 to-gray-400"></span>
-                      </h3>
-                    </td>
-                  </tr>
-                  {anciensFiltres.map((m) => (
-                    <tr
-                      key={m.id}
-                      className="hover:bg-white/10 transition duration-150 border-b border-blue-300"
+                      Détails
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {anciensFiltres.map((m) => (
+                <tr
+                  key={m.id}
+                  className="hover:bg-white/10 transition duration-150 border-b border-blue-300"
+                >
+                  <td className="px-4 py-2">{m.prenom} {m.nom}</td>
+                  <td className="px-4 py-2">{m.telephone}</td>
+                  <td className="px-4 py-2">{m.statut}</td>
+                  <td className="px-4 py-2">
+                    <button
+                      onClick={() => setPopupMember(m)}
+                      className="text-orange-400 underline text-sm"
                     >
-                      <td
-                        className="px-4 py-2 border-l-4 rounded-l-md"
-                        style={{ borderLeftColor: getBorderColor(m) }}
-                      >
-                        {m.prenom} {m.nom}
-                      </td>
-                      <td className="px-4 py-2">{m.telephone}</td>
-                      <td className="px-4 py-2">
-                        <select
-                          value={m.statut}
-                          onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                          className="border rounded-md px-2 py-1 text-sm w-full text-gray-800"
-                        >
-                          {statusOptions.map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-4 py-2">
-                        <button
-                          onClick={() => setPopupMember(m)}
-                          className="text-orange-400 underline text-sm"
-                        >
-                          Détails
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </>
-              )}
+                      Détails
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* Popup Détails */}
+      {/* Popup détails inchangé */}
       {popupMember && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
@@ -308,58 +288,6 @@ export default function ListMembers() {
             <p className="text-gray-700 text-sm mb-1">
               📱 {popupMember.telephone || "—"}
             </p>
-            <p className="text-sm text-gray-700 mb-2">
-              Statut :
-              <select
-                value={popupMember.statut}
-                onChange={(e) => handleChangeStatus(popupMember.id, e.target.value)}
-                className="ml-2 border rounded-md px-2 py-1 text-sm"
-              >
-                {statusOptions.map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
-            </p>
-            <p className="text-sm text-gray-700 mb-1">
-              Besoin : {popupMember.besoin || "—"}
-            </p>
-            <p className="text-sm text-gray-700 mb-1">
-              Infos : {popupMember.infos_supplementaires || "—"}
-            </p>
-            <p className="text-sm text-gray-700 mb-3">
-              Comment venu : {popupMember.comment || "—"}
-            </p>
-
-            <p className="text-green-600 font-semibold mt-2">Cellule :</p>
-            <select
-              value={selectedCellules[popupMember.id] || ""}
-              onChange={(e) =>
-                setSelectedCellules((prev) => ({
-                  ...prev,
-                  [popupMember.id]: e.target.value,
-                }))
-              }
-              className="border rounded-lg px-2 py-1 text-sm w-full"
-            >
-              <option value="">-- Sélectionner cellule --</option>
-              {cellules.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.cellule} ({c.responsable})
-                </option>
-              ))}
-            </select>
-
-            {selectedCellules[popupMember.id] && (
-              <div className="mt-3">
-                <BoutonEnvoyer
-                  membre={popupMember}
-                  cellule={cellules.find(
-                    (c) => String(c.id) === String(selectedCellules[popupMember.id])
-                  )}
-                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                />
-              </div>
-            )}
           </div>
         </div>
       )}

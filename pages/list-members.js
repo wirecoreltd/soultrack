@@ -134,7 +134,7 @@ export default function ListMembers() {
         Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
       </p>
 
-      {/* Filtre + recherche */}
+      {/* Filtres */}
       <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4 space-y-2 sm:space-y-0 sm:space-x-2">
         <div className="flex items-center space-x-2">
           <select
@@ -165,156 +165,86 @@ export default function ListMembers() {
         </button>
       </div>
 
-      {/* === VUE TABLE === */}
-      {view === "table" ? (
-        <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
-          <table className="w-full text-sm text-left text-white border-collapse">
-            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-lg shadow-sm">
-              <tr className="rounded-t-lg">
-                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-                <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Statut</th>
-                <th className="px-4 py-2 rounded-tr-lg">Détails</th>
-              </tr>
-            </thead>
-            <tbody>
-              {nouveauxFiltres.length > 0 && (
-                <>
-                  <tr>
-                    <td
-                      colSpan="4"
-                      className="py-2 text-white font-medium border-b border-blue-300"
+      {/* === Vue Carte === */}
+      {view === "card" ? (
+        <div className="w-full max-w-5xl">
+          {/* 💖 Nouveaux */}
+          {nouveauxFiltres.length > 0 && (
+            <>
+              <h3 className="text-white font-semibold text-lg mb-3">
+                💖 Bien aimé venu le{" "}
+                {formatDate(nouveauxFiltres[0].created_at)}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                {nouveauxFiltres.map((m) => (
+                  <div
+                    key={m.id}
+                    className="bg-white/40 rounded-2xl p-4 shadow-md text-white border-l-4 hover:scale-[1.02] transition-transform"
+                    style={{ borderLeftColor: getBorderColor(m) }}
+                  >
+                    <h3 className="font-semibold text-lg">
+                      {m.prenom} {m.nom}
+                    </h3>
+                    <p className="text-sm opacity-90">
+                      {m.telephone || "—"}
+                    </p>
+                    <p className="text-sm italic opacity-80">{m.statut}</p>
+                    <button
+                      onClick={() => setPopupMember(m)}
+                      className="mt-2 text-orange-400 hover:text-orange-300 underline text-sm"
                     >
-                      💖 Bien aimé venu le{" "}
-                      {formatDate(nouveauxFiltres[0].created_at)}
-                    </td>
-                  </tr>
-                  {nouveauxFiltres.map((m) => (
-                    <tr
-                      key={m.id}
-                      className="border-b border-blue-300 hover:bg-white/10 transition"
-                    >
-                      <td
-                        className="px-4 py-2 border-l-4 rounded-l-md"
-                        style={{ borderLeftColor: getBorderColor(m) }}
-                      >
-                        {m.prenom} {m.nom}
-                      </td>
-                      <td className="px-4 py-2 text-white">{m.telephone}</td>
-                      <td className="px-4 py-2">
-                        <select
-                          value={m.statut}
-                          onChange={(e) =>
-                            handleChangeStatus(m.id, e.target.value)
-                          }
-                          className="border rounded-md px-2 py-1 text-sm w-full text-black"
-                        >
-                          {statusOptions.map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-4 py-2 rounded-r-md">
-                        <button
-                          onClick={() => setPopupMember(m)}
-                          className="text-orange-400 hover:text-orange-300 underline text-sm font-medium"
-                        >
-                          Détails
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </>
-              )}
+                      Détails
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
 
-              {anciensFiltres.length > 0 && (
-                <>
-                  <tr>
-                    <td
-                      colSpan="4"
-                      className="py-3 text-left border-b border-blue-300"
+          {/* Membres existants */}
+          {anciensFiltres.length > 0 && (
+            <>
+              <h3
+                className="text-lg mb-3 font-semibold"
+                style={{
+                  background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                  WebkitBackgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                Membres existants
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {anciensFiltres.map((m) => (
+                  <div
+                    key={m.id}
+                    className="bg-white/40 rounded-2xl p-4 shadow-md text-white border-l-4 hover:scale-[1.02] transition-transform"
+                    style={{ borderLeftColor: getBorderColor(m) }}
+                  >
+                    <h3 className="font-semibold text-lg">
+                      {m.prenom} {m.nom}
+                    </h3>
+                    <p className="text-sm opacity-90">
+                      {m.telephone || "—"}
+                    </p>
+                    <p className="text-sm italic opacity-80">{m.statut}</p>
+                    <button
+                      onClick={() => setPopupMember(m)}
+                      className="mt-2 text-orange-400 hover:text-orange-300 underline text-sm"
                     >
-                      <h3 className="text-lg mb-1 font-semibold">
-                        <span
-                          style={{
-                            background:
-                              "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                            WebkitBackgroundClip: "text",
-                            color: "transparent",
-                          }}
-                        >
-                          Membres existants
-                        </span>
-                        <span className="ml-2 w-3/4 inline-block h-px bg-gradient-to-r from-blue-500 to-gray-400"></span>
-                      </h3>
-                    </td>
-                  </tr>
-                  {anciensFiltres.map((m) => (
-                    <tr
-                      key={m.id}
-                      className="border-b border-blue-300 hover:bg-white/10 transition"
-                    >
-                      <td
-                        className="px-4 py-2 border-l-4 rounded-l-md"
-                        style={{ borderLeftColor: getBorderColor(m) }}
-                      >
-                        {m.prenom} {m.nom}
-                      </td>
-                      <td className="px-4 py-2 text-white">{m.telephone}</td>
-                      <td className="px-4 py-2">
-                        <select
-                          value={m.statut}
-                          onChange={(e) =>
-                            handleChangeStatus(m.id, e.target.value)
-                          }
-                          className="border rounded-md px-2 py-1 text-sm w-full text-black"
-                        >
-                          {statusOptions.map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-4 py-2 rounded-r-md">
-                        <button
-                          onClick={() => setPopupMember(m)}
-                          className="text-orange-400 hover:text-orange-300 underline text-sm font-medium"
-                        >
-                          Détails
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </>
-              )}
-            </tbody>
-          </table>
+                      Détails
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       ) : (
-        // ✅ réaffichage cartes
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6 w-full max-w-5xl">
-          {filteredMembers.map((m) => (
-            <div
-              key={m.id}
-              className="bg-white/10 rounded-2xl p-4 shadow-md text-white border-l-4"
-              style={{ borderLeftColor: getBorderColor(m) }}
-            >
-              <h3 className="font-semibold text-lg">
-                {m.prenom} {m.nom}
-              </h3>
-              <p className="text-sm opacity-90">{m.telephone || "—"}</p>
-              <p className="text-sm italic opacity-80">{m.statut}</p>
-              <button
-                onClick={() => setPopupMember(m)}
-                className="mt-2 text-orange-400 hover:text-orange-300 underline text-sm"
-              >
-                Détails
-              </button>
-            </div>
-          ))}
-        </div>
+        <></>
       )}
 
-      {/* ✅ Popup Détails */}
+      {/* Popup Détails */}
       {popupMember && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">

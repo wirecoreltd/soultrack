@@ -11,6 +11,7 @@ export default function SuivisMembres() {
   const [statusChanges, setStatusChanges] = useState({});
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
+  const [message, setMessage] = useState(null); // succès / erreur visible à l'écran
 
   useEffect(() => {
     fetchSuivis();
@@ -18,18 +19,27 @@ export default function SuivisMembres() {
 
   const fetchSuivis = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("suivis_membres")
-      .select("*")
-      .order("created_at", { ascending: false });
+    setMessage(null);
+    try {
+      const { data, error } = await supabase
+        .from("suivis_membres")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Erreur chargement suivis :", error.message);
+      if (error) {
+        console.error("Erreur chargement suivis :", error);
+        setMessage({ type: "error", text: `Erreur chargement : ${error.message}` });
+        setSuivis([]);
+      } else {
+        setSuivis(data || []);
+      }
+    } catch (err) {
+      console.error("Exception fetchSuivis:", err);
+      setMessage({ type: "error", text: `Exception fetch: ${err.message}` });
       setSuivis([]);
-    } else {
-      setSuivis(data || []);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const toggleDetails = (id) =>
@@ -41,45 +51,111 @@ export default function SuivisMembres() {
   const handleCommentChange = (id, value) =>
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
-  // ✅ Nouvelle version de mise à jour persistante
+  // Version robuste et verbeuse de updateSuivi
   const updateSuivi = async (id) => {
+    setMessage(null);
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
-    if (!newStatus && !newComment) return;
 
-    setUpdating((prev) => ({ ...prev, [id]: true }));
-
-    // 🟢 1. Récupérer la ligne actuelle
-    const { data: currentData, error: fetchError } = await supabase
-      .from("suivis_membres")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (fetchError) {
-      console.error("Erreur récupération :", fetchError.message);
-      setUpdating((prev) => ({ ...prev, [id]: false }));
+    if (!newStatus && !newComment) {
+      setMessage({ type: "info", text: "Aucun changement détecté." });
       return;
     }
 
-    // 🟢 2. Mettre à jour la ligne dans Supabase
-    const { error: updateError } = await supabase
-      .from("suivis_membres")
-      .update({
-        statut_suivis: newStatus ?? currentData.statut_suivis,
-        commentaire: newComment ?? currentData.commentaire,
-        updated_at: new Date(),
-      })
-      .eq("id", id);
+    setUpdating((prev) => ({ ...prev, [id]: true }));
 
-    if (updateError) {
-      console.error("Erreur mise à jour :", updateError.message);
+    try {
+      // 1) Récupérer la ligne actuelle (single pour s'assurer de l'existence)
+      const { data: currentData, error: fetchError } = await supabase
+        .from("suivis_membres")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) {
+        console.error("Erreur récupération (fetch current) :", fetchError);
+        setMessage({ type: "error", text: `Impossible de récupérer l'entrée : ${fetchError.message}` });
+        setUpdating((prev) => ({ ...prev, [id]: false }));
+        return;
+      }
+
+      // 2) Déterminer le nom exact de la colonne de statut à utiliser.
+      //    - Si ta table a 'statut_suivis' -> utilise cet attribut
+      //    - si c'est 'statut' -> adapte. Ici on va tenter les deux (priorité à statut_suivis).
+      const payload = {};
+      if (newStatus !== undefined && newStatus !== null) {
+        payload["statut_suivis"] = newStatus;
+      }
+      if (newComment !== undefined && newComment !== null) {
+        // ta table semble avoir 'commentaire' comme champ; on envoie dans 'commentaire' si existant,
+        // sinon on envoie dans 'comment' (au cas où la table a un autre nom).
+        payload["commentaire"] = newComment;
+      }
+      payload["updated_at"] = new Date();
+
+      // 3) Tenter l'update et récupérer la ligne modifiée en retour
+      const { data: updatedData, error: updateError } = await supabase
+        .from("suivis_membres")
+        .update(payload)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (updateError) {
+        // Cas fréquent : colonne inexistante (erreur de colonne), RLS, manque de permission, etc.
+        console.error("Erreur update :", updateError);
+        setMessage({ type: "error", text: `Erreur mise à jour : ${updateError.message}` });
+
+        // Tentative fallback : si l'erreur mentionne une colonne inconnue, essaie avec d'autres noms
+        if (updateError.message && updateError.message.toLowerCase().includes("column")) {
+          console.warn("Tentative fallback avec noms alternatifs de colonnes...");
+          // fallback 1 : utiliser 'statut' au lieu de 'statut_suivis' si présent
+          const payloadFallback = {};
+          if (newStatus) payloadFallback["statut"] = newStatus;
+          if (newComment) payloadFallback["commentaire"] = newComment;
+          payloadFallback["updated_at"] = new Date();
+
+          const { data: upd2, error: upd2Err } = await supabase
+            .from("suivis_membres")
+            .update(payloadFallback)
+            .eq("id", id)
+            .select()
+            .single();
+
+          if (upd2Err) {
+            console.error("Fallback update échoué :", upd2Err);
+            setMessage({ type: "error", text: `Fallback échoué : ${upd2Err.message}` });
+            setUpdating((prev) => ({ ...prev, [id]: false }));
+            return;
+          } else {
+            // Succès fallback
+            // mettre à jour local state
+            setSuivis((prev) => prev.map((it) => (it.id === id ? upd2 : it)));
+            setMessage({ type: "success", text: "Mise à jour réussie (fallback)." });
+            setUpdating((prev) => ({ ...prev, [id]: false }));
+            return;
+          }
+        }
+
+        setUpdating((prev) => ({ ...prev, [id]: false }));
+        return;
+      }
+
+      // 4) Succès : mettre à jour le state avec la ligne renvoyée.
+      if (updatedData) {
+        setSuivis((prev) => prev.map((it) => (it.id === id ? updatedData : it)));
+        setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
+      } else {
+        // Si aucun data renvoyé, on force un refresh complet
+        await fetchSuivis();
+        setMessage({ type: "success", text: "Mise à jour effectuée (rafraîchissement)." });
+      }
+    } catch (err) {
+      console.error("Exception updateSuivi:", err);
+      setMessage({ type: "error", text: `Exception durant la mise à jour : ${err.message}` });
+    } finally {
+      setUpdating((prev) => ({ ...prev, [id]: false }));
     }
-
-    // 🟢 3. Rafraîchir la liste depuis la base
-    await fetchSuivis();
-
-    setUpdating((prev) => ({ ...prev, [id]: false }));
   };
 
   return (
@@ -102,6 +178,21 @@ export default function SuivisMembres() {
       <p className="text-center text-white text-lg mb-6 font-handwriting-light">
         Liste des membres envoyés pour suivi 💬
       </p>
+
+      {/* Message visible */}
+      {message && (
+        <div
+          className={`mb-4 px-4 py-2 rounded-md text-sm ${
+            message.type === "error"
+              ? "bg-red-200 text-red-800"
+              : message.type === "success"
+              ? "bg-green-200 text-green-800"
+              : "bg-yellow-100 text-yellow-800"
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
 
       {loading ? (
         <p className="text-white">Chargement...</p>
@@ -130,11 +221,13 @@ export default function SuivisMembres() {
                 </p>
                 <p className="text-sm text-gray-700 mb-1">
                   📅 Créé le :{" "}
-                  {new Date(item.created_at).toLocaleDateString("fr-FR", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })}
+                  {item.created_at
+                    ? new Date(item.created_at).toLocaleDateString("fr-FR", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "—"}
                 </p>
 
                 {/* Bouton voir détails */}
@@ -154,9 +247,7 @@ export default function SuivisMembres() {
                     <div className="mt-2">
                       <label className="text-gray-700 text-sm">💬 Commentaire :</label>
                       <textarea
-                        value={
-                          commentChanges[item.id] ?? item.commentaire ?? ""
-                        }
+                        value={commentChanges[item.id] ?? item.commentaire ?? ""}
                         onChange={(e) =>
                           handleCommentChange(item.id, e.target.value)
                         }
@@ -169,7 +260,7 @@ export default function SuivisMembres() {
                     <div className="mt-2">
                       <label className="text-gray-700 text-sm">📋 Statut suivi :</label>
                       <select
-                        value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
+                        value={statusChanges[item.id] ?? item.statut_suivis ?? item.statut ?? ""}
                         onChange={(e) =>
                           handleStatusChange(item.id, e.target.value)
                         }

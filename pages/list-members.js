@@ -77,6 +77,14 @@ export default function ListMembers() {
     (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
   );
 
+  const nouveauxFiltres = filter
+    ? nouveaux.filter((m) => m.statut === filter)
+    : nouveaux;
+
+  const anciensFiltres = filter
+    ? anciens.filter((m) => m.statut === filter)
+    : anciens;
+
   const allMembersOrdered = [...nouveaux, ...anciens];
 
   const statusOptions = [
@@ -87,14 +95,6 @@ export default function ListMembers() {
     "visiteur",
     "a déjà mon église",
   ];
-
-  // ✅ Ajout : filtres appliqués aux cartes aussi
-  const nouveauxFiltres = filter
-    ? nouveaux.filter((m) => m.statut === filter)
-    : nouveaux;
-  const anciensFiltres = filter
-    ? anciens.filter((m) => m.statut === filter)
-    : anciens;
 
   const filteredMembers = filter
     ? allMembersOrdered.filter((m) => m.statut === filter)
@@ -157,7 +157,6 @@ export default function ListMembers() {
       {/* === VUE CARTE === */}
       {view === "card" ? (
         <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
-          {/* Section Nouveaux */}
           {nouveauxFiltres.length > 0 && (
             <div>
               <p className="text-white text-lg mb-2 ml-1">
@@ -202,7 +201,6 @@ export default function ListMembers() {
                       ))}
                     </select>
 
-                    {/* Bouton Détails */}
                     <p
                       className="text-blue-500 underline cursor-pointer text-sm"
                       onClick={() => setPopupMember(m)}
@@ -215,7 +213,6 @@ export default function ListMembers() {
             </div>
           )}
 
-          {/* Section Membres existants */}
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
               <h3 className="text-white text-lg mb-3 font-semibold">
@@ -230,7 +227,6 @@ export default function ListMembers() {
                 </span>
                 <span className="ml-2 w-3/4 inline-block h-px bg-gradient-to-r from-blue-500 to-gray-400"></span>
               </h3>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {anciensFiltres.map((m) => (
                   <div
@@ -267,7 +263,6 @@ export default function ListMembers() {
                       ))}
                     </select>
 
-                    {/* Bouton Détails */}
                     <p
                       className="text-blue-500 underline cursor-pointer text-sm"
                       onClick={() => setPopupMember(m)}
@@ -281,9 +276,9 @@ export default function ListMembers() {
           )}
         </div>
       ) : (
-        // === VUE TABLE ===
+        // === VUE TABLE (fond transparent + lignes bleutées) ===
         <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
-          <table className="w-full text-sm text-left text-gray-700 border-separate border-spacing-0 rounded-md overflow-hidden shadow-lg bg-white">
+          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-indigo-600 text-white text-sm uppercase rounded-t-md">
               <tr>
                 <th className="px-4 py-2">Nom complet</th>
@@ -293,13 +288,12 @@ export default function ListMembers() {
               </tr>
             </thead>
             <tbody>
-              {/* ✅ Section Nouveaux */}
               {nouveauxFiltres.length > 0 && (
                 <>
                   <tr>
                     <td
                       colSpan="4"
-                      className="text-blue-600 font-semibold py-2 px-4"
+                      className="py-3 text-left text-white font-semibold"
                     >
                       💖 Bien aimé venu le{" "}
                       {formatDate(nouveauxFiltres[0].created_at)}
@@ -308,7 +302,7 @@ export default function ListMembers() {
                   {nouveauxFiltres.map((m) => (
                     <tr
                       key={m.id}
-                      className="bg-white transition duration-200 rounded-lg mb-1"
+                      className="border-b border-blue-300 hover:bg-white/10 transition duration-150"
                     >
                       <td
                         className="px-4 py-2 border-l-4 rounded-l-md"
@@ -323,17 +317,17 @@ export default function ListMembers() {
                           onChange={(e) =>
                             handleChangeStatus(m.id, e.target.value)
                           }
-                          className="border rounded-md px-2 py-1 text-sm w-full"
+                          className="border rounded-md px-2 py-1 text-sm w-full text-gray-800"
                         >
                           {statusOptions.map((s) => (
                             <option key={s}>{s}</option>
                           ))}
                         </select>
                       </td>
-                      <td className="px-4 py-2 rounded-r-md">
+                      <td className="px-4 py-2">
                         <button
                           onClick={() => setPopupMember(m)}
-                          className="text-blue-600 underline text-sm"
+                          className="text-blue-200 underline text-sm"
                         >
                           Détails
                         </button>
@@ -343,31 +337,29 @@ export default function ListMembers() {
                 </>
               )}
 
-              {/* ✅ Section Membres existants */}
               {anciensFiltres.length > 0 && (
                 <>
                   <tr>
-                    <td
-                      colSpan="4"
-                      className="text-lg font-semibold py-3 px-4 text-left"
-                    >
-                      <span
-                        style={{
-                          background:
-                            "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                          WebkitBackgroundClip: "text",
-                          color: "transparent",
-                        }}
-                      >
-                        Membres existants
-                      </span>
-                      <span className="ml-2 w-3/4 inline-block h-px bg-gradient-to-r from-blue-500 to-gray-400"></span>
+                    <td colSpan="4" className="py-3 text-left">
+                      <h3 className="text-lg mb-1 font-semibold">
+                        <span
+                          style={{
+                            background:
+                              "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                            WebkitBackgroundClip: "text",
+                            color: "transparent",
+                          }}
+                        >
+                          Membres existants
+                        </span>
+                        <span className="ml-2 w-3/4 inline-block h-px bg-gradient-to-r from-blue-500 to-gray-400"></span>
+                      </h3>
                     </td>
                   </tr>
                   {anciensFiltres.map((m) => (
                     <tr
                       key={m.id}
-                      className="bg-white transition duration-200 rounded-lg mb-1"
+                      className="border-b border-blue-300 hover:bg-white/10 transition duration-150"
                     >
                       <td
                         className="px-4 py-2 border-l-4 rounded-l-md"
@@ -382,17 +374,17 @@ export default function ListMembers() {
                           onChange={(e) =>
                             handleChangeStatus(m.id, e.target.value)
                           }
-                          className="border rounded-md px-2 py-1 text-sm w-full"
+                          className="border rounded-md px-2 py-1 text-sm w-full text-gray-800"
                         >
                           {statusOptions.map((s) => (
                             <option key={s}>{s}</option>
                           ))}
                         </select>
                       </td>
-                      <td className="px-4 py-2 rounded-r-md">
+                      <td className="px-4 py-2">
                         <button
                           onClick={() => setPopupMember(m)}
-                          className="text-blue-600 underline text-sm"
+                          className="text-blue-200 underline text-sm"
                         >
                           Détails
                         </button>
@@ -406,7 +398,7 @@ export default function ListMembers() {
         </div>
       )}
 
-      {/* ✅ Popup Détails (identique à celle des cartes) */}
+      {/* ✅ Popup Détails */}
       {popupMember && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">

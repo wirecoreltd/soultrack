@@ -13,19 +13,18 @@ export default function HomePage() {
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🧩 Vérification d'accès à la page
   useEffect(() => {
     const storedRole = localStorage.getItem("userRole");
     if (!storedRole) {
-      router.replace("/login");
+      router.push("/login");
       return;
     }
 
-    // ✅ Utilisation correcte de router.pathname
-    const canAccess = canAccessPage(storedRole, router.pathname);
+    // Vérifie l'accès à la page via accessControl.js
+    const canAccess = canAccessPage(storedRole, "/index");
     if (!canAccess) {
       alert("⛔ Accès non autorisé !");
-      router.replace("/login");
+      router.push("/login");
       return;
     }
 
@@ -36,16 +35,16 @@ export default function HomePage() {
   if (loading) return <div className="text-center mt-20">Chargement...</div>;
 
   const handleRedirect = (path) => {
-    console.log("Rôle actuel :", role);
     router.push(path);
   };
 
-  // 🟢 Déconnexion
+  // 🟢🟢🟢 DÉBUT DE LA PARTIE DÉCONNEXION
   const handleLogout = () => {
     localStorage.removeItem("userId");
     localStorage.removeItem("userRole");
     router.push("/login");
   };
+  // 🔴🔴🔴 FIN DE LA PARTIE DÉCONNEXION
 
   return (
     <div
@@ -64,6 +63,8 @@ export default function HomePage() {
         <h1 className="text-5xl sm:text-5xl font-handwriting text-white text-center">
           SoulTrack
         </h1>
+
+        {/* 🔵 Texte cliquable de déconnexion */}
         <p
           onClick={handleLogout}
           className="text-sm text-white mt-2 cursor-pointer hover:underline"
@@ -158,10 +159,8 @@ export default function HomePage() {
 
       {/* Verset */}
       <div className="mt-4 mb-2 text-center text-white text-lg font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1
-        Corinthiens 12:14 ❤️
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
       </div>
     </div>
   );
 }
-

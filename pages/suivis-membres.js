@@ -28,15 +28,15 @@ export default function SuivisMembres() {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Erreur chargement suivis :", error);
+        console.error(error);
         setMessage({ type: "error", text: `Erreur chargement : ${error.message}` });
         setSuivis([]);
       } else {
         setSuivis(data || []);
       }
     } catch (err) {
-      console.error("Exception fetchSuivis:", err);
-      setMessage({ type: "error", text: `Exception fetch: ${err.message}` });
+      console.error(err);
+      setMessage({ type: "error", text: `Exception fetch : ${err.message}` });
       setSuivis([]);
     } finally {
       setLoading(false);
@@ -52,14 +52,6 @@ export default function SuivisMembres() {
   const handleCommentChange = (id, value) =>
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
-  const getBorderColor = (item) => {
-    if (item.statut_suivis === "actif") return "#4285F4";
-    if (item.statut_suivis === "en attente") return "#FBC02D";
-    if (item.statut_suivis === "suivi terminé") return "#34A853";
-    if (item.statut_suivis === "inactif") return "#EA4335";
-    return "#ccc";
-  };
-
   const updateSuivi = async (id) => {
     setMessage(null);
     const newStatus = statusChanges[id];
@@ -74,8 +66,8 @@ export default function SuivisMembres() {
 
     try {
       const payload = {};
-      if (newStatus !== undefined && newStatus !== null) payload["statut_suivis"] = newStatus;
-      if (newComment !== undefined && newComment !== null) payload["commentaire_suivis"] = newComment;
+      if (newStatus) payload["statut_suivis"] = newStatus;
+      if (newComment) payload["commentaire_suivis"] = newComment;
       payload["updated_at"] = new Date();
 
       const { data: updatedData, error: updateError } = await supabase
@@ -86,23 +78,40 @@ export default function SuivisMembres() {
         .single();
 
       if (updateError) {
-        console.error("Erreur update :", updateError);
+        console.error(updateError);
         setMessage({ type: "error", text: `Erreur mise à jour : ${updateError.message}` });
-      } else {
-        setSuivis((prev) => prev.map((it) => (it.id === id ? updatedData : it)));
-        setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
+        setUpdating((prev) => ({ ...prev, [id]: false }));
+        return;
       }
+
+      setSuivis((prev) => prev.map((it) => (it.id === id ? updatedData : it)));
+      setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
     } catch (err) {
-      console.error("Exception updateSuivi:", err);
-      setMessage({ type: "error", text: `Exception durant la mise à jour : ${err.message}` });
+      console.error(err);
+      setMessage({ type: "error", text: `Exception update : ${err.message}` });
     } finally {
       setUpdating((prev) => ({ ...prev, [id]: false }));
     }
   };
 
+  const getBorderColor = (item) => {
+    switch (item.statut_suivis) {
+      case "actif":
+        return "#4285F4";
+      case "en attente":
+        return "#FFA500";
+      case "suivi terminé":
+        return "#34A853";
+      case "inactif":
+        return "#999999";
+      default:
+        return "#ccc";
+    }
+  };
+
   return (
     <div
-      className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
+      className="min-h-screen flex flex-col items-center p-6"
       style={{
         background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
       }}
@@ -118,13 +127,15 @@ export default function SuivisMembres() {
       {/* Logo */}
       <Image src="/logo.png" alt="Logo" width={80} height={80} className="mb-3" />
 
-      <div className="flex w-full max-w-5xl justify-between items-center mb-4">
-        <h1 className="text-4xl font-handwriting text-white text-center mb-3">
-          Suivis des Membres
-        </h1>
+      <h1 className="text-4xl font-handwriting text-white text-center mb-2">
+        Suivis des Membres
+      </h1>
+
+      {/* Toggle vue */}
+      <div className="flex justify-end w-full max-w-5xl mb-4">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
-          className="text-white text-sm underline"
+          className="text-white text-sm underline hover:text-gray-200"
         >
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
@@ -148,109 +159,105 @@ export default function SuivisMembres() {
       {loading ? (
         <p className="text-white">Chargement...</p>
       ) : suivis.length === 0 ? (
-        <p className="text-white text-lg italic">
-          Aucun membre en suivi pour le moment.
-        </p>
+        <p className="text-white text-lg italic">Aucun membre en suivi pour le moment.</p>
       ) : view === "card" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
-          {suivis.map((item) => {
-            const isOpen = detailsOpen[item.id];
-            return (
+          {suivis.map((item) => (
+            <div
+              key={item.id}
+              className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl"
+            >
+              {/* Bande colorée en haut à l’intérieur */}
               <div
-                key={item.id}
-                className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl border"
-              >
-                {/* Bande colorée intégrée */}
-                <div
-                  className="rounded-t-2xl w-1/2 mx-auto"
-                  style={{
-                    backgroundColor: getBorderColor(item),
-                    height: "6px",
-                    marginTop: "0.5rem",
-                  }}
-                />
-                <div className="p-4 flex flex-col items-center divide-y divide-gray-200">
-                  <h2 className="font-bold text-black text-base text-center mb-1">
-                    {item.prenom} {item.nom}
-                  </h2>
-                  <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
-                  <button
-                    onClick={() => toggleDetails(item.id)}
-                    className="text-orange-500 underline text-sm mt-1"
-                  >
-                    {isOpen ? "Fermer détails" : "Détails"}
-                  </button>
+                className="rounded-t-2xl w-full"
+                style={{ backgroundColor: getBorderColor(item), height: "6px" }}
+              />
 
-                  {isOpen && (
-                    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full pt-2">
-                      <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
-                      <p>📞 Téléphone : {item.telephone || "—"}</p>
-                      <p>💬 WhatsApp : {item.whatsapp || "—"}</p>
-                      <p>🏙 Ville : {item.ville || "—"}</p>
-                      <p>🕊 Statut : {item.statut || "—"}</p>
-                      <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
-                      <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
-                      <div>
-                        <label className="text-black text-sm">BESOIN :</label>
-                        <select
-                          value={item.besoin || ""}
-                          className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
-                        >
-                          <option value="">-- Sélectionner --</option>
-                          <option value="Finances">Finances</option>
-                          <option value="Santé">Santé</option>
-                          <option value="Travail">Travail</option>
-                          <option value="Les Enfants">Les Enfants</option>
-                          <option value="La Famille">La Famille</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-black text-sm">📋 Statut Suivis :</label>
-                        <select
-                          value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
-                          onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                          className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
-                        >
-                          <option value="">-- Choisir un statut --</option>
-                          <option value="actif">✅ Actif</option>
-                          <option value="en attente">🕓 En attente</option>
-                          <option value="suivi terminé">🏁 Terminé</option>
-                          <option value="inactif">❌ Inactif</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-black text-sm">📝 Commentaire Suivis :</label>
-                        <textarea
-                          value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
-                          onChange={(e) => handleCommentChange(item.id, e.target.value)}
-                          rows={2}
-                          className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
-                          placeholder="Ajouter un commentaire..."
-                        />
-                      </div>
-                      <button
-                        onClick={() => updateSuivi(item.id)}
-                        disabled={updating[item.id]}
-                        className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-                          updating[item.id]
-                            ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-green-600 hover:bg-green-700"
-                        }`}
+              <div className="p-4 flex flex-col items-center divide-y divide-gray-200">
+                <h2 className="font-bold text-black text-base text-center mb-1">
+                  {item.prenom} {item.nom}
+                </h2>
+                <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
+                <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
+                <p className="text-sm text-gray-700 mb-1">
+                  📋 Statut Suivis : {item.statut_suivis || "—"}
+                </p>
+
+                <button
+                  onClick={() => toggleDetails(item.id)}
+                  className="text-orange-500 underline text-sm mt-1"
+                >
+                  {detailsOpen[item.id] ? "Fermer détails" : "Détails"}
+                </button>
+
+                {detailsOpen[item.id] && (
+                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full pt-2">
+                    <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
+                    <p>📞 Téléphone : {item.telephone || "—"}</p>
+                    <p>💬 WhatsApp : {item.whatsapp || "—"}</p>
+                    <p>🏙 Ville : {item.ville || "—"}</p>
+                    <p>🕊 Statut : {item.statut || "—"}</p>
+                    <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
+                    <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
+                    <div>
+                      <label className="text-black text-sm">BESOIN :</label>
+                      <select
+                        value={item.besoin || ""}
+                        className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
                       >
-                        {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
-                      </button>
+                        <option value="">-- Sélectionner --</option>
+                        <option value="Finances">Finances</option>
+                        <option value="Santé">Santé</option>
+                        <option value="Travail">Travail</option>
+                        <option value="Les Enfants">Les Enfants</option>
+                        <option value="La Famille">La Famille</option>
+                      </select>
                     </div>
-                  )}
-                </div>
+                    <div>
+                      <label className="text-black text-sm">📋 Statut Suivis :</label>
+                      <select
+                        value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
+                        onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                        className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+                      >
+                        <option value="">-- Choisir un statut --</option>
+                        <option value="actif">✅ Actif</option>
+                        <option value="en attente">🕓 En attente</option>
+                        <option value="suivi terminé">🏁 Terminé</option>
+                        <option value="inactif">❌ Inactif</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-black text-sm">📝 Commentaire Suivis :</label>
+                      <textarea
+                        value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
+                        onChange={(e) => handleCommentChange(item.id, e.target.value)}
+                        rows={2}
+                        className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
+                        placeholder="Ajouter un commentaire..."
+                      />
+                    </div>
+                    <button
+                      onClick={() => updateSuivi(item.id)}
+                      disabled={updating[item.id]}
+                      className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+                        updating[item.id]
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-green-600 hover:bg-green-700"
+                      }`}
+                    >
+                      {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
+                    </button>
+                  </div>
+                )}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       ) : (
-        /* === TABLE === */
-        <div className="w-full max-w-5xl overflow-x-auto transition duration-200 bg-white rounded-2xl shadow-lg">
-          <table className="w-full text-sm text-left text-gray-800 border-separate border-spacing-0">
+        /* === Table === */
+        <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
+          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
               <tr>
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
@@ -260,89 +267,84 @@ export default function SuivisMembres() {
               </tr>
             </thead>
             <tbody>
-              {suivis.map((item) => {
-                const isOpen = detailsOpen[item.id];
-                return (
-                  <tr key={item.id} className="border-b border-gray-300">
-                    <td
-                      className="px-4 py-2 border-l-4"
-                      style={{ borderLeftColor: getBorderColor(item) }}
+              {suivis.map((item) => (
+                <tr key={item.id} className="hover:bg-white/10 border-b border-gray-300">
+                  <td className="px-4 py-2 border-l-4" style={{ borderLeftColor: getBorderColor(item) }}>
+                    {item.prenom} {item.nom}
+                  </td>
+                  <td className="px-4 py-2">{item.telephone}</td>
+                  <td className="px-4 py-2">{item.statut}</td>
+                  <td className="px-4 py-2">
+                    <button
+                      onClick={() => toggleDetails(item.id)}
+                      className="text-orange-500 underline text-sm"
                     >
-                      {item.prenom} {item.nom}
-                    </td>
-                    <td className="px-4 py-2">{item.telephone}</td>
-                    <td className="px-4 py-2">{item.statut}</td>
-                    <td className="px-4 py-2">
-                      <button
-                        onClick={() => toggleDetails(item.id)}
-                        className="text-orange-500 underline text-sm"
-                      >
-                        {isOpen ? "Fermer détails" : "Détails"}
-                      </button>
-                      {isOpen && (
-                        <div className="mt-2 p-2 bg-gray-100 rounded-md space-y-2">
-                          <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
-                          <p>📞 Téléphone : {item.telephone || "—"}</p>
-                          <p>💬 WhatsApp : {item.whatsapp || "—"}</p>
-                          <p>🏙 Ville : {item.ville || "—"}</p>
-                          <p>🕊 Statut : {item.statut || "—"}</p>
-                          <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
-                          <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
-                          <div>
-                            <label className="text-black text-sm">BESOIN :</label>
-                            <select
-                              value={item.besoin || ""}
-                              className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
-                            >
-                              <option value="">-- Sélectionner --</option>
-                              <option value="Finances">Finances</option>
-                              <option value="Santé">Santé</option>
-                              <option value="Travail">Travail</option>
-                              <option value="Les Enfants">Les Enfants</option>
-                              <option value="La Famille">La Famille</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-black text-sm">📋 Statut Suivis :</label>
-                            <select
-                              value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
-                              onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                              className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
-                            >
-                              <option value="">-- Choisir un statut --</option>
-                              <option value="actif">✅ Actif</option>
-                              <option value="en attente">🕓 En attente</option>
-                              <option value="suivi terminé">🏁 Terminé</option>
-                              <option value="inactif">❌ Inactif</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-black text-sm">📝 Commentaire Suivis :</label>
-                            <textarea
-                              value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
-                              onChange={(e) => handleCommentChange(item.id, e.target.value)}
-                              rows={2}
-                              className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
-                              placeholder="Ajouter un commentaire..."
-                            />
-                          </div>
-                          <button
-                            onClick={() => updateSuivi(item.id)}
-                            disabled={updating[item.id]}
-                            className={`mt-2 w-full text-white font-semibold py-1 rounded-md transition ${
-                              updating[item.id]
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-green-600 hover:bg-green-700"
-                            }`}
+                      {detailsOpen[item.id] ? "Fermer détails" : "Détails"}
+                    </button>
+
+                    {detailsOpen[item.id] && (
+                      <div className="mt-2 text-gray-700 text-sm space-y-2 bg-white p-2 rounded-md shadow-md">
+                        <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
+                        <p>📞 Téléphone : {item.telephone || "—"}</p>
+                        <p>💬 WhatsApp : {item.whatsapp || "—"}</p>
+                        <p>🏙 Ville : {item.ville || "—"}</p>
+                        <p>🕊 Statut : {item.statut || "—"}</p>
+                        <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
+                        <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
+                        <div>
+                          <label className="text-black text-sm">BESOIN :</label>
+                          <select
+                            value={item.besoin || ""}
+                            className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
                           >
-                            {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
-                          </button>
+                            <option value="">-- Sélectionner --</option>
+                            <option value="Finances">Finances</option>
+                            <option value="Santé">Santé</option>
+                            <option value="Travail">Travail</option>
+                            <option value="Les Enfants">Les Enfants</option>
+                            <option value="La Famille">La Famille</option>
+                          </select>
                         </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+                        <div>
+                          <label className="text-black text-sm">📋 Statut Suivis :</label>
+                          <select
+                            value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
+                            onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                            className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+                          >
+                            <option value="">-- Choisir un statut --</option>
+                            <option value="actif">✅ Actif</option>
+                            <option value="en attente">🕓 En attente</option>
+                            <option value="suivi terminé">🏁 Terminé</option>
+                            <option value="inactif">❌ Inactif</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-black text-sm">📝 Commentaire Suivis :</label>
+                          <textarea
+                            value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
+                            onChange={(e) => handleCommentChange(item.id, e.target.value)}
+                            rows={2}
+                            className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
+                            placeholder="Ajouter un commentaire..."
+                          />
+                        </div>
+                        <button
+                          onClick={() => updateSuivi(item.id)}
+                          disabled={updating[item.id]}
+                          className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+                            updating[item.id]
+                              ? "bg-gray-400 cursor-not-allowed"
+                              : "bg-green-600 hover:bg-green-700"
+                          }`}
+                        >
+                          {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

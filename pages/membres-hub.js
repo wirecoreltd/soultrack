@@ -69,6 +69,15 @@ export default function MembresHub() {
           </div>
         </Link>
       </div>
+       {/* Boutons popup */}
+      <div className="flex flex-col gap-3 mt-4 w-full max-w-md">
+        {(role === "ResponsableIntegration" || role === "Admin") && (
+          <SendLinkPopup
+            label="Envoyer l'appli – Nouveau membre"
+            type="ajouter_membre"
+            buttonColor="from-[#09203F] to-[#537895]"
+          />
+        )}
 
       {/* 🔹 Verset biblique */}
       <div className="mt-auto mb-4 text-center text-white text-lg font-handwriting max-w-2xl">

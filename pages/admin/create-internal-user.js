@@ -1,4 +1,4 @@
-6//pages/admin/create-user.js
+//pages/admin/create-user.js
 "use client";
 
 import { useEffect, useState } from "react";

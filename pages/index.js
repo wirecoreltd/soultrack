@@ -22,7 +22,7 @@ export default function HomePage() {
 
     // ✅ Si ResponsableIntegration → rediriger directement vers /membres-hub
     if (storedRole === "ResponsableIntegration") {
-      router.push("/pages/membres-hub");
+      router.push("/membres-hub");
       return;
     }
 

@@ -79,7 +79,7 @@ export default function LoginPage() {
       if (formattedRole === "Admin") {
         router.push("/index");
       } else if (formattedRole === "ResponsableIntegration") {
-        router.push("/pages/membres-hub");
+        router.push("/membres-hub");
       } else if (formattedRole === "ResponsableEvangelisation") {
         router.push("/evangelisation-hub");
       } else {

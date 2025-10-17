@@ -1,4 +1,4 @@
-// pages/index.js - Home page
+7// pages/index.js - Home page
 "use client";
 
 import { useEffect, useState } from "react";
@@ -109,11 +109,11 @@ export default function HomePage() {
 
             <div
               className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-              onClick={() => handleRedirect("/admin/create-internal-user")}
+              onClick={() => handleRedirect("/administrateur")}
             >
               <div className="text-4xl mb-1">🧑‍💻</div>
               <div className="text-lg font-bold text-gray-800">
-                Créer un utilisateur
+                Admin
               </div>
             </div>
           </>

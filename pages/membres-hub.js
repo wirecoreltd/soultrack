@@ -1,7 +1,10 @@
 /* ✅ pages/membres-hub.js */
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
+import SendLinkPopup from "../components/SendLinkPopup";
 import { useRouter } from "next/router";
 
 export default function MembresHub() {
@@ -35,7 +38,7 @@ export default function MembresHub() {
       </h1>
 
       {/* 🔹 Cartes principales */}
-      <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl">
+      <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6">
         {/* Ajouter un membre */}
         <Link
           href="/add-member"
@@ -69,15 +72,15 @@ export default function MembresHub() {
           </div>
         </Link>
       </div>
-       {/* Boutons popup */}
-      <div className="flex flex-col gap-3 mt-4 w-full max-w-md">
-        {(role === "ResponsableIntegration" || role === "Admin") && (
-          <SendLinkPopup
-            label="Envoyer l'appli – Nouveau membre"
-            type="ajouter_membre"
-            buttonColor="from-[#09203F] to-[#537895]"
-          />
-        )}
+
+      {/* 🔹 Bouton popup ajouté sous les cartes */}
+      <div className="w-full max-w-md mb-10">
+        <SendLinkPopup
+          label="Envoyer l'appli – Nouveau membre"
+          type="ajouter_membre"
+          buttonColor="from-[#09203F] to-[#537895]"
+        />
+      </div>
 
       {/* 🔹 Verset biblique */}
       <div className="mt-auto mb-4 text-center text-white text-lg font-handwriting max-w-2xl">

@@ -1,4 +1,4 @@
-//pages/index.js - Home page
+// pages/index.js - Home page
 "use client";
 
 import { useEffect, useState } from "react";
@@ -20,6 +20,13 @@ export default function HomePage() {
       return;
     }
 
+    // ✅ Si ResponsableIntegration → rediriger directement vers /members-hub
+    if (storedRole === "ResponsableIntegration") {
+      router.push("/members-hub");
+      return;
+    }
+
+    // Vérifie les droits d’accès pour /index
     const canAccess = canAccessPage(storedRole, "/index");
     if (!canAccess) {
       alert("⛔ Accès non autorisé !");
@@ -44,7 +51,7 @@ export default function HomePage() {
         background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
       }}
     >
-      {/* 🔵 Bouton de déconnexion en haut à droite */}
+      {/* 🔵 Bouton de déconnexion */}
       <LogoutLink />
 
       {/* Logo */}
@@ -70,7 +77,7 @@ export default function HomePage() {
         {(role === "ResponsableIntegration" || role === "Admin") && (
           <div
             className="flex-1 min-w-[250px] w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-            onClick={() => handleRedirect("/membres-hub")}
+            onClick={() => handleRedirect("/members-hub")}
           >
             <div className="text-4xl mb-1">👤</div>
             <div className="text-lg font-bold text-gray-800 text-center">

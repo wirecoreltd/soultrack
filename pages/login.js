@@ -1,4 +1,4 @@
-//pages/login.js
+// pages/login.js
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/router";
@@ -75,8 +75,16 @@ export default function LoginPage() {
       localStorage.setItem("userId", profile.id);
       localStorage.setItem("userRole", formattedRole);
 
-      // 5️⃣ Redirection vers la page d'accueil
-      router.push("/index");
+      // 5️⃣ Redirection selon le rôle
+      if (formattedRole === "Admin") {
+        router.push("/index");
+      } else if (formattedRole === "ResponsableIntegration") {
+        router.push("/members-hub");
+      } else if (formattedRole === "ResponsableEvangelisation") {
+        router.push("/evangelisation-hub");
+      } else {
+        router.push("/index");
+      }
     } catch (err) {
       console.error("Erreur inattendue:", err);
       setError("Erreur inattendue");
@@ -98,14 +106,12 @@ export default function LoginPage() {
           SoulTrack
         </h1>
 
-        {/* Message de bienvenue */}
         <p className="text-center text-gray-700 mb-6">
           Bienvenue sur SoulTrack !<br />
           Une plateforme pour garder le contact, organiser les visites,
           et soutenir chaque membre dans sa vie spirituelle.
         </p>
 
-        {/* Formulaire login */}
         <form onSubmit={handleLogin} className="flex flex-col w-full gap-4">
           <input
             type="email"
@@ -138,7 +144,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Texte biblique */}
         <p className="text-center italic font-semibold mt-4 text-green-600">
           "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
         </p>

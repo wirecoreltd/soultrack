@@ -1,4 +1,4 @@
-//pages/admin/create-user.js
+6//pages/admin/create-user.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -186,7 +186,6 @@ export default function CreateInternalUserPage() {
             <option value="ResponsableIntegration">Responsable Intégration</option>
 <option value="ResponsableCellule">Responsable Cellule</option>
             <option value="ResponsableEvangelisation">Responsable Évangélisation</option>
-            <option value="Membre">Membre</option>
           </select>
         </div>
 

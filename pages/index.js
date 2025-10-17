@@ -22,7 +22,7 @@ export default function HomePage() {
 
     // ✅ Si ResponsableIntegration → rediriger directement vers /membres-hub
     if (storedRole === "ResponsableIntegration") {
-      router.push("/membres-hub");
+      router.push("/pages/membres-hub");
       return;
     }
 
@@ -77,7 +77,7 @@ export default function HomePage() {
         {(role === "ResponsableIntegration" || role === "Admin") && (
           <div
             className="flex-1 min-w-[250px] w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-            onClick={() => handleRedirect("/membres-hub")}
+            onClick={() => handleRedirect("/pages/membres-hub")}
           >
             <div className="text-4xl mb-1">👤</div>
             <div className="text-lg font-bold text-gray-800 text-center">

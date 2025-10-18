@@ -56,15 +56,6 @@ export default function AdministrateurPage() {
       <h1 className="text-4xl font-handwriting text-white mb-6">
         Espace Administrateur
       </h1>
-              <Link
-          href="/add-evangelise"
-          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#4285F4] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
-        >
-          <div className="text-5xl mb-2">➕</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            Ajouter un évangélisé
-          </div>
-        </Link>
 
       {/* 🔹 Bouton administrateur */}
       <div className="flex flex-col gap-4 items-center justify-center w-full max-w-sm">

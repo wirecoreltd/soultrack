@@ -65,7 +65,7 @@ export default function HomePage() {
         SoulTrack
       </h1>
 
-      {/* Sous-titre / message d’intro */}
+      {/* Sous-titre */}
       <p className="text-white text-lg font-handwriting-light max-w-2xl mb-8">
         Chaque personne a une valeur infinie. Ensemble, nous avançons, nous
         grandissons, et nous partageons l’amour de Christ dans chaque action ❤️
@@ -99,6 +99,7 @@ export default function HomePage() {
 
         {role === "Admin" && (
           <>
+            {/* Rapport */}
             <div
               className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
               onClick={() => handleRedirect("/rapport")}
@@ -107,14 +108,22 @@ export default function HomePage() {
               <div className="text-lg font-bold text-gray-800">Rapport</div>
             </div>
 
+            {/* Admin */}
             <div
               className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
               onClick={() => handleRedirect("/administrateur")}
             >
               <div className="text-4xl mb-1">🧑‍💻</div>
-              <div className="text-lg font-bold text-gray-800">
-                Admin
-              </div>
+              <div className="text-lg font-bold text-gray-800">Admin</div>
+            </div>
+
+            {/* 🔹 Nouvelle carte : Cellule */}
+            <div
+              className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-purple-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+              onClick={() => handleRedirect("/cellules-hub")}
+            >
+              <div className="text-4xl mb-1">🏠</div>
+              <div className="text-lg font-bold text-gray-800">Cellule</div>
             </div>
           </>
         )}

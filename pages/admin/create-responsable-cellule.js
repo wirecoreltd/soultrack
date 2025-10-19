@@ -111,14 +111,6 @@ export default function CreateResponsableCellule() {
           className="border p-3 rounded-xl"
           required
         />
-        <input
-          type="tel"
-          placeholder="Téléphone du responsable (optionnel)"
-          value={telephoneResponsable}
-          onChange={(e) => setTelephoneResponsable(e.target.value)}
-          className="border p-3 rounded-xl"
-        />
-
         <button
           type="submit"
           className="bg-gradient-to-r from-[#005AA7] to-[#FFFDE4] text-gray-800 font-semibold rounded-xl py-3 mt-4 hover:opacity-90 transition"

@@ -1,72 +1,50 @@
+//admin/create-responsable-cellule.js
+
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
-import { supabase } from "../../lib/supabaseClient";
 import LogoutLink from "../../components/LogoutLink";
+import supabase from "../../lib/supabaseClient"; // ✅ import par défaut
 
 export default function CreateResponsableCellule() {
   const router = useRouter();
-
-  const [formData, setFormData] = useState({
-    ville: "",
-    cellule: "",
-    responsable: "",
-    telephone: "",
-    telephone_responsable: "",
-  });
-
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(null);
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const [ville, setVille] = useState("");
+  const [cellule, setCellule] = useState("");
+  const [responsable, setResponsable] = useState("");
+  const [telephone, setTelephone] = useState("");
+  const [telephoneResponsable, setTelephoneResponsable] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage(null);
 
-    // Validation simple
-    if (
-      !formData.ville ||
-      !formData.cellule ||
-      !formData.responsable ||
-      !formData.telephone
-    ) {
-      setMessage("⚠️ Merci de remplir tous les champs obligatoires.");
-      setLoading(false);
+    if (!ville || !cellule || !responsable || !telephone) {
+      alert("Merci de remplir tous les champs requis.");
       return;
     }
 
-    // Insertion dans Supabase
-    const { error } = await supabase.from("cellules").insert([
-      {
-        ville: formData.ville.trim(),
-        cellule: formData.cellule.trim(),
-        responsable: formData.responsable.trim(),
-        telephone: formData.telephone.trim(),
-        telephone_responsable: formData.telephone_responsable.trim() || null,
-      },
-    ]);
+    try {
+      const { data, error } = await supabase
+        .from("cellules")
+        .insert([
+          {
+            ville,
+            cellule,
+            responsable,
+            telephone,
+            telephone_responsable: telephoneResponsable,
+          },
+        ]);
 
-    if (error) {
-      console.error(error);
-      setMessage("❌ Erreur lors de la création du responsable.");
-    } else {
-      setMessage("✅ Responsable de cellule créé avec succès !");
-      setFormData({
-        ville: "",
-        cellule: "",
-        responsable: "",
-        telephone: "",
-        telephone_responsable: "",
-      });
+      if (error) throw error;
+
+      alert("✅ Responsable de cellule enregistré avec succès !");
+      router.push("/administrateur");
+    } catch (err) {
+      console.error(err);
+      alert("❌ Erreur : " + err.message);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -76,23 +54,19 @@ export default function CreateResponsableCellule() {
         background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
       }}
     >
-      {/* 🔹 Top bar */}
-      <div className="absolute top-4 left-4">
+      {/* 🔹 En-tête */}
+      <div className="w-full max-w-3xl flex justify-between items-center mb-6">
         <button
           onClick={() => router.back()}
-          className="text-white font-semibold hover:text-gray-200 transition"
+          className="text-white font-semibold hover:text-gray-200"
         >
           ← Retour
         </button>
-      </div>
 
-      <div className="absolute top-4 right-4">
-        <LogoutLink />
-      </div>
-
-      {/* 🔹 Logo */}
-      <div className="mb-4">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
+        <div className="flex items-center gap-4">
+          <Image src="/logo.png" alt="SoulTrack Logo" width={60} height={60} />
+          <LogoutLink />
+        </div>
       </div>
 
       {/* 🔹 Titre */}
@@ -103,92 +77,55 @@ export default function CreateResponsableCellule() {
       {/* 🔹 Formulaire */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white rounded-3xl shadow-md p-6 w-full max-w-md space-y-4"
+        className="bg-white rounded-3xl shadow-md p-8 w-full max-w-md flex flex-col gap-4"
       >
-        <div>
-          <label className="block text-gray-700 font-semibold mb-1">
-            Ville *
-          </label>
-          <input
-            type="text"
-            name="ville"
-            value={formData.ville}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-2"
-            placeholder="Ex : Abidjan"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-gray-700 font-semibold mb-1">
-            Nom de la cellule *
-          </label>
-          <input
-            type="text"
-            name="cellule"
-            value={formData.cellule}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-2"
-            placeholder="Ex : Cellule Grâce"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-gray-700 font-semibold mb-1">
-            Nom du responsable *
-          </label>
-          <input
-            type="text"
-            name="responsable"
-            value={formData.responsable}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-2"
-            placeholder="Ex : Jean Dupont"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-gray-700 font-semibold mb-1">
-            Téléphone *
-          </label>
-          <input
-            type="text"
-            name="telephone"
-            value={formData.telephone}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-2"
-            placeholder="Ex : +225 0700000000"
-            required
-          />
-        </div>
+        <input
+          type="text"
+          placeholder="Ville"
+          value={ville}
+          onChange={(e) => setVille(e.target.value)}
+          className="border p-3 rounded-xl"
+          required
+        />
+        <input
+          type="text"
+          placeholder="Nom de la cellule"
+          value={cellule}
+          onChange={(e) => setCellule(e.target.value)}
+          className="border p-3 rounded-xl"
+          required
+        />
+        <input
+          type="text"
+          placeholder="Nom du responsable"
+          value={responsable}
+          onChange={(e) => setResponsable(e.target.value)}
+          className="border p-3 rounded-xl"
+          required
+        />
+        <input
+          type="tel"
+          placeholder="Téléphone"
+          value={telephone}
+          onChange={(e) => setTelephone(e.target.value)}
+          className="border p-3 rounded-xl"
+          required
+        />
+        <input
+          type="tel"
+          placeholder="Téléphone du responsable (optionnel)"
+          value={telephoneResponsable}
+          onChange={(e) => setTelephoneResponsable(e.target.value)}
+          className="border p-3 rounded-xl"
+        />
 
         <button
           type="submit"
-          disabled={loading}
-          className={`w-full text-white py-3 rounded-lg font-semibold transition ${
-            loading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-gradient-to-r from-[#005AA7] to-[#FFFDE4] hover:opacity-90"
-          }`}
+          className="bg-gradient-to-r from-[#005AA7] to-[#FFFDE4] text-gray-800 font-semibold rounded-xl py-3 mt-4 hover:opacity-90 transition"
         >
-          {loading ? "Enregistrement..." : "Créer le responsable"}
+          Enregistrer
         </button>
-
-        {message && (
-          <p className="text-center mt-3 font-semibold text-gray-700">
-            {message}
-          </p>
-        )}
       </form>
-
-      {/* 🔹 Verset */}
-      <div className="mt-10 text-center text-white text-lg font-handwriting-light max-w-2xl">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
-        1 Corinthiens 12:14 ❤️
-      </div>
     </div>
   );
 }

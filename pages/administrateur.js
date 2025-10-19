@@ -75,7 +75,7 @@ export default function AdministrateurPage() {
         >
           <div className="text-5xl mb-2">👤</div>
           <div className="text-lg font-bold text-gray-800 text-center">
-            Créer un responsable de cellule
+            Créer une Cellule
           </div>
         </Link>
 
@@ -86,7 +86,7 @@ export default function AdministrateurPage() {
         >
           <div className="text-5xl mb-2">🧑‍💻</div>
           <div className="text-lg font-bold text-gray-800 text-center">
-            Créer un utilisateur interne
+            Créer Un Responsable
           </div>
         </Link>
       </div>

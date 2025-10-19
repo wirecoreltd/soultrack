@@ -165,20 +165,6 @@ export default function CreateResponsableCellule() {
           />
         </div>
 
-        <div>
-          <label className="block text-gray-700 font-semibold mb-1">
-            Téléphone du responsable (optionnel)
-          </label>
-          <input
-            type="text"
-            name="telephone_responsable"
-            value={formData.telephone_responsable}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-2"
-            placeholder="Ex : +225 0700000000"
-          />
-        </div>
-
         <button
           type="submit"
           disabled={loading}

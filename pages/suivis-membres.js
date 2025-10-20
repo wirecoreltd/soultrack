@@ -177,9 +177,7 @@ export default function SuivisMembres() {
                   </button>
 
                   {isOpen && (
-                    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                      <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
-                      <p>📞 Téléphone : {item.telephone || "—"}</p>
+                    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">                      
                       <p>💬 WhatsApp : {item.whatsapp || "—"}</p>
                       <p>🏙 Ville : {item.ville || "—"}</p>
                       <p>🕊 Statut : {item.statut || "—"}</p>

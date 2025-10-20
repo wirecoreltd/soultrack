@@ -180,11 +180,10 @@ export default function SuivisMembres() {
                     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">                      
                       <p>💬 WhatsApp : {item.whatsapp || "—"}</p>
                       <p>🏙 Ville : {item.ville || "—"}</p>
-                      <p>🕊 Statut : {item.statut || "—"}</p>
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
                       <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
                       <div>
-                        <label className="text-black text-sm">BESOIN :</label>
+                        <label className="text-black text-sm">Besoin :</label>
                         <select
                           value={item.besoin || ""}
                           className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"

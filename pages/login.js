@@ -69,6 +69,8 @@ export default function LoginPage() {
           : role === "responsable évangélisation" ||
             role === "responsableevangelisation"
           ? "ResponsableEvangelisation"
+          : role === "responsable Cellule"
+          ? "Responsablecellule"
           : "Membre";
 
       // 4️⃣ Sauvegarde locale pour usage global
@@ -82,6 +84,8 @@ export default function LoginPage() {
         router.push("/membres-hub");
       } else if (formattedRole === "ResponsableEvangelisation") {
         router.push("/evangelisation-hub");
+      } else if (formattedRole === "ResponsableCellule") {
+        router.push("/Cellules-hub");  
       } else {
         router.push("/index");
       }

@@ -58,37 +58,37 @@ export default function LoginPage() {
       }
 
       // 3️⃣ Normalisation du rôle pour éviter les erreurs
-      const role = (profile.role || "Membre").trim().toLowerCase();
+const role = (profile.role || "Membre").trim().toLowerCase();
 
-      // Mapping pour correspondre à /lib/accessControl.js
-      const formattedRole =
-        role === "admin"
-          ? "Admin"
-          : role === "responsableintegration"
-          ? "ResponsableIntegration"
-          : role === "responsable évangélisation" ||
-            role === "responsableevangelisation"
-          ? "ResponsableEvangelisation"
-          : role === "responsable Cellule"
-          ? "Responsablecellule"
-          : "Membre";
+// Mapping pour correspondre à /lib/accessControl.js
+const formattedRole =
+  role === "admin"
+    ? "Admin"
+    : role === "responsableintegration"
+    ? "ResponsableIntegration"
+    : role === "responsable évangélisation" || role === "responsableevangelisation"
+    ? "ResponsableEvangelisation"
+    : role === "responsablecellule" || role === "responsable cellule"
+    ? "ResponsableCellule"
+    : "Membre";
 
-      // 4️⃣ Sauvegarde locale pour usage global
-      localStorage.setItem("userId", profile.id);
-      localStorage.setItem("userRole", formattedRole);
+// 4️⃣ Sauvegarde locale pour usage global
+localStorage.setItem("userId", profile.id);
+localStorage.setItem("userRole", formattedRole);
 
-      // 5️⃣ Redirection selon le rôle
-      if (formattedRole === "Admin") {
-        router.push("/index");
-      } else if (formattedRole === "ResponsableIntegration") {
-        router.push("/membres-hub");
-      } else if (formattedRole === "ResponsableEvangelisation") {
-        router.push("/evangelisation-hub");
-      } else if (formattedRole === "ResponsableCellule") {
-        router.push("/Cellules-hub");  
-      } else {
-        router.push("/index");
-      }
+// 5️⃣ Redirection selon le rôle
+if (formattedRole === "Admin") {
+  router.push("/index");
+} else if (formattedRole === "ResponsableIntegration") {
+  router.push("/membres-hub");
+} else if (formattedRole === "ResponsableEvangelisation") {
+  router.push("/evangelisation-hub");
+} else if (formattedRole === "ResponsableCellule") {
+  router.push("/cellules-hub");  // ✅ attention au "s" minuscule ici
+} else {
+  router.push("/index");
+}
+
     } catch (err) {
       console.error("Erreur inattendue:", err);
       setError("Erreur inattendue");

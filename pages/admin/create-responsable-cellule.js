@@ -1,142 +1,143 @@
+//pages/admin/create-responsable-cellule.js
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import Image from "next/image";
-import LogoutLink from "../../components/LogoutLink";
 import supabase from "../../lib/supabaseClient";
+import { canAccessPage } from "../../lib/accessControl";
 
-export default function CreateResponsableCellule() {
+export default function CreateCellulePage() {
   const router = useRouter();
-  const [ville, setVille] = useState("");
-  const [cellule, setCellule] = useState("");
-  const [responsableId, setResponsableId] = useState(""); // ⚡ stocke l'ID du responsable
-  const [telephone, setTelephone] = useState("");
-  const [responsables, setResponsables] = useState([]); // ⚡ liste des responsables
+  const [role, setRole] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [responsables, setResponsables] = useState([]);
+  const [formData, setFormData] = useState({
+    cellule: "",
+    ville: "",
+    responsable_id: "",
+    telephone: "",
+  });
 
-  // 🔹 Récupérer les responsables depuis profiles
   useEffect(() => {
-    const fetchResponsables = async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, roles")
-        .contains("roles", ["ResponsableCellule"]); // filtre par rôle
+    const storedRole = localStorage.getItem("userRole");
+    if (!storedRole) {
+      router.replace("/login");
+      return;
+    }
 
-      if (error) {
-        console.error("Erreur fetch responsables:", error);
-      } else {
-        setResponsables(data);
-      }
-    };
+    if (!canAccessPage(storedRole, router.pathname)) {
+      alert("⛔ Accès non autorisé !");
+      router.replace("/login");
+      return;
+    }
 
+    setRole(storedRole);
+    setLoading(false);
+
+    // 🔹 Charger les responsables disponibles
     fetchResponsables();
-  }, []);
+  }, [router]);
+
+  const fetchResponsables = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom, roles")
+      .or('roles.cs.{ResponsableCellule,ResponsableIntegration}') // ✅ récupère ceux qui ont ResponsableCellule
+      .order('prenom', { ascending: true });
+
+    if (error) {
+      console.error("Erreur récupération responsables :", error);
+    } else {
+      setResponsables(data);
+    }
+  };
+
+  if (loading) return <div className="text-center mt-20">Chargement...</div>;
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!ville || !cellule || !responsableId || !telephone) {
-      alert("Merci de remplir tous les champs requis.");
+    if (!formData.responsable_id) {
+      alert("⚠️ Veuillez sélectionner un responsable !");
       return;
     }
 
     try {
-      const responsable = responsables.find(r => r.id === responsableId);
-      const responsableNom = `${responsable.prenom} ${responsable.nom}`;
-
       const { data, error } = await supabase
         .from("cellules")
         .insert([
           {
-            ville,
-            cellule,
-            responsable: responsableNom,
-            telephone,
-            responsable_id: responsableId, // lien direct vers le profil
+            cellule: formData.cellule,
+            ville: formData.ville,
+            responsable_id: formData.responsable_id,
+            telephone: formData.telephone,
           },
         ]);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur création cellule :", error);
+        alert("❌ Erreur lors de la création de la cellule !");
+        return;
+      }
 
-      alert("✅ Responsable de cellule enregistré avec succès !");
-      router.push("/administrateur");
+      alert(`✅ Cellule "${formData.cellule}" créée avec succès !`);
+      router.push("/cellules-hub");
+
     } catch (err) {
-      console.error(err);
-      alert("❌ Erreur : " + err.message);
+      console.error("Erreur inattendue :", err);
+      alert("❌ Une erreur inattendue s'est produite !");
     }
   };
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center p-6"
+    <div className="min-h-screen flex flex-col items-center justify-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      <div className="w-full max-w-3xl flex justify-between items-center mb-6">
-        <button onClick={() => router.back()} className="text-white font-semibold hover:text-gray-200">
-          ← Retour
-        </button>
-        <div className="flex items-center gap-4">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={60} height={60} />
-          <LogoutLink />
-        </div>
-      </div>
+      <h1 className="text-4xl font-bold text-white mb-6">Créer une cellule</h1>
 
-      <h1 className="text-3xl text-white font-handwriting mb-6 text-center">
-        Créer un Responsable de Cellule
-      </h1>
-
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-3xl shadow-md p-8 w-full max-w-md flex flex-col gap-4"
+      <form onSubmit={handleSubmit}
+        className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md flex flex-col gap-4"
       >
-        <input
-          type="text"
-          placeholder="Ville"
-          value={ville}
-          onChange={(e) => setVille(e.target.value)}
-          className="border p-3 rounded-xl"
-          required
-        />
-        <input
-          type="text"
-          placeholder="Nom de la cellule"
-          value={cellule}
-          onChange={(e) => setCellule(e.target.value)}
-          className="border p-3 rounded-xl"
-          required
-        />
+        <input type="text" name="cellule" placeholder="Nom de la cellule"
+          value={formData.cellule} onChange={handleChange} required
+          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"/>
+        
+        <input type="text" name="ville" placeholder="Ville"
+          value={formData.ville} onChange={handleChange} required
+          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"/>
 
-        {/* 🔹 Menu déroulant pour les responsables */}
-        <select
-          value={responsableId}
-          onChange={(e) => setResponsableId(e.target.value)}
-          className="border p-3 rounded-xl"
-          required
-        >
-          <option value="">Sélectionnez un responsable</option>
-          {responsables.map((respo) => (
-            <option key={respo.id} value={respo.id}>
-              {respo.prenom} {respo.nom}
-            </option>
-          ))}
-        </select>
+        <input type="text" name="telephone" placeholder="Téléphone"
+          value={formData.telephone} onChange={handleChange} required
+          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"/>
 
-        <input
-          type="tel"
-          placeholder="Téléphone"
-          value={telephone}
-          onChange={(e) => setTelephone(e.target.value)}
-          className="border p-3 rounded-xl"
-          required
-        />
+        {/* 🔹 Menu déroulant responsable */}
+        <div className="flex flex-col gap-2">
+          <label className="font-semibold text-gray-700">Responsable :</label>
+          <select name="responsable_id" value={formData.responsable_id} onChange={handleChange} required
+            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <option value="">-- Sélectionnez un responsable --</option>
+            {responsables.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.prenom} {r.nom} ({r.roles.join(", ")})
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <button
-          type="submit"
-          className="bg-gradient-to-r from-[#005AA7] to-[#FFFDE4] text-gray-800 font-semibold rounded-xl py-3 mt-4 hover:opacity-90 transition"
-        >
-          Enregistrer
+        <button type="submit"
+          className="mt-2 bg-gradient-to-r from-blue-600 to-blue-400 text-white font-semibold rounded-xl py-2 hover:opacity-90 transition">
+          Créer la cellule
         </button>
       </form>
+
+      <button onClick={() => router.push("/cellules-hub")}
+        className="mt-4 text-white underline hover:opacity-80">
+        ⬅️ Retour
+      </button>
     </div>
   );
 }

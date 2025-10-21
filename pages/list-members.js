@@ -228,13 +228,13 @@ export default function ListMembers() {
                           {/* Détails inline compact (conserve tout le contenu du popup original) */}
                           {isOpen && (
                             <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                              <p className="text-sm">💬 WhatsApp : {m.whatsapp || "—"}</p>
+                              <p className="text-sm">💬 WhatsApp : {m.is_whatsapp || "—"}</p>
                               <p className="text-sm">🏙 Ville: {m.ville || "—"}</p>
                               <p className="text-sm">❓Besoin : {m.besoin || "—"}</p>
                               <p className="text-sm">
                                 📝 Infos : {m.infos_supplementaires || "—"}
                               </p>
-                              <p className="text-sm">🧩 Comment est-il venu : {m.comment || "—"}</p>
+                              <p className="text-sm">🧩 Comment est-il venu : {m.venu || "—"}</p>
 
                               {/* Statut select moved here */}
                               <div>

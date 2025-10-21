@@ -18,9 +18,10 @@ export default function Login() {
     setLoading(true);
     setMessage("");
 
+    // 🧩 On interroge la table "profiles"
     const { data, error } = await supabase
-      .from("users")
-      .select("id, email, password, roles") // 🧩 le champ doit s’appeler "roles" (tableau)
+      .from("profiles")
+      .select("id, email, password, roles") // ⚡ "roles" doit être un champ text[] (tableau)
       .eq("email", email)
       .single();
 
@@ -37,13 +38,12 @@ export default function Login() {
     }
 
     try {
-      // 🧩 Si le champ "roles" est déjà un tableau → on le garde
-      // sinon on le transforme en tableau (ex: ["Admin"])
+      // 🧠 Si "roles" est un tableau → on garde, sinon on convertit
       const rolesArray = Array.isArray(data.roles)
         ? data.roles
         : [data.roles || ""];
 
-      // 🧠 Sauvegarde en localStorage (sous forme JSON)
+      // 💾 Sauvegarde des infos utilisateur
       localStorage.setItem("userEmail", data.email);
       localStorage.setItem("userId", data.id);
       localStorage.setItem("userRole", JSON.stringify(rolesArray));

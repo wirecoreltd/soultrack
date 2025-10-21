@@ -1,117 +1,111 @@
 // pages/index.js - Home page
+// pages/index.js
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
+import SendLinkPopup from "../components/SendLinkPopup";
 import LogoutLink from "../components/LogoutLink";
+import { canAccessPage } from "../lib/accessControl";
+import supabase from "../lib/supabaseClient";
 
 export default function HomePage() {
   const router = useRouter();
-  const [role, setRole] = useState(null);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
-    const storedRole = localStorage.getItem("userRole");
-    if (!storedRole) {
-      router.push("/login");
-      return;
-    }
+    const fetchUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
 
-    setRole(storedRole);
-    setLoading(false);
-  }, [router]);
+      if (session?.user) {
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
 
-  if (loading) return <div className="text-center mt-20">Chargement...</div>;
+        if (error) console.error(error);
+        else setUser(profile);
+      }
+      setLoading(false);
+    };
+    fetchUser();
+  }, []);
 
-  const handleRedirect = (path) => {
+  const handleNavigation = (path) => {
     router.push(path);
   };
 
+  if (loading) return <p className="text-center mt-10">Chargement en cours...</p>;
+
   return (
-    <div
-      className="relative min-h-screen flex flex-col items-center justify-center p-6 text-center"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
-    >
-      <div className="absolute top-4 right-4">
-        <LogoutLink />
+    <div className="min-h-screen bg-blue-950 flex flex-col items-center justify-center text-white px-4">
+      <div className="max-w-3xl text-center">
+        <h1 className="text-3xl font-bold mb-4">Bienvenue dans le Hub de l'Église ✝️</h1>
+        <p className="text-lg mb-6">
+          Chaque personne a une valeur infinie. Ensemble, nous avançons, nous grandissons, et nous partageons
+          l’amour de Christ dans chaque action ❤️
+        </p>
+
+        <blockquote className="italic text-gray-300 mb-8">
+          “Car le corps ne se compose pas d’un seul membre, mais de plusieurs.” — 1 Corinthiens 12:14 ❤️
+        </blockquote>
+
+        {/* ✅ BOUTONS SELON LE ROLE */}
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+          {/* ADMIN → accès à tout */}
+          {user?.role === "Admin" && (
+            <>
+              <button onClick={() => handleNavigation("/admin/create-user")} className="bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg">
+                👤 Créer un utilisateur
+              </button>
+              <button onClick={() => handleNavigation("/admin/create-responsable-cellule")} className="bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg">
+                🏠 Créer une cellule
+              </button>
+              <button onClick={() => handleNavigation("/hub/evangelisation")} className="bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg">
+                🙌 Hub Évangélisation
+              </button>
+              <button onClick={() => handleNavigation("/hub/members")} className="bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg">
+                🤝 Hub Membres
+              </button>
+              <button onClick={() => handleNavigation("/hub/cellule")} className="bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg">
+                🏡 Hub Cellule
+              </button>
+            </>
+          )}
+
+          {/* RESPONSABLE ÉVANGÉLISATION */}
+          {user?.role === "ResponsableEvangelisation" && (
+            <button onClick={() => handleNavigation("/hub/evangelisation")} className="bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg">
+              🙌 Hub Évangélisation
+            </button>
+          )}
+
+          {/* RESPONSABLE INTÉGRATION */}
+          {user?.role === "ResponsableIntegration" && (
+            <button onClick={() => handleNavigation("/hub/members")} className="bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg">
+              🤝 Hub Membres
+            </button>
+          )}
+
+          {/* RESPONSABLE CELLULE */}
+          {user?.role === "ResponsableCellule" && (
+            <button onClick={() => handleNavigation("/hub/cellule")} className="bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg">
+              🏡 Hub Cellule
+            </button>
+          )}
+        </div>
+
+        <div className="mt-8">
+          <LogoutLink />
+        </div>
       </div>
 
-      <div className="mb-4">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={90} height={90} />
-      </div>
-
-      <h1 className="text-5xl sm:text-5xl font-handwriting text-white mb-2">
-        SoulTrack
-      </h1>
-
-      <p className="text-white text-lg font-handwriting-light max-w-2xl mb-8">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons, nous
-        grandissons, et nous partageons l’amour de Christ dans chaque action ❤️
-      </p>
-
-      <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl mb-10">
-        {(role === "ResponsableIntegration" || role === "Admin") && (
-          <div
-            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-            onClick={() => handleRedirect("/membres-hub")}
-          >
-            <div className="text-4xl mb-1">👤</div>
-            <div className="text-lg font-bold text-gray-800">
-              Suivis des membres
-            </div>
-          </div>
-        )}
-
-        {(role === "ResponsableEvangelisation" || role === "Admin") && (
-          <div
-            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-            onClick={() => handleRedirect("/evangelisation-hub")}
-          >
-            <div className="text-4xl mb-1">🙌</div>
-            <div className="text-lg font-bold text-gray-800">
-              Évangélisation
-            </div>
-          </div>
-        )}
-
-        {(role === "ResponsableCellule" || role === "Admin") && (
-          <div
-            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-purple-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-            onClick={() => handleRedirect("/cellules-hub")}
-          >
-            <div className="text-4xl mb-1">🏠</div>
-            <div className="text-lg font-bold text-gray-800">Cellule</div>
-          </div>
-        )}
-
-        {role === "Admin" && (
-          <>
-            <div
-              className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-              onClick={() => handleRedirect("/rapport")}
-            >
-              <div className="text-4xl mb-1">📊</div>
-              <div className="text-lg font-bold text-gray-800">Rapport</div>
-            </div>
-
-            <div
-              className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-              onClick={() => handleRedirect("/administrateur")}
-            >
-              <div className="text-4xl mb-1">🧑‍💻</div>
-              <div className="text-lg font-bold text-gray-800">Admin</div>
-            </div>
-          </>
-        )}
-      </div>
-
-      <div className="text-white text-lg font-handwriting-light max-w-2xl">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
-        1 Corinthiens 12:14 ❤️
-      </div>
+      {showPopup && <SendLinkPopup onClose={() => setShowPopup(false)} />}
     </div>
   );
 }
+

@@ -1,91 +1,64 @@
-//admin/create-responsable-cellule.js
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import LogoutLink from "../../components/LogoutLink";
 import supabase from "../../lib/supabaseClient";
 
-// 🧮 Fonction pour hasher le mot de passe (compatible navigateur)
-async function hashPassword(password) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-  return hashHex;
-}
-
 export default function CreateResponsableCellule() {
   const router = useRouter();
   const [ville, setVille] = useState("");
   const [cellule, setCellule] = useState("");
-  const [responsable, setResponsable] = useState("");
+  const [responsableId, setResponsableId] = useState(""); // ⚡ stocke l'ID du responsable
   const [telephone, setTelephone] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [responsables, setResponsables] = useState([]); // ⚡ liste des responsables
+
+  // 🔹 Récupérer les responsables depuis profiles
+  useEffect(() => {
+    const fetchResponsables = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, roles")
+        .contains("roles", ["ResponsableCellule"]); // filtre par rôle
+
+      if (error) {
+        console.error("Erreur fetch responsables:", error);
+      } else {
+        setResponsables(data);
+      }
+    };
+
+    fetchResponsables();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!ville || !cellule || !responsable || !telephone || !email || !password) {
+    if (!ville || !cellule || !responsableId || !telephone) {
       alert("Merci de remplir tous les champs requis.");
       return;
     }
 
     try {
-      // Séparer le prénom et le nom
-      const [prenom, nom] = responsable.split(" ");
+      const responsable = responsables.find(r => r.id === responsableId);
+      const responsableNom = `${responsable.prenom} ${responsable.nom}`;
 
-      // 1️⃣ Vérifier si un profil existe déjà avec cet email
-      const { data: existing } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", email)
-        .maybeSingle();
-
-      if (existing) {
-        alert("⚠️ Cet email est déjà utilisé pour un autre utilisateur !");
-        return;
-      }
-
-      // 2️⃣ Hacher le mot de passe
-      const hashedPassword = await hashPassword(password);
-
-      // 3️⃣ Créer le profil du responsable
-      const { data: newProfile, error: profileError } = await supabase
-        .from("profiles")
-        .insert([
-          {
-            email,
-            password_hash: hashedPassword,
-            prenom,
-            nom,
-            role: "ResponsableCellule",
-          },
-        ])
-        .select()
-        .single();
-
-      if (profileError) throw profileError;
-
-      // 4️⃣ Créer la cellule liée
-      const { error: celluleError } = await supabase
+      const { data, error } = await supabase
         .from("cellules")
         .insert([
           {
             ville,
             cellule,
-            responsable,
+            responsable: responsableNom,
             telephone,
-            responsable_id: newProfile.id,
+            responsable_id: responsableId, // lien direct vers le profil
           },
         ]);
 
-      if (celluleError) throw celluleError;
+      if (error) throw error;
 
-      alert("✅ Responsable et cellule créés avec succès !");
+      alert("✅ Responsable de cellule enregistré avec succès !");
       router.push("/administrateur");
     } catch (err) {
       console.error(err);
@@ -96,31 +69,22 @@ export default function CreateResponsableCellule() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-6"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* 🔹 En-tête */}
       <div className="w-full max-w-3xl flex justify-between items-center mb-6">
-        <button
-          onClick={() => router.back()}
-          className="text-white font-semibold hover:text-gray-200"
-        >
+        <button onClick={() => router.back()} className="text-white font-semibold hover:text-gray-200">
           ← Retour
         </button>
-
         <div className="flex items-center gap-4">
           <Image src="/logo.png" alt="SoulTrack Logo" width={60} height={60} />
           <LogoutLink />
         </div>
       </div>
 
-      {/* 🔹 Titre */}
       <h1 className="text-3xl text-white font-handwriting mb-6 text-center">
         Créer un Responsable de Cellule
       </h1>
 
-      {/* 🔹 Formulaire */}
       <form
         onSubmit={handleSubmit}
         className="bg-white rounded-3xl shadow-md p-8 w-full max-w-md flex flex-col gap-4"
@@ -141,14 +105,22 @@ export default function CreateResponsableCellule() {
           className="border p-3 rounded-xl"
           required
         />
-        <input
-          type="text"
-          placeholder="Nom complet du responsable"
-          value={responsable}
-          onChange={(e) => setResponsable(e.target.value)}
+
+        {/* 🔹 Menu déroulant pour les responsables */}
+        <select
+          value={responsableId}
+          onChange={(e) => setResponsableId(e.target.value)}
           className="border p-3 rounded-xl"
           required
-        />
+        >
+          <option value="">Sélectionnez un responsable</option>
+          {responsables.map((respo) => (
+            <option key={respo.id} value={respo.id}>
+              {respo.prenom} {respo.nom}
+            </option>
+          ))}
+        </select>
+
         <input
           type="tel"
           placeholder="Téléphone"
@@ -157,31 +129,14 @@ export default function CreateResponsableCellule() {
           className="border p-3 rounded-xl"
           required
         />
-        <input
-          type="email"
-          placeholder="Email du responsable"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border p-3 rounded-xl"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Mot de passe (temporaire)"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="border p-3 rounded-xl"
-          required
-        />
 
         <button
           type="submit"
           className="bg-gradient-to-r from-[#005AA7] to-[#FFFDE4] text-gray-800 font-semibold rounded-xl py-3 mt-4 hover:opacity-90 transition"
         >
-          Enregistrer le Responsable
+          Enregistrer
         </button>
       </form>
     </div>
   );
 }
-

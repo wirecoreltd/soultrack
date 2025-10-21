@@ -13,11 +13,11 @@ export default function ListMembers() {
   const [members, setMembers] = useState([]);
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
-  const [detailsOpen, setDetailsOpen] = useState({}); // used for inline card details
+  const [detailsOpen, setDetailsOpen] = useState({}); // inline card details
   const [cellules, setCellules] = useState([]);
   const [selectedCellules, setSelectedCellules] = useState({});
   const [view, setView] = useState("card");
-  const [popupMember, setPopupMember] = useState(null); // used for table modal
+  const [popupMember, setPopupMember] = useState(null); // modal in table view
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -177,60 +177,78 @@ export default function ListMembers() {
         </button>
       </div>
 
-      {/* === VUE CARTE (nouveau visuel inspiré de suivis-membres) === */}
+      {/* === VUE CARTE (compact + badge "Nouveau" top-right) === */}
       {view === "card" ? (
         <>
-          <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
+          <div className="w-full max-w-5xl space-y-6 transition-all duration-200">
             {nouveauxFiltres.length > 0 && (
               <div>
                 <p className="text-white text-lg mb-2 ml-1">
                   💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {nouveauxFiltres.map((m) => {
                     const isOpen = detailsOpen[m.id];
+                    const isNouveau =
+                      m.statut === "visiteur" || m.statut === "veut rejoindre ICC";
                     return (
                       <div
                         key={m.id}
-                        className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
+                        className="bg-white rounded-2xl shadow-md flex flex-col w-full transition-all duration-300 hover:shadow-lg overflow-hidden relative"
+                        style={{ minHeight: "unset" }}
                       >
                         {/* Bande colorée collée en haut */}
                         <div
                           className="w-full h-[6px] rounded-t-2xl"
                           style={{ backgroundColor: getBorderColor(m) }}
                         />
-                        <div className="p-4 flex flex-col items-center">
-                          <div className="font-bold text-black text-lg text-center mb-1">
+                        {/* Badge "Nouveau" top-right */}
+                        {isNouveau && (
+                          <span className="absolute top-2 right-2 text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full shadow-sm">
+                            Nouveau
+                          </span>
+                        )}
+
+                        <div className="p-3 flex flex-col items-center">
+                          <div className="font-semibold text-black text-sm text-center mb-1">
                             {m.prenom} {m.nom}
                           </div>
-                          <p className="text-sm text-gray-700 mb-1">📱 {m.telephone || "—"}</p>
-                          <p className="text-sm text-gray-700 mb-1">🕊 Statut : {m.statut || "—"}</p>
+                          <p className="text-xs text-gray-700 mb-1">📱 {m.telephone || "—"}</p>
+                          <p className="text-xs text-gray-700 mb-1">🕊 {m.statut || "—"}</p>
 
-                          <select
-                            value={m.statut}
-                            onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                            className="border rounded-md px-2 py-1 text-sm w-full text-black mb-2"
-                          >
-                            {statusOptions.map((s) => (
-                              <option key={s}>{s}</option>
-                            ))}
-                          </select>
+                          {/* Note: statut select removed from main card (moved to details) */}
 
                           <button
                             onClick={() => toggleDetails(m.id)}
-                            className="text-orange-500 underline text-sm mt-1"
+                            className="text-orange-500 underline text-xs mt-1"
                           >
                             {isOpen ? "Fermer détails" : "Détails"}
                           </button>
 
-                          {/* Détails inline (conserve tout le contenu du popup original) */}
+                          {/* Détails inline compact (conserve tout le contenu du popup original) */}
                           {isOpen && (
-                            <div className="text-gray-700 text-sm mt-3 space-y-2 w-full">
+                            <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                               <p className="text-sm">Besoin : {m.besoin || "—"}</p>
-                              <p className="text-sm">Infos : {m.infos_supplementaires || "—"}</p>
+                              <p className="text-sm">
+                                Infos : {m.infos_supplementaires || "—"}
+                              </p>
                               <p className="text-sm">Comment venu : {m.comment || "—"}</p>
 
-                              <p className="text-green-600 font-semibold mt-2">Cellule :</p>
+                              {/* Statut select moved here */}
+                              <div>
+                                <label className="text-black text-sm">Statut :</label>
+                                <select
+                                  value={m.statut}
+                                  onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                                  className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+                                >
+                                  {statusOptions.map((s) => (
+                                    <option key={s}>{s}</option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <p className="text-green-600 font-semibold mt-1">Cellule :</p>
                               <select
                                 value={selectedCellules[m.id] || ""}
                                 onChange={(e) =>
@@ -250,7 +268,7 @@ export default function ListMembers() {
                               </select>
 
                               {selectedCellules[m.id] && (
-                                <div className="mt-3">
+                                <div className="mt-2">
                                   <BoutonEnvoyer
                                     membre={m}
                                     cellule={cellules.find(
@@ -271,7 +289,7 @@ export default function ListMembers() {
             )}
 
             {anciensFiltres.length > 0 && (
-              <div className="mt-8">
+              <div className="mt-6">
                 <h3 className="text-white text-lg mb-3 font-semibold">
                   <span
                     style={{
@@ -284,50 +302,62 @@ export default function ListMembers() {
                   </span>
                   <span className="ml-2 w-3/4 inline-block h-px bg-gradient-to-r from-blue-500 to-gray-400"></span>
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {anciensFiltres.map((m) => {
                     const isOpen = detailsOpen[m.id];
+                    const isNouveau =
+                      m.statut === "visiteur" || m.statut === "veut rejoindre ICC";
                     return (
                       <div
                         key={m.id}
-                        className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
-                        // left border removed (we use top band for color)
+                        className="bg-white rounded-2xl shadow-md flex flex-col w-full transition-all duration-300 hover:shadow-lg overflow-hidden relative"
                       >
                         <div
                           className="w-full h-[6px] rounded-t-2xl"
                           style={{ backgroundColor: getBorderColor(m) }}
                         />
-                        <div className="p-4 flex flex-col items-center">
-                          <div className="font-bold text-black text-lg text-center mb-1">
+                        {isNouveau && (
+                          <span className="absolute top-2 right-2 text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full shadow-sm">
+                            Nouveau
+                          </span>
+                        )}
+                        <div className="p-3 flex flex-col items-center">
+                          <div className="font-semibold text-black text-sm text-center mb-1">
                             {m.prenom} {m.nom}
                           </div>
-                          <p className="text-sm text-gray-700 mb-1">📱 {m.telephone || "—"}</p>
-                          <p className="text-sm text-gray-700 mb-1">🕊 Statut : {m.statut || "—"}</p>
-
-                          <select
-                            value={m.statut}
-                            onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                            className="border rounded-md px-2 py-1 text-sm w-full text-black mb-2"
-                          >
-                            {statusOptions.map((s) => (
-                              <option key={s}>{s}</option>
-                            ))}
-                          </select>
+                          <p className="text-xs text-gray-700 mb-1">📱 {m.telephone || "—"}</p>
+                          <p className="text-xs text-gray-700 mb-1">🕊 {m.statut || "—"}</p>
 
                           <button
                             onClick={() => toggleDetails(m.id)}
-                            className="text-orange-500 underline text-sm mt-1"
+                            className="text-orange-500 underline text-xs mt-1"
                           >
                             {isOpen ? "Fermer détails" : "Détails"}
                           </button>
 
                           {isOpen && (
-                            <div className="text-gray-700 text-sm mt-3 space-y-2 w-full">
+                            <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                               <p className="text-sm">Besoin : {m.besoin || "—"}</p>
-                              <p className="text-sm">Infos : {m.infos_supplementaires || "—"}</p>
+                              <p className="text-sm">
+                                Infos : {m.infos_supplementaires || "—"}
+                              </p>
                               <p className="text-sm">Comment venu : {m.comment || "—"}</p>
 
-                              <p className="text-green-600 font-semibold mt-2">Cellule :</p>
+                              {/* Statut select moved here */}
+                              <div>
+                                <label className="text-black text-sm">Statut :</label>
+                                <select
+                                  value={m.statut}
+                                  onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                                  className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+                                >
+                                  {statusOptions.map((s) => (
+                                    <option key={s}>{s}</option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <p className="text-green-600 font-semibold mt-1">Cellule :</p>
                               <select
                                 value={selectedCellules[m.id] || ""}
                                 onChange={(e) =>
@@ -347,7 +377,7 @@ export default function ListMembers() {
                               </select>
 
                               {selectedCellules[m.id] && (
-                                <div className="mt-3">
+                                <div className="mt-2">
                                   <BoutonEnvoyer
                                     membre={m}
                                     cellule={cellules.find(
@@ -369,7 +399,7 @@ export default function ListMembers() {
           </div>
         </>
       ) : (
-        // === VUE TABLE (nouveau visuel) ===
+        // === VUE TABLE (inchangée) ===
         <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
           {loading ? (
             <p className="text-white">Chargement...</p>
@@ -384,7 +414,6 @@ export default function ListMembers() {
                 </tr>
               </thead>
               <tbody>
-                {/* Ligne texte “💖 Bien aimé venu le …” en blanc */}
                 {nouveauxFiltres.length > 0 && (
                   <tr>
                     <td colSpan={4} className="px-4 py-2 text-white font-semibold">
@@ -393,7 +422,6 @@ export default function ListMembers() {
                   </tr>
                 )}
 
-                {/* Nouveaux membres */}
                 {nouveauxFiltres.map((m, index) => (
                   <tr
                     key={m.id}
@@ -433,7 +461,6 @@ export default function ListMembers() {
                   </tr>
                 ))}
 
-                {/* Ligne séparatrice “Membres existants------” */}
                 {anciensFiltres.length > 0 && (
                   <tr>
                     <td colSpan={4} className="px-4 py-2 font-semibold">
@@ -451,7 +478,6 @@ export default function ListMembers() {
                   </tr>
                 )}
 
-                {/* Anciens membres */}
                 {anciensFiltres.map((m, index) => (
                   <tr
                     key={m.id}
@@ -493,7 +519,7 @@ export default function ListMembers() {
         </div>
       )}
 
-      {/* ✅ Popup (MODAL) Détails pour la VUE TABLE */}
+      {/* ✅ Popup (MODAL) Détails pour la VUE TABLE (inchangé, garde le statut select) */}
       {popupMember && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">

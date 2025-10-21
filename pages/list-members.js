@@ -209,11 +209,10 @@ export default function ListMembers() {
                           </span>
                         )}
 
-                        <div className="p-3 flex flex-col items-center">
+                        <div className="p-3 flex flex-col items-center"></div>
                           <h2 className="font-semibold text-black text-sm text-center mb-1">
                             {m.prenom} {m.nom}
-                          </h2>
-                          </div>
+                          </h2>                          
                           <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
                           <p className="text-sm text-gray-700 mb-1">🕊 {m.statut || "—"}</p>
 

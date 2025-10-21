@@ -324,30 +324,35 @@ export default function ListMembers() {
                           </span>
                         )}
                         <div className="p-3 flex flex-col items-center">
-                          <div className="font-semibold text-black text-sm text-center mb-1">
+                          <h2 className="font-semibold text-black text-lg text-center mb-1">
                             {m.prenom} {m.nom}
-                          </div>
-                          <p className="text-xs text-gray-700 mb-1">📱 {m.telephone || "—"}</p>
-                          <p className="text-xs text-gray-700 mb-1">🕊 {m.statut || "—"}</p>
+                          </h2>                       
+                          <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
+                          <p className="text-sm text-gray-700 mb-1">🕊 {m.statut || "—"}</p>
+
+                          {/* Note: statut select removed from main card (moved to details) */}
 
                           <button
                             onClick={() => toggleDetails(m.id)}
-                            className="text-orange-500 underline text-xs mt-1"
+                            className="text-orange-500 underline text-sm mt-1"
                           >
                             {isOpen ? "Fermer détails" : "Détails"}
                           </button>
 
+                          {/* Détails inline compact (conserve tout le contenu du popup original) */}
                           {isOpen && (
                             <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                              <p className="text-sm">Besoin : {m.besoin || "—"}</p>
+                              <p className="text-sm">💬 WhatsApp : {m.is_whatsapp ? "Oui" : "—"}</p>
+                              <p className="text-sm">🏙 Ville: {m.ville || "—"}</p>
+                              <p className="text-sm">❓Besoin : {m.besoin || "—"}</p>
                               <p className="text-sm">
-                                Infos : {m.infos_supplementaires || "—"}
+                                📝 Infos : {m.infos_supplementaires || "—"}
                               </p>
-                              <p className="text-sm">Comment venu : {m.comment || "—"}</p>
+                              <p className="text-sm">🧩 Comment est-il venu : {m.venu || "—"}</p>
 
                               {/* Statut select moved here */}
                               <div>
-                                <label className="text-black text-sm">Statut :</label>
+                                <label className="text-black text-sm">🕊 Statut :</label>
                                 <select
                                   value={m.statut}
                                   onChange={(e) => handleChangeStatus(m.id, e.target.value)}

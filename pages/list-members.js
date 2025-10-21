@@ -209,13 +209,13 @@ export default function ListMembers() {
                           </span>
                         )}
 
-                        <div className="p-4 flex flex-col items-center">
-                           <h2 className="font-bold text-black text-base text-center mb-1">
-                            {m.prenom} {m.nom}
-                          </div>
-                          <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
-                          <p className="text-sm text-gray-700 mb-1">🕊 {m.statut || "—"}</p>
-                          </div>
+                      <div className="p-4 flex flex-col items-center">
+                        <h2 className="font-bold text-black text-base text-center mb-1">
+                          {m.prenom} {m.nom}
+                        </h2>
+                        <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
+                        <p className="text-sm text-gray-700 mb-1">🕊 {m.statut || "—"}</p>
+                      </div>
                           {/* Note: statut select removed from main card (moved to details) */}
 
                           <button

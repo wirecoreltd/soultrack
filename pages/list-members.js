@@ -1,4 +1,5 @@
 // pages/list-members.js
+
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -222,7 +223,7 @@ export default function ListMembers() {
                         ))}
                       </select>
 
-                      <p className="text-green-600 font-semibold mt-2">Cellule :</p>
+                      <p className="text-green-600 font-semibold mt-1 text-sm">Cellule :</p>
                       <select
                         value={selectedCellules[m.id] || ""}
                         onChange={(e) =>
@@ -242,7 +243,7 @@ export default function ListMembers() {
                       </select>
 
                       {selectedCellules[m.id] && (
-                        <div className="mt-2">
+                        <div className="mt-1">
                           <BoutonEnvoyer
                             membre={m}
                             cellule={cellules.find(
@@ -263,11 +264,11 @@ export default function ListMembers() {
       {/* === VUE TABLE === */}
       {view === "table" && (
         <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
-          {/* ton code table inchangé */}
+          {/* Table inchangée */}
         </div>
       )}
 
-      {/* Popup détails table */}
+      {/* Popup détails table inchangé */}
       {popupMember && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
           {/* ton popup inchangé */}

@@ -53,7 +53,7 @@ export default function CreateInternalUserPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 💾 Création utilisateur
+  // 💾 Création utilisateur + cellule auto si ResponsableCellule
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -73,25 +73,55 @@ export default function CreateInternalUserPage() {
       // 2️⃣ Hachage du mot de passe (SHA-256)
       const hashedPassword = await hashPassword(formData.password);
 
-      // 3️⃣ Insertion dans Supabase
-      const { error } = await supabase.from("profiles").insert([
-        {
-          email: formData.email,
-          password_hash: hashedPassword,
-          prenom: formData.prenom,
-          nom: formData.nom,
-          role: formData.role,
-        },
-      ]);
+      // 3️⃣ Création du profil
+      const { data: newUser, error: createError } = await supabase
+        .from("profiles")
+        .insert([
+          {
+            email: formData.email,
+            password_hash: hashedPassword,
+            prenom: formData.prenom,
+            nom: formData.nom,
+            role: formData.role,
+          },
+        ])
+        .select()
+        .single();
 
-      if (error) {
-        console.error("Erreur Supabase:", error);
+      if (createError) {
+        console.error("Erreur Supabase:", createError);
         alert("❌ Erreur lors de la création de l’utilisateur !");
         return;
       }
 
+      // 4️⃣ Si c’est un ResponsableCellule, créer automatiquement une cellule liée
+      if (formData.role === "ResponsableCellule") {
+        const responsableNom = `${formData.prenom} ${formData.nom}`;
+        const celluleName = `Cellule de ${formData.prenom}`;
+
+        const { error: celluleError } = await supabase
+          .from("cellules")
+          .insert([
+            {
+              cellule: celluleName,
+              ville: "À définir",
+              responsable: responsableNom,
+              telephone: "N/A",
+              responsable_id: newUser.id, // ✅ lien direct vers le profil
+            },
+          ]);
+
+        if (celluleError) {
+          console.error("Erreur création cellule:", celluleError);
+          alert("⚠️ Utilisateur créé mais la cellule n’a pas pu être ajoutée.");
+        } else {
+          console.log(`✅ Cellule "${celluleName}" créée pour ${responsableNom}`);
+        }
+      }
+
       alert(`✅ Utilisateur "${formData.prenom} ${formData.nom}" créé avec succès !`);
       router.push("/");
+
     } catch (err) {
       console.error("Erreur inattendue:", err);
       alert("❌ Une erreur inattendue s’est produite");
@@ -213,4 +243,3 @@ export default function CreateInternalUserPage() {
     </div>
   );
 }
-

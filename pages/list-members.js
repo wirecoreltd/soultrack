@@ -237,6 +237,7 @@ export default function ListMembers() {
                             <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                               <p className="text-sm">💬 WhatsApp : {m.is_whatsapp ? "Oui" : "—"}</p>
                               <p className="text-sm">🏙 Ville: {m.ville || "—"}</p>
+                              <p className="text-sm"> Intégrer à: {m.cellule ? `${m.cellule.cellule} (${m.cellule.responsable})` : "—"}</p>
                               <p className="text-sm">❓Besoin : {m.besoin || "—"}</p>
                               <p className="text-sm">
                                 📝 Infos : {m.infos_supplementaires || "—"}

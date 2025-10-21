@@ -215,7 +215,7 @@ export default function ListMembers() {
                           </div>
                           <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
                           <p className="text-sm text-gray-700 mb-1">🕊 {m.statut || "—"}</p>
-
+                          </div>
                           {/* Note: statut select removed from main card (moved to details) */}
 
                           <button

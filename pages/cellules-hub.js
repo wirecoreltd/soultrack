@@ -1,3 +1,4 @@
+// pages/cellules-hub.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -12,25 +13,47 @@ export default function CellulesHub() {
   const [role, setRole] = useState(null);
   const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState(null);
 
-  // 🔹 Récupère les cellules depuis Supabase
-  const fetchCellules = async () => {
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("*")
-      .order("created_at", { ascending: false });
+  const fetchCellules = async (role, userId) => {
+    let query = supabase.from("cellules").select("*").order("created_at", { ascending: false });
+
+    // 🔹 Si c’est un ResponsableCellule, on filtre selon son profil
+    if (role === "ResponsableCellule" && userId) {
+      // On récupère le profil du responsable pour connaître son nom ou email
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("prenom, nom, email")
+        .eq("id", userId)
+        .single();
+
+      if (profileError || !profile) {
+        console.error("Profil non trouvé :", profileError);
+        setCellules([]);
+        setLoading(false);
+        return;
+      }
+
+      // 🔹 On filtre la table "cellules" selon le nom du responsable
+      query = query.eq("responsable", `${profile.prenom} ${profile.nom}`);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error("Erreur lors du chargement :", error);
     } else {
       setCellules(data);
     }
+
     setLoading(false);
   };
 
   useEffect(() => {
     const storedRole = localStorage.getItem("userRole");
-    if (!storedRole) {
+    const storedUserId = localStorage.getItem("userId");
+
+    if (!storedRole || !storedUserId) {
       router.push("/login");
       return;
     }
@@ -43,7 +66,8 @@ export default function CellulesHub() {
     }
 
     setRole(storedRole);
-    fetchCellules();
+    setUserId(storedUserId);
+    fetchCellules(storedRole, storedUserId);
   }, [router]);
 
   if (loading)
@@ -52,11 +76,8 @@ export default function CellulesHub() {
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* 🔹 Top bar */}
       <div className="w-full max-w-6xl flex justify-between items-center mb-6">
         <button
           onClick={() => router.back()}
@@ -70,12 +91,10 @@ export default function CellulesHub() {
         </div>
       </div>
 
-      {/* 🔹 Titre */}
       <h1 className="text-3xl font-login text-white mb-6 text-center">
         Gestion des Cellules
       </h1>
 
-      {/* 🔹 Bouton pour créer un responsable de cellule */}
       {role === "Admin" && (
         <button
           onClick={() => router.push("/admin/create-responsable-cellule")}
@@ -85,7 +104,6 @@ export default function CellulesHub() {
         </button>
       )}
 
-      {/* 🔹 Liste des cellules */}
       <div className="w-full max-w-5xl bg-white/20 backdrop-blur-md rounded-3xl p-6 shadow-lg">
         <h2 className="text-xl font-semibold text-white mb-4">
           📋 Liste des Cellules
@@ -110,7 +128,8 @@ export default function CellulesHub() {
                   <strong>Responsable :</strong> {cellule.responsable}
                 </p>
                 <p className="text-gray-700">
-                  <strong>Téléphone :</strong> {cellule.telephone_responsable || cellule.telephone}
+                  <strong>Téléphone :</strong>{" "}
+                  {cellule.telephone_responsable || cellule.telephone}
                 </p>
                 <p className="text-gray-500 text-sm mt-2">
                   Créée le {new Date(cellule.created_at).toLocaleDateString()}
@@ -121,7 +140,6 @@ export default function CellulesHub() {
         )}
       </div>
 
-      {/* 🔹 Verset */}
       <div className="mt-10 text-center text-white text-lg font-handwriting max-w-2xl">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         1 Corinthiens 12:14 ❤️

@@ -3,69 +3,56 @@
 
 import { useState } from "react";
 import { useRouter } from "next/router";
-import Image from "next/image";
 import supabase from "../lib/supabaseClient";
+import Image from "next/image";
 
-export default function LoginPage() {
+export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🧮 Fonction pour hasher le mot de passe (SHA-256)
-  async function hashPassword(password) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-  }
-
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setMessage("");
+
+    const { data, error } = await supabase
+      .from("users")
+      .select("id, email, password, roles") // 🧩 le champ doit s’appeler "roles" (tableau)
+      .eq("email", email)
+      .single();
+
+    if (error || !data) {
+      setMessage("Utilisateur non trouvé ❌");
+      setLoading(false);
+      return;
+    }
+
+    if (data.password !== password) {
+      setMessage("Mot de passe incorrect ❌");
+      setLoading(false);
+      return;
+    }
 
     try {
-      const hashedPassword = await hashPassword(password);
+      // 🧩 Si le champ "roles" est déjà un tableau → on le garde
+      // sinon on le transforme en tableau (ex: ["Admin"])
+      const rolesArray = Array.isArray(data.roles)
+        ? data.roles
+        : [data.roles || ""];
 
-      // 🔍 Vérifie dans la table profiles
-      const { data: user, error } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, email, password_hash, roles")
-        .eq("email", email)
-        .single();
+      // 🧠 Sauvegarde en localStorage (sous forme JSON)
+      localStorage.setItem("userEmail", data.email);
+      localStorage.setItem("userId", data.id);
+      localStorage.setItem("userRole", JSON.stringify(rolesArray));
 
-      if (error || !user) {
-        alert("❌ Utilisateur non trouvé !");
-        setLoading(false);
-        return;
-      }
-
-      if (user.password_hash !== hashedPassword) {
-        alert("❌ Mot de passe incorrect !");
-        setLoading(false);
-        return;
-      }
-
-      // ✅ Stocke l’ID et le rôle (en JSON)
-      localStorage.setItem("userId", user.id);
-      localStorage.setItem("userRole", JSON.stringify(user.roles));
-
-      // ✅ Redirection selon rôle
-      if (user.roles.includes("Admin")) {
-        router.push("/");
-      } else if (user.roles.includes("ResponsableEvangelisation")) {
-        router.push("/evangelisation-hub");
-      } else if (user.roles.includes("ResponsableIntegration")) {
-        router.push("/membres-hub");
-      } else if (user.roles.includes("ResponsableCellule")) {
-        router.push("/cellules-hub");
-      } else {
-        router.push("/");
-      }
+      setMessage("Connexion réussie ✅");
+      router.push("/");
     } catch (err) {
-      console.error(err);
-      alert("❌ Une erreur s’est produite lors de la connexion");
+      console.error("Erreur de login:", err);
+      setMessage("Erreur interne ⚠️");
     }
 
     setLoading(false);
@@ -73,48 +60,55 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col justify-center items-center p-6"
+      className="min-h-screen flex flex-col justify-center items-center text-center px-6"
       style={{
         background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
       }}
     >
-      <div className="flex flex-col items-center mb-6">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={90} height={90} />
-        <h1 className="text-4xl text-white font-bold mt-4 mb-2">SoulTrack</h1>
-        <p className="text-white text-center max-w-md">
-          Connectez-vous pour suivre et servir avec excellence 💪
-        </p>
-      </div>
+      {/* Logo */}
+      <Image
+        src="/logo.png"
+        alt="SoulTrack Logo"
+        width={100}
+        height={100}
+        className="mb-6"
+      />
+
+      <h1 className="text-4xl font-bold text-white mb-4">Connexion</h1>
 
       <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md"
+        onSubmit={handleLogin}
+        className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm"
       >
         <input
           type="email"
           placeholder="Email"
+          className="w-full mb-4 p-3 border rounded-xl focus:outline-none"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full border rounded-lg px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
 
         <input
           type="password"
           placeholder="Mot de passe"
+          className="w-full mb-4 p-3 border rounded-xl focus:outline-none"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full border rounded-lg px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-gradient-to-r from-blue-600 to-blue-400 text-white py-2 rounded-xl font-semibold hover:opacity-90 transition"
+          className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition"
         >
           {loading ? "Connexion..." : "Se connecter"}
         </button>
+
+        {message && (
+          <p className="mt-4 text-gray-700 font-semibold">{message}</p>
+        )}
       </form>
     </div>
   );

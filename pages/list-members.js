@@ -26,15 +26,22 @@ export default function ListMembers() {
   }, []);
 
   const fetchMembers = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("membres")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (!error && data) setMembers(data);
-    else setMembers([]);
-    setLoading(false);
-  };
+  setLoading(true);
+  const { data, error } = await supabase
+    .from("membres")
+    .select(`
+      *,
+      cellule:cellule_id (
+        cellule,
+        responsable
+      )
+    `)
+    .order("created_at", { ascending: false });
+
+  if (!error && data) setMembers(data);
+  else setMembers([]);
+  setLoading(false);
+};
 
   const fetchCellules = async () => {
     const { data, error } = await supabase

@@ -213,8 +213,8 @@ export default function ListMembers() {
                           <div className="font-semibold text-black text-sm text-center mb-1">
                             {m.prenom} {m.nom}
                           </div>
-                          <p className="text-xs text-gray-700 mb-1">📱 {m.telephone || "—"}</p>
-                          <p className="text-xs text-gray-700 mb-1">🕊 {m.statut || "—"}</p>
+                          <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
+                          <p className="text-sm text-gray-700 mb-1">🕊 {m.statut || "—"}</p>
 
                           {/* Note: statut select removed from main card (moved to details) */}
 
@@ -228,15 +228,17 @@ export default function ListMembers() {
                           {/* Détails inline compact (conserve tout le contenu du popup original) */}
                           {isOpen && (
                             <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+                              <p className="text-sm">💬 WhatsApp : {m.whatsapp || "—"}</p>
+                              <p className="text-sm">🏙 Ville: {m.ville || "—"}</p>
                               <p className="text-sm">Besoin : {m.besoin || "—"}</p>
                               <p className="text-sm">
-                                Infos : {m.infos_supplementaires || "—"}
+                                📝 Infos : {m.infos_supplementaires || "—"}
                               </p>
-                              <p className="text-sm">Comment venu : {m.comment || "—"}</p>
+                              <p className="text-sm">🧩 Comment est-il venu : {m.comment || "—"}</p>
 
                               {/* Statut select moved here */}
                               <div>
-                                <label className="text-black text-sm">Statut :</label>
+                                <label className="text-black text-sm">🕊 Statut :</label>
                                 <select
                                   value={m.statut}
                                   onChange={(e) => handleChangeStatus(m.id, e.target.value)}
@@ -248,7 +250,7 @@ export default function ListMembers() {
                                 </select>
                               </div>
 
-                              <p className="text-green-600 font-semibold mt-1">Cellule :</p>
+                              <p className="text-green-600 font-semibold mt-1">🏠 Cellule :</p>
                               <select
                                 value={selectedCellules[m.id] || ""}
                                 onChange={(e) =>

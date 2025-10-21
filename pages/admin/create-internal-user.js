@@ -1,4 +1,5 @@
 // pages/admin/create-internal-user.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -25,7 +26,7 @@ export default function CreateUserPage() {
     nom: "",
     email: "",
     password: "",
-    roles: [], // ⚡ tableau pour plusieurs rôles
+    roles: [], // ✅ tableau pour plusieurs rôles
   });
 
   // 🧩 Vérification d’accès
@@ -57,7 +58,7 @@ export default function CreateUserPage() {
     const value = e.target.value;
     let newRoles = [...formData.roles];
     if (e.target.checked) {
-      newRoles.push(value);
+      if (!newRoles.includes(value)) newRoles.push(value);
     } else {
       newRoles = newRoles.filter(r => r !== value);
     }
@@ -68,7 +69,6 @@ export default function CreateUserPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // 1️⃣ Vérifie si l’email existe déjà
       const { data: existingUser } = await supabase
         .from("profiles")
         .select("id")
@@ -80,10 +80,9 @@ export default function CreateUserPage() {
         return;
       }
 
-      // 2️⃣ Hachage du mot de passe
       const hashedPassword = await hashPassword(formData.password);
 
-      // 3️⃣ Création du profil avec tableau de rôles
+      // 🔹 Crée le profil avec tableau de rôles
       const { data: newUser, error: createError } = await supabase
         .from("profiles")
         .insert([
@@ -92,7 +91,7 @@ export default function CreateUserPage() {
             password_hash: hashedPassword,
             prenom: formData.prenom,
             nom: formData.nom,
-            roles: formData.roles, // ✅ tableau
+            roles: formData.roles, // ✅ tableau multi-rôles
           },
         ])
         .select()
@@ -104,7 +103,7 @@ export default function CreateUserPage() {
         return;
       }
 
-      // 4️⃣ Si ResponsableCellule est coché, créer automatiquement une cellule
+      // 🔹 Si ResponsableCellule est coché, créer automatiquement une cellule
       if (formData.roles.includes("ResponsableCellule")) {
         const responsableNom = `${formData.prenom} ${formData.nom}`;
         const celluleName = `Cellule de ${formData.prenom}`;
@@ -200,3 +199,4 @@ export default function CreateUserPage() {
     </div>
   );
 }
+

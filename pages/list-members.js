@@ -265,19 +265,7 @@ export default function ListMembers() {
 
                       <p className="text-sm text-gray-600 mb-2">
                         📱 {m.telephone || "—"}
-                      </p>
-
-                      <select
-                        value={m.statut}
-                        onChange={(e) =>
-                          handleChangeStatus(m.id, e.target.value)
-                        }
-                        className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
-                      >
-                        {statusOptions.map((s) => (
-                          <option key={s}>{s}</option>
-                        ))}
-                      </select>
+                      </p>                     
 
                       <p
                         className="text-blue-500 underline cursor-pointer text-sm"

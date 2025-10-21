@@ -1,105 +1,146 @@
+//pages/login.js
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const router = useRouter();
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // 🔐 Fonction pour hacher le mot de passe avec SHA-256
+  const hashPassword = async (password) => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    return hashHex;
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setMessage("Connexion en cours...");
+    setLoading(true);
+    setError(null);
 
     try {
-      const { data, error } = await supabase
+      // 🔎 Récupération du profil via email
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("email", email)
         .single();
 
-      if (error || !data) {
-        setMessage("❌ Utilisateur non trouvé !");
+      if (profileError || !profile) {
+        setError("Utilisateur introuvable !");
+        setLoading(false);
         return;
       }
 
-      // ⚙️ Vérifie le mot de passe
-      if (data.password_hash !== password) {
-        setMessage("❌ Mot de passe incorrect !");
+      // 🔑 Vérification du mot de passe (hash local SHA-256)
+      const hashed = await hashPassword(password);
+      if (hashed !== profile.password_hash) {
+        setError("Mot de passe incorrect !");
+        setLoading(false);
         return;
       }
 
-      // ✅ Formatage du profil utilisateur
-      const fullName = `${data.prenom} ${data.nom}`;
-      const formattedRole = data.role || "Membre";
+      // 🧩 Gestion multi-rôles
+      let formattedRole = "Membre";
+      if (Array.isArray(profile.roles) && profile.roles.length > 0) {
+        if (profile.roles.includes("Admin")) formattedRole = "Admin";
+        else if (profile.roles.includes("ResponsableIntegration"))
+          formattedRole = "ResponsableIntegration";
+        else if (profile.roles.includes("ResponsableEvangelisation"))
+          formattedRole = "ResponsableEvangelisation";
+        else if (profile.roles.includes("ResponsableCellule"))
+          formattedRole = "ResponsableCellule";
+      } else if (profile.role) {
+        formattedRole = profile.role; // compatibilité ancienne colonne
+      }
 
-      // ✅ Sauvegarde dans le localStorage
-      localStorage.setItem("userEmail", data.email);
-      localStorage.setItem("userName", fullName);
+      // 💾 Stockage local
+      localStorage.setItem("userId", profile.id);
       localStorage.setItem("userRole", formattedRole);
-      localStorage.setItem("userId", data.id);
 
-      // ✅ Multi-rôles (si un jour tu ajoutes un tableau)
-      if (Array.isArray(data.roles)) {
-        localStorage.setItem("userRoles", JSON.stringify(data.roles));
-      } else {
-        localStorage.setItem("userRoles", JSON.stringify([formattedRole]));
-      }
-
-      // ✅ Redirection selon le rôle principal
-      if (formattedRole === "Admin") {
-        router.push("/index");
-      } else if (formattedRole === "ResponsableIntegration") {
-        router.push("/membres-hub");
-      } else if (formattedRole === "ResponsableEvangelisation") {
-        router.push("/evangelisation-hub");
-      } else if (formattedRole === "ResponsableCellule") {
-        router.push("/cellules-hub");
-      } else {
-        router.push("/index");
+      // 🚀 Redirection selon le rôle
+      switch (formattedRole) {
+        case "Admin":
+          router.push("/index");
+          break;
+        case "ResponsableIntegration":
+          router.push("/membres-hub");
+          break;
+        case "ResponsableEvangelisation":
+          router.push("/evangelisation-hub");
+          break;
+        case "ResponsableCellule":
+          router.push("/cellules-hub");
+          break;
+        default:
+          router.push("/index");
       }
     } catch (err) {
-      console.error("Erreur login :", err);
-      setMessage("❌ Erreur lors de la connexion !");
+      console.error("Erreur inattendue:", err);
+      setError("Erreur inattendue lors de la connexion !");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-blue-50">
-      <form
-        onSubmit={handleLogin}
-        className="bg-white p-6 rounded-xl shadow-lg w-96 space-y-4"
-      >
-        <h2 className="text-center text-2xl font-bold text-blue-700">
-          Connexion
-        </h2>
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full p-2 border rounded-lg"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Mot de passe"
-          className="w-full p-2 border rounded-lg"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-        >
-          Se connecter
-        </button>
-        <p className="text-center text-sm text-gray-500">{message}</p>
-      </form>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
+      <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
+        <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <img src="/logo.png" alt="Logo SoulTrack" className="w-12 h-12 object-contain" />
+          SoulTrack
+        </h1>
+
+        <p className="text-center text-gray-700 mb-6">
+          Bienvenue sur SoulTrack !<br />
+          Une plateforme pour garder le contact, organiser les visites,
+          et soutenir chaque membre dans sa vie spirituelle.
+        </p>
+
+        <form onSubmit={handleLogin} className="flex flex-col w-full gap-4">
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
+            required
+            autoComplete="email"
+          />
+
+          <input
+            type="password"
+            placeholder="Mot de passe"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
+            required
+            autoComplete="current-password"
+          />
+
+          {error && <p className="text-red-500 text-center">{error}</p>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
+          >
+            {loading ? "Connexion..." : "Se connecter"}
+          </button>
+        </form>
+
+        <p className="text-center italic font-semibold mt-4 text-green-600">
+          "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
+        </p>
+      </div>
     </div>
   );
 }

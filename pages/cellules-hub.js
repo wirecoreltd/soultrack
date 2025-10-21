@@ -14,9 +14,10 @@ export default function CellulesHub() {
       try {
         const userId = localStorage.getItem("userId");
 
+        // 🔹 Charger le profil du responsable
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .select("prenom, nom, role, id")
+          .select("id, prenom, nom, role")
           .eq("id", userId)
           .single();
 
@@ -25,25 +26,22 @@ export default function CellulesHub() {
         console.log("✅ Profil chargé :", profile);
 
         if (profile.role === "ResponsableCellule") {
-          const responsableNom = `${profile.prenom} ${profile.nom}`;
-          console.log("Responsable :", responsableNom);
-
-          // 🔹 Récupère toutes les cellules (au cas où le responsable en a plusieurs)
+          // 🔹 Trouver la cellule liée à ce responsable
           const { data: cellulesData, error: celluleError } = await supabase
             .from("cellules")
-            .select("id, cellule, ville, responsable, telephone")
-            .eq("responsable", responsableNom);
+            .select("id, cellule, ville, responsable_id, telephone")
+            .eq("responsable_id", profile.id);
 
           if (celluleError) throw celluleError;
           if (!cellulesData || cellulesData.length === 0)
-            throw new Error("Aucune cellule trouvée !");
+            throw new Error("Aucune cellule trouvée pour ce responsable !");
           console.log("✅ Cellules trouvées :", cellulesData);
 
-          // 🔹 On prend la première cellule du responsable
+          // 🔹 On prend la première cellule trouvée
           const celluleData = cellulesData[0];
           setCellule(celluleData);
 
-          // 🔹 On charge les membres liés à cette cellule
+          // 🔹 Charger les membres liés à cette cellule
           const { data: membresData, error: membresError } = await supabase
             .from("membres")
             .select("id, prenom, nom, telephone, cellule_id")
@@ -51,18 +49,13 @@ export default function CellulesHub() {
 
           if (membresError) throw membresError;
 
-          if (!membresData || membresData.length === 0) {
-            console.warn("Aucun membre trouvé pour cette cellule.");
-          } else {
-            console.log("✅ Membres :", membresData);
-          }
-
+          console.log("✅ Membres trouvés :", membresData);
           setMembres(membresData);
         }
 
         setLoading(false);
       } catch (err) {
-        console.error("❌ Erreur pendant fetchData :", err);
+        console.error("❌ Erreur pendant fetchData :", err.message);
         setLoading(false);
       }
     };
@@ -80,7 +73,7 @@ export default function CellulesHub() {
             📍 Cellule : {cellule.cellule}
           </h1>
           <p className="text-sm text-gray-600 mb-2">
-            Responsable : {cellule.responsable}
+            Responsable : {cellule.responsable_id}
           </p>
           <p className="text-sm text-gray-600 mb-4">Ville : {cellule.ville}</p>
 

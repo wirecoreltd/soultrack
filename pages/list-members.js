@@ -146,7 +146,7 @@ export default function ListMembers() {
         </p>
       ) : view === "card" ? (
         // === 🌟 VUE CARTE ===
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 w-full max-w-6xl">
           {members.map((m) => {
             const isOpen = detailsOpen[m.id];
             const isNew =
@@ -172,7 +172,7 @@ export default function ListMembers() {
                 )}
 
                 {/* Contenu principal de la carte */}
-                <div className="p-3 flex flex-col items-center text-sm">
+                <div className="p-2.5 flex flex-col items-center text-sm">
                   <h2 className="font-bold text-black text-center mb-0.5">
                     {m.prenom} {m.nom}
                   </h2>
@@ -234,9 +234,7 @@ export default function ListMembers() {
                             : "bg-green-600 hover:bg-green-700"
                         }`}
                       >
-                        {updating[m.id]
-                          ? "Mise à jour..."
-                          : "Mettre à jour"}
+                        {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
                       </button>
                     </div>
                   )}
@@ -246,7 +244,7 @@ export default function ListMembers() {
           })}
         </div>
       ) : (
-        // === 🧾 VUE TABLE (inchangée) ===
+        // === VUE TABLE ===
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">

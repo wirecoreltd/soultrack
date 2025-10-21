@@ -220,7 +220,7 @@ export default function ListMembers() {
 
                           <button
                             onClick={() => toggleDetails(m.id)}
-                            className="text-orange-500 underline text-xs mt-1"
+                            className="text-orange-500 underline text-sm mt-1"
                           >
                             {isOpen ? "Fermer détails" : "Détails"}
                           </button>
@@ -230,7 +230,7 @@ export default function ListMembers() {
                             <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                               <p className="text-sm">💬 WhatsApp : {m.whatsapp || "—"}</p>
                               <p className="text-sm">🏙 Ville: {m.ville || "—"}</p>
-                              <p className="text-sm">Besoin : {m.besoin || "—"}</p>
+                              <p className="text-sm">❓Besoin : {m.besoin || "—"}</p>
                               <p className="text-sm">
                                 📝 Infos : {m.infos_supplementaires || "—"}
                               </p>

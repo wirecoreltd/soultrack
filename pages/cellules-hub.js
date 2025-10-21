@@ -11,49 +11,15 @@ import { canAccessPage } from "../lib/accessControl";
 export default function CellulesHub() {
   const router = useRouter();
   const [role, setRole] = useState(null);
-  const [cellules, setCellules] = useState([]);
+  const [cellule, setCellule] = useState(null);
+  const [membres, setMembres] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState(null);
-
-  const fetchCellules = async (role, userId) => {
-    let query = supabase.from("cellules").select("*").order("created_at", { ascending: false });
-
-    // 🔹 Si c’est un ResponsableCellule, on filtre selon son profil
-    if (role === "ResponsableCellule" && userId) {
-      // On récupère le profil du responsable pour connaître son nom ou email
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("prenom, nom, email")
-        .eq("id", userId)
-        .single();
-
-      if (profileError || !profile) {
-        console.error("Profil non trouvé :", profileError);
-        setCellules([]);
-        setLoading(false);
-        return;
-      }
-
-      // 🔹 On filtre la table "cellules" selon le nom du responsable
-      query = query.eq("responsable", `${profile.prenom} ${profile.nom}`);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error("Erreur lors du chargement :", error);
-    } else {
-      setCellules(data);
-    }
-
-    setLoading(false);
-  };
 
   useEffect(() => {
     const storedRole = localStorage.getItem("userRole");
-    const storedUserId = localStorage.getItem("userId");
+    const userId = localStorage.getItem("userId");
 
-    if (!storedRole || !storedUserId) {
+    if (!storedRole || !userId) {
       router.push("/login");
       return;
     }
@@ -66,18 +32,81 @@ export default function CellulesHub() {
     }
 
     setRole(storedRole);
-    setUserId(storedUserId);
-    fetchCellules(storedRole, storedUserId);
+
+    const fetchData = async () => {
+      try {
+        // 🔹 Récupérer le profil du responsable
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("prenom, nom, role, id")
+          .eq("id", userId)
+          .single();
+
+        if (profileError || !profile) {
+          console.error("Erreur profil :", profileError);
+          setLoading(false);
+          return;
+        }
+
+        // 🔹 Si c’est un ResponsableCellule, on trouve sa cellule
+        if (profile.role === "ResponsableCellule") {
+          const responsableNom = `${profile.prenom} ${profile.nom}`;
+
+          const { data: celluleData, error: celluleError } = await supabase
+            .from("cellules")
+            .select("id, cellule, ville, responsable, telephone")
+            .eq("responsable", responsableNom)
+            .single();
+
+          if (celluleError || !celluleData) {
+            console.error("Cellule non trouvée :", celluleError);
+            setLoading(false);
+            return;
+          }
+
+          setCellule(celluleData);
+
+          // 🔹 Récupérer les membres liés à cette cellule
+          const { data: membresData, error: membresError } = await supabase
+            .from("membres")
+            .select(`
+              id,
+              prenom,
+              nom,
+              telephone,
+              cellule:cellule_id (cellule)
+            `)
+            .eq("cellule_id", celluleData.id);
+
+          if (membresError) {
+            console.error("Erreur membres :", membresError);
+          } else {
+            setMembres(membresData);
+          }
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error("Erreur générale :", err);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [router]);
 
-  if (loading)
-    return <div className="text-center mt-20 text-white">Chargement...</div>;
+  if (loading) {
+    return <div className="text-white text-center mt-20">Chargement...</div>;
+  }
 
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+      style={{
+        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
+      }}
     >
+      {/* HEADER */}
       <div className="w-full max-w-6xl flex justify-between items-center mb-6">
         <button
           onClick={() => router.back()}
@@ -91,48 +120,52 @@ export default function CellulesHub() {
         </div>
       </div>
 
-      <h1 className="text-3xl font-login text-white mb-6 text-center">
-        Gestion des Cellules
+      {/* TITRE */}
+      <h1 className="text-3xl font-bold text-white mb-6 text-center">
+        📋 Tableau de bord de ta Cellule
       </h1>
 
-      {role === "Admin" && (
-        <button
-          onClick={() => router.push("/admin/create-responsable-cellule")}
-          className="mb-8 bg-gradient-to-r from-purple-500 to-pink-400 text-white px-6 py-3 rounded-xl shadow-md hover:shadow-lg transition font-semibold"
-        >
-          ➕ Créer un Responsable de Cellule
-        </button>
+      {/* INFOS CELLULE */}
+      {cellule ? (
+        <div className="bg-white/20 backdrop-blur-md rounded-3xl p-6 shadow-lg w-full max-w-3xl mb-8">
+          <h2 className="text-2xl text-white font-semibold mb-2">
+            Cellule : {cellule.cellule}
+          </h2>
+          <p className="text-white">Ville : {cellule.ville}</p>
+          <p className="text-white">Responsable : {cellule.responsable}</p>
+          <p className="text-white">
+            Téléphone : {cellule.telephone || "—"}
+          </p>
+        </div>
+      ) : (
+        <p className="text-white mb-8">Aucune cellule trouvée.</p>
       )}
 
-      <div className="w-full max-w-5xl bg-white/20 backdrop-blur-md rounded-3xl p-6 shadow-lg">
+      {/* LISTE DES MEMBRES */}
+      <div className="w-full max-w-4xl bg-white/20 backdrop-blur-md rounded-3xl p-6 shadow-lg">
         <h2 className="text-xl font-semibold text-white mb-4">
-          📋 Liste des Cellules
+          👥 Membres de ta cellule
         </h2>
 
-        {cellules.length === 0 ? (
-          <p className="text-white text-center">Aucune cellule enregistrée.</p>
+        {membres.length === 0 ? (
+          <p className="text-white text-center">
+            Aucun membre trouvé pour cette cellule.
+          </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {cellules.map((cellule) => (
+            {membres.map((membre) => (
               <div
-                key={cellule.id}
+                key={membre.id}
                 className="bg-white rounded-2xl shadow-md p-4 border-t-4 border-purple-500 hover:shadow-xl transition"
               >
                 <h3 className="text-lg font-bold text-gray-800 mb-1">
-                  {cellule.cellule}
+                  {membre.prenom} {membre.nom}
                 </h3>
                 <p className="text-gray-700">
-                  <strong>Ville :</strong> {cellule.ville}
+                  📞 {membre.telephone || "Non renseigné"}
                 </p>
-                <p className="text-gray-700">
-                  <strong>Responsable :</strong> {cellule.responsable}
-                </p>
-                <p className="text-gray-700">
-                  <strong>Téléphone :</strong>{" "}
-                  {cellule.telephone_responsable || cellule.telephone}
-                </p>
-                <p className="text-gray-500 text-sm mt-2">
-                  Créée le {new Date(cellule.created_at).toLocaleDateString()}
+                <p className="text-gray-600 text-sm mt-2">
+                  Cellule : {membre.cellule?.cellule || cellule.cellule}
                 </p>
               </div>
             ))}
@@ -140,9 +173,10 @@ export default function CellulesHub() {
         )}
       </div>
 
+      {/* VERSET */}
       <div className="mt-10 text-center text-white text-lg font-handwriting max-w-2xl">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
-        1 Corinthiens 12:14 ❤️
+        <span className="font-semibold">1 Corinthiens 12:14 ❤️</span>
       </div>
     </div>
   );

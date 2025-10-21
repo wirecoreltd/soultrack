@@ -210,8 +210,8 @@ export default function ListMembers() {
                           </span>
                         )}
 
-                        <div className="p-3 flex flex-col items-center">
-                          <div className="font-semibold text-black text-sm text-center mb-1">
+                        <div className="p-4 flex flex-col items-center">
+                          <h2 className="font-bold text-black text-base text-center mb-1">
                             {m.prenom} {m.nom}
                           </div>
                           <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
@@ -401,13 +401,10 @@ export default function ListMembers() {
         </>
       ) : (
         // === VUE TABLE (inchangée) ===
-        <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
-          {loading ? (
-            <p className="text-white">Chargement...</p>
-          ) : (
-            <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-              <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-lg">
-                <tr>
+        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
+              <tr>
                   <th className="px-4 py-2 rounded-l-lg">Nom complet</th>
                   <th className="px-4 py-2">Téléphone</th>
                   <th className="px-4 py-2">Statut</th>

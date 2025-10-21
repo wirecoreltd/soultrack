@@ -1,4 +1,3 @@
-
 // pages/list-members.js
 
 "use client";
@@ -89,7 +88,7 @@ export default function ListMembers() {
 
   const filterBySearch = (list) =>
     list.filter((m) =>
-      `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase())
+      ${m.prenom} ${m.nom}.toLowerCase().includes(search.toLowerCase())
     );
 
   const nouveauxFiltres = filterBySearch(
@@ -210,18 +209,18 @@ export default function ListMembers() {
                           </span>
                         )}
 
-                        <div className="p-4 flex flex-col items-center">
-                          <h2 className="font-bold text-black text-base text-center mb-1">
+                        <div className="p-3 flex flex-col items-center">
+                          <div className="font-semibold text-black text-sm text-center mb-1">
                             {m.prenom} {m.nom}
                           </div>
-                          <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
-                          <p className="text-sm text-gray-700 mb-1">🕊 {m.statut || "—"}</p>
+                          <p className="text-xs text-gray-700 mb-1">📱 {m.telephone || "—"}</p>
+                          <p className="text-xs text-gray-700 mb-1">🕊 {m.statut || "—"}</p>
 
                           {/* Note: statut select removed from main card (moved to details) */}
 
                           <button
                             onClick={() => toggleDetails(m.id)}
-                            className="text-orange-500 underline text-sm mt-1"
+                            className="text-orange-500 underline text-xs mt-1"
                           >
                             {isOpen ? "Fermer détails" : "Détails"}
                           </button>
@@ -231,13 +230,13 @@ export default function ListMembers() {
                             <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                               <p className="text-sm">Besoin : {m.besoin || "—"}</p>
                               <p className="text-sm">
-                                📝 Infos : {m.infos_supplementaires || "—"}
+                                Infos : {m.infos_supplementaires || "—"}
                               </p>
-                              <p className="text-sm">🧩 Comment venu : {m.comment || "—"}</p>
+                              <p className="text-sm">Comment venu : {m.comment || "—"}</p>
 
                               {/* Statut select moved here */}
                               <div>
-                                <label className="text-black text-sm">🕊 Statut :</label>
+                                <label className="text-black text-sm">Statut :</label>
                                 <select
                                   value={m.statut}
                                   onChange={(e) => handleChangeStatus(m.id, e.target.value)}
@@ -249,7 +248,7 @@ export default function ListMembers() {
                                 </select>
                               </div>
 
-                              <p className="text-green-600 font-semibold mt-1">🏠 Cellule :</p>
+                              <p className="text-green-600 font-semibold mt-1">Cellule :</p>
                               <select
                                 value={selectedCellules[m.id] || ""}
                                 onChange={(e) =>
@@ -401,10 +400,13 @@ export default function ListMembers() {
         </>
       ) : (
         // === VUE TABLE (inchangée) ===
-        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
-              <tr>
+        <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
+          {loading ? (
+            <p className="text-white">Chargement...</p>
+          ) : (
+            <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+              <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-lg">
+                <tr>
                   <th className="px-4 py-2 rounded-l-lg">Nom complet</th>
                   <th className="px-4 py-2">Téléphone</th>
                   <th className="px-4 py-2">Statut</th>
@@ -423,9 +425,9 @@ export default function ListMembers() {
                 {nouveauxFiltres.map((m, index) => (
                   <tr
                     key={m.id}
-                    className={`${
+                    className={${
                       index < nouveauxFiltres.length - 1 ? "border-b border-gray-400" : ""
-                    } hover:bg-white/10 transition duration-150`}
+                    } hover:bg-white/10 transition duration-150}
                   >
                     <td
                       className="px-4 py-2 border-l-4"
@@ -479,9 +481,9 @@ export default function ListMembers() {
                 {anciensFiltres.map((m, index) => (
                   <tr
                     key={m.id}
-                    className={`${
+                    className={${
                       index < anciensFiltres.length - 1 ? "border-b border-gray-400" : ""
-                    } hover:bg-white/10 transition duration-150`}
+                    } hover:bg-white/10 transition duration-150}
                   >
                     <td
                       className="px-4 py-2 border-l-4"

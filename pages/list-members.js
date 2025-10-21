@@ -88,7 +88,7 @@ export default function ListMembers() {
 
   const filterBySearch = (list) =>
     list.filter((m) =>
-      ${m.prenom} ${m.nom}.toLowerCase().includes(search.toLowerCase())
+      `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase())
     );
 
   const nouveauxFiltres = filterBySearch(
@@ -425,9 +425,9 @@ export default function ListMembers() {
                 {nouveauxFiltres.map((m, index) => (
                   <tr
                     key={m.id}
-                    className={${
+                    className={`${
                       index < nouveauxFiltres.length - 1 ? "border-b border-gray-400" : ""
-                    } hover:bg-white/10 transition duration-150}
+                    } hover:bg-white/10 transition duration-150`}
                   >
                     <td
                       className="px-4 py-2 border-l-4"
@@ -481,9 +481,9 @@ export default function ListMembers() {
                 {anciensFiltres.map((m, index) => (
                   <tr
                     key={m.id}
-                    className={${
+                    className={`${
                       index < anciensFiltres.length - 1 ? "border-b border-gray-400" : ""
-                    } hover:bg-white/10 transition duration-150}
+                    } hover:bg-white/10 transition duration-150`}
                   >
                     <td
                       className="px-4 py-2 border-l-4"

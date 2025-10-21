@@ -1,146 +1,121 @@
-//pages/login.js
+// ✅ pages/login.js
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/router";
+import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 🔐 Fonction pour hacher le mot de passe avec SHA-256
-  const hashPassword = async (password) => {
+  // 🧮 Fonction pour hasher le mot de passe (SHA-256)
+  async function hashPassword(password) {
     const encoder = new TextEncoder();
     const data = encoder.encode(password);
     const hashBuffer = await crypto.subtle.digest("SHA-256", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-    return hashHex;
-  };
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     try {
-      // 🔎 Récupération du profil via email
-      const { data: profile, error: profileError } = await supabase
+      const hashedPassword = await hashPassword(password);
+
+      // 🔍 Vérifie dans la table profiles
+      const { data: user, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, prenom, nom, email, password_hash, roles")
         .eq("email", email)
         .single();
 
-      if (profileError || !profile) {
-        setError("Utilisateur introuvable !");
+      if (error || !user) {
+        alert("❌ Utilisateur non trouvé !");
         setLoading(false);
         return;
       }
 
-      // 🔑 Vérification du mot de passe (hash local SHA-256)
-      const hashed = await hashPassword(password);
-      if (hashed !== profile.password_hash) {
-        setError("Mot de passe incorrect !");
+      if (user.password_hash !== hashedPassword) {
+        alert("❌ Mot de passe incorrect !");
         setLoading(false);
         return;
       }
 
-      // 🧩 Gestion multi-rôles
-      let formattedRole = "Membre";
-      if (Array.isArray(profile.roles) && profile.roles.length > 0) {
-        if (profile.roles.includes("Admin")) formattedRole = "Admin";
-        else if (profile.roles.includes("ResponsableIntegration"))
-          formattedRole = "ResponsableIntegration";
-        else if (profile.roles.includes("ResponsableEvangelisation"))
-          formattedRole = "ResponsableEvangelisation";
-        else if (profile.roles.includes("ResponsableCellule"))
-          formattedRole = "ResponsableCellule";
-      } else if (profile.role) {
-        formattedRole = profile.role; // compatibilité ancienne colonne
-      }
+      // ✅ Stocke l’ID et le rôle (en JSON)
+      localStorage.setItem("userId", user.id);
+      localStorage.setItem("userRole", JSON.stringify(user.roles));
 
-      // 💾 Stockage local
-      localStorage.setItem("userId", profile.id);
-      localStorage.setItem("userRole", formattedRole);
-
-      // 🚀 Redirection selon le rôle
-      switch (formattedRole) {
-        case "Admin":
-          router.push("/index");
-          break;
-        case "ResponsableIntegration":
-          router.push("/membres-hub");
-          break;
-        case "ResponsableEvangelisation":
-          router.push("/evangelisation-hub");
-          break;
-        case "ResponsableCellule":
-          router.push("/cellules-hub");
-          break;
-        default:
-          router.push("/index");
+      // ✅ Redirection selon rôle
+      if (user.roles.includes("Admin")) {
+        router.push("/");
+      } else if (user.roles.includes("ResponsableEvangelisation")) {
+        router.push("/evangelisation-hub");
+      } else if (user.roles.includes("ResponsableIntegration")) {
+        router.push("/membres-hub");
+      } else if (user.roles.includes("ResponsableCellule")) {
+        router.push("/cellules-hub");
+      } else {
+        router.push("/");
       }
     } catch (err) {
-      console.error("Erreur inattendue:", err);
-      setError("Erreur inattendue lors de la connexion !");
-    } finally {
-      setLoading(false);
+      console.error(err);
+      alert("❌ Une erreur s’est produite lors de la connexion");
     }
+
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
-      <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
-        <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <img src="/logo.png" alt="Logo SoulTrack" className="w-12 h-12 object-contain" />
-          SoulTrack
-        </h1>
-
-        <p className="text-center text-gray-700 mb-6">
-          Bienvenue sur SoulTrack !<br />
-          Une plateforme pour garder le contact, organiser les visites,
-          et soutenir chaque membre dans sa vie spirituelle.
-        </p>
-
-        <form onSubmit={handleLogin} className="flex flex-col w-full gap-4">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
-            required
-            autoComplete="email"
-          />
-
-          <input
-            type="password"
-            placeholder="Mot de passe"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
-            required
-            autoComplete="current-password"
-          />
-
-          {error && <p className="text-red-500 text-center">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
-          >
-            {loading ? "Connexion..." : "Se connecter"}
-          </button>
-        </form>
-
-        <p className="text-center italic font-semibold mt-4 text-green-600">
-          "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
+    <div
+      className="min-h-screen flex flex-col justify-center items-center p-6"
+      style={{
+        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
+      }}
+    >
+      <div className="flex flex-col items-center mb-6">
+        <Image src="/logo.png" alt="SoulTrack Logo" width={90} height={90} />
+        <h1 className="text-4xl text-white font-bold mt-4 mb-2">SoulTrack</h1>
+        <p className="text-white text-center max-w-md">
+          Connectez-vous pour suivre et servir avec excellence 💪
         </p>
       </div>
+
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md"
+      >
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="w-full border rounded-lg px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+
+        <input
+          type="password"
+          placeholder="Mot de passe"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="w-full border rounded-lg px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-gradient-to-r from-blue-600 to-blue-400 text-white py-2 rounded-xl font-semibold hover:opacity-90 transition"
+        >
+          {loading ? "Connexion..." : "Se connecter"}
+        </button>
+      </form>
     </div>
   );
 }

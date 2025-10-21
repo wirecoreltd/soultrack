@@ -1,105 +1,198 @@
-//pages/cellule.hub.js
-
+// pages/cellules-hub.js
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
+import Image from "next/image";
+import LogoutLink from "../components/LogoutLink";
+import { canAccessPage } from "../lib/accessControl";
 
-export default function CelluleHub() {
+export default function CellulesHub() {
   const router = useRouter();
-  const { id } = router.query; // récupère l'id de la cellule depuis l'URL
-
+  const [role, setRole] = useState(null);
   const [cellule, setCellule] = useState(null);
-  const [members, setMembers] = useState([]);
+  const [membres, setMembres] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // 🧭 Récupérer les infos de la cellule
-  const fetchCellule = async () => {
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (!error) setCellule(data);
-  };
-
-  // 👥 Récupérer les membres liés à cette cellule
-  const fetchMembersByCellule = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("membres")
-      .select(`
-        *,
-        cellule:cellule_id (
-          cellule,
-          responsable
-        )
-      `)
-      .eq("cellule_id", id)
-      .order("created_at", { ascending: true });
-
-    if (!error && data) setMembers(data);
-    else setMembers([]);
-
-    setLoading(false);
-  };
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    if (id) {
-      fetchCellule();
-      fetchMembersByCellule();
-    }
-  }, [id]);
+    const storedRole = localStorage.getItem("userRole");
+    const userId = localStorage.getItem("userId");
 
-  // 🌀 Affichage en cours de chargement
-  if (loading && !cellule) {
-    return <p className="p-6 text-gray-500">Chargement en cours...</p>;
+    if (!storedRole || !userId) {
+      router.push("/login");
+      return;
+    }
+
+    const canAccess = canAccessPage(storedRole, "/cellules-hub");
+    if (!canAccess) {
+      alert("⛔ Accès non autorisé !");
+      router.push("/login");
+      return;
+    }
+
+    setRole(storedRole);
+
+    const fetchData = async () => {
+      console.log("▶️ Début du chargement des données...");
+      try {
+        // 🔹 Récupérer le profil
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("prenom, nom, role, id")
+          .eq("id", userId)
+          .single();
+
+        if (profileError) throw profileError;
+        if (!profile) throw new Error("Profil non trouvé !");
+        console.log("✅ Profil chargé :", profile);
+
+        if (profile.role === "ResponsableCellule") {
+          const responsableNom = `${profile.prenom} ${profile.nom}`;
+          console.log("Responsable :", responsableNom);
+
+          // 🔹 Trouver la cellule du responsable
+          const { data: celluleData, error: celluleError } = await supabase
+            .from("cellules")
+            .select("id, cellule, ville, responsable, telephone")
+            .eq("responsable", responsableNom)
+            .single();
+
+          if (celluleError) throw celluleError;
+          if (!celluleData) throw new Error("Cellule non trouvée !");
+          console.log("✅ Cellule trouvée :", celluleData);
+          setCellule(celluleData);
+
+          // 🔹 Récupérer les membres liés à cette cellule
+          const { data: membresData, error: membresError } = await supabase
+            .from("membres")
+            .select("id, prenom, nom, telephone, cellule_id")
+            .eq("cellule_id", celluleData.id);
+
+          if (membresError) throw membresError;
+          console.log("✅ Membres trouvés :", membresData);
+
+          setMembres(membresData);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error("❌ Erreur pendant fetchData :", err);
+        setErrorMessage(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [router]);
+
+  // 🔄 Chargement
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-900 to-blue-400">
+        <p className="text-white text-xl font-semibold animate-pulse">
+          Chargement en cours...
+        </p>
+      </div>
+    );
+  }
+
+  // ❌ Erreur
+  if (errorMessage) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-red-700 to-red-400">
+        <p className="text-white text-2xl font-semibold mb-4">❌ Erreur</p>
+        <p className="text-white text-lg">{errorMessage}</p>
+        <button
+          onClick={() => router.reload()}
+          className="mt-6 bg-white text-red-600 px-4 py-2 rounded-xl font-bold"
+        >
+          🔁 Réessayer
+        </button>
+      </div>
+    );
   }
 
   return (
-    <div className="p-6">
-      {/* ✅ Infos de la cellule */}
-      {cellule && (
-        <div className="bg-white shadow-lg rounded-2xl p-6 border border-gray-100 mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">
-            {cellule.cellule}
-          </h1>
-          <p className="text-gray-600">🏙️ Ville : {cellule.ville}</p>
-          <p className="text-gray-600">👤 Responsable : {cellule.responsable}</p>
-          <p className="text-gray-600">📞 Téléphone : {cellule.telephone}</p>
+    <div
+      className="min-h-screen flex flex-col items-center p-6"
+      style={{
+        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
+      }}
+    >
+      {/* HEADER */}
+      <div className="w-full max-w-6xl flex justify-between items-center mb-6">
+        <button
+          onClick={() => router.back()}
+          className="text-white font-semibold hover:text-gray-200 transition"
+        >
+          ← Retour
+        </button>
+        <div className="flex items-center gap-4">
+          <Image src="/logo.png" alt="SoulTrack Logo" width={50} height={50} />
+          <LogoutLink />
         </div>
-      )}
+      </div>
 
-      {/* 👥 Liste des membres */}
-      <h2 className="text-xl font-bold mb-3">Membres de cette cellule :</h2>
+      {/* TITRE */}
+      <h1 className="text-3xl font-bold text-white mb-6 text-center">
+        📋 Tableau de bord de ta Cellule
+      </h1>
 
-      {loading ? (
-        <p className="text-gray-500 italic">Chargement des membres...</p>
-      ) : members.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {members.map((m) => (
-            <div
-              key={m.id}
-              className="bg-white shadow rounded-2xl p-4 border border-gray-100"
-            >
-              <h3 className="text-lg font-bold text-gray-800">
-                {m.prenom} {m.nom}
-              </h3>
-              <p className="text-gray-500 text-sm">{m.email}</p>
-              <p className="text-gray-700 mt-1">📞 {m.telephone}</p>
-              <p className="text-green-600 font-semibold mt-1">
-                🏠 Intégré à :{" "}
-                {m.cellule
-                  ? `${m.cellule.cellule} (${m.cellule.responsable})`
-                  : "Aucune cellule attribuée"}
-              </p>
-            </div>
-          ))}
+      {/* INFOS CELLULE */}
+      {cellule ? (
+        <div className="bg-white/20 backdrop-blur-md rounded-3xl p-6 shadow-lg w-full max-w-3xl mb-8">
+          <h2 className="text-2xl text-white font-semibold mb-2">
+            Cellule : {cellule.cellule}
+          </h2>
+          <p className="text-white">Ville : {cellule.ville}</p>
+          <p className="text-white">Responsable : {cellule.responsable}</p>
+          <p className="text-white">
+            Téléphone : {cellule.telephone || "—"}
+          </p>
         </div>
       ) : (
-        <p className="text-gray-500 italic">Aucun membre trouvé pour cette cellule.</p>
+        <p className="text-white mb-8">Aucune cellule trouvée.</p>
       )}
+
+      {/* LISTE DES MEMBRES */}
+      <div className="w-full max-w-4xl bg-white/20 backdrop-blur-md rounded-3xl p-6 shadow-lg">
+        <h2 className="text-xl font-semibold text-white mb-4">
+          👥 Membres de ta cellule
+        </h2>
+
+        {membres.length === 0 ? (
+          <p className="text-white text-center">
+            Aucun membre trouvé pour cette cellule.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {membres.map((membre) => (
+              <div
+                key={membre.id}
+                className="bg-white rounded-2xl shadow-md p-4 border-t-4 border-purple-500 hover:shadow-xl transition"
+              >
+                <h3 className="text-lg font-bold text-gray-800 mb-1">
+                  {membre.prenom} {membre.nom}
+                </h3>
+                <p className="text-gray-700">
+                  📞 {membre.telephone || "Non renseigné"}
+                </p>
+                <p className="text-gray-600 text-sm mt-2">
+                  Cellule : {cellule.cellule}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* VERSET */}
+      <div className="mt-10 text-center text-white text-lg font-handwriting max-w-2xl">
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
+        <span className="font-semibold">1 Corinthiens 12:14 ❤️</span>
+      </div>
     </div>
   );
 }

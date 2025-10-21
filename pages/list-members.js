@@ -50,6 +50,12 @@ export default function ListMembers() {
     );
   };
 
+  const handleStatusUpdateFromEnvoyer = (id, newStatus) => {
+    setMembers((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
+    );
+  };
+
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -92,7 +98,12 @@ export default function ListMembers() {
     filter ? anciens.filter((m) => m.statut === filter) : anciens
   );
 
-  const totalCount = filterBySearch([...nouveaux, ...anciens]).length;
+  const allMembersOrdered = [...nouveaux, ...anciens];
+  const filteredMembers = filterBySearch(
+    filter
+      ? allMembersOrdered.filter((m) => m.statut === filter)
+      : allMembersOrdered
+  );
 
   const statusOptions = [
     "actif",
@@ -102,6 +113,8 @@ export default function ListMembers() {
     "visiteur",
     "a déjà mon église",
   ];
+
+  const totalCount = filteredMembers.length;
 
   return (
     <div
@@ -205,7 +218,7 @@ export default function ListMembers() {
 
                   {/* Détails avec select de statut */}
                   {isOpen && (
-                    <div className="text-gray-700 text-sm mt-2 space-y-1.5 w-full">
+                    <div className="text-gray-700 text-sm mt-1.5 space-y-1 w-full">
                       <p>Besoin : {m.besoin || "—"}</p>
                       <p>Infos : {m.infos_supplementaires || "—"}</p>
                       <p>Comment venu : {m.comment || "—"}</p>
@@ -249,6 +262,7 @@ export default function ListMembers() {
                             cellule={cellules.find(
                               (c) => String(c.id) === String(selectedCellules[m.id])
                             )}
+                            onStatusUpdate={handleStatusUpdateFromEnvoyer}
                           />
                         </div>
                       )}

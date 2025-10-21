@@ -214,8 +214,8 @@ export default function ListMembers() {
                           <div className="font-semibold text-black text-sm text-center mb-1">
                             {m.prenom} {m.nom}
                           </div>
-                          <p className="text-xs text-gray-700 mb-1">📱 {m.telephone || "—"}</p>
-                          <p className="text-xs text-gray-700 mb-1">🕊 {m.statut || "—"}</p>
+                          <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
+                          <p className="text-sm text-gray-700 mb-1">🕊 {m.statut || "—"}</p>
 
                           {/* Note: statut select removed from main card (moved to details) */}
 
@@ -231,7 +231,7 @@ export default function ListMembers() {
                             <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                               <p className="text-sm">Besoin : {m.besoin || "—"}</p>
                               <p className="text-sm">
-                                Infos : {m.infos_supplementaires || "—"}
+                                📝 Infos : {m.infos_supplementaires || "—"}
                               </p>
                               <p className="text-sm">Comment venu : {m.comment || "—"}</p>
 

@@ -221,7 +221,7 @@ export default function ListMembers() {
 
                           <button
                             onClick={() => toggleDetails(m.id)}
-                            className="text-orange-500 underline text-xs mt-1"
+                            className="text-orange-500 underline text-sm mt-1"
                           >
                             {isOpen ? "Fermer détails" : "Détails"}
                           </button>
@@ -233,11 +233,11 @@ export default function ListMembers() {
                               <p className="text-sm">
                                 📝 Infos : {m.infos_supplementaires || "—"}
                               </p>
-                              <p className="text-sm">Comment venu : {m.comment || "—"}</p>
+                              <p className="text-sm">🧩 Comment venu : {m.comment || "—"}</p>
 
                               {/* Statut select moved here */}
                               <div>
-                                <label className="text-black text-sm">Statut :</label>
+                                <label className="text-black text-sm">🕊 Statut :</label>
                                 <select
                                   value={m.statut}
                                   onChange={(e) => handleChangeStatus(m.id, e.target.value)}
@@ -249,7 +249,7 @@ export default function ListMembers() {
                                 </select>
                               </div>
 
-                              <p className="text-green-600 font-semibold mt-1">Cellule :</p>
+                              <p className="text-green-600 font-semibold mt-1">🏠 Cellule :</p>
                               <select
                                 value={selectedCellules[m.id] || ""}
                                 onChange={(e) =>

@@ -1,12 +1,21 @@
 //admin/create-responsable-cellule.js
-
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import LogoutLink from "../../components/LogoutLink";
-import supabase from "../../lib/supabaseClient"; // ✅ import par défaut
+import supabase from "../../lib/supabaseClient";
+
+// 🧮 Fonction pour hasher le mot de passe (compatible navigateur)
+async function hashPassword(password) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  return hashHex;
+}
 
 export default function CreateResponsableCellule() {
   const router = useRouter();
@@ -14,18 +23,55 @@ export default function CreateResponsableCellule() {
   const [cellule, setCellule] = useState("");
   const [responsable, setResponsable] = useState("");
   const [telephone, setTelephone] = useState("");
-  const [telephoneResponsable, setTelephoneResponsable] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!ville || !cellule || !responsable || !telephone) {
+    if (!ville || !cellule || !responsable || !telephone || !email || !password) {
       alert("Merci de remplir tous les champs requis.");
       return;
     }
 
     try {
-      const { data, error } = await supabase
+      // Séparer le prénom et le nom
+      const [prenom, nom] = responsable.split(" ");
+
+      // 1️⃣ Vérifier si un profil existe déjà avec cet email
+      const { data: existing } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (existing) {
+        alert("⚠️ Cet email est déjà utilisé pour un autre utilisateur !");
+        return;
+      }
+
+      // 2️⃣ Hacher le mot de passe
+      const hashedPassword = await hashPassword(password);
+
+      // 3️⃣ Créer le profil du responsable
+      const { data: newProfile, error: profileError } = await supabase
+        .from("profiles")
+        .insert([
+          {
+            email,
+            password_hash: hashedPassword,
+            prenom,
+            nom,
+            role: "ResponsableCellule",
+          },
+        ])
+        .select()
+        .single();
+
+      if (profileError) throw profileError;
+
+      // 4️⃣ Créer la cellule liée
+      const { error: celluleError } = await supabase
         .from("cellules")
         .insert([
           {
@@ -33,13 +79,13 @@ export default function CreateResponsableCellule() {
             cellule,
             responsable,
             telephone,
-            telephone_responsable: telephoneResponsable,
+            responsable_id: newProfile.id,
           },
         ]);
 
-      if (error) throw error;
+      if (celluleError) throw celluleError;
 
-      alert("✅ Responsable de cellule enregistré avec succès !");
+      alert("✅ Responsable et cellule créés avec succès !");
       router.push("/administrateur");
     } catch (err) {
       console.error(err);
@@ -97,7 +143,7 @@ export default function CreateResponsableCellule() {
         />
         <input
           type="text"
-          placeholder="Nom du responsable"
+          placeholder="Nom complet du responsable"
           value={responsable}
           onChange={(e) => setResponsable(e.target.value)}
           className="border p-3 rounded-xl"
@@ -111,13 +157,31 @@ export default function CreateResponsableCellule() {
           className="border p-3 rounded-xl"
           required
         />
+        <input
+          type="email"
+          placeholder="Email du responsable"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="border p-3 rounded-xl"
+          required
+        />
+        <input
+          type="password"
+          placeholder="Mot de passe (temporaire)"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="border p-3 rounded-xl"
+          required
+        />
+
         <button
           type="submit"
           className="bg-gradient-to-r from-[#005AA7] to-[#FFFDE4] text-gray-800 font-semibold rounded-xl py-3 mt-4 hover:opacity-90 transition"
         >
-          Enregistrer
+          Enregistrer le Responsable
         </button>
       </form>
     </div>
   );
 }
+

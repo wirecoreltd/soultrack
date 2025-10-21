@@ -1,4 +1,5 @@
 // pages/login.js
+
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/router";
@@ -17,7 +18,6 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // 1️⃣ Recherche du profil par email
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -30,7 +30,6 @@ export default function LoginPage() {
         return;
       }
 
-      // 2️⃣ Vérification du mot de passe via la fonction SQL
       const { data: checkPassword, error: rpcError } = await supabase.rpc(
         "verify_password",
         {
@@ -57,37 +56,40 @@ export default function LoginPage() {
         return;
       }
 
-      // 3️⃣ Normalisation du rôle pour éviter les erreurs
-const role = (profile.role || "Membre").trim().toLowerCase();
+      // ✅ Gestion multi-rôles
+      let formattedRole = "Membre";
+      if (Array.isArray(profile.roles) && profile.roles.length > 0) {
+        if (profile.roles.includes("Admin")) {
+          formattedRole = "Admin";
+        } else if (profile.roles.includes("ResponsableIntegration")) {
+          formattedRole = "ResponsableIntegration";
+        } else if (profile.roles.includes("ResponsableEvangelisation")) {
+          formattedRole = "ResponsableEvangelisation";
+        } else if (profile.roles.includes("ResponsableCellule")) {
+          formattedRole = "ResponsableCellule";
+        }
+      }
 
-// Mapping pour correspondre à /lib/accessControl.js
-const formattedRole =
-  role === "admin"
-    ? "Admin"
-    : role === "responsableintegration"
-    ? "ResponsableIntegration"
-    : role === "responsable évangélisation" || role === "responsableevangelisation"
-    ? "ResponsableEvangelisation"
-    : role === "responsablecellule" || role === "responsable cellule"
-    ? "ResponsableCellule"
-    : "Membre";
+      localStorage.setItem("userId", profile.id);
+      localStorage.setItem("userRole", formattedRole);
 
-// 4️⃣ Sauvegarde locale pour usage global
-localStorage.setItem("userId", profile.id);
-localStorage.setItem("userRole", formattedRole);
-
-// 5️⃣ Redirection selon le rôle
-if (formattedRole === "Admin") {
-  router.push("/index");
-} else if (formattedRole === "ResponsableIntegration") {
-  router.push("/membres-hub");
-} else if (formattedRole === "ResponsableEvangelisation") {
-  router.push("/evangelisation-hub");
-} else if (formattedRole === "ResponsableCellule") {
-  router.push("/cellules-hub");  // ✅ attention au "s" minuscule ici
-} else {
-  router.push("/index");
-}
+      // 🔹 Redirection selon rôle
+      switch(formattedRole) {
+        case "Admin":
+          router.push("/index");
+          break;
+        case "ResponsableIntegration":
+          router.push("/membres-hub");
+          break;
+        case "ResponsableEvangelisation":
+          router.push("/evangelisation-hub");
+          break;
+        case "ResponsableCellule":
+          router.push("/cellules-hub");
+          break;
+        default:
+          router.push("/index");
+      }
 
     } catch (err) {
       console.error("Erreur inattendue:", err);
@@ -100,13 +102,8 @@ if (formattedRole === "Admin") {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
       <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
-        {/* Titre avec logo */}
         <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <img
-            src="/logo.png"
-            alt="Logo SoulTrack"
-            className="w-12 h-12 object-contain"
-          />
+          <img src="/logo.png" alt="Logo SoulTrack" className="w-12 h-12 object-contain" />
           SoulTrack
         </h1>
 
@@ -155,3 +152,4 @@ if (formattedRole === "Admin") {
     </div>
   );
 }
+

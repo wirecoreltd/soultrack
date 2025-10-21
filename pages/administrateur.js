@@ -81,7 +81,7 @@ export default function AdministrateurPage() {
 
         {/* ✅ Carte : Créer un utilisateur interne */}
         <Link
-          href="/admin/create-user"
+          href="/admin/create-internal-user"
           className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#4285F4] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
         >
           <div className="text-5xl mb-2">🧑‍💻</div>

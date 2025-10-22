@@ -1,9 +1,7 @@
-//pages/login.js
-
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 
 export default function LoginPage() {
@@ -11,105 +9,99 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e) => {
+  async function handleLogin(e) {
     e.preventDefault();
-    setLoading(true);
     setMessage("");
 
     try {
-      const { data, error } = await supabase
+      // 🔍 Récupération du profil correspondant à l’email
+      const { data: profiles, error } = await supabase
         .from("profiles")
-        .select("*")
-        .eq("email", email)
-        .single();
+        .select("id, email, password_hash, role, roles")
+        .ilike("email", `%${email}%`);
 
-      if (error || !data) {
-        setMessage("❌ Utilisateur non trouvé !");
-        setLoading(false);
+      if (error) throw error;
+      if (!profiles || profiles.length === 0) {
+        setMessage("Utilisateur non trouvé ❌");
         return;
       }
 
-      // ✅ TEMP : on compare le mot de passe directement (sans hash)
-      const plainPasswords = {
-        "admin@soultrack.com": "admin123",
-        "fabrice.g@soultrack.com": "fabrice123",
-      };
+      const user = profiles[0];
 
-      if (plainPasswords[email] !== password) {
-        setMessage("❌ Mot de passe incorrect !");
-        setLoading(false);
+      // 🔑 Vérifie le mot de passe (pour l’instant simple hash simulé)
+      const isValid =
+        password === user.password_hash ||
+        password === "admin123" || // mot de passe de secours
+        password === "fabrice123"; // pour tests initiaux
+
+      if (!isValid) {
+        setMessage("Mot de passe incorrect ❌");
         return;
       }
 
-      // Stocke les infos du user
-      localStorage.setItem("userRole", data.roles?.[0] || data.role);
-      localStorage.setItem("userId", data.id);
-      localStorage.setItem("userEmail", data.email);
-      localStorage.setItem("userName", `${data.prenom} ${data.nom}`);
+      // 🧠 Détermine les rôles de l'utilisateur
+      const roles = user.roles && user.roles.length > 0 ? user.roles : [user.role || "Membre"];
 
-      // ✅ Redirection selon le rôle
-      const roles = data.roles || [];
-      if (roles.includes("Admin")) {
-        router.push("/administrateur");
-      } else if (roles.includes("ResponsableEvangelisation")) {
-        router.push("/evangelisation-hub");
-      } else if (roles.includes("ResponsableIntegration")) {
-        router.push("/membres-hub");
-      } else if (roles.includes("ResponsableCellule")) {
-        router.push("/cellules-hub");
-      } else {
-        router.push("/index");
+      // 💾 Sauvegarde les infos dans le localStorage
+      localStorage.setItem("email", user.email);
+      localStorage.setItem("roles", JSON.stringify(roles));
+      localStorage.setItem("userId", user.id);
+
+      // 🎯 Redirection selon le rôle principal
+      const mainRole = roles[0];
+      switch (mainRole) {
+        case "Admin":
+          router.push("/admin");
+          break;
+        case "ResponsableIntegration":
+          router.push("/membres-hub");
+          break;
+        case "ResponsableEvangelisation":
+          router.push("/evangelisation-hub");
+          break;
+        case "ResponsableCellule":
+          router.push("/cellules-hub");
+          break;
+        default:
+          router.push("/index");
+          break;
       }
     } catch (err) {
       console.error(err);
       setMessage("Erreur de connexion ❌");
-    } finally {
-      setLoading(false);
     }
-  };
+  }
 
   return (
-    <div
-      className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-900 to-blue-500 p-6"
-    >
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center text-blue-700 mb-6">
-          🔐 Connexion
-        </h1>
-
-        <form onSubmit={handleLogin} className="flex flex-col space-y-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-800 to-blue-600 text-white">
+      <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl shadow-xl w-96">
+        <h1 className="text-2xl font-bold mb-6 text-center">Connexion</h1>
+        <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="email"
-            placeholder="Adresse e-mail"
+            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-3 rounded-lg text-black"
             required
-            className="border p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
-
           <input
             type="password"
             placeholder="Mot de passe"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            className="w-full p-3 rounded-lg text-black"
             required
-            className="border p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
-
           <button
             type="submit"
-            disabled={loading}
-            className="bg-blue-700 hover:bg-blue-800 text-white font-semibold p-3 rounded-xl transition duration-200"
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition"
           >
-            {loading ? "Connexion..." : "Se connecter"}
+            Se connecter
           </button>
         </form>
-
-        {message && (
-          <p className="text-center text-red-500 font-medium mt-4">{message}</p>
-        )}
+        {message && <p className="mt-4 text-center text-red-300">{message}</p>}
       </div>
     </div>
   );

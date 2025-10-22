@@ -70,7 +70,7 @@ export default function AdministrateurPage() {
       <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-4xl mb-8">
         {/* ✅ Carte : Créer un responsable de cellule */}
         <Link
-          href="/admin/create-responsable-cellule"
+          href="/admin/create-user"
           className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
         >
           <div className="text-5xl mb-2">👤</div>

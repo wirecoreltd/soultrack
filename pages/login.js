@@ -10,95 +10,87 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // 🧮 Fonction pour hasher le mot de passe (SHA-256)
-  async function hashPassword(password) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-    return hashHex;
-  }
+  const [message, setMessage] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setMessage("");
 
     try {
-      // 🔎 Vérifie si l'utilisateur existe
-      const { data: user, error } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
-        .select("id, email, password_hash, roles")
-        .eq("email", email.toLowerCase())
+        .select("*")
+        .eq("email", email)
         .single();
 
-      if (error || !user) {
-        alert("❌ Utilisateur non trouvé !");
+      if (error || !data) {
+        setMessage("Utilisateur non trouvé ❌");
         setLoading(false);
         return;
       }
 
-      // 🔑 Vérifie le mot de passe
-      const hashedPassword = await hashPassword(password);
-      if (hashedPassword !== user.password_hash) {
-        alert("❌ Mot de passe incorrect !");
+      // ⚙️ Vérifie le mot de passe (si tu utilises du hash, adapte ici)
+      if (password !== data.password_hash) {
+        setMessage("Mot de passe incorrect ❌");
         setLoading(false);
         return;
       }
 
-      // ✅ Sauvegarde du rôle dans le localStorage
-      const userRole = Array.isArray(user.roles) ? user.roles[0] : user.roles;
-      localStorage.setItem("userId", user.id);
-      localStorage.setItem("userRole", userRole);
+      // ✅ Sauvegarde de l’utilisateur
+      localStorage.setItem("user", JSON.stringify(data));
 
-      alert(`✅ Bienvenue ${userRole} !`);
-      router.push("/");
-
+      // ✅ Redirection selon le rôle
+      if (data.roles?.includes("Admin")) {
+        router.push("/admin");
+      } else if (data.roles?.includes("ResponsableCellule")) {
+        router.push("/cellule-hub");
+      } else {
+        router.push("/");
+      }
     } catch (err) {
       console.error(err);
-      alert("Erreur de connexion !");
+      setMessage("Erreur de connexion ❌");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
-    >
-      <h1 className="text-4xl font-bold text-white mb-6">Connexion</h1>
-
-      <form onSubmit={handleLogin}
-        className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md flex flex-col gap-4"
-      >
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-        />
-        <input
-          type="password"
-          placeholder="Mot de passe"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-        />
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-2 bg-gradient-to-r from-blue-600 to-blue-400 text-white font-semibold rounded-xl py-2 hover:opacity-90 transition"
-        >
-          {loading ? "Connexion..." : "Se connecter"}
-        </button>
-      </form>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-blue-100 p-6">
+      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+        <h1 className="text-2xl font-bold text-center text-blue-700 mb-6">
+          🔐 Connexion
+        </h1>
+        <form onSubmit={handleLogin} className="flex flex-col space-y-4">
+          <input
+            type="email"
+            placeholder="Adresse e-mail"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="border p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <input
+            type="password"
+            placeholder="Mot de passe"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="border p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold p-3 rounded-xl transition duration-200"
+          >
+            {loading ? "Connexion..." : "Se connecter"}
+          </button>
+        </form>
+        {message && (
+          <p className="text-center text-red-500 font-medium mt-4">{message}</p>
+        )}
+      </div>
     </div>
   );
 }

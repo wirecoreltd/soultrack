@@ -1,83 +1,127 @@
+//pages/login.js
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setMessage("");
+    setLoading(true);
+    setError(null);
 
     try {
       // 🔹 Récupère le profil par email
-      const { data: profiles, error } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, email, password_hash, role, roles")
-        .ilike("email", email);
+        .select("*")
+        .eq("email", email)
+        .single();
 
-      if (error) throw error;
-      if (!profiles || profiles.length === 0) {
-        setMessage("❌ Utilisateur non trouvé !");
+      if (profileError || !profile) {
+        setError("Utilisateur introuvable ❌");
+        setLoading(false);
         return;
       }
 
-      const user = profiles[0];
-
-      // 🔹 Vérifie le mot de passe côté serveur avec bcrypt
-      const { data: isValid, error: verifyError } = await supabase.rpc(
+      // 🔹 Vérifie le mot de passe via RPC Supabase
+      const { data: checkPassword, error: rpcError } = await supabase.rpc(
         "verify_password",
         {
           plain_password: password,
-          hashed_password: user.password_hash,
+          hashed_password: profile.password_hash,
         }
       );
 
-      if (verifyError) throw verifyError;
-      if (!isValid) {
-        setMessage("❌ Mot de passe incorrect !");
+      if (rpcError) {
+        console.error("Erreur RPC verify_password:", rpcError);
+        setError("Erreur lors de la vérification du mot de passe ❌");
+        setLoading(false);
         return;
       }
 
-      // ✅ Sauvegarde la session
-      localStorage.setItem("user", JSON.stringify(user));
+      const verified =
+        Array.isArray(checkPassword) &&
+        checkPassword[0] &&
+        checkPassword[0].verify === true;
+
+      if (!verified) {
+        setError("Mot de passe incorrect ❌");
+        setLoading(false);
+        return;
+      }
+
+      // 🔹 Détermine le rôle
+      let formattedRole = "Membre";
+      if (Array.isArray(profile.roles) && profile.roles.length > 0) {
+        if (profile.roles.includes("Admin")) formattedRole = "Admin";
+        else if (profile.roles.includes("ResponsableIntegration"))
+          formattedRole = "ResponsableIntegration";
+        else if (profile.roles.includes("ResponsableEvangelisation"))
+          formattedRole = "ResponsableEvangelisation";
+        else if (profile.roles.includes("ResponsableCellule"))
+          formattedRole = "ResponsableCellule";
+      }
+
+      // 🔹 Stocke l’ID et le rôle
+      localStorage.setItem("userId", profile.id);
+      localStorage.setItem("userRole", formattedRole);
 
       // 🔹 Redirection selon rôle
-      const roles = user.roles || [];
-      if (roles.includes("Admin") || user.role === "admin") {
-        router.push("/administrateur");
-      } else if (roles.includes("ResponsableCellule")) {
-        router.push("/cellules-hub");
-      } else if (roles.includes("ResponsableEvangelisation")) {
-        router.push("/evangelisation-hub");
-      } else if (roles.includes("ResponsableIntegration")) {
-        router.push("/membres-hub");
-      } else {
-        router.push("/index");
+      switch (formattedRole) {
+        case "Admin":
+          router.push("/index");
+          break;
+        case "ResponsableIntegration":
+          router.push("/membres-hub");
+          break;
+        case "ResponsableEvangelisation":
+          router.push("/evangelisation-hub");
+          break;
+        case "ResponsableCellule":
+          router.push("/cellules-hub");
+          break;
+        default:
+          router.push("/index");
       }
     } catch (err) {
-      console.error("Erreur de connexion :", err);
-      setMessage("❌ Une erreur est survenue lors de la connexion.");
+      console.error("Erreur inattendue:", err);
+      setError("❌ Une erreur est survenue lors de la connexion");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-blue-100">
-      <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center mb-6 text-blue-700">
-          Connexion
-        </h2>
-        <form onSubmit={handleLogin} className="space-y-4">
+    <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
+        <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <img
+            src="/logo.png"
+            alt="Logo SoulTrack"
+            className="w-12 h-12 object-contain"
+          />
+          SoulTrack
+        </h1>
+
+        <p className="text-center text-gray-700 mb-6">
+          Bienvenue sur SoulTrack !<br />
+          Une plateforme pour garder le contact et organiser vos suivis.
+        </p>
+
+        <form onSubmit={handleLogin} className="flex flex-col w-full gap-4">
           <input
             type="email"
-            placeholder="Adresse email"
+            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-3 border rounded-lg"
+            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
             required
           />
           <input
@@ -85,19 +129,18 @@ export default function LoginPage() {
             placeholder="Mot de passe"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-3 border rounded-lg"
+            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
             required
           />
+          {error && <p className="text-red-500 text-center">{error}</p>}
           <button
             type="submit"
-            className="w-full bg-blue-700 text-white py-3 rounded-lg hover:bg-blue-800 transition"
+            disabled={loading}
+            className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
           >
-            Se connecter
+            {loading ? "Connexion..." : "Se connecter"}
           </button>
         </form>
-        {message && (
-          <p className="text-center mt-4 text-red-500 font-medium">{message}</p>
-        )}
       </div>
     </div>
   );

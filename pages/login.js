@@ -30,14 +30,14 @@ export default function LoginPage() {
         return;
       }
 
-      // ⚙️ Vérifie le mot de passe (si tu utilises du hash, adapte ici)
-      if (password !== data.password_hash) {
+      // ✅ On compare maintenant avec le champ password normal (en clair)
+      if (password !== data.password_hash && password !== data.password) {
         setMessage("Mot de passe incorrect ❌");
         setLoading(false);
         return;
       }
 
-      // ✅ Sauvegarde de l’utilisateur
+      // ✅ Sauvegarde de l’utilisateur connecté
       localStorage.setItem("user", JSON.stringify(data));
 
       // ✅ Redirection selon le rôle

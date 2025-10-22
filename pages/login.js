@@ -3,6 +3,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/router";
+import bcrypt from "bcryptjs"; // ✅ pour vérifier les mots de passe
 import supabase from "../lib/supabaseClient";
 
 export default function LoginPage() {
@@ -18,7 +19,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // 🔹 Cherche l'utilisateur
+      // 1️⃣ Récupérer l'utilisateur depuis Supabase
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -26,54 +27,34 @@ export default function LoginPage() {
         .single();
 
       if (profileError || !profile) {
-        setError("Utilisateur introuvable ❌");
+        setError("Utilisateur introuvable");
         setLoading(false);
         return;
       }
 
-      // 🔹 Vérifie le mot de passe via la fonction RPC verify_password
-      const { data: checkPassword, error: rpcError } = await supabase.rpc(
-        "verify_password",
-        {
-          plain_password: password,
-          hashed_password: profile.password_hash,
-        }
-      );
-
-      if (rpcError) {
-        console.error("Erreur RPC verify_password:", rpcError);
-        setError("Erreur lors de la vérification du mot de passe ❌");
-        setLoading(false);
-        return;
-      }
-
-      const verified = Array.isArray(checkPassword) &&
-                       checkPassword[0] &&
-                       checkPassword[0].verify === true;
+      // 2️⃣ Vérifier le mot de passe avec bcrypt
+      const verified = bcrypt.compareSync(password, profile.password_hash);
 
       if (!verified) {
-        setError("Mot de passe incorrect ❌");
+        setError("Mot de passe incorrect");
         setLoading(false);
         return;
       }
 
-      // 🔹 Gestion multi-rôles
+      // 3️⃣ Déterminer le rôle
       let formattedRole = "Membre";
       if (Array.isArray(profile.roles) && profile.roles.length > 0) {
         if (profile.roles.includes("Admin")) formattedRole = "Admin";
-        else if (profile.roles.includes("ResponsableIntegration"))
-          formattedRole = "ResponsableIntegration";
-        else if (profile.roles.includes("ResponsableEvangelisation"))
-          formattedRole = "ResponsableEvangelisation";
-        else if (profile.roles.includes("ResponsableCellule"))
-          formattedRole = "ResponsableCellule";
+        else if (profile.roles.includes("ResponsableIntegration")) formattedRole = "ResponsableIntegration";
+        else if (profile.roles.includes("ResponsableEvangelisation")) formattedRole = "ResponsableEvangelisation";
+        else if (profile.roles.includes("ResponsableCellule")) formattedRole = "ResponsableCellule";
       }
 
-      // 🔹 Stocke l'utilisateur localement
+      // 4️⃣ Stocker localement
       localStorage.setItem("userId", profile.id);
       localStorage.setItem("userRole", formattedRole);
 
-      // 🔹 Redirection selon rôle
+      // 5️⃣ Redirection selon rôle
       switch (formattedRole) {
         case "Admin":
           router.push("/index");
@@ -91,8 +72,8 @@ export default function LoginPage() {
           router.push("/index");
       }
     } catch (err) {
-      console.error("Erreur inattendue:", err);
-      setError("Une erreur est survenue ❌");
+      console.error("Erreur de connexion :", err);
+      setError("❌ Une erreur est survenue lors de la connexion.");
     } finally {
       setLoading(false);
     }
@@ -151,4 +132,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
 

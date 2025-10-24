@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
+import AccessGuard from "../components/AccessGuard";
 
 export default function Evangelisation() {
   const [contacts, setContacts] = useState([]);

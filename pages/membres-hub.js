@@ -6,6 +6,7 @@ import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import SendLinkPopup from "../components/SendLinkPopup";
 import { useRouter } from "next/router";
+import AccessGuard from "../components/AccessGuard";
 
 export default function MembresHub() {
   const router = useRouter();

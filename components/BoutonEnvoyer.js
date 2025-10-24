@@ -1,124 +1,87 @@
-//components/BoutonEnvoyer.js
-"use client";
+//components/BoutonEnvoyer.js //
 
+"use client";
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate }) {
+export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session }) {
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
 
-  const handleSend = async () => {
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error("Erreur de session:", sessionError.message);
-      alert("Erreur de session Supabase");
-      return;
-    }
-
+  const sendToWhatsapp = async () => {
     if (!session) {
-      alert("❌ Erreur : utilisateur non connecté");
+      alert("❌ Vous devez être connecté pour envoyer un membre à une cellule.");
       return;
     }
 
     if (!cellule) {
-      alert("⚠️ Sélectionne une cellule avant d’envoyer !");
+      alert("❌ Sélectionnez une cellule !");
       return;
     }
 
     setLoading(true);
 
     try {
-      // 🔹 Enregistrer dans Supabase
-      const { error } = await supabase.from("suivis_membres").insert([
-        {
-          membre_id: membre.id,
-          cellule_id: cellule.id,
-          prenom: membre.prenom,
-          nom: membre.nom,
-          telephone: membre.telephone,
-          statut_membre: membre.statut,
-          besoin: membre.besoin,
-          infos_supplementaires: membre.infos_supplementaires,
-          cellule_nom: cellule.cellule,
-          responsable: cellule.responsable,
-          statut: "envoye",
-          created_at: new Date().toISOString(),
-        },
-      ]);
+      const now = new Date().toISOString();
 
-      if (error) throw error;
+      const suiviData = {
+        prenom: membre.prenom,
+        nom: membre.nom,
+        telephone: membre.telephone,
+        is_whatsapp: true,
+        ville: membre.ville,
+        besoin: membre.besoin,
+        infos_supplementaires: membre.infos_supplementaires,
+        cellule_id: cellule.id,
+        responsable_cellule: cellule.responsable,
+        date_suivi: now,
+      };
 
-      // 🔄 Mise à jour du statut du membre
-      if (
-        membre.statut === "visiteur" ||
-        membre.statut === "veut rejoindre ICC"
-      ) {
-        await supabase
-          .from("membres")
-          .update({ statut: "actif" })
-          .eq("id", membre.id);
+      const { error: insertError } = await supabase
+        .from("suivis_des_membres")
+        .insert([suiviData]);
 
-        if (onStatusUpdate) onStatusUpdate(membre.id, "actif");
+      if (insertError) {
+        console.error("Erreur lors de l'insertion du suivi :", insertError.message);
+        alert("❌ Une erreur est survenue lors de l’enregistrement du suivi.");
+        setLoading(false);
+        return;
       }
 
-      // ✅ Message WhatsApp
-      const message = `
-👋 Salut ${cellule.responsable},
+      let message = `👋 Salut ${cellule.responsable},\n\n🙏 Nous avons un nouveau membre à suivre :\n\n`;
+      message += `- 👤 Nom : ${membre.prenom || ""} ${membre.nom || ""}\n`;
+      message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
+      message += `- 📲 WhatsApp : Oui\n`;
+      message += `- 🏙 Ville : ${membre.ville || "—"}\n`;
+      message += `- 🙏 Besoin : ${membre.besoin || "—"}\n`;
+      message += `- 📝 Infos supplémentaires : ${membre.infos_supplementaires || "—"}\n\n`;
+      message += "🙏 Merci pour ton cœur ❤ et ton amour ✨";
 
-🙏 Dieu nous a envoyé de nouvelles âmes à suivre.
-Voici leurs infos :
+      const phone = cellule.telephone.replace(/\D/g, "");
+      window.open(
+        `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
+        "_blank"
+      );
 
-- 👤 Nom : ${membre.prenom || ""} ${membre.nom || ""}
-- 📱 Téléphone : ${membre.telephone || "—"}
-- 📲 WhatsApp : Oui
-- 🏙 Ville : ${membre.ville || "—"}
-- 🙏 Besoin : ${membre.besoin || "—"}
-- 📝 Infos supplémentaires : ${membre.infos_supplementaires || "—"}
-
-🙏 Merci pour ton cœur ❤ et ton amour ✨
-      `;
-
-      const sanitizedPhone = cellule.telephone
-        ? cellule.telephone.replace(/\D/g, "")
-        : null;
-
-      if (sanitizedPhone) {
-        const whatsappURL = `https://wa.me/${sanitizedPhone}?text=${encodeURIComponent(
-          message.trim()
-        )}`;
-        window.open(whatsappURL, "_blank");
-      } else {
-        alert("⚠️ Aucun numéro WhatsApp trouvé pour ce responsable.");
+      if (onStatusUpdate) {
+        onStatusUpdate(membre.id, membre.statut);
       }
-
-      setSent(true);
-      alert(`✅ ${membre.prenom} ${membre.nom} a été envoyé au responsable ${cellule.responsable}`);
-    } catch (err) {
-      console.error("Erreur lors de l’envoi :", err.message);
-      alert("Erreur inattendue lors de l’envoi");
+    } catch (error) {
+      console.error("Erreur lors de l'envoi WhatsApp :", error.message);
+      alert("❌ Une erreur est survenue.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
     <button
-      onClick={handleSend}
-      disabled={loading || sent}
-      className={`mt-2 w-full py-2 rounded-lg text-white font-semibold transition duration-300 ${
-        sent
-          ? "bg-green-500 cursor-not-allowed"
-          : loading
-          ? "bg-gray-400 cursor-wait"
-          : "bg-teal-600 hover:bg-teal-700"
+      onClick={sendToWhatsapp}
+      disabled={loading}
+      className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg transition-all ${
+        loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
       }`}
     >
-      {sent ? "✅ Envoyé" : loading ? "⏳ Envoi..." : "📤 Envoyer au responsable"}
+      {loading ? "Envoi..." : "Envoyer par WhatsApp"}
     </button>
   );
 }

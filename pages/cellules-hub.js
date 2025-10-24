@@ -1,134 +1,104 @@
-//pages/cellules-hub.js
+/* ✅ pages/cellules-hub.js */
 "use client";
 
-import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
+import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/router";
+import SendLinkPopup from "../components/SendLinkPopup";
 import LogoutLink from "../components/LogoutLink";
+import AccessGuard from "../components/AccessGuard";
 
 export default function CellulesHub() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [cellule, setCellule] = useState(null);
-  const [membres, setMembres] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("userProfile"));
-    if (!storedUser) {
-      router.push("/login");
-      return;
-    }
-    setUser(storedUser);
-  }, [router]);
-
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchData = async () => {
-      try {
-        console.log("▶️ Début du chargement des données...");
-
-        // 1️⃣ Récupérer la cellule liée à ce responsable
-        const { data: celluleData, error: celluleError } = await supabase
-          .from("cellules")
-          .select("id, cellule, ville, responsable, telephone")
-          .eq("responsable_id", user.id)
-          .maybeSingle();
-
-        if (celluleError) throw celluleError;
-
-        if (!celluleData) {
-          console.log("❌ Aucune cellule assignée.");
-          setCellule(null);
-          setMembres([]);
-          setLoading(false);
-          return;
-        }
-
-        setCellule(celluleData);
-
-        // 2️⃣ Récupérer les membres de cette cellule
-        const { data: membresData, error: membresError } = await supabase
-          .from("membres")
-          .select("*")
-          .eq("cellule_id", celluleData.id);
-
-        if (membresError) throw membresError;
-
-        setMembres(membresData || []);
-        setLoading(false);
-
-        console.log("✅ Données chargées :", { celluleData, membresData });
-      } catch (err) {
-        console.error("❌ Erreur pendant fetchData :", err);
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [user]);
-
-  if (loading) return <div className="text-center mt-20">Chargement...</div>;
 
   return (
-    <div
-      className="relative min-h-screen flex flex-col items-center justify-center p-6"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
-    >
-      {/* 🔹 Bouton de déconnexion */}
-      <div className="absolute top-4 right-4">
-        <LogoutLink />
-      </div>
+    <AccessGuard allowedRoles={["Admin", "ResponsableCellule"]}>
+      <div
+        className="min-h-screen flex flex-col items-center p-6"
+        style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+      >
+        {/* 🔹 Top bar: Retour + logo + Déconnexion */}
+        <div className="w-full max-w-5xl flex justify-between items-center mb-6">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center text-white font-semibold hover:text-gray-200 transition-colors"
+          >
+            ← Retour
+          </button>
 
-      <h1 className="text-4xl text-white font-handwriting mb-6">
-        Espace Responsable de Cellule
-      </h1>
-
-      {cellule ? (
-        <div className="bg-white rounded-2xl shadow-md p-6 w-full max-w-3xl mb-10">
-          <h2 className="text-2xl font-bold mb-2 text-gray-800">
-            🏠 Cellule : {cellule.cellule}
-          </h2>
-          <p className="text-gray-700">
-            📍 Ville : {cellule.ville} <br />
-            📞 Téléphone : {cellule.telephone}
-          </p>
-
-          <h3 className="text-xl font-semibold mt-6 mb-2 text-gray-800">
-            👥 Membres de la cellule
-          </h3>
-
-          {membres.length > 0 ? (
-            <ul className="space-y-2">
-              {membres.map((m) => (
-                <li
-                  key={m.id}
-                  className="border-b border-gray-300 pb-2 flex justify-between"
-                >
-                  <span>
-                    {m.prenom} {m.nom}
-                  </span>
-                  <span className="text-sm text-gray-500">{m.telephone}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-600">Aucun membre trouvé pour cette cellule.</p>
-          )}
+          <div className="flex items-center gap-4">
+            <Image src="/logo.png" alt="SoulTrack Logo" width={50} height={50} />
+            <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
+          </div>
         </div>
-      ) : (
-        <div className="bg-white rounded-2xl shadow-md p-6 w-full max-w-3xl text-center">
-          <p className="text-gray-700">Aucune cellule assignée.</p>
-        </div>
-      )}
 
-      <div className="text-white text-lg font-handwriting-light text-center max-w-2xl">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
-        1 Corinthiens 12:14 ❤️
+        {/* 🔹 Titre */}
+        <h1 className="text-3xl font-login text-white mb-6 text-center">
+          Cellule
+        </h1>
+
+        {/* 🔹 Cartes principales */}
+        <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6">
+          {/* Ajouter un évangélisé */}
+          <Link
+            href="/ajouter-membre-cellule"
+            className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#4285F4] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
+          >
+            <div className="text-5xl mb-2">➕</div>
+            <div className="text-lg font-bold text-gray-800 text-center">
+              Ajouter un membres a la Cellule
+            </div>
+          </Link>
+
+          {/* Liste des membres de la cellule */}
+          <Link
+            href="/membres-cellule"
+            className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
+          >
+            <div className="text-5xl mb-2">👥</div>
+            <div className="text-lg font-bold text-gray-800 text-center">
+              Membres de la Cellule
+            </div>
+          </Link>
+
+          {/* Suivis des évangélisés */}
+          <Link
+            href="/suivis-evangelisation"
+            className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
+          >
+            <div className="text-5xl mb-2">📋</div>
+            <div className="text-lg font-bold text-gray-800 text-center">
+              Suivis des évangélisés
+            </div>
+          </Link>
+
+          {/* Suivis des membres */}
+          <Link
+            href="/suivis-membres"
+            className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
+          >
+            <div className="text-5xl mb-2">📋</div>
+            <div className="text-lg font-bold text-gray-800 text-center">
+              Suivis des membres
+            </div>
+          </Link>
+        </div>
+
+        {/* 🔹 Bouton popup ajouté sous les cartes */}
+        <div className="w-full max-w-md mb-10">
+          <SendLinkPopup
+            label="Envoyer l'appli – Évangélisé"
+            type="ajouter_evangelise"
+            buttonColor="from-[#09203F] to-[#537895]"
+          />
+        </div>
+
+        {/* 🔹 Verset biblique */}
+        <div className="mt-auto mb-4 text-center text-white text-lg font-handwriting max-w-2xl">
+          Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
+          1 Corinthiens 12:14 ❤️
+        </div>
       </div>
-    </div>
+    </AccessGuard>
   );
 }

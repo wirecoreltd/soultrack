@@ -1,8 +1,10 @@
+//pages/suivis-evangelisation.js
 "use client";
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
+import AccessGuard from "../components/AccessGuard";
 
 export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
@@ -16,28 +18,66 @@ export default function SuivisEvangelisation() {
     fetchSuivis();
   }, []);
 
-  // ✅ Nouvelle version avec filtrage correct des statuts
+  // ✅ Nouvelle version avec filtrage par rôle (Admin / ResponsableCellule)
   const fetchSuivis = async () => {
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from("suivis_des_evangelises")
-      .select(`
-        *,
-        cellules:cellule_id (cellule)
-      `)
-      .or(
-        'status_suivis_evangelises.is.null,status_suivis_evangelises.eq.,and(status_suivis_evangelises.neq.Integrer,status_suivis_evangelises.neq."Venu à l’église")'
-      )
-      .order("date_suivi", { ascending: false });
+    try {
+      const userEmail = localStorage.getItem("userEmail");
+      const userRole = JSON.parse(localStorage.getItem("userRole") || "[]");
 
-    if (error) {
-      console.error("Erreur de chargement :", error.message);
-      setSuivis([]);
-    } else {
+      if (!userEmail) throw new Error("Utilisateur non connecté");
+
+      // 🔹 Récupération du profil connecté
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", userEmail)
+        .single();
+
+      if (profileError) throw profileError;
+      const responsableId = profileData.id;
+
+      let query = supabase
+        .from("suivis_des_evangelises")
+        .select(`
+          *,
+          cellules:cellule_id (id, cellule, responsable)
+        `)
+        .or(
+          'status_suivis_evangelises.is.null,status_suivis_evangelises.eq.,and(status_suivis_evangelises.neq.Integrer,status_suivis_evangelises.neq."Venu à l’église")'
+        )
+        .order("date_suivi", { ascending: false });
+
+      // 🔸 Si ResponsableCellule → filtrer par la cellule dont il est responsable
+      if (userRole.includes("ResponsableCellule")) {
+        const { data: celluleData, error: celluleError } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", responsableId)
+          .single();
+
+        if (celluleError) throw celluleError;
+        if (!celluleData) {
+          setSuivis([]);
+          setLoading(false);
+          console.warn("Aucune cellule trouvée pour ce responsable.");
+          return;
+        }
+
+        query = query.eq("cellule_id", celluleData.id);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
       setSuivis(data || []);
+    } catch (err) {
+      console.error("❌ Erreur chargement suivis :", err.message || err);
+      setSuivis([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const toggleDetails = (id) =>

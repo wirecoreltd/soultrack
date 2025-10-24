@@ -1,11 +1,11 @@
-// ✅ pages/index.js - Home page //
-
+// pages/index.js
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
+import AccessGuard from "../components/AccessGuard";
 
 export default function HomePage() {
   const router = useRouter();
@@ -15,20 +15,20 @@ export default function HomePage() {
   useEffect(() => {
     const storedRoles = localStorage.getItem("userRole");
 
-    if (!storedRoles) {
-      router.push("/login");
-      return;
-    }
-
-    try {
-      const parsedRoles = JSON.parse(storedRoles);
-      if (Array.isArray(parsedRoles)) {
-        setRoles(parsedRoles.map(r => r.trim()));
-      } else {
-        setRoles([parsedRoles.trim()]);
+    if (storedRoles) {
+      try {
+        const parsedRoles = JSON.parse(storedRoles);
+        const normalizedRoles = Array.isArray(parsedRoles)
+          ? parsedRoles.map(r => r.trim().replace(/^./, c => c.toUpperCase()))
+          : [parsedRoles.trim().replace(/^./, c => c.toUpperCase())];
+        setRoles(normalizedRoles);
+        console.log("Roles récupérés :", normalizedRoles);
+      } catch {
+        setRoles([storedRoles.trim().replace(/^./, c => c.toUpperCase())]);
       }
-    } catch {
-      setRoles([storedRoles.trim()]);
+    } else {
+      // Si pas de roles, redirige après un petit délai pour éviter conflits
+      setTimeout(() => router.push("/login"), 100);
     }
 
     setLoading(false);
@@ -36,15 +36,14 @@ export default function HomePage() {
 
   if (loading) return <div className="text-center mt-20">Chargement...</div>;
 
-  const hasRole = (role) => roles.includes(role);
-  const handleRedirect = (path) => router.push(path);
+  const hasRole = role => roles.includes(role);
+
+  const handleRedirect = path => router.push(path);
 
   return (
     <div
       className="relative min-h-screen flex flex-col items-center justify-center p-6 text-center"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
       <div className="absolute top-4 right-4">
         <LogoutLink />
@@ -54,13 +53,10 @@ export default function HomePage() {
         <Image src="/logo.png" alt="SoulTrack Logo" width={90} height={90} />
       </div>
 
-      <h1 className="text-5xl sm:text-5xl font-handwriting text-white mb-2">
-        SoulTrack
-      </h1>
-
+      <h1 className="text-5xl sm:text-5xl font-handwriting text-white mb-2">SoulTrack</h1>
       <p className="text-white text-lg font-handwriting-light max-w-2xl mb-8">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons, nous
-        grandissons, et nous partageons l’amour de Christ dans chaque action ❤️
+        Chaque personne a une valeur infinie. Ensemble, nous avançons, nous grandissons,
+        et nous partageons l’amour de Christ dans chaque action ❤️
       </p>
 
       <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl mb-10">
@@ -70,9 +66,7 @@ export default function HomePage() {
             onClick={() => handleRedirect("/membres-hub")}
           >
             <div className="text-4xl mb-1">👤</div>
-            <div className="text-lg font-bold text-gray-800">
-              Suivis des membres
-            </div>
+            <div className="text-lg font-bold text-gray-800">Suivis des membres</div>
           </div>
         )}
 
@@ -82,9 +76,7 @@ export default function HomePage() {
             onClick={() => handleRedirect("/evangelisation-hub")}
           >
             <div className="text-4xl mb-1">🙌</div>
-            <div className="text-lg font-bold text-gray-800">
-              Évangélisation
-            </div>
+            <div className="text-lg font-bold text-gray-800">Évangélisation</div>
           </div>
         )}
 

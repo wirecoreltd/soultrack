@@ -1,5 +1,4 @@
 //pages/login.js
-
 "use client";
 
 import { useState } from "react";
@@ -24,13 +23,16 @@ export default function LoginPage() {
         .single();
 
       if (rpcError || !data) {
-        setError("Mot de passe incorrect ❌");
+        setError("Email ou mot de passe incorrect ❌");
         setLoading(false);
         return;
       }
 
-      // stocke le role ou roles pour index.js
-      const userRoles = data.roles && data.roles.length > 0 ? data.roles : [data.role];
+      // Toujours stocker un array
+      const userRoles = data.roles && data.roles.length > 0
+        ? data.roles
+        : [data.role];
+
       localStorage.setItem("userRole", JSON.stringify(userRoles));
       localStorage.setItem("userEmail", data.email);
 
@@ -78,3 +80,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

@@ -1,92 +1,103 @@
-// pages/index.js
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import supabase from "../lib/supabaseClient";
 
-// 🔹 Mapping des rôles et des pages/cartes autorisées
-const roleCards = {
-  Admin: [
-    { path: "/membres-hub", label: "Suivis des membres", emoji: "👤", color: "blue-500" },
-    { path: "/evangelisation-hub", label: "Évangélisation", emoji: "🙌", color: "green-500" },
-    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "purple-500" },
-    { path: "/rapport", label: "Rapport", emoji: "📊", color: "red-500" },
-    { path: "/administrateur", label: "Admin", emoji: "🧑‍💻", color: "blue-400" },
-  ],
-  ResponsableIntegration: [
-    { path: "/membres-hub", label: "Suivis des membres", emoji: "👤", color: "blue-500" },
-  ],
-  ResponsableEvangelisation: [
-    { path: "/evangelisation-hub", label: "Évangélisation", emoji: "🙌", color: "green-500" },
-  ],
-  ResponsableCellule: [
-    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "purple-500" },
-  ],
-  Membre: [],
-};
-
-export default function IndexPage() {
-  const [userEmail, setUserEmail] = useState("");
-  const [roles, setRoles] = useState([]);
+export default function LoginPage() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    const email = localStorage.getItem("userEmail");
-    setUserEmail(email || "Inconnu");
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
-    const storedRoles = localStorage.getItem("userRole");
-    if (storedRoles) {
-      try {
-        const parsedRoles = JSON.parse(storedRoles);
-        setRoles(Array.isArray(parsedRoles) ? parsedRoles : [parsedRoles]);
-      } catch {
-        setRoles([storedRoles]);
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError || !data.user) {
+        setError("❌ Email ou mot de passe incorrect");
+        return;
       }
-    }
-  }, []);
 
-  const handleRedirect = (path) => {
-    router.push(path.startsWith("/") ? path : "/" + path);
+      // ✅ Stockage de l'email et rôle
+      localStorage.setItem("userEmail", data.user.email);
+      // Exemple : récupérer le rôle depuis la colonne 'role' de ton profil Supabase
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
+
+      const role = profile?.role || "Membre";
+      localStorage.setItem("userRole", JSON.stringify([role]));
+
+      console.log("✅ Login réussi :", data.user.email, "| Role :", role);
+
+      // 🧭 Redirection selon rôle
+      if (role === "ResponsableIntegration") {
+        router.push("/membres-hub");
+      } else if (role === "ResponsableEvangelisation") {
+        router.push("/evangelisation-hub");
+      } else if (role === "ResponsableCellule") {
+        router.push("/cellules-hub");
+      } else if (role === "Admin") {
+        router.push("/index");
+      } else {
+        router.push("/index");
+      }
+
+    } catch (err) {
+      console.error("Erreur lors du login :", err);
+      setError("❌ Erreur lors de la connexion");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // 🔹 Construit les cartes à afficher selon les rôles
-  const cardsToShow = [];
-  roles.forEach((role) => {
-    const roleKey = role.trim();
-    if (roleCards[roleKey]) {
-      roleCards[roleKey].forEach((card) => {
-        if (!cardsToShow.find((c) => c.path === card.path)) {
-          cardsToShow.push(card);
-        }
-      });
-    }
-  });
-
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
-      <h1 className="text-3xl font-bold mb-4 text-white">🏠 Page d'accueil</h1>
-      <p className="text-lg mb-6 text-white">Bienvenue {userEmail}</p>
+    <div className="min-h-screen flex items-center justify-center bg-blue-100">
+      <form
+        onSubmit={handleLogin}
+        className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm"
+      >
+        <h1 className="text-2xl font-bold mb-6">Se connecter</h1>
 
-      <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl">
-        {cardsToShow.map((card) => (
-          <div
-            key={card.path}
-            onClick={() => handleRedirect(card.path)}
-            className={`flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-${card.color} p-3 hover:shadow-lg transition-all duration-200 cursor-pointer`}
-          >
-            <div className="text-4xl mb-1">{card.emoji}</div>
-            <div className="text-lg font-bold text-gray-800">{card.label}</div>
-          </div>
-        ))}
-      </div>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full mb-4 p-2 border rounded"
+          required
+        />
 
-      <div className="text-white text-lg font-handwriting-light max-w-2xl mt-6">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
-        1 Corinthiens 12:14 ❤️
-      </div>
+        <input
+          type="password"
+          placeholder="Mot de passe"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full mb-4 p-2 border rounded"
+          required
+        />
+
+        <button
+          type="submit"
+          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+          disabled={loading}
+        >
+          {loading ? "Connexion..." : "Se connecter"}
+        </button>
+
+        {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
+      </form>
     </div>
   );
 }

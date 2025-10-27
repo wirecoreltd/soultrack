@@ -1,8 +1,7 @@
-//pages/login.js
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 
 export default function LoginPage() {
@@ -18,37 +17,36 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const { data, error: rpcError } = await supabase
-        .rpc("verify_password", { p_email: email, p_password: password })
-        .single();
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      if (rpcError || !data) {
-        setError("Email ou mot de passe incorrect ❌");
-        setLoading(false);
+      if (authError || !data.user) {
+        setError("❌ Email ou mot de passe incorrect");
         return;
       }
 
-      // Toujours stocker un array
-      const userRoles = data.roles && data.roles.length > 0
-        ? data.roles
-        : [data.role];
+      console.log("✅ Login réussi :", data.user.email);
+      localStorage.setItem("userEmail", data.user.email);
 
-      localStorage.setItem("userRole", JSON.stringify(userRoles));
-      localStorage.setItem("userEmail", data.email);
-
-      router.push("/index");
+      // Redirection selon le rôle ou vers index par défaut
+      await router.push("/index");
     } catch (err) {
-      console.error("Erreur de connexion :", err);
-      setError("❌ Une erreur est survenue lors de la connexion.");
+      console.error("Erreur lors du login :", err);
+      setError("❌ Erreur lors de la connexion");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-blue-100">
-      <form onSubmit={handleLogin} className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm">
-        <h1 className="text-2xl font-bold mb-6">Se connecter</h1>
+    <div className="min-h-screen flex items-center justify-center bg-blue-100">
+      <form
+        onSubmit={handleLogin}
+        className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm"
+      >
+        <h1 className="text-2xl font-bold mb-6 text-center">Se connecter</h1>
 
         <input
           type="email"
@@ -58,6 +56,7 @@ export default function LoginPage() {
           className="w-full mb-4 p-2 border rounded"
           required
         />
+
         <input
           type="password"
           placeholder="Mot de passe"
@@ -75,9 +74,8 @@ export default function LoginPage() {
           {loading ? "Connexion..." : "Se connecter"}
         </button>
 
-        {error && <p className="mt-4 text-red-500">{error}</p>}
+        {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
       </form>
     </div>
   );
 }
-

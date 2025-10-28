@@ -1,12 +1,12 @@
-// pages/index.js
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import LogoutLink from "../components/LogoutLink";
 
 // 🔹 Mapping des rôles et des pages/cartes autorisées
 const roleCards = {
-  Administrateur: [ // correspond à ton rôle admin dans Supabase
+  Administrateur: [ 
     { path: "/membres-hub", label: "Suivis des membres", emoji: "👤", color: "blue-500" },
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "🙌", color: "green-500" },
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "purple-500" },
@@ -49,10 +49,8 @@ export default function IndexPage() {
     router.push(path.startsWith("/") ? path : "/" + path);
   };
 
-  // 🔹 Construit les cartes à afficher selon les rôles
   let cardsToShow = [];
 
-  // Si l'utilisateur est admin, on affiche toutes les cartes
   if (roles.includes("Administrateur")) {
     Object.values(roleCards).forEach((cards) => {
       cards.forEach((card) => {
@@ -76,12 +74,32 @@ export default function IndexPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-6"
+      className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      <h1 className="text-3xl font-bold mb-4 text-white">🏠 Page d'accueil</h1>
-      <p className="text-lg mb-6 text-white">Bienvenue {userEmail}</p>
+      {/* 🔹 Top bar: Retour + Bienvenue + Déconnexion */}
+      <div className="w-full max-w-5xl flex justify-between items-center mb-6">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center text-white font-semibold hover:text-gray-200 transition-colors"
+        >
+          ← Retour
+        </button>
+        <p className="text-white font-semibold">Bienvenue {userEmail}</p>
+        <LogoutLink />
+      </div>
 
+      {/* 🔹 Logo centré */}
+      <div className="mb-6">
+        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-20 mx-auto" />
+      </div>
+
+      {/* 🔹 Message motivant */}
+      <p className="text-white text-lg italic mb-6 max-w-2xl">
+        "La famille est le premier lieu où l'amour, le soutien et la foi se transmettent. Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté."
+      </p>
+
+      {/* 🔹 Cartes des fonctionnalités */}
       <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl">
         {cardsToShow.map((card) => (
           <div
@@ -95,6 +113,7 @@ export default function IndexPage() {
         ))}
       </div>
 
+      {/* 🔹 Verset biblique */}
       <div className="text-white text-lg font-handwriting-light max-w-2xl mt-6">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         1 Corinthiens 12:14 ❤️

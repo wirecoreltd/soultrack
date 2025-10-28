@@ -32,8 +32,9 @@ export default function IndexPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const name = localStorage.getItem("userName"); // récupère le nom
-    setUserName(name || "Utilisateur");
+    const name = localStorage.getItem("userName") || "Utilisateur";
+    const prenom = name.split(" ")[0]; // récupère seulement le prénom
+    setUserName(prenom);
 
     const storedRoles = localStorage.getItem("userRole");
     if (storedRoles) {
@@ -88,16 +89,16 @@ export default function IndexPage() {
           ← Retour
         </button>
 
-        {/* Déconnexion + bienvenue */}
+        {/* Déconnexion */}
         <div className="flex flex-col items-end">
-          <LogoutLink className="text-red-400 hover:text-red-500 mb-2" />
-          <p className="text-gray-200 text-sm mt-1">Bienvenue {userName}</p>
+          <LogoutLink className="text-red-300 hover:text-red-400" />
+          <p className="text-yellow-200 text-sm mt-4">Bienvenue {userName}</p>
         </div>
       </div>
 
       {/* 🔹 Logo centré */}
       <div className="mb-6">
-        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18 mx-auto" />
+        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-20 mx-auto" />
       </div>
 
       {/* 🔹 Message motivant */}
@@ -127,5 +128,3 @@ export default function IndexPage() {
     </div>
   );
 }
-
-

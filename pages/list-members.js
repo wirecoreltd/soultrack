@@ -215,6 +215,9 @@ export default function ListMembers() {
                         <p className="text-sm text-gray-600 mb-2 text-center">
                           📱 {m.telephone || "—"}
                         </p>
+                        <p className="text-sm text-gray-600 mb-2 text-center">
+                         🕊 Statut : {m.statut || "—"}
+                        </p>
                         <button
                           onClick={() => toggleDetails(m.id)}
                           className="text-orange-500 underline text-sm"
@@ -229,7 +232,8 @@ export default function ListMembers() {
                             <p>💬 WhatsApp : {m.whatsapp || "—"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🕊 Statut : {m.statut || "—"}</p>
-                            <p>🧩 Comment est-il venu : {m.comment || "—"}</p>
+                            <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+                            <p>❓ Besoin : {m. || besoin"—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             {/* Menu déroulant de statut */}
@@ -331,8 +335,8 @@ export default function ListMembers() {
                             <p>💬 WhatsApp : {m.whatsapp || "—"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🕊 Statut : {m.statut || "—"}</p>
-                            <p>🧩 Comment est-il venu : {m.comment || "—"}</p>
-                            <p>❓ Besoin : {m.comment || "—"}</p>
+                            <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+                            <p>❓ Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             {/* Menu déroulant de statut */}
@@ -425,6 +429,39 @@ export default function ListMembers() {
               ))}
             </tbody>
           </table>
+
+          {/* === POPUP DÉTAILS === */}
+          {popupMember && (
+            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl p-6 w-full max-w-md text-gray-800 relative">
+                <button
+                  onClick={() => setPopupMember(null)}
+                  className="absolute top-2 right-3 text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+                <h2 className="text-xl font-bold mb-2 text-center">
+                  {popupMember.prenom} {popupMember.nom}
+                </h2>
+                <p>📞 Téléphone : {popupMember.telephone || "—"}</p>
+                <p>💬 WhatsApp : {popupMember.whatsapp || "—"}</p>
+                <p>🏙 Ville : {popupMember.ville || "—"}</p>
+                <p>🕊 Statut : {popupMember.statut || "—"}</p>
+                <p>🧩 Comment est-il venu : {popupMember.comment || "—"}</p>
+                <p>📝 Infos : {popupMember.infos_supplementaires || "—"}</p>
+
+                <select
+                  value={popupMember.statut}
+                  onChange={(e) => handleChangeStatus(popupMember.id, e.target.value)}
+                  className="border rounded-md px-2 py-1 text-sm mt-3 w-full"
+                >
+                  {statusOptions.map((s) => (
+                    <option key={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -31,7 +31,7 @@ export default function LoginPage() {
       localStorage.setItem("userEmail", data.user.email);
 
       // Redirection selon le rôle ou vers index par défaut
-      await router.push("/index");
+      await router.push("/");
     } catch (err) {
       console.error("Erreur lors du login :", err);
       setError("❌ Erreur lors de la connexion");

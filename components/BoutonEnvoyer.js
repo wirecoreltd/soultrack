@@ -37,7 +37,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
       };
 
       const { error: insertError } = await supabase
-        .from("suivis_des_membres")
+        .from("suivis_membres")
         .insert([suiviData]);
 
       if (insertError) {

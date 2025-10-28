@@ -1,15 +1,15 @@
+//pages/index.js
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import LogoutLink from "../components/LogoutLink";
 
-// 🔹 Mapping des rôles et des pages/cartes autorisées
 const roleCards = {
   Administrateur: [ 
     { path: "/membres-hub", label: "Suivis des membres", emoji: "👤", color: "blue-500" },
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "🙌", color: "green-500" },
-    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "purple-500" },
+    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "blue-500" },
     { path: "/rapport", label: "Rapport", emoji: "📊", color: "red-500" },
     { path: "/administrateur", label: "Admin", emoji: "🧑‍💻", color: "blue-400" },
   ],
@@ -20,7 +20,7 @@ const roleCards = {
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "🙌", color: "green-500" },
   ],
   ResponsableCellule: [
-    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "purple-500" },
+    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "blue-500" },
   ],
   Membre: [],
 };
@@ -85,8 +85,10 @@ export default function IndexPage() {
         >
           ← Retour
         </button>
-        <p className="text-white font-semibold">Bienvenue {userEmail}</p>
-        <LogoutLink />
+        <div className="flex flex-col items-end">
+          <p className="text-gray-200 text-sm mb-1">Bienvenue {userEmail}</p>
+          <LogoutLink />
+        </div>
       </div>
 
       {/* 🔹 Logo centré */}

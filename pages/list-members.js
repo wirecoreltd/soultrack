@@ -1,4 +1,4 @@
-//list-members.js
+// list-members.js
 
 "use client";
 import { useEffect, useState } from "react";
@@ -17,7 +17,7 @@ export default function ListMembers() {
   const [cellules, setCellules] = useState([]);
   const [selectedCellules, setSelectedCellules] = useState({});
   const [view, setView] = useState("card");
-  const [popupMember, setPopupMember] = useState(null); // gardé pour compatibilité si besoin
+  const [popupMember, setPopupMember] = useState(null);
   const [session, setSession] = useState(null);
 
   useEffect(() => {
@@ -114,12 +114,10 @@ export default function ListMembers() {
 
   const totalCount = filteredMembers.length;
 
-  // ---------- helper pour toggle expansion des cards ----------
-  const toggleCard = (id) => {
+  const toggleDetails = (id) => {
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // ---------- rendu ----------
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
@@ -181,7 +179,7 @@ export default function ListMembers() {
         </button>
       </div>
 
-      {/* === VUE CARTE (MODIFIÉE : cartes compactes + agrandissement dans la grille) === */}
+      {/* === VUE CARTE === */}
       {view === "card" && (
         <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
           {nouveauxFiltres.length > 0 && (
@@ -189,105 +187,80 @@ export default function ListMembers() {
               <p className="text-white text-lg mb-2 ml-1">
                 💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
               </p>
-
-              {/* grille compacte, cards "grow" when expanded */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {nouveauxFiltres.map((m) => {
-                  const isOpen = !!detailsOpen[m.id];
+                  const isOpen = detailsOpen[m.id];
                   return (
-                    <article
+                    <div
                       key={m.id}
-                      className={`bg-white rounded-xl shadow-md transition-all duration-300 overflow-hidden cursor-pointer transform ${
-                        isOpen ? "lg:col-span-2 sm:col-span-2 scale-100" : ""
-                      }`}
-                      style={{
-                        borderTop: `6px solid ${getBorderColor(m)}`,
-                        padding: isOpen ? "16px" : "12px",
-                      }}
-                      onClick={() => toggleCard(m.id)}
-                      role="button"
+                      className={`bg-white rounded-2xl shadow-md border-l-4 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl`}
+                      style={{ borderLeftColor: getBorderColor(m) }}
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3">
-                            <div className="text-3xl">{m.star ? "⭐" : "👤"}</div>
-                            <div>
-                              <div className="text-md font-semibold text-gray-800">
-                                {m.prenom} {m.nom}
-                              </div>
-                              <div className="text-xs text-gray-500 mt-0.5">
-                                {m.statut || "—"}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                      {/* Bande colorée en haut */}
+                      <div
+                        className="w-full h-[6px] rounded-t-2xl"
+                        style={{ backgroundColor: getBorderColor(m) }}
+                      />
 
-                        <div className="flex flex-col items-end">
-                          <div className="text-xs text-white bg-blue-500 px-2 py-0.5 rounded-full">
+                      {/* Contenu de la carte */}
+                      <div className="p-3 flex flex-col flex-grow">
+                        <div className="flex justify-between items-center mb-1">
+                          <span
+                            className="text-sm font-semibold"
+                            style={{ color: getBorderColor(m) }}
+                          >
+                            {m.star ? "⭐ S.T.A.R" : m.statut}
+                          </span>
+                          <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full ml-2">
                             Nouveau
-                          </div>
-                          <div className="text-sm text-gray-500 mt-2 underline">Détails ▾</div>
+                          </span>
                         </div>
-                      </div>
 
-                      {/* Compact info row */}
-                      <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
-                        <div>📱 {m.telephone || "—"}</div>
-                        <div>{m.ville || "—"}</div>
-                      </div>
+                        <div className="text-lg font-bold text-gray-800">
+                          {m.prenom} {m.nom}
+                        </div>
 
-                      {/* Expanded content (apparaît quand la carte est agrandie) */}
-                      {isOpen && (
-                        <div className="mt-3 text-gray-700 text-sm space-y-3">
-                          <div className="grid grid-cols-1 gap-2">
-                            <div>
-                              <label className="block text-xs text-gray-500">Statut</label>
-                              <select
-                                value={m.statut}
-                                onChange={(e) => {
-                                  // empêcher propagation du click sur la carte
-                                  e.stopPropagation();
-                                  handleChangeStatus(m.id, e.target.value);
-                                }}
-                                className="mt-1 w-full border rounded-md px-2 py-1 text-sm text-gray-800"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                {statusOptions.map((s) => (
-                                  <option key={s}>{s}</option>
-                                ))}
-                              </select>
-                            </div>
+                        <p className="text-sm text-gray-600 mb-2">📱 {m.telephone || "—"}</p>
 
-                            <div>
-                              <label className="block text-xs text-gray-500">Besoin</label>
-                              <div className="mt-1 text-sm text-gray-700">{m.besoin || "—"}</div>
-                            </div>
+                        <select
+                          value={m.statut}
+                          onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                          className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
+                        >
+                          {statusOptions.map((s) => (
+                            <option key={s}>{s}</option>
+                          ))}
+                        </select>
 
-                            <div>
-                              <label className="block text-xs text-gray-500">Infos supplémentaires</label>
-                              <div className="mt-1 text-sm text-gray-700">
-                                {m.infos_supplementaires || "—"}
-                              </div>
-                            </div>
+                        {/* Bouton détails */}
+                        <button
+                          onClick={() => toggleDetails(m.id)}
+                          className="text-orange-500 underline text-sm mt-1"
+                        >
+                          {isOpen ? "Fermer détails" : "Détails"}
+                        </button>
 
-                            <div>
-                              <label className="block text-xs text-gray-500">Comment venu</label>
-                              <div className="mt-1 text-sm text-gray-700">{m.venu || "—"}</div>
-                            </div>
+                        {isOpen && (
+                          <div className="flex flex-col mt-2 space-y-2">
+                            <p>📌 Prénom Nom : {m.prenom} {m.nom}</p>
+                            <p>📞 Téléphone : {m.telephone || "—"}</p>
+                            <p>💬 WhatsApp : {m.whatsapp || "—"}</p>
+                            <p>🏙 Ville : {m.ville || "—"}</p>
+                            <p>🕊 Statut : {m.statut || "—"}</p>
+                            <p>🧩 Comment est-il venu : {m.comment || "—"}</p>
+                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                            <div>
-                              <label className="block text-xs text-gray-500">Cellule</label>
+                            {/* Cellule en bas */}
+                            <div className="mt-auto">
                               <select
                                 value={selectedCellules[m.id] || ""}
-                                onChange={(e) => {
-                                  e.stopPropagation();
+                                onChange={(e) =>
                                   setSelectedCellules((prev) => ({
                                     ...prev,
                                     [m.id]: e.target.value,
-                                  }));
-                                }}
-                                className="mt-1 w-full border rounded-md px-2 py-1 text-sm text-gray-800"
-                                onClick={(e) => e.stopPropagation()}
+                                  }))
+                                }
+                                className="border rounded-lg px-2 py-1 text-sm w-full"
                               >
                                 <option value="">-- Sélectionner cellule --</option>
                                 {cellules.map((c) => (
@@ -296,24 +269,24 @@ export default function ListMembers() {
                                   </option>
                                 ))}
                               </select>
-                            </div>
 
-                            {selectedCellules[m.id] && (
-                              <div onClick={(e) => e.stopPropagation()}>
-                                <BoutonEnvoyer
-                                  membre={m}
-                                  cellule={cellules.find(
-                                    (c) => c.id === selectedCellules[m.id]
-                                  )}
-                                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                                  session={session}
-                                />
-                              </div>
-                            )}
+                              {selectedCellules[m.id] && (
+                                <div className="mt-2">
+                                  <BoutonEnvoyer
+                                    membre={m}
+                                    cellule={cellules.find(
+                                      (c) => c.id === selectedCellules[m.id]
+                                    )}
+                                    onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                                    session={session}
+                                  />
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </article>
+                        )}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -322,7 +295,7 @@ export default function ListMembers() {
 
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
-              <h3 className="text-white text-lg mb-2 font-semibold">
+              <h3 className="text-white text-lg mb-3 font-semibold">
                 <span
                   style={{
                     background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
@@ -333,119 +306,99 @@ export default function ListMembers() {
                   Membres existants
                 </span>
               </h3>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {anciensFiltres.map((m) => {
-                  const isOpen = !!detailsOpen[m.id];
+                  const isOpen = detailsOpen[m.id];
                   return (
-                    <article
+                    <div
                       key={m.id}
-                      className={`bg-white rounded-xl shadow-md transition-all duration-300 overflow-hidden cursor-pointer transform ${
-                        isOpen ? "lg:col-span-2 sm:col-span-2 scale-100" : ""
-                      }`}
-                      style={{
-                        borderTop: `6px solid ${getBorderColor(m)}`,
-                        padding: isOpen ? "16px" : "12px",
-                      }}
-                      onClick={() => toggleCard(m.id)}
+                      className={`bg-white rounded-2xl shadow-md border-l-4 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl`}
+                      style={{ borderLeftColor: getBorderColor(m) }}
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3">
-                            <div className="text-3xl">{m.star ? "⭐" : "👥"}</div>
-                            <div>
-                              <div className="text-md font-semibold text-gray-800">
-                                {m.prenom} {m.nom}
-                              </div>
-                              <div className="text-xs text-gray-500 mt-0.5">
-                                {m.statut || "—"}
-                              </div>
-                            </div>
-                          </div>
+                      <div
+                        className="w-full h-[6px] rounded-t-2xl"
+                        style={{ backgroundColor: getBorderColor(m) }}
+                      />
+
+                      <div className="p-3 flex flex-col flex-grow">
+                        <div className="flex justify-between items-center mb-1">
+                          <span
+                            className="text-sm font-semibold"
+                            style={{ color: getBorderColor(m) }}
+                          >
+                            {m.star ? "⭐ S.T.A.R" : m.statut}
+                          </span>
                         </div>
 
-                        <div className="flex flex-col items-end">
-                          <div className="text-sm text-gray-500 mt-2 underline">Détails ▾</div>
+                        <div className="text-lg font-bold text-gray-800">
+                          {m.prenom} {m.nom}
                         </div>
+
+                        <p className="text-sm text-gray-600 mb-2">📱 {m.telephone || "—"}</p>
+
+                        <select
+                          value={m.statut}
+                          onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                          className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
+                        >
+                          {statusOptions.map((s) => (
+                            <option key={s}>{s}</option>
+                          ))}
+                        </select>
+
+                        <button
+                          onClick={() => toggleDetails(m.id)}
+                          className="text-orange-500 underline text-sm mt-1"
+                        >
+                          {isOpen ? "Fermer détails" : "Détails"}
+                        </button>
+
+                        {isOpen && (
+                          <div className="flex flex-col mt-2 space-y-2">
+                            <p>📌 Prénom Nom : {m.prenom} {m.nom}</p>
+                            <p>📞 Téléphone : {m.telephone || "—"}</p>
+                            <p>💬 WhatsApp : {m.whatsapp || "—"}</p>
+                            <p>🏙 Ville : {m.ville || "—"}</p>
+                            <p>🕊 Statut : {m.statut || "—"}</p>
+                            <p>🧩 Comment est-il venu : {m.comment || "—"}</p>
+                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+
+                            <div className="mt-auto">
+                              <select
+                                value={selectedCellules[m.id] || ""}
+                                onChange={(e) =>
+                                  setSelectedCellules((prev) => ({
+                                    ...prev,
+                                    [m.id]: e.target.value,
+                                  }))
+                                }
+                                className="border rounded-lg px-2 py-1 text-sm w-full"
+                              >
+                                <option value="">-- Sélectionner cellule --</option>
+                                {cellules.map((c) => (
+                                  <option key={c.id} value={c.id}>
+                                    {c.cellule} ({c.responsable})
+                                  </option>
+                                ))}
+                              </select>
+
+                              {selectedCellules[m.id] && (
+                                <div className="mt-2">
+                                  <BoutonEnvoyer
+                                    membre={m}
+                                    cellule={cellules.find(
+                                      (c) => c.id === selectedCellules[m.id]
+                                    )}
+                                    onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                                    session={session}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
-
-                      <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
-                        <div>📱 {m.telephone || "—"}</div>
-                        <div>{m.ville || "—"}</div>
-                      </div>
-
-                      {isOpen && (
-                        <div className="mt-3 text-gray-700 text-sm space-y-3">
-                          <div>
-                            <label className="block text-xs text-gray-500">Statut</label>
-                            <select
-                              value={m.statut}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                handleChangeStatus(m.id, e.target.value);
-                              }}
-                              className="mt-1 w-full border rounded-md px-2 py-1 text-sm text-gray-800"
-                            >
-                              {statusOptions.map((s) => (
-                                <option key={s}>{s}</option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div>
-                            <label className="block text-xs text-gray-500">Besoin</label>
-                            <div className="mt-1 text-sm text-gray-700">{m.besoin || "—"}</div>
-                          </div>
-
-                          <div>
-                            <label className="block text-xs text-gray-500">Infos supplémentaires</label>
-                            <div className="mt-1 text-sm text-gray-700">
-                              {m.infos_supplementaires || "—"}
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="block text-xs text-gray-500">Comment venu</label>
-                            <div className="mt-1 text-sm text-gray-700">{m.venu || "—"}</div>
-                          </div>
-
-                          <div>
-                            <label className="block text-xs text-gray-500">Cellule</label>
-                            <select
-                              value={selectedCellules[m.id] || ""}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                setSelectedCellules((prev) => ({
-                                  ...prev,
-                                  [m.id]: e.target.value,
-                                }));
-                              }}
-                              className="mt-1 w-full border rounded-md px-2 py-1 text-sm text-gray-800"
-                            >
-                              <option value="">-- Sélectionner cellule --</option>
-                              {cellules.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {c.cellule} ({c.responsable})
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {selectedCellules[m.id] && (
-                            <div>
-                              <BoutonEnvoyer
-                                membre={m}
-                                cellule={cellules.find(
-                                  (c) => c.id === selectedCellules[m.id]
-                                )}
-                                onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                                session={session}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </article>
+                    </div>
                   );
                 })}
               </div>
@@ -467,81 +420,9 @@ export default function ListMembers() {
               </tr>
             </thead>
             <tbody>
-              {nouveauxFiltres.length > 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-2 text-white font-semibold">
-                    💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-                  </td>
-                </tr>
-              )}
-
-              {nouveauxFiltres.map((m, index) => (
-                <tr
-                  key={m.id}
-                  className={`${
-                    index < nouveauxFiltres.length - 1 ? "border-b border-gray-400" : ""
-                  } hover:bg-white/10 transition duration-150`}
-                >
-                  <td
-                    className="px-4 py-2 border-l-4"
-                    style={{ borderLeftColor: getBorderColor(m) }}
-                  >
-                    {m.prenom} {m.nom}{" "}
-                    <span className="ml-2 text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">
-                      Nouveau
-                    </span>
-                  </td>
-                  <td className="px-4 py-2">{m.telephone}</td>
-                  <td className="px-4 py-2">
-                    <select
-                      value={m.statut}
-                      onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                      className="border rounded-md px-2 py-1 text-sm w-full text-gray-800"
-                    >
-                      {statusOptions.map((s) => (
-                        <option key={s}>{s}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="px-4 py-2">
-                    <button
-                      onClick={() => setPopupMember(m)}
-                      className="text-orange-400 underline text-sm"
-                    >
-                      Détails
-                    </button>
-                  </td>
-                </tr>
-              ))}
-
-              {anciensFiltres.length > 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-2 font-semibold">
-                    <span
-                      style={{
-                        background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                        WebkitBackgroundClip: "text",
-                        color: "transparent",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      Membres existants ______________________________________________________
-                    </span>
-                  </td>
-                </tr>
-              )}
-
-              {anciensFiltres.map((m, index) => (
-                <tr
-                  key={m.id}
-                  className={`${
-                    index < anciensFiltres.length - 1 ? "border-b border-gray-400" : ""
-                  } hover:bg-white/10 transition duration-150`}
-                >
-                  <td
-                    className="px-4 py-2 border-l-4"
-                    style={{ borderLeftColor: getBorderColor(m) }}
-                  >
+              {filteredMembers.map((m) => (
+                <tr key={m.id} className="hover:bg-white/10 transition duration-150">
+                  <td className="px-4 py-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
                     {m.prenom} {m.nom}
                   </td>
                   <td className="px-4 py-2">{m.telephone}</td>
@@ -571,8 +452,61 @@ export default function ListMembers() {
         </div>
       )}
 
-      {/* ✅ Note : la popup a été remplacée par l'agrandissement des cartes.
-          Je garde l'état popupMember (inutilisé maintenant) si tu veux revenir au comportement antérieur. */}
+      {/* ✅ Popup pour table */}
+      {popupMember && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative overflow-y-auto max-h-[90vh]">
+            <button
+              onClick={() => setPopupMember(null)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+            >
+              ✖
+            </button>
+
+            <div className="flex flex-col flex-grow">
+              <h2 className="text-xl font-bold mb-2 text-indigo-700">
+                {popupMember.prenom} {popupMember.nom}
+              </h2>
+              <p className="text-gray-700 text-sm mb-1">📱 {popupMember.telephone || "—"}</p>
+              <p className="text-sm text-gray-700 mb-1">💬 WhatsApp: {popupMember.whatsapp || "—"}</p>
+              <p className="text-sm text-gray-700 mb-1">🏙 Ville: {popupMember.ville || "—"}</p>
+              <p className="text-sm text-gray-700 mb-1">🕊 Statut: {popupMember.statut || "—"}</p>
+              <p className="text-sm text-gray-700 mb-1">🧩 Comment est-il venu: {popupMember.comment || "—"}</p>
+              <p className="text-sm text-gray-700 mb-1">📝 Infos: {popupMember.infos_supplementaires || "—"}</p>
+
+              <div className="mt-2">
+                <select
+                  value={selectedCellules[popupMember.id] || ""}
+                  onChange={(e) =>
+                    setSelectedCellules((prev) => ({ ...prev, [popupMember.id]: e.target.value }))
+                  }
+                  className="border rounded-lg px-2 py-1 text-sm w-full"
+                >
+                  <option value="">-- Sélectionner cellule --</option>
+                  {cellules.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.cellule} ({c.responsable})
+                    </option>
+                  ))}
+                </select>
+
+                {selectedCellules[popupMember.id] && (
+                  <div className="mt-2">
+                    <BoutonEnvoyer
+                      membre={popupMember}
+                      cellule={cellules.find(
+                        (c) => c.id === selectedCellules[popupMember.id]
+                      )}
+                      onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                      session={session}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

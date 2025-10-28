@@ -1,5 +1,7 @@
 //list-members.js
 
+//list-members.js
+
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -187,8 +189,8 @@ export default function ListMembers() {
                 {nouveauxFiltres.map((m) => (
                   <div
                     key={m.id}
-                    className="bg-white p-3 rounded-xl shadow-md hover:shadow-xl transition duration-200 border-l-4"
-                    style={{ borderLeftColor: getBorderColor(m) }}
+                    className="bg-white p-3 rounded-lg shadow-md hover:shadow-xl transition duration-200 border-t-4"
+                    style={{ borderTopColor: getBorderColor(m) }}
                   >
                     <div className="flex justify-between items-center mb-1">
                       <span
@@ -251,8 +253,8 @@ export default function ListMembers() {
                 {anciensFiltres.map((m) => (
                   <div
                     key={m.id}
-                    className="bg-white p-3 rounded-xl shadow-md border-l-4 transition duration-200"
-                    style={{ borderLeftColor: getBorderColor(m) }}
+                    className="bg-white p-3 rounded-lg shadow-md border-t-4 transition duration-200"
+                    style={{ borderTopColor: getBorderColor(m) }}
                   >
                     <div className="flex justify-between items-center mb-1">
                       <span
@@ -296,6 +298,10 @@ export default function ListMembers() {
           )}
         </div>
       )}
+
+      {/* === VUE TABLE === */}
+      {/* ...le reste du fichier (table, popup, etc.) reste inchangé ... */}
+
 
       {/* === VUE TABLE === */}
       {view === "table" && (

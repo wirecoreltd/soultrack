@@ -35,7 +35,7 @@ export default function MembresHub() {
 
       {/* 🔹 Titre */}
       <h1 className="text-3xl font-login text-white mb-6 text-center">
-        Suivis des membres
+        Membres Hub
       </h1>
 
       {/* 🔹 Cartes principales */}

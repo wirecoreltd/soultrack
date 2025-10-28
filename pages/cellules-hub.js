@@ -1,24 +1,65 @@
 /* ✅ pages/cellules-hub.js */
+
 "use client";
 
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import SendLinkPopup from "../components/SendLinkPopup";
 import LogoutLink from "../components/LogoutLink";
 import AccessGuard from "../components/AccessGuard";
+import { useEffect, useState } from "react";
 
 export default function CellulesHub() {
   const router = useRouter();
+  const [userName, setUserName] = useState("");
+
+  useEffect(() => {
+    const name = localStorage.getItem("userName") || "Utilisateur";
+    const prenom = name.split(" ")[0]; // récupère uniquement le prénom
+    setUserName(prenom);
+  }, []);
+
+  const handleRedirect = (path) => {
+    router.push(path.startsWith("/") ? path : "/" + path);
+  };
+
+  const cards = [
+    {
+      path: "/ajouter-membre-cellule",
+      label: "Ajouter un membre à la Cellule",
+      emoji: "➕",
+      color: "blue-500",
+    },
+    {
+      path: "/membres-cellule",
+      label: "Membres de la Cellule",
+      emoji: "👥",
+      color: "green-500",
+    },
+    {
+      path: "/suivis-evangelisation",
+      label: "Suivis des évangélisés",
+      emoji: "📋",
+      color: "orange-500",
+    },
+    {
+      path: "/suivis-membres",
+      label: "Suivis des membres",
+      emoji: "📋",
+      color: "yellow-500",
+    },
+  ];
 
   return (
-    <AccessGuard allowedRoles={["Admin", "ResponsableCellule"]}>
+    <AccessGuard allowedRoles={["Administrateur", "ResponsableCellule"]}>
       <div
         className="min-h-screen flex flex-col items-center p-6"
         style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
       >
-        {/* 🔹 Top bar: Retour + logo + Déconnexion */}
+        {/* 🔹 Top bar: Retour + Déconnexion + prénom */}
         <div className="w-full max-w-5xl flex justify-between items-center mb-6">
+          {/* Retour */}
           <button
             onClick={() => router.back()}
             className="flex items-center text-white font-semibold hover:text-gray-200 transition-colors"
@@ -26,65 +67,33 @@ export default function CellulesHub() {
             ← Retour
           </button>
 
-          <div className="flex items-center gap-4">
-            <Image src="/logo.png" alt="SoulTrack Logo" width={50} height={50} />
-            <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
+          {/* Déconnexion et prénom */}
+          <div className="flex flex-col items-end">
+            <LogoutLink className="text-red-300 hover:text-red-400" />
+            <p className="text-yellow-200 text-sm mt-4">Bienvenue {userName}</p>
           </div>
         </div>
 
-        {/* 🔹 Titre */}
-        <h1 className="text-3xl font-login text-white mb-6 text-center">
-          Cellule
-        </h1>
+        {/* 🔹 Logo centré */}
+        <div className="mb-6">
+          <Image src="/logo.png" alt="Logo SoulTrack" width={90} height={90} />
+        </div>
 
         {/* 🔹 Cartes principales */}
         <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6">
-          {/* Ajouter un évangélisé */}
-          <Link
-            href="/ajouter-membre-cellule"
-            className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#4285F4] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
-          >
-            <div className="text-5xl mb-2">➕</div>
-            <div className="text-lg font-bold text-gray-800 text-center">
-              Ajouter un membres a la Cellule
+          {cards.map((card) => (
+            <div
+              key={card.path}
+              onClick={() => handleRedirect(card.path)}
+              className={`flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-${card.color} p-6 hover:shadow-xl transition-all duration-200 cursor-pointer`}
+            >
+              <div className="text-5xl mb-2">{card.emoji}</div>
+              <div className="text-lg font-bold text-gray-800 text-center">{card.label}</div>
             </div>
-          </Link>
-
-          {/* Liste des membres de la cellule */}
-          <Link
-            href="/membres-cellule"
-            className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
-          >
-            <div className="text-5xl mb-2">👥</div>
-            <div className="text-lg font-bold text-gray-800 text-center">
-              Membres de la Cellule
-            </div>
-          </Link>
-
-          {/* Suivis des évangélisés */}
-          <Link
-            href="/suivis-evangelisation"
-            className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
-          >
-            <div className="text-5xl mb-2">📋</div>
-            <div className="text-lg font-bold text-gray-800 text-center">
-              Suivis des évangélisés
-            </div>
-          </Link>
-
-          {/* Suivis des membres */}
-          <Link
-            href="/suivis-membres"
-            className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
-          >
-            <div className="text-5xl mb-2">📋</div>
-            <div className="text-lg font-bold text-gray-800 text-center">
-              Suivis des membres
-            </div>
-          </Link>
+          ))}
         </div>
 
-        {/* 🔹 Bouton popup ajouté sous les cartes */}
+        {/* 🔹 Bouton popup */}
         <div className="w-full max-w-md mb-10">
           <SendLinkPopup
             label="Envoyer l'appli – Évangélisé"

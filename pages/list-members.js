@@ -216,11 +216,12 @@ export default function ListMembers() {
                           </span>
                         </div>
 
-                        <div className="text-lg font-bold text-gray-800">
+                        <div className="p-3 flex flex-col items-center flex-grow">
+                          <div className="text-lg font-bold text-gray-800 text-center">
                           {m.prenom} {m.nom}
                         </div>
 
-                        <p className="text-sm text-gray-600 mb-2">📱 {m.telephone || "—"}</p>
+                        <p className="text-sm text-gray-600 mb-2 text-center">📱 {m.telephone || "—"}</p>
 
                         <select
                           value={m.statut}
@@ -249,6 +250,16 @@ export default function ListMembers() {
                             <p>🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.comment || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                             {/* ✅ Menu déroulant déplacé ici */}
+                            <select
+                              value={m.statut}
+                              onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                              className="border rounded-md px-2 py-1 text-sm text-gray-700 mb-2 w-full"
+                            >
+                              {statusOptions.map((s) => (
+                                <option key={s}>{s}</option>
+                              ))}
+                            </select>
 
                             {/* Cellule en bas */}
                             <div className="mt-auto">

@@ -213,15 +213,16 @@ export default function ListMembers() {
                         </p>
 
                         {/* Tag Nouveau diagonale */}
-                        {(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && (
-                          <div className="absolute top-0 right-0 w-[120px] overflow-hidden pointer-events-none">
-                            <div
-                              className="bg-blue-500 text-white text-xs font-bold text-center transform rotate-45 -translate-y-3 translate-x-8 px-2 py-1"
-                          >
-                              Nouveau
-                            </div>
-                          </div>
-                        )}
+{(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && (
+  <div className="absolute top-0 right-0 w-[120px] overflow-hidden pointer-events-none">
+    <div
+      className="bg-blue-500 text-white text-xs font-bold text-center transform rotate-45 -translate-y-3 translate-x-8 px-2 py-1"
+    >
+      Nouveau
+    </div>
+  </div>
+)}
+
 
                         {/* Bouton détails */}
                         <button

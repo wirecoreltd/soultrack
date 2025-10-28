@@ -1,5 +1,4 @@
-// pages/add-member.js
-
+//pages/add-member.js
 "use client";
 
 import { useState, useEffect } from "react";
@@ -23,7 +22,6 @@ export default function AddMember() {
 
   const [success, setSuccess] = useState(false);
 
-  // ✅ Gestion du rôle (facultatif)
   const [roles, setRoles] = useState([]);
   useEffect(() => {
     const storedRole = localStorage.getItem("userRole");
@@ -54,13 +52,10 @@ export default function AddMember() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // 🔹 Vérification rôle si nécessaire
     if (!hasRole("admin") && !hasRole("administrateur")) {
       alert("⛔ Accès non autorisé !");
       return;
     }
-
     try {
       const { error } = await supabase.from("membres").insert([formData]);
       if (error) throw error;
@@ -68,7 +63,6 @@ export default function AddMember() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
-      // Reset formulaire
       setFormData({
         nom: "",
         prenom: "",
@@ -80,21 +74,24 @@ export default function AddMember() {
         is_whatsapp: false,
         infos_supplementaires: "",
       });
-
-      // Redirection facultative après ajout
-      // router.push("/membres-hub");
     } catch (err) {
       alert(err.message);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex flex-col items-center p-6">
+      
+      {/* Logo centré en haut */}
+      <div className="mb-6 flex justify-center">
+        <img src="/logo.png" alt="SoulTrack Logo" className="w-20 h-20 object-contain" />
+      </div>
 
+      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
+        {/* Bouton Retour */}
         <button
           onClick={() => router.back()}
-          className="flex items-center text-orange-500 font-semibold mb-4 hover:text-orange-600 transition-colors"
+          className="flex items-center text-orange-500 font-semibold mb-6 hover:text-orange-600 transition-colors"
         >
           ← Retour
         </button>
@@ -107,7 +104,6 @@ export default function AddMember() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Prénom */}
           <input
             type="text"
             name="prenom"
@@ -117,7 +113,6 @@ export default function AddMember() {
             className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             required
           />
-          {/* Nom */}
           <input
             type="text"
             name="nom"
@@ -127,7 +122,6 @@ export default function AddMember() {
             className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             required
           />
-          {/* Téléphone + WhatsApp */}
           <div className="flex items-center gap-2">
             <input
               type="text"
@@ -148,7 +142,6 @@ export default function AddMember() {
               WhatsApp
             </label>
           </div>
-          {/* Ville */}
           <input
             type="text"
             name="ville"
@@ -157,7 +150,6 @@ export default function AddMember() {
             onChange={handleChange}
             className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
           />
-          {/* Statut */}
           <select
             name="statut"
             value={formData.statut}
@@ -169,7 +161,6 @@ export default function AddMember() {
             <option value="a déjà mon église">A déjà son église</option>
             <option value="visiteur">Visiteur</option>
           </select>
-          {/* Comment est venu */}
           <select
             name="venu"
             value={formData.venu}
@@ -182,7 +173,6 @@ export default function AddMember() {
             <option value="evangélisation">Evangélisation</option>
             <option value="autre">Autre</option>
           </select>
-          {/* Besoin */}
           <select
             name="besoin"
             value={formData.besoin}
@@ -196,7 +186,6 @@ export default function AddMember() {
             <option value="Les Enfants">Les Enfants</option>
             <option value="La Famille">La Famille</option>
           </select>
-          {/* Infos supplémentaires */}
           <textarea
             name="infos_supplementaires"
             value={formData.infos_supplementaires}
@@ -205,7 +194,7 @@ export default function AddMember() {
             placeholder="Informations supplémentaires..."
             className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
           />
-          {/* Boutons */}
+
           <div className="flex gap-4">
             <button
               type="button"
@@ -244,4 +233,3 @@ export default function AddMember() {
     </div>
   );
 }
-

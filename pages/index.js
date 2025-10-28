@@ -98,7 +98,7 @@ export default function IndexPage() {
 
       {/* 🔹 Logo centré */}
       <div className="mb-6">
-        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-20 mx-auto" />
+        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18 mx-auto" />
       </div>
 
       {/* 🔹 Message motivant */}

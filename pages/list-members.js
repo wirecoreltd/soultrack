@@ -229,7 +229,7 @@ export default function ListMembers() {
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                             <p>📌 Prénom Nom : {m.prenom} {m.nom}</p>
                             <p>📞 Téléphone : {m.telephone || "—"}</p>
-                            <p>💬 WhatsApp : {m.whatsapp || "—"}</p>
+                            <p>💬 WhatsApp : {m.iswhatsapp || "—"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
@@ -332,7 +332,7 @@ export default function ListMembers() {
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                             <p>📌 Prénom Nom : {m.prenom} {m.nom}</p>
                             <p>📞 Téléphone : {m.telephone || "—"}</p>
-                            <p>💬 WhatsApp : {m.whatsapp || "—"}</p>
+                            <p>💬 WhatsApp : {m.is_whatsapp || "—"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
@@ -443,12 +443,14 @@ export default function ListMembers() {
                 <h2 className="text-xl font-bold mb-2 text-center">
                   {popupMember.prenom} {popupMember.nom}
                 </h2>
-                <p>📞 Téléphone : {popupMember.telephone || "—"}</p>
-                <p>💬 WhatsApp : {popupMember.whatsapp || "—"}</p>
-                <p>🏙 Ville : {popupMember.ville || "—"}</p>
-                <p>🕊 Statut : {popupMember.statut || "—"}</p>
-                <p>🧩 Comment est-il venu : {popupMember.comment || "—"}</p>
-                <p>📝 Infos : {popupMember.infos_supplementaires || "—"}</p>
+                <p>📌 Prénom Nom : {m.prenom} {m.nom}</p>
+                <p>📞 Téléphone : {m.telephone || "—"}</p>
+                <p>💬 WhatsApp : {m.iswhatsapp || "—"}</p>
+                <p>🏙 Ville : {m.ville || "—"}</p>
+                <p>🕊 Statut : {m.statut || "—"}</p>
+                <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+                <p>❓Besoin : {m.besoin || "—"}</p>
+                <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                 <select
                   value={popupMember.statut}

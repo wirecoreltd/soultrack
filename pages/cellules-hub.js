@@ -1,5 +1,4 @@
 /* ✅ pages/cellules-hub.js */
-
 "use client";
 
 import Link from "next/link";

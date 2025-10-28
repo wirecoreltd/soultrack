@@ -17,7 +17,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // 🔹 Authentification
+      // 🔑 Connexion Supabase
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -25,43 +25,44 @@ export default function LoginPage() {
 
       if (authError || !data.user) {
         setError("❌ Email ou mot de passe incorrect");
+        setLoading(false);
         return;
       }
 
-      console.log("✅ Login réussi :", data.user.email);
+      // ✅ Stockage email
+      localStorage.setItem("userEmail", data.user.email);
 
-      // 🔹 Récupérer le profil (pour connaître le rôle)
+      // 🔍 Récupérer le rôle dans Supabase
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
-        .eq("email", data.user.email)
+        .eq("id", data.user.id)
         .single();
 
-      if (profileError || !profile) {
-        setError("❌ Impossible de récupérer le profil utilisateur");
-        console.error("Erreur profil :", profileError);
+      if (profileError) {
+        setError("❌ Impossible de récupérer le rôle");
+        setLoading(false);
         return;
       }
 
-      const role = profile.role;
-      console.log("🎭 Rôle :", role);
+      const role = profile?.role || "Membre";
+      localStorage.setItem("userRole", JSON.stringify([role]));
 
-      // 🔹 Stocker infos utilisateur
-      localStorage.setItem("userEmail", data.user.email);
-      localStorage.setItem("userRole", role);
+      console.log("✅ Login réussi :", data.user.email, "| Role :", role);
 
-      // 🔹 Redirection selon le rôle
-      if (role === "Administrateur") {
-        router.push("/"); // page index.js
-      } else if (role === "ResponsableIntegration") {
+      // 🧭 Redirection selon rôle
+      if (role === "ResponsableIntegration") {
         router.push("/membres-hub");
       } else if (role === "ResponsableEvangelisation") {
         router.push("/evangelisation-hub");
       } else if (role === "ResponsableCellule") {
         router.push("/cellules-hub");
+      } else if (role === "Administrateur") {
+        router.push("/"); // index.js
       } else {
-        router.push("/"); // par défaut
+        router.push("/"); // par défaut, vers index
       }
+
     } catch (err) {
       console.error("Erreur lors du login :", err);
       setError("❌ Erreur lors de la connexion");
@@ -109,3 +110,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+

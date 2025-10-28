@@ -17,7 +17,7 @@ export default function ListMembers() {
   const [cellules, setCellules] = useState([]);
   const [selectedCellules, setSelectedCellules] = useState({});
   const [view, setView] = useState("card");
-  const [popupMember, setPopupMember] = useState(null);
+  const [popupMember, setPopupMember] = useState(null); // gardé pour compatibilité si besoin
   const [session, setSession] = useState(null);
 
   useEffect(() => {
@@ -114,6 +114,12 @@ export default function ListMembers() {
 
   const totalCount = filteredMembers.length;
 
+  // ---------- helper pour toggle expansion des cards ----------
+  const toggleCard = (id) => {
+    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  // ---------- rendu ----------
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
@@ -175,7 +181,7 @@ export default function ListMembers() {
         </button>
       </div>
 
-      {/* === VUE CARTE === */}
+      {/* === VUE CARTE (MODIFIÉE : cartes compactes + agrandissement dans la grille) === */}
       {view === "card" && (
         <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
           {nouveauxFiltres.length > 0 && (
@@ -183,73 +189,140 @@ export default function ListMembers() {
               <p className="text-white text-lg mb-2 ml-1">
                 💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
               </p>
+
+              {/* grille compacte, cards "grow" when expanded */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {nouveauxFiltres.map((m) => (
-                  <div
-                    key={m.id}
-                    className={`bg-white p-4 rounded-lg shadow-md border-l-4 cursor-pointer transition-all duration-200`}
-                    style={{
-                      borderLeftColor: getBorderColor(m),
-                      minHeight: "180px",
-                    }}
-                    onClick={() =>
-                      setDetailsOpen((prev) => ({
-                        ...prev,
-                        [m.id]: !prev[m.id],
-                      }))
-                    }
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <span
-                        className="text-sm font-semibold"
-                        style={{ color: getBorderColor(m) }}
-                      >
-                        {m.star ? "⭐ S.T.A.R" : m.statut}
-                      </span>
-                      <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full ml-2">
-                        Nouveau
-                      </span>
-                    </div>
+                {nouveauxFiltres.map((m) => {
+                  const isOpen = !!detailsOpen[m.id];
+                  return (
+                    <article
+                      key={m.id}
+                      className={`bg-white rounded-xl shadow-md transition-all duration-300 overflow-hidden cursor-pointer transform ${
+                        isOpen ? "lg:col-span-2 sm:col-span-2 scale-100" : ""
+                      }`}
+                      style={{
+                        borderTop: `6px solid ${getBorderColor(m)}`,
+                        padding: isOpen ? "16px" : "12px",
+                      }}
+                      onClick={() => toggleCard(m.id)}
+                      role="button"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <div className="text-3xl">{m.star ? "⭐" : "👤"}</div>
+                            <div>
+                              <div className="text-md font-semibold text-gray-800">
+                                {m.prenom} {m.nom}
+                              </div>
+                              <div className="text-xs text-gray-500 mt-0.5">
+                                {m.statut || "—"}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
 
-                    <div className="text-lg font-bold text-gray-800 mb-1">
-                      {m.prenom} {m.nom}
-                    </div>
-
-                    <p className="text-sm text-gray-600 mb-2">
-                      📱 {m.telephone || "—"}
-                    </p>
-
-                    {detailsOpen[m.id] && (
-                      <div className="mt-2">
-                        <select
-                          value={m.statut}
-                          onChange={(e) =>
-                            handleChangeStatus(m.id, e.target.value)
-                          }
-                          className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
-                        >
-                          {statusOptions.map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
-
-                        <p
-                          className="text-blue-500 underline cursor-pointer text-sm"
-                          onClick={() => setPopupMember(m)}
-                        >
-                          Détails
-                        </p>
+                        <div className="flex flex-col items-end">
+                          <div className="text-xs text-white bg-blue-500 px-2 py-0.5 rounded-full">
+                            Nouveau
+                          </div>
+                          <div className="text-sm text-gray-500 mt-2 underline">Détails ▾</div>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                ))}
+
+                      {/* Compact info row */}
+                      <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
+                        <div>📱 {m.telephone || "—"}</div>
+                        <div>{m.ville || "—"}</div>
+                      </div>
+
+                      {/* Expanded content (apparaît quand la carte est agrandie) */}
+                      {isOpen && (
+                        <div className="mt-3 text-gray-700 text-sm space-y-3">
+                          <div className="grid grid-cols-1 gap-2">
+                            <div>
+                              <label className="block text-xs text-gray-500">Statut</label>
+                              <select
+                                value={m.statut}
+                                onChange={(e) => {
+                                  // empêcher propagation du click sur la carte
+                                  e.stopPropagation();
+                                  handleChangeStatus(m.id, e.target.value);
+                                }}
+                                className="mt-1 w-full border rounded-md px-2 py-1 text-sm text-gray-800"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {statusOptions.map((s) => (
+                                  <option key={s}>{s}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs text-gray-500">Besoin</label>
+                              <div className="mt-1 text-sm text-gray-700">{m.besoin || "—"}</div>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs text-gray-500">Infos supplémentaires</label>
+                              <div className="mt-1 text-sm text-gray-700">
+                                {m.infos_supplementaires || "—"}
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs text-gray-500">Comment venu</label>
+                              <div className="mt-1 text-sm text-gray-700">{m.venu || "—"}</div>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs text-gray-500">Cellule</label>
+                              <select
+                                value={selectedCellules[m.id] || ""}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedCellules((prev) => ({
+                                    ...prev,
+                                    [m.id]: e.target.value,
+                                  }));
+                                }}
+                                className="mt-1 w-full border rounded-md px-2 py-1 text-sm text-gray-800"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <option value="">-- Sélectionner cellule --</option>
+                                {cellules.map((c) => (
+                                  <option key={c.id} value={c.id}>
+                                    {c.cellule} ({c.responsable})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {selectedCellules[m.id] && (
+                              <div onClick={(e) => e.stopPropagation()}>
+                                <BoutonEnvoyer
+                                  membre={m}
+                                  cellule={cellules.find(
+                                    (c) => c.id === selectedCellules[m.id]
+                                  )}
+                                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                                  session={session}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
               </div>
             </div>
           )}
 
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
-              <h3 className="text-white text-lg mb-3 font-semibold">
+              <h3 className="text-white text-lg mb-2 font-semibold">
                 <span
                   style={{
                     background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
@@ -260,63 +333,121 @@ export default function ListMembers() {
                   Membres existants
                 </span>
               </h3>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {anciensFiltres.map((m) => (
-                  <div
-                    key={m.id}
-                    className={`bg-white p-4 rounded-lg shadow-md border-l-4 cursor-pointer transition-all duration-200`}
-                    style={{
-                      borderLeftColor: getBorderColor(m),
-                      minHeight: "180px",
-                    }}
-                    onClick={() =>
-                      setDetailsOpen((prev) => ({
-                        ...prev,
-                        [m.id]: !prev[m.id],
-                      }))
-                    }
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <span
-                        className="text-sm font-semibold"
-                        style={{ color: getBorderColor(m) }}
-                      >
-                        {m.star ? "⭐ S.T.A.R" : m.statut}
-                      </span>
-                    </div>
+                {anciensFiltres.map((m) => {
+                  const isOpen = !!detailsOpen[m.id];
+                  return (
+                    <article
+                      key={m.id}
+                      className={`bg-white rounded-xl shadow-md transition-all duration-300 overflow-hidden cursor-pointer transform ${
+                        isOpen ? "lg:col-span-2 sm:col-span-2 scale-100" : ""
+                      }`}
+                      style={{
+                        borderTop: `6px solid ${getBorderColor(m)}`,
+                        padding: isOpen ? "16px" : "12px",
+                      }}
+                      onClick={() => toggleCard(m.id)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <div className="text-3xl">{m.star ? "⭐" : "👥"}</div>
+                            <div>
+                              <div className="text-md font-semibold text-gray-800">
+                                {m.prenom} {m.nom}
+                              </div>
+                              <div className="text-xs text-gray-500 mt-0.5">
+                                {m.statut || "—"}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
 
-                    <div className="text-lg font-bold text-gray-800 mb-1">
-                      {m.prenom} {m.nom}
-                    </div>
-
-                    <p className="text-sm text-gray-600 mb-2">
-                      📱 {m.telephone || "—"}
-                    </p>
-
-                    {detailsOpen[m.id] && (
-                      <div className="mt-2">
-                        <select
-                          value={m.statut}
-                          onChange={(e) =>
-                            handleChangeStatus(m.id, e.target.value)
-                          }
-                          className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
-                        >
-                          {statusOptions.map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
-
-                        <p
-                          className="text-blue-500 underline cursor-pointer text-sm"
-                          onClick={() => setPopupMember(m)}
-                        >
-                          Détails
-                        </p>
+                        <div className="flex flex-col items-end">
+                          <div className="text-sm text-gray-500 mt-2 underline">Détails ▾</div>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                ))}
+
+                      <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
+                        <div>📱 {m.telephone || "—"}</div>
+                        <div>{m.ville || "—"}</div>
+                      </div>
+
+                      {isOpen && (
+                        <div className="mt-3 text-gray-700 text-sm space-y-3">
+                          <div>
+                            <label className="block text-xs text-gray-500">Statut</label>
+                            <select
+                              value={m.statut}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                handleChangeStatus(m.id, e.target.value);
+                              }}
+                              className="mt-1 w-full border rounded-md px-2 py-1 text-sm text-gray-800"
+                            >
+                              {statusOptions.map((s) => (
+                                <option key={s}>{s}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs text-gray-500">Besoin</label>
+                            <div className="mt-1 text-sm text-gray-700">{m.besoin || "—"}</div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs text-gray-500">Infos supplémentaires</label>
+                            <div className="mt-1 text-sm text-gray-700">
+                              {m.infos_supplementaires || "—"}
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs text-gray-500">Comment venu</label>
+                            <div className="mt-1 text-sm text-gray-700">{m.venu || "—"}</div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs text-gray-500">Cellule</label>
+                            <select
+                              value={selectedCellules[m.id] || ""}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                setSelectedCellules((prev) => ({
+                                  ...prev,
+                                  [m.id]: e.target.value,
+                                }));
+                              }}
+                              className="mt-1 w-full border rounded-md px-2 py-1 text-sm text-gray-800"
+                            >
+                              <option value="">-- Sélectionner cellule --</option>
+                              {cellules.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.cellule} ({c.responsable})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {selectedCellules[m.id] && (
+                            <div>
+                              <BoutonEnvoyer
+                                membre={m}
+                                cellule={cellules.find(
+                                  (c) => c.id === selectedCellules[m.id]
+                                )}
+                                onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                                session={session}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -440,80 +571,8 @@ export default function ListMembers() {
         </div>
       )}
 
-      {/* ✅ Popup Détails */}
-      {popupMember && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
-            <button
-              onClick={() => setPopupMember(null)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
-            >
-              ✖
-            </button>
-            <h2 className="text-xl font-bold mb-2 text-indigo-700">
-              {popupMember.prenom} {popupMember.nom}
-            </h2>
-            <p className="text-gray-700 text-sm mb-1">
-              📱 {popupMember.telephone || "—"}
-            </p>
-            <p className="text-sm text-gray-700 mb-2">
-              Statut :
-              <select
-                value={popupMember.statut}
-                onChange={(e) =>
-                  handleChangeStatus(popupMember.id, e.target.value)
-                }
-                className="ml-2 border rounded-md px-2 py-1 text-sm"
-              >
-                {statusOptions.map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
-            </p>
-            <p className="text-sm text-gray-700 mb-1">
-              Besoin : {popupMember.besoin || "—"}
-            </p>
-            <p className="text-sm text-gray-700 mb-1">
-              Infos : {popupMember.infos_supplementaires || "—"}
-            </p>
-            <p className="text-sm text-gray-700 mb-3">
-              Comment venu : {popupMember.comment || "—"}
-            </p>
-
-            <p className="text-green-600 font-semibold mt-2">Cellule :</p>
-            <select
-              value={selectedCellules[popupMember.id] || ""}
-              onChange={(e) =>
-                setSelectedCellules((prev) => ({
-                  ...prev,
-                  [popupMember.id]: e.target.value,
-                }))
-              }
-              className="border rounded-lg px-2 py-1 text-sm w-full"
-            >
-              <option value="">-- Sélectionner cellule --</option>
-              {cellules.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.cellule} ({c.responsable})
-                </option>
-              ))}
-            </select>
-
-            {selectedCellules[popupMember.id] && (
-              <div className="mt-4">
-                <BoutonEnvoyer
-                  membre={popupMember}
-                  cellule={cellules.find(
-                    (c) => c.id === selectedCellules[popupMember.id]
-                  )}
-                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                  session={session}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* ✅ Note : la popup a été remplacée par l'agrandissement des cartes.
+          Je garde l'état popupMember (inutilisé maintenant) si tu veux revenir au comportement antérieur. */}
     </div>
   );
 }

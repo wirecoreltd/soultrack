@@ -24,10 +24,10 @@ export default function AddMemberPage() {
   const [roles, setRoles] = useState([]);
   useEffect(() => {
     const storedRole = localStorage.getItem("userRole");
-    if (!storedRole) {
-      router.push("/login");
-      return;
-    }
+    //if (!storedRole) {
+    //  router.push("/login");
+    //  return;
+    //}
     let parsedRoles = [];
     try {
       parsedRoles = JSON.parse(storedRole);

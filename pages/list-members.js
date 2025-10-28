@@ -1,4 +1,4 @@
-//list-members.js
+// list-members.js
 
 "use client";
 import { useEffect, useState } from "react";
@@ -193,46 +193,35 @@ export default function ListMembers() {
                   return (
                     <div
                       key={m.id}
-                      className="bg-white rounded-2xl shadow-md flex flex-col w-full transition-all duration-300 hover:shadow-xl overflow-hidden"
+                      className="bg-white p-3 rounded-xl shadow-md hover:shadow-xl transition duration-200 overflow-hidden relative"
                     >
-                      {/* Bande colorée collée à l'intérieur du haut */}
+                      {/* Tag Nouveau en diagonale */}
+                      <div className="absolute top-0 right-0 w-24 h-8 overflow-hidden">
+                        <div className="bg-blue-500 text-white font-bold text-xs rotate-45 absolute -top-2 right-[-40px] px-2">
+                          Nouveau
+                        </div>
+                      </div>
+
+                      {/* Bande colorée */}
                       <div
-                        className="w-full h-[6px] rounded-t-2xl"
+                        className="w-full h-[6px] rounded-t-xl mb-2"
                         style={{ backgroundColor: getBorderColor(m) }}
                       />
 
-                      <div className="p-4 flex flex-col items-center">
-                        <div className="text-lg font-bold text-gray-800 text-center mb-1">
+                      <div className="flex flex-col items-center">
+                        <h2 className="text-lg font-bold text-gray-800 text-center">
                           {m.prenom} {m.nom}
-                        </div>
-                        <p className="text-sm text-gray-600 mb-1 text-center">
+                        </h2>
+                        <p className="text-sm text-gray-600 mb-2 text-center">
                           📱 {m.telephone || "—"}
                         </p>
-                        <p className="text-sm text-gray-600 mb-1 text-center">
-                          🕊 Statut : {m.statut || "—"}
-                        </p>
-
-                        {/* Tag Nouveau diagonale */}
-{(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && (
-  <div className="absolute top-0 right-0 w-[120px] overflow-hidden pointer-events-none">
-    <div
-      className="bg-blue-500 text-white text-xs font-bold text-center transform rotate-45 -translate-y-3 translate-x-8 px-2 py-1"
-    >
-      Nouveau
-    </div>
-  </div>
-)}
-
-
-                        {/* Bouton détails */}
                         <button
                           onClick={() => toggleDetails(m.id)}
-                          className="text-orange-500 underline text-sm mt-2"
+                          className="text-orange-500 underline text-sm"
                         >
                           {isOpen ? "Fermer détails" : "Détails"}
                         </button>
 
-                        {/* Détails agrandis */}
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                             <p>📌 Prénom Nom : {m.prenom} {m.nom}</p>
@@ -240,26 +229,22 @@ export default function ListMembers() {
                             <p>💬 WhatsApp : {m.whatsapp || "—"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🕊 Statut : {m.statut || "—"}</p>
-                            <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                            <p>❓ Besoin : {m.besoin || "—"}</p>
+                            <p>🧩 Comment est-il venu : {m.comment || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                            {/* Menu déroulant Statut déplacé ici */}
-                            <p className="mt-2">
-                              Statut :
-                              <select
-                                value={m.statut}
-                                onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                                className="ml-2 border rounded-md px-2 py-1 text-sm w-full text-gray-700"
-                              >
-                                {statusOptions.map((s) => (
-                                  <option key={s}>{s}</option>
-                                ))}
-                              </select>
-                            </p>
+                            {/* Menu déroulant de statut */}
+                            <select
+                              value={m.statut}
+                              onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                              className="border rounded-md px-2 py-1 text-xs text-gray-700 w-full"
+                            >
+                              {statusOptions.map((s) => (
+                                <option key={s}>{s}</option>
+                              ))}
+                            </select>
 
                             {/* Cellule */}
-                            <p className="mt-2">Cellule :</p>
+                            <p className="mt-2 font-semibold text-green-600">Cellule :</p>
                             <select
                               value={selectedCellules[m.id] || ""}
                               onChange={(e) =>
@@ -319,29 +304,26 @@ export default function ListMembers() {
                   return (
                     <div
                       key={m.id}
-                      className="bg-white rounded-2xl shadow-md flex flex-col w-full transition-all duration-300 hover:shadow-xl overflow-hidden relative"
->
-                      <div
-                        className="w-full h-[6px] rounded-t-2xl"
-                        style={{ backgroundColor: getBorderColor(m) }}
-                      />
-                      <div className="p-4 flex flex-col items-center">
-                        <div className="text-lg font-bold text-gray-800 text-center mb-1">
+                      className="bg-white p-3 rounded-xl shadow-md border-l-4 transition duration-200 overflow-hidden relative"
+                      style={{ borderLeftColor: getBorderColor(m) }}
+                    >
+                      <div className="flex flex-col items-center">
+                        <h2 className="text-lg font-bold text-gray-800 text-center">
                           {m.prenom} {m.nom}
-                        </div>
-                        <p className="text-sm text-gray-600 mb-1 text-center">
+                        </h2>
+                        <p className="text-sm text-gray-600 mb-2 text-center">
                           📱 {m.telephone || "—"}
                         </p>
-
-                        {/* Bouton détails */}
+                        <p className="text-sm text-gray-600 mb-2 text-center">
+                          🕊 Statut : {m.statut || "—"}
+                        </p>
                         <button
                           onClick={() => toggleDetails(m.id)}
-                          className="text-orange-500 underline text-sm mt-2"
+                          className="text-orange-500 underline text-sm"
                         >
                           {isOpen ? "Fermer détails" : "Détails"}
                         </button>
 
-                        {/* Détails agrandis */}
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                             <p>📌 Prénom Nom : {m.prenom} {m.nom}</p>
@@ -350,24 +332,22 @@ export default function ListMembers() {
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.comment || "—"}</p>
+                            <p>❓ Besoin : {m.comment || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                            {/* Menu déroulant Statut déplacé ici */}
-                            <p className="mt-2">
-                              Statut :
-                              <select
-                                value={m.statut}
-                                onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                                className="ml-2 border rounded-md px-2 py-1 text-sm w-full text-gray-700"
-                              >
-                                {statusOptions.map((s) => (
-                                  <option key={s}>{s}</option>
-                                ))}
-                              </select>
-                            </p>
+                            {/* Menu déroulant de statut */}
+                            <select
+                              value={m.statut}
+                              onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                              className="border rounded-md px-2 py-1 text-xs text-gray-700 w-full"
+                            >
+                              {statusOptions.map((s) => (
+                                <option key={s}>{s}</option>
+                              ))}
+                            </select>
 
                             {/* Cellule */}
-                            <p className="mt-2">Cellule :</p>
+                            <p className="mt-2 font-semibold text-green-600">Cellule :</p>
                             <select
                               value={selectedCellules[m.id] || ""}
                               onChange={(e) =>
@@ -414,7 +394,36 @@ export default function ListMembers() {
       {view === "table" && (
         <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-            {/* Ici tu peux laisser la table comme avant, mais popup pour tout afficher */}
+            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-lg">
+              <tr>
+                <th className="px-4 py-2 rounded-l-lg">Nom complet</th>
+                <th className="px-4 py-2">Téléphone</th>
+                <th className="px-4 py-2">Statut</th>
+                <th className="px-4 py-2 rounded-r-lg">Détails</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredMembers.map((m) => (
+                <tr
+                  key={m.id}
+                  className="hover:bg-white/10 transition duration-150"
+                >
+                  <td className="px-4 py-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
+                    {m.prenom} {m.nom}
+                  </td>
+                  <td className="px-4 py-2">{m.telephone || "—"}</td>
+                  <td className="px-4 py-2">{m.statut}</td>
+                  <td className="px-4 py-2">
+                    <button
+                      onClick={() => setPopupMember(m)}
+                      className="text-orange-400 underline text-sm"
+                    >
+                      Détails
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
           </table>
         </div>
       )}

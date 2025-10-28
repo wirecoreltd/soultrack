@@ -233,7 +233,7 @@ export default function ListMembers() {
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                            <p>❓ Besoin : {m. || besoin"—"}</p>
+                            <p>❓Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             {/* Menu déroulant de statut */}

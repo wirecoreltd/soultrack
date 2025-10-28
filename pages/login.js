@@ -50,7 +50,7 @@ export default function LoginPage() {
 
       // Redirection selon le rôle
       if (role === "Administrateur") {
-        await router.push("/admin-hub");
+        await router.push("/index");
       } else if (role === "ResponsableIntegration") {
         await router.push("/integration-hub");
       } else if (role === "ResponsableEvangelisation") {

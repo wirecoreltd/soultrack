@@ -1,4 +1,4 @@
-// list-members.js
+//list-members.js
 
 "use client";
 import { useEffect, useState } from "react";
@@ -17,7 +17,6 @@ export default function ListMembers() {
   const [cellules, setCellules] = useState([]);
   const [selectedCellules, setSelectedCellules] = useState({});
   const [view, setView] = useState("card");
-  const [popupMember, setPopupMember] = useState(null);
   const [session, setSession] = useState(null);
 
   useEffect(() => {
@@ -57,6 +56,10 @@ export default function ListMembers() {
     if (currentStatus === "visiteur" || currentStatus === "veut rejoindre ICC") {
       handleChangeStatus(id, "actif");
     }
+  };
+
+  const toggleDetails = (id) => {
+    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const getBorderColor = (m) => {
@@ -113,10 +116,6 @@ export default function ListMembers() {
   ];
 
   const totalCount = filteredMembers.length;
-
-  const toggleDetails = (id) => {
-    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
 
   return (
     <div
@@ -193,8 +192,7 @@ export default function ListMembers() {
                   return (
                     <div
                       key={m.id}
-                      className={`bg-white rounded-2xl shadow-md border-l-4 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl`}
-                      style={{ borderLeftColor: getBorderColor(m) }}
+                      className={`bg-white rounded-2xl shadow-md flex flex-col transition-all duration-300 hover:shadow-xl overflow-hidden`}
                     >
                       {/* Bande colorée en haut */}
                       <div
@@ -202,38 +200,15 @@ export default function ListMembers() {
                         style={{ backgroundColor: getBorderColor(m) }}
                       />
 
-                      {/* Contenu de la carte */}
-                      <div className="p-3 flex flex-col flex-grow">
-                        <div className="flex justify-between items-center mb-1">
-                          <span
-                            className="text-sm font-semibold"
-                            style={{ color: getBorderColor(m) }}
-                          >
-                            {m.star ? "⭐ S.T.A.R" : m.statut}
-                          </span>
-                          <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full ml-2">
-                            Nouveau
-                          </span>
-                        </div>
-
-                        <div className="p-3 flex flex-col items-center flex-grow">
-                          <div className="text-lg font-bold text-gray-800 text-center">
+                      {/* Contenu principal centré */}
+                      <div className="p-4 flex flex-col items-center">
+                        <div className="text-lg font-bold text-gray-800 text-center">
                           {m.prenom} {m.nom}
                         </div>
+                        <p className="text-sm text-gray-600 mb-2 text-center">
+                          📱 {m.telephone || "—"}
+                        </p>
 
-                        <p className="text-sm text-gray-600 mb-2 text-center">📱 {m.telephone || "—"}</p>
-
-                        <select
-                          value={m.statut}
-                          onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                          className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
-                        >
-                          {statusOptions.map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
-
-                        {/* Bouton détails */}
                         <button
                           onClick={() => toggleDetails(m.id)}
                           className="text-orange-500 underline text-sm mt-1"
@@ -241,8 +216,9 @@ export default function ListMembers() {
                           {isOpen ? "Fermer détails" : "Détails"}
                         </button>
 
+                        {/* Détails agrandis */}
                         {isOpen && (
-                          <div className="flex flex-col mt-2 space-y-2">
+                          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                             <p>📌 Prénom Nom : {m.prenom} {m.nom}</p>
                             <p>📞 Téléphone : {m.telephone || "—"}</p>
                             <p>💬 WhatsApp : {m.whatsapp || "—"}</p>
@@ -250,7 +226,8 @@ export default function ListMembers() {
                             <p>🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.comment || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                             {/* ✅ Menu déroulant déplacé ici */}
+
+                            {/* Menu déroulant pour modifier le statut */}
                             <select
                               value={m.statut}
                               onChange={(e) => handleChangeStatus(m.id, e.target.value)}
@@ -261,7 +238,7 @@ export default function ListMembers() {
                               ))}
                             </select>
 
-                            {/* Cellule en bas */}
+                            {/* Cellule et bouton */}
                             <div className="mt-auto">
                               <select
                                 value={selectedCellules[m.id] || ""}
@@ -323,39 +300,21 @@ export default function ListMembers() {
                   return (
                     <div
                       key={m.id}
-                      className={`bg-white rounded-2xl shadow-md border-l-4 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl`}
-                      style={{ borderLeftColor: getBorderColor(m) }}
+                      className={`bg-white rounded-2xl shadow-md flex flex-col transition-all duration-300 hover:shadow-xl overflow-hidden`}
                     >
+                      {/* Bande colorée en haut */}
                       <div
                         className="w-full h-[6px] rounded-t-2xl"
                         style={{ backgroundColor: getBorderColor(m) }}
                       />
 
-                      <div className="p-3 flex flex-col flex-grow">
-                        <div className="flex justify-between items-center mb-1">
-                          <span
-                            className="text-sm font-semibold"
-                            style={{ color: getBorderColor(m) }}
-                          >
-                            {m.star ? "⭐ S.T.A.R" : m.statut}
-                          </span>
-                        </div>
-
-                        <div className="text-lg font-bold text-gray-800">
+                      <div className="p-4 flex flex-col items-center">
+                        <div className="text-lg font-bold text-gray-800 text-center">
                           {m.prenom} {m.nom}
                         </div>
-
-                        <p className="text-sm text-gray-600 mb-2">📱 {m.telephone || "—"}</p>
-
-                        <select
-                          value={m.statut}
-                          onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                          className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
-                        >
-                          {statusOptions.map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
+                        <p className="text-sm text-gray-600 mb-2 text-center">
+                          📱 {m.telephone || "—"}
+                        </p>
 
                         <button
                           onClick={() => toggleDetails(m.id)}
@@ -365,7 +324,7 @@ export default function ListMembers() {
                         </button>
 
                         {isOpen && (
-                          <div className="flex flex-col mt-2 space-y-2">
+                          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                             <p>📌 Prénom Nom : {m.prenom} {m.nom}</p>
                             <p>📞 Téléphone : {m.telephone || "—"}</p>
                             <p>💬 WhatsApp : {m.whatsapp || "—"}</p>
@@ -374,6 +333,18 @@ export default function ListMembers() {
                             <p>🧩 Comment est-il venu : {m.comment || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
+                            {/* Menu déroulant pour modifier le statut */}
+                            <select
+                              value={m.statut}
+                              onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                              className="border rounded-md px-2 py-1 text-sm text-gray-700 mb-2 w-full"
+                            >
+                              {statusOptions.map((s) => (
+                                <option key={s}>{s}</option>
+                              ))}
+                            </select>
+
+                            {/* Cellule et bouton */}
                             <div className="mt-auto">
                               <select
                                 value={selectedCellules[m.id] || ""}
@@ -432,90 +403,21 @@ export default function ListMembers() {
             </thead>
             <tbody>
               {filteredMembers.map((m) => (
-                <tr key={m.id} className="hover:bg-white/10 transition duration-150">
+                <tr
+                  key={m.id}
+                  className="hover:bg-white/10 transition duration-150 cursor-pointer"
+                  onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: true }))}
+                >
                   <td className="px-4 py-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
                     {m.prenom} {m.nom}
                   </td>
                   <td className="px-4 py-2">{m.telephone}</td>
-                  <td className="px-4 py-2">
-                    <select
-                      value={m.statut}
-                      onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                      className="border rounded-md px-2 py-1 text-sm w-full text-gray-800"
-                    >
-                      {statusOptions.map((s) => (
-                        <option key={s}>{s}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="px-4 py-2">
-                    <button
-                      onClick={() => setPopupMember(m)}
-                      className="text-orange-400 underline text-sm"
-                    >
-                      Détails
-                    </button>
-                  </td>
+                  <td className="px-4 py-2">{m.statut}</td>
+                  <td className="px-4 py-2 text-blue-400 underline">Voir détails</td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {/* ✅ Popup pour table */}
-      {popupMember && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative overflow-y-auto max-h-[90vh]">
-            <button
-              onClick={() => setPopupMember(null)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
-            >
-              ✖
-            </button>
-
-            <div className="flex flex-col flex-grow">
-              <h2 className="text-xl font-bold mb-2 text-indigo-700">
-                {popupMember.prenom} {popupMember.nom}
-              </h2>
-              <p className="text-gray-700 text-sm mb-1">📱 {popupMember.telephone || "—"}</p>
-              <p className="text-sm text-gray-700 mb-1">💬 WhatsApp: {popupMember.whatsapp || "—"}</p>
-              <p className="text-sm text-gray-700 mb-1">🏙 Ville: {popupMember.ville || "—"}</p>
-              <p className="text-sm text-gray-700 mb-1">🕊 Statut: {popupMember.statut || "—"}</p>
-              <p className="text-sm text-gray-700 mb-1">🧩 Comment est-il venu: {popupMember.comment || "—"}</p>
-              <p className="text-sm text-gray-700 mb-1">📝 Infos: {popupMember.infos_supplementaires || "—"}</p>
-
-              <div className="mt-2">
-                <select
-                  value={selectedCellules[popupMember.id] || ""}
-                  onChange={(e) =>
-                    setSelectedCellules((prev) => ({ ...prev, [popupMember.id]: e.target.value }))
-                  }
-                  className="border rounded-lg px-2 py-1 text-sm w-full"
-                >
-                  <option value="">-- Sélectionner cellule --</option>
-                  {cellules.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.cellule} ({c.responsable})
-                    </option>
-                  ))}
-                </select>
-
-                {selectedCellules[popupMember.id] && (
-                  <div className="mt-2">
-                    <BoutonEnvoyer
-                      membre={popupMember}
-                      cellule={cellules.find(
-                        (c) => c.id === selectedCellules[popupMember.id]
-                      )}
-                      onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                      session={session}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
         </div>
       )}
     </div>

@@ -212,11 +212,15 @@ export default function ListMembers() {
                           🕊 Statut : {m.statut || "—"}
                         </p>
 
-                        {/* Tag Nouveau */}
+                        {/* Tag Nouveau diagonale */}
                         {(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && (
-                          <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full mt-1">
-                            Nouveau
-                          </span>
+                          <div className="absolute top-0 right-0 w-[120px] overflow-hidden pointer-events-none">
+                            <div
+                              className="bg-blue-500 text-white text-xs font-bold text-center transform rotate-45 -translate-y-3 translate-x-8 px-2 py-1"
+                          >
+                              Nouveau
+                            </div>
+                          </div>
                         )}
 
                         {/* Bouton détails */}
@@ -236,6 +240,7 @@ export default function ListMembers() {
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+                            <p>❓ Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             {/* Menu déroulant Statut déplacé ici */}
@@ -313,8 +318,8 @@ export default function ListMembers() {
                   return (
                     <div
                       key={m.id}
-                      className="bg-white rounded-2xl shadow-md flex flex-col w-full transition-all duration-300 hover:shadow-xl overflow-hidden"
-                    >
+                      className="bg-white rounded-2xl shadow-md flex flex-col w-full transition-all duration-300 hover:shadow-xl overflow-hidden relative"
+>
                       <div
                         className="w-full h-[6px] rounded-t-2xl"
                         style={{ backgroundColor: getBorderColor(m) }}

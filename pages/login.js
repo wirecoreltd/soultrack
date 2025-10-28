@@ -1,3 +1,5 @@
+//pages/login.js
+
 "use client";
 
 import { useState } from "react";
@@ -27,11 +29,38 @@ export default function LoginPage() {
         return;
       }
 
-      console.log("✅ Login réussi :", data.user.email);
-      localStorage.setItem("userEmail", data.user.email);
+      const userEmail = data.user.email;
+      console.log("✅ Login réussi :", userEmail);
+      localStorage.setItem("userEmail", userEmail);
 
-      // Redirection selon le rôle ou vers index par défaut
-      await router.push("/");
+      // Vérifie le rôle de l'utilisateur dans la table 'profiles'
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("email", userEmail)
+        .single();
+
+      if (profileError || !profile) {
+        setError("Impossible de récupérer le rôle utilisateur");
+        return;
+      }
+
+      const role = profile.role;
+      console.log("🎭 Rôle :", role);
+
+      // Redirection selon le rôle
+      if (role === "Administrateur") {
+        await router.push("/admin-hub");
+      } else if (role === "ResponsableIntegration") {
+        await router.push("/integration-hub");
+      } else if (role === "ResponsableEvangelisation") {
+        await router.push("/evangelisation-hub");
+      } else if (role === "ResponsableCellule") {
+        await router.push("/cellule-hub");
+      } else {
+        await router.push("/"); // page par défaut
+      }
+
     } catch (err) {
       console.error("Erreur lors du login :", err);
       setError("❌ Erreur lors de la connexion");

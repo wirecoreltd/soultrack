@@ -1,26 +1,29 @@
 // pages/add-member.js
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import LogoutLink from "../components/LogoutLink";
-import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 
-export default function AddMemberPage() {
+export default function AddMember() {
   const router = useRouter();
-  const [membre, setMembre] = useState({
-    prenom: "",
+
+  const [formData, setFormData] = useState({
     nom: "",
+    prenom: "",
     telephone: "",
-    email: "",
     ville: "",
+    statut: "nouveau",
+    venu: "",
     besoin: "",
+    is_whatsapp: false,
     infos_supplementaires: "",
   });
-  const [loading, setLoading] = useState(false);
 
-  // ✅ Vérification du rôle (optionnelle)
+  const [success, setSuccess] = useState(false);
+
+  // ✅ Gestion du rôle (facultatif)
   const [roles, setRoles] = useState([]);
   useEffect(() => {
     const storedRole = localStorage.getItem("userRole");
@@ -41,130 +44,203 @@ export default function AddMemberPage() {
     (role === "admin" && roles.includes("administrateur")) ||
     (role === "administrateur" && roles.includes("admin"));
 
-  // ✅ Gestion du formulaire
-  const handleChange = e => {
-    setMembre({ ...membre, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? checked : value,
+    });
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // 🔹 Vérification rôle si nécessaire
     if (!hasRole("admin") && !hasRole("administrateur")) {
       alert("⛔ Accès non autorisé !");
       return;
     }
 
-    setLoading(true);
     try {
-      const { error } = await supabase.from("membres").insert([membre]);
-      if (error) {
-        console.error("Erreur ajout membre :", error.message);
-        alert("❌ Une erreur est survenue !");
-      } else {
-        alert("✅ Membre ajouté avec succès !");
-        router.push("/membres-hub"); // Redirection après ajout
-      }
+      const { error } = await supabase.from("membres").insert([formData]);
+      if (error) throw error;
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+
+      // Reset formulaire
+      setFormData({
+        nom: "",
+        prenom: "",
+        telephone: "",
+        ville: "",
+        statut: "nouveau",
+        venu: "",
+        besoin: "",
+        is_whatsapp: false,
+        infos_supplementaires: "",
+      });
+
+      // Redirection facultative après ajout
+      // router.push("/membres-hub");
     } catch (err) {
-      console.error(err);
-      alert("❌ Une erreur est survenue !");
-    } finally {
-      setLoading(false);
+      alert(err.message);
     }
   };
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
-      <div className="w-full max-w-4xl flex justify-between items-center mb-6">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
+
         <button
           onClick={() => router.back()}
-          className="text-white font-semibold hover:text-gray-200 transition"
+          className="flex items-center text-orange-500 font-semibold mb-4 hover:text-orange-600 transition-colors"
         >
           ← Retour
         </button>
-        <LogoutLink />
-      </div>
 
-      <div className="mb-6 text-center">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={90} height={90} />
-        <h1 className="text-3xl font-handwriting text-white mt-4">
+        <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-2">
           Ajouter un nouveau membre
         </h1>
+        <p className="text-center text-gray-500 italic mb-6">
+          « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Prénom */}
+          <input
+            type="text"
+            name="prenom"
+            placeholder="Prénom"
+            value={formData.prenom}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            required
+          />
+          {/* Nom */}
+          <input
+            type="text"
+            name="nom"
+            placeholder="Nom"
+            value={formData.nom}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            required
+          />
+          {/* Téléphone + WhatsApp */}
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              name="telephone"
+              placeholder="Téléphone"
+              value={formData.telephone}
+              onChange={handleChange}
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              required
+            />
+            <label className="flex items-center gap-1">
+              <input
+                type="checkbox"
+                name="is_whatsapp"
+                checked={formData.is_whatsapp}
+                onChange={handleChange}
+              />
+              WhatsApp
+            </label>
+          </div>
+          {/* Ville */}
+          <input
+            type="text"
+            name="ville"
+            placeholder="Ville"
+            value={formData.ville}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+          {/* Statut */}
+          <select
+            name="statut"
+            value={formData.statut}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          >
+            <option value="">-- Statut --</option>
+            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+            <option value="a déjà mon église">A déjà son église</option>
+            <option value="visiteur">Visiteur</option>
+          </select>
+          {/* Comment est venu */}
+          <select
+            name="venu"
+            value={formData.venu}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          >
+            <option value="">-- Comment est-il venu ? --</option>
+            <option value="invité">Invité</option>
+            <option value="réseaux">Réseaux</option>
+            <option value="evangélisation">Evangélisation</option>
+            <option value="autre">Autre</option>
+          </select>
+          {/* Besoin */}
+          <select
+            name="besoin"
+            value={formData.besoin}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          >
+            <option value="">-- Besoin --</option>
+            <option value="Finances">Finances</option>
+            <option value="Santé">Santé</option>
+            <option value="Travail">Travail</option>
+            <option value="Les Enfants">Les Enfants</option>
+            <option value="La Famille">La Famille</option>
+          </select>
+          {/* Infos supplémentaires */}
+          <textarea
+            name="infos_supplementaires"
+            value={formData.infos_supplementaires}
+            onChange={handleChange}
+            rows={3}
+            placeholder="Informations supplémentaires..."
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+          {/* Boutons */}
+          <div className="flex gap-4">
+            <button
+              type="button"
+              onClick={() =>
+                setFormData({
+                  nom: "",
+                  prenom: "",
+                  telephone: "",
+                  ville: "",
+                  statut: "nouveau",
+                  venu: "",
+                  besoin: "",
+                  is_whatsapp: false,
+                  infos_supplementaires: "",
+                })
+              }
+              className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-all"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all"
+            >
+              Ajouter
+            </button>
+          </div>
+        </form>
+
+        {success && (
+          <div className="text-green-600 font-semibold text-center mt-3">
+            ✅ Membre ajouté avec succès !
+          </div>
+        )}
       </div>
-
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white rounded-3xl p-6 shadow-md flex flex-col gap-4"
-      >
-        <input
-          type="text"
-          name="prenom"
-          placeholder="Prénom"
-          value={membre.prenom}
-          onChange={handleChange}
-          className="border px-4 py-2 rounded-lg w-full"
-          required
-        />
-        <input
-          type="text"
-          name="nom"
-          placeholder="Nom"
-          value={membre.nom}
-          onChange={handleChange}
-          className="border px-4 py-2 rounded-lg w-full"
-          required
-        />
-        <input
-          type="text"
-          name="telephone"
-          placeholder="Téléphone"
-          value={membre.telephone}
-          onChange={handleChange}
-          className="border px-4 py-2 rounded-lg w-full"
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={membre.email}
-          onChange={handleChange}
-          className="border px-4 py-2 rounded-lg w-full"
-        />
-        <input
-          type="text"
-          name="ville"
-          placeholder="Ville"
-          value={membre.ville}
-          onChange={handleChange}
-          className="border px-4 py-2 rounded-lg w-full"
-        />
-        <textarea
-          name="besoin"
-          placeholder="Besoin"
-          value={membre.besoin}
-          onChange={handleChange}
-          className="border px-4 py-2 rounded-lg w-full"
-        />
-        <textarea
-          name="infos_supplementaires"
-          placeholder="Infos supplémentaires"
-          value={membre.infos_supplementaires}
-          onChange={handleChange}
-          className="border px-4 py-2 rounded-lg w-full"
-        />
-
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg transition-all ${
-            loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
-          }`}
-        >
-          {loading ? "Enregistrement..." : "Ajouter le membre"}
-        </button>
-      </form>
     </div>
   );
 }

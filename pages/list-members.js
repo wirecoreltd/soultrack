@@ -459,6 +459,35 @@ export default function ListMembers() {
                 >
                   {statusOptions.map((s) => (
                     <option key={s}>{s}</option>
+                                       {/* Cellule */}
+                            <p className="mt-2 font-semibold text-green-600">Cellule :</p>
+                            <select
+                              value={selectedCellules[m.id] || ""}
+                              onChange={(e) =>
+                                setSelectedCellules((prev) => ({
+                                  ...prev,
+                                  [m.id]: e.target.value,
+                                }))
+                              }
+                              className="border rounded-lg px-2 py-1 text-sm w-full"
+                            >
+                              <option value="">-- Sélectionner cellule --</option>
+                              {cellules.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.cellule} ({c.responsable})
+                                </option>
+                              ))}
+                            </select>
+
+                            {selectedCellules[m.id] && (
+                              <div className="mt-2">
+                                <BoutonEnvoyer
+                                  membre={m}
+                                  cellule={cellules.find(
+                                    (c) => c.id === selectedCellules[m.id]
+                                  )}
+                                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                                  session={session}
                   ))}
                 </select>
               </div>

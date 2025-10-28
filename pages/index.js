@@ -9,9 +9,9 @@ const roleCards = {
   Administrateur: [ 
     { path: "/membres-hub", label: "Suivis des membres", emoji: "👤", color: "blue-500" },
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "🙌", color: "green-500" },
-    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "blue-500" },
+    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "yellow-500" },
     { path: "/rapport", label: "Rapport", emoji: "📊", color: "red-500" },
-    { path: "/administrateur", label: "Admin", emoji: "🧑‍💻", color: "blue-400" },
+    { path: "/administrateur", label: "Admin", emoji: "🧑‍💻", color: "purple-500" },
   ],
   ResponsableIntegration: [
     { path: "/membres-hub", label: "Suivis des membres", emoji: "👤", color: "blue-500" },
@@ -20,19 +20,19 @@ const roleCards = {
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "🙌", color: "green-500" },
   ],
   ResponsableCellule: [
-    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "blue-500" },
+    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "yellow-500" },
   ],
   Membre: [],
 };
 
 export default function IndexPage() {
-  const [userEmail, setUserEmail] = useState("");
+  const [userName, setUserName] = useState("");
   const [roles, setRoles] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
-    const email = localStorage.getItem("userEmail");
-    setUserEmail(email || "Inconnu");
+    const name = localStorage.getItem("userName"); // récupère le nom
+    setUserName(name || "Utilisateur");
 
     const storedRoles = localStorage.getItem("userRole");
     if (storedRoles) {
@@ -77,17 +77,20 @@ export default function IndexPage() {
       className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* 🔹 Top bar: Retour + Bienvenue + Déconnexion */}
+      {/* 🔹 Top bar */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-6">
+        {/* Bouton retour */}
         <button
           onClick={() => router.back()}
           className="flex items-center text-white font-semibold hover:text-gray-200 transition-colors"
         >
           ← Retour
         </button>
+
+        {/* Déconnexion + bienvenue */}
         <div className="flex flex-col items-end">
-          <p className="text-gray-200 text-sm mb-1">Bienvenue {userEmail}</p>
-          <LogoutLink />
+          <LogoutLink className="text-red-400 hover:text-red-500 mb-2" />
+          <p className="text-gray-200 text-sm mt-1">Bienvenue {userName}</p>
         </div>
       </div>
 
@@ -123,3 +126,4 @@ export default function IndexPage() {
     </div>
   );
 }
+

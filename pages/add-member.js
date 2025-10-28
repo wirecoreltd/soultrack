@@ -1,10 +1,10 @@
 //pages/add-member.js
-
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
+import Image from "next/image";
 
 export default function AddMember() {
   const router = useRouter();
@@ -80,9 +80,6 @@ export default function AddMember() {
         is_whatsapp: false,
         infos_supplementaires: "",
       });
-
-      // Redirection facultative après ajout
-      // router.push("/membres-hub");
     } catch (err) {
       alert(err.message);
     }
@@ -91,6 +88,17 @@ export default function AddMember() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
+
+        {/* 🔹 Logo au centre */}
+        <div className="flex justify-center mb-6">
+          <Image
+            src="/logo.png"
+            alt="SoulTrack Logo"
+            width={80}
+            height={80}
+            className="object-contain"
+          />
+        </div>
 
         <button
           onClick={() => router.back()}
@@ -252,4 +260,5 @@ export default function AddMember() {
     </div>
   );
 }
+
 

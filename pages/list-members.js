@@ -1,7 +1,5 @@
 //list-members.js
 
-//list-members.js
-
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -189,10 +187,19 @@ export default function ListMembers() {
                 {nouveauxFiltres.map((m) => (
                   <div
                     key={m.id}
-                    className="bg-white p-3 rounded-lg shadow-md hover:shadow-xl transition duration-200 border-t-4"
-                    style={{ borderTopColor: getBorderColor(m) }}
+                    className={`bg-white p-4 rounded-lg shadow-md border-l-4 cursor-pointer transition-all duration-200`}
+                    style={{
+                      borderLeftColor: getBorderColor(m),
+                      minHeight: "180px",
+                    }}
+                    onClick={() =>
+                      setDetailsOpen((prev) => ({
+                        ...prev,
+                        [m.id]: !prev[m.id],
+                      }))
+                    }
                   >
-                    <div className="flex justify-between items-center mb-1">
+                    <div className="flex justify-between items-center mb-2">
                       <span
                         className="text-sm font-semibold"
                         style={{ color: getBorderColor(m) }}
@@ -204,7 +211,7 @@ export default function ListMembers() {
                       </span>
                     </div>
 
-                    <div className="text-lg font-bold text-gray-800">
+                    <div className="text-lg font-bold text-gray-800 mb-1">
                       {m.prenom} {m.nom}
                     </div>
 
@@ -212,24 +219,28 @@ export default function ListMembers() {
                       📱 {m.telephone || "—"}
                     </p>
 
-                    <select
-                      value={m.statut}
-                      onChange={(e) =>
-                        handleChangeStatus(m.id, e.target.value)
-                      }
-                      className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
-                    >
-                      {statusOptions.map((s) => (
-                        <option key={s}>{s}</option>
-                      ))}
-                    </select>
+                    {detailsOpen[m.id] && (
+                      <div className="mt-2">
+                        <select
+                          value={m.statut}
+                          onChange={(e) =>
+                            handleChangeStatus(m.id, e.target.value)
+                          }
+                          className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
+                        >
+                          {statusOptions.map((s) => (
+                            <option key={s}>{s}</option>
+                          ))}
+                        </select>
 
-                    <p
-                      className="text-blue-500 underline cursor-pointer text-sm"
-                      onClick={() => setPopupMember(m)}
-                    >
-                      Détails
-                    </p>
+                        <p
+                          className="text-blue-500 underline cursor-pointer text-sm"
+                          onClick={() => setPopupMember(m)}
+                        >
+                          Détails
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -253,10 +264,19 @@ export default function ListMembers() {
                 {anciensFiltres.map((m) => (
                   <div
                     key={m.id}
-                    className="bg-white p-3 rounded-lg shadow-md border-t-4 transition duration-200"
-                    style={{ borderTopColor: getBorderColor(m) }}
+                    className={`bg-white p-4 rounded-lg shadow-md border-l-4 cursor-pointer transition-all duration-200`}
+                    style={{
+                      borderLeftColor: getBorderColor(m),
+                      minHeight: "180px",
+                    }}
+                    onClick={() =>
+                      setDetailsOpen((prev) => ({
+                        ...prev,
+                        [m.id]: !prev[m.id],
+                      }))
+                    }
                   >
-                    <div className="flex justify-between items-center mb-1">
+                    <div className="flex justify-between items-center mb-2">
                       <span
                         className="text-sm font-semibold"
                         style={{ color: getBorderColor(m) }}
@@ -265,7 +285,7 @@ export default function ListMembers() {
                       </span>
                     </div>
 
-                    <div className="text-lg font-bold text-gray-800">
+                    <div className="text-lg font-bold text-gray-800 mb-1">
                       {m.prenom} {m.nom}
                     </div>
 
@@ -273,24 +293,28 @@ export default function ListMembers() {
                       📱 {m.telephone || "—"}
                     </p>
 
-                    <select
-                      value={m.statut}
-                      onChange={(e) =>
-                        handleChangeStatus(m.id, e.target.value)
-                      }
-                      className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
-                    >
-                      {statusOptions.map((s) => (
-                        <option key={s}>{s}</option>
-                      ))}
-                    </select>
+                    {detailsOpen[m.id] && (
+                      <div className="mt-2">
+                        <select
+                          value={m.statut}
+                          onChange={(e) =>
+                            handleChangeStatus(m.id, e.target.value)
+                          }
+                          className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
+                        >
+                          {statusOptions.map((s) => (
+                            <option key={s}>{s}</option>
+                          ))}
+                        </select>
 
-                    <p
-                      className="text-blue-500 underline cursor-pointer text-sm"
-                      onClick={() => setPopupMember(m)}
-                    >
-                      Détails
-                    </p>
+                        <p
+                          className="text-blue-500 underline cursor-pointer text-sm"
+                          onClick={() => setPopupMember(m)}
+                        >
+                          Détails
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -298,10 +322,6 @@ export default function ListMembers() {
           )}
         </div>
       )}
-
-      {/* === VUE TABLE === */}
-      {/* ...le reste du fichier (table, popup, etc.) reste inchangé ... */}
-
 
       {/* === VUE TABLE === */}
       {view === "table" && (

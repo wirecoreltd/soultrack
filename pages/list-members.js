@@ -408,10 +408,7 @@ export default function ListMembers() {
             </thead>
             <tbody>
               {filteredMembers.map((m) => (
-                <tr
-                  key={m.id}
-                  className="hover:bg-white/10 transition duration-150"
-                >
+                <tr key={m.id} className="hover:bg-white/10 transition duration-150">
                   <td
                     className="px-4 py-2 border-l-4"
                     style={{ borderLeftColor: getBorderColor(m) }}
@@ -447,7 +444,6 @@ export default function ListMembers() {
                 <h2 className="text-xl font-bold mb-2 text-center">
                   {popupMember.prenom} {popupMember.nom}
                 </h2>
-                <p>📌 Prénom Nom : {popupMember.prenom} {popupMember.nom}</p>
                 <p>📞 Téléphone : {popupMember.telephone || "—"}</p>
                 <p>💬 WhatsApp : {popupMember.iswhatsapp || "—"}</p>
                 <p>🏙 Ville : {popupMember.ville || "—"}</p>
@@ -456,7 +452,6 @@ export default function ListMembers() {
                 <p>❓ Besoin : {popupMember.besoin || "—"}</p>
                 <p>📝 Infos : {popupMember.infos_supplementaires || "—"}</p>
 
-                {/* Menu déroulant de statut */}
                 <select
                   value={popupMember.statut}
                   onChange={(e) =>
@@ -469,7 +464,6 @@ export default function ListMembers() {
                   ))}
                 </select>
 
-                {/* Sélecteur de cellule */}
                 <p className="mt-3 font-semibold text-green-600">Cellule :</p>
                 <select
                   value={selectedCellules[popupMember.id] || ""}
@@ -506,3 +500,6 @@ export default function ListMembers() {
           )}
         </div>
       )}
+    </div>
+  );
+}

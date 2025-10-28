@@ -1,5 +1,3 @@
-//pages/login.js
-
 "use client";
 
 import { useState } from "react";
@@ -19,6 +17,7 @@ export default function LoginPage() {
     setError("");
 
     try {
+      // 🔹 Authentification
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -29,38 +28,40 @@ export default function LoginPage() {
         return;
       }
 
-      const userEmail = data.user.email;
-      console.log("✅ Login réussi :", userEmail);
-      localStorage.setItem("userEmail", userEmail);
+      console.log("✅ Login réussi :", data.user.email);
 
-      // Vérifie le rôle de l'utilisateur dans la table 'profiles'
+      // 🔹 Récupérer le profil (pour connaître le rôle)
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
-        .eq("email", userEmail)
+        .eq("email", data.user.email)
         .single();
 
       if (profileError || !profile) {
-        setError("Impossible de récupérer le rôle utilisateur");
+        setError("❌ Impossible de récupérer le profil utilisateur");
+        console.error("Erreur profil :", profileError);
         return;
       }
 
       const role = profile.role;
       console.log("🎭 Rôle :", role);
 
-      // Redirection selon le rôle
-      if (role === "Administrateur") {
-        await router.push("/");
-      } else if (role === "ResponsableIntegration") {
-        await router.push("/integration-hub");
-      } else if (role === "ResponsableEvangelisation") {
-        await router.push("/evangelisation-hub");
-      } else if (role === "ResponsableCellule") {
-        await router.push("/cellule-hub");
-      } else {
-        await router.push("/"); // page par défaut
-      }
+      // 🔹 Stocker infos utilisateur
+      localStorage.setItem("userEmail", data.user.email);
+      localStorage.setItem("userRole", role);
 
+      // 🔹 Redirection selon le rôle
+      if (role === "Administrateur") {
+        router.push("/"); // page index.js
+      } else if (role === "ResponsableIntegration") {
+        router.push("/membres-hub");
+      } else if (role === "ResponsableEvangelisation") {
+        router.push("/evangelisation-hub");
+      } else if (role === "ResponsableCellule") {
+        router.push("/cellules-hub");
+      } else {
+        router.push("/"); // par défaut
+      }
     } catch (err) {
       console.error("Erreur lors du login :", err);
       setError("❌ Erreur lors de la connexion");

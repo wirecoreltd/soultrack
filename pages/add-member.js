@@ -123,25 +123,28 @@ export default function AddMember() {
             required
           />
           <div className="flex items-center gap-2">
-            <input
-              type="text"
-              name="telephone"
-              placeholder="Téléphone"
-              value={formData.telephone}
-              onChange={handleChange}
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              required
-            />
-            <label className="flex items-center gap-1">
-              <input
-                type="checkbox"
-                name="is_whatsapp"
-                checked={formData.is_whatsapp}
-                onChange={handleChange}
-              />
-              WhatsApp
-            </label>
-          </div>
+            {/* Téléphone */}
+<input
+  type="text"
+  name="telephone"
+  placeholder="Téléphone"
+  value={formData.telephone}
+  onChange={handleChange}
+  className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+  required
+/>
+
+{/* WhatsApp */}
+<label className="flex items-center gap-2 mt-1">
+  <input
+    type="checkbox"
+    name="is_whatsapp"
+    checked={formData.is_whatsapp}
+    onChange={handleChange}
+  />
+  WhatsApp
+</label>
+
           <input
             type="text"
             name="ville"

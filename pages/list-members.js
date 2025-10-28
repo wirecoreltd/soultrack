@@ -215,6 +215,9 @@ export default function ListMembers() {
                         <p className="text-sm text-gray-600 mb-2 text-center">
                           📱 {m.telephone || "—"}
                         </p>
+                          <p className="text-sm text-gray-600 mb-2 text-center">
+                          🕊 Statut : {m.statut || "—"}
+                        </p>
                         <button
                           onClick={() => toggleDetails(m.id)}
                           className="text-orange-500 underline text-sm"
@@ -229,7 +232,8 @@ export default function ListMembers() {
                             <p>💬 WhatsApp : {m.whatsapp || "—"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🕊 Statut : {m.statut || "—"}</p>
-                            <p>🧩 Comment est-il venu : {m.comment || "—"}</p>
+                            <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+                            <p>❓ Besoin : {m.besoin || "—"}</p>                          
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             {/* Menu déroulant de statut */}

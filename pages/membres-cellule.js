@@ -35,7 +35,7 @@ export default function MembresCellule() {
         let membresData = [];
 
         // 🔹 ADMIN → tous les membres
-        if (userRole.includes("Admin")) {
+        if (userRole.includes("Administrateur")) {
           const { data, error } = await supabase
             .from("membres")
             .select(`

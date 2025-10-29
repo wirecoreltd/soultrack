@@ -1,5 +1,3 @@
-//pages/admin/create-internal-user.js
-
 "use client";
 import { useState } from "react";
 
@@ -27,7 +25,6 @@ export default function CreateInternalUser() {
         body: JSON.stringify(formData),
       });
 
-      // 🔹 Lire le body une seule fois
       const text = await res.text();
       let data;
       try {
@@ -39,7 +36,7 @@ export default function CreateInternalUser() {
 
       if (!res.ok) throw new Error(data?.error || "Erreur inconnue");
 
-      // ✅ Réinitialisation du formulaire
+      setMessage(data.message);
       setFormData({
         prenom: "",
         nom: "",
@@ -48,8 +45,6 @@ export default function CreateInternalUser() {
         password: "",
         role: "Admin",
       });
-
-      setMessage(data.message);
     } catch (err) {
       console.error(err);
       setMessage("❌ " + err.message);

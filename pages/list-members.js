@@ -543,13 +543,16 @@ export default function ListMembers() {
                 )}
                 onStatusUpdate={handleStatusUpdateFromEnvoyer}
                 session={session}
-              />
+                  />
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
-      </div>
-    )}
-  </div>
-)}
+      )}
+    </div> // <-- fermeture div principal
+  );      // <-- fermeture du return
+}         // <-- fermeture fonction ListMembers
 
      

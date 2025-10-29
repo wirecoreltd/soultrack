@@ -1,4 +1,5 @@
 //pages/membres-cellule.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,93 +10,87 @@ export default function MembresCellule() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-  const fetchMembres = async () => {
-    setLoading(true);
+    const fetchMembres = async () => {
+      setLoading(true);
 
-    try {
-      const userEmail = localStorage.getItem("userEmail");
-      const userRole = JSON.parse(localStorage.getItem("userRole") || "[]");
+      try {
+        const userEmail = localStorage.getItem("userEmail");
+        const userRole = JSON.parse(localStorage.getItem("userRole") || "[]");
 
-      if (!userEmail) throw new Error("Utilisateur non connecté");
+        if (!userEmail) throw new Error("Utilisateur non connecté");
 
-      // 🔹 Récupérer l'ID du responsable connecté
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", userEmail)
-        .single();
-
-      if (profileError) throw profileError;
-      const responsableId = profileData.id;
-
-      let membresData = [];
-
-      // 🔹 Si ADMIN → tous les membres
-      if (userRole.includes("Admin")) {
-        const { data, error } = await supabase
-          .from("membres")
-          .select(`
-            id,
-            nom,
-            prenom,
-            telephone,
-            ville,
-            cellule_id,
-            cellules (id, cellule, responsable)
-          `)
-          .not("cellule_id", "is", null);
-
-        if (error) throw error;
-        membresData = data;
-      }
-
-      // 🔹 Si ResponsableCellule → membres de sa cellule
-      else if (userRole.includes("ResponsableCellule")) {
-        // On récupère d’abord la cellule dont il est responsable
-        const { data: celluleData, error: celluleError } = await supabase
-          .from("cellules")
-          .select("id, cellule, responsable")
-          .eq("responsable_id", responsableId)
+        // 🔹 Récupérer l'ID du profil connecté
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("email", userEmail)
           .single();
 
-        if (celluleError) throw celluleError;
-        if (!celluleData) throw new Error("Aucune cellule trouvée pour ce responsable");
+        if (profileError) throw profileError;
+        const responsableId = profileData.id;
 
-        const celluleId = celluleData.id;
+        let membresData = [];
 
-        // On récupère uniquement les membres de cette cellule
-        const { data, error } = await supabase
-          .from("membres")
-          .select(`
-            id,
-            nom,
-            prenom,
-            telephone,
-            ville,
-            cellule_id,
-            cellules (cellule, responsable)
-          `)
-          .eq("cellule_id", celluleId);
+        // 🔹 Si ADMIN → tous les membres
+        if (userRole.includes("Admin")) {
+          const { data, error } = await supabase
+            .from("membres")
+            .select(`
+              id,
+              nom,
+              prenom,
+              telephone,
+              ville,
+              cellule_id,
+              cellules (id, cellule, responsable)
+            `)
+            .not("cellule_id", "is", null);
 
-        if (error) throw error;
-        membresData = data;
+          if (error) throw error;
+          membresData = data;
+        }
+
+        // 🔹 Si ResponsableCellule → membres de sa cellule
+        else if (userRole.includes("ResponsableCellule")) {
+          const { data: celluleData, error: celluleError } = await supabase
+            .from("cellules")
+            .select("id, cellule")
+            .eq("responsable_id", responsableId)
+            .single();
+
+          if (celluleError) throw celluleError;
+          if (!celluleData) throw new Error("Aucune cellule trouvée pour ce responsable");
+
+          const celluleId = celluleData.id;
+
+          const { data, error } = await supabase
+            .from("membres")
+            .select(`
+              id,
+              nom,
+              prenom,
+              telephone,
+              ville,
+              cellule_id,
+              cellules (cellule)
+            `)
+            .eq("cellule_id", celluleId);
+
+          if (error) throw error;
+          membresData = data;
+        }
+
+        setMembres(membresData || []);
+      } catch (err) {
+        console.error("❌ Erreur :", err.message || err);
+        setMembres([]);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      console.log("✅ Membres récupérés :", membresData);
-      setMembres(membresData || []);
-
-    } catch (err) {
-      console.error("❌ Erreur :", err.message || err);
-      setMembres([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchMembres();
-}, []);
-
-
+    fetchMembres();
+  }, []);
 
   if (loading) return <p>Chargement...</p>;
   if (membres.length === 0)
@@ -129,3 +124,4 @@ export default function MembresCellule() {
     </div>
   );
 }
+

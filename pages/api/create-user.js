@@ -1,4 +1,3 @@
-// ✅ /pages/api/create-user.js
 
 import supabaseAdmin from "../../lib/supabaseAdmin";
 
@@ -13,8 +12,6 @@ export default async function handler(req, res) {
     if (!prenom || !nom || !email || !password || !role) {
       return res.status(400).json({ error: "Tous les champs sont obligatoires !" });
     }
-
-    console.log("🔹 Création utilisateur :", { prenom, nom, email, role });
 
     // 1️⃣ Créer l'utilisateur dans Supabase Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -66,4 +63,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: err.message || "Erreur serveur inconnue" });
   }
 }
-

@@ -28,11 +28,9 @@ export default async function handler(req, res) {
     }
 
     const userId = authData?.user?.id;
-    if (!userId) {
-      return res.status(500).json({ error: "Impossible de récupérer l'ID utilisateur" });
-    }
+    if (!userId) return res.status(500).json({ error: "Impossible de récupérer l'ID utilisateur" });
 
-    // 2️⃣ Créer le profil dans la table profiles
+    // 2️⃣ Créer le profil
     const { error: profileError } = await supabaseAdmin.from("profiles").insert([
       {
         id: userId,

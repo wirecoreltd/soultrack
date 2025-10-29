@@ -1,5 +1,4 @@
-// list-members.js
-
+// pages/list-members.js
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -179,16 +178,16 @@ export default function ListMembers() {
         </button>
       </div>
 
-      {/* === VUE CARTE === */}
+      {/* ================= VUE CARTE ================= */}
       {view === "card" && (
         <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
+          {/* === Cartes Nouveaux === */}
           {nouveauxFiltres.length > 0 && (
             <div>
               <p className="text-white text-lg mb-2 ml-1">
                 💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                // === DEBUT Carte Nouveaux Membres (Vue Carte) ===
                 {nouveauxFiltres.map((m) => {
                   const isOpen = detailsOpen[m.id];
                   return (
@@ -196,19 +195,17 @@ export default function ListMembers() {
                       key={m.id}
                       className="bg-white p-3 rounded-xl shadow-md hover:shadow-xl transition duration-200 overflow-hidden relative"
                     >
-                      {/* Bande colorée en haut comme les anciens, couleur selon statut */}
+                      {/* Bande colorée en haut similaire aux anciens */}
                       <div
                         className="w-full h-[6px] rounded-t-xl mb-2"
                         style={{ backgroundColor: getBorderColor(m) }}
                       />
-                
+
                       {/* Tag Nouveau */}
-                      {(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && (
-                        <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
-                          Nouveau
-                        </span>
-                      )}
-                
+                      <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
+                        Nouveau
+                      </span>
+
                       <div className="flex flex-col items-center">
                         <h2 className="text-lg font-bold text-gray-800 text-center">
                           {m.prenom} {m.nom}
@@ -225,18 +222,8 @@ export default function ListMembers() {
                         >
                           {isOpen ? "Fermer détails" : "Détails"}
                         </button>
-                
-                        {isOpen && (
-                          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                            {/* contenu détaillé comme avant */}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-                // === FIN Carte Nouveaux Membres (Vue Carte) ===
 
+                        {isOpen && (
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                             <p>📌 Prénom Nom : {m.prenom} {m.nom}</p>
                             <p>📞 Téléphone : {m.telephone || "—"}</p>
@@ -298,6 +285,7 @@ export default function ListMembers() {
             </div>
           )}
 
+          {/* === Cartes Anciens === */}
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
               <h3 className="text-white text-lg mb-3 font-semibold">
@@ -400,170 +388,3 @@ export default function ListMembers() {
           )}
         </div>
       )}
-      {/* === VUE TABLE === */}
-{view === "table" && (
-  <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
-
-    {/* 💖 Nouveaux membres */}
-    {nouveauxFiltres.length > 0 && (
-      <div className="mb-4">
-        <p className="text-white text-lg mb-2 ml-1">
-          💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-        </p>
-        <table className="w-full text-sm text-left text-white border-separate border-spacing-0 mb-6">
-          <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-lg">
-            <tr>
-              <th className="px-4 py-2 rounded-l-lg">Nom complet</th>
-              <th className="px-4 py-2">Téléphone</th>
-              <th className="px-4 py-2">Statut</th>
-              <th className="px-4 py-2 rounded-r-lg">Détails</th>
-            </tr>
-          </thead>
-          <tbody>
-            {nouveauxFiltres.map((m) => (
-              <tr key={m.id} className="hover:bg-white/10 transition duration-150">
-                <td
-                  className="px-4 py-2 border-l-4 flex items-center gap-2"
-                  style={{ borderLeftColor: getBorderColor(m) }}
-                >
-                  {m.prenom} {m.nom}
-                  <span className="bg-blue-500 text-white text-xs px-1 rounded">Nouveau</span>
-                </td>
-                <td className="px-4 py-2">{m.telephone || "—"}</td>
-                <td className="px-4 py-2">{m.statut}</td>
-                <td className="px-4 py-2">
-                  <button
-                    onClick={() => setPopupMember(m)}
-                    className="text-orange-400 underline text-sm"
-                  >
-                    Détails
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )}
-
-    {/* Membres existants */}
-    {anciensFiltres.length > 0 && (
-      <div>
-        <h3 className="text-white text-lg mb-3 font-semibold">
-          <span
-            style={{
-              background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-              WebkitBackgroundClip: "text",
-              color: "transparent",
-            }}
-          >
-            Membres existants
-          </span>
-        </h3>
-        <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-          <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-lg">
-            <tr>
-              <th className="px-4 py-2 rounded-l-lg">Nom complet</th>
-              <th className="px-4 py-2">Téléphone</th>
-              <th className="px-4 py-2">Statut</th>
-              <th className="px-4 py-2 rounded-r-lg">Détails</th>
-            </tr>
-          </thead>
-          <tbody>
-            {anciensFiltres.map((m) => (
-              <tr key={m.id} className="hover:bg-white/10 transition duration-150">
-                <td className="px-4 py-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
-                  {m.prenom} {m.nom}
-                </td>
-                <td className="px-4 py-2">{m.telephone || "—"}</td>
-                <td className="px-4 py-2">{m.statut}</td>
-                <td className="px-4 py-2">
-                  <button
-                    onClick={() => setPopupMember(m)}
-                    className="text-orange-400 underline text-sm"
-                  >
-                    Détails
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )}
-
-    {/* === POPUP DÉTAILS === */}
-    {popupMember && (
-      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-        <div className="bg-white rounded-xl p-6 w-full max-w-md text-gray-800 relative">
-          <button
-            onClick={() => setPopupMember(null)}
-            className="absolute top-2 right-3 text-gray-500 hover:text-gray-700"
-          >
-            ✕
-          </button>
-
-          <h2 className="text-xl font-bold mb-2 text-center">
-            {popupMember.prenom} {popupMember.nom}
-          </h2>
-          <p>📞 Téléphone : {popupMember.telephone || "—"}</p>
-          <p>💬 WhatsApp : {popupMember.is_whatsapp || "—"}</p>
-          <p>🏙 Ville : {popupMember.ville || "—"}</p>
-          <p>🕊 Statut : {popupMember.statut || "—"}</p>
-          <p>🧩 Comment est-il venu : {popupMember.venu || "—"}</p>
-          <p>❓ Besoin : {popupMember.besoin || "—"}</p>
-          <p>📝 Infos : {popupMember.infos_supplementaires || "—"}</p>
-
-          <select
-            value={popupMember.statut}
-            onChange={(e) =>
-              handleChangeStatus(popupMember.id, e.target.value)
-            }
-            className="border rounded-md px-2 py-1 text-sm mt-3 w-full"
-          >
-            {statusOptions.map((s) => (
-              <option key={s}>{s}</option>
-            ))}
-          </select>
-
-          <p className="mt-3 font-semibold text-green-600">Cellule :</p>
-          <select
-            value={selectedCellules[popupMember.id] || ""}
-            onChange={(e) =>
-              setSelectedCellules((prev) => ({
-                ...prev,
-                [popupMember.id]: e.target.value,
-              }))
-            }
-            className="border rounded-lg px-2 py-1 text-sm w-full"
-          >
-            <option value="">-- Sélectionner cellule --</option>
-            {cellules.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.cellule} ({c.responsable})
-              </option>
-            ))}
-          </select>
-
-          {selectedCellules[popupMember.id] && (
-            <div className="mt-3">
-              <BoutonEnvoyer
-                membre={popupMember}
-                cellule={cellules.find(
-                  (c) => c.id === selectedCellules[popupMember.id]
-                )}
-                onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                session={session}
-                  />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-    </div> // <-- fermeture div principal
-  );      // <-- fermeture du return
-}         // <-- fermeture fonction ListMembers
-
-     

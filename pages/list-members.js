@@ -314,6 +314,16 @@ export default function ListMembers() {
                         <h2 className="text-lg font-bold text-gray-800 text-center">
                           {m.prenom} {m.nom}
                         </h2>
+                          //Etoile*/
+                          <div className="flex justify-between items-center mb-1">
+                      <span
+                        className="text-sm font-semibold"
+                        style={{ color: getBorderColor(m) }}
+                      >
+                        {m.star ? "⭐ S.T.A.R" : m.statut}
+                      </span>
+                    </div>
+                        //fin Etoile*/
                         <p className="text-sm text-gray-600 mb-2 text-center">
                           📱 {m.telephone || "—"}
                         </p>

@@ -195,12 +195,12 @@ export default function ListMembers() {
                       key={m.id}
                       className="bg-white p-3 rounded-xl shadow-md hover:shadow-xl transition duration-200 overflow-hidden relative"
                     >
-                      {/* Tag Nouveau en diagonale */}
-                      <div className="absolute top-0 right-0 w-24 h-8 overflow-hidden">
-                        <div className="bg-blue-500 text-white font-bold text-xs rotate-45 absolute -top-2 right-[-40px] px-2">
+                      {/* Tag Nouveau en diagonale uniquement pour visiteurs / veut rejoindre ICC */}
+                      {(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && (
+                        <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
                           Nouveau
-                        </div>
-                      </div>
+                        </span>
+                      )}
 
                       {/* Bande colorée */}
                       <div
@@ -216,7 +216,7 @@ export default function ListMembers() {
                           📱 {m.telephone || "—"}
                         </p>
                         <p className="text-sm text-gray-600 mb-2 text-center">
-                         🕊 Statut : {m.statut || "—"}
+                          🕊 Statut : {m.statut || "—"}
                         </p>
                         <button
                           onClick={() => toggleDetails(m.id)}
@@ -229,14 +229,13 @@ export default function ListMembers() {
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                             <p>📌 Prénom Nom : {m.prenom} {m.nom}</p>
                             <p>📞 Téléphone : {m.telephone || "—"}</p>
-                            <p>💬 WhatsApp : {m.iswhatsapp || "—"}</p>
+                            <p>💬 WhatsApp : {m.is_whatsapp || "—"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
                             <p>❓Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                            {/* Menu déroulant de statut */}
                             <select
                               value={m.statut}
                               onChange={(e) => handleChangeStatus(m.id, e.target.value)}
@@ -247,7 +246,6 @@ export default function ListMembers() {
                               ))}
                             </select>
 
-                            {/* Cellule */}
                             <p className="mt-2 font-semibold text-green-600">Cellule :</p>
                             <select
                               value={selectedCellules[m.id] || ""}
@@ -339,7 +337,6 @@ export default function ListMembers() {
                             <p>❓ Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                            {/* Menu déroulant de statut */}
                             <select
                               value={m.statut}
                               onChange={(e) => handleChangeStatus(m.id, e.target.value)}
@@ -350,7 +347,6 @@ export default function ListMembers() {
                               ))}
                             </select>
 
-                            {/* Cellule */}
                             <p className="mt-2 font-semibold text-green-600">Cellule :</p>
                             <select
                               value={selectedCellules[m.id] || ""}
@@ -394,7 +390,7 @@ export default function ListMembers() {
         </div>
       )}
 
-            {/* === VUE TABLE === */}
+      {/* === VUE TABLE === */}
       {view === "table" && (
         <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
@@ -445,7 +441,7 @@ export default function ListMembers() {
                   {popupMember.prenom} {popupMember.nom}
                 </h2>
                 <p>📞 Téléphone : {popupMember.telephone || "—"}</p>
-                <p>💬 WhatsApp : {popupMember.iswhatsapp || "—"}</p>
+                <p>💬 WhatsApp : {popupMember.is_whatsapp || "—"}</p>
                 <p>🏙 Ville : {popupMember.ville || "—"}</p>
                 <p>🕊 Statut : {popupMember.statut || "—"}</p>
                 <p>🧩 Comment est-il venu : {popupMember.venu || "—"}</p>

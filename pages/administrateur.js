@@ -7,7 +7,7 @@ import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import SendLinkPopup from "../components/SendLinkPopup";
 import { useRouter } from "next/router";
-//import AccessGuard from "../components/AccessGuard";
+// import AccessGuard from "../components/AccessGuard";
 
 export default function MembresHub() {
   const router = useRouter();
@@ -42,9 +42,9 @@ export default function MembresHub() {
       {/* 🔹 Cartes principales */}
       <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6">
         
-      {/* Créer une Cellule */}
+        {/* Créer une Cellule */}
         <Link
-          href="/admin/create-responsable-cellule
+          href="/admin/create-responsable-cellule"
           className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
         >
           <div className="text-5xl mb-2">👤</div>

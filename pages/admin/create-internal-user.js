@@ -1,3 +1,4 @@
+//create-internal-user.js
 "use client";
 import { useState } from "react";
 
@@ -25,7 +26,15 @@ export default function CreateInternalUser() {
         body: JSON.stringify(formData),
       });
 
-      const data = await res.json();
+      // 🔹 Sécurisé : parse JSON seulement si possible
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text();
+        console.error("❌ Réponse non JSON :", text);
+        throw new Error("Réponse vide ou non JSON du serveur");
+      }
 
       if (!res.ok) throw new Error(data.error || "Erreur inconnue");
 
@@ -95,13 +104,13 @@ export default function CreateInternalUser() {
         </button>
 
         {message && (
-          <p
+          <pre
             className={`mt-4 text-center ${
               message.startsWith("✅") ? "text-green-600" : "text-red-600"
             }`}
           >
             {message}
-          </p>
+          </pre>
         )}
       </form>
     </div>

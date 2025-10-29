@@ -2,6 +2,7 @@
 import supabaseAdmin from "../../lib/supabaseAdmin";
 
 export default async function handler(req, res) {
+  // 🔹 Vérifie que la méthode est POST
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -11,6 +12,7 @@ export default async function handler(req, res) {
   try {
     const { prenom, nom, email, telephone, role, password } = req.body;
 
+    // 🔹 Champs obligatoires
     if (!prenom || !nom || !email || !password || !role) {
       return res.status(400).json({ error: "Tous les champs sont obligatoires !" });
     }
@@ -28,9 +30,10 @@ export default async function handler(req, res) {
     if (authError) return res.status(400).json({ error: authError.message });
 
     const userId = authData?.user?.id;
-    if (!userId) return res.status(500).json({ error: "Impossible de récupérer l'ID utilisateur" });
+    if (!userId)
+      return res.status(500).json({ error: "Impossible de récupérer l'ID utilisateur" });
 
-    // 2️⃣ Créer le profil
+    // 2️⃣ Créer le profil dans "profiles"
     const { error: profileError } = await supabaseAdmin.from("profiles").insert([
       {
         id: userId,
@@ -61,7 +64,11 @@ export default async function handler(req, res) {
       if (cellError) return res.status(400).json({ error: cellError.message });
     }
 
-    return res.status(200).json({ message: "✅ Utilisateur créé avec succès !" });
+    // ✅ Réponse JSON toujours présente
+    return res.status(200).json({
+      message: "✅ Utilisateur créé avec succès !",
+      data: { prenom, nom, email, role },
+    });
   } catch (err) {
     console.error("❌ Erreur serveur :", err);
     return res.status(500).json({ error: err.message || "Erreur serveur inconnue" });

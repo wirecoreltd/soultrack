@@ -1,5 +1,5 @@
 // pages/api/create-user.js
-import supabase from "../../lib/supabaseClient";
+import supabaseAdmin from "../../lib/supabaseAdmin";
 
 export default async function handler(req, res) {
   if (req.method !== "POST")

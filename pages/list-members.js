@@ -389,7 +389,6 @@ export default function ListMembers() {
           )}
         </div>
       )}
-
       {/* === VUE TABLE === */}
 {view === "table" && (
   <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
@@ -553,4 +552,4 @@ export default function ListMembers() {
   </div>
 )}
 
-
+     

@@ -44,12 +44,12 @@ export default function MembresHub() {
         
         {/* Créer une Cellule */}
         <Link
-          href="/admin/create-responsable-cellule"
-          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
+          href="/admin/create-internal-user"
+          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
         >
-          <div className="text-5xl mb-2">👤</div>
+          <div className="text-5xl mb-2">🧑‍💻</div>
           <div className="text-lg font-bold text-gray-800 text-center">
-            Créer une Cellule
+            Créer Un Responsable
           </div>
         </Link>
 

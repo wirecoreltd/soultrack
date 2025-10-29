@@ -1,12 +1,11 @@
 "use client";
 import { useState } from "react";
 
-export default function TestCreateUser() {
-  const [message, setMessage] = useState("");
+export default function TestApiButton() {
+  const [result, setResult] = useState("");
 
   const handleTest = async () => {
-    setMessage("⏳ Envoi de la requête...");
-
+    setResult("Chargement...");
     try {
       const res = await fetch("/api/create-user", {
         method: "POST",
@@ -16,30 +15,35 @@ export default function TestCreateUser() {
           nom: "User",
           email: "test@test.com",
           role: "Admin",
+          password: "Test123!"
         }),
       });
 
-      const data = await res.json();
-      console.log(data);
-      setMessage(JSON.stringify(data, null, 2));
+      const text = await res.text(); // récupère tout le corps
+      let data;
+      try {
+        data = JSON.parse(text); // essaie de parser en JSON
+      } catch {
+        throw new Error("Réponse vide ou non JSON du serveur : " + text);
+      }
+
+      if (!res.ok) throw new Error(data?.error || "Erreur inconnue");
+
+      setResult(JSON.stringify(data, null, 2));
     } catch (err) {
-      console.error(err);
-      setMessage("❌ " + err.message);
+      setResult(err.message);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-6">
+    <div className="p-4">
       <button
         onClick={handleTest}
-        className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 mb-4"
+        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
       >
-        Tester API Create User
+        Test API Create User
       </button>
-
-      {message && (
-        <pre className="bg-white p-4 rounded shadow w-full max-w-md">{message}</pre>
-      )}
+      <pre className="mt-4 bg-gray-100 p-4 rounded">{result}</pre>
     </div>
   );
 }

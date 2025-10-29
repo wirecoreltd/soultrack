@@ -1,3 +1,5 @@
+//pages/admin/create-internal-user.js
+
 "use client";
 import { useState } from "react";
 
@@ -8,12 +10,12 @@ export default function CreateInternalUser() {
     email: "",
     telephone: "",
     password: "",
-    role: "Admin",
+    role: "Admin"
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
@@ -24,29 +26,12 @@ export default function CreateInternalUser() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
-      const text = await res.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        console.error("❌ Réponse non JSON :", text);
-        throw new Error("Réponse vide ou non JSON du serveur");
-      }
-
-      if (!res.ok) throw new Error(data?.error || "Erreur inconnue");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur inconnue");
 
       setMessage(data.message);
-      setFormData({
-        prenom: "",
-        nom: "",
-        email: "",
-        telephone: "",
-        password: "",
-        role: "Admin",
-      });
+      setFormData({ prenom: "", nom: "", email: "", telephone: "", password: "", role: "Admin" });
     } catch (err) {
-      console.error(err);
       setMessage("❌ " + err.message);
     } finally {
       setLoading(false);
@@ -55,23 +40,16 @@ export default function CreateInternalUser() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-100 p-6">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-xl shadow-md w-full max-w-md"
-      >
-        <h1 className="text-2xl font-bold mb-6 text-center">
-          Créer un utilisateur interne
-        </h1>
+      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
+        <h1 className="text-2xl font-bold mb-6">Créer un utilisateur interne</h1>
 
-        {["prenom", "nom", "email", "telephone", "password"].map((field) => (
+        {["prenom", "nom", "email", "telephone", "password"].map(field => (
           <input
             key={field}
             type={field === "password" ? "password" : "text"}
             placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
             value={formData[field]}
-            onChange={(e) =>
-              setFormData({ ...formData, [field]: e.target.value })
-            }
+            onChange={e => setFormData({ ...formData, [field]: e.target.value })}
             className="w-full mb-4 p-2 border rounded"
             required
           />
@@ -79,9 +57,7 @@ export default function CreateInternalUser() {
 
         <select
           value={formData.role}
-          onChange={(e) =>
-            setFormData({ ...formData, role: e.target.value })
-          }
+          onChange={e => setFormData({ ...formData, role: e.target.value })}
           className="w-full mb-4 p-2 border rounded"
         >
           <option value="Admin">Admin</option>
@@ -99,15 +75,7 @@ export default function CreateInternalUser() {
           {loading ? "Création..." : "Créer l'utilisateur"}
         </button>
 
-        {message && (
-          <pre
-            className={`mt-4 text-center ${
-              message.startsWith("✅") ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {message}
-          </pre>
-        )}
+        {message && <p className="mt-4 text-center text-red-600">{message}</p>}
       </form>
     </div>
   );

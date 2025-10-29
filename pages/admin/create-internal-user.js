@@ -1,4 +1,5 @@
-//create-internal-user.js
+//pages/admin/create-internal-user.js
+
 "use client";
 import { useState } from "react";
 
@@ -26,17 +27,17 @@ export default function CreateInternalUser() {
         body: JSON.stringify(formData),
       });
 
-      // 🔹 Sécurisé : parse JSON seulement si possible
+      // 🔹 Lire le body une seule fois
+      const text = await res.text();
       let data;
       try {
-        data = await res.json();
+        data = JSON.parse(text);
       } catch {
-        const text = await res.text();
         console.error("❌ Réponse non JSON :", text);
         throw new Error("Réponse vide ou non JSON du serveur");
       }
 
-      if (!res.ok) throw new Error(data.error || "Erreur inconnue");
+      if (!res.ok) throw new Error(data?.error || "Erreur inconnue");
 
       // ✅ Réinitialisation du formulaire
       setFormData({

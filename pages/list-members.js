@@ -449,6 +449,7 @@ export default function ListMembers() {
                           </button>
                           <h2 className="text-xl font-bold mb-2 text-black">
                             {m.prenom} {m.nom}
+                            {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                           </h2>
                           <p className="text-black text-sm mb-1">📞 {m.telephone || "—"}</p>
                           <p className="text-black text-sm mb-1">💬 WhatsApp : {m.is_whatsapp || "—"}</p>

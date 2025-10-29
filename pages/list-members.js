@@ -122,7 +122,7 @@ export default function ListMembers() {
       className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* Header */}
+      {/* ==================== HEADER ==================== */}
       <div className="flex justify-between w-full max-w-5xl items-center mb-4">
         <button
           onClick={() => window.history.back()}
@@ -133,7 +133,7 @@ export default function ListMembers() {
         <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
       </div>
 
-      {/* Logo */}
+      {/* ==================== LOGO ==================== */}
       <div className="mt-2 mb-2">
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
       </div>
@@ -145,7 +145,7 @@ export default function ListMembers() {
         Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
       </p>
 
-      {/* Filtre + recherche + compteur + toggle */}
+      {/* ==================== FILTRE + RECHERCHE + TOGGLE ==================== */}
       <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">
         <div className="flex items-center space-x-2 mb-2 sm:mb-0">
           <select
@@ -178,10 +178,10 @@ export default function ListMembers() {
         </button>
       </div>
 
-      {/* ================= VUE CARTE ================= */}
+      {/* ==================== VUE CARTE ==================== */}
       {view === "card" && (
         <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
-          {/* === Cartes Nouveaux === */}
+          {/* -------- Nouveaux membres -------- */}
           {nouveauxFiltres.length > 0 && (
             <div>
               <p className="text-white text-lg mb-2 ml-1">
@@ -195,16 +195,18 @@ export default function ListMembers() {
                       key={m.id}
                       className="bg-white p-3 rounded-xl shadow-md hover:shadow-xl transition duration-200 overflow-hidden relative"
                     >
-                      {/* Bande colorée en haut similaire aux anciens */}
+                      {/* Bordure en haut comme les anciens */}
                       <div
                         className="w-full h-[6px] rounded-t-xl mb-2"
                         style={{ backgroundColor: getBorderColor(m) }}
                       />
 
                       {/* Tag Nouveau */}
-                      <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
-                        Nouveau
-                      </span>
+                      {(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && (
+                        <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
+                          Nouveau
+                        </span>
+                      )}
 
                       <div className="flex flex-col items-center">
                         <h2 className="text-lg font-bold text-gray-800 text-center">
@@ -285,7 +287,7 @@ export default function ListMembers() {
             </div>
           )}
 
-          {/* === Cartes Anciens === */}
+          {/* -------- Membres existants -------- */}
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
               <h3 className="text-white text-lg mb-3 font-semibold">
@@ -388,3 +390,148 @@ export default function ListMembers() {
           )}
         </div>
       )}
+
+      {/* ==================== VUE TABLE ==================== */}
+      {view === "table" && (
+        <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
+
+          {/* -------- Tableau avec un seul en-tête -------- */}
+          <table className="w-full text-sm text-left text-white border-separate border-spacing-0 mb-6">
+            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-lg">
+              <tr>
+                <th className="px-4 py-2 rounded-l-lg">Nom complet</th>
+                <th className="px-4 py-2">Téléphone</th>
+                <th className="px-4 py-2">Statut</th>
+                <th className="px-4 py-2 rounded-r-lg">Détails</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Nouveaux membres */}
+              {nouveauxFiltres.map((m) => (
+                <tr key={m.id} className="hover:bg-white/10 transition duration-150">
+                  <td
+                    className="px-4 py-2 border-l-4 flex items-center gap-2"
+                    style={{ borderLeftColor: getBorderColor(m) }}
+                  >
+                    {m.prenom} {m.nom}
+                    <span className="bg-blue-500 text-white text-xs px-1 rounded">Nouveau</span>
+                  </td>
+                  <td className="px-4 py-2">{m.telephone || "—"}</td>
+                  <td className="px-4 py-2">{m.statut}</td>
+                  <td className="px-4 py-2">
+                    <button
+                      onClick={() => setPopupMember(m)}
+                      className="text-orange-400 underline text-sm"
+                    >
+                      Détails
+                    </button>
+                  </td>
+                </tr>
+              ))}
+
+              {/* Séparateur Membres existants */}
+              {anciensFiltres.length > 0 && (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-4 py-2 font-semibold text-white text-lg"
+                  >
+                    Membres existants
+                  </td>
+                </tr>
+              )}
+
+              {/* Membres existants */}
+              {anciensFiltres.map((m) => (
+                <tr key={m.id} className="hover:bg-white/10 transition duration-150">
+                  <td className="px-4 py-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
+                    {m.prenom} {m.nom}
+                  </td>
+                  <td className="px-4 py-2">{m.telephone || "—"}</td>
+                  <td className="px-4 py-2">{m.statut}</td>
+                  <td className="px-4 py-2">
+                    <button
+                      onClick={() => setPopupMember(m)}
+                      className="text-orange-400 underline text-sm"
+                    >
+                      Détails
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* ==================== POPUP ==================== */}
+          {popupMember && (
+            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl p-6 w-full max-w-md text-gray-800 relative">
+                <button
+                  onClick={() => setPopupMember(null)}
+                  className="absolute top-2 right-3 text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+
+                <h2 className="text-xl font-bold mb-2 text-center">
+                  {popupMember.prenom} {popupMember.nom}
+                </h2>
+                <p>📞 Téléphone : {popupMember.telephone || "—"}</p>
+                <p>💬 WhatsApp : {popupMember.is_whatsapp || "—"}</p>
+                <p>🏙 Ville : {popupMember.ville || "—"}</p>
+                <p>🕊 Statut : {popupMember.statut || "—"}</p>
+                <p>🧩 Comment est-il venu : {popupMember.venu || "—"}</p>
+                <p>❓ Besoin : {popupMember.besoin || "—"}</p>
+                <p>📝 Infos : {popupMember.infos_supplementaires || "—"}</p>
+
+                <select
+                  value={popupMember.statut}
+                  onChange={(e) =>
+                    handleChangeStatus(popupMember.id, e.target.value)
+                  }
+                  className="border rounded-md px-2 py-1 text-sm mt-3 w-full"
+                >
+                  {statusOptions.map((s) => (
+                    <option key={s}>{s}</option>
+                  ))}
+                </select>
+
+                <p className="mt-3 font-semibold text-green-600">Cellule :</p>
+                <select
+                  value={selectedCellules[popupMember.id] || ""}
+                  onChange={(e) =>
+                    setSelectedCellules((prev) => ({
+                      ...prev,
+                      [popupMember.id]: e.target.value,
+                    }))
+                  }
+                  className="border rounded-lg px-2 py-1 text-sm w-full"
+                >
+                  <option value="">-- Sélectionner cellule --</option>
+                  {cellules.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.cellule} ({c.responsable})
+                    </option>
+                  ))}
+                </select>
+
+                {selectedCellules[popupMember.id] && (
+                  <div className="mt-3">
+                    <BoutonEnvoyer
+                      membre={popupMember}
+                      cellule={cellules.find(
+                        (c) => c.id === selectedCellules[popupMember.id]
+                      )}
+                      onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                      session={session}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -313,17 +313,9 @@ export default function ListMembers() {
                       <div className="flex flex-col items-center">
                         <h2 className="text-lg font-bold text-gray-800 text-center">
                           {m.prenom} {m.nom}
+                          {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                         </h2>
-                          //Etoile*/
-                          <div className="flex justify-between items-center mb-1">
-                      <span
-                        className="text-sm font-semibold"
-                        style={{ color: getBorderColor(m) }}
-                      >
-                        {m.star ? "⭐ S.T.A.R" : m.statut}
-                      </span>
-                    </div>
-                        //fin Etoile*/
+                          
                         <p className="text-sm text-gray-600 mb-2 text-center">
                           📱 {m.telephone || "—"}
                         </p>
@@ -414,7 +406,15 @@ export default function ListMembers() {
               </tr>
             </thead>
             <tbody>
+              {nouveauxFiltres.length > 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-2 text-white font-semibold">
+                      💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+                    </td>
+                  </tr>
+                )}
               {/* Nouveaux membres */}
+             
               {nouveauxFiltres.map((m) => (
                 <tr
                   key={m.id}
@@ -425,6 +425,7 @@ export default function ListMembers() {
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
                     {m.prenom} {m.nom}
+                    {m.star && <span className="text-yellow-400 ml-1">⭐</span>}  
                     <span className="bg-blue-500 text-white text-xs px-1 rounded">Nouveau</span>
                   </td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>

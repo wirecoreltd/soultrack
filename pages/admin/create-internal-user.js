@@ -1,5 +1,4 @@
-//pages/admin/create-internal-user.js
-
+//✅ pages/admin/create-internal-user.js
 "use client";
 import { useState } from "react";
 
@@ -26,11 +25,19 @@ export default function CreateInternalUser() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur inconnue");
 
       setMessage(data.message);
-      setFormData({ prenom: "", nom: "", email: "", telephone: "", password: "", role: "Admin" });
+      setFormData({
+        prenom: "",
+        nom: "",
+        email: "",
+        telephone: "",
+        password: "",
+        role: "Admin"
+      });
     } catch (err) {
       setMessage("❌ " + err.message);
     } finally {
@@ -41,7 +48,7 @@ export default function CreateInternalUser() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-100 p-6">
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6">Créer un utilisateur interne</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">Créer un utilisateur interne</h1>
 
         {["prenom", "nom", "email", "telephone", "password"].map(field => (
           <input
@@ -75,7 +82,11 @@ export default function CreateInternalUser() {
           {loading ? "Création..." : "Créer l'utilisateur"}
         </button>
 
-        {message && <p className="mt-4 text-center text-red-600">{message}</p>}
+        {message && (
+          <p className={`mt-4 text-center ${message.startsWith("✅") ? "text-green-600" : "text-red-600"}`}>
+            {message}
+          </p>
+        )}
       </form>
     </div>
   );

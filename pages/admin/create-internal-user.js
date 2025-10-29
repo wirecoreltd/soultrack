@@ -1,4 +1,3 @@
-//✅ pages/admin/create-internal-user.js
 "use client";
 import { useState } from "react";
 

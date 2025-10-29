@@ -227,11 +227,11 @@ export default function ListMembers() {
 
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                            <p>📌 Prénom Nom : {m.prenom} {m.nom}</p>
-                            <p>📞 Téléphone : {m.telephone || "—"}</p>
-                            <p>💬 WhatsApp : {m.is_whatsapp || "—"}</p>
-                            <p>🏙 Ville : {m.ville || "—"}</p>
-                            <p>🕊 Statut : {m.statut || "—"}</p>
+                            <p> 📌 Prénom Nom : {m.prenom} {m.nom}</p>
+                            <p> 📞 Téléphone : {m.telephone || "—"}</p>
+                            <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
+                            <p> 🏙 Ville : {m.ville || "—"}</p>
+                            <p> 🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
                             <p>❓Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
@@ -331,11 +331,11 @@ export default function ListMembers() {
 
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                            <p>📌 Prénom Nom : {m.prenom} {m.nom}</p>
-                            <p>📞 Téléphone : {m.telephone || "—"}</p>
-                            <p>💬 WhatsApp : {m.is_whatsapp || "—"}</p>
-                            <p>🏙 Ville : {m.ville || "—"}</p>
-                            <p>🕊 Statut : {m.statut || "—"}</p>
+                            <p> 📌 Prénom Nom : {m.prenom} {m.nom}</p>
+                            <p> 📞 Téléphone : {m.telephone || "—"}</p>
+                            <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
+                            <p> 🏙 Ville : {m.ville || "—"}</p>
+                            <p> 🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
                             <p>❓ Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
@@ -451,11 +451,12 @@ export default function ListMembers() {
                             {m.prenom} {m.nom}
                             {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                           </h2>
-                          <p className="text-black text-sm mb-1">📞 {m.telephone || "—"}</p>
-                          <p className="text-black text-sm mb-1">💬 WhatsApp : {m.is_whatsapp || "—"}</p>
-                          <p className="text-black text-sm mb-1">🏙 Ville : {m.ville || "—"}</p>
-                          <p className="text-black text-sm mb-1">🕊 Statut : {m.statut || "—"}</p>
+                          <p className="text-black text-sm mb-1"> 📞 {m.telephone || "—"}</p>
+                          <p className="text-black text-sm mb-1"> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
+                          <p className="text-black text-sm mb-1"> 🏙 Ville : {m.ville || "—"}</p>
+                          <p className="text-black text-sm mb-1"> 🕊 Statut : {m.statut || "—"}</p>
                           <p className="text-black text-sm mb-1">🧩 Comment est-il venu : {m.venu || "—"}</p>
+                          <p className="text-black text-sm mb-1">❓ Comment est-il venu : {m.venu || "—"}</p>
                           <p className="text-black text-sm mb-1">📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                           <p className="mt-2 font-semibold text-green-600">Cellule :</p>

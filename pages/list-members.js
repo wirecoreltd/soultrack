@@ -188,6 +188,7 @@ export default function ListMembers() {
                 💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                // === DEBUT Carte Nouveaux Membres (Vue Carte) ===
                 {nouveauxFiltres.map((m) => {
                   const isOpen = detailsOpen[m.id];
                   return (
@@ -195,19 +196,19 @@ export default function ListMembers() {
                       key={m.id}
                       className="bg-white p-3 rounded-xl shadow-md hover:shadow-xl transition duration-200 overflow-hidden relative"
                     >
-                      {/* Tag Nouveau en diagonale uniquement pour visiteurs / veut rejoindre ICC */}
+                      {/* Bande colorée en haut comme les anciens, couleur selon statut */}
+                      <div
+                        className="w-full h-[6px] rounded-t-xl mb-2"
+                        style={{ backgroundColor: getBorderColor(m) }}
+                      />
+                
+                      {/* Tag Nouveau */}
                       {(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && (
                         <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
                           Nouveau
                         </span>
                       )}
-
-                      {/* Bande colorée */}
-                      <div
-                        className="w-full h-[6px] rounded-t-xl mb-2"
-                        style={{ backgroundColor: getBorderColor(m) }}
-                      />
-
+                
                       <div className="flex flex-col items-center">
                         <h2 className="text-lg font-bold text-gray-800 text-center">
                           {m.prenom} {m.nom}
@@ -224,8 +225,18 @@ export default function ListMembers() {
                         >
                           {isOpen ? "Fermer détails" : "Détails"}
                         </button>
-
+                
                         {isOpen && (
+                          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+                            {/* contenu détaillé comme avant */}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+                // === FIN Carte Nouveaux Membres (Vue Carte) ===
+
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                             <p>📌 Prénom Nom : {m.prenom} {m.nom}</p>
                             <p>📞 Téléphone : {m.telephone || "—"}</p>

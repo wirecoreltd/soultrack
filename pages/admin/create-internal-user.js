@@ -1,4 +1,5 @@
 "use client";
+"use client";
 import { useState } from "react";
 
 export default function CreateInternalUser() {
@@ -19,7 +20,7 @@ export default function CreateInternalUser() {
     setMessage("");
 
     try {
-      const res = await fetch("/api/create-user", {
+      const res = await fetch("/api/create-user", {  // ✅ URL correcte
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -90,3 +91,4 @@ export default function CreateInternalUser() {
     </div>
   );
 }
+

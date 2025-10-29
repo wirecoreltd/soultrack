@@ -447,18 +447,33 @@ export default function ListMembers() {
                           >
                             ✖
                           </button>
+                    
                           <h2 className="text-xl font-bold mb-2 text-black">
                             {m.prenom} {m.nom}
                             {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                           </h2>
-                          <p className="text-black text-sm mb-1"> 📞 {m.telephone || "—"}</p>
-                          <p className="text-black text-sm mb-1"> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
-                          <p className="text-black text-sm mb-1"> 🏙 Ville : {m.ville || "—"}</p>
-                          <p className="text-black text-sm mb-1"> 🕊 Statut : {m.statut || "—"}</p>
+                    
+                          <p className="text-black text-sm mb-1">📞 {m.telephone || "—"}</p>
+                          <p className="text-black text-sm mb-1">💬 WhatsApp : {m.is_whatsapp || "—"}</p>
+                          <p className="text-black text-sm mb-1">🏙 Ville : {m.ville || "—"}</p>
+                          <p className="text-black text-sm mb-1">🕊 Statut actuel : {m.statut || "—"}</p>
                           <p className="text-black text-sm mb-1">🧩 Comment est-il venu : {m.venu || "—"}</p>
                           <p className="text-black text-sm mb-1">❓ Besoin : {m.besoin || "—"}</p>
                           <p className="text-black text-sm mb-1">📝 Infos : {m.infos_supplementaires || "—"}</p>
-
+                    
+                          {/* ---------- Nouveau menu déroulant Statut ---------- */}
+                          <p className="mt-2 font-semibold text-gray-800">Modifier le statut :</p>
+                          <select
+                            value={m.statut}
+                            onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                            className="border rounded-lg px-2 py-1 text-sm w-full text-black"
+                          >
+                            {statusOptions.map((s) => (
+                              <option key={s} className="text-black">{s}</option>
+                            ))}
+                          </select>
+                    
+                          {/* ---------- Menu déroulant Cellule ---------- */}
                           <p className="mt-2 font-semibold text-green-600">Cellule :</p>
                           <select
                             value={selectedCellules[m.id] || ""}
@@ -468,16 +483,16 @@ export default function ListMembers() {
                                 [m.id]: e.target.value,
                               }))
                             }
-                            className="border rounded-lg px-2 py-1 text-sm w-full"
+                            className="border rounded-lg px-2 py-1 text-sm w-full text-black"
                           >
-                            <option value="">-- Sélectionner cellule --</option>
+                            <option value="" className="text-black">-- Sélectionner cellule --</option>
                             {cellules.map((c) => (
-                              <option key={c.id} value={c.id}>
+                              <option key={c.id} value={c.id} className="text-black">
                                 {c.cellule} ({c.responsable})
                               </option>
                             ))}
                           </select>
-
+                    
                           {selectedCellules[m.id] && (
                             <div className="mt-3">
                               <BoutonEnvoyer
@@ -492,7 +507,8 @@ export default function ListMembers() {
                           )}
                         </div>
                       </div>
-                    )}
+                      )}
+
                   </td>
                 </tr>
               ))}

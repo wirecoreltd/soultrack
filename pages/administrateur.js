@@ -1,106 +1,91 @@
+/* ✅ pages/administrateur.js */
+
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
-import Image from "next/image";
 import Link from "next/link";
+import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import SendLinkPopup from "../components/SendLinkPopup";
-import { canAccessPage } from "../lib/accessControl";
+import { useRouter } from "next/router";
+//import AccessGuard from "../components/AccessGuard";
 
-export default function AdministrateurPage() {
+export default function MembresHub() {
   const router = useRouter();
-  const [roles, setRoles] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const storedRole = localStorage.getItem("userRole");
-
-    if (!storedRole) {
-      router.push("/login");
-      return;
-    }
-
-    let parsedRoles = [];
-    try {
-      parsedRoles = JSON.parse(storedRole);
-      if (!Array.isArray(parsedRoles)) parsedRoles = [parsedRoles];
-    } catch {
-      parsedRoles = [storedRole];
-    }
-    parsedRoles = parsedRoles.map(r => r.toLowerCase().trim());
-    setRoles(parsedRoles);
-
-    const canAccess = canAccessPage(parsedRoles, "/administrateur");
-    if (!canAccess) {
-      alert("⛔ Accès non autorisé !");
-      router.push("/login");
-      return;
-    }
-
-    setLoading(false);
-  }, [router]);
-
-  if (loading) return <div className="text-center mt-20">Chargement...</div>;
-
-  const hasRole = role => roles.includes(role.toLowerCase());
 
   return (
     <div
-      className="relative min-h-screen flex flex-col items-center justify-center p-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+      className="min-h-screen flex flex-col items-center p-6"
+      style={{
+        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
+      }}
     >
-      <div className="absolute top-4 left-4">
-        <button onClick={() => router.back()} className="text-white font-semibold hover:text-gray-200 transition">
+      {/* 🔹 Top bar: Retour + logo + Déconnexion */}
+      <div className="w-full max-w-5xl flex justify-between items-center mb-6">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center text-white font-semibold hover:text-gray-200 transition-colors"
+        >
           ← Retour
         </button>
+
+        <div className="flex items-center gap-4">
+          <Image src="/logo.png" alt="SoulTrack Logo" width={50} height={50} />
+          <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
+        </div>
       </div>
 
-      <div className="absolute top-4 right-4">
-        <LogoutLink />
-      </div>
-
-      <div className="mb-4">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={90} height={90} />
-      </div>
-
-      <h1 className="text-4xl font-handwriting text-white mb-6 text-center">
-        Espace Administrateur
+      {/* 🔹 Titre */}
+      <h1 className="text-3xl font-login text-white mb-6 text-center">
+        Membres Hub
       </h1>
 
-      <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-4xl mb-8">
+      {/* 🔹 Cartes principales */}
+      <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6">
+        {/* Ajouter un membre */}
         <Link
-          href="/admin/create-responsable-cellule"
-          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
-        >
-          <div className="text-5xl mb-2">👤</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            Créer une Cellule
-          </div>
-        </Link>
-
-        <Link
-          href="/admin/create-internal-user"
+          href="/add-member"
           className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#4285F4] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
         >
-          <div className="text-5xl mb-2">🧑‍💻</div>
+          <div className="text-5xl mb-2">➕</div>
           <div className="text-lg font-bold text-gray-800 text-center">
-            Créer Un Responsable
+            Ajouter un membre
+          </div>
+        </Link>
+
+        {/* Liste des membres */}
+        <Link
+          href="/list-members"
+          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
+        >
+          <div className="text-5xl mb-2">👥</div>
+          <div className="text-lg font-bold text-gray-800 text-center">
+            Liste des membres
+          </div>
+        </Link>
+
+        {/* Suivis des membres */}
+        <Link
+          href="/suivis-membres"
+          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
+        >
+          <div className="text-5xl mb-2">📋</div>
+          <div className="text-lg font-bold text-gray-800 text-center">
+            Suivis des membres
           </div>
         </Link>
       </div>
 
-      <div className="flex flex-col gap-4 items-center justify-center w-full max-w-sm">
-        {hasRole("admin") && (
-          <SendLinkPopup
-            label="Voir / Copier liens…"
-            type="voir_copier"
-            buttonColor="from-[#005AA7] to-[#FFFDE4]"
-          />
-        )}
+      {/* 🔹 Bouton popup ajouté sous les cartes */}
+      <div className="w-full max-w-md mb-10">
+        <SendLinkPopup
+          label="Envoyer l'appli – Nouveau membre"
+          type="ajouter_membre"
+          buttonColor="from-[#09203F] to-[#537895]"
+        />
       </div>
 
-      <div className="mt-10 text-center text-white text-lg font-handwriting-light max-w-2xl">
+      {/* 🔹 Verset biblique */}
+      <div className="mt-auto mb-4 text-center text-white text-lg font-handwriting max-w-2xl">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         1 Corinthiens 12:14 ❤️
       </div>

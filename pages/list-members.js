@@ -499,7 +499,7 @@ export default function ListMembers() {
               {/* Membres existants */}
               {anciensFiltres.length > 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-2 font-semibold text-white text-lg">
+                  <td colSpan={4} className="px-4 py-2 font-semibold text-lg">
                     <span
                       className="bg-clip-text text-transparent"
                       style={{
@@ -522,6 +522,7 @@ export default function ListMembers() {
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
                     {m.prenom} {m.nom}
+                    {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                   </td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.statut || "—"}</td>

@@ -1,7 +1,8 @@
-//pages/admin/create-cellule.js
+//✅pages/admin/create-cellule.js
 
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import supabase from "../../lib/supabaseClient";
 
 export default function CreateCellule() {
   const [formData, setFormData] = useState({
@@ -9,9 +10,21 @@ export default function CreateCellule() {
     zone: "",
     responsable_id: "",
   });
-
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [responsables, setResponsables] = useState([]);
+
+  // 🔹 Charger la liste des responsables depuis Supabase
+  useEffect(() => {
+    const fetchResponsables = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom")
+        .in("role", ["ResponsableCellule"]);
+      if (!error) setResponsables(data);
+    };
+    fetchResponsables();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -70,26 +83,33 @@ export default function CreateCellule() {
           onChange={handleChange}
           className="input"
         />
-        <input
+
+        <select
           name="responsable_id"
-          placeholder="ID du responsable"
           value={formData.responsable_id}
           onChange={handleChange}
           className="input"
-        />
+        >
+          <option value="">-- Sélectionnez un responsable --</option>
+          {responsables.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.prenom} {r.nom}
+            </option>
+          ))}
+        </select>
 
         <div className="flex gap-4 mt-2">
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 bg-gradient-to-r from-green-400 to-blue-400 text-white py-2 rounded-lg hover:from-green-500 hover:to-blue-500 transition-all"
+            className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all"
           >
             {loading ? "Création..." : "Créer"}
           </button>
           <button
             type="button"
             onClick={handleCancel}
-            className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-all"
+            className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 text-white py-2 rounded-lg hover:from-gray-500 hover:to-gray-600 transition-all"
           >
             Annuler
           </button>

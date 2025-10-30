@@ -1,18 +1,12 @@
 // pages/ajouter-membre-cellule.js
-// pages/ajouter-membre-cellule.js
 "use client";
 
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
-import { useRouter } from "next/router";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/navigation";
 
-export default function AddMemberCellule() {
+export default function AjouterMembreCellule() {
   const router = useRouter();
-  const { user } = useUser();
-  const [cellule, setCellule] = useState(null);
-  const [loadingCellule, setLoadingCellule] = useState(true);
-
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
@@ -23,32 +17,34 @@ export default function AddMemberCellule() {
     is_whatsapp: false,
     infos_supplementaires: "",
   });
-
   const [success, setSuccess] = useState(false);
+  const [celluleId, setCelluleId] = useState(null);
+  const [loadingCellule, setLoadingCellule] = useState(true);
 
-  // ✅ Récupération de la cellule du responsable
+  // 🔹 Récupération de la cellule du responsable connecté
   useEffect(() => {
     const fetchCellule = async () => {
-      if (!user) return;
+      try {
+        const responsableId = localStorage.getItem("userId"); // stocké à la connexion
+        if (!responsableId) throw new Error("Utilisateur non trouvé");
 
-      setLoadingCellule(true);
-      const { data, error } = await supabase
-        .from("cellules")
-        .select("id, cellule")
-        .eq("responsable_id", user.id)
-        .single();
+        const { data, error } = await supabase
+          .from("cellules")
+          .select("id, cellule")
+          .eq("responsable_id", responsableId)
+          .single();
 
-      if (error) {
-        console.error("Erreur récupération cellule :", error.message);
-        setCellule(null);
-      } else {
-        setCellule(data);
+        if (error || !data) throw new Error("Aucune cellule trouvée pour ce responsable !");
+        setCelluleId(data.id);
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        setLoadingCellule(false);
       }
-      setLoadingCellule(false);
     };
 
     fetchCellule();
-  }, [user]);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -60,18 +56,16 @@ export default function AddMemberCellule() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!cellule) return alert("Cellule introuvable pour ce responsable !");
+    if (!celluleId) return alert("Impossible d’ajouter le membre : cellule introuvable.");
 
     try {
-      // ✅ Ajout dans membres avec cellule_id et statut "Integrer"
-      const { error } = await supabase.from("membres").insert([
-        {
-          ...formData,
-          statut: "Integrer",
-          cellule_id: cellule.id,
-        },
-      ]);
+      const memberData = {
+        ...formData,
+        statut: "Integrer",
+        cellule_id: celluleId,
+      };
 
+      const { error } = await supabase.from("membres").insert([memberData]);
       if (error) throw error;
 
       setSuccess(true);
@@ -86,26 +80,17 @@ export default function AddMemberCellule() {
         infos_supplementaires: "",
       });
 
-      setTimeout(() => setSuccess(false), 4000);
+      setTimeout(() => setSuccess(false), 3000); // message succès
     } catch (err) {
-      alert("❌ " + err.message);
+      alert(err.message);
     }
   };
 
-  if (loadingCellule)
-    return <p className="text-center mt-10 text-xl text-gray-700">Chargement...</p>;
-
-  if (!cellule)
-    return (
-      <p className="text-center mt-10 text-xl text-red-600">
-        Aucune cellule trouvée pour ce responsable !
-      </p>
-    );
+  if (loadingCellule) return <p className="text-center mt-10 text-gray-700">Chargement...</p>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-400 to-blue-200 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
-        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
           className="flex items-center text-orange-600 font-semibold mb-4 hover:text-orange-700 transition-colors"
@@ -113,128 +98,86 @@ export default function AddMemberCellule() {
           ← Retour
         </button>
 
-        <h1 className="text-3xl font-extrabold text-center text-orange-700 mb-2">
+        <h1 className="text-3xl font-handwriting text-black mb-2 text-center">
           Ajouter un membre à ma cellule
         </h1>
         <p className="text-center text-gray-500 italic mb-6">
-          Cellule : <span className="font-semibold">{cellule.cellule}</span>
+          Chaque âme a une valeur infinie 🌱
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Prénom */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Prénom</label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="text"
+            name="prenom"
+            placeholder="Prénom"
+            value={formData.prenom}
+            onChange={handleChange}
+            required
+            className="input"
+          />
+          <input
+            type="text"
+            name="nom"
+            placeholder="Nom"
+            value={formData.nom}
+            onChange={handleChange}
+            required
+            className="input"
+          />
+          <input
+            type="text"
+            name="telephone"
+            placeholder="Téléphone"
+            value={formData.telephone}
+            onChange={handleChange}
+            required
+            className="input"
+          />
+          <div className="flex items-center gap-2">
             <input
-              type="text"
-              name="prenom"
-              value={formData.prenom}
+              type="checkbox"
+              name="is_whatsapp"
+              checked={formData.is_whatsapp}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-              required
             />
+            <span>WhatsApp</span>
           </div>
+          <input
+            type="text"
+            name="ville"
+            placeholder="Ville"
+            value={formData.ville}
+            onChange={handleChange}
+            className="input"
+          />
+          <select name="venu" value={formData.venu} onChange={handleChange} className="input">
+            <option value="">-- Comment est-il venu ? --</option>
+            <option value="invité">Invité</option>
+            <option value="réseaux">Réseaux</option>
+            <option value="evangelisation">Evangélisation</option>
+            <option value="autre">Autre</option>
+          </select>
+          <select name="besoin" value={formData.besoin} onChange={handleChange} className="input">
+            <option value="">-- Besoin de la personne ? --</option>
+            <option value="Finances">Finances</option>
+            <option value="Santé">Santé</option>
+            <option value="Travail">Travail</option>
+            <option value="Les Enfants">Les Enfants</option>
+            <option value="La Famille">La Famille</option>
+          </select>
+          <textarea
+            name="infos_supplementaires"
+            placeholder="Infos supplémentaires..."
+            value={formData.infos_supplementaires}
+            onChange={handleChange}
+            rows={3}
+            className="input"
+          />
 
-          {/* Nom */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Nom</label>
-            <input
-              type="text"
-              name="nom"
-              value={formData.nom}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-              required
-            />
-          </div>
-
-          {/* Téléphone + WhatsApp */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Téléphone</label>
-            <input
-              type="text"
-              name="telephone"
-              value={formData.telephone}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-              required
-            />
-            <div className="mt-2 flex items-center">
-              <input
-                type="checkbox"
-                name="is_whatsapp"
-                checked={formData.is_whatsapp}
-                onChange={handleChange}
-                className="mr-2"
-              />
-              <label className="text-gray-700">Ce numéro est WhatsApp</label>
-            </div>
-          </div>
-
-          {/* Ville */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Ville</label>
-            <input
-              type="text"
-              name="ville"
-              value={formData.ville}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-            />
-          </div>
-
-          {/* Comment est venu */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Comment est-il venu ?</label>
-            <select
-              name="venu"
-              value={formData.venu}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="invité">Invité</option>
-              <option value="réseaux">Réseaux</option>
-              <option value="evangélisation">Evangélisation</option>
-              <option value="autre">Autre</option>
-            </select>
-          </div>
-
-          {/* Besoin */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Besoin de la personne ?</label>
-            <select
-              name="besoin"
-              value={formData.besoin}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="Finances">Finances</option>
-              <option value="Santé">Santé</option>
-              <option value="Travail">Travail</option>
-              <option value="Les Enfants">Les Enfants</option>
-              <option value="La Famille">La Famille</option>
-            </select>
-          </div>
-
-          {/* Infos supplémentaires */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
-            <textarea
-              name="infos_supplementaires"
-              value={formData.infos_supplementaires}
-              onChange={handleChange}
-              rows={3}
-              placeholder="Ajoute ici d'autres détails utiles sur la personne..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-            />
-          </div>
-
-          {/* Boutons */}
-          <div className="flex justify-between mt-4 gap-4">
+          <div className="flex gap-4 mt-2">
             <button
               type="submit"
-              className="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-2xl transition-all"
             >
               Ajouter
             </button>
@@ -252,19 +195,29 @@ export default function AddMemberCellule() {
                   infos_supplementaires: "",
                 })
               }
-              className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              className="flex-1 bg-gray-300 hover:bg-gray-400 text-black font-bold py-3 rounded-2xl transition-all"
             >
               Annuler
             </button>
           </div>
         </form>
 
-        {/* Message de succès */}
         {success && (
-          <div className="text-green-600 font-semibold text-center mt-3">
+          <p className="text-green-600 font-semibold text-center mt-3">
             ✅ Membre ajouté avec succès !
-          </div>
+          </p>
         )}
+
+        <style jsx>{`
+          .input {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          }
+        `}</style>
       </div>
     </div>
   );

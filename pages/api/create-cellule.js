@@ -10,9 +10,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Méthode non autorisée" });
 
   try {
-    const { nom, zone, responsable_id } = req.body;
+    const { cellule, ville, responsable_id } = req.body;
 
-    if (!nom || !zone || !responsable_id) {
+    if (!cellule || !ville || !responsable_id) {
       return res.status(400).json({ error: "Tous les champs sont obligatoires !" });
     }
 
@@ -31,8 +31,8 @@ export default async function handler(req, res) {
     const { error: insertError } = await supabaseAdmin
       .from("cellules")
       .insert([{
-        nom,
-        zone,
+        cellule,
+        ville,
         responsable_id,
         responsable: `${user.prenom} ${user.nom}`,
         created_at: new Date().toISOString(),

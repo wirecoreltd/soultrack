@@ -84,7 +84,7 @@ export default function SuivisMembres() {
             *,
             cellules!inner(cellule)
           `)
-          .in("cellule_id", celluleIds)
+          .left("cellule_id", celluleIds)
           .order("created_at", { ascending: false });
 
         if (error) throw error;

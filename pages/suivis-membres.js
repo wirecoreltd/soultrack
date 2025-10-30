@@ -41,7 +41,13 @@ export default function SuivisMembres() {
       if (profileError) throw profileError;
       const responsableId = profileData.id;
 
-      let query = supabase.from("suivis_membres").select("*").order("created_at", { ascending: false });
+      let query = supabase
+        .from("suivis_membres")
+        .select(`
+          *,
+          cellules:cellules_id_fkey (cellule)
+        `)
+        .order("created_at", { ascending: false });
 
       // 🔹 Si ResponsableCellule → filtrer uniquement ses cellules
       if (userRole.includes("ResponsableCellule")) {
@@ -188,7 +194,7 @@ export default function SuivisMembres() {
                     {item.prenom} {item.nom}
                   </h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {item.cellule || "—"}</p>  
+                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {item.cellules?.cellule || "—"}</p>  
                   <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">
                     📋 Statut Suivis : {item.statut_suivis || "—"}

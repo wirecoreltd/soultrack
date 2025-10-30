@@ -1,5 +1,3 @@
-// pages/login.js
-
 "use client";
 
 import { useState } from "react";
@@ -31,9 +29,9 @@ export default function LoginPage() {
         return;
       }
 
-      // ✅ Stockage email et ID utilisateur
+      // ✅ Stockage email et ID
       localStorage.setItem("userEmail", data.user.email);
-      localStorage.setItem("userId", data.user.id); // ✅ AJOUT ESSENTIEL
+      localStorage.setItem("userId", data.user.id); // <-- AJOUTÉ
 
       // 🔍 Récupérer le rôle dans Supabase
       const { data: profile, error: profileError } = await supabase
@@ -65,7 +63,6 @@ export default function LoginPage() {
       } else {
         router.push("/"); // par défaut, vers index
       }
-
     } catch (err) {
       console.error("Erreur lors du login :", err);
       setError("❌ Erreur lors de la connexion");
@@ -77,23 +74,15 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
       <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
-        {/* Titre avec logo responsive */}
         <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <img
-            src="/logo.png"
-            alt="Logo SoulTrack"
-            className="w-12 h-12 object-contain"
-          />
+          <img src="/logo.png" alt="Logo SoulTrack" className="w-12 h-12 object-contain" />
           SoulTrack
         </h1>
-
-        {/* Message de bienvenue */}
         <p className="text-center text-gray-700 mb-6">
-          Bienvenue sur SoulTrack !<br />
+          Bienvenue sur SoulTrack !<br/>
           Une plateforme pour garder le contact, organiser les visites, et soutenir chaque membre dans sa vie spirituelle.
         </p>
 
-        {/* Formulaire login */}
         <form onSubmit={handleLogin} className="flex flex-col w-full gap-4">
           <input
             type="email"
@@ -103,7 +92,6 @@ export default function LoginPage() {
             className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
             required
           />
-
           <input
             type="password"
             placeholder="Mot de passe"
@@ -112,9 +100,7 @@ export default function LoginPage() {
             className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
             required
           />
-
           {error && <p className="text-red-500 text-center">{error}</p>}
-
           <button
             type="submit"
             disabled={loading}
@@ -124,7 +110,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Texte biblique sous le bouton */}
         <p className="text-center italic font-semibold mt-4 text-green-600">
           "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
         </p>

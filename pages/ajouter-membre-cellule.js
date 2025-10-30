@@ -1,5 +1,4 @@
-//pages/ajouter-membre-cellule.js
-
+// pages/ajouter-membre-cellule.js
 "use client";
 
 import { useState, useEffect } from "react";
@@ -19,16 +18,14 @@ export default function AddMemberCellule() {
     infos_supplementaires: "",
   });
   const [success, setSuccess] = useState(false);
-  const [responsableCelluleId, setResponsableCelluleId] = useState(null);
   const [celluleId, setCelluleId] = useState(null);
 
+  // Récupérer la cellule du responsable connecté
   useEffect(() => {
     const fetchCellule = async () => {
       try {
-        const userId = localStorage.getItem("userId"); 
+        const userId = localStorage.getItem("userId"); // id Supabase Auth
         if (!userId) return;
-
-        setResponsableCelluleId(userId);
 
         const { data, error } = await supabase
           .from("cellules")
@@ -37,7 +34,8 @@ export default function AddMemberCellule() {
           .single();
 
         if (error) throw error;
-        if (data) setCelluleId(data.id);
+
+        if (data?.id) setCelluleId(data.id);
       } catch (err) {
         console.error("Erreur récupération cellule :", err.message);
       }
@@ -55,13 +53,13 @@ export default function AddMemberCellule() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!celluleId) return alert("⚠️ Aucune cellule trouvée pour ce responsable !");
+    if (!celluleId) return alert("⚠️ Vous n'avez pas encore de cellule assignée. Contactez l'administrateur !");
 
     try {
       const { error } = await supabase.from("membres").insert([
         {
           ...formData,
-          statut: "Intégré", // ✅ Champ fixe
+          statut: "Integrer",
           cellule_id: celluleId,
         },
       ]);
@@ -82,13 +80,14 @@ export default function AddMemberCellule() {
 
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      alert("❌ Erreur ajout membre : " + err.message);
+      alert("❌ Impossible d’ajouter le membre : " + err.message);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-200 via-white to-blue-100">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
+        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
           className="flex items-center text-orange-500 font-semibold mb-4 hover:text-orange-600 transition-colors"
@@ -96,6 +95,7 @@ export default function AddMemberCellule() {
           ← Retour
         </button>
 
+        {/* Logo */}
         <div className="flex justify-center mb-6">
           <img src="/logo.png" alt="Logo" className="w-20 h-20" />
         </div>
@@ -207,17 +207,6 @@ export default function AddMemberCellule() {
               rows={3}
               placeholder="Ajoute ici d'autres détails utiles sur la personne..."
               className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
-            />
-          </div>
-
-          {/* ✅ Champ fixe Statut */}
-          <div>
-            <label className="block text-gray-700 mb-1">Statut</label>
-            <input
-              type="text"
-              value="Intégré"
-              readOnly
-              className="w-full px-4 py-2 border rounded-xl bg-gray-100 text-gray-700 cursor-not-allowed"
             />
           </div>
 

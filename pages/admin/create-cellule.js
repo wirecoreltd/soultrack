@@ -9,8 +9,8 @@ import supabase from "../../lib/supabaseClient";
 export default function CreateCellule() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    cellule: "",
-    ville: "",
+    nom: "",
+    zone: "",
     responsable_id: "",
     telephone: "",
   });
@@ -18,16 +18,28 @@ export default function CreateCellule() {
   const [message, setMessage] = useState("");
   const [responsables, setResponsables] = useState([]);
 
+  // Récupérer les responsables
   useEffect(() => {
     const fetchResponsables = async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, prenom, nom")
+        .select("id, prenom, nom, telephone")
         .in("role", ["ResponsableCellule"]);
       if (!error) setResponsables(data);
     };
     fetchResponsables();
   }, []);
+
+  // Lors de la sélection du responsable, remplir le téléphone
+  const handleChangeResponsable = (e) => {
+    const selectedId = e.target.value;
+    const responsable = responsables.find(r => r.id === selectedId);
+    setFormData({
+      ...formData,
+      responsable_id: selectedId,
+      telephone: responsable?.telephone || "",
+    });
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -49,7 +61,7 @@ export default function CreateCellule() {
 
       if (res.ok) {
         setMessage("✅ Cellule créée avec succès !");
-        setFormData({ nom: "", zone: "", responsable_id: "" });
+        setFormData({ nom: "", zone: "", responsable_id: "", telephone: "" });
       } else {
         setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
       }
@@ -61,12 +73,12 @@ export default function CreateCellule() {
   };
 
   const handleCancel = () => {
-    setFormData({ nom: "", zone: "", responsable_id: "" });
+    setFormData({ nom: "", zone: "", responsable_id: "", telephone: "" });
     setMessage("");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-100 via-pink-50 to-orange-100 p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-orange-200 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-lg relative">
         {/* Flèche retour */}
         <button
@@ -85,31 +97,28 @@ export default function CreateCellule() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            name="cellule"
+            name="nom"
             placeholder="Nom de la cellule"
-            value={formData.cellule}
+            value={formData.nom}
             onChange={handleChange}
             className="input"
+            required
           />
           <input
-            name="ville"
+            name="zone"
             placeholder="Zone / Localisation"
-            value={formData.ville}
+            value={formData.zone}
             onChange={handleChange}
             className="input"
+            required
           />
+
           <select
             name="responsable_id"
             value={formData.responsable_id}
-            onChange={(e) => {
-              const selectedId = e.target.value;
-              setFormData({
-                ...formData,
-                responsable_id: selectedId,
-                telephone: responsables.find(r => r.id === selectedId)?.telephone || "",
-              });
-            }}
+            onChange={handleChangeResponsable}
             className="input"
+            required
           >
             <option value="">-- Sélectionnez un responsable --</option>
             {responsables.map((r) => (
@@ -118,8 +127,7 @@ export default function CreateCellule() {
               </option>
             ))}
           </select>
-          
-          {/* Affiche le téléphone du responsable automatiquement */}
+
           <input
             name="telephone"
             placeholder="Téléphone du responsable"
@@ -127,7 +135,6 @@ export default function CreateCellule() {
             readOnly
             className="input"
           />
-          
 
           <div className="flex gap-4 mt-2">
             <button
@@ -169,3 +176,4 @@ export default function CreateCellule() {
     </div>
   );
 }
+

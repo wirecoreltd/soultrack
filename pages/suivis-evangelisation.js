@@ -1,4 +1,3 @@
-//pages/suivis-evangelisation.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -13,7 +12,6 @@ export default function SuivisEvangelisation() {
   const [statusChanges, setStatusChanges] = useState({});
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
-  const [view, setView] = useState("card");
 
   useEffect(() => {
     fetchSuivis();
@@ -31,25 +29,37 @@ export default function SuivisEvangelisation() {
       // 🔹 Récupération du profil connecté
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("id, nom")
+        .select("id")
         .eq("email", userEmail)
         .single();
 
       if (profileError) throw profileError;
-      const userNom = profileData.nom;
 
-      // 🔹 Requête principale
+      const responsableId = profileData.id;
+
       let query = supabase
         .from("suivis_des_evangelises")
-        .select(`
-          *,
-          cellules:cellule_id (id, cellule, responsable)
-        `)
+        .select(`*, cellules:cellule_id (id, cellule, responsable)`)
         .order("date_suivi", { ascending: false });
 
-      // 🔸 Si ResponsableCellule → filtrer uniquement ses contacts
+      // 🔸 Si ResponsableCellule → filtrer par la cellule dont il est responsable
       if (userRole.includes("ResponsableCellule")) {
-        query = query.eq("responsable_cellule", userNom);
+        const { data: celluleData, error: celluleError } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", responsableId)
+          .single();
+
+        if (celluleError) throw celluleError;
+
+        if (!celluleData) {
+          setSuivis([]);
+          setLoading(false);
+          console.warn("Aucune cellule trouvée pour ce responsable.");
+          return;
+        }
+
+        query = query.eq("cellule_id", celluleData.id);
       }
 
       const { data, error } = await query;
@@ -67,11 +77,13 @@ export default function SuivisEvangelisation() {
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  const handleStatusChange = (id, value) =>
+  const handleStatusChange = (id, value) => {
     setStatusChanges((prev) => ({ ...prev, [id]: value }));
+  };
 
-  const handleCommentChange = (id, value) =>
+  const handleCommentChange = (id, value) => {
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
+  };
 
   const updateStatus = async (id) => {
     const newStatus = statusChanges[id];
@@ -81,60 +93,56 @@ export default function SuivisEvangelisation() {
 
     setUpdating((prev) => ({ ...prev, [id]: true }));
 
-    try {
-      const { data: currentData, error: fetchError } = await supabase
-        .from("suivis_des_evangelises")
-        .select("*")
-        .eq("id", id)
-        .single();
+    const { data: currentData, error: fetchError } = await supabase
+      .from("suivis_des_evangelises")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-      if (fetchError) throw fetchError;
-
-      const { error: updateError } = await supabase
-        .from("suivis_des_evangelises")
-        .update({
-          status_suivis_evangelises: newStatus,
-          commentaire_evangelises: newComment,
-        })
-        .eq("id", id);
-
-      if (updateError) throw updateError;
-
-      // ✅ Transfert vers membres si statut = "Integrer" ou "Venu à l’église"
-      if (["Integrer", "Venu à l’église"].includes(newStatus)) {
-        const { error: insertError } = await supabase.from("membres").insert([
-          {
-            nom: currentData.nom,
-            prenom: currentData.prenom,
-            telephone: currentData.telephone,
-            email: currentData.email,
-            statut: newStatus,
-            venu: newStatus === "Venu à l’église" ? "Oui" : null,
-            besoin: currentData.besoin,
-            ville: currentData.ville,
-            formation: currentData.formation,
-            evangeliste_nom: currentData.evangeliste_nom,
-            comment: newComment || currentData.commentaire_evangelises,
-            responsable_suivi: currentData.responsable_cellule,
-          },
-        ]);
-
-        if (!insertError) {
-          await supabase
-            .from("suivis_des_evangelises")
-            .delete()
-            .eq("id", id);
-        } else {
-          console.error("Erreur insertion membre :", insertError.message);
-        }
-      }
-
-      fetchSuivis();
-    } catch (err) {
-      console.error("❌ Erreur updateStatus :", err.message || err);
-    } finally {
+    if (fetchError) {
+      console.error("Erreur récupération :", fetchError.message);
       setUpdating((prev) => ({ ...prev, [id]: false }));
+      return;
     }
+
+    const { error: updateError } = await supabase
+      .from("suivis_des_evangelises")
+      .update({
+        status_suivis_evangelises: newStatus,
+        commentaire_evangelises: newComment,
+      })
+      .eq("id", id);
+
+    if (updateError) {
+      console.error("Erreur mise à jour :", updateError.message);
+      setUpdating((prev) => ({ ...prev, [id]: false }));
+      return;
+    }
+
+    if (["Integrer", "Venu à l’église"].includes(newStatus)) {
+      const { error: insertError } = await supabase.from("membres").insert([
+        {
+          nom: currentData.nom,
+          prenom: currentData.prenom,
+          telephone: currentData.telephone,
+          email: currentData.email,
+          statut: newStatus,
+          venu: newStatus === "Venu à l’église" ? "Oui" : null,
+          besoin: currentData.besoin,
+          ville: currentData.ville,
+          formation: currentData.formation,
+          evangeliste_nom: currentData.evangeliste_nom,
+          comment: newComment || currentData.commentaire_evangelises,
+          responsable_suivi: currentData.responsable_cellule,
+        },
+      ]);
+
+      if (insertError) console.error("Erreur insertion membre :", insertError.message);
+      else await supabase.from("suivis_des_evangelises").delete().eq("id", id);
+    }
+
+    setUpdating((prev) => ({ ...prev, [id]: false }));
+    fetchSuivis();
   };
 
   return (
@@ -156,20 +164,11 @@ export default function SuivisEvangelisation() {
         Voici les personnes confiées pour le suivi spirituel 🌱
       </p>
 
-      <p
-        onClick={() => setView(view === "card" ? "table" : "card")}
-        className="cursor-pointer text-sm text-yellow-100 underline mb-4"
-      >
-        {view === "card" ? "Changer en vue table" : "Changer en vue carte"}
-      </p>
-
       {loading ? (
         <p className="text-white">Chargement en cours...</p>
       ) : suivis.length === 0 ? (
-        <p className="text-white text-lg italic">
-          Aucun contact suivi pour le moment.
-        </p>
-      ) : view === "card" ? (
+        <p className="text-white text-lg italic">Aucun contact suivi pour le moment.</p>
+      ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
           {suivis.map((item) => {
             const isOpen = detailsOpen[item.id];
@@ -181,12 +180,15 @@ export default function SuivisEvangelisation() {
                 <h2 className="font-bold text-gray-800 text-base text-center mb-1">
                   👤 {item.prenom} {item.nom}
                 </h2>
+
                 <p className="text-sm text-gray-700 mb-1">
                   📞 {item.telephone || "—"}
                 </p>
+
                 <p className="text-sm text-gray-700 mb-1">
                   🕊 Cellule : {item.cellules?.cellule || "—"}
                 </p>
+
                 <p className="text-sm text-gray-700 mb-2">
                   👑 Responsable : {item.responsable_cellule || "—"}
                 </p>
@@ -207,22 +209,18 @@ export default function SuivisEvangelisation() {
                     <div className="mt-2">
                       <label className="text-gray-700 text-sm">💬 Commentaire :</label>
                       <textarea
-                        value={
-                          commentChanges[item.id] ?? item.commentaire_evangelises ?? ""
-                        }
+                        value={commentChanges[item.id] ?? item.commentaire_evangelises ?? ""}
                         onChange={(e) => handleCommentChange(item.id, e.target.value)}
                         rows={2}
                         className="w-full border rounded-md px-2 py-1 text-sm mt-1 resize-none"
                         placeholder="Ajouter un commentaire..."
-                      />
+                      ></textarea>
                     </div>
 
                     <div className="mt-2">
-                      <label className="text-gray-700 text-sm">📋 Statut :</label>
+                      <label className="text-gray-700 text-sm">📋 Statut du suivi :</label>
                       <select
-                        value={
-                          statusChanges[item.id] ?? item.status_suivis_evangelises ?? ""
-                        }
+                        value={statusChanges[item.id] ?? item.status_suivis_evangelises ?? ""}
                         onChange={(e) => handleStatusChange(item.id, e.target.value)}
                         className="w-full border rounded-md px-2 py-1 text-sm mt-1"
                       >
@@ -265,84 +263,6 @@ export default function SuivisEvangelisation() {
               </div>
             );
           })}
-        </div>
-      ) : (
-        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-          <table className="w-full text-sm text-left text-white border-separate border-spacing-0 bg-gradient-to-tr from-orange-400/30 via-yellow-200/20 to-pink-300/20 backdrop-blur-md rounded-2xl shadow-lg border border-white/20">
-            <thead className="bg-yellow-200/40 text-gray-900">
-              <tr>
-                <th className="p-3">Prénom</th>
-                <th className="p-3">Nom</th>
-                <th className="p-3">Téléphone</th>
-                <th className="p-3">Cellule</th>
-                <th className="p-3">Responsable</th>
-                <th className="p-3">Statut</th>
-                <th className="p-3">Commentaire</th>
-                <th className="p-3">Date suivi</th>
-                <th className="p-3">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {suivis.map((item) => (
-                <tr key={item.id} className="hover:bg-yellow-200/50 transition-all">
-                  <td className="p-3">{item.prenom}</td>
-                  <td className="p-3">{item.nom}</td>
-                  <td className="p-3">{item.telephone || "—"}</td>
-                  <td className="p-3">{item.cellules?.cellule || "—"}</td>
-                  <td className="p-3">{item.responsable_cellule || "—"}</td>
-                  <td className="p-3">
-                    <select
-                      value={
-                        statusChanges[item.id] ?? item.status_suivis_evangelises ?? ""
-                      }
-                      onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                      className="w-full border rounded-md px-2 py-1 text-sm"
-                    >
-                      <option value="">-- Choisir un statut --</option>
-                      <option value="En cours">🕊 En cours</option>
-                      <option value="Integrer">🔥 Intégrer</option>
-                      <option value="Venu à l’église">⛪ Venu à l’église</option>
-                      <option value="Veut venir à la famille d’impact">
-                        👨‍👩‍👧‍👦 Veut venir à la famille d’impact
-                      </option>
-                      <option value="Veut être visité">🏡 Veut être visité</option>
-                      <option value="Ne souhaite pas continuer">
-                        🚫 Ne souhaite pas continuer
-                      </option>
-                    </select>
-                  </td>
-                  <td className="p-3">
-                    <textarea
-                      value={commentChanges[item.id] ?? item.commentaire_evangelises ?? ""}
-                      onChange={(e) => handleCommentChange(item.id, e.target.value)}
-                      rows={1}
-                      className="w-full border rounded-md px-2 py-1 text-sm resize-none"
-                    />
-                  </td>
-                  <td className="p-3">
-                    {new Date(item.date_suivi).toLocaleDateString("fr-FR", {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </td>
-                  <td className="p-3">
-                    <button
-                      onClick={() => updateStatus(item.id)}
-                      disabled={updating[item.id]}
-                      className={`text-white font-semibold py-1 px-2 rounded-md transition ${
-                        updating[item.id]
-                          ? "bg-gray-400 cursor-not-allowed"
-                          : "bg-blue-600 hover:bg-blue-700"
-                      }`}
-                    >
-                      {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       )}
     </div>

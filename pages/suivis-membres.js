@@ -19,9 +19,11 @@ export default function SuivisMembres() {
     fetchSuivis();
   }, []);
 
+  // 🔹 Fonction fetchSuivis modifiée
   const fetchSuivis = async () => {
     setLoading(true);
     setMessage(null);
+
     try {
       const userEmail = localStorage.getItem("userEmail");
       const userRole = JSON.parse(localStorage.getItem("userRole") || "[]");
@@ -58,13 +60,14 @@ export default function SuivisMembres() {
 
         if (cellulesError) throw cellulesError;
 
-        const celluleIds = cellulesData.map((c) => c.id);
-
-        if (celluleIds.length === 0) {
+        if (!cellulesData || cellulesData.length === 0) {
           setMessage("Vous n’êtes responsable d’aucune cellule pour le moment.");
           setSuivis([]);
           return;
         }
+
+        const celluleIds = cellulesData.map((c) => c.id);
+        const orQuery = celluleIds.map((id) => `cellule_id.eq.${id}`).join(",");
 
         const { data, error } = await supabase
           .from("suivis_membres")
@@ -72,18 +75,17 @@ export default function SuivisMembres() {
             *,
             cellules!left(cellule)
           `)
-          .in("cellule_id", celluleIds)
+          .or(orQuery)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
         suivisData = data;
       }
 
+      setSuivis(suivisData || []);
       if (!suivisData || suivisData.length === 0) {
         setMessage("Aucun membre en suivi pour le moment.");
       }
-
-      setSuivis(suivisData || []);
     } catch (err) {
       console.error("❌ Erreur fetchSuivis:", err.message || err);
       setMessage("Erreur lors de la récupération des suivis.");
@@ -210,7 +212,7 @@ export default function SuivisMembres() {
                     {item.prenom} {item.nom}
                   </h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {item.cellules?.cellule || "—"}</p>  
+                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {item.cellules?.cellule || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">
                     📋 Statut Suivis : {item.statut_suivis || "—"}
@@ -224,6 +226,7 @@ export default function SuivisMembres() {
 
                   {isOpen && (
                     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+                      {/* Partie détails complète */}
                       <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
                       <p>📞 Téléphone : {item.telephone || "—"}</p>
                       <p>💬 WhatsApp : {item.whatsapp || "—"}</p>
@@ -289,6 +292,7 @@ export default function SuivisMembres() {
         </div>
       ) : (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+          {/* Vue Table identique */}
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
               <tr>

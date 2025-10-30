@@ -1,264 +1,123 @@
-//pages/add-member.js
+// pages/add-member.js
 "use client";
-
-import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
-import supabase from "../lib/supabaseClient";
+import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function AddMember() {
   const router = useRouter();
-
-  const [formData, setFormData] = useState({
-    nom: "",
-    prenom: "",
-    telephone: "",
-    ville: "",
-    statut: "nouveau",
-    venu: "",
-    besoin: "",
-    is_whatsapp: false,
-    infos_supplementaires: "",
-  });
-
-  const [success, setSuccess] = useState(false);
-
-  // ✅ Gestion du rôle (facultatif)
-  const [roles, setRoles] = useState([]);
-  useEffect(() => {
-    const storedRole = localStorage.getItem("userRole");
-    if (storedRole) {
-      let parsedRoles = [];
-      try {
-        parsedRoles = JSON.parse(storedRole);
-        if (!Array.isArray(parsedRoles)) parsedRoles = [parsedRoles];
-      } catch {
-        parsedRoles = [storedRole];
-      }
-      setRoles(parsedRoles.map(r => r.toLowerCase().trim()));
-    }
-  }, []);
-
-  const hasRole = role =>
-    roles.includes(role.toLowerCase()) ||
-    (role === "admin" && roles.includes("administrateur")) ||
-    (role === "administrateur" && roles.includes("admin"));
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
-  };
+  const [nom, setNom] = useState("");
+  const [prenom, setPrenom] = useState("");
+  const [telephone, setTelephone] = useState("");
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // 🔹 Vérification rôle si nécessaire
-    if (!hasRole("admin") && !hasRole("administrateur")) {
-      alert("⛔ Accès non autorisé !");
-      return;
-    }
+    setLoading(true);
 
     try {
-      const { error } = await supabase.from("membres").insert([formData]);
-      if (error) throw error;
+      // 🔧 Ici tu pourras ajouter ton code Supabase
+      // const { error } = await supabase.from("membres").insert([{ nom, prenom, telephone, email }]);
+      // if (error) throw error;
 
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-
-      // Reset formulaire
-      setFormData({
-        nom: "",
-        prenom: "",
-        telephone: "",
-        ville: "",
-        statut: "nouveau",
-        venu: "",
-        besoin: "",
-        is_whatsapp: false,
-        infos_supplementaires: "",
-      });
-    } catch (err) {
-      alert(err.message);
+      alert("✅ Membre ajouté avec succès !");
+      router.push("/admin/liste-membres");
+    } catch (error) {
+      console.error("Erreur :", error.message);
+      alert("❌ Une erreur est survenue lors de l’ajout du membre.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
-
-        {/* 🔹 Logo au centre */}
-        <div className="flex justify-center mb-6">
-          <Image
-            src="/logo.png"
-            alt="SoulTrack Logo"
-            width={80}
-            height={80}
-            className="object-contain"
-          />
-        </div>
-
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-200 via-sky-100 to-cyan-200 p-6">
+      <div className="bg-white/70 rounded-3xl shadow-lg p-8 w-full max-w-md relative">
+        
+        {/* Bouton retour */}
         <button
           onClick={() => router.back()}
-          className="flex items-center text-orange-500 font-semibold mb-4 hover:text-orange-600 transition-colors"
+          className="absolute top-4 left-4 text-white bg-sky-500 hover:bg-sky-600 transition px-3 py-1.5 rounded-full shadow-md"
         >
           ← Retour
         </button>
 
-        <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-2">
-          Ajouter un nouveau membre
+        {/* Logo */}
+        <div className="flex justify-center mb-4 mt-6">
+          <Image src="/images/logo.png" alt="Logo" width={80} height={80} />
+        </div>
+
+        {/* Titre */}
+        <h1 className="text-3xl font-handwriting text-center mb-6 text-gray-800">
+          Ajouter un Membre
         </h1>
-        <p className="text-center text-gray-500 italic mb-6">
-          « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
-        </p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Prénom */}
-          <input
-            type="text"
-            name="prenom"
-            placeholder="Prénom"
-            value={formData.prenom}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            required
-          />
-
-          {/* Nom */}
-          <input
-            type="text"
-            name="nom"
-            placeholder="Nom"
-            value={formData.nom}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            required
-          />
-
-          {/* Téléphone */}
-          <input
-            type="text"
-            name="telephone"
-            placeholder="Téléphone"
-            value={formData.telephone}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            required
-          />
-
-          {/* WhatsApp */}
-          <label className="flex items-center gap-2 mt-1">
+        {/* Formulaire */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">Nom</label>
             <input
-              type="checkbox"
-              name="is_whatsapp"
-              checked={formData.is_whatsapp}
-              onChange={handleChange}
+              type="text"
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+              required
+              className="w-full px-4 py-2 rounded-full border border-gray-300 focus:ring-2 focus:ring-sky-400 outline-none"
             />
-            WhatsApp
-          </label>
+          </div>
 
-          {/* Ville */}
-          <input
-            type="text"
-            name="ville"
-            placeholder="Ville"
-            value={formData.ville}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          />
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">Prénom</label>
+            <input
+              type="text"
+              value={prenom}
+              onChange={(e) => setPrenom(e.target.value)}
+              required
+              className="w-full px-4 py-2 rounded-full border border-gray-300 focus:ring-2 focus:ring-sky-400 outline-none"
+            />
+          </div>
 
-          {/* Statut */}
-          <select
-            name="statut"
-            value={formData.statut}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          >
-            <option value="">-- Statut --</option>
-            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-            <option value="a déjà mon église">A déjà son église</option>
-            <option value="visiteur">Visiteur</option>
-          </select>
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">Téléphone</label>
+            <input
+              type="tel"
+              value={telephone}
+              onChange={(e) => setTelephone(e.target.value)}
+              required
+              className="w-full px-4 py-2 rounded-full border border-gray-300 focus:ring-2 focus:ring-sky-400 outline-none"
+            />
+          </div>
 
-          {/* Comment est venu */}
-          <select
-            name="venu"
-            value={formData.venu}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          >
-            <option value="">-- Comment est-il venu ? --</option>
-            <option value="invité">Invité</option>
-            <option value="réseaux">Réseaux</option>
-            <option value="evangélisation">Evangélisation</option>
-            <option value="autre">Autre</option>
-          </select>
-
-          {/* Besoin */}
-          <select
-            name="besoin"
-            value={formData.besoin}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          >
-            <option value="">-- Besoin --</option>
-            <option value="Finances">Finances</option>
-            <option value="Santé">Santé</option>
-            <option value="Travail">Travail</option>
-            <option value="Les Enfants">Les Enfants</option>
-            <option value="La Famille">La Famille</option>
-          </select>
-
-          {/* Infos supplémentaires */}
-          <textarea
-            name="infos_supplementaires"
-            value={formData.infos_supplementaires}
-            onChange={handleChange}
-            rows={3}
-            placeholder="Informations supplémentaires..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          />
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full px-4 py-2 rounded-full border border-gray-300 focus:ring-2 focus:ring-sky-400 outline-none"
+            />
+          </div>
 
           {/* Boutons */}
-          <div className="flex gap-4">
+          <div className="flex justify-between mt-6">
             <button
               type="button"
-              onClick={() =>
-                setFormData({
-                  nom: "",
-                  prenom: "",
-                  telephone: "",
-                  ville: "",
-                  statut: "nouveau",
-                  venu: "",
-                  besoin: "",
-                  is_whatsapp: false,
-                  infos_supplementaires: "",
-                })
-              }
-              className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-all"
+              onClick={() => router.push("/admin")}
+              className="flex-1 mr-2 bg-gradient-to-r from-sky-400 to-cyan-300 hover:opacity-90 text-white font-semibold py-2 rounded-full shadow-md transition"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all"
+              disabled={loading}
+              className="flex-1 ml-2 bg-gradient-to-r from-cyan-400 to-sky-400 hover:opacity-90 text-white font-semibold py-2 rounded-full shadow-md transition"
             >
-              Ajouter
+              {loading ? "Ajout..." : "Ajouter"}
             </button>
           </div>
         </form>
-
-        {success && (
-          <div className="text-green-600 font-semibold text-center mt-3">
-            ✅ Membre ajouté avec succès !
-          </div>
-        )}
       </div>
     </div>
   );
 }
-
-

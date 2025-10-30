@@ -3,10 +3,11 @@
 
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 
-export default function AjouterMembreCellule() {
+export default function AddMemberCellule() {
   const router = useRouter();
+
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
@@ -17,16 +18,17 @@ export default function AjouterMembreCellule() {
     is_whatsapp: false,
     infos_supplementaires: "",
   });
+
   const [success, setSuccess] = useState(false);
   const [celluleId, setCelluleId] = useState(null);
-  const [loadingCellule, setLoadingCellule] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-  // 🔹 Récupération de la cellule du responsable connecté
+  // 🔹 Récupérer la cellule du responsable connecté
   useEffect(() => {
     const fetchCellule = async () => {
       try {
-        const responsableId = localStorage.getItem("userId"); // stocké à la connexion
-        if (!responsableId) throw new Error("Utilisateur non trouvé");
+        const responsableId = localStorage.getItem("responsable_id"); // Assure-toi que c'est le bon champ
+        if (!responsableId) throw new Error("Responsable non trouvé");
 
         const { data, error } = await supabase
           .from("cellules")
@@ -34,12 +36,18 @@ export default function AjouterMembreCellule() {
           .eq("responsable_id", responsableId)
           .single();
 
-        if (error || !data) throw new Error("Aucune cellule trouvée pour ce responsable !");
+        if (error || !data) {
+          alert("Aucune cellule trouvée pour ce responsable !");
+          setLoading(false);
+          return;
+        }
+
         setCelluleId(data.id);
       } catch (err) {
-        alert(err.message);
+        console.error(err);
+        alert("Erreur lors de la récupération de la cellule !");
       } finally {
-        setLoadingCellule(false);
+        setLoading(false);
       }
     };
 
@@ -48,15 +56,16 @@ export default function AjouterMembreCellule() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
+    setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!celluleId) return alert("Impossible d’ajouter le membre : cellule introuvable.");
+
+    if (!celluleId) {
+      alert("Impossible d’ajouter le membre : cellule introuvable.");
+      return;
+    }
 
     try {
       const memberData = {
@@ -80,104 +89,147 @@ export default function AjouterMembreCellule() {
         infos_supplementaires: "",
       });
 
-      setTimeout(() => setSuccess(false), 3000); // message succès
+      setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      alert(err.message);
+      alert("Erreur lors de l'ajout du membre : " + err.message);
     }
   };
 
-  if (loadingCellule) return <p className="text-center mt-10 text-gray-700">Chargement...</p>;
+  if (loading) return <p className="text-center mt-10 text-gray-700">Chargement...</p>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-400 to-blue-200 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
+        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
-          className="flex items-center text-orange-600 font-semibold mb-4 hover:text-orange-700 transition-colors"
+          className="flex items-center text-orange-500 font-semibold mb-4 hover:text-orange-600 transition-colors"
         >
           ← Retour
         </button>
 
-        <h1 className="text-3xl font-handwriting text-black mb-2 text-center">
+        <h1 className="text-3xl font-extrabold text-center text-gray-800 mb-2">
           Ajouter un membre à ma cellule
         </h1>
         <p className="text-center text-gray-500 italic mb-6">
-          Chaque âme a une valeur infinie 🌱
+          « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            name="prenom"
-            placeholder="Prénom"
-            value={formData.prenom}
-            onChange={handleChange}
-            required
-            className="input"
-          />
-          <input
-            type="text"
-            name="nom"
-            placeholder="Nom"
-            value={formData.nom}
-            onChange={handleChange}
-            required
-            className="input"
-          />
-          <input
-            type="text"
-            name="telephone"
-            placeholder="Téléphone"
-            value={formData.telephone}
-            onChange={handleChange}
-            required
-            className="input"
-          />
-          <div className="flex items-center gap-2">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Prénom */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Prénom</label>
             <input
-              type="checkbox"
-              name="is_whatsapp"
-              checked={formData.is_whatsapp}
+              type="text"
+              name="prenom"
+              value={formData.prenom}
               onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              required
             />
-            <span>WhatsApp</span>
           </div>
-          <input
-            type="text"
-            name="ville"
-            placeholder="Ville"
-            value={formData.ville}
-            onChange={handleChange}
-            className="input"
-          />
-          <select name="venu" value={formData.venu} onChange={handleChange} className="input">
-            <option value="">-- Comment est-il venu ? --</option>
-            <option value="invité">Invité</option>
-            <option value="réseaux">Réseaux</option>
-            <option value="evangelisation">Evangélisation</option>
-            <option value="autre">Autre</option>
-          </select>
-          <select name="besoin" value={formData.besoin} onChange={handleChange} className="input">
-            <option value="">-- Besoin de la personne ? --</option>
-            <option value="Finances">Finances</option>
-            <option value="Santé">Santé</option>
-            <option value="Travail">Travail</option>
-            <option value="Les Enfants">Les Enfants</option>
-            <option value="La Famille">La Famille</option>
-          </select>
-          <textarea
-            name="infos_supplementaires"
-            placeholder="Infos supplémentaires..."
-            value={formData.infos_supplementaires}
-            onChange={handleChange}
-            rows={3}
-            className="input"
-          />
 
-          <div className="flex gap-4 mt-2">
+          {/* Nom */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Nom</label>
+            <input
+              type="text"
+              name="nom"
+              value={formData.nom}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              required
+            />
+          </div>
+
+          {/* Téléphone + WhatsApp */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Téléphone</label>
+            <input
+              type="text"
+              name="telephone"
+              value={formData.telephone}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              required
+            />
+            <div className="mt-2 flex items-center">
+              <input
+                type="checkbox"
+                name="is_whatsapp"
+                checked={formData.is_whatsapp}
+                onChange={handleChange}
+                className="mr-2"
+              />
+              <label className="text-gray-700">Ce numéro est WhatsApp</label>
+            </div>
+          </div>
+
+          {/* Ville */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Ville</label>
+            <input
+              type="text"
+              name="ville"
+              value={formData.ville}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            />
+          </div>
+
+          {/* Comment est venu */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Comment est-il venu ?</label>
+            <select
+              name="venu"
+              value={formData.venu}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            >
+              <option value="">-- Sélectionner --</option>
+              <option value="invité">Invité</option>
+              <option value="réseaux">Réseaux</option>
+              <option value="evangélisation">Evangélisation</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
+
+          {/* Besoin */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Besoin de la personne ?</label>
+            <select
+              name="besoin"
+              value={formData.besoin}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            >
+              <option value="">-- Sélectionner --</option>
+              <option value="Finances">Finances</option>
+              <option value="Santé">Santé</option>
+              <option value="Travail">Travail</option>
+              <option value="Les Enfants">Les Enfants</option>
+              <option value="La Famille">La Famille</option>
+            </select>
+          </div>
+
+          {/* Infos supplémentaires */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
+            <textarea
+              name="infos_supplementaires"
+              value={formData.infos_supplementaires}
+              onChange={handleChange}
+              rows={3}
+              placeholder="Ajoute ici d'autres détails utiles sur la personne..."
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            />
+          </div>
+
+          {/* Boutons */}
+          <div className="flex justify-between mt-4 gap-4">
             <button
               type="submit"
-              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-2xl transition-all"
+              className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
             >
               Ajouter
             </button>
@@ -195,29 +247,19 @@ export default function AjouterMembreCellule() {
                   infos_supplementaires: "",
                 })
               }
-              className="flex-1 bg-gray-300 hover:bg-gray-400 text-black font-bold py-3 rounded-2xl transition-all"
+              className="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
             >
               Annuler
             </button>
           </div>
+
+          {/* Message succès */}
+          {success && (
+            <div className="text-green-600 font-semibold text-center mt-3">
+              ✅ Membre ajouté avec succès !
+            </div>
+          )}
         </form>
-
-        {success && (
-          <p className="text-green-600 font-semibold text-center mt-3">
-            ✅ Membre ajouté avec succès !
-          </p>
-        )}
-
-        <style jsx>{`
-          .input {
-            width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            padding: 12px;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-          }
-        `}</style>
       </div>
     </div>
   );

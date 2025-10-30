@@ -38,7 +38,6 @@ export default function AjouterMembreCellule() {
       }
 
       setCellules(data);
-      // Par défaut, sélectionne la première cellule
       setFormData((prev) => ({ ...prev, cellule_id: data[0].id }));
     };
 
@@ -55,8 +54,6 @@ export default function AjouterMembreCellule() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.cellule_id) return alert("⚠️ Veuillez sélectionner une cellule.");
-
     try {
       const { error } = await supabase.from("membres").insert([formData]);
       if (error) throw error;
@@ -93,18 +90,17 @@ export default function AjouterMembreCellule() {
 
         {/* Logo */}
         <div className="flex justify-center mb-6">
-          <img src="/logo.png" alt="Logo" className="w-20 h-18" />
+          <img src="/logo.png" alt="Logo" className="w-20 h-20" />
         </div>
 
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
           Ajouter un membre à ma cellule
         </h1>
         <p className="text-center text-gray-500 italic mb-6">
-          🌿 « Chaque âme compte » – Luc 15:7
+          « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Prénom */}
           <div>
             <label className="block text-gray-700 mb-1">Prénom</label>
             <input
@@ -117,7 +113,6 @@ export default function AjouterMembreCellule() {
             />
           </div>
 
-          {/* Nom */}
           <div>
             <label className="block text-gray-700 mb-1">Nom</label>
             <input
@@ -130,7 +125,6 @@ export default function AjouterMembreCellule() {
             />
           </div>
 
-          {/* Téléphone et WhatsApp */}
           <div>
             <label className="block text-gray-700 mb-1">Téléphone</label>
             <input
@@ -153,7 +147,6 @@ export default function AjouterMembreCellule() {
             </div>
           </div>
 
-          {/* Ville */}
           <div>
             <label className="block text-gray-700 mb-1">Ville</label>
             <input
@@ -165,27 +158,6 @@ export default function AjouterMembreCellule() {
             />
           </div>
 
-          {/* Cellule (si >1) */}
-          {cellules.length > 1 && (
-            <div>
-              <label className="block text-gray-700 mb-1">Sélectionnez la cellule</label>
-              <select
-                name="cellule_id"
-                value={formData.cellule_id}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
-                required
-              >
-                {cellules.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.cellule}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Comment est-il venu */}
           <div>
             <label className="block text-gray-700 mb-1">Comment est-il venu ?</label>
             <select
@@ -202,7 +174,6 @@ export default function AjouterMembreCellule() {
             </select>
           </div>
 
-          {/* Besoin */}
           <div>
             <label className="block text-gray-700 mb-1">Besoin de la personne ?</label>
             <select
@@ -220,7 +191,6 @@ export default function AjouterMembreCellule() {
             </select>
           </div>
 
-          {/* Infos supplémentaires */}
           <div>
             <label className="block text-gray-700 mb-1">Informations supplémentaires</label>
             <textarea
@@ -233,7 +203,6 @@ export default function AjouterMembreCellule() {
             />
           </div>
 
-          {/* Boutons */}
           <div className="flex justify-between gap-4 mt-4">
             <button
               type="submit"
@@ -249,12 +218,12 @@ export default function AjouterMembreCellule() {
                   prenom: "",
                   telephone: "",
                   ville: "",
-                  statut: "nouveau",
                   venu: "",
                   besoin: "",
-                  cellule_id: cellules[0]?.id || "",
-                  infos_supplementaires: "",
                   is_whatsapp: false,
+                  infos_supplementaires: "",
+                  cellule_id: cellules[0]?.id || "",
+                  statut: "nouveau",
                 })
               }
               className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-all"

@@ -1,3 +1,4 @@
+// pages/ajouter-membre-cellule.js
 "use client";
 
 import { useState, useEffect } from "react";
@@ -17,6 +18,7 @@ export default function AddMemberCellule() {
     infos_supplementaires: "",
   });
   const [success, setSuccess] = useState(false);
+  const [responsableCelluleId, setResponsableCelluleId] = useState(null);
   const [celluleId, setCelluleId] = useState(null);
 
   // ✅ Récupérer la cellule du responsable connecté
@@ -26,20 +28,26 @@ export default function AddMemberCellule() {
         const userId = localStorage.getItem("userId");
         if (!userId) return;
 
+        setResponsableCelluleId(userId);
+
         const { data, error } = await supabase
           .from("cellules")
-          .select("id")
-          .eq("responsable_id", userId)
-          .single();
+          .select("id, nom_cellule")
+          .eq("responsable_id", userId);
 
-        if (error || !data) {
-          console.error("Aucune cellule trouvée :", error?.message);
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          setCelluleId(null);
+          console.warn("⚠️ Aucune cellule assignée à ce responsable !");
           return;
         }
 
-        setCelluleId(data.id);
+        // Prendre la première cellule si plusieurs
+        setCelluleId(data[0].id);
       } catch (err) {
         console.error("Erreur récupération cellule :", err.message);
+        setCelluleId(null);
       }
     };
     fetchCellule();
@@ -55,13 +63,19 @@ export default function AddMemberCellule() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!celluleId) return alert("⚠️ Aucune cellule trouvée pour ce responsable !");
+
+    if (!celluleId) {
+      alert(
+        "⚠️ Vous n'avez pas encore de cellule assignée. Contactez l'administrateur !"
+      );
+      return;
+    }
 
     try {
       const { error } = await supabase.from("membres").insert([
         {
           ...formData,
-          statut: "Integrer", // ✅ correspond à l'enum dans la DB
+          statut: "Integrer",
           cellule_id: celluleId,
         },
       ]);
@@ -89,6 +103,7 @@ export default function AddMemberCellule() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-200 via-white to-blue-100">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
+        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
           className="flex items-center text-orange-500 font-semibold mb-4 hover:text-orange-600 transition-colors"
@@ -96,6 +111,7 @@ export default function AddMemberCellule() {
           ← Retour
         </button>
 
+        {/* Logo */}
         <div className="flex justify-center mb-6">
           <img src="/logo.png" alt="Logo" className="w-20 h-20" />
         </div>
@@ -103,7 +119,6 @@ export default function AddMemberCellule() {
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
           Ajouter un membre à ma cellule
         </h1>
-
         <p className="text-center text-gray-500 italic mb-6">
           « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
         </p>
@@ -113,29 +128,31 @@ export default function AddMemberCellule() {
           <input
             type="text"
             name="prenom"
+            placeholder="Prénom"
             value={formData.prenom}
             onChange={handleChange}
-            placeholder="Prénom"
             className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
             required
           />
+
           {/* Nom */}
           <input
             type="text"
             name="nom"
+            placeholder="Nom"
             value={formData.nom}
             onChange={handleChange}
-            placeholder="Nom"
             className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
             required
           />
+
           {/* Téléphone */}
           <input
             type="text"
             name="telephone"
+            placeholder="Téléphone"
             value={formData.telephone}
             onChange={handleChange}
-            placeholder="Téléphone"
             className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
             required
           />
@@ -155,9 +172,9 @@ export default function AddMemberCellule() {
           <input
             type="text"
             name="ville"
+            placeholder="Ville"
             value={formData.ville}
             onChange={handleChange}
-            placeholder="Ville"
             className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
           />
 
@@ -168,7 +185,7 @@ export default function AddMemberCellule() {
             onChange={handleChange}
             className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
           >
-            <option value="">-- Sélectionner --</option>
+            <option value="">-- Comment est-il venu ? --</option>
             <option value="invité">Invité</option>
             <option value="réseaux">Réseaux</option>
             <option value="evangélisation">Evangélisation</option>
@@ -201,7 +218,7 @@ export default function AddMemberCellule() {
           />
 
           {/* Boutons */}
-          <div className="flex gap-4">
+          <div className="flex gap-4 mt-4">
             <button
               type="button"
               onClick={() =>
@@ -220,7 +237,6 @@ export default function AddMemberCellule() {
             >
               Annuler
             </button>
-
             <button
               type="submit"
               className="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-md transition-all"

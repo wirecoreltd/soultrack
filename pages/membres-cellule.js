@@ -54,27 +54,28 @@ export default function MembresCellule() {
           console.log("✅ Membres récupérés (Admin):", membresData);
         }
 
-        // 🔹 ResponsableCellule → membres de sa cellule
+        // 🔹 ResponsableCellule → membres de toutes ses cellules
         else if (userRole.includes("ResponsableCellule")) {
-          const { data: celluleData, error: celluleError } = await supabase
+          const { data: cellulesData, error: cellulesError } = await supabase
             .from("cellules")
-            .select("id, cellule, responsable_id")
-            .eq("responsable_id", responsableId)
-            .single();
+            .select("id, cellule")
+            .eq("responsable_id", responsableId);
 
-          if (celluleError) {
-            console.error("❌ Erreur cellule:", celluleError);
+          if (cellulesError) {
+            console.error("❌ Erreur récupération cellules:", cellulesError);
+            setMessage("Erreur lors de la récupération des cellules.");
+            setMembres([]);
+            return;
           }
 
-          if (!celluleData) {
-            console.warn("⚠️ Aucune cellule trouvée pour ce responsable");
+          if (!cellulesData || cellulesData.length === 0) {
             setMessage("Vous n’êtes responsable d’aucune cellule pour le moment.");
             setMembres([]);
             return;
           }
 
-          console.log("🏠 Cellule trouvée:", celluleData);
-          const celluleId = celluleData.id;
+          console.log("🏠 Cellules trouvées:", cellulesData);
+          const celluleIds = cellulesData.map(c => c.id);
 
           const { data, error } = await supabase
             .from("membres")
@@ -87,15 +88,15 @@ export default function MembresCellule() {
               cellule_id,
               cellules (cellule)
             `)
-            .eq("cellule_id", celluleId);
+            .in("cellule_id", celluleIds);
 
           if (error) throw error;
           membresData = data;
-          console.log("✅ Membres récupérés (ResponsableCellule):", membresData);
 
           if (!membresData || membresData.length === 0) {
-            setMessage("Aucun membre assigné à votre cellule.");
+            setMessage("Aucun membre assigné à vos cellules.");
           }
+          console.log("✅ Membres récupérés (ResponsableCellule):", membresData);
         }
 
         setMembres(membresData || []);
@@ -111,12 +112,12 @@ export default function MembresCellule() {
     fetchMembres();
   }, []);
 
-  if (loading) return <p>Chargement...</p>;
+  if (loading) return <p className="text-center mt-10">Chargement...</p>;
   if (message) return <p className="text-center text-gray-600 mt-10">{message}</p>;
 
   return (
     <div className="p-6 min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50">
-      <h2 className="text-3xl font-bold text-center text-indigo-700 mb-6">👥 Membres de ma cellule</h2>
+      <h2 className="text-3xl font-bold text-center text-indigo-700 mb-6">👥 Membres de ma/mes cellule(s)</h2>
       <div className="overflow-x-auto bg-white rounded-3xl shadow-2xl p-6">
         <table className="min-w-full text-sm">
           <thead className="bg-indigo-600 text-white">
@@ -131,7 +132,7 @@ export default function MembresCellule() {
             {membres.map((membre) => (
               <tr key={membre.id} className="border-b hover:bg-indigo-50 transition-all">
                 <td className="py-3 px-4 font-semibold text-gray-700">{membre.nom} {membre.prenom}</td>
-                <td className="py-3 px-4">{membre.telephone}</td>
+                <td className="py-3 px-4">{membre.telephone || "—"}</td>
                 <td className="py-3 px-4">{membre.ville || "—"}</td>
                 <td className="py-3 px-4 text-indigo-700 font-medium">{membre.cellules?.cellule || "—"}</td>
               </tr>

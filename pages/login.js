@@ -1,4 +1,4 @@
-//pages/login.js
+// pages/login.js
 
 "use client";
 
@@ -31,8 +31,9 @@ export default function LoginPage() {
         return;
       }
 
-      // ✅ Stockage email
+      // ✅ Stockage email et ID utilisateur
       localStorage.setItem("userEmail", data.user.email);
+      localStorage.setItem("userId", data.user.id); // ✅ AJOUT ESSENTIEL
 
       // 🔍 Récupérer le rôle dans Supabase
       const { data: profile, error: profileError } = await supabase
@@ -88,7 +89,7 @@ export default function LoginPage() {
 
         {/* Message de bienvenue */}
         <p className="text-center text-gray-700 mb-6">
-          Bienvenue sur SoulTrack !<br/>
+          Bienvenue sur SoulTrack !<br />
           Une plateforme pour garder le contact, organiser les visites, et soutenir chaque membre dans sa vie spirituelle.
         </p>
 

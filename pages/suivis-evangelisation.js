@@ -46,11 +46,14 @@ export default function SuivisEvangelisation() {
 
       // 🔹 Si responsable → filtrer par sa cellule
       if (userRole.includes("ResponsableCellule")) {
-        const { data: celluleData, error: celluleError } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("responsable_id", userId)
-          .single();
+  // Récupérer le nom du responsable depuis son profil
+  const { data: profileData } = await supabase
+    .from("profiles")
+    .select("nom")
+    .eq("id", userId)
+    .single();
+
+  const userNom = profileData.nom;
 
         if (celluleError) throw celluleError;
         if (!celluleData) {

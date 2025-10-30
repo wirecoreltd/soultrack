@@ -1,24 +1,56 @@
 // pages/ajouter-membre-cellule.js
-import { useState } from "react";
-import supabase from "../lib/supabaseClient"; // <- chemin corrigé
-import { useRouter } from "next/router";
-import AccessGuard from "../components/AccessGuard";
 
-export default function AddMember() {
+"use client";
+import { useState, useEffect } from "react";
+import supabase from "../lib/supabaseClient";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+
+export default function AjouterMembreCellule() {
   const router = useRouter();
-
   const [formData, setFormData] = useState({
-    nom: "",
     prenom: "",
+    nom: "",
     telephone: "",
-    ville: "",    
+    ville: "",
     venu: "",
     besoin: "",
     is_whatsapp: false,
     infos_supplementaires: "",
   });
-
   const [success, setSuccess] = useState(false);
+  const [responsableCelluleId, setResponsableCelluleId] = useState(null);
+  const [celluleId, setCelluleId] = useState(null);
+  const [responsableNom, setResponsableNom] = useState("");
+
+  // 🟢 Charger la cellule du responsable connecté
+  useEffect(() => {
+    const fetchResponsableCellule = async () => {
+      const userEmail = localStorage.getItem("userEmail");
+      if (!userEmail) return;
+
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom")
+        .eq("email", userEmail)
+        .single();
+
+      if (!profileData) return;
+
+      setResponsableCelluleId(profileData.id);
+      setResponsableNom(`${profileData.prenom} ${profileData.nom}`);
+
+      const { data: celluleData } = await supabase
+        .from("cellules")
+        .select("id")
+        .eq("responsable_id", profileData.id)
+        .single();
+
+      if (celluleData) setCelluleId(celluleData.id);
+    };
+
+    fetchResponsableCellule();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -28,89 +60,97 @@ export default function AddMember() {
     });
   };
 
+  // 🟩 Soumission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const { data, error } = await supabase.from("membres").insert([formData]);
-      if (error) throw error;
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-
-      // Reset du formulaire
-      setFormData({
-        nom: "",
-        prenom: "",
-        telephone: "",
-        ville: "",
-        statut: "nouveau",
-        venu: "",
-        besoin: "",
-        is_whatsapp: false,
-        infos_supplementaires: "",
-      });
-    } catch (err) {
-      alert(err.message);
+    if (!celluleId) {
+      alert("Aucune cellule trouvée pour ce responsable !");
+      return;
     }
+
+    const membreData = {
+      ...formData,
+      cellule_id: celluleId,
+      statut: "Integrer",
+      responsable_suivi: responsableNom,
+    };
+
+    const { error } = await supabase.from("membres").insert([membreData]);
+    if (error) {
+      alert("Erreur : " + error.message);
+      return;
+    }
+
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 3000);
+    setFormData({
+      prenom: "",
+      nom: "",
+      telephone: "",
+      ville: "",
+      venu: "",
+      besoin: "",
+      is_whatsapp: false,
+      infos_supplementaires: "",
+    });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
-        
+    <div className="min-h-screen bg-gradient-to-b from-emerald-100 to-yellow-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl border border-emerald-200">
+
         {/* Flèche retour */}
         <button
           onClick={() => router.back()}
-           className="flex items-center text-orange-500 font-semibold mb-4 hover:text-orange-600 transition-colors"
+          className="flex items-center text-emerald-600 font-semibold mb-4 hover:text-emerald-700 transition"
         >
           ← Retour
         </button>
 
-        <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-2">
-          Ajouter un nouveau membre
+        {/* Logo */}
+        <div className="flex justify-center mb-4">
+          <Image src="/logo.png" alt="Logo ICC" width={80} height={80} />
+        </div>
+
+        <h1 className="text-3xl font-extrabold text-center text-emerald-700 mb-2">
+          Ajouter un membre à ma cellule
         </h1>
         <p className="text-center text-gray-500 italic mb-6">
-          « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
+          🌿 « Chaque âme compte » – Luc 15:7
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Prénom */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Prénom</label>
             <input
-              type="text"
               name="prenom"
               value={formData.prenom}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
               required
+              className="w-full px-4 py-3 border rounded-xl shadow-sm focus:ring-2 focus:ring-emerald-400"
             />
           </div>
-                
-          {/* Nom */}
+
           <div>
             <label className="block text-gray-700 font-medium mb-1">Nom</label>
             <input
-              type="text"
               name="nom"
               value={formData.nom}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
               required
+              className="w-full px-4 py-3 border rounded-xl shadow-sm focus:ring-2 focus:ring-emerald-400"
             />
-          </div>          
+          </div>
 
-          {/* Téléphone */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Téléphone</label>
             <input
-              type="text"
               name="telephone"
               value={formData.telephone}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
               required
+              className="w-full px-4 py-3 border rounded-xl shadow-sm focus:ring-2 focus:ring-emerald-400"
             />
-            {/* Case à cocher WhatsApp */}
             <div className="mt-2 flex items-center">
               <input
                 type="checkbox"
@@ -119,104 +159,100 @@ export default function AddMember() {
                 onChange={handleChange}
                 className="mr-2"
               />
-              <label className="text-gray-700">Ce numéro est WhatsApp</label>
+              <label className="text-gray-700">Numéro WhatsApp</label>
             </div>
-          </div>          
+          </div>
 
-          {/* Ville */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Ville</label>
             <input
-              type="text"
               name="ville"
               value={formData.ville}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full px-4 py-3 border rounded-xl shadow-sm focus:ring-2 focus:ring-emerald-400"
             />
-          </div>         
+          </div>
 
-          {/* Comment est venu */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Comment est-il venu ?</label>
+            <label className="block text-gray-700 font-medium mb-1">
+              Comment est-il venu ?
+            </label>
             <select
               name="venu"
               value={formData.venu}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full px-4 py-3 border rounded-xl shadow-sm focus:ring-2 focus:ring-emerald-400"
             >
               <option value="">-- Sélectionner --</option>
               <option value="invité">Invité</option>
               <option value="réseaux">Réseaux</option>
-              <option value="evangélisation">Evangélisation</option>                             
+              <option value="evangélisation">Évangélisation</option>
               <option value="autre">Autre</option>
             </select>
           </div>
 
-          {/* Besoin */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Besoin de la personne ?</label>
+            <label className="block text-gray-700 font-medium mb-1">Besoin</label>
             <select
               name="besoin"
               value={formData.besoin}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full px-4 py-3 border rounded-xl shadow-sm focus:ring-2 focus:ring-emerald-400"
             >
               <option value="">-- Sélectionner --</option>
               <option value="Finances">Finances</option>
               <option value="Santé">Santé</option>
               <option value="Travail">Travail</option>
-              <option value="Les Enfants">Les Enfants</option>
-              <option value="La Famille">La Famille</option>
+              <option value="Famille">Famille</option>
+              <option value="Autre">Autre</option>
             </select>
-          </div>          
+          </div>
 
-          {/* Informations supplémentaires */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
+            <label className="block text-gray-700 font-medium mb-1">
+              Informations supplémentaires
+            </label>
             <textarea
               name="infos_supplementaires"
               value={formData.infos_supplementaires}
               onChange={handleChange}
               rows={3}
-              placeholder="Ajoute ici d'autres détails utiles sur la personne..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              placeholder="Ajoute ici d'autres détails utiles..."
+              className="w-full px-4 py-3 border rounded-xl shadow-sm focus:ring-2 focus:ring-emerald-400"
             />
           </div>
 
-          {/* Boutons */}
-          <div className="flex justify-between mt-4 gap-4">
+          <div className="flex gap-4 mt-4">
             <button
               type="button"
               onClick={() =>
                 setFormData({
-                  nom: "",
                   prenom: "",
+                  nom: "",
                   telephone: "",
                   ville: "",
-                  statut: "nouveau",
                   venu: "",
                   besoin: "",
                   is_whatsapp: false,
                   infos_supplementaires: "",
                 })
               }
-              className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              className="flex-1 py-3 bg-yellow-400 hover:bg-yellow-500 text-white font-bold rounded-2xl shadow-md"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-md"
             >
               Ajouter
             </button>
           </div>
         </form>
 
-        {/* Message de succès */}
         {success && (
-          <div className="text-green-600 font-semibold text-center mt-3">
-            ✅ Membre ajouté avec succès !
+          <div className="text-emerald-700 font-semibold text-center mt-3">
+            ✅ Membre ajouté avec succès à votre cellule !
           </div>
         )}
       </div>

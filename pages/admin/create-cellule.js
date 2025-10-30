@@ -12,6 +12,7 @@ export default function CreateCellule() {
     cellule: "",
     ville: "",
     responsable_id: "",
+    telephone: "",
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -100,7 +101,14 @@ export default function CreateCellule() {
           <select
             name="responsable_id"
             value={formData.responsable_id}
-            onChange={handleChange}
+            onChange={(e) => {
+              const selectedId = e.target.value;
+              setFormData({
+                ...formData,
+                responsable_id: selectedId,
+                telephone: responsables.find(r => r.id === selectedId)?.telephone || "",
+              });
+            }}
             className="input"
           >
             <option value="">-- Sélectionnez un responsable --</option>
@@ -110,6 +118,16 @@ export default function CreateCellule() {
               </option>
             ))}
           </select>
+          
+          {/* Affiche le téléphone du responsable automatiquement */}
+          <input
+            name="telephone"
+            placeholder="Téléphone du responsable"
+            value={formData.telephone}
+            readOnly
+            className="input"
+          />
+          
 
           <div className="flex gap-4 mt-2">
             <button

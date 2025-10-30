@@ -11,8 +11,7 @@ export default function AddMember() {
     nom: "",
     prenom: "",
     telephone: "",
-    ville: "",
-    statut: "nouveau",
+    ville: "",    
     venu: "",
     besoin: "",
     is_whatsapp: false,
@@ -134,23 +133,7 @@ export default function AddMember() {
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
-          </div>
-
-          {/* Statut */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Statut</label>
-            <select
-              name="statut"
-              value={formData.statut}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-              <option value="a déjà mon église">A déjà son église</option>
-              <option value="visiteur">Visiteur</option>
-            </select>
-          </div>
+          </div>         
 
           {/* Comment est venu */}
           <div>

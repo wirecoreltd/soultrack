@@ -4,10 +4,11 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import { useRouter } from "next/router";
+import { useUser } from "@supabase/auth-helpers-react"; // ✅ pour récupérer l'utilisateur connecté
 
 export default function AddMemberCellule() {
   const router = useRouter();
-
+  const user = useUser(); // utilisateur connecté Supabase
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
@@ -18,63 +19,57 @@ export default function AddMemberCellule() {
     is_whatsapp: false,
     infos_supplementaires: "",
   });
-
   const [success, setSuccess] = useState(false);
   const [celluleId, setCelluleId] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  // 🔹 Récupérer la cellule du responsable connecté
+  // Récupération de la cellule du responsable connecté
   useEffect(() => {
     const fetchCellule = async () => {
-      try {
-        const responsableId = localStorage.getItem("responsable_id"); // Assure-toi que c'est le bon champ
-        if (!responsableId) throw new Error("Responsable non trouvé");
+      if (!user) return;
 
+      try {
         const { data, error } = await supabase
           .from("cellules")
-          .select("id, cellule")
-          .eq("responsable_id", responsableId)
+          .select("id")
+          .eq("responsable_id", user.id)
           .single();
 
         if (error || !data) {
-          alert("Aucune cellule trouvée pour ce responsable !");
-          setLoading(false);
-          return;
+          console.error("Erreur récupération cellule :", error?.message);
+          return alert("⚠️ Aucune cellule trouvée pour ce responsable !");
         }
 
         setCelluleId(data.id);
       } catch (err) {
-        console.error(err);
-        alert("Erreur lors de la récupération de la cellule !");
-      } finally {
-        setLoading(false);
+        console.error("Erreur récupération cellule :", err.message);
+        alert("⚠️ Impossible de récupérer la cellule du responsable.");
       }
     };
 
     fetchCellule();
-  }, []);
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? checked : value,
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!celluleId) {
-      alert("Impossible d’ajouter le membre : cellule introuvable.");
-      return;
-    }
+    if (!celluleId) return alert("⚠️ Aucune cellule trouvée pour ce responsable !");
 
     try {
-      const memberData = {
-        ...formData,
-        statut: "Integrer",
-        cellule_id: celluleId,
-      };
+      const { error } = await supabase.from("membres").insert([
+        {
+          ...formData,
+          statut: "Intégré",
+          cellule_id: celluleId,
+        },
+      ]);
 
-      const { error } = await supabase.from("membres").insert([memberData]);
       if (error) throw error;
 
       setSuccess(true);
@@ -91,14 +86,12 @@ export default function AddMemberCellule() {
 
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      alert("Erreur lors de l'ajout du membre : " + err.message);
+      alert("❌ Erreur ajout membre : " + err.message);
     }
   };
 
-  if (loading) return <p className="text-center mt-10 text-gray-700">Chargement...</p>;
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-400 to-blue-200 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-200 via-white to-blue-100">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
         {/* Flèche retour */}
         <button
@@ -108,49 +101,51 @@ export default function AddMemberCellule() {
           ← Retour
         </button>
 
-        <h1 className="text-3xl font-extrabold text-center text-gray-800 mb-2">
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
+          <img src="/logo.png" alt="Logo" className="w-20 h-18" />
+        </div>
+
+        <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
           Ajouter un membre à ma cellule
         </h1>
         <p className="text-center text-gray-500 italic mb-6">
-          « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
+          🌿 « Chaque âme compte » – Luc 15:7
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Prénom */}
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Prénom</label>
+            <label className="block text-gray-700 mb-1">Prénom</label>
             <input
               type="text"
               name="prenom"
               value={formData.prenom}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
               required
             />
           </div>
 
-          {/* Nom */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Nom</label>
+            <label className="block text-gray-700 mb-1">Nom</label>
             <input
               type="text"
               name="nom"
               value={formData.nom}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
               required
             />
           </div>
 
-          {/* Téléphone + WhatsApp */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Téléphone</label>
+            <label className="block text-gray-700 mb-1">Téléphone</label>
             <input
               type="text"
               name="telephone"
               value={formData.telephone}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
               required
             />
             <div className="mt-2 flex items-center">
@@ -165,26 +160,24 @@ export default function AddMemberCellule() {
             </div>
           </div>
 
-          {/* Ville */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Ville</label>
+            <label className="block text-gray-700 mb-1">Ville</label>
             <input
               type="text"
               name="ville"
               value={formData.ville}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
             />
           </div>
 
-          {/* Comment est venu */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Comment est-il venu ?</label>
+            <label className="block text-gray-700 mb-1">Comment est-il venu ?</label>
             <select
               name="venu"
               value={formData.venu}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
             >
               <option value="">-- Sélectionner --</option>
               <option value="invité">Invité</option>
@@ -194,14 +187,13 @@ export default function AddMemberCellule() {
             </select>
           </div>
 
-          {/* Besoin */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Besoin de la personne ?</label>
+            <label className="block text-gray-700 mb-1">Besoin de la personne ?</label>
             <select
               name="besoin"
               value={formData.besoin}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
             >
               <option value="">-- Sélectionner --</option>
               <option value="Finances">Finances</option>
@@ -212,24 +204,22 @@ export default function AddMemberCellule() {
             </select>
           </div>
 
-          {/* Infos supplémentaires */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
+            <label className="block text-gray-700 mb-1">Informations supplémentaires</label>
             <textarea
               name="infos_supplementaires"
               value={formData.infos_supplementaires}
               onChange={handleChange}
               rows={3}
               placeholder="Ajoute ici d'autres détails utiles sur la personne..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
             />
           </div>
 
-          {/* Boutons */}
-          <div className="flex justify-between mt-4 gap-4">
+          <div className="flex justify-start gap-4 mt-4">
             <button
               type="submit"
-              className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              className="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-md transition-all"
             >
               Ajouter
             </button>
@@ -247,19 +237,18 @@ export default function AddMemberCellule() {
                   infos_supplementaires: "",
                 })
               }
-              className="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-all"
             >
               Annuler
             </button>
           </div>
-
-          {/* Message succès */}
-          {success && (
-            <div className="text-green-600 font-semibold text-center mt-3">
-              ✅ Membre ajouté avec succès !
-            </div>
-          )}
         </form>
+
+        {success && (
+          <p className="mt-4 text-center text-green-600 font-semibold">
+            ✅ Membre ajouté avec succès à ta cellule !
+          </p>
+        )}
       </div>
     </div>
   );

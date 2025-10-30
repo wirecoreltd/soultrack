@@ -1,5 +1,4 @@
 // pages/ajouter-membre-cellule.js
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -19,34 +18,30 @@ export default function AddMemberCellule() {
     infos_supplementaires: "",
   });
   const [success, setSuccess] = useState(false);
-  const [responsableId, setResponsableId] = useState(null);
+  const [responsableCelluleId, setResponsableCelluleId] = useState(null);
   const [celluleId, setCelluleId] = useState(null);
 
-  // 🔹 Récupérer la cellule du responsable connecté
+  // Récupérer la cellule du responsable connecté
   useEffect(() => {
     const fetchCellule = async () => {
       try {
         const userId = localStorage.getItem("userId"); // id Supabase Auth
         if (!userId) return;
-        setResponsableId(userId);
 
-        const { data: cellules, error } = await supabase
+        setResponsableCelluleId(userId);
+
+        const { data, error } = await supabase
           .from("cellules")
           .select("id")
-          .eq("responsable_id", userId);
+          .eq("responsable_id", userId)
+          .single();
 
         if (error) throw error;
-
-        if (cellules && cellules.length > 0) {
-          setCelluleId(cellules[0].id); // on prend la première cellule par défaut
-        } else {
-          console.warn("⚠️ Aucune cellule trouvée pour ce responsable !");
-        }
+        if (data) setCelluleId(data.id);
       } catch (err) {
         console.error("Erreur récupération cellule :", err.message);
       }
     };
-
     fetchCellule();
   }, []);
 
@@ -60,23 +55,20 @@ export default function AddMemberCellule() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!celluleId) return alert("⚠️ Aucune cellule trouvée pour ce responsable !");
 
     try {
       const { error } = await supabase.from("membres").insert([
         {
           ...formData,
-          statut: "Intégré",
-          cellule_id: celluleId,
+          statut: "Integrer", // ✅ enum correct
+          cellule_id: celluleId, // ✅ clé étrangère correcte
         },
       ]);
 
       if (error) throw error;
 
       setSuccess(true);
-
-      // Reset du formulaire
       setFormData({
         nom: "",
         prenom: "",
@@ -97,7 +89,6 @@ export default function AddMemberCellule() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-200 via-white to-blue-100">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
-
         {/* Flèche retour */}
         <button
           onClick={() => router.back()}

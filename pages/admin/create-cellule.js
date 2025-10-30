@@ -1,141 +1,141 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
-import supabase from "../../lib/supabaseClient";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import supabase from "../../lib/supabaseClient"; // client normal pour fetch
 
-export default function CreateUser() {
+export default function CreateCellule() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    prenom: "",
     nom: "",
-    email: "",
-    password: "",
-    role: "ResponsableIntegration",
+    zone: "",
+    responsable_id: "",
   });
+  const [responsables, setResponsables] = useState([]);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const role = localStorage.getItem("role");
-    if (role !== "Admin") router.push("/login");
-  }, [router]);
+    // Récupérer tous les responsables de cellules existants
+    async function fetchResponsables() {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom")
+        .eq("role", "ResponsableCellule");
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+      if (!error) setResponsables(data);
+    }
+    fetchResponsables();
+  }, []);
 
-  // 🔥 ICI on appelle la fonction SQL create_user
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
+    setLoading(true);
+    setMessage("⏳ Création en cours...");
 
-    const { data, error } = await supabase.rpc("create_user", {
-      p_email: formData.email,
-      p_password: formData.password,
-      p_prenom: formData.prenom,
-      p_nom: formData.nom,
-      p_role: formData.role,
+    const res = await fetch("/api/create-cellule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
     });
 
-    if (error) {
-      console.error(error);
-      setMessage("❌ Erreur : " + error.message);
+    const data = await res.json().catch(() => null);
+
+    if (res.ok) {
+      setMessage("✅ Cellule créée avec succès !");
+      setFormData({ nom: "", zone: "", responsable_id: "" });
     } else {
-      setMessage(data); // la fonction renvoie le message du SQL
-      setFormData({
-        prenom: "",
-        nom: "",
-        email: "",
-        password: "",
-        role: "ResponsableIntegration",
-      });
+      setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
     }
+
+    setLoading(false);
   };
 
+  const handleCancel = () => router.push("/"); // retour accueil
+
   return (
-    <div
-      className="min-h-screen flex flex-col justify-center items-center p-6"
-      style={{
-        background: "linear-gradient(135deg, #09203F 0%, #537895 100%)",
-      }}
-    >
-      <h1 className="text-3xl text-white font-bold mb-6">
-        Créer un utilisateur
-      </h1>
-
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-2xl shadow-md w-96 flex flex-col gap-4"
-      >
-        <input
-          name="prenom"
-          placeholder="Prénom"
-          value={formData.prenom}
-          onChange={handleChange}
-          required
-          className="border border-gray-300 rounded-lg px-3 py-2"
-        />
-
-        <input
-          name="nom"
-          placeholder="Nom"
-          value={formData.nom}
-          onChange={handleChange}
-          required
-          className="border border-gray-300 rounded-lg px-3 py-2"
-        />
-
-        <input
-          name="email"
-          type="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-          className="border border-gray-300 rounded-lg px-3 py-2"
-        />
-
-        <input
-          name="password"
-          type="password"
-          placeholder="Mot de passe"
-          value={formData.password}
-          onChange={handleChange}
-          required
-          className="border border-gray-300 rounded-lg px-3 py-2"
-        />
-
-        <select
-          name="role"
-          value={formData.role}
-          onChange={handleChange}
-          className="border border-gray-300 rounded-lg px-3 py-2"
-        >
-          <option value="ResponsableIntegration">
-            Responsable Intégration
-          </option>
-          <option value="ResponsableEvangelisation">
-            Responsable Évangélisation
-          </option>
-          <option value="Admin">Admin</option>
-        </select>
-
-        {message && (
-          <p
-            className={`text-center text-sm ${
-              message.startsWith("✅") ? "text-green-600" : "text-red-500"
-            }`}
-          >
-            {message}
-          </p>
-        )}
-
+    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
+      <div className="w-full flex justify-between items-center mb-6">
         <button
-          type="submit"
-          className="bg-gradient-to-r from-green-600 to-lime-400 text-white py-2 rounded-xl font-semibold hover:shadow-lg transition-all"
+          onClick={() => router.back()}
+          className="flex items-center text-white font-semibold hover:text-gray-200 transition-colors"
         >
-          Créer
+          ← Retour
         </button>
-      </form>
+      </div>
+
+      <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md">
+        {/* Logo */}
+        <div className="flex justify-center mb-4">
+          <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
+        </div>
+
+        <h1 className="text-3xl font-handwriting text-black-800 mb-6 text-center">
+          Créer une cellule
+        </h1>
+
+        <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
+          <input
+            name="nom"
+            placeholder="Nom de la cellule"
+            value={formData.nom}
+            onChange={handleChange}
+            className="input"
+            required
+          />
+          <input
+            name="zone"
+            placeholder="Zone / Ville"
+            value={formData.zone}
+            onChange={handleChange}
+            className="input"
+            required
+          />
+          <select
+            name="responsable_id"
+            value={formData.responsable_id}
+            onChange={handleChange}
+            className="input"
+            required
+          >
+            <option value="">-- Sélectionnez un responsable --</option>
+            {responsables.map(r => (
+              <option key={r.id} value={r.id}>{r.prenom} {r.nom}</option>
+            ))}
+          </select>
+
+          <div className="flex gap-4 mt-4">
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
+            >
+              {loading ? "Création..." : "Créer"}
+            </button>
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
+            >
+              Annuler
+            </button>
+          </div>
+        </form>
+
+        {message && <p className="mt-4 text-center text-sm text-gray-700">{message}</p>}
+
+        <style jsx>{`
+          .input {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          }
+        `}</style>
+      </div>
     </div>
   );
 }

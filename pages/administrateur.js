@@ -41,6 +41,28 @@ export default function MembresHub() {
 
       {/* 🔹 Cartes principales */}
       <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6">
+         {/* Liste des Utilisateur */}
+        <Link
+          href="/admin/list-users"
+          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
+        >
+          <div className="text-5xl mb-2">🏠</div>
+          <div className="text-lg font-bold text-gray-800 text-center">
+            Liste de Utilisateur
+          </div>
+        </Link>
+
+        {/* Liste des Cellules */}
+        <Link
+          href="/admin/list-cellules"
+          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
+        >
+          <div className="text-5xl mb-2">🏠</div>
+          <div className="text-lg font-bold text-gray-800 text-center">
+            Liste des Cellules
+          </div>
+        </Link>
+
         
         {/* Créer une Cellule */}
         <Link

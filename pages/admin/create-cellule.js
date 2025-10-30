@@ -1,5 +1,5 @@
 //✅pages/admin/create-cellule.js
-
+// pages/admin/create-cellule.js
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -12,13 +12,13 @@ export default function CreateCellule() {
     nom: "",
     zone: "",
     responsable_id: "",
+    responsable_nom: "",
     telephone: "",
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [responsables, setResponsables] = useState([]);
 
-  // Récupérer les responsables
   useEffect(() => {
     const fetchResponsables = async () => {
       const { data, error } = await supabase
@@ -30,19 +30,18 @@ export default function CreateCellule() {
     fetchResponsables();
   }, []);
 
-  // Lors de la sélection du responsable, remplir le téléphone
-  const handleChangeResponsable = (e) => {
-    const selectedId = e.target.value;
-    const responsable = responsables.find(r => r.id === selectedId);
-    setFormData({
-      ...formData,
-      responsable_id: selectedId,
-      telephone: responsable?.telephone || "",
-    });
-  };
-
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleResponsableChange = (e) => {
+    const selected = responsables.find(r => r.id === e.target.value);
+    setFormData({
+      ...formData,
+      responsable_id: e.target.value,
+      responsable_nom: selected ? `${selected.prenom} ${selected.nom}` : "",
+      telephone: selected ? selected.telephone || "" : "",
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -61,7 +60,7 @@ export default function CreateCellule() {
 
       if (res.ok) {
         setMessage("✅ Cellule créée avec succès !");
-        setFormData({ nom: "", zone: "", responsable_id: "", telephone: "" });
+        setFormData({ nom: "", zone: "", responsable_id: "", responsable_nom: "", telephone: "" });
       } else {
         setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
       }
@@ -73,12 +72,12 @@ export default function CreateCellule() {
   };
 
   const handleCancel = () => {
-    setFormData({ nom: "", zone: "", responsable_id: "", telephone: "" });
+    setFormData({ nom: "", zone: "", responsable_id: "", responsable_nom: "", telephone: "" });
     setMessage("");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-orange-200 p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-lg relative">
         {/* Flèche retour */}
         <button
@@ -116,7 +115,7 @@ export default function CreateCellule() {
           <select
             name="responsable_id"
             value={formData.responsable_id}
-            onChange={handleChangeResponsable}
+            onChange={handleResponsableChange}
             className="input"
             required
           >
@@ -128,19 +127,21 @@ export default function CreateCellule() {
             ))}
           </select>
 
-          <input
-            name="telephone"
-            placeholder="Téléphone du responsable"
-            value={formData.telephone}
-            readOnly
-            className="input"
-          />
+          {formData.responsable_id && (
+            <input
+              name="telephone"
+              placeholder="Téléphone du responsable"
+              value={formData.telephone}
+              readOnly
+              className="input bg-gray-100 cursor-not-allowed"
+            />
+          )}
 
           <div className="flex gap-4 mt-2">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-gradient-to-r from-green-400 to-blue-500 text-white py-2 rounded-2xl hover:from-green-500 hover:to-blue-600 transition-all"
+              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white py-2 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition-all"
             >
               {loading ? "Création..." : "Créer"}
             </button>
@@ -176,4 +177,5 @@ export default function CreateCellule() {
     </div>
   );
 }
+
 

@@ -9,8 +9,8 @@ import supabase from "../../lib/supabaseClient";
 export default function CreateCellule() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    nom: "",
-    zone: "",
+    cellule: "",
+    ville: "",
     responsable_id: "",
   });
   const [loading, setLoading] = useState(false);
@@ -84,20 +84,19 @@ export default function CreateCellule() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            name="nom"
+            name="cellule"
             placeholder="Nom de la cellule"
-            value={formData.nom}
+            value={formData.cellule}
             onChange={handleChange}
             className="input"
           />
           <input
-            name="zone"
+            name="ville"
             placeholder="Zone / Localisation"
-            value={formData.zone}
+            value={formData.ville}
             onChange={handleChange}
             className="input"
           />
-
           <select
             name="responsable_id"
             value={formData.responsable_id}

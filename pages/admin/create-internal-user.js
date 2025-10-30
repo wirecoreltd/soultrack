@@ -70,13 +70,13 @@ export default function CreateInternalUser() {
           ← Retour
         </button>
       </div>
-
+      
+      {/* Formulaire */}
       {/* Logo centré */}
       <div className="mb-6">
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
       </div>
-
-      {/* Formulaire */}
+        
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md">
         <h1 className="text-3xl font-handwriting text-black-800 mb-6 text-center">
           Créer un utilisateur

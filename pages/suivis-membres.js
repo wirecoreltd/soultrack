@@ -1,4 +1,5 @@
 // pages/suivis-membres.js
+// pages/suivis-membres.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -29,76 +30,62 @@ export default function SuivisMembres() {
       const userRole = JSON.parse(localStorage.getItem("userRole") || "[]");
 
       if (!userEmail) throw new Error("Utilisateur non connecté");
-      console.log("📧 Email du user:", userEmail);
-      console.log("🛡️ Rôles du user:", userRole);
 
-      // 🔹 Récupérer l'ID du profil connecté
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profileData } = await supabase
         .from("profiles")
         .select("id")
         .eq("email", userEmail)
         .single();
 
-      if (profileError) throw profileError;
       const responsableId = profileData.id;
-      console.log("🆔 ID du responsable:", responsableId);
 
       let membresData = [];
 
-      // 🔹 ADMIN → tous les membres
+      // ADMIN → tous les suivis
       if (userRole.includes("Administrateur")) {
         const { data, error } = await supabase
           .from("suivis_membres")
           .select(`
             *,
-            cellules!inner(cellule)
+            cellules!left(cellule)
           `)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
         membresData = data;
-        console.log("✅ Membres récupérés (Admin):", membresData);
       }
-
-      // 🔹 ResponsableCellule → membres de toutes ses cellules
+      // RESPONSABLE → seulement les membres de ses cellules
       else if (userRole.includes("ResponsableCellule")) {
-        // 🔹 Récupérer toutes les cellules de ce responsable
-        const { data: cellulesData, error: cellulesError } = await supabase
+        const { data: cellulesData } = await supabase
           .from("cellules")
           .select("id")
           .eq("responsable_id", responsableId);
 
-        if (cellulesError) throw cellulesError;
-        if (!cellulesData || cellulesData.length === 0) {
+        const celluleIds = cellulesData.map((c) => c.id);
+        console.log("🔹 Cellule IDs du responsable:", celluleIds);
+
+        if (celluleIds.length === 0) {
           setMessage("Vous n’êtes responsable d’aucune cellule pour le moment.");
-          setMembres([]);
+          setSuivis([]);
           return;
         }
 
-        const celluleIds = cellulesData.map((c) => c.id);
-
-        // 🔹 Récupérer tous les suivis liés à ces cellules
         const { data, error } = await supabase
           .from("suivis_membres")
           .select(`
             *,
-            cellules!inner(cellule)
+            cellules!left(cellule)
           `)
-          .left("cellule_id", celluleIds)
+          .in("cellule_id", celluleIds)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
         membresData = data;
-        console.log("✅ Membres récupérés (ResponsableCellule):", membresData);
-
-        if (!membresData || membresData.length === 0) {
-          setMessage("Aucun membre assigné à votre/ vos cellule(s).");
-        }
       }
 
       setSuivis(membresData || []);
     } catch (err) {
-      console.error("❌ Erreur générale:", err.message || err);
+      console.error(err);
       setMessage("Erreur lors de la récupération des membres.");
       setSuivis([]);
     } finally {
@@ -214,12 +201,10 @@ export default function SuivisMembres() {
                 key={item.id}
                 className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
               >
-                {/* ✅ Bande colorée collée à l'intérieur du haut */}
+                {/* Bande colorée collée à l'intérieur du haut */}
                 <div
                   className="w-full h-[6px] rounded-t-2xl"
-                  style={{
-                    backgroundColor: getBorderColor(item),
-                  }}
+                  style={{ backgroundColor: getBorderColor(item) }}
                 />
                 <div className="p-4 flex flex-col items-center">
                   <h2 className="font-bold text-black text-base text-center mb-1">
@@ -245,7 +230,6 @@ export default function SuivisMembres() {
                       <p>🕊 Statut : {item.statut || "—"}</p>
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
                       <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
-                      <p>🏠 Cellule : {item.cellules?.cellule || "—"}</p>
                       <div>
                         <label className="text-black text-sm">BESOIN :</label>
                         <select
@@ -303,7 +287,6 @@ export default function SuivisMembres() {
           })}
         </div>
       ) : (
-        // Vue Table identique
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
@@ -335,7 +318,6 @@ export default function SuivisMembres() {
                     >
                       {detailsOpen[item.id] ? "Fermer détails" : "Détails"}
                     </button>
-
                     {detailsOpen[item.id] && (
                       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
                         <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
@@ -354,60 +336,21 @@ export default function SuivisMembres() {
                           <p className="text-black text-sm mb-1">
                             💬 WhatsApp : {item.whatsapp || "—"}
                           </p>
-                          <p className="text-black text-sm mb-1">🏙 Ville : {item.ville || "—"}</p>
-                          <p className="text-black text-sm mb-1">🕊 Statut : {item.statut || "—"}</p>
-                          <p className="text-black text-sm mb-1">🧩 Comment est-il venu : {item.venu || "—"}</p>
-                          <p className="text-black text-sm mb-1">📝 Infos : {item.infos_supplementaires || "—"}</p>
-                          <p className="text-black text-sm mb-1">🏠 Cellule : {item.cellules?.cellule || "—"}</p>
-                          <div>
-                            <label className="text-black text-sm">BESOIN :</label>
-                            <select
-                              value={item.besoin || ""}
-                              className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
-                            >
-                              <option value="">-- Sélectionner --</option>
-                              <option value="Finances">Finances</option>
-                              <option value="Santé">Santé</option>
-                              <option value="Travail">Travail</option>
-                              <option value="Les Enfants">Les Enfants</option>
-                              <option value="La Famille">La Famille</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-black text-sm">📋 Statut Suivis :</label>
-                            <select
-                              value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
-                              onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                              className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
-                            >
-                              <option value="">-- Choisir un statut --</option>
-                              <option value="actif">✅ Actif</option>
-                              <option value="en attente">🕓 En attente</option>
-                              <option value="suivi terminé">🏁 Terminé</option>
-                              <option value="inactif">❌ Inactif</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-black text-sm">📝 Commentaire Suivis :</label>
-                            <textarea
-                              value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
-                              onChange={(e) => handleCommentChange(item.id, e.target.value)}
-                              rows={2}
-                              className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
-                              placeholder="Ajouter un commentaire..."
-                            />
-                          </div>
-                          <button
-                            onClick={() => updateSuivi(item.id)}
-                            disabled={updating[item.id]}
-                            className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-                              updating[item.id]
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-green-600 hover:bg-green-700"
-                            }`}
-                          >
-                            {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
-                          </button>
+                          <p className="text-black text-sm mb-1">
+                            🏙 Ville : {item.ville || "—"}
+                          </p>
+                          <p className="text-black text-sm mb-1">
+                            🕊 Statut : {item.statut || "—"}
+                          </p>
+                          <p className="text-black text-sm mb-1">
+                            🧩 Comment est-il venu : {item.venu || "—"}
+                          </p>
+                          <p className="text-black text-sm mb-1">
+                            🏠 Cellule : {item.cellules?.cellule || "—"}
+                          </p>
+                          <p className="text-black text-sm mb-1">
+                            📝 Infos : {item.infos_supplementaires || "—"}
+                          </p>
                         </div>
                       </div>
                     )}

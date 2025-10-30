@@ -75,7 +75,7 @@ export default function CreateInternalUser() {
         
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md">
         {/* Logo centré */}
-      <div className="mb-6">
+      <div className="flex justify-center mb-6">
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
       </div>
         

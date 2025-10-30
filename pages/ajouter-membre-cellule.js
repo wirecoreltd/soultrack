@@ -100,14 +100,14 @@ export default function AddMemberCellule() {
 
         {/* Logo */}
         <div className="flex justify-center mb-6">
-          <img src="/logo.png" alt="Logo" className="w-20 h-20" />
+          <img src="/logo.png" alt="Logo" className="w-20 h-18" />
         </div>
 
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
           Ajouter un membre à ma cellule
         </h1>
         <p className="text-center text-gray-500 italic mb-6">
-          « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
+        🌿 « Chaque âme compte » – Luc 15:7
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">

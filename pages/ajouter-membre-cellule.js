@@ -1,4 +1,3 @@
-// pages/ajouter-membre-cellule.js
 "use client";
 
 import { useState, useEffect } from "react";
@@ -18,17 +17,14 @@ export default function AddMemberCellule() {
     infos_supplementaires: "",
   });
   const [success, setSuccess] = useState(false);
-  const [responsableCelluleId, setResponsableCelluleId] = useState(null);
   const [celluleId, setCelluleId] = useState(null);
 
-  // Récupérer la cellule du responsable connecté
+  // ✅ Récupérer la cellule du responsable connecté
   useEffect(() => {
     const fetchCellule = async () => {
       try {
-        const userId = localStorage.getItem("userId"); // id Supabase Auth
+        const userId = localStorage.getItem("userId");
         if (!userId) return;
-
-        setResponsableCelluleId(userId);
 
         const { data, error } = await supabase
           .from("cellules")
@@ -36,8 +32,12 @@ export default function AddMemberCellule() {
           .eq("responsable_id", userId)
           .single();
 
-        if (error) throw error;
-        if (data) setCelluleId(data.id);
+        if (error || !data) {
+          console.error("Aucune cellule trouvée :", error?.message);
+          return;
+        }
+
+        setCelluleId(data.id);
       } catch (err) {
         console.error("Erreur récupération cellule :", err.message);
       }
@@ -61,8 +61,8 @@ export default function AddMemberCellule() {
       const { error } = await supabase.from("membres").insert([
         {
           ...formData,
-          statut: "Integrer", // ✅ enum correct
-          cellule_id: celluleId, // ✅ clé étrangère correcte
+          statut: "Integrer", // ✅ correspond à l'enum dans la DB
+          cellule_id: celluleId,
         },
       ]);
 
@@ -89,7 +89,6 @@ export default function AddMemberCellule() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-200 via-white to-blue-100">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
-        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
           className="flex items-center text-orange-500 font-semibold mb-4 hover:text-orange-600 transition-colors"
@@ -97,7 +96,6 @@ export default function AddMemberCellule() {
           ← Retour
         </button>
 
-        {/* Logo */}
         <div className="flex justify-center mb-6">
           <img src="/logo.png" alt="Logo" className="w-20 h-20" />
         </div>
@@ -105,120 +103,105 @@ export default function AddMemberCellule() {
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
           Ajouter un membre à ma cellule
         </h1>
+
         <p className="text-center text-gray-500 italic mb-6">
           « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 mb-1">Prénom</label>
+          {/* Prénom */}
+          <input
+            type="text"
+            name="prenom"
+            value={formData.prenom}
+            onChange={handleChange}
+            placeholder="Prénom"
+            className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
+            required
+          />
+          {/* Nom */}
+          <input
+            type="text"
+            name="nom"
+            value={formData.nom}
+            onChange={handleChange}
+            placeholder="Nom"
+            className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
+            required
+          />
+          {/* Téléphone */}
+          <input
+            type="text"
+            name="telephone"
+            value={formData.telephone}
+            onChange={handleChange}
+            placeholder="Téléphone"
+            className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
+            required
+          />
+
+          {/* WhatsApp */}
+          <label className="flex items-center gap-2 mt-1">
             <input
-              type="text"
-              name="prenom"
-              value={formData.prenom}
+              type="checkbox"
+              name="is_whatsapp"
+              checked={formData.is_whatsapp}
               onChange={handleChange}
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
-              required
             />
-          </div>
+            WhatsApp
+          </label>
 
-          <div>
-            <label className="block text-gray-700 mb-1">Nom</label>
-            <input
-              type="text"
-              name="nom"
-              value={formData.nom}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
-              required
-            />
-          </div>
+          {/* Ville */}
+          <input
+            type="text"
+            name="ville"
+            value={formData.ville}
+            onChange={handleChange}
+            placeholder="Ville"
+            className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
+          />
 
-          <div>
-            <label className="block text-gray-700 mb-1">Téléphone</label>
-            <input
-              type="text"
-              name="telephone"
-              value={formData.telephone}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
-              required
-            />
-            <div className="mt-2 flex items-center">
-              <input
-                type="checkbox"
-                name="is_whatsapp"
-                checked={formData.is_whatsapp}
-                onChange={handleChange}
-                className="mr-2"
-              />
-              <label className="text-gray-700">Ce numéro est WhatsApp</label>
-            </div>
-          </div>
+          {/* Comment est-il venu */}
+          <select
+            name="venu"
+            value={formData.venu}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
+          >
+            <option value="">-- Sélectionner --</option>
+            <option value="invité">Invité</option>
+            <option value="réseaux">Réseaux</option>
+            <option value="evangélisation">Evangélisation</option>
+            <option value="autre">Autre</option>
+          </select>
 
-          <div>
-            <label className="block text-gray-700 mb-1">Ville</label>
-            <input
-              type="text"
-              name="ville"
-              value={formData.ville}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
-            />
-          </div>
+          {/* Besoin */}
+          <select
+            name="besoin"
+            value={formData.besoin}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
+          >
+            <option value="">-- Besoin --</option>
+            <option value="Finances">Finances</option>
+            <option value="Santé">Santé</option>
+            <option value="Travail">Travail</option>
+            <option value="Les Enfants">Les Enfants</option>
+            <option value="La Famille">La Famille</option>
+          </select>
 
-          <div>
-            <label className="block text-gray-700 mb-1">Comment est-il venu ?</label>
-            <select
-              name="venu"
-              value={formData.venu}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="invité">Invité</option>
-              <option value="réseaux">Réseaux</option>
-              <option value="evangélisation">Evangélisation</option>
-              <option value="autre">Autre</option>
-            </select>
-          </div>
+          {/* Infos supplémentaires */}
+          <textarea
+            name="infos_supplementaires"
+            value={formData.infos_supplementaires}
+            onChange={handleChange}
+            rows={3}
+            placeholder="Informations supplémentaires..."
+            className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
+          />
 
-          <div>
-            <label className="block text-gray-700 mb-1">Besoin de la personne ?</label>
-            <select
-              name="besoin"
-              value={formData.besoin}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="Finances">Finances</option>
-              <option value="Santé">Santé</option>
-              <option value="Travail">Travail</option>
-              <option value="Les Enfants">Les Enfants</option>
-              <option value="La Famille">La Famille</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-gray-700 mb-1">Informations supplémentaires</label>
-            <textarea
-              name="infos_supplementaires"
-              value={formData.infos_supplementaires}
-              onChange={handleChange}
-              rows={3}
-              placeholder="Ajoute ici d'autres détails utiles sur la personne..."
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none"
-            />
-          </div>
-
-          <div className="flex justify-between gap-4 mt-4">
-            <button
-              type="submit"
-              className="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-md transition-all"
-            >
-              Ajouter
-            </button>
+          {/* Boutons */}
+          <div className="flex gap-4">
             <button
               type="button"
               onClick={() =>
@@ -236,6 +219,13 @@ export default function AddMemberCellule() {
               className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-all"
             >
               Annuler
+            </button>
+
+            <button
+              type="submit"
+              className="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-md transition-all"
+            >
+              Ajouter
             </button>
           </div>
         </form>

@@ -1,3 +1,5 @@
+//pages/ajouter-membre-cellule.js
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -17,6 +19,7 @@ export default function AjouterMembreCellule() {
     besoin: "",
     cellule_id: "",
     infos_supplementaires: "",
+    is_whatsapp: false,
   });
 
   const [success, setSuccess] = useState(false);
@@ -42,8 +45,11 @@ export default function AjouterMembreCellule() {
   }, []);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? checked : value,
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -64,6 +70,7 @@ export default function AjouterMembreCellule() {
         besoin: "",
         cellule_id: cellules[0]?.id || "",
         infos_supplementaires: "",
+        is_whatsapp: false,
       });
     } catch (err) {
       alert("❌ Impossible d’ajouter le membre : " + err.message);
@@ -215,6 +222,8 @@ export default function AjouterMembreCellule() {
                   besoin: "",
                   is_whatsapp: false,
                   infos_supplementaires: "",
+                  cellule_id: cellules[0]?.id || "",
+                  statut: "nouveau",
                 })
               }
               className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-all"
@@ -227,7 +236,8 @@ export default function AjouterMembreCellule() {
         {success && (
           <p className="mt-4 text-center text-green-600 font-semibold">
             ✅ Membre ajouté avec succès à ta cellule !
-
+          </p>
+        )}
       </div>
     </div>
   );

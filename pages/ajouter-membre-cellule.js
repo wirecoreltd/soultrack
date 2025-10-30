@@ -1,4 +1,5 @@
 // pages/ajouter-membre-cellule.js
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -21,46 +22,26 @@ export default function AddMemberCellule() {
   const [responsableId, setResponsableId] = useState(null);
   const [celluleId, setCelluleId] = useState(null);
 
-  // ✅ Récupérer la cellule du responsable connecté
+  // 🔹 Récupérer la cellule du responsable connecté
   useEffect(() => {
     const fetchCellule = async () => {
       try {
-        const userEmail = localStorage.getItem("userEmail");
-        if (!userEmail) {
-          console.warn("⚠️ Aucun email utilisateur trouvé dans le localStorage.");
-          return;
-        }
+        const userId = localStorage.getItem("userId"); // id Supabase Auth
+        if (!userId) return;
+        setResponsableId(userId);
 
-        // 🔍 Récupérer le responsable dans la table profiles
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("id, role")
-          .eq("email", userEmail)
-          .single();
-
-        if (profileError || !profile) {
-          console.error("Erreur profil :", profileError?.message);
-          return;
-        }
-
-        const responsableId = profile.id;
-        setResponsableId(responsableId);
-
-        // 🔍 Récupérer la cellule liée à ce responsable
-        const { data: cellule, error: celluleError } = await supabase
+        const { data: cellules, error } = await supabase
           .from("cellules")
-          .select("id, cellule, responsable_id")
-          .eq("responsable_id", responsableId)
-          .single();
+          .select("id")
+          .eq("responsable_id", userId);
 
-        if (celluleError || !cellule) {
+        if (error) throw error;
+
+        if (cellules && cellules.length > 0) {
+          setCelluleId(cellules[0].id); // on prend la première cellule par défaut
+        } else {
           console.warn("⚠️ Aucune cellule trouvée pour ce responsable !");
-          return;
         }
-
-        setCelluleId(cellule.id);
-        console.log("✅ Cellule trouvée :", cellule);
-
       } catch (err) {
         console.error("Erreur récupération cellule :", err.message);
       }
@@ -80,25 +61,22 @@ export default function AddMemberCellule() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!celluleId) {
-      alert("⚠️ Aucune cellule trouvée pour ce responsable !");
-      return;
-    }
+    if (!celluleId) return alert("⚠️ Aucune cellule trouvée pour ce responsable !");
 
     try {
-      // ✅ Insertion membre lié à la cellule
       const { error } = await supabase.from("membres").insert([
         {
           ...formData,
+          statut: "Intégré",
           cellule_id: celluleId,
-          statut: "nouveau",
-          responsable_id: responsableId,
         },
       ]);
 
       if (error) throw error;
 
       setSuccess(true);
+
+      // Reset du formulaire
       setFormData({
         nom: "",
         prenom: "",
@@ -109,10 +87,9 @@ export default function AddMemberCellule() {
         is_whatsapp: false,
         infos_supplementaires: "",
       });
-      setTimeout(() => setSuccess(false), 3000);
 
+      setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      console.error("Erreur ajout membre :", err.message);
       alert("❌ Impossible d’ajouter le membre : " + err.message);
     }
   };
@@ -120,6 +97,7 @@ export default function AddMemberCellule() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-200 via-white to-blue-100">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
+
         {/* Flèche retour */}
         <button
           onClick={() => router.back()}

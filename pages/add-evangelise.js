@@ -1,9 +1,7 @@
 // pages/add-evangelise.js
-"use client";
 import { useState } from "react";
-import Image from "next/image";
 import { createClient } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 
 // --- Supabase Client ---
 const supabase = createClient(
@@ -25,7 +23,6 @@ export default function AddEvangelise() {
     besoin: "",
   });
 
-  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => {
@@ -38,9 +35,12 @@ export default function AddEvangelise() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     try {
-      const { error } = await supabase.from("evangelises").insert([formData]);
+      // <- IMPORTANT : insertion dans la table "evangelises"
+      const { data, error } = await supabase
+        .from("evangelises")
+        .insert([formData]);
+
       if (error) throw error;
 
       setSuccess(true);
@@ -57,72 +57,62 @@ export default function AddEvangelise() {
         besoin: "",
       });
     } catch (err) {
-      alert("❌ " + err.message);
-    } finally {
-      setLoading(false);
+      alert(err.message);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-200 via-amber-100 to-yellow-200 p-6">
-      <div className="bg-white/70 rounded-3xl shadow-lg p-8 w-full max-w-md relative">
-        
-        {/* Bouton retour */}
+    <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
+        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
-          className="absolute top-4 left-4 text-white bg-amber-500 hover:bg-amber-600 transition px-3 py-1.5 rounded-full shadow-md"
+          className="flex items-center text-orange-500 font-semibold mb-4"
         >
           ← Retour
         </button>
 
-        {/* Logo */}
-        <div className="flex justify-center mb-4 mt-6">
-          <Image src="/images/logo.png" alt="Logo" width={80} height={80} />
-        </div>
-
-        {/* Titre */}
-        <h1 className="text-3xl font-handwriting text-center mb-2 text-gray-800">
-          Ajouter une Personne Évangélisée
+        <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-2">
+          Ajouter une personne évangélisée
         </h1>
-        <p className="text-center text-gray-600 italic mb-6">
+        <p className="text-center text-gray-500 italic mb-6">
           « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
         </p>
 
-        {/* Formulaire */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-gray-700 font-medium mb-2">Prénom</label>
+            <label className="block text-gray-700 font-medium mb-1">Prénom</label>
             <input
               type="text"
               name="prenom"
               value={formData.prenom}
               onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
               required
-              className="w-full px-4 py-2 rounded-full border border-gray-300 focus:ring-2 focus:ring-amber-400 outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium mb-2">Nom</label>
+            <label className="block text-gray-700 font-medium mb-1">Nom</label>
             <input
               type="text"
               name="nom"
               value={formData.nom}
               onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
               required
-              className="w-full px-4 py-2 rounded-full border border-gray-300 focus:ring-2 focus:ring-amber-400 outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium mb-2">Téléphone</label>
+            <label className="block text-gray-700 font-medium mb-1">Téléphone</label>
             <input
               type="text"
               name="telephone"
               value={formData.telephone}
               onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
               required
-              className="w-full px-4 py-2 rounded-full border border-gray-300 focus:ring-2 focus:ring-amber-400 outline-none"
             />
           </div>
 
@@ -138,44 +128,39 @@ export default function AddEvangelise() {
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium mb-2">Ville</label>
+            <label className="block text-gray-700 font-medium mb-1">Ville</label>
             <input
               type="text"
               name="ville"
               value={formData.ville}
               onChange={handleChange}
-              className="w-full px-4 py-2 rounded-full border border-gray-300 focus:ring-2 focus:ring-amber-400 outline-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Besoin de la personne
-            </label>
+            <label className="block text-gray-700 font-medium mb-1">Besoin de la personne</label>
             <textarea
               name="besoin"
               value={formData.besoin}
               onChange={handleChange}
               rows={3}
-              className="w-full px-4 py-2 rounded-2xl border border-gray-300 focus:ring-2 focus:ring-amber-400 outline-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Informations supplémentaires
-            </label>
+            <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
             <textarea
               name="infos_supplementaires"
               value={formData.infos_supplementaires}
               onChange={handleChange}
               rows={2}
-              className="w-full px-4 py-2 rounded-2xl border border-gray-300 focus:ring-2 focus:ring-amber-400 outline-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
-          {/* Boutons */}
-          <div className="flex justify-between mt-6">
+          <div className="flex justify-between mt-4 gap-4">
             <button
               type="button"
               onClick={() =>
@@ -190,21 +175,19 @@ export default function AddEvangelise() {
                   besoin: "",
                 })
               }
-              className="flex-1 mr-2 bg-gradient-to-r from-amber-400 to-yellow-300 hover:opacity-90 text-white font-semibold py-2 rounded-full shadow-md transition"
+              className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
             >
               Annuler
             </button>
             <button
               type="submit"
-              disabled={loading}
-              className="flex-1 ml-2 bg-gradient-to-r from-yellow-400 to-amber-400 hover:opacity-90 text-white font-semibold py-2 rounded-full shadow-md transition"
+              className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
             >
-              {loading ? "Ajout..." : "Ajouter"}
+              Ajouter
             </button>
           </div>
         </form>
 
-        {/* Message succès */}
         {success && (
           <div className="text-green-600 font-semibold text-center mt-4">
             ✅ Personne évangélisée ajoutée avec succès !

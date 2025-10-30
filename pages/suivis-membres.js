@@ -19,7 +19,6 @@ export default function SuivisMembres() {
     fetchSuivis();
   }, []);
 
-  // 🔹 Fonction fetchSuivis modifiée
   const fetchSuivis = async () => {
     setLoading(true);
     setMessage(null);
@@ -30,6 +29,7 @@ export default function SuivisMembres() {
 
       if (!userEmail) throw new Error("Utilisateur non connecté");
 
+      // 🔹 Récupérer l'ID du profil connecté
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("id")
@@ -39,56 +39,28 @@ export default function SuivisMembres() {
       if (profileError) throw profileError;
       const responsableId = profileData.id;
 
-      let suivisData = [];
+      let query = supabase.from("suivis_membres").select("*").order("created_at", { ascending: false });
 
-      if (userRole.includes("Administrateur")) {
-        const { data, error } = await supabase
-          .from("suivis_membres")
-          .select(`
-            *,
-            cellules!left(cellule)
-          `)
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        suivisData = data;
-      } else if (userRole.includes("ResponsableCellule")) {
+      // 🔹 Si ResponsableCellule → filtrer uniquement ses cellules
+      if (userRole.includes("ResponsableCellule")) {
         const { data: cellulesData, error: cellulesError } = await supabase
           .from("cellules")
-          .select("id, cellule")
+          .select("id")
           .eq("responsable_id", responsableId);
 
         if (cellulesError) throw cellulesError;
 
-        if (!cellulesData || cellulesData.length === 0) {
-          setMessage("Vous n’êtes responsable d’aucune cellule pour le moment.");
-          setSuivis([]);
-          return;
-        }
-
         const celluleIds = cellulesData.map((c) => c.id);
-        const orQuery = celluleIds.map((id) => `cellule_id.eq.${id}`).join(",");
-
-        const { data, error } = await supabase
-          .from("suivis_membres")
-          .select(`
-            *,
-            cellules!left(cellule)
-          `)
-          .or(orQuery)
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        suivisData = data;
+        query = query.in("cellule_id", celluleIds);
       }
 
-      setSuivis(suivisData || []);
-      if (!suivisData || suivisData.length === 0) {
-        setMessage("Aucun membre en suivi pour le moment.");
-      }
+      const { data, error } = await query;
+      if (error) throw error;
+
+      setSuivis(data || []);
     } catch (err) {
-      console.error("❌ Erreur fetchSuivis:", err.message || err);
-      setMessage("Erreur lors de la récupération des suivis.");
+      console.error("Erreur fetchSuivis:", err);
+      setMessage("Erreur lors de la récupération des membres.");
       setSuivis([]);
     } finally {
       setLoading(false);
@@ -205,14 +177,16 @@ export default function SuivisMembres() {
               >
                 <div
                   className="w-full h-[6px] rounded-t-2xl"
-                  style={{ backgroundColor: getBorderColor(item) }}
+                  style={{
+                    backgroundColor: getBorderColor(item),
+                  }}
                 />
                 <div className="p-4 flex flex-col items-center">
                   <h2 className="font-bold text-black text-base text-center mb-1">
                     {item.prenom} {item.nom}
                   </h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {item.cellules?.cellule || "—"}</p>
+                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {item.cellule_nom || "—"}</p>  
                   <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">
                     📋 Statut Suivis : {item.statut_suivis || "—"}
@@ -226,7 +200,7 @@ export default function SuivisMembres() {
 
                   {isOpen && (
                     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                      {/* Partie détails complète */}
+                      {/* === Toute la partie détails que tu avais === */}
                       <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
                       <p>📞 Téléphone : {item.telephone || "—"}</p>
                       <p>💬 WhatsApp : {item.whatsapp || "—"}</p>
@@ -291,8 +265,8 @@ export default function SuivisMembres() {
           })}
         </div>
       ) : (
+        // Vue Table identique
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-          {/* Vue Table identique */}
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
               <tr>
@@ -323,6 +297,14 @@ export default function SuivisMembres() {
                     >
                       {detailsOpen[item.id] ? "Fermer détails" : "Détails"}
                     </button>
+
+                    {detailsOpen[item.id] && (
+                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
+                        <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
+                          {/* === Toute la partie détails de la table === */}
+                        </div>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

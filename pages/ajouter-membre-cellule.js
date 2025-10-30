@@ -1,5 +1,3 @@
-//pages/ajouter-membre-cellule.js
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -189,11 +187,6 @@ export default function AjouterMembreCellule() {
               <option value="Les Enfants">Les Enfants</option>
               <option value="La Famille">La Famille</option>
             </select>
-                <div>
-                <select name="cellule_id" value={formData.cellule_id} onChange={handleChange} required
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400">
-            {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule}</option>)}
-          </select>
           </div>
 
           <div>

@@ -188,7 +188,7 @@ export default function SuivisMembres() {
                     {item.prenom} {item.nom}
                   </h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {item.cellule_nom || "—"}</p>  
+                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {m.cellule || "—"}</p>  
                   <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">
                     📋 Statut Suivis : {item.statut_suivis || "—"}
@@ -211,7 +211,7 @@ export default function SuivisMembres() {
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
                       <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
                       <div>
-                        <label className="text-black text-sm">BESOIN :</label>
+                        <label className="text-black text-sm">Besoin :</label>
                         <select
                           value={item.besoin || ""}
                           className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"

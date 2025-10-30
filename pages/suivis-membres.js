@@ -1,5 +1,4 @@
 // pages/suivis-membres.js
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -30,6 +29,8 @@ export default function SuivisMembres() {
       const userRole = JSON.parse(localStorage.getItem("userRole") || "[]");
 
       if (!userEmail) throw new Error("Utilisateur non connecté");
+      console.log("📧 Email du user:", userEmail);
+      console.log("🛡️ Rôles du user:", userRole);
 
       // 🔹 Récupérer l'ID du profil connecté
       const { data: profileData, error: profileError } = await supabase
@@ -40,34 +41,64 @@ export default function SuivisMembres() {
 
       if (profileError) throw profileError;
       const responsableId = profileData.id;
+      console.log("🆔 ID du responsable:", responsableId);
 
-      let query = supabase
-        .from("suivis_membres")
-        .select(`
-          *,
-          cellules:cellules_id_fkey (cellule)
-        `)
-        .order("created_at", { ascending: false });
+      let membresData = [];
 
-      // 🔹 Si ResponsableCellule → filtrer uniquement ses cellules
-      if (userRole.includes("ResponsableCellule")) {
+      // 🔹 ADMIN → tous les membres
+      if (userRole.includes("Administrateur")) {
+        const { data, error } = await supabase
+          .from("suivis_membres")
+          .select(`
+            *,
+            cellules!inner(cellule)
+          `)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        membresData = data;
+        console.log("✅ Membres récupérés (Admin):", membresData);
+      }
+
+      // 🔹 ResponsableCellule → membres de toutes ses cellules
+      else if (userRole.includes("ResponsableCellule")) {
+        // 🔹 Récupérer toutes les cellules de ce responsable
         const { data: cellulesData, error: cellulesError } = await supabase
           .from("cellules")
           .select("id")
           .eq("responsable_id", responsableId);
 
         if (cellulesError) throw cellulesError;
+        if (!cellulesData || cellulesData.length === 0) {
+          setMessage("Vous n’êtes responsable d’aucune cellule pour le moment.");
+          setMembres([]);
+          return;
+        }
 
         const celluleIds = cellulesData.map((c) => c.id);
-        query = query.in("cellule_id", celluleIds);
+
+        // 🔹 Récupérer tous les suivis liés à ces cellules
+        const { data, error } = await supabase
+          .from("suivis_membres")
+          .select(`
+            *,
+            cellules!inner(cellule)
+          `)
+          .in("cellule_id", celluleIds)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        membresData = data;
+        console.log("✅ Membres récupérés (ResponsableCellule):", membresData);
+
+        if (!membresData || membresData.length === 0) {
+          setMessage("Aucun membre assigné à votre/ vos cellule(s).");
+        }
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-
-      setSuivis(data || []);
+      setSuivis(membresData || []);
     } catch (err) {
-      console.error("Erreur fetchSuivis:", err);
+      console.error("❌ Erreur générale:", err.message || err);
       setMessage("Erreur lors de la récupération des membres.");
       setSuivis([]);
     } finally {
@@ -183,6 +214,7 @@ export default function SuivisMembres() {
                 key={item.id}
                 className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
               >
+                {/* ✅ Bande colorée collée à l'intérieur du haut */}
                 <div
                   className="w-full h-[6px] rounded-t-2xl"
                   style={{
@@ -194,11 +226,9 @@ export default function SuivisMembres() {
                     {item.prenom} {item.nom}
                   </h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {item.cellules?.cellule || "—"}</p>  
+                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {item.cellules?.cellule || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">
-                    📋 Statut Suivis : {item.statut_suivis || "—"}
-                  </p>
+                  <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
                   <button
                     onClick={() => toggleDetails(item.id)}
                     className="text-orange-500 underline text-sm mt-1"
@@ -208,7 +238,6 @@ export default function SuivisMembres() {
 
                   {isOpen && (
                     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                      {/* === Toute la partie détails que tu avais === */}
                       <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
                       <p>📞 Téléphone : {item.telephone || "—"}</p>
                       <p>💬 WhatsApp : {item.whatsapp || "—"}</p>
@@ -216,8 +245,9 @@ export default function SuivisMembres() {
                       <p>🕊 Statut : {item.statut || "—"}</p>
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
                       <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
+                      <p>🏠 Cellule : {item.cellules?.cellule || "—"}</p>
                       <div>
-                        <label className="text-black text-sm">Besoin :</label>
+                        <label className="text-black text-sm">BESOIN :</label>
                         <select
                           value={item.besoin || ""}
                           className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
@@ -309,7 +339,75 @@ export default function SuivisMembres() {
                     {detailsOpen[item.id] && (
                       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
                         <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
-                          {/* === Toute la partie détails de la table === */}
+                          <button
+                            onClick={() => toggleDetails(item.id)}
+                            className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+                          >
+                            ✖
+                          </button>
+                          <h2 className="text-xl font-bold mb-2 text-black">
+                            {item.prenom} {item.nom}
+                          </h2>
+                          <p className="text-black text-sm mb-1">
+                            📞 {item.telephone || "—"}
+                          </p>
+                          <p className="text-black text-sm mb-1">
+                            💬 WhatsApp : {item.whatsapp || "—"}
+                          </p>
+                          <p className="text-black text-sm mb-1">🏙 Ville : {item.ville || "—"}</p>
+                          <p className="text-black text-sm mb-1">🕊 Statut : {item.statut || "—"}</p>
+                          <p className="text-black text-sm mb-1">🧩 Comment est-il venu : {item.venu || "—"}</p>
+                          <p className="text-black text-sm mb-1">📝 Infos : {item.infos_supplementaires || "—"}</p>
+                          <p className="text-black text-sm mb-1">🏠 Cellule : {item.cellules?.cellule || "—"}</p>
+                          <div>
+                            <label className="text-black text-sm">BESOIN :</label>
+                            <select
+                              value={item.besoin || ""}
+                              className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+                            >
+                              <option value="">-- Sélectionner --</option>
+                              <option value="Finances">Finances</option>
+                              <option value="Santé">Santé</option>
+                              <option value="Travail">Travail</option>
+                              <option value="Les Enfants">Les Enfants</option>
+                              <option value="La Famille">La Famille</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-black text-sm">📋 Statut Suivis :</label>
+                            <select
+                              value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
+                              onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                              className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+                            >
+                              <option value="">-- Choisir un statut --</option>
+                              <option value="actif">✅ Actif</option>
+                              <option value="en attente">🕓 En attente</option>
+                              <option value="suivi terminé">🏁 Terminé</option>
+                              <option value="inactif">❌ Inactif</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-black text-sm">📝 Commentaire Suivis :</label>
+                            <textarea
+                              value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
+                              onChange={(e) => handleCommentChange(item.id, e.target.value)}
+                              rows={2}
+                              className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
+                              placeholder="Ajouter un commentaire..."
+                            />
+                          </div>
+                          <button
+                            onClick={() => updateSuivi(item.id)}
+                            disabled={updating[item.id]}
+                            className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+                              updating[item.id]
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-green-600 hover:bg-green-700"
+                            }`}
+                          >
+                            {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
+                          </button>
                         </div>
                       </div>
                     )}

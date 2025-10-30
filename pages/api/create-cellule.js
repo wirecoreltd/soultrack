@@ -11,19 +11,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Méthode non autorisée" });
   }
 
-  const { nom, zone, responsable_id, telephone } = req.body;
+  const { nom, zone, responsable_id, telephone, responsable_nom } = req.body;
 
-  // Vérification des champs obligatoires
-  if (!nom || !zone || !responsable_id || !telephone) {
+  if (!nom || !zone || !responsable_id || !telephone || !responsable_nom) {
     return res.status(400).json({ error: "Tous les champs sont obligatoires !" });
   }
 
   try {
-    // Création de la cellule
     const { error } = await supabaseAdmin.from("cellules").insert({
-      cellule: nom,         // colonne "cellule" dans ta table
-      ville: zone,          // colonne "ville"
+      cellule: nom,          // colonne "cellule"
+      ville: zone,           // colonne "ville"
       responsable_id,
+      responsable: responsable_nom, // nom complet du responsable
       telephone,
       created_at: new Date(),
     });

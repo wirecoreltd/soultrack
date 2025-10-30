@@ -1,113 +1,181 @@
 //✅pages/admin/create-cellule.js
 
 "use client";
-import { useState } from "react";
-import Image from "next/image";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import supabase from "../../lib/supabaseClient";
 
 export default function CreateCellule() {
   const router = useRouter();
-  const [nomCellule, setNomCellule] = useState("");
-  const [lieu, setLieu] = useState("");
-  const [responsable, setResponsable] = useState("");
+  const [formData, setFormData] = useState({
+    nom: "",
+    zone: "",
+    responsable_id: "",
+    responsable_nom: "",
+    telephone: "",
+  });
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [responsables, setResponsables] = useState([]);
+
+  useEffect(() => {
+    const fetchResponsables = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, telephone")
+        .in("role", ["ResponsableCellule"]);
+      if (!error) setResponsables(data);
+    };
+    fetchResponsables();
+  }, []);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleResponsableChange = (e) => {
+    const selected = responsables.find(r => r.id === e.target.value);
+    setFormData({
+      ...formData,
+      responsable_id: e.target.value,
+      responsable_nom: selected ? `${selected.prenom} ${selected.nom}` : "",
+      telephone: selected ? selected.telephone || "" : "",
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setMessage("⏳ Création en cours...");
 
     try {
-      // 🔧 Ici, ajoute ton code pour insérer la cellule dans Supabase
-      // Exemple :
-      // const { error } = await supabase.from("cellules").insert([{ nomCellule, lieu, responsable }]);
-      // if (error) throw error;
+      const res = await fetch("/api/create-cellule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-      alert("✅ Cellule créée avec succès !");
-      router.push("/admin/liste-cellules");
-    } catch (error) {
-      console.error("Erreur :", error.message);
-      alert("❌ Une erreur est survenue lors de la création de la cellule.");
+      const data = await res.json().catch(() => null);
+
+      if (res.ok) {
+        setMessage("✅ Cellule créée avec succès !");
+        setFormData({ nom: "", zone: "", responsable_id: "", responsable_nom: "", telephone: "" });
+      } else {
+        setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
+      }
+    } catch (err) {
+      setMessage("❌ Erreur serveur: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleCancel = () => {
+    setFormData({ nom: "", zone: "", responsable_id: "", responsable_nom: "", telephone: "" });
+    setMessage("");
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-200 via-lime-100 to-yellow-200 p-6">
-      <div className="bg-white/70 rounded-3xl shadow-lg p-8 w-full max-w-md relative">
-        
-        {/* Bouton retour */}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
+      <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-lg relative">
+        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
-          className="absolute top-4 left-4 text-white bg-green-500 hover:bg-green-600 transition px-3 py-1.5 rounded-full shadow-md"
+          className="absolute top-4 left-4 flex items-center text-gray-700 font-semibold hover:text-gray-900 transition-colors"
         >
           ← Retour
         </button>
 
-        {/* Logo */}
-        <div className="flex justify-center mb-4 mt-6">
-          <Image src="/images/logo.png" alt="Logo" width={80} height={80} />
+        {/* Logo centré */}
+        <div className="flex justify-center mb-6">
+          <Image src="/logo.png" alt="SoulTrack Logo" width={60} height={60} />
         </div>
 
-        {/* Titre */}
-        <h1 className="text-3xl font-handwriting text-center mb-6 text-gray-800">
-          Créer une Cellule
-        </h1>
+        <h1 className="text-2xl font-bold mb-4 text-center">Créer une cellule</h1>
 
-        {/* Formulaire */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">Nom de la cellule</label>
-            <input
-              type="text"
-              value={nomCellule}
-              onChange={(e) => setNomCellule(e.target.value)}
-              required
-              className="w-full px-4 py-2 rounded-full border border-gray-300 focus:ring-2 focus:ring-green-400 outline-none"
-            />
-          </div>
+          <input
+            name="nom"
+            placeholder="Nom de la cellule"
+            value={formData.nom}
+            onChange={handleChange}
+            className="input"
+            required
+          />
+          <input
+            name="zone"
+            placeholder="Zone / Localisation"
+            value={formData.zone}
+            onChange={handleChange}
+            className="input"
+            required
+          />
 
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">Lieu</label>
-            <input
-              type="text"
-              value={lieu}
-              onChange={(e) => setLieu(e.target.value)}
-              required
-              className="w-full px-4 py-2 rounded-full border border-gray-300 focus:ring-2 focus:ring-green-400 outline-none"
-            />
-          </div>
+          <select
+            name="responsable_id"
+            value={formData.responsable_id}
+            onChange={handleResponsableChange}
+            className="input"
+            required
+          >
+            <option value="">-- Sélectionnez un responsable --</option>
+            {responsables.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.prenom} {r.nom}
+              </option>
+            ))}
+          </select>
 
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">Responsable</label>
+          {formData.responsable_id && (
             <input
-              type="text"
-              value={responsable}
-              onChange={(e) => setResponsable(e.target.value)}
-              required
-              className="w-full px-4 py-2 rounded-full border border-gray-300 focus:ring-2 focus:ring-green-400 outline-none"
+              name="telephone"
+              placeholder="Téléphone du responsable"
+              value={formData.telephone}
+              readOnly
+              className="input bg-gray-100 cursor-not-allowed"
             />
-          </div>
+          )}
 
-          {/* Boutons */}
-          <div className="flex justify-between mt-6">
-            <button
-              type="button"
-              onClick={() => router.push("/admin")}
-              className="flex-1 mr-2 bg-gradient-to-r from-green-400 to-lime-300 hover:opacity-90 text-white font-semibold py-2 rounded-full shadow-md transition"
-            >
-              Annuler
-            </button>
+          <div className="flex gap-4 mt-2">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 ml-2 bg-gradient-to-r from-lime-400 to-green-400 hover:opacity-90 text-white font-semibold py-2 rounded-full shadow-md transition"
+              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white py-2 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition-all"
             >
               {loading ? "Création..." : "Créer"}
             </button>
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 text-white py-2 rounded-2xl hover:from-gray-500 hover:to-gray-600 transition-all"
+            >
+              Annuler
+            </button>
           </div>
         </form>
+
+        {message && (
+          <p
+            className={`mt-4 text-center text-sm ${
+              message.startsWith("✅") ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {message}
+          </p>
+        )}
       </div>
+
+      <style jsx>{`
+        .input {
+          width: 100%;
+          border: 1px solid #ccc;
+          border-radius: 12px;
+          padding: 12px;
+        }
+      `}</style>
     </div>
   );
 }
+
+

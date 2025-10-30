@@ -1,4 +1,6 @@
 // pages/api/create-cellule.js
+
+// pages/api/create-cellule.js
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseAdmin = createClient(
@@ -11,18 +13,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Méthode non autorisée" });
   }
 
-  const { nom, zone, responsable_id, telephone, responsable_nom } = req.body;
+  const { nom, zone, responsable_id, responsable_nom, telephone } = req.body;
 
-  if (!nom || !zone || !responsable_id || !telephone || !responsable_nom) {
+  if (!nom || !zone || !responsable_id || !responsable_nom || !telephone) {
     return res.status(400).json({ error: "Tous les champs sont obligatoires !" });
   }
 
   try {
     const { error } = await supabaseAdmin.from("cellules").insert({
-      cellule: nom,          // colonne "cellule"
-      ville: zone,           // colonne "ville"
+      cellule: nom,
+      ville: zone,
+      responsable: responsable_nom,
       responsable_id,
-      responsable: responsable_nom, // nom complet du responsable
       telephone,
       created_at: new Date(),
     });
@@ -35,3 +37,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: err.message });
   }
 }
+

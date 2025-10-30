@@ -4,11 +4,9 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import { useRouter } from "next/router";
-import { useUser } from "@supabase/auth-helpers-react"; // ✅ pour récupérer l'utilisateur connecté
 
 export default function AddMemberCellule() {
   const router = useRouter();
-  const user = useUser(); // utilisateur connecté Supabase
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
@@ -22,32 +20,30 @@ export default function AddMemberCellule() {
   const [success, setSuccess] = useState(false);
   const [celluleId, setCelluleId] = useState(null);
 
-  // Récupération de la cellule du responsable connecté
+  // Récupérer la cellule du responsable connecté via localStorage
   useEffect(() => {
     const fetchCellule = async () => {
-      if (!user) return;
-
       try {
+        const userId = localStorage.getItem("userId"); // id du responsable
+        if (!userId) return;
+
         const { data, error } = await supabase
           .from("cellules")
           .select("id")
-          .eq("responsable_id", user.id)
+          .eq("responsable_id", userId)
           .single();
 
-        if (error || !data) {
-          console.error("Erreur récupération cellule :", error?.message);
-          return alert("⚠️ Aucune cellule trouvée pour ce responsable !");
+        if (error) {
+          console.error("Erreur récupération cellule :", error.message);
+          return;
         }
-
-        setCelluleId(data.id);
+        if (data) setCelluleId(data.id);
       } catch (err) {
         console.error("Erreur récupération cellule :", err.message);
-        alert("⚠️ Impossible de récupérer la cellule du responsable.");
       }
     };
-
     fetchCellule();
-  }, [user]);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -216,7 +212,7 @@ export default function AddMemberCellule() {
             />
           </div>
 
-          <div className="flex justify-start gap-4 mt-4">
+          <div className="flex justify-between gap-4 mt-4">
             <button
               type="submit"
               className="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-md transition-all"

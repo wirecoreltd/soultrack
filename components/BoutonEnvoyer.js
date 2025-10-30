@@ -33,6 +33,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
         besoin: membre.besoin,
         infos_supplementaires: membre.infos_supplementaires,
         cellule_id: cellule.id,
+        cellule_nom: cellule.cellule,
         responsable: cellule.responsable, // colonne existante dans suivis_membres
       };
 

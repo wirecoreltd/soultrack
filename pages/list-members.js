@@ -227,8 +227,6 @@ export default function ListMembers() {
 
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                            <p> 📌 Prénom Nom : {m.prenom} {m.nom}</p>
-                            <p> 📞 Téléphone : {m.telephone || "—"}</p>
                             <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
                             <p> 🏙 Ville : {m.ville || "—"}</p>
                             <p> 🕊 Statut : {m.statut || "—"}</p>
@@ -236,10 +234,11 @@ export default function ListMembers() {
                             <p>❓Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                            <select
+                          <p className="mt-2 font-semibold text-bleu-600">Statut :</p>  
+                          <select
                               value={m.statut}
                               onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                              className="border rounded-md px-2 py-1 text-xs text-gray-700 w-full"
+                              className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
                             >
                               {statusOptions.map((s) => (
                                 <option key={s}>{s}</option>

@@ -1,8 +1,10 @@
 //✅pages/add-member.js
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import Image from "../components/Image"; // ou "next/image" si tu utilises Next.js Image
 import supabase from "../lib/supabaseClient";
 
 export default function AddMember() {
@@ -96,16 +98,21 @@ export default function AddMember() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-indigo-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl relative">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
+      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg relative">
 
-        {/* Retour */}
+        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
-          className="absolute top-4 left-4 flex items-center text-gray-700 font-semibold hover:text-gray-900 transition-colors"
+          className="absolute top-4 left-4 flex items-center text-black font-semibold hover:text-gray-800 transition-colors"
         >
           ← Retour
         </button>
+
+        {/* Logo centré */}
+        <div className="flex justify-center mb-6">
+          <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
+        </div>
 
         {/* Titre */}
         <h1 className="text-3xl font-bold text-center mb-4">Ajouter un nouveau membre</h1>
@@ -118,7 +125,7 @@ export default function AddMember() {
           <input type="text" name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input" required />
           <input type="text" name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={handleChange} className="input" required />
           <input type="text" name="ville" placeholder="Ville" value={formData.ville} onChange={handleChange} className="input" />
-          
+
           <label className="flex items-center gap-2 mt-1">
             <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} />
             WhatsApp
@@ -159,12 +166,10 @@ export default function AddMember() {
 
           {/* Boutons côte à côte */}
           <div className="flex gap-4 mt-2">
-            {/* Annuler à gauche */}
             <button type="button" onClick={handleCancel} className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               Annuler
             </button>
-            {/* Ajouter à droite */}
-            <button type="submit" className="flex-1 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
+            <button type="submit" className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               Ajouter
             </button>
           </div>

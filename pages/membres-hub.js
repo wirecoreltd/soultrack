@@ -48,7 +48,7 @@ export default function MembresHub() {
 
       {/* 🔹 Logo centré */}
       <div className="mb-6">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={100} height={100} />
+        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
 
       {/* 🔹 Titre + texte motivant */}

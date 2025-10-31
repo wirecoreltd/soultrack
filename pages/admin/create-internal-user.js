@@ -103,7 +103,8 @@ export default function CreateInternalUser() {
           )}
 
           {/* Boutons côte à côte */}
-            <div className="flex gap-4 mt-4 justify-between">
+            <div className="flex gap-4 mt-4">
+              {/* Annuler à gauche */}
               <button
                 type="button"
                 onClick={handleCancel}
@@ -111,6 +112,8 @@ export default function CreateInternalUser() {
               >
                 Annuler
               </button>
+            
+              {/* Créer à droite */}
               <button
                 type="submit"
                 disabled={loading}

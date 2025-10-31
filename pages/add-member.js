@@ -1,5 +1,4 @@
 //✅pages/add-member.js
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -158,11 +157,13 @@ export default function AddMember() {
             className="input"
           />
 
-          {/* Boutons */}
+          {/* Boutons côte à côte */}
           <div className="flex gap-4 mt-2">
+            {/* Annuler à gauche */}
             <button type="button" onClick={handleCancel} className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               Annuler
             </button>
+            {/* Ajouter à droite */}
             <button type="submit" className="flex-1 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               Ajouter
             </button>
@@ -186,4 +187,3 @@ export default function AddMember() {
     </div>
   );
 }
-

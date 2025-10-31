@@ -103,14 +103,23 @@ export default function CreateInternalUser() {
           )}
 
           {/* Boutons côte à côte */}
-          <div className="flex gap-4 mt-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
-            >
-              {loading ? "Création..." : "Créer"}
-            </button>
+            <div className="flex gap-4 mt-4 justify-between">
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
+              >
+                {loading ? "Création..." : "Créer"}
+              </button>
+            </div>
+
             <button
               type="button"
               onClick={handleCancel}

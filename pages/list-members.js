@@ -408,62 +408,187 @@ export default function ListMembers() {
         </div>
       )}
 
-      {/* ==================== VUE TABLE ==================== */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
-              <tr>
-                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-                <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Statut</th>
-                <th className="px-4 py-2 rounded-tr-lg">Détails</th>
-              </tr>
-            </thead>
-            <tbody>
-              {nouveauxFiltres.length > 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-2 text-white font-semibold">
-                    💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-                  </td>
-                </tr>
-              )}
-              {/* Nouveaux membres */}
-              {nouveauxFiltres.map((m) => (
-                <tr
-                  key={m.id}
-                  className="hover:bg-white/10 transition duration-150 border-b border-blue-300"
-                >
-                  <td
-                    className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
-                    style={{ borderLeftColor: getBorderColor(m) }}
-                  >
-                    {m.prenom} {m.nom}
-                    {m.star && <span className="text-yellow-400 ml-1">⭐</span>}  
-                    <span className="bg-blue-500 text-white text-xs px-1 rounded">Nouveau</span>
-                  </td>
-                  <td className="px-4 py-2">{m.telephone || "—"}</td>
-                  <td className="px-4 py-2">{m.statut || "—"}</td>
-                  <td className="px-4 py-2">
+     {/* ==================== VUE TABLE ==================== */}
+{view === "table" && (
+  <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+    <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+      <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
+        <tr>
+          <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+          <th className="px-4 py-2">Téléphone</th>
+          <th className="px-4 py-2">Statut</th>
+          <th className="px-4 py-2 rounded-tr-lg">Détails</th>
+        </tr>
+      </thead>
+      <tbody>
+        {/* Nouveaux membres */}
+        {nouveauxFiltres.length > 0 && (
+          <tr>
+            <td colSpan={4} className="px-4 py-2 font-semibold text-lg">
+              <span
+                style={{
+                  background: "linear-gradient(to right, #34A853, #0EA5E9)",
+                  WebkitBackgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+              </span>
+            </td>
+          </tr>
+        )}
+        {nouveauxFiltres.map((m) => (
+          <tr
+            key={m.id}
+            className="hover:bg-white/10 transition duration-150 border-b border-gray-300"
+          >
+            <td
+              className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
+              style={{ borderLeftColor: getBorderColor(m) }}
+            >
+              {m.prenom} {m.nom}
+              {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+              <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">
+                Nouveau
+              </span>
+            </td>
+            <td className="px-4 py-2">{m.telephone || "—"}</td>
+            <td className="px-4 py-2">{m.statut || "—"}</td>
+            <td className="px-4 py-2">
+              <button
+                onClick={() => toggleDetails(m.id)}
+                className="text-orange-500 underline text-sm"
+              >
+                {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
+              </button>
+
+              {detailsOpen[m.id] && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
+                  <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
                     <button
                       onClick={() => toggleDetails(m.id)}
-                      className="text-orange-500 underline text-sm"
+                      className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
                     >
-                      {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
+                      ✖
                     </button>
+                    <h2 className="text-xl font-bold mb-2 text-black">
+                      {m.prenom} {m.nom}
+                      {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                    </h2>
 
-                    {detailsOpen[m.id] && (
-                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
-                        <div className="bg-white text-black p-6 rounded-lg w-80 max-h-[90vh] overflow-y-auto relative">
-                          <button
-                            onClick={() => toggleDetails(m.id)}
-                            className="absolute top-2 right-2 text-red-500 font-bold"
-                          >
-                            ✕
-                          </button>
-                          <h3 className="text-lg font-semibold">
-                            {m.prenom} {m.nom}
-                          </h3>
+                    <div className="text-black text-sm mt-2 space-y-2 w-full">
+                      <p>📱 {m.telephone || "—"}</p>
+                      <p>💬 WhatsApp : {m.is_whatsapp || "—"}</p>
+                      <p>🏙 Ville : {m.ville || "—"}</p>
+                      <p>🕊 Statut : {m.statut || "—"}</p>
+                      <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+                      <p>❓Besoin : {m.besoin || "—"}</p>
+                      <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+
+                      <p className="mt-2 font-semibold text-gray-800">Modifier le statut :</p>
+                      <select
+                        value={m.statut}
+                        onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                        className="border rounded-lg px-2 py-1 text-sm w-full text-black"
+                      >
+                        {statusOptions.map((s) => (
+                          <option key={s} className="text-black">{s}</option>
+                        ))}
+                      </select>
+
+                      <p className="mt-2 font-semibold text-green-600">Cellule :</p>
+                      <select
+                        value={selectedCellules[m.id] || ""}
+                        onChange={(e) =>
+                          setSelectedCellules((prev) => ({
+                            ...prev,
+                            [m.id]: e.target.value,
+                          }))
+                        }
+                        className="border rounded-lg px-2 py-1 text-sm w-full text-black"
+                      >
+                        <option value="" className="text-black">-- Sélectionner cellule --</option>
+                        {cellules.map((c) => (
+                          <option key={c.id} value={c.id} className="text-black">
+                            {c.cellule} ({c.responsable})
+                          </option>
+                        ))}
+                      </select>
+
+                      {selectedCellules[m.id] && (
+                        <div className="mt-2">
+                          <BoutonEnvoyer
+                            membre={m}
+                            cellule={cellules.find(
+                              (c) => c.id === selectedCellules[m.id]
+                            )}
+                            onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                            session={session}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </td>
+          </tr>
+        ))}
+
+        {/* Membres existants */}
+        {anciensFiltres.length > 0 && (
+          <>
+            <tr>
+              <td colSpan={4} className="px-4 py-2 font-semibold text-lg">
+                <span
+                  style={{
+                    background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                    WebkitBackgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
+                  Membres existants
+                </span>
+              </td>
+            </tr>
+
+            {anciensFiltres.map((m) => (
+              <tr
+                key={m.id}
+                className="hover:bg-white/10 transition duration-150 border-b border-gray-300"
+              >
+                <td
+                  className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
+                  style={{ borderLeftColor: getBorderColor(m) }}
+                >
+                  {m.prenom} {m.nom}
+                  {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                </td>
+                <td className="px-4 py-2">{m.telephone || "—"}</td>
+                <td className="px-4 py-2">{m.statut || "—"}</td>
+                <td className="px-4 py-2">
+                  <button
+                    onClick={() => toggleDetails(m.id)}
+                    className="text-orange-500 underline text-sm"
+                  >
+                    {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
+                  </button>
+
+                  {detailsOpen[m.id] && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
+                      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
+                        <button
+                          onClick={() => toggleDetails(m.id)}
+                          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+                        >
+                          ✖
+                        </button>
+                        <h2 className="text-xl font-bold mb-2 text-black">
+                          {m.prenom} {m.nom}
+                          {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                        </h2>
+
+                        <div className="text-black text-sm mt-2 space-y-2 w-full">
                           <p>📱 {m.telephone || "—"}</p>
                           <p>💬 WhatsApp : {m.is_whatsapp || "—"}</p>
                           <p>🏙 Ville : {m.ville || "—"}</p>
@@ -471,61 +596,60 @@ export default function ListMembers() {
                           <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
                           <p>❓Besoin : {m.besoin || "—"}</p>
                           <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+
+                          <p className="mt-2 font-semibold text-gray-800">Modifier le statut :</p>
+                          <select
+                            value={m.statut}
+                            onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                            className="border rounded-lg px-2 py-1 text-sm w-full text-black"
+                          >
+                            {statusOptions.map((s) => (
+                              <option key={s} className="text-black">{s}</option>
+                            ))}
+                          </select>
+
+                          <p className="mt-2 font-semibold text-green-600">Cellule :</p>
+                          <select
+                            value={selectedCellules[m.id] || ""}
+                            onChange={(e) =>
+                              setSelectedCellules((prev) => ({
+                                ...prev,
+                                [m.id]: e.target.value,
+                              }))
+                            }
+                            className="border rounded-lg px-2 py-1 text-sm w-full text-black"
+                          >
+                            <option value="" className="text-black">-- Sélectionner cellule --</option>
+                            {cellules.map((c) => (
+                              <option key={c.id} value={c.id} className="text-black">
+                                {c.cellule} ({c.responsable})
+                              </option>
+                            ))}
+                          </select>
+
+                          {selectedCellules[m.id] && (
+                            <div className="mt-2">
+                              <BoutonEnvoyer
+                                membre={m}
+                                cellule={cellules.find(
+                                  (c) => c.id === selectedCellules[m.id]
+                                )}
+                                onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                                session={session}
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-
-              {/* Membres existants */}
-              {anciensFiltres.length > 0 && (
-                <>
-                  <tr>
-                    <td colSpan={4} className="px-4 py-2 font-semibold text-lg">
-                      <span
-                        style={{
-                          background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                          WebkitBackgroundClip: "text",
-                          color: "transparent",
-                        }}
-                      >
-                        Membres existants
-                      </span>
-                    </td>
-                  </tr>
-              
-                  {anciensFiltres.map((m) => (
-                    <tr
-                      key={m.id}
-                      className="hover:bg-white/10 transition duration-150 border-b border-gray-300"
-                    >
-                      <td
-                        className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
-                        style={{ borderLeftColor: getBorderColor(m) }}
-                      >
-                        {m.prenom} {m.nom}
-                        {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                      </td>
-                      <td className="px-4 py-2">{m.telephone || "—"}</td>
-                      <td className="px-4 py-2">{m.statut || "—"}</td>
-                      <td className="px-4 py-2">
-                        <button
-                          onClick={() => toggleDetails(m.id)}
-                          className="text-orange-500 underline text-sm"
-                        >
-                          {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </>
-              )}
-
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </>
+        )}
+      </tbody>
+    </table>
+  </div>
+)}
+ 

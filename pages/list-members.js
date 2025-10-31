@@ -650,7 +650,7 @@ export default function ListMembers() {
       </tr>
     ))}
   </>
-)} {/* ✅ ferme la condition anciansFiltres */}
+)} {/* ✅ ferme le map + condition */}
 
 </tbody>
 </table>

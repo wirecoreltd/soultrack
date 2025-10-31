@@ -138,20 +138,25 @@ export default function CreateCellule() {
           )}
 
           <div className="flex gap-4 mt-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white py-2 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition-all"
-            >
-              {loading ? "Création..." : "Créer"}
-            </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 text-white py-2 rounded-2xl hover:from-gray-500 hover:to-gray-600 transition-all"
-            >
-              Annuler
-            </button>
+              {/* Annuler à gauche */}
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 text-white py-2 rounded-2xl hover:from-gray-500 hover:to-gray-600 transition-all"
+              >
+                Annuler
+              </button>
+            
+              {/* Créer à droite */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white py-2 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition-all"
+              >
+                {loading ? "Création..." : "Créer"}
+              </button>
+            </div>
+
           </div>
         </form>
 

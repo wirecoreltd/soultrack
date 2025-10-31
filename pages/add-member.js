@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import Image from "../components/Image"; // ou "next/image" si tu utilises Next.js Image
+import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 
 export default function AddMember() {

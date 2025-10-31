@@ -11,13 +11,13 @@ const roleCards = {
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#0D9488" }, // teal foncé
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" }, // cyan
     { path: "/rapport", label: "Rapport", emoji: "📈", color: "#60A5FA" }, // bleu clair
-    { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" }, // sky
+    { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" }, // sky (différent de Cellule)
   ],
   ResponsableIntegration: [
-    { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#3B82F6" },
+    { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#0284C7" },
   ],
   ResponsableEvangelisation: [
-    { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#14B8A6" },
+    { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#0D9488" },
   ],
   ResponsableCellule: [
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" },
@@ -78,11 +78,11 @@ export default function IndexPage() {
       style={{ background: "linear-gradient(135deg, #1E3A8A 0%, #38BDF8 100%)" }}
     >
       {/* 🔹 Barre du haut */}
-      <div className="w-full max-w-5xl flex justify-between items-start mb-6 bg-white/10 backdrop-blur-sm rounded-xl px-6 py-3 shadow-sm">
+      <div className="w-full max-w-5xl flex justify-between items-center mb-6 px-0 py-0">
         {/* Bouton retour */}
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1 text-white hover:text-gray-200 transition-colors mt-[6px]"
+          className="flex items-center gap-1 text-white hover:text-gray-200 transition-colors"
         >
           ← <span>Retour</span>
         </button>
@@ -103,8 +103,13 @@ export default function IndexPage() {
 
       {/* 🔹 Texte inspirant */}
       <p className="text-white/90 text-lg italic mb-6 max-w-2xl leading-relaxed tracking-wide font-light">
-        “Car le corps ne se compose pas d’un seul membre, mais de plusieurs.”
-        <br />
+        La famille est le premier lieu où l'amour, le soutien et la foi se transmettent.  
+        Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté.
+      </p>
+
+      {/* 🔹 Verset biblique */}
+      <p className="text-white/90 text-lg italic max-w-2xl leading-relaxed tracking-wide font-light">
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         <span className="font-semibold">1 Corinthiens 12:14 ❤️</span>
       </p>
 

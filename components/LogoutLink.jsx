@@ -13,11 +13,11 @@ export default function LogoutLink() {
   };
 
   return (
-    <p
+    <button
       onClick={handleLogout}
-      className="absolute top-4 right-6 text-sm sm:text-base text-white cursor-pointer hover:text-yellow-300 transition-all duration-200"
+      className="text-sm sm:text-base text-white cursor-pointer hover:text-yellow-300 transition-all duration-200"
     >
       Déconnexion
-    </p>
+    </button>
   );
 }

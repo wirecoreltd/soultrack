@@ -552,7 +552,7 @@ export default function ListMembers() {
               </td>
             </tr>
 
-            {anciensFiltres.map((m) => (
+           {anciensFiltres.map((m) => (
   <tr
     key={m.id}
     className="hover:bg-white/10 transition duration-150 border-b border-gray-300"
@@ -605,7 +605,9 @@ export default function ListMembers() {
                 className="border rounded-lg px-2 py-1 text-sm w-full text-black"
               >
                 {statusOptions.map((s) => (
-                  <option key={s} className="text-black">{s}</option>
+                  <option key={s} className="text-black">
+                    {s}
+                  </option>
                 ))}
               </select>
 
@@ -620,7 +622,9 @@ export default function ListMembers() {
                 }
                 className="border rounded-lg px-2 py-1 text-sm w-full text-black"
               >
-                <option value="" className="text-black">-- Sélectionner cellule --</option>
+                <option value="" className="text-black">
+                  -- Sélectionner cellule --
+                </option>
                 {cellules.map((c) => (
                   <option key={c.id} value={c.id} className="text-black">
                     {c.cellule} ({c.responsable})
@@ -650,7 +654,10 @@ export default function ListMembers() {
 
 </tbody>
 </table>
-</div>
-</div> {/* ✅ ferme le container principal */}
+</div> {/* ✅ ferme le conteneur de la table */}
+</div> {/* ✅ ferme le conteneur principal */}
+</div> {/* ✅ ferme le layout global */}
 );
 }
+
+export default ListMembers;

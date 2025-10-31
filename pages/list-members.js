@@ -180,216 +180,106 @@ export default function ListMembers() {
       </div>
 
       {/* ==================== VUE CARTE ==================== */}
-            {view === "card" && (
-              <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
-                {/* -------- Nouveaux membres -------- */}
-                {nouveauxFiltres.length > 0 && (
-                  <div>
-                    <p className="text-white text-lg mb-2 ml-1">
-                      💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {nouveauxFiltres.map((m) => {
-                        const isOpen = detailsOpen[m.id];
-                        return (
-                          <div
-                            key={m.id}
-                            className="bg-white p-3 rounded-xl shadow-md border-l-4 transition duration-200 overflow-hidden relative"
-                            style={{ borderLeftColor: getBorderColor(m) }}
-                          >
-                            {(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && (
-                              <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
-                                Nouveau
-                              </span>
+      {view === "card" && (
+        <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
+          {/* -------- Nouveaux membres -------- */}
+          {nouveauxFiltres.length > 0 && (
+            <div>
+              <p className="text-white text-lg mb-2 ml-1">
+                💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {nouveauxFiltres.map((m) => {
+                  const isOpen = detailsOpen[m.id];
+                  return (
+                    <div
+                      key={m.id}
+                      className="bg-white p-3 rounded-xl shadow-md border-l-4 transition duration-200 overflow-hidden relative"
+                      style={{ borderLeftColor: getBorderColor(m) }}
+                    >
+                      {(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && (
+                        <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
+                          Nouveau
+                        </span>
+                      )}
+
+                      <div className="flex flex-col items-center">
+                        <h2 className="text-lg font-bold text-gray-800 text-center">
+                          {m.prenom} {m.nom}
+                        </h2>
+                        <p className="text-sm text-gray-600 mb-2 text-center">
+                          📱 {m.telephone || "—"}
+                        </p>
+                        <p className="text-sm text-gray-600 mb-2 text-center">
+                          🕊 Statut : {m.statut || "—"}
+                        </p>
+                        <button
+                          onClick={() => toggleDetails(m.id)}
+                          className="text-orange-500 underline text-sm"
+                        >
+                          {isOpen ? "Fermer détails" : "Détails"}
+                        </button>
+
+                        {isOpen && (
+                          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+                            <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
+                            <p> 🏙 Ville : {m.ville || "—"}</p>
+                            <p> 🕊 Statut : {m.statut || "—"}</p>
+                            <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+                            <p>❓Besoin : {m.besoin || "—"}</p>
+                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+
+                            <p className="mt-2 font-semibold text-bleu-600">Statut :</p>
+                            <select
+                              value={m.statut}
+                              onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                              className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
+                            >
+                              {statusOptions.map((s) => (
+                                <option key={s}>{s}</option>
+                              ))}
+                            </select>
+
+                            <p className="mt-2 font-semibold text-green-600">Cellule :</p>
+                            <select
+                              value={selectedCellules[m.id] || ""}
+                              onChange={(e) =>
+                                setSelectedCellules((prev) => ({
+                                  ...prev,
+                                  [m.id]: e.target.value,
+                                }))
+                              }
+                              className="border rounded-lg px-2 py-1 text-sm w-full"
+                            >
+                              <option value="">-- Sélectionner cellule --</option>
+                              {cellules.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.cellule} ({c.responsable})
+                                </option>
+                              ))}
+                            </select>
+
+                            {selectedCellules[m.id] && (
+                              <div className="mt-2">
+                                <BoutonEnvoyer
+                                  membre={m}
+                                  cellule={cellules.find(
+                                    (c) => c.id === selectedCellules[m.id]
+                                  )}
+                                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                                  session={session}
+                                />
+                              </div>
                             )}
-            
-                            <div className="flex flex-col items-center">
-                              <h2 className="text-lg font-bold text-gray-800 text-center">
-                                {m.prenom} {m.nom}
-                              </h2>
-                              <p className="text-sm text-gray-600 mb-2 text-center">
-                                📱 {m.telephone || "—"}
-                              </p>
-                              <p className="text-sm text-gray-600 mb-2 text-center">
-                                🕊 Statut : {m.statut || "—"}
-                              </p>
-                              <button
-                                onClick={() => toggleDetails(m.id)}
-                                className="text-orange-500 underline text-sm"
-                              >
-                                {isOpen ? "Fermer détails" : "Détails"}
-                              </button>
-            
-                              {isOpen && (
-                                <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                                  <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
-                                  <p> 🏙 Ville : {m.ville || "—"}</p>
-                                  <p> 🕊 Statut : {m.statut || "—"}</p>
-                                  <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                                  <p>❓Besoin : {m.besoin || "—"}</p>
-                                  <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-            
-                                  <p className="mt-2 font-semibold text-bleu-600">Statut :</p>
-                                  <select
-                                    value={m.statut}
-                                    onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                                    className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
-                                  >
-                                    {statusOptions.map((s) => (
-                                      <option key={s}>{s}</option>
-                                    ))}
-                                  </select>
-            
-                                  <p className="mt-2 font-semibold text-green-600">Cellule :</p>
-                                  <select
-                                    value={selectedCellules[m.id] || ""}
-                                    onChange={(e) =>
-                                      setSelectedCellules((prev) => ({
-                                        ...prev,
-                                        [m.id]: e.target.value,
-                                      }))
-                                    }
-                                    className="border rounded-lg px-2 py-1 text-sm w-full"
-                                  >
-                                    <option value="">-- Sélectionner cellule --</option>
-                                    {cellules.map((c) => (
-                                      <option key={c.id} value={c.id}>
-                                        {c.cellule} ({c.responsable})
-                                      </option>
-                                    ))}
-                                  </select>
-            
-                                  {selectedCellules[m.id] && (
-                                    <div className="mt-2">
-                                      <BoutonEnvoyer
-                                        membre={m}
-                                        cellule={cellules.find(
-                                          (c) => c.id === selectedCellules[m.id]
-                                        )}
-                                        onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                                        session={session}
-                                      />
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
                           </div>
-                        );
-                      })}
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
-            
-                {/* -------- Membres existants -------- */}
-                {anciensFiltres.length > 0 && (
-                  <div className="mt-8">
-                    <h3 className="text-white text-lg mb-3 font-semibold">
-                      <span
-                        style={{
-                          background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                          WebkitBackgroundClip: "text",
-                          color: "transparent",
-                        }}
-                      >
-                        Membres existants
-                      </span>
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {anciensFiltres.map((m) => {
-                        const isOpen = detailsOpen[m.id];
-                        return (
-                          <div
-                            key={m.id}
-                            className="bg-white p-3 rounded-xl shadow-md border-l-4 transition duration-200 overflow-hidden relative"
-                            style={{ borderLeftColor: getBorderColor(m) }}
-                          >
-                            <div className="flex flex-col items-center">
-                              <h2 className="text-lg font-bold text-gray-800 text-center">
-                                {m.prenom} {m.nom}
-                                {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                              </h2>
-            
-                              <p className="text-sm text-gray-600 mb-2 text-center">
-                                📱 {m.telephone || "—"}
-                              </p>
-                              <p className="text-sm text-gray-600 mb-2 text-center">
-                                🕊 Statut : {m.statut || "—"}
-                              </p>
-                              <button
-                                onClick={() => toggleDetails(m.id)}
-                                className="text-orange-500 underline text-sm"
-                              >
-                                {isOpen ? "Fermer détails" : "Détails"}
-                              </button>
-            
-                              {isOpen && (
-                                <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                                  <p> 📌 Prénom Nom : {m.prenom} {m.nom}</p>
-                                  <p> 📞 Téléphone : {m.telephone || "—"}</p>
-                                  <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
-                                  <p> 🏙 Ville : {m.ville || "—"}</p>
-                                  <p> 🕊 Statut : {m.statut || "—"}</p>
-                                  <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                                  <p>❓ Besoin : {m.besoin || "—"}</p>
-                                  <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-            
-                                  <select
-                                    value={m.statut}
-                                    onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                                    className="border rounded-md px-2 py-1 text-xs text-gray-700 w-full"
-                                  >
-                                    {statusOptions.map((s) => (
-                                      <option key={s}>{s}</option>
-                                    ))}
-                                  </select>
-            
-                                  <p className="mt-2 font-semibold text-green-600">Cellule :</p>
-                                  <select
-                                    value={selectedCellules[m.id] || ""}
-                                    onChange={(e) =>
-                                      setSelectedCellules((prev) => ({
-                                        ...prev,
-                                        [m.id]: e.target.value,
-                                      }))
-                                    }
-                                    className="border rounded-lg px-2 py-1 text-sm w-full"
-                                  >
-                                    <option value="">-- Sélectionner cellule --</option>
-                                    {cellules.map((c) => (
-                                      <option key={c.id} value={c.id}>
-                                        {c.cellule} ({c.responsable})
-                                      </option>
-                                    ))}
-                                  </select>
-            
-                                  {selectedCellules[m.id] && (
-                                    <div className="mt-2">
-                                      <BoutonEnvoyer
-                                        membre={m}
-                                        cellule={cellules.find(
-                                          (c) => c.id === selectedCellules[m.id]
-                                        )}
-                                        onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                                        session={session}
-                                      />
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                  );
+                })}
               </div>
-)}
-
-
-
-
+            </div>
+          )}
 
           {/* -------- Membres existants -------- */}
           {anciensFiltres.length > 0 && (
@@ -511,14 +401,13 @@ export default function ListMembers() {
             </thead>
             <tbody>
               {nouveauxFiltres.length > 0 && (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-2 text-white font-semibold">
-                      💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-                    </td>
-                  </tr>
-                )}
+                <tr>
+                  <td colSpan={4} className="px-4 py-2 text-white font-semibold">
+                    💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+                  </td>
+                </tr>
+              )}
               {/* Nouveaux membres */}
-             
               {nouveauxFiltres.map((m) => (
                 <tr
                   key={m.id}
@@ -544,102 +433,38 @@ export default function ListMembers() {
 
                     {detailsOpen[m.id] && (
                       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
-                        <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
+                        <div className="bg-white text-black p-6 rounded-lg w-80 max-h-[90vh] overflow-y-auto relative">
                           <button
                             onClick={() => toggleDetails(m.id)}
-                            className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+                            className="absolute top-2 right-2 text-red-500 font-bold"
                           >
-                            ✖
+                            ✕
                           </button>
-                    
-                          <h2 className="text-xl font-bold mb-2 text-black">
+                          <h3 className="text-lg font-semibold">
                             {m.prenom} {m.nom}
-                            {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                          </h2>
-                    
-                          <p className="text-black text-sm mb-1">📞 {m.telephone || "—"}</p>
-                          <p className="text-black text-sm mb-1">💬 WhatsApp : {m.is_whatsapp || "—"}</p>
-                          <p className="text-black text-sm mb-1">🏙 Ville : {m.ville || "—"}</p>
-                          <p className="text-black text-sm mb-1">🕊 Statut actuel : {m.statut || "—"}</p>
-                          <p className="text-black text-sm mb-1">🧩 Comment est-il venu : {m.venu || "—"}</p>
-                          <p className="text-black text-sm mb-1">❓ Besoin : {m.besoin || "—"}</p>
-                          <p className="text-black text-sm mb-1">📝 Infos : {m.infos_supplementaires || "—"}</p>
-                    
-                          {/* ---------- Nouveau menu déroulant Statut ---------- */}
-                          <p className="mt-2 font-semibold text-gray-800">Modifier le statut :</p>
-                          <select
-                            value={m.statut}
-                            onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                            className="border rounded-lg px-2 py-1 text-sm w-full text-black"
-                          >
-                            {statusOptions.map((s) => (
-                              <option key={s} className="text-black">{s}</option>
-                            ))}
-                          </select>
-                    
-                          {/* ---------- Menu déroulant Cellule ---------- */}
-                          <p className="mt-2 font-semibold text-green-600">Cellule :</p>
-                          <select
-                            value={selectedCellules[m.id] || ""}
-                            onChange={(e) =>
-                              setSelectedCellules((prev) => ({
-                                ...prev,
-                                [m.id]: e.target.value,
-                              }))
-                            }
-                            className="border rounded-lg px-2 py-1 text-sm w-full text-black"
-                          >
-                            <option value="" className="text-black">-- Sélectionner cellule --</option>
-                            {cellules.map((c) => (
-                              <option key={c.id} value={c.id} className="text-black">
-                                {c.cellule} ({c.responsable})
-                              </option>
-                            ))}
-                          </select>
-                    
-                          {selectedCellules[m.id] && (
-                            <div className="mt-3">
-                              <BoutonEnvoyer
-                                membre={m}
-                                cellule={cellules.find(
-                                  (c) => c.id === selectedCellules[m.id]
-                                )}
-                                onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                                session={session}
-                              />
-                            </div>
-                          )}
+                          </h3>
+                          <p>📱 {m.telephone || "—"}</p>
+                          <p>💬 WhatsApp : {m.is_whatsapp || "—"}</p>
+                          <p>🏙 Ville : {m.ville || "—"}</p>
+                          <p>🕊 Statut : {m.statut || "—"}</p>
+                          <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+                          <p>❓Besoin : {m.besoin || "—"}</p>
+                          <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
                         </div>
                       </div>
-                      )}
-
+                    )}
                   </td>
                 </tr>
               ))}
 
               {/* Membres existants */}
-              {anciensFiltres.length > 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-2 font-semibold text-lg">
-                    <span
-                      className="bg-clip-text text-transparent"
-                      style={{
-                        background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                      }}
-                    >
-                      Membres existants
-                    </span>
-                  </td>
-                </tr>
-              )}
-
               {anciensFiltres.map((m) => (
                 <tr
                   key={m.id}
-                  className="hover:bg-white/10 transition duration-150 border-b border-gray-400"
+                  className="hover:bg-white/10 transition duration-150 border-b border-gray-300"
                 >
                   <td
-                    className="px-4 py-2 border-l-4 rounded-l-md"
+                    className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
                     {m.prenom} {m.nom}
@@ -654,60 +479,6 @@ export default function ListMembers() {
                     >
                       {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
                     </button>
-
-                    {detailsOpen[m.id] && (
-                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
-                        <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
-                          <button
-                            onClick={() => toggleDetails(m.id)}
-                            className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
-                          >
-                            ✖
-                          </button>
-                          <h2 className="text-xl font-bold mb-2 text-black">
-                            {m.prenom} {m.nom}
-                          </h2>
-                          <p className="text-black text-sm mb-1">📞 {m.telephone || "—"}</p>
-                          <p className="text-black text-sm mb-1">💬 WhatsApp : {m.is_whatsapp || "—"}</p>
-                          <p className="text-black text-sm mb-1">🏙 Ville : {m.ville || "—"}</p>
-                          <p className="text-black text-sm mb-1">🕊 Statut : {m.statut || "—"}</p>
-                          <p className="text-black text-sm mb-1">🧩 Comment est-il venu : {m.venu || "—"}</p>
-                          <p className="text-black text-sm mb-1">📝 Infos : {m.infos_supplementaires || "—"}</p>
-
-                          <p className="mt-2 font-semibold text-green-600">Cellule :</p>
-                          <select
-                            value={selectedCellules[m.id] || ""}
-                            onChange={(e) =>
-                              setSelectedCellules((prev) => ({
-                                ...prev,
-                                [m.id]: e.target.value,
-                              }))
-                            }
-                            className="border rounded-lg px-2 py-1 text-sm w-full"
-                          >
-                            <option value="">-- Sélectionner cellule --</option>
-                            {cellules.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.cellule} ({c.responsable})
-                              </option>
-                            ))}
-                          </select>
-
-                          {selectedCellules[m.id] && (
-                            <div className="mt-3">
-                              <BoutonEnvoyer
-                                membre={m}
-                                cellule={cellules.find(
-                                  (c) => c.id === selectedCellules[m.id]
-                                )}
-                                onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                                session={session}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
                   </td>
                 </tr>
               ))}

@@ -1,4 +1,4 @@
-//pages/index.js
+//✅pages/index.js
 
 "use client";
 
@@ -8,11 +8,11 @@ import LogoutLink from "../components/LogoutLink";
 
 const roleCards = {
   Administrateur: [
-    { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#0284C7" }, // bleu profond
-    { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#0D9488" }, // teal foncé
-    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" }, // cyan
-    { path: "/rapport", label: "Rapport", emoji: "📈", color: "#60A5FA" }, // bleu clair
-    { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" }, // sky (différent de Cellule)
+    { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#0E7490" }, // bleu profond
+    { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#F97316" }, // teal foncé
+    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#10B981" }, // cyan
+    { path: "/rapport", label: "Rapport", emoji: "📈", color: "##FBBF24" }, // bleu clair
+    { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#E0F2FE" }, // sky
   ],
   ResponsableIntegration: [
     { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#0284C7" },
@@ -78,21 +78,21 @@ export default function IndexPage() {
       className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* 🔹 Barre du haut */}
+      {/* 🔹 Top bar */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-6">
         {/* Bouton retour */}
         <button
           onClick={() => router.back()}
-          className="flex items-center text-white font-semibold hover:text-gray-200 transition-colors"
+          className="flex items-center text-white hover:text-gray-200 transition-colors"
         >
           ← Retour
         </button>
 
-        {/* Déconnexion + Bienvenue */}
+        {/* Déconnexion */}
         <div className="flex flex-col items-end">
           <LogoutLink className="text-red-300 hover:text-red-400 mb-1" />
           <p className="text-yellow-200 text-sm mt-2">
-            👋 Bienvenue <span className="font-semibold text-white">{userName}</span>
+            👋 Bienvenue {userName}
           </p>
         </div>
       </div>
@@ -102,13 +102,10 @@ export default function IndexPage() {
         <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18 mx-auto" />
       </div>
 
-      {/* 🔹 Texte inspirant et verset */}
-      <div className="text-white text-lg italic mb-6 max-w-2xl leading-relaxed tracking-wide font-light">
+      {/* 🔹 Message motivant */}
+      <p className="text-white text-lg italic mb-6 max-w-2xl leading-relaxed tracking-wide font-light">
         La famille est le premier lieu où l'amour, le soutien et la foi se transmettent. Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté.
-        <br /><br />
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
-        1 Corinthiens 12:14 ❤️
-      </div>
+      </p>
 
       {/* 🔹 Cartes des fonctionnalités */}
       <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl">
@@ -124,6 +121,13 @@ export default function IndexPage() {
           </div>
         ))}
       </div>
+
+      {/* 🔹 Verset biblique sous les cartes */}
+      <div className="text-white text-lg italic max-w-2xl mt-6 leading-relaxed tracking-wide font-light">
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
+        1 Corinthiens 12:14 ❤️
+      </div>
     </div>
   );
 }
+

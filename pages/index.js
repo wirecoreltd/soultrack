@@ -1,4 +1,5 @@
 //✅pages/index.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -88,12 +89,14 @@ export default function IndexPage() {
             ← Retour
           </button>
 
-          <div className="flex flex-col items-end">
-            <LogoutLink className="text-red-300 hover:text-red-400" />
-            <p className="text-yellow-200 text-sm mt-2">
-              👋 Bienvenue {userName}
-            </p>
-          </div>
+          <LogoutLink className="text-red-300 hover:text-red-400" />
+        </div>
+
+        {/* Ligne du dessous : Bienvenue aligné à droite */}
+        <div className="flex justify-end mt-2">
+          <p className="text-#F97316-200 text-sm">
+            👋 Bienvenue {userName}
+          </p>
         </div>
       </div>
 
@@ -130,3 +133,4 @@ export default function IndexPage() {
     </div>
   );
 }
+

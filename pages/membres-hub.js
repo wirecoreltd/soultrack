@@ -30,7 +30,7 @@ export default function MembresHub() {
         <div className="flex justify-between items-center">
           <button
             onClick={() => router.back()}
-            className="flex items-center text-white hover:text-gray-200 transition-colors
+            className="flex items-center text-white hover:text-gray-200 transition-colors"
           >
             ← Retour
           </button>

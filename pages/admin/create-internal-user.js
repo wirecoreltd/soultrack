@@ -1,4 +1,5 @@
 // pages/admin/create-internal-user.js
+
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -61,27 +62,23 @@ export default function CreateInternalUser() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
-      {/* Top bar */}
-      <div className="w-full flex justify-between items-center mb-6">
+      <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
+
+        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
-          className="flex items-center text-white font-semibold hover:text-gray-200 transition-colors"
+          className="absolute top-4 left-4 flex items-center text-gray-700 font-semibold hover:text-gray-900 transition-colors"
         >
           ← Retour
         </button>
-      </div>
-      
-      {/* Formulaire */}   
-        
-      <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md">
+
         {/* Logo centré */}
-      <div className="flex justify-center mb-6">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
-      </div>
-        
-        <h1 className="text-3xl font-handwriting text-black-800 mb-6 text-center">
-          Créer un utilisateur
-        </h1>
+        <div className="flex justify-center mb-6">
+          <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
+        </div>
+
+        {/* Titre */}
+        <h1 className="text-3xl font-bold text-center mb-6">Créer un utilisateur</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
           <input name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input" required />
@@ -110,7 +107,7 @@ export default function CreateInternalUser() {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
+              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
             >
               {loading ? "Création..." : "Créer"}
             </button>
@@ -134,6 +131,7 @@ export default function CreateInternalUser() {
             padding: 12px;
             text-align: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            color: black;
           }
         `}</style>
       </div>

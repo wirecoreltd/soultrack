@@ -7,7 +7,7 @@ import LogoutLink from "../components/LogoutLink";
 
 const roleCards = {
   Administrateur: [
-    { path: "/membres-hub", label: "Suivis des membres", emoji: "👥", color: "blue-500" },
+    { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "blue-500" },
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "teal-500" },
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "cyan-500" },
     { path: "/rapport", label: "Rapport", emoji: "📈", color: "blue-400" },
@@ -79,19 +79,21 @@ export default function IndexPage() {
       style={{ background: "linear-gradient(135deg, #1E3A8A 0%, #38BDF8 100%)" }}
     >
       {/* 🔹 Barre du haut */}
-      <div className="w-full max-w-5xl flex justify-between items-center mb-6 bg-white/10 backdrop-blur-sm rounded-xl px-6 py-3 shadow-sm">
+      <div className="w-full max-w-5xl flex justify-between items-start mb-6 bg-white/10 backdrop-blur-sm rounded-xl px-6 py-3 shadow-sm">
         {/* Bouton retour */}
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1 text-white hover:text-gray-200 transition-colors"
+          className="flex items-center gap-1 text-white font-semibold hover:text-gray-200 transition-colors mt-[6px]"
         >
           ← <span>Retour</span>
         </button>
 
         {/* Déconnexion + nom utilisateur */}
         <div className="flex flex-col items-end">
-          <LogoutLink className="text-red-300 hover:text-red-400" />
-          <p className="text-yellow-200 text-sm italic mt-2">
+          <div>
+            <LogoutLink className="text-red-300 hover:text-red-400" />
+          </div>
+          <p className="text-yellow-200 text-sm italic mt-1">
             👋 Bienvenue <span className="font-semibold text-white">{userName}</span>
           </p>
         </div>
@@ -103,7 +105,7 @@ export default function IndexPage() {
       </div>
 
       {/* 🔹 Message inspirant */}
-      <p className="text-white/90 text-lg italic mb-6 max-w-2xl leading-relaxed tracking-wide">
+      <p className="text-white/90 text-lg italic mb-6 max-w-2xl leading-relaxed tracking-wide font-light">
         “La famille est le premier lieu où l'amour, le soutien et la foi se transmettent.
         Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté.”
       </p>
@@ -114,7 +116,8 @@ export default function IndexPage() {
           <div
             key={card.path}
             onClick={() => handleRedirect(card.path)}
-            className={`flex-1 min-w-[240px] w-full h-32 bg-white/80 backdrop-blur-md rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-${card.color} p-3 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 cursor-pointer`}
+            className={`flex-1 min-w-[240px] w-full h-32 bg-white/80 backdrop-blur-md rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 cursor-pointer`}
+            style={{ borderTopColor: `var(--tw-${card.color})` }}
           >
             <div className="text-5xl mb-2 drop-shadow-sm">{card.emoji}</div>
             <div className="text-lg font-bold text-gray-800">{card.label}</div>
@@ -123,7 +126,7 @@ export default function IndexPage() {
       </div>
 
       {/* 🔹 Verset biblique */}
-      <div className="text-white/90 text-lg font-light max-w-2xl mt-6 italic">
+      <div className="text-white/90 text-lg font-light max-w-2xl mt-6 italic leading-relaxed">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         <span className="font-semibold">1 Corinthiens 12:14 ❤️</span>
       </div>

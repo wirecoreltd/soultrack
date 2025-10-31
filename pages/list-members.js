@@ -179,112 +179,110 @@ export default function ListMembers() {
       </div>
 
       {/* ==================== VUE CARTE ==================== */}
-      {view === "card" && (
-        <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
-          {/* -------- Nouveaux membres -------- */}
-          {nouveauxFiltres.length > 0 && (
-            <div>
-              <p className="text-white text-lg mb-2 ml-1">
-                💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {nouveauxFiltres.map((m) => {
-                  const isOpen = detailsOpen[m.id];
-                  return (
-                    <div
-                      key={m.id}
-                      className="bg-white p-3 rounded-xl shadow-md hover:shadow-xl transition duration-200 overflow-hidden relative"
-                    >
-                      {/* Bordure en haut comme les anciens */}
-                      <div
-                        className="w-full h-[6px] rounded-t-xl mb-2"
-                        style={{ backgroundColor: getBorderColor(m) }}
-                      />
+{view === "card" && (
+  <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
+    {/* -------- Nouveaux membres -------- */}
+    {nouveauxFiltres.length > 0 && (
+      <div>
+        <p className="text-white text-lg mb-2 ml-1">
+          💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {nouveauxFiltres.map((m) => {
+            const isOpen = detailsOpen[m.id];
+            return (
+              <div
+                key={m.id}
+                className="bg-white p-3 rounded-xl shadow-md hover:shadow-xl transition duration-200 overflow-hidden relative border-l-4"
+                style={{ borderLeftColor: getBorderColor(m) }}
+              >
+                {/* Tag Nouveau */}
+                {(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && (
+                  <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
+                    Nouveau
+                  </span>
+                )}
 
-                      {/* Tag Nouveau */}
-                      {(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && (
-                        <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
-                          Nouveau
-                        </span>
-                      )}
+                <div className="flex flex-col items-center">
+                  <h2 className="text-lg font-bold text-gray-800 text-center">
+                    {m.prenom} {m.nom}
+                  </h2>
+                  <p className="text-sm text-gray-600 mb-2 text-center">
+                    📱 {m.telephone || "—"}
+                  </p>
+                  <p className="text-sm text-gray-600 mb-2 text-center">
+                    🕊 Statut : {m.statut || "—"}
+                  </p>
+                  <button
+                    onClick={() => toggleDetails(m.id)}
+                    className="text-orange-500 underline text-sm"
+                  >
+                    {isOpen ? "Fermer détails" : "Détails"}
+                  </button>
 
-                      <div className="flex flex-col items-center">
-                        <h2 className="text-lg font-bold text-gray-800 text-center">
-                          {m.prenom} {m.nom}
-                        </h2>
-                        <p className="text-sm text-gray-600 mb-2 text-center">
-                          📱 {m.telephone || "—"}
-                        </p>
-                        <p className="text-sm text-gray-600 mb-2 text-center">
-                          🕊 Statut : {m.statut || "—"}
-                        </p>
-                        <button
-                          onClick={() => toggleDetails(m.id)}
-                          className="text-orange-500 underline text-sm"
-                        >
-                          {isOpen ? "Fermer détails" : "Détails"}
-                        </button>
+                  {isOpen && (
+                    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+                      <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
+                      <p> 🏙 Ville : {m.ville || "—"}</p>
+                      <p> 🕊 Statut : {m.statut || "—"}</p>
+                      <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+                      <p>❓Besoin : {m.besoin || "—"}</p>
+                      <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                        {isOpen && (
-                          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                            <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
-                            <p> 🏙 Ville : {m.ville || "—"}</p>
-                            <p> 🕊 Statut : {m.statut || "—"}</p>
-                            <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                            <p>❓Besoin : {m.besoin || "—"}</p>
-                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                      <p className="mt-2 font-semibold text-blue-600">Statut :</p>
+                      <select
+                        value={m.statut}
+                        onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                        className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
+                      >
+                        {statusOptions.map((s) => (
+                          <option key={s}>{s}</option>
+                        ))}
+                      </select>
 
-                          <p className="mt-2 font-semibold text-bleu-600">Statut :</p>  
-                          <select
-                              value={m.statut}
-                              onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                              className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
-                            >
-                              {statusOptions.map((s) => (
-                                <option key={s}>{s}</option>
-                              ))}
-                            </select>
+                      <p className="mt-2 font-semibold text-green-600">Cellule :</p>
+                      <select
+                        value={selectedCellules[m.id] || ""}
+                        onChange={(e) =>
+                          setSelectedCellules((prev) => ({
+                            ...prev,
+                            [m.id]: e.target.value,
+                          }))
+                        }
+                        className="border rounded-lg px-2 py-1 text-sm w-full"
+                      >
+                        <option value="">-- Sélectionner cellule --</option>
+                        {cellules.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.cellule} ({c.responsable})
+                          </option>
+                        ))}
+                      </select>
 
-                            <p className="mt-2 font-semibold text-green-600">Cellule :</p>
-                            <select
-                              value={selectedCellules[m.id] || ""}
-                              onChange={(e) =>
-                                setSelectedCellules((prev) => ({
-                                  ...prev,
-                                  [m.id]: e.target.value,
-                                }))
-                              }
-                              className="border rounded-lg px-2 py-1 text-sm w-full"
-                            >
-                              <option value="">-- Sélectionner cellule --</option>
-                              {cellules.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {c.cellule} ({c.responsable})
-                                </option>
-                              ))}
-                            </select>
-
-                            {selectedCellules[m.id] && (
-                              <div className="mt-2">
-                                <BoutonEnvoyer
-                                  membre={m}
-                                  cellule={cellules.find(
-                                    (c) => c.id === selectedCellules[m.id]
-                                  )}
-                                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                                  session={session}
-                                />
-                              </div>
+                      {selectedCellules[m.id] && (
+                        <div className="mt-2">
+                          <BoutonEnvoyer
+                            membre={m}
+                            cellule={cellules.find(
+                              (c) => c.id === selectedCellules[m.id]
                             )}
-                          </div>
-                        )}
-                      </div>
+                            onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                            session={session}
+                          />
+                        </div>
+                      )}
                     </div>
-                  );
-                })}
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })}
+        </div>
+      </div>
+    )}
+  </div>
+)}
+
 
           {/* -------- Membres existants -------- */}
           {anciensFiltres.length > 0 && (

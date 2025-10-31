@@ -20,7 +20,8 @@ export default function CreateInternalUser() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -81,13 +82,54 @@ export default function CreateInternalUser() {
         <h1 className="text-3xl font-bold text-center mb-6">Créer un utilisateur</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
-          <input name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input" required />
-          <input name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input" required />
-          <input name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="input" required />
-          <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
-          <input name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={handleChange} className="input" />
+          <input
+            name="prenom"
+            placeholder="Prénom"
+            value={formData.prenom}
+            onChange={handleChange}
+            className="input"
+            required
+          />
+          <input
+            name="nom"
+            placeholder="Nom"
+            value={formData.nom}
+            onChange={handleChange}
+            className="input"
+            required
+          />
+          <input
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+            className="input"
+            required
+          />
+          <input
+            name="password"
+            placeholder="Mot de passe"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            className="input"
+            required
+          />
+          <input
+            name="telephone"
+            placeholder="Téléphone"
+            value={formData.telephone}
+            onChange={handleChange}
+            className="input"
+          />
 
-          <select name="role" value={formData.role} onChange={handleChange} className="input" required>
+          <select
+            name="role"
+            value={formData.role}
+            onChange={handleChange}
+            className="input"
+            required
+          >
             <option value="">-- Sélectionne un rôle --</option>
             <option value="Administrateur">Administrateur</option>
             <option value="ResponsableIntegration">Responsable Intégration</option>
@@ -97,32 +139,25 @@ export default function CreateInternalUser() {
 
           {formData.role === "ResponsableCellule" && (
             <div className="space-y-3 border-t pt-3">
-              <input name="cellule_nom" placeholder="Nom de la cellule" value={formData.cellule_nom} onChange={handleChange} className="input" />
-              <input name="cellule_zone" placeholder="Zone / Localisation" value={formData.cellule_zone} onChange={handleChange} className="input" />
+              <input
+                name="cellule_nom"
+                placeholder="Nom de la cellule"
+                value={formData.cellule_nom}
+                onChange={handleChange}
+                className="input"
+              />
+              <input
+                name="cellule_zone"
+                placeholder="Zone / Localisation"
+                value={formData.cellule_zone}
+                onChange={handleChange}
+                className="input"
+              />
             </div>
           )}
 
-          {/* Boutons côte à côte */}
-            <div className="flex gap-4 mt-4">
-              {/* Annuler à gauche */}
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
-              >
-                Annuler
-              </button>
-            
-              {/* Créer à droite */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
-              >
-                {loading ? "Création..." : "Créer"}
-              </button>
-            </div>
-
+          {/* Boutons côte à côte: Annuler à gauche, Créer à droite */}
+          <div className="flex gap-4 mt-4">
             <button
               type="button"
               onClick={handleCancel}
@@ -130,10 +165,20 @@ export default function CreateInternalUser() {
             >
               Annuler
             </button>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
+            >
+              {loading ? "Création..." : "Créer"}
+            </button>
           </div>
         </form>
 
-        {message && <p className="mt-4 text-center text-sm text-gray-700">{message}</p>}
+        {message && (
+          <p className="mt-4 text-center text-sm text-gray-700">{message}</p>
+        )}
 
         <style jsx>{`
           .input {

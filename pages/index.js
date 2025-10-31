@@ -1,4 +1,5 @@
 //✅/pages/index.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -83,7 +84,7 @@ export default function IndexPage() {
         <div className="flex justify-between items-center">
           <button
             onClick={() => router.back()}
-            className="flex items-center text-white hover:text-gray-200 transition-colors font-semibold"
+            className="flex items-center text-white hover:text-gray-200 transition-colors"
           >
             ← Retour
           </button>
@@ -93,7 +94,7 @@ export default function IndexPage() {
 
         {/* Ligne du dessous : Bienvenue aligné à droite */}
         <div className="flex justify-end mt-2">
-          <p className="text-yellow-200 text-sm">
+          <p className="text-orange-200 text-sm">
             👋 Bienvenue {userName}
           </p>
         </div>

@@ -1,6 +1,4 @@
-// pages/add-member.js
-
-//pages/add-member.js
+//✅pages/add-member.js
 
 "use client";
 
@@ -25,7 +23,6 @@ export default function AddMember() {
 
   const [success, setSuccess] = useState(false);
 
-  // ✅ Gestion du rôle (facultatif)
   const [roles, setRoles] = useState([]);
   useEffect(() => {
     const storedRole = localStorage.getItem("userRole");
@@ -57,7 +54,6 @@ export default function AddMember() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 🔹 Vérification rôle si nécessaire
     if (!hasRole("admin") && !hasRole("administrateur")) {
       alert("⛔ Accès non autorisé !");
       return;
@@ -70,7 +66,6 @@ export default function AddMember() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
-      // Reset formulaire
       setFormData({
         nom: "",
         prenom: "",
@@ -82,107 +77,62 @@ export default function AddMember() {
         is_whatsapp: false,
         infos_supplementaires: "",
       });
-
-      // Redirection facultative après ajout
-      // router.push("/membres-hub");
     } catch (err) {
       alert(err.message);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
+  const handleCancel = () => {
+    setFormData({
+      nom: "",
+      prenom: "",
+      telephone: "",
+      ville: "",
+      statut: "nouveau",
+      venu: "",
+      besoin: "",
+      is_whatsapp: false,
+      infos_supplementaires: "",
+    });
+  };
 
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-indigo-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl relative">
+
+        {/* Retour */}
         <button
           onClick={() => router.back()}
-          className="flex items-center text-orange-500 font-semibold mb-4 hover:text-orange-600 transition-colors"
+          className="absolute top-4 left-4 flex items-center text-gray-700 font-semibold hover:text-gray-900 transition-colors"
         >
           ← Retour
         </button>
 
-        <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-2">
-          Ajouter un nouveau membre
-        </h1>
+        {/* Titre */}
+        <h1 className="text-3xl font-bold text-center mb-4">Ajouter un nouveau membre</h1>
         <p className="text-center text-gray-500 italic mb-6">
           « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Prénom */}
-          <input
-            type="text"
-            name="prenom"
-            placeholder="Prénom"
-            value={formData.prenom}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            required
-          />
-
-          {/* Nom */}
-          <input
-            type="text"
-            name="nom"
-            placeholder="Nom"
-            value={formData.nom}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            required
-          />
-
-          {/* Téléphone */}
-          <input
-            type="text"
-            name="telephone"
-            placeholder="Téléphone"
-            value={formData.telephone}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            required
-          />
-
-          {/* WhatsApp */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <input type="text" name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input" required />
+          <input type="text" name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input" required />
+          <input type="text" name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={handleChange} className="input" required />
+          <input type="text" name="ville" placeholder="Ville" value={formData.ville} onChange={handleChange} className="input" />
+          
           <label className="flex items-center gap-2 mt-1">
-            <input
-              type="checkbox"
-              name="is_whatsapp"
-              checked={formData.is_whatsapp}
-              onChange={handleChange}
-            />
+            <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} />
             WhatsApp
           </label>
 
-          {/* Ville */}
-          <input
-            type="text"
-            name="ville"
-            placeholder="Ville"
-            value={formData.ville}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          />
-
-          {/* Statut */}
-          <select
-            name="statut"
-            value={formData.statut}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          >
+          <select name="statut" value={formData.statut} onChange={handleChange} className="input">
             <option value="">-- Statut --</option>
             <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
             <option value="a déjà mon église">A déjà son église</option>
             <option value="visiteur">Visiteur</option>
           </select>
 
-          {/* Comment est venu */}
-          <select
-            name="venu"
-            value={formData.venu}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          >
+          <select name="venu" value={formData.venu} onChange={handleChange} className="input">
             <option value="">-- Comment est-il venu ? --</option>
             <option value="invité">Invité</option>
             <option value="réseaux">Réseaux</option>
@@ -190,13 +140,7 @@ export default function AddMember() {
             <option value="autre">Autre</option>
           </select>
 
-          {/* Besoin */}
-          <select
-            name="besoin"
-            value={formData.besoin}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          >
+          <select name="besoin" value={formData.besoin} onChange={handleChange} className="input">
             <option value="">-- Besoin --</option>
             <option value="Finances">Finances</option>
             <option value="Santé">Santé</option>
@@ -205,51 +149,39 @@ export default function AddMember() {
             <option value="La Famille">La Famille</option>
           </select>
 
-          {/* Infos supplémentaires */}
           <textarea
             name="infos_supplementaires"
             value={formData.infos_supplementaires}
             onChange={handleChange}
             rows={3}
             placeholder="Informations supplémentaires..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="input"
           />
 
           {/* Boutons */}
-          <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={() =>
-                setFormData({
-                  nom: "",
-                  prenom: "",
-                  telephone: "",
-                  ville: "",
-                  statut: "nouveau",
-                  venu: "",
-                  besoin: "",
-                  is_whatsapp: false,
-                  infos_supplementaires: "",
-                })
-              }
-              className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-all"
-            >
+          <div className="flex gap-4 mt-2">
+            <button type="button" onClick={handleCancel} className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               Annuler
             </button>
-            <button
-              type="submit"
-              className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all"
-            >
+            <button type="submit" className="flex-1 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               Ajouter
             </button>
           </div>
         </form>
 
-        {success && (
-          <div className="text-green-600 font-semibold text-center mt-3">
-            ✅ Membre ajouté avec succès !
-          </div>
-        )}
+        {success && <p className="text-green-600 font-semibold text-center mt-3">✅ Membre ajouté avec succès !</p>}
+
+        <style jsx>{`
+          .input {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            color: black;
+          }
+        `}</style>
       </div>
     </div>
   );

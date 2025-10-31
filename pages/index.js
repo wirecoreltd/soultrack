@@ -11,8 +11,8 @@ const roleCards = {
     { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#0E7490" }, // bleu profond
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#F97316" }, // teal foncé
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#10B981" }, // cyan
-    { path: "/rapport", label: "Rapport", emoji: "📈", color: "##FBBF24" }, // bleu clair
-    { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#E0F2FE" }, // sky
+    { path: "/rapport", label: "Rapport", emoji: "📈", color: "#FBBF24" }, // bleu clair
+    { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" }, // sky
   ],
   ResponsableIntegration: [
     { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#0284C7" },

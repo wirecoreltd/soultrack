@@ -1,7 +1,11 @@
-// pages/add-evangelise.js
+// ✅pages/add-evangelise.js
+
+"use client";
+
 import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/router";
+import Image from "next/image";
 
 // --- Supabase Client ---
 const supabase = createClient(
@@ -36,11 +40,7 @@ export default function AddEvangelise() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // <- IMPORTANT : insertion dans la table "evangelises"
-      const { data, error } = await supabase
-        .from("evangelises")
-        .insert([formData]);
-
+      const { error } = await supabase.from("evangelises").insert([formData]);
       if (error) throw error;
 
       setSuccess(true);
@@ -61,127 +61,84 @@ export default function AddEvangelise() {
     }
   };
 
+  const handleCancel = () => {
+    setFormData({
+      nom: "",
+      prenom: "",
+      telephone: "",
+      ville: "",
+      statut: "evangelisé",
+      infos_supplementaires: "",
+      is_whatsapp: false,
+      besoin: "",
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
+      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg relative">
+
         {/* Flèche retour */}
         <button
           onClick={() => router.back()}
-          className="flex items-center text-orange-500 font-semibold mb-4"
+          className="absolute top-4 left-4 flex items-center text-black hover:text-gray-800 transition-colors"
         >
           ← Retour
         </button>
 
-        <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-2">
-          Ajouter une personne évangélisée
-        </h1>
+        {/* Logo centré */}
+        <div className="flex justify-center mb-6">
+          <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
+        </div>
+
+        {/* Titre */}
+        <h1 className="text-3xl font-bold text-center mb-2">Ajouter une personne évangélisée</h1>
         <p className="text-center text-gray-500 italic mb-6">
           « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Prénom</label>
-            <input
-              type="text"
-              name="prenom"
-              value={formData.prenom}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              required
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <input type="text" name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input" required />
+          <input type="text" name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input" required />
+          <input type="text" name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={handleChange} className="input" required />
+          
+          <label className="flex items-center gap-2 mt-1">
+            <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} />
+            WhatsApp
+          </label>
 
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Nom</label>
-            <input
-              type="text"
-              name="nom"
-              value={formData.nom}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              required
-            />
-          </div>
+          <input type="text" name="ville" placeholder="Ville" value={formData.ville} onChange={handleChange} className="input" />
 
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Téléphone</label>
-            <input
-              type="text"
-              name="telephone"
-              value={formData.telephone}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              required
-            />
-          </div>
+          <textarea
+            name="besoin"
+            value={formData.besoin}
+            onChange={handleChange}
+            rows={3}
+            placeholder="Besoin de la personne"
+            className="input"
+          />
 
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="is_whatsapp"
-              checked={formData.is_whatsapp}
-              onChange={handleChange}
-              className="h-5 w-5"
-            />
-            <label className="text-gray-700 font-medium">Ce numéro a WhatsApp</label>
-          </div>
+          <textarea
+            name="infos_supplementaires"
+            value={formData.infos_supplementaires}
+            onChange={handleChange}
+            rows={2}
+            placeholder="Informations supplémentaires..."
+            className="input"
+          />
 
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Ville</label>
-            <input
-              type="text"
-              name="ville"
-              value={formData.ville}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Besoin de la personne</label>
-            <textarea
-              name="besoin"
-              value={formData.besoin}
-              onChange={handleChange}
-              rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
-            <textarea
-              name="infos_supplementaires"
-              value={formData.infos_supplementaires}
-              onChange={handleChange}
-              rows={2}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-          </div>
-
-          <div className="flex justify-between mt-4 gap-4">
+          {/* Boutons côte à côte */}
+          <div className="flex gap-4 mt-2">
             <button
               type="button"
-              onClick={() =>
-                setFormData({
-                  nom: "",
-                  prenom: "",
-                  telephone: "",
-                  ville: "",
-                  statut: "evangelisé",
-                  infos_supplementaires: "",
-                  is_whatsapp: false,
-                  besoin: "",
-                })
-              }
-              className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              onClick={handleCancel}
+              className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
             >
               Ajouter
             </button>
@@ -189,10 +146,22 @@ export default function AddEvangelise() {
         </form>
 
         {success && (
-          <div className="text-green-600 font-semibold text-center mt-4">
+          <p className="text-green-600 font-semibold text-center mt-3">
             ✅ Personne évangélisée ajoutée avec succès !
-          </div>
+          </p>
         )}
+
+        <style jsx>{`
+          .input {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            color: black;
+          }
+        `}</style>
       </div>
     </div>
   );

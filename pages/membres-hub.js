@@ -65,7 +65,7 @@ export default function MembresHub() {
       <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6">
         <Link
           href="/add-member"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0E7490] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0EA5E9] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
         >
           <div className="text-4xl mb-2">➕</div>
           <div className="text-lg font-bold text-gray-800 text-center">

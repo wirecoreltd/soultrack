@@ -127,7 +127,7 @@ export default function ListMembers() {
       <div className="flex justify-between w-full max-w-5xl items-center mb-4">
         <button
           onClick={() => window.history.back()}
-          className="flex items-center text-white font-semibold hover:text-gray-200"
+          className="flex items-center text-white hover:text-gray-200"
         >
           ← Retour
         </button>
@@ -136,11 +136,11 @@ export default function ListMembers() {
 
       {/* ==================== LOGO ==================== */}
       <div className="mt-2 mb-2">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
+        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
 
       <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">
-        SoulTrack
+        Liste de Membres
       </h1>
       <p className="text-center text-white text-lg mb-2 font-handwriting-light">
         Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
@@ -458,30 +458,49 @@ export default function ListMembers() {
               ))}
 
               {/* Membres existants */}
-              {anciensFiltres.map((m) => (
-                <tr
-                  key={m.id}
-                  className="hover:bg-white/10 transition duration-150 border-b border-gray-300"
-                >
-                  <td
-                    className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
-                    style={{ borderLeftColor: getBorderColor(m) }}
-                  >
-                    {m.prenom} {m.nom}
-                    {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                  </td>
-                  <td className="px-4 py-2">{m.telephone || "—"}</td>
-                  <td className="px-4 py-2">{m.statut || "—"}</td>
-                  <td className="px-4 py-2">
-                    <button
-                      onClick={() => toggleDetails(m.id)}
-                      className="text-orange-500 underline text-sm"
+              {anciensFiltres.length > 0 && (
+                <>
+                  <tr>
+                    <td colSpan={4} className="px-4 py-2 font-semibold text-lg">
+                      <span
+                        style={{
+                          background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                          WebkitBackgroundClip: "text",
+                          color: "transparent",
+                        }}
+                      >
+                        Membres existants
+                      </span>
+                    </td>
+                  </tr>
+              
+                  {anciensFiltres.map((m) => (
+                    <tr
+                      key={m.id}
+                      className="hover:bg-white/10 transition duration-150 border-b border-gray-300"
                     >
-                      {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                      <td
+                        className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
+                        style={{ borderLeftColor: getBorderColor(m) }}
+                      >
+                        {m.prenom} {m.nom}
+                        {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                      </td>
+                      <td className="px-4 py-2">{m.telephone || "—"}</td>
+                      <td className="px-4 py-2">{m.statut || "—"}</td>
+                      <td className="px-4 py-2">
+                        <button
+                          onClick={() => toggleDetails(m.id)}
+                          className="text-orange-500 underline text-sm"
+                        >
+                          {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              )}
+
             </tbody>
           </table>
         </div>

@@ -1,4 +1,4 @@
-/* ✅ pages/membres-hub.js */
+//* ✅ pages/membres-hub.js 
 
 "use client";
 
@@ -13,29 +13,31 @@ export default function MembresHub() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center p-6"
+      className="min-h-screen flex flex-col items-center p-6 font-sans"
       style={{
         background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
       }}
     >
-      {/* 🔹 Top bar: Retour + logo + Déconnexion */}
+      {/* 🔹 Top bar: Retour + Déconnexion */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-6">
         <button
           onClick={() => router.back()}
-          className="flex items-center text-white font-semibold hover:text-gray-200 transition-colors"
+          className="flex items-center text-white hover:text-gray-200 transition-colors"
         >
           ← Retour
         </button>
 
-        <div className="flex items-center gap-4">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={50} height={50} />
-          <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
-        </div>
+        <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
+      </div>
+
+      {/* 🔹 Logo centré */}
+      <div className="mb-6">
+        <Image src="/logo.png" alt="SoulTrack Logo" width={100} height={100} />
       </div>
 
       {/* 🔹 Titre + texte motivant */}
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-login text-white mb-2">
+        <h1 className="text-3xl font-bold text-white mb-2">
           Membres Hub
         </h1>
         <p className="text-white text-lg max-w-xl mx-auto">

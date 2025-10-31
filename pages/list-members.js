@@ -124,27 +124,48 @@ export default function ListMembers() {
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
       {/* ==================== HEADER ==================== */}
-      <div className="flex justify-between w-full max-w-5xl items-center mb-4">
-        <button
-          onClick={() => window.history.back()}
-          className="flex items-center text-white hover:text-gray-200"
-        >
-          ← Retour
-        </button>
-        <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
-      </div>
-
-      {/* ==================== LOGO ==================== */}
-      <div className="mt-2 mb-2">
-        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
-      </div>
-
-      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">
-        Liste de Membres
-      </h1>
-      <p className="text-center text-white text-lg mb-2 font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
-      </p>
+          <div className="w-full max-w-5xl mb-6">
+            {/* Ligne principale : Retour à gauche, Déconnexion à droite */}
+            <div className="flex justify-between items-center">
+              <button
+                onClick={() => window.history.back()}
+                className="flex items-center text-white hover:text-gray-200 transition-colors"
+              >
+                ← Retour
+              </button>
+          
+              <LogoutLink />
+            </div>
+          
+            {/* Ligne du dessous : Bienvenue aligné à droite */}
+            <div className="flex justify-end mt-2">
+              <p className="text-orange-200 text-sm">
+                👋 Bienvenue {session?.user?.user_metadata?.prenom || "Utilisateur"}
+              </p>
+            </div>
+          </div>
+          
+          {/* ==================== LOGO ==================== */}
+          <div className="mb-6">
+            <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} className="mx-auto" />
+          </div>
+          
+          {/* ==================== TITRE + TEXTE MOTIVANT ==================== */}
+          <div className="text-center mb-6">
+            <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-2">
+              SoulTrack
+            </h1>
+            <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
+              Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
+            </p>
+          </div>
+          
+          {/* ==================== TEXTE "Bien aimé venu le ..." ==================== */}
+            {nouveauxFiltres.length > 0 && (
+              <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic text-center mb-2 ml-1">
+                💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+              </p>
+            )}
 
       {/* ==================== FILTRE + RECHERCHE + TOGGLE ==================== */}
       <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">

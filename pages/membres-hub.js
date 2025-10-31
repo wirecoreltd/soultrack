@@ -1,4 +1,5 @@
 /* ✅ pages/membres-hub.js */
+
 "use client";
 
 import Link from "next/link";
@@ -6,7 +7,6 @@ import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import SendLinkPopup from "../components/SendLinkPopup";
 import { useRouter } from "next/router";
-//import AccessGuard from "../components/AccessGuard";
 
 export default function MembresHub() {
   const router = useRouter();
@@ -33,14 +33,18 @@ export default function MembresHub() {
         </div>
       </div>
 
-      {/* 🔹 Titre */}
-      <h1 className="text-3xl font-login text-white mb-6 text-center">
-        Membres Hub
-      </h1>
+      {/* 🔹 Titre + texte motivant */}
+      <div className="text-center mb-6">
+        <h1 className="text-3xl font-login text-white mb-2">
+          Membres Hub
+        </h1>
+        <p className="text-white text-lg max-w-xl mx-auto">
+          Bienvenue ! Chaque membre compte et ensemble, nous grandissons plus fort. 🌟
+        </p>
+      </div>
 
       {/* 🔹 Cartes principales */}
       <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6">
-        {/* Ajouter un membre */}
         <Link
           href="/add-member"
           className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#4285F4] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
@@ -51,7 +55,6 @@ export default function MembresHub() {
           </div>
         </Link>
 
-        {/* Liste des membres */}
         <Link
           href="/list-members"
           className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
@@ -62,7 +65,6 @@ export default function MembresHub() {
           </div>
         </Link>
 
-        {/* Suivis des membres */}
         <Link
           href="/suivis-membres"
           className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
@@ -91,3 +93,4 @@ export default function MembresHub() {
     </div>
   );
 }
+

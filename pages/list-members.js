@@ -605,9 +605,7 @@ export default function ListMembers() {
                 className="border rounded-lg px-2 py-1 text-sm w-full text-black"
               >
                 {statusOptions.map((s) => (
-                  <option key={s} className="text-black">
-                    {s}
-                  </option>
+                  <option key={s} className="text-black">{s}</option>
                 ))}
               </select>
 
@@ -622,9 +620,7 @@ export default function ListMembers() {
                 }
                 className="border rounded-lg px-2 py-1 text-sm w-full text-black"
               >
-                <option value="" className="text-black">
-                  -- Sélectionner cellule --
-                </option>
+                <option value="" className="text-black">-- Sélectionner cellule --</option>
                 {cellules.map((c) => (
                   <option key={c.id} value={c.id} className="text-black">
                     {c.cellule} ({c.responsable})
@@ -656,8 +652,6 @@ export default function ListMembers() {
 </table>
 </div> {/* ✅ ferme le conteneur de la table */}
 </div> {/* ✅ ferme le conteneur principal */}
-</div> {/* ✅ ferme le layout global */}
-);
-}
+); // ✅ ferme le return
 
 export default ListMembers;

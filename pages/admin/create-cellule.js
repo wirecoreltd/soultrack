@@ -1,5 +1,3 @@
-//✅pages/admin/create-cellule.js
-
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -79,6 +77,7 @@ export default function CreateCellule() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-lg relative">
+
         {/* Flèche retour */}
         <button
           onClick={() => router.back()}
@@ -92,7 +91,8 @@ export default function CreateCellule() {
           <Image src="/logo.png" alt="SoulTrack Logo" width={60} height={60} />
         </div>
 
-        <h1 className="text-2xl font-bold mb-4 text-center">Créer une cellule</h1>
+        {/* Titre */}
+        <h1 className="text-3xl font-bold text-center mb-6">Créer une cellule</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
@@ -100,7 +100,7 @@ export default function CreateCellule() {
             placeholder="Nom de la cellule"
             value={formData.nom}
             onChange={handleChange}
-            className="input"
+            className="w-full rounded-xl border border-gray-300 p-3 text-black"
             required
           />
           <input
@@ -108,7 +108,7 @@ export default function CreateCellule() {
             placeholder="Zone / Localisation"
             value={formData.zone}
             onChange={handleChange}
-            className="input"
+            className="w-full rounded-xl border border-gray-300 p-3 text-black"
             required
           />
 
@@ -116,7 +116,7 @@ export default function CreateCellule() {
             name="responsable_id"
             value={formData.responsable_id}
             onChange={handleResponsableChange}
-            className="input"
+            className="w-full rounded-xl border border-gray-300 p-3 text-black"
             required
           >
             <option value="">-- Sélectionnez un responsable --</option>
@@ -133,7 +133,7 @@ export default function CreateCellule() {
               placeholder="Téléphone du responsable"
               value={formData.telephone}
               readOnly
-              className="input bg-gray-100 cursor-not-allowed"
+              className="w-full rounded-xl border border-gray-300 p-3 text-black bg-gray-100 cursor-not-allowed"
             />
           )}
 
@@ -157,25 +157,12 @@ export default function CreateCellule() {
 
         {message && (
           <p
-            className={`mt-4 text-center text-sm ${
-              message.startsWith("✅") ? "text-green-600" : "text-red-600"
-            }`}
+            className={`mt-4 text-center text-sm ${message.startsWith("✅") ? "text-green-600" : "text-red-600"}`}
           >
             {message}
           </p>
         )}
       </div>
-
-      <style jsx>{`
-        .input {
-          width: 100%;
-          border: 1px solid #ccc;
-          border-radius: 12px;
-          padding: 12px;
-        }
-      `}</style>
     </div>
   );
 }
-
-

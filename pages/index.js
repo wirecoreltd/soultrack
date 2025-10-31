@@ -96,8 +96,7 @@ export default function IndexPage() {
         <p className="text-orange-200 text-sm mt-2 text-center">
           👋 Bienvenue {prenom}
         </p>
-      </div>
-      </div>
+      </div>     
 
       {/* 🔹 Logo centré */}
       <div className="mb-6">

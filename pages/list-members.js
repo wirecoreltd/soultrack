@@ -649,7 +649,11 @@ export default function ListMembers() {
           </>
         )}
       </tbody>
-    </table>
-  </div>
-)}
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
  

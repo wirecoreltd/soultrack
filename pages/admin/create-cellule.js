@@ -81,14 +81,14 @@ export default function CreateCellule() {
         {/* Flèche retour */}
         <button
           onClick={() => router.back()}
-          className="absolute top-4 left-4 flex items-center text-gray-700 font-semibold hover:text-gray-900 transition-colors"
+          className="absolute top-4 left-4 flex items-center text-gray-700 hover:text-gray-900 transition-colors"
         >
           ← Retour
         </button>
 
         {/* Logo centré */}
         <div className="flex justify-center mb-6">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={60} height={60} />
+          <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
         </div>
 
         {/* Titre */}

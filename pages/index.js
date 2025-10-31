@@ -7,14 +7,14 @@ import LogoutLink from "../components/LogoutLink";
 
 const roleCards = {
   Administrateur: [
-    { path: "/membres-hub", label: "Suivis des membres", emoji: "👥", color: "#3B82F6" }, // blue
-    { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#14B8A6" }, // teal
+    { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#0284C7" }, // bleu profond
+    { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#0D9488" }, // teal foncé
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" }, // cyan
-    { path: "/rapport", label: "Rapport", emoji: "📈", color: "#60A5FA" }, // light blue
+    { path: "/rapport", label: "Rapport", emoji: "📈", color: "#60A5FA" }, // bleu clair
     { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" }, // sky
   ],
   ResponsableIntegration: [
-    { path: "/membres-hub", label: "Suivis des membres", emoji: "👥", color: "#3B82F6" },
+    { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#3B82F6" },
   ],
   ResponsableEvangelisation: [
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#14B8A6" },
@@ -89,10 +89,8 @@ export default function IndexPage() {
 
         {/* Déconnexion + Bienvenue */}
         <div className="flex flex-col items-end">
-          <div>
-            <LogoutLink className="text-red-300 hover:text-red-400" />
-          </div>
-          <p className="text-yellow-200 text-sm italic mt-2">
+          <LogoutLink className="text-red-300 hover:text-red-400 mb-1" />
+          <p className="text-yellow-200 text-sm italic">
             👋 Bienvenue <span className="font-semibold text-white">{userName}</span>
           </p>
         </div>

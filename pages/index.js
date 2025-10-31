@@ -88,15 +88,15 @@ export default function IndexPage() {
           >
             ← Retour
           </button>
-      
+
           <LogoutLink className="text-red-300 hover:text-red-400" />
         </div>
-      
+
         {/* Ligne du dessous : Bienvenue centré */}
         <p className="text-orange-200 text-sm mt-2 text-center">
-          👋 Bienvenue {prenom}
+          👋 Bienvenue {userName}
         </p>
-      </div>     
+      </div>
 
       {/* 🔹 Logo centré */}
       <div className="mb-6">
@@ -131,4 +131,3 @@ export default function IndexPage() {
     </div>
   );
 }
-

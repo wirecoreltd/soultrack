@@ -77,26 +77,26 @@ export default function IndexPage() {
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
       {/* 🔹 Top bar */}
-      <div className="w-full max-w-5xl mb-6">
-        {/* Ligne principale : Retour à gauche, Déconnexion à droite */}
-        <div className="flex justify-between items-center">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-white hover:text-gray-200 transition-colors"
-          >
-            ← Retour
-          </button>
-
-          <LogoutLink />
+        <div className="w-full max-w-5xl mb-6">
+          {/* Ligne principale : Retour à gauche, Déconnexion à droite */}
+          <div className="flex justify-between items-center">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center text-white hover:text-gray-200 transition-colors font-semibold"
+            >
+              ← Retour
+            </button>
+        
+            <LogoutLink />
+          </div>
+        
+          {/* Ligne du dessous : Bienvenue aligné à droite */}
+          <div className="flex justify-end mt-2">
+            <p className="text-yellow-200 text-sm">
+              👋 Bienvenue {userName}
+            </p>
+          </div>
         </div>
-
-        {/* Ligne du dessous : Bienvenue aligné à droite */}
-        <div className="flex justify-end mt-2">
-          <p className="text-yellow-200 text-sm">
-            👋 Bienvenue {userName}
-          </p>
-        </div>
-      </div>
 
       {/* 🔹 Logo centré */}
       <div className="mb-6">

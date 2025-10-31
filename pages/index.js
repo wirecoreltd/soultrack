@@ -1,3 +1,5 @@
+//pages/index.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -10,7 +12,7 @@ const roleCards = {
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#0D9488" }, // teal foncé
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" }, // cyan
     { path: "/rapport", label: "Rapport", emoji: "📈", color: "#60A5FA" }, // bleu clair
-    { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" }, // sky
+    { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" }, // sky (différent de Cellule)
   ],
   ResponsableIntegration: [
     { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#0284C7" },
@@ -76,21 +78,21 @@ export default function IndexPage() {
       className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* 🔹 Top bar */}
+      {/* 🔹 Barre du haut */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-6">
         {/* Bouton retour */}
         <button
           onClick={() => router.back()}
-          className="flex items-center text-white hover:text-gray-200 transition-colors"
+          className="flex items-center text-white font-semibold hover:text-gray-200 transition-colors"
         >
           ← Retour
         </button>
 
-        {/* Déconnexion */}
+        {/* Déconnexion + Bienvenue */}
         <div className="flex flex-col items-end">
-          <LogoutLink className="text-red-300 hover:text-red-400" />
-          <p className="text-yellow-200 text-sm mt-6">
-            👋 Bienvenue {userName}
+          <LogoutLink className="text-red-300 hover:text-red-400 mb-1" />
+          <p className="text-yellow-200 text-sm mt-2">
+            👋 Bienvenue <span className="font-semibold text-white">{userName}</span>
           </p>
         </div>
       </div>
@@ -100,10 +102,13 @@ export default function IndexPage() {
         <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18 mx-auto" />
       </div>
 
-      {/* 🔹 Message motivant */}
-      <p className="text-white text-lg italic mb-6 max-w-2xl">
-        "La famille est le premier lieu où l'amour, le soutien et la foi se transmettent. Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté."
-      </p>
+      {/* 🔹 Texte inspirant et verset */}
+      <div className="text-white text-lg italic mb-6 max-w-2xl leading-relaxed tracking-wide font-light">
+        La famille est le premier lieu où l'amour, le soutien et la foi se transmettent. Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté.
+        <br /><br />
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
+        1 Corinthiens 12:14 ❤️
+      </div>
 
       {/* 🔹 Cartes des fonctionnalités */}
       <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl">
@@ -111,19 +116,13 @@ export default function IndexPage() {
           <div
             key={card.path}
             onClick={() => handleRedirect(card.path)}
-            className={`flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer`}
+            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
             style={{ borderTopColor: card.color }}
           >
             <div className="text-4xl mb-1">{card.emoji}</div>
             <div className="text-lg font-bold text-gray-800">{card.label}</div>
           </div>
         ))}
-      </div>
-
-      {/* 🔹 Verset biblique */}
-      <div className="text-white text-lg font-handwriting-light max-w-2xl mt-6">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
-        1 Corinthiens 12:14 ❤️
       </div>
     </div>
   );

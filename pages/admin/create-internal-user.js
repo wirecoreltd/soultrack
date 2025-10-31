@@ -67,7 +67,7 @@ export default function CreateInternalUser() {
         {/* Flèche retour */}
         <button
           onClick={() => router.back()}
-          className="absolute top-4 left-4 flex items-center text-gray-700 font-semibold hover:text-gray-900 transition-colors"
+          className="absolute top-4 left-4 flex items-center text-gray-700 hover:text-gray-900 transition-colors"
         >
           ← Retour
         </button>

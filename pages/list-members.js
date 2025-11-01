@@ -657,6 +657,9 @@ export default function ListMembers() {
 </table>
 </div> {/* ✅ ferme le conteneur de la table */}
 </div> {/* ✅ ferme le conteneur principal */}
+)} {/* ✅ ferme la condition "view === 'table'" */}
+
+</div> {/* ✅ ferme le layout global */}
 ); // ✅ ferme le return
 
 export default ListMembers;

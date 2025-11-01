@@ -536,7 +536,8 @@ export default function ListMembers() {
         ))}
 
         {/* Membres existants */}
-        {anciensFiltres.length > 0 && (
+        {/* Membres existants */}
+{anciensFiltres.length > 0 && (
   <>
     <tr>
       <td colSpan={4} className="px-4 py-2 font-semibold text-lg">
@@ -650,7 +651,7 @@ export default function ListMembers() {
       </tr>
     ))}
   </>
-)} {/* ✅ ferme le map + condition */}
+)} {/* ✅ ferme la condition et le map */}
 
 </tbody>
 </table>

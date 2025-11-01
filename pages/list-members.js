@@ -412,6 +412,11 @@ export default function ListMembers() {
                   <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>
                     {m.prenom} {m.nom} {m.star && <span className="text-yellow-400">⭐</span>}
                   </td>
+                      <tr>
+                  <td colSpan={4} className="px-4 py-2 text-white font-semibold">
+                    💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+                  </td>
+                </tr>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.statut || "—"}</td>
                   <td className="px-4 py-2">

@@ -411,9 +411,7 @@ export default function ListMembers() {
                 <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
                   <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>
                     {m.prenom} {m.nom} {m.star && <span className="text-yellow-400">⭐</span>}
-                  </td>
-                      
-                </tr>
+                  </td>                
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.statut || "—"}</td>
                   <td className="px-4 py-2">

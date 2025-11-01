@@ -431,16 +431,15 @@ export default function ListMembers() {
                           >
                             ✕
                           </button>
-                          <h3 className="text-lg font-semibold text-center mb-2">
-                            {m.prenom} {m.nom}
-                          </h3>
-                          <p>📱 Téléphone : {m.telephone || "—"}</p>
-                          <p>💬 WhatsApp : {m.is_whatsapp || "—"}</p>
-                          <p>🏙 Ville : {m.ville || "—"}</p>
-                          <p>🕊 Statut : {m.statut || "—"}</p>
-                          <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                          <p>❓Besoin : {m.besoin || "—"}</p>
-                          <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                          <div className="text-gray-700 text-sm space-y-2 w-full">
+                          <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
+                          <p>📞 Téléphone : {item.telephone || "—"}</p>
+                          <p>💬 WhatsApp : {item.is_whatsapp ? "Oui" : "—"}</p>
+                          <p>🏙 Ville : {item.ville || "—"}</p>
+                          <p>🏠 Cellule : {item.cellule_nom || "—"}</p>
+                          <p>🕊 Statut : {item.statut || "—"}</p>
+                          <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
+                          <p>📝 Infos : {item.infos_supplementaires || "—"}</p>                          
 
                           <p className="mt-2 font-semibold text-blue-600">Changer Statut :</p>
                           <select

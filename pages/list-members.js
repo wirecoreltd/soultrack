@@ -407,6 +407,14 @@ export default function ListMembers() {
               </tr>
             </thead>
             <tbody>
+        {/* ✅ Ajout de la ligne spéciale uniquement si nouveaux membres */}
+        {nouveauxFiltres.length > 0 && (
+          <tr>
+            <td colSpan={4} className="px-4 py-2 text-white font-semibold">
+              💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+            </td>
+          </tr>
+        )}
               {[...nouveauxFiltres, ...anciensFiltres].map((m) => (
                 <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
                   <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>

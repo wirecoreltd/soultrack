@@ -151,7 +151,7 @@ export default function ListMembers() {
 
       {/* ==================== TITRE ==================== */}
       <div className="text-center mb-6">
-        <h1 className="text-5xl sm:text-6xl font-handwriting text-white mb-2">SoulTrack</h1>
+        <h1 className="text-5xl sm:text-6xl font-handwriting text-white mb-2">List des Membres</h1>
         <p className="text-white text-lg max-w-xl mx-auto italic">
           Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
         </p>
@@ -233,7 +233,7 @@ export default function ListMembers() {
 
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                            <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
+                            <p> 💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p> 🏙 Ville : {m.ville || "—"}</p>
                             <p> 🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
@@ -338,7 +338,7 @@ export default function ListMembers() {
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                             <p> 📌 Prénom Nom : {m.prenom} {m.nom}</p>
                             <p> 📞 Téléphone : {m.telephone || "—"}</p>
-                            <p> 💬 WhatsApp : {m.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
+                            <p> 💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p> 🏙 Ville : {m.ville || "—"}</p>
                             <p> 🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
@@ -450,7 +450,7 @@ export default function ListMembers() {
                           {m.prenom} {m.nom}
                           </h2>
                           <p>📱 Téléphone : {m.telephone || "—"}</p>
-                          <p>💬 WhatsApp : {m.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
+                          <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                           <p>🏙 Ville : {m.ville || "—"}</p>
                           <p>🕊 Statut : {m.statut || "—"}</p>
                           <p>🧩 Comment est-il venu : {m.venu || "—"}</p>

@@ -201,10 +201,8 @@ export default function SuivisMembres() {
 
                   {isOpen && (
                     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                      {/* === Toute la partie détails que tu avais === */}
-                      <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
-                      <p>📞 Téléphone : {item.telephone || "—"}</p>
-                      <p>💬 WhatsApp : {item.whatsapp || "—"}</p>
+                      {/* === Toute la partie détails que tu avais === */}                      
+                      <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                       <p>🏙 Ville : {item.ville || "—"}</p>
                       <p>🕊 Statut : {item.statut || "—"}</p>
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>

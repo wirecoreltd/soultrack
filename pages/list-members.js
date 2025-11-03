@@ -461,7 +461,12 @@ export default function ListMembers() {
               {nouveauxFiltres.map((m) => (
                 <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
                   <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>
-                    {m.prenom} {m.nom} {m.star && <span className="text-yellow-400">⭐</span>}
+                    {m.prenom} {m.nom} 
+                    {m.star && <span className="text-yellow-400">⭐</span>}
+                    {/* Tag Nouveau */}
+                    {(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && (
+                      <span className="ml-1 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">Nouveau</span>
+                    )}
                   </td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.statut || "—"}</td>
@@ -472,45 +477,35 @@ export default function ListMembers() {
                     >
                       {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
                     </button>
-
+              
                     {detailsOpen[m.id] && (
-                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 space-y-2">
-                        <div className="bg-white text-black p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto relative">
+                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div className="bg-white text-black p-6 rounded-xl w-96 max-h-[90vh] overflow-y-auto relative space-y-4">
                           <button
                             onClick={() => toggleDetails(m.id)}
                             className="absolute top-2 right-2 text-red-500 font-bold"
                           >
                             ✕
                           </button>
+              
+                          {/* LOGO */}
+                          <div className="flex justify-center mb-2">
+                            <Image src="/logo.png" alt="SoulTrack Logo" width={60} height={60} />
+                          </div>
+              
                           <h2 className="text-lg font-bold text-gray-800 text-center">
-                          {m.prenom} {m.nom}
+                            {m.prenom} {m.nom}
+                            {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                           </h2>
+              
                           <p>📱 Téléphone : {m.telephone || "—"}</p>
                           <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                           <p>🏙 Ville : {m.ville || "—"}</p>
                           <p>🕊 Statut : {m.statut || "—"}</p>
                           <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                          <p>❓Besoin : {
-                                (() => {
-                                  if (!m.besoin) return "—";
-                            
-                                  // Si c'est déjà un tableau → join directement
-                                  if (Array.isArray(m.besoin)) {
-                                    return m.besoin.join(", ");
-                                  }
-                            
-                                  // Sinon → essayer de parser la string JSON
-                                  try {
-                                    const arr = JSON.parse(m.besoin);
-                                    return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                                  } catch (e) {
-                                    return m.besoin; // fallback si parsing échoue
-                                  }
-                                })()
-                              }
-                          </p>
+                          <p>❓Besoin : {Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin || "—"}</p>
                           <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-
+              
                           <p className="mt-2 font-semibold text-blue-600">Changer Statut :</p>
                           <select
                             value={m.statut}
@@ -521,15 +516,12 @@ export default function ListMembers() {
                               <option key={s}>{s}</option>
                             ))}
                           </select>
-
+              
                           <p className="mt-2 font-semibold text-green-600">Cellule :</p>
                           <select
                             value={selectedCellules[m.id] || ""}
                             onChange={(e) =>
-                              setSelectedCellules((prev) => ({
-                                ...prev,
-                                [m.id]: e.target.value,
-                              }))
+                              setSelectedCellules((prev) => ({ ...prev, [m.id]: e.target.value }))
                             }
                             className="border rounded-lg px-2 py-1 text-sm w-full"
                           >
@@ -540,7 +532,7 @@ export default function ListMembers() {
                               </option>
                             ))}
                           </select>
-
+              
                           {selectedCellules[m.id] && (
                             <div className="mt-2">
                               <BoutonEnvoyer
@@ -557,7 +549,6 @@ export default function ListMembers() {
                   </td>
                 </tr>
               ))}
-
               {/* 👥 Séparation Membres existants */}
               {anciensFiltres.length > 0 && (
                 <tr>

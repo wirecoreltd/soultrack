@@ -174,20 +174,74 @@ export default function AjouterMembreCellule() {
             <option value="evangélisation">Evangélisation</option>
             <option value="autre">Autre</option>
           </select>
+          {/* ✅ Besoins avec checkboxes */}
+            <div className="text-left">
+              <p className="font-semibold mb-2">Besoin :</p>
+            
+              {[
+                "Finances",
+                "Santé",
+                "Travail",
+                "Les Enfants",
+                "La Famille"
+              ].map((item) => (
+                <label key={item} className="flex items-center gap-3 mb-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    value={item}
+                    checked={Array.isArray(formData.besoin) && formData.besoin.includes(item)}
+                    onChange={(e) => {
+                      const { checked } = e.target;
+                      setFormData((prev) => ({
+                        ...prev,
+                        besoin: checked
+                          ? [...prev.besoin, item]
+                          : prev.besoin.filter((b) => b !== item),
+                      }));
+                    }}
+                    className="w-5 h-5 accent-indigo-600 rounded cursor-pointer"
+                  />
+                  {item}
+                </label>
+              ))}
+            
+              {/* ✅ Checkbox AUTRE */}
+              <label className="flex items-center gap-3 mb-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.besoin.includes("Autre")}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setFormData((prev) => ({
+                      ...prev,
+                      besoin: checked
+                        ? [...prev.besoin, "Autre"]
+                        : prev.besoin.filter((b) => b !== "Autre"),
+                    }));
+                  }}
+                  className="w-5 h-5 accent-indigo-600 rounded cursor-pointer"
+                />
+                Autre
+              </label>
+            
+              {/* ✅ Champ texte visible si Autre sélectionné */}
+              {formData.besoin.includes("Autre") && (
+                <input
+                  type="text"
+                  placeholder="Précisez..."
+                  value={formData.autreBesoin || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      autreBesoin: e.target.value,
+                    })
+                  }
+                  className="input mt-1"
+                />
+              )}
+</div>
 
-          <select
-            name="besoin"
-            value={formData.besoin}
-            onChange={handleChange}
-            className="input"
-          >
-            <option value="">-- Besoin de la personne --</option>
-            <option value="Finances">Finances</option>
-            <option value="Santé">Santé</option>
-            <option value="Travail">Travail</option>
-            <option value="Les Enfants">Les Enfants</option>
-            <option value="La Famille">La Famille</option>
-          </select>
+          
 
           <textarea
             name="infos_supplementaires"

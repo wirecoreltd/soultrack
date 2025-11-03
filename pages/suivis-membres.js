@@ -219,7 +219,7 @@ export default function SuivisMembres() {
                                         
                            // Sinon → essayer de parser la string JSON
                            try {
-                             const arr = JSON.parse(m.besoin);
+                             const arr = JSON.parse(item.besoin);
                              return Array.isArray(arr) ? arr.join(", ") : item.besoin;
                            } catch (e) {
                              return m.besoin; // fallback si parsing échoue

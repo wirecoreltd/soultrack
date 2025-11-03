@@ -186,7 +186,7 @@ export default function CreateInternalUser() {
             border: 1px solid #ccc;
             border-radius: 12px;
             padding: 12px;
-            text-align: center;
+            text-align: left;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             color: black;
           }

@@ -338,7 +338,7 @@ export default function ListMembers() {
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                             <p> 📌 Prénom Nom : {m.prenom} {m.nom}</p>
                             <p> 📞 Téléphone : {m.telephone || "—"}</p>
-                            <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
+                            <p> 💬 WhatsApp : {m.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
                             <p> 🏙 Ville : {m.ville || "—"}</p>
                             <p> 🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
@@ -438,7 +438,7 @@ export default function ListMembers() {
                     </button>
 
                     {detailsOpen[m.id] && (
-                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 space-y-2">
                         <div className="bg-white text-black p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto relative">
                           <button
                             onClick={() => toggleDetails(m.id)}
@@ -446,11 +446,11 @@ export default function ListMembers() {
                           >
                             ✕
                           </button>
-                          <h3 className="text-lg font-semibold text-center mb-2">
-                            {m.prenom} {m.nom}
-                          </h3>
+                          <h2 className="text-lg font-bold text-gray-800 text-center">
+                          {m.prenom} {m.nom}
+                          </h2>
                           <p>📱 Téléphone : {m.telephone || "—"}</p>
-                          <p>💬 WhatsApp : {m.is_whatsapp || "—"}</p>
+                          <p>💬 WhatsApp : {m.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
                           <p>🏙 Ville : {m.ville || "—"}</p>
                           <p>🕊 Statut : {m.statut || "—"}</p>
                           <p>🧩 Comment est-il venu : {m.venu || "—"}</p>

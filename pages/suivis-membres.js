@@ -236,7 +236,7 @@ export default function SuivisMembres() {
                           className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
                         >
                           <option value="">-- Choisir un statut --</option>
-                          <option value="actif">✅Intégrer Actif</option>
+                          <option value="actif">✅Intégrer</option>
                           <option value="en cours">🕓 En Cours</option>
                           <option value="refus">❌ Refus</option>                          
                         </select>

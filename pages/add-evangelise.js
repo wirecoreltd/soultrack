@@ -139,43 +139,48 @@ export default function AddEvangelise() {
 
           <input className="input" type="text" name="ville" placeholder="Ville" value={formData.ville} onChange={(e)=>setFormData({...formData,ville:e.target.value})} />
 
-          {/* ✅ Besoin */}
-          <label className="font-semibold text-gray-700 mt-2">Besoin :</label>
-          
-          <div className="grid grid-cols-2 gap-3">
-            {besoinsList.map((b) => (
-              <label key={b} className="flex items-center gap-2 cursor-pointer">
+          {/* ✅ Besoin avec style correct + coche bleue */}
+            <div className="mt-4">
+              <p className="font-semibold mb-2">Besoin :</p>
+            
+              {besoinsList.map((b) => (
+                <label key={b} className="flex items-center gap-3 mb-2">
+                  <input
+                    type="checkbox"
+                    name="besoin"
+                    value={b}
+                    checked={formData.besoin.includes(b)}
+                    onChange={() => handleBesoinChange(b)}
+                    className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600"
+                  />
+                  <span>{b}</span>
+                </label>
+              ))}
+            
+              {/* ✅ Autre */}
+              <label className="flex items-center gap-3 mb-2">
                 <input
                   type="checkbox"
-                  className="w-5 h-5 accent-indigo-600 cursor-pointer"
-                  checked={formData.besoin.includes(b)}
-                  onChange={() => handleBesoinChange(b)}
+                  name="besoin"
+                  value="Autre"
+                  checked={showOtherField}
+                  onChange={() => setShowOtherField(!showOtherField)}
+                  className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600"
                 />
-                {b}
+                Autre
               </label>
-            ))}
-
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                className="w-5 h-5 accent-indigo-600 cursor-pointer"
-                checked={showOtherField}
-                onChange={() => setShowOtherField(!showOtherField)}
-              />
-              Autre
-            </label>
-          </div>
-
-          {showOtherField && (
-            <input
-              className="input"
-              type="text"
-              placeholder="Précisez le besoin..."
-              value={otherBesoin}
-              onChange={(e) => setOtherBesoin(e.target.value)}
-            />
-          )}
-
+            
+              {/* ✅ Champ dynamique */}
+              {showOtherField && (
+                <input
+                  type="text"
+                  placeholder="Précisez le besoin..."
+                  value={otherBesoin}
+                  onChange={(e) => setOtherBesoin(e.target.value)}
+                  className="input mt-1"
+                />
+              )}
+            </div>
           <textarea
             className="input"
             name="infos_supplementaires"

@@ -222,7 +222,7 @@ export default function SuivisMembres() {
                              const arr = JSON.parse(item.besoin);
                              return Array.isArray(arr) ? arr.join(", ") : item.besoin;
                            } catch (e) {
-                             return m.besoin; // fallback si parsing échoue
+                             return item.besoin; // fallback si parsing échoue
                            }
                           })()
                         }
@@ -236,10 +236,9 @@ export default function SuivisMembres() {
                           className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
                         >
                           <option value="">-- Choisir un statut --</option>
-                          <option value="actif">✅ Actif</option>
-                          <option value="en attente">🕓 En attente</option>
-                          <option value="suivi terminé">🏁 Terminé</option>
-                          <option value="inactif">❌ Inactif</option>
+                          <option value="actif">✅Intégrer Actif</option>
+                          <option value="en cours">🕓 En Cours</option>
+                          <option value="refus">❌ Refus</option>                          
                         </select>
                       </div>
                       <div>

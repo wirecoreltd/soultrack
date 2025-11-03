@@ -201,8 +201,10 @@ export default function SuivisMembres() {
 
                   {isOpen && (
                     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                      {/* === Toute la partie détails que tu avais === */}                      
-                      <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                      {/* === Toute la partie détails que tu avais === */}
+                      <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
+                      <p>📞 Téléphone : {item.telephone || "—"}</p>
+                      <p>💬 WhatsApp : {item.whatsapp || "—"}</p>
                       <p>🏙 Ville : {item.ville || "—"}</p>
                       <p>🕊 Statut : {item.statut || "—"}</p>
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
@@ -314,6 +316,25 @@ export default function SuivisMembres() {
         <p>🏠 Cellule : {item.cellule_nom || "—"}</p>
         <p>🕊 Statut : {item.statut || "—"}</p>
         <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
+        <p>❓Besoin : {
+            (() => {
+              if (!m.besoin) return "—";
+                          
+              // Si c'est déjà un tableau → join directement
+              if (Array.isArray(m.besoin)) {
+                 return m.besoin.join(", ");
+             }
+                          
+             // Sinon → essayer de parser la string JSON
+             try {
+               const arr = JSON.parse(m.besoin);
+               return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+             } catch (e) {
+               return m.besoin; // fallback si parsing échoue
+             }
+            })()
+          }
+        </p>  
         <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
         <div>
           <label className="text-black text-sm">BESOIN :</label>

@@ -210,17 +210,17 @@ export default function SuivisMembres() {
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
                       <p>❓Besoin : {
                           (() => {
-                            if (!m.besoin) return "—";
+                            if (!item.besoin) return "—";
                                         
                             // Si c'est déjà un tableau → join directement
-                            if (Array.isArray(m.besoin)) {
-                               return m.besoin.join(", ");
+                            if (Array.isArray(item.besoin)) {
+                               return item.besoin.join(", ");
                            }
                                         
                            // Sinon → essayer de parser la string JSON
                            try {
                              const arr = JSON.parse(m.besoin);
-                             return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                             return Array.isArray(arr) ? arr.join(", ") : item.besoin;
                            } catch (e) {
                              return m.besoin; // fallback si parsing échoue
                            }
@@ -323,19 +323,19 @@ export default function SuivisMembres() {
         <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
         <p>❓Besoin : {
             (() => {
-              if (!m.besoin) return "—";
+              if (!item.besoin) return "—";
                           
               // Si c'est déjà un tableau → join directement
-              if (Array.isArray(m.besoin)) {
-                 return m.besoin.join(", ");
+              if (Array.isArray(item.besoin)) {
+                 return item.besoin.join(", ");
              }
                           
              // Sinon → essayer de parser la string JSON
              try {
-               const arr = JSON.parse(m.besoin);
-               return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+               const arr = JSON.parse(item.besoin);
+               return Array.isArray(arr) ? arr.join(", ") : item.besoin;
              } catch (e) {
-               return m.besoin; // fallback si parsing échoue
+               return item.besoin; // fallback si parsing échoue
              }
             })()
           }

@@ -227,21 +227,7 @@ export default function SuivisMembres() {
                           })()
                         }
                       </p>
-                      <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
-                      <div>
-                        <label className="text-black text-sm">BESOIN :</label>
-                        <select
-                          value={item.besoin || ""}
-                          className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
-                        >
-                          <option value="">-- Sélectionner --</option>
-                          <option value="Finances">Finances</option>
-                          <option value="Santé">Santé</option>
-                          <option value="Travail">Travail</option>
-                          <option value="Les Enfants">Les Enfants</option>
-                          <option value="La Famille">La Famille</option>
-                        </select>
-                      </div>
+                      <p>📝 Infos : {item.infos_supplementaires || "—"}</p>                      
                       <div>
                         <label className="text-black text-sm">📋 Statut Suivis :</label>
                         <select
@@ -354,21 +340,7 @@ export default function SuivisMembres() {
             })()
           }
         </p>  
-        <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
-        <div>
-          <label className="text-black text-sm">BESOIN :</label>
-          <select
-            value={item.besoin || ""}
-            className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
-          >
-            <option value="">-- Sélectionner --</option>
-            <option value="Finances">Finances</option>
-            <option value="Santé">Santé</option>
-            <option value="Travail">Travail</option>
-            <option value="Les Enfants">Les Enfants</option>
-            <option value="La Famille">La Famille</option>
-          </select>
-        </div>
+        <p>📝 Infos : {item.infos_supplementaires || "—"}</p>        
         <div>
           <label className="text-black text-sm">📋 Statut Suivis :</label>
           <select

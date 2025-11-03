@@ -1,3 +1,4 @@
+//pages/suivis-membres.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -200,32 +201,16 @@ export default function SuivisMembres() {
 
                   {isOpen && (
                     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                      {/* === Toute la partie détails que tu avais === */}                      
-                      <p> 💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                      <p>🏙 Ville : {item.ville || "—"}</p>                      
+                      {/* === Toute la partie détails que tu avais === */}
+                      <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
+                      <p>📞 Téléphone : {item.telephone || "—"}</p>
+                      <p>💬 WhatsApp : {item.whatsapp || "—"}</p>
+                      <p>🏙 Ville : {item.ville || "—"}</p>
+                      <p>🕊 Statut : {item.statut || "—"}</p>
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
-                      <p>❓Besoin : {
-                                (() => {
-                                  if (!m.besoin) return "—";
-                            
-                                  // Si c'est déjà un tableau → join directement
-                                  if (Array.isArray(m.besoin)) {
-                                    return m.besoin.join(", ");
-                                  }
-                            
-                                  // Sinon → essayer de parser la string JSON
-                                  try {
-                                    const arr = JSON.parse(m.besoin);
-                                    return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                                  } catch (e) {
-                                    return m.besoin; // fallback si parsing échoue
-                                  }
-                                })()
-                              }
-                            </p>
                       <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
                       <div>
-                        <label className="text-black text-sm">Besoin :</label>
+                        <label className="text-black text-sm">BESOIN :</label>
                         <select
                           value={item.besoin || ""}
                           className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
@@ -246,9 +231,10 @@ export default function SuivisMembres() {
                           className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
                         >
                           <option value="">-- Choisir un statut --</option>
-                          <option value="actif">✅ Intégrer</option>
-                          <option value="en cours">🕓 En Cours</option>
-                          <option value="refus">🏁 Refus</option>                          
+                          <option value="actif">✅ Actif</option>
+                          <option value="en attente">🕓 En attente</option>
+                          <option value="suivi terminé">🏁 Terminé</option>
+                          <option value="inactif">❌ Inactif</option>
                         </select>
                       </div>
                       <div>

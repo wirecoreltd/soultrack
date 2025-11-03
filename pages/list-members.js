@@ -71,8 +71,7 @@ export default function ListMembers() {
 
   const formatDate = (dateStr) => {
     try {
-      const date = new Date(dateStr);
-      return format(date, "EEEE d MMMM yyyy", { locale: fr });
+      return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr });
     } catch {
       return "";
     }
@@ -97,11 +96,6 @@ export default function ListMembers() {
     filter ? anciens.filter((m) => m.statut === filter) : anciens
   );
 
-  const allMembersOrdered = [...nouveaux, ...anciens];
-  const filteredMembers = filterBySearch(
-    filter ? allMembersOrdered.filter((m) => m.statut === filter) : allMembersOrdered
-  );
-
   const statusOptions = [
     "actif",
     "Integrer",
@@ -111,7 +105,7 @@ export default function ListMembers() {
     "a déjà mon église",
   ];
 
-  const totalCount = filteredMembers.length;
+  const totalCount = filterBySearch(members).length;
 
   const toggleDetails = (id) => {
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -122,15 +116,11 @@ export default function ListMembers() {
       className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* ==================== HEADER ==================== */}
+      {/* Header */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
           <button
-            onClick={() => {
-              if (typeof window !== "undefined") {
-                window.history.back();
-              }
-            }}
+            onClick={() => typeof window !== "undefined" && window.history.back()}
             className="flex items-center text-white hover:text-gray-200 transition-colors"
           >
             ← Retour
@@ -144,12 +134,12 @@ export default function ListMembers() {
         </div>
       </div>
 
-      {/* ==================== LOGO ==================== */}
+      {/* Logo */}
       <div className="mb-6">
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} className="mx-auto" />
       </div>
 
-      {/* ==================== TITRE ==================== */}
+      {/* Titre */}
       <div className="text-center mb-6">
         <h1 className="text-5xl sm:text-6xl font-handwriting text-white mb-2">SoulTrack</h1>
         <p className="text-white text-lg max-w-xl mx-auto italic">
@@ -157,7 +147,7 @@ export default function ListMembers() {
         </p>
       </div>
 
-      {/* ==================== CONTROLS ==================== */}
+      {/* Controls */}
       <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">
         <div className="flex items-center space-x-2 mb-2 sm:mb-0">
           <select
@@ -190,109 +180,37 @@ export default function ListMembers() {
         </button>
       </div>
 
-      {/* ==================== VUE CARTE ==================== */}
+      {/* Vue Carte */}
       {view === "card" && (
         <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
-          {/* -------- Nouveaux membres -------- */}
+          {/* Nouveaux Membres */}
           {nouveauxFiltres.length > 0 && (
             <div>
               <p className="text-white text-lg mb-2 ml-1">
                 💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {nouveauxFiltres.map((m) => {
-                  const isOpen = detailsOpen[m.id];
-                  return (
-                    <div
-                      key={m.id}
-                      className="bg-white p-3 rounded-xl shadow-md border-l-4 transition duration-200 overflow-hidden relative"
-                      style={{ borderLeftColor: getBorderColor(m) }}
-                    >
-                      {(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && (
-                        <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
-                          Nouveau
-                        </span>
-                      )}
-
-                      <div className="flex flex-col items-center">
-                        <h2 className="text-lg font-bold text-gray-800 text-center">
-                          {m.prenom} {m.nom}
-                        </h2>
-                        <p className="text-sm text-gray-600 mb-2 text-center">
-                          📱 {m.telephone || "—"}
-                        </p>
-                        <p className="text-sm text-gray-600 mb-2 text-center">
-                          🕊 Statut : {m.statut || "—"}
-                        </p>
-                        <button
-                          onClick={() => toggleDetails(m.id)}
-                          className="text-orange-500 underline text-sm"
-                        >
-                          {isOpen ? "Fermer détails" : "Détails"}
-                        </button>
-
-                        {isOpen && (
-                          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                            <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
-                            <p> 🏙 Ville : {m.ville || "—"}</p>
-                            <p> 🕊 Statut : {m.statut || "—"}</p>
-                            <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                            <p>❓Besoin : {m.besoin || "—"}</p>
-                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-
-                            <p className="mt-2 font-semibold text-bleu-600">Statut :</p>
-                            <select
-                              value={m.statut}
-                              onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                              className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
-                            >
-                              {statusOptions.map((s) => (
-                                <option key={s}>{s}</option>
-                              ))}
-                            </select>
-
-                            <p className="mt-2 font-semibold text-green-600">Cellule :</p>
-                            <select
-                              value={selectedCellules[m.id] || ""}
-                              onChange={(e) =>
-                                setSelectedCellules((prev) => ({
-                                  ...prev,
-                                  [m.id]: e.target.value,
-                                }))
-                              }
-                              className="border rounded-lg px-2 py-1 text-sm w-full"
-                            >
-                              <option value="">-- Sélectionner cellule --</option>
-                              {cellules.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {c.cellule} ({c.responsable})
-                                </option>
-                              ))}
-                            </select>
-
-                            {selectedCellules[m.id] && (
-                              <div className="mt-2">
-                                <BoutonEnvoyer
-                                  membre={m}
-                                  cellule={cellules.find(
-                                    (c) => c.id === selectedCellules[m.id]
-                                  )}
-                                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                                  session={session}
-                                />
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                {nouveauxFiltres.map((m) => (
+                  <MemberCard
+                    key={m.id}
+                    member={m}
+                    detailsOpen={detailsOpen[m.id]}
+                    toggleDetails={toggleDetails}
+                    cellules={cellules}
+                    selectedCellules={selectedCellules}
+                    setSelectedCellules={setSelectedCellules}
+                    handleChangeStatus={handleChangeStatus}
+                    handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
+                    session={session}
+                    getBorderColor={getBorderColor}
+                    statusOptions={statusOptions}
+                  />
+                ))}
               </div>
             </div>
           )}
 
-          {/* -------- Membres existants -------- */}
+          {/* Membres existants */}
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
               <h3 className="text-white text-lg mb-3 font-semibold">
@@ -307,242 +225,137 @@ export default function ListMembers() {
                 </span>
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {anciensFiltres.map((m) => {
-                  const isOpen = detailsOpen[m.id];
-                  return (
-                    <div
-                      key={m.id}
-                      className="bg-white p-3 rounded-xl shadow-md border-l-4 transition duration-200 overflow-hidden relative"
-                      style={{ borderLeftColor: getBorderColor(m) }}
-                    >
-                      <div className="flex flex-col items-center">
-                        <h2 className="text-lg font-bold text-gray-800 text-center">
-                          {m.prenom} {m.nom}
-                          {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                        </h2>
-
-                        <p className="text-sm text-gray-600 mb-2 text-center">
-                          📱 {m.telephone || "—"}
-                        </p>
-                        <p className="text-sm text-gray-600 mb-2 text-center">
-                          🕊 Statut : {m.statut || "—"}
-                        </p>
-                        <button
-                          onClick={() => toggleDetails(m.id)}
-                          className="text-orange-500 underline text-sm"
-                        >
-                          {isOpen ? "Fermer détails" : "Détails"}
-                        </button>
-
-                        {isOpen && (
-                          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                            <p> 📌 Prénom Nom : {m.prenom} {m.nom}</p>
-                            <p> 📞 Téléphone : {m.telephone || "—"}</p>
-                            <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
-                            <p> 🏙 Ville : {m.ville || "—"}</p>
-                            <p> 🕊 Statut : {m.statut || "—"}</p>
-                            <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                            <p>❓ Besoin : {m.besoin || "—"}</p>
-                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-
-                            <select
-                              value={m.statut}
-                              onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                              className="border rounded-md px-2 py-1 text-xs text-gray-700 w-full"
-                            >
-                              {statusOptions.map((s) => (
-                                <option key={s}>{s}</option>
-                              ))}
-                            </select>
-
-                            <p className="mt-2 font-semibold text-green-600">Cellule :</p>
-                            <select
-                              value={selectedCellules[m.id] || ""}
-                              onChange={(e) =>
-                                setSelectedCellules((prev) => ({
-                                  ...prev,
-                                  [m.id]: e.target.value,
-                                }))
-                              }
-                              className="border rounded-lg px-2 py-1 text-sm w-full"
-                            >
-                              <option value="">-- Sélectionner cellule --</option>
-                              {cellules.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {c.cellule} ({c.responsable})
-                                </option>
-                              ))}
-                            </select>
-
-                            {selectedCellules[m.id] && (
-                              <div className="mt-2">
-                                <BoutonEnvoyer
-                                  membre={m}
-                                  cellule={cellules.find(
-                                    (c) => c.id === selectedCellules[m.id]
-                                  )}
-                                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                                  session={session}
-                                />
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                {anciensFiltres.map((m) => (
+                  <MemberCard
+                    key={m.id}
+                    member={m}
+                    detailsOpen={detailsOpen[m.id]}
+                    toggleDetails={toggleDetails}
+                    cellules={cellules}
+                    selectedCellules={selectedCellules}
+                    setSelectedCellules={setSelectedCellules}
+                    handleChangeStatus={handleChangeStatus}
+                    handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
+                    session={session}
+                    getBorderColor={getBorderColor}
+                    statusOptions={statusOptions}
+                  />
+                ))}
               </div>
             </div>
           )}
         </div>
       )}
 
-      {/* ==================== VUE TABLE ==================== */}
+      {/* Vue Table */}
       {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
-              <tr>
-                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-                <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Statut</th>
-                <th className="px-4 py-2 rounded-tr-lg">Détails</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {/* 💖 Ligne spéciale pour nouveaux membres */}
-              {nouveauxFiltres.length > 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-2 text-white font-semibold">
-                    💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-                  </td>
-                </tr>
-              )}
-
-              {/* 👤 Liste des nouveaux membres */}
-              {nouveauxFiltres.map((m) => (
-                <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                  <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>
-                    {m.prenom} {m.nom} {m.star && <span className="text-yellow-400">⭐</span>}
-                  </td>
-                  <td className="px-4 py-2">{m.telephone || "—"}</td>
-                  <td className="px-4 py-2">{m.statut || "—"}</td>
-                  <td className="px-4 py-2">
-                    <button
-                      onClick={() => toggleDetails(m.id)}
-                      className="text-orange-400 underline text-sm"
-                    >
-                      {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
-                    </button>
-
-                    {detailsOpen[m.id] && (
-                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                        <div className="bg-white text-black p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto relative">
-                          <button
-                            onClick={() => toggleDetails(m.id)}
-                            className="absolute top-2 right-2 text-red-500 font-bold"
-                          >
-                            ✕
-                          </button>
-                          <h3 className="text-lg font-semibold text-center mb-2">
-                            {m.prenom} {m.nom}
-                          </h3>
-                          <p>📱 Téléphone : {m.telephone || "—"}</p>
-                          <p>💬 WhatsApp : {m.is_whatsapp || "—"}</p>
-                          <p>🏙 Ville : {m.ville || "—"}</p>
-                          <p>🕊 Statut : {m.statut || "—"}</p>
-                          <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                          <p>❓Besoin : {m.besoin || "—"}</p>
-                          <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-
-                          <p className="mt-2 font-semibold text-blue-600">Changer Statut :</p>
-                          <select
-                            value={m.statut}
-                            onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                            className="border rounded-md px-2 py-1 text-sm w-full"
-                          >
-                            {statusOptions.map((s) => (
-                              <option key={s}>{s}</option>
-                            ))}
-                          </select>
-
-                          <p className="mt-2 font-semibold text-green-600">Cellule :</p>
-                          <select
-                            value={selectedCellules[m.id] || ""}
-                            onChange={(e) =>
-                              setSelectedCellules((prev) => ({
-                                ...prev,
-                                [m.id]: e.target.value,
-                              }))
-                            }
-                            className="border rounded-lg px-2 py-1 text-sm w-full"
-                          >
-                            <option value="">-- Sélectionner cellule --</option>
-                            {cellules.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.cellule} ({c.responsable})
-                              </option>
-                            ))}
-                          </select>
-
-                          {selectedCellules[m.id] && (
-                            <div className="mt-2">
-                              <BoutonEnvoyer
-                                membre={m}
-                                cellule={cellules.find((c) => c.id === selectedCellules[m.id])}
-                                onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                                session={session}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-
-              {/* 👥 Séparation Membres existants */}
-              {anciensFiltres.length > 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-2 font-semibold text-lg">
-                    <span
-                      style={{
-                        background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                        WebkitBackgroundClip: "text",
-                        color: "transparent",
-                      }}
-                    >
-                      👥 Membres existants
-                    </span>
-                  </td>
-                </tr>
-              )}
-
-              {/* 👥 Liste des membres existants */}
-              {anciensFiltres.map((m) => (
-                <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                  <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>
-                    {m.prenom} {m.nom} {m.star && <span className="text-yellow-400">⭐</span>}
-                  </td>
-                  <td className="px-4 py-2">{m.telephone || "—"}</td>
-                  <td className="px-4 py-2">{m.statut || "—"}</td>
-                  <td className="px-4 py-2">
-                    <button
-                      onClick={() => toggleDetails(m.id)}
-                      className="text-orange-400 underline text-sm"
-                    >
-                      {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <MemberTable
+          nouveauxFiltres={nouveauxFiltres}
+          anciensFiltres={anciensFiltres}
+          detailsOpen={detailsOpen}
+          toggleDetails={toggleDetails}
+          selectedCellules={selectedCellules}
+          setSelectedCellules={setSelectedCellules}
+          handleChangeStatus={handleChangeStatus}
+          handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
+          cellules={cellules}
+          session={session}
+          getBorderColor={getBorderColor}
+          statusOptions={statusOptions}
+          formatDate={formatDate}
+        />
       )}
     </div>
   );
 }
+
+/* ==================== COMPONENTS ==================== */
+
+const MemberCard = ({
+  member: m,
+  detailsOpen,
+  toggleDetails,
+  cellules,
+  selectedCellules,
+  setSelectedCellules,
+  handleChangeStatus,
+  handleStatusUpdateFromEnvoyer,
+  session,
+  getBorderColor,
+  statusOptions,
+}) => {
+  const isNew = m.statut === "visiteur" || m.statut === "veut rejoindre ICC";
+  return (
+    <div
+      className="bg-white p-3 rounded-xl shadow-md border-l-4 transition duration-200 overflow-hidden relative"
+      style={{ borderLeftColor: getBorderColor(m) }}
+    >
+      {isNew && (
+        <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
+          Nouveau
+        </span>
+      )}
+      <div className="flex flex-col items-center">
+        <h2 className="text-lg font-bold text-gray-800 text-center">
+          {m.prenom} {m.nom}
+          {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+        </h2>
+        <p className="text-sm text-gray-600 mb-2 text-center">📱 {m.telephone || "—"}</p>
+        <p className="text-sm text-gray-600 mb-2 text-center">🕊 Statut : {m.statut || "—"}</p>
+
+        <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">
+          {detailsOpen ? "Fermer détails" : "Détails"}
+        </button>
+
+        {detailsOpen && (
+          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+            <p>💬 WhatsApp : {m.is_whatsapp || "—"}</p>
+            <p>🏙 Ville : {m.ville || "—"}</p>
+            <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+            <p>❓Besoin : {m.besoin || "—"}</p>
+            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+
+            <p className="mt-2 font-semibold text-blue-600">Changer Statut :</p>
+            <select
+              value={m.statut}
+              onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+              className="border rounded-md px-2 py-1 text-sm w-full"
+            >
+              {statusOptions.map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+            </select>
+
+            <p className="mt-2 font-semibold text-green-600">Cellule :</p>
+            <select
+              value={selectedCellules[m.id] || ""}
+              onChange={(e) =>
+                setSelectedCellules((prev) => ({ ...prev, [m.id]: e.target.value }))
+              }
+              className="border rounded-lg px-2 py-1 text-sm w-full"
+            >
+              <option value="">-- Sélectionner cellule --</option>
+              {cellules.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.cellule} ({c.responsable})
+                </option>
+              ))}
+            </select>
+
+            {selectedCellules[m.id] && (
+              <div className="mt-2">
+                <BoutonEnvoyer
+                  membre={m}
+                  cellule={cellules.find((c) => c.id === selectedCellules[m.id])}
+                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                  session={session}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+

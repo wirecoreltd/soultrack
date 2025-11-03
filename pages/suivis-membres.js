@@ -200,16 +200,13 @@ export default function SuivisMembres() {
 
                   {isOpen && (
                     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                      {/* === Toute la partie détails que tu avais === */}
-                      <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
-                      <p>📞 Téléphone : {item.telephone || "—"}</p>
-                      <p>💬 WhatsApp : {item.whatsapp || "—"}</p>
-                      <p>🏙 Ville : {item.ville || "—"}</p>
-                      <p>🕊 Statut : {item.statut || "—"}</p>
+                      {/* === Toute la partie détails que tu avais === */}                      
+                      <p>💬 WhatsApp : {item.is_whatsapp || "—"}</p>
+                      <p>🏙 Ville : {item.ville || "—"}</p>                      
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
                       <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
                       <div>
-                        <label className="text-black text-sm">BESOIN :</label>
+                        <label className="text-black text-sm">Besoin :</label>
                         <select
                           value={item.besoin || ""}
                           className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
@@ -230,10 +227,9 @@ export default function SuivisMembres() {
                           className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
                         >
                           <option value="">-- Choisir un statut --</option>
-                          <option value="actif">✅ Actif</option>
-                          <option value="en attente">🕓 En attente</option>
-                          <option value="suivi terminé">🏁 Terminé</option>
-                          <option value="inactif">❌ Inactif</option>
+                          <option value="actif">✅ Intégrer</option>
+                          <option value="en cours">🕓 En Cours</option>
+                          <option value="refus">🏁 Refus</option>                          
                         </select>
                       </div>
                       <div>

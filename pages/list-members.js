@@ -237,7 +237,7 @@ export default function ListMembers() {
                             <p> 🏙 Ville : {m.ville || "—"}</p>
                             <p> 🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                            <p>❓Besoin : {m.besoin || "—"}</p>
+                            <p>❓Besoin : {Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             <p className="mt-2 font-semibold text-bleu-600">Statut :</p>
@@ -342,7 +342,7 @@ export default function ListMembers() {
                             <p> 🏙 Ville : {m.ville || "—"}</p>
                             <p> 🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                            <p>❓ Besoin : {m.besoin || "—"}</p>
+                            <p>❓Besoin : {Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             <select
@@ -454,7 +454,7 @@ export default function ListMembers() {
                           <p>🏙 Ville : {m.ville || "—"}</p>
                           <p>🕊 Statut : {m.statut || "—"}</p>
                           <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                          <p>❓Besoin : {m.besoin || "—"}</p>
+                          <p>❓Besoin : {Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin || "—"}</p>
                           <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                           <p className="mt-2 font-semibold text-blue-600">Changer Statut :</p>

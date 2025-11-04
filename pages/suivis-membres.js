@@ -1,4 +1,4 @@
-// pages/suivis-membres.js
+//pages/suivis-membres.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -30,7 +30,6 @@ export default function SuivisMembres() {
 
       if (!userEmail) throw new Error("Utilisateur non connecté");
 
-      // 🔹 Récupérer l'ID du profil connecté
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("id")
@@ -40,13 +39,8 @@ export default function SuivisMembres() {
       if (profileError) throw profileError;
       const responsableId = profileData.id;
 
-      // On sélectionne la table suivis_membres et on récupère aussi la cellule liée
-      let query = supabase
-        .from("suivis_membres")
-        .select("*, cellules (id, cellule)")
-        .order("created_at", { ascending: false });
+      let query = supabase.from("suivis_membres").select("*").order("created_at", { ascending: false });
 
-      // 🔹 Si ResponsableCellule → filtrer uniquement ses cellules
       if (userRole.includes("ResponsableCellule")) {
         const { data: cellulesData, error: cellulesError } = await supabase
           .from("cellules")
@@ -54,22 +48,13 @@ export default function SuivisMembres() {
           .eq("responsable_id", responsableId);
 
         if (cellulesError) throw cellulesError;
-
         const celluleIds = cellulesData.map((c) => c.id);
         query = query.in("cellule_id", celluleIds);
       }
 
       const { data, error } = await query;
       if (error) throw error;
-
-      // Normalisation
-      const normalized = (data || []).map((item) => ({
-        ...item,
-        cellule_id: item.cellules?.id ?? item.cellule_id ?? null,
-        cellule_nom: item.cellules?.cellule ?? item.cellule_nom ?? null,
-      }));
-
-      setSuivis(normalized);
+      setSuivis(data || []);
     } catch (err) {
       console.error("Erreur fetchSuivis:", err);
       setMessage("Erreur lors de la récupération des membres.");
@@ -90,13 +75,11 @@ export default function SuivisMembres() {
 
   const getBorderColor = (m) => {
     if (m.statut_suivis === "integrer") return "#4285F4";
-    if (m.statut_suivis === "en cours" || m.statut_suivis === "en attente") return "#FFA500";
-    if (m.statut_suivis === "refus") return "#EA5454";
-    if (m.statut_suivis === "suivi terminé" || m.statut_suivis === "termine") return "#34A853";
+    if (m.statut_suivis === "en cours") return "#FFA500";
+    if (m.statut_suivis === "refus") return "#34A853";
     return "#ccc";
   };
 
-  // ✅ Modification : mise à jour cellule_id au lieu d'insertion
   const updateSuivi = async (id) => {
     setMessage(null);
     const newStatus = statusChanges[id];
@@ -113,56 +96,79 @@ export default function SuivisMembres() {
     setUpdating((prev) => ({ ...prev, [id]: true }));
 
     try {
-      if (newStatus === "integrer") {
-        console.log("➡️ Mise à jour du membre existant pour suivi id:", id);
+      // ✅ Si statut = integrer → MAJ du cellule_id dans membres existant
+      if (["integrer", "Venu à l’église"].includes(newStatus)) {
+        console.log("➡️ Mise à jour cellule_id pour membre existant :", currentData.telephone);
 
-        // ✅ Chercher membre existant
-        const { data: membreData, error: membreError } = await supabase
+        // Vérifier si le membre existe déjà (email ou téléphone)
+        const { data: membre, error: membreError } = await supabase
           .from("membres")
           .select("id")
           .or(`telephone.eq.${currentData.telephone},email.eq.${currentData.email}`)
-          .single();
+          .maybeSingle();
 
-        if (membreError || !membreData) {
-          throw new Error("Membre non trouvé dans la table 'membres'.");
+        if (membreError) throw membreError;
+
+        if (membre) {
+          // ✅ Mettre à jour le membre existant
+          const { error: updateError } = await supabase
+            .from("membres")
+            .update({
+              cellule_id: currentData.cellule_id,
+              statut: "integrer",
+              venu: "Oui",
+              besoin: currentData.besoin,
+              ville: currentData.ville,
+              formation: currentData.formation,
+              comment:
+                newComment ||
+                currentData.commentaire_suivis ||
+                currentData.infos_supplementaires,
+              responsable_suivi: currentData.responsable_cellule,
+              infos_supplementaires: currentData.infos_supplementaires ?? null,
+            })
+            .eq("id", membre.id);
+
+          if (updateError) throw updateError;
+        } else {
+          // ⚠️ Si non trouvé, on insère (sécurité)
+          const { error: insertError } = await supabase.from("membres").insert([
+            {
+              nom: currentData.nom,
+              prenom: currentData.prenom,
+              telephone: currentData.telephone,
+              email: currentData.email,
+              statut: "integrer",
+              venu: "Oui",
+              besoin: currentData.besoin,
+              ville: currentData.ville,
+              formation: currentData.formation,
+              comment:
+                newComment ||
+                currentData.commentaire_suivis ||
+                currentData.infos_supplementaires,
+              cellule_id: currentData.cellule_id ?? null,
+              responsable_suivi: currentData.responsable_cellule ?? null,
+              infos_supplementaires: currentData.infos_supplementaires ?? null,
+            },
+          ]);
+          if (insertError) throw insertError;
         }
 
-        // ✅ Mise à jour du cellule_id et autres champs
-        const { error: updateError } = await supabase
-          .from("membres")
-          .update({
-            cellule_id: currentData.cellule_id ?? null,
-            statut: "integrer",
-            venu: "Oui",
-            besoin: currentData.besoin,
-            ville: currentData.ville,
-            formation: currentData.formation,
-            comment:
-              newComment ||
-              currentData.commentaire_suivis ||
-              currentData.infos_supplementaires,
-            responsable_suivi: currentData.responsable_cellule ?? null,
-            infos_supplementaires: currentData.infos_supplementaires ?? null,
-          })
-          .eq("id", membreData.id);
-
-        if (updateError) throw updateError;
-
-        // ✅ Supprimer le suivi une fois intégré
+        // ✅ Supprimer le suivi après intégration
         const { error: deleteError } = await supabase
           .from("suivis_membres")
           .delete()
           .eq("id", id);
-
         if (deleteError) throw deleteError;
 
         setSuivis((prev) => prev.filter((s) => s.id !== id));
         setMessage({
           type: "success",
-          text: "🎉 Membre intégré : cellule mise à jour avec succès !",
+          text: "🎉 Membre intégré avec succès (cellule mise à jour) !",
         });
       } else {
-        // 🔸 Mise à jour normale
+        // ✅ Sinon, simple mise à jour du suivi
         const payload = {};
         if (newStatus) payload.statut_suivis = newStatus;
         if (newComment) payload.commentaire_suivis = newComment;
@@ -176,23 +182,23 @@ export default function SuivisMembres() {
           .single();
 
         if (updateError) throw updateError;
-
         setSuivis((prev) => prev.map((s) => (s.id === id ? updated : s)));
         setMessage({ type: "success", text: "✅ Suivi mis à jour." });
       }
     } catch (err) {
-      console.error("Erreur :", err);
-      setMessage({ type: "error", text: `Erreur : ${err.message || err}` });
+      console.error("Error :", err);
+      setMessage({ type: "error", text: `Erreur : ${err.message}` });
     } finally {
       setUpdating((prev) => ({ ...prev, [id]: false }));
     }
   };
 
-  // 🔸 UI inchangé
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+      style={{
+        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
+      }}
     >
       <div className="flex justify-between w-full max-w-5xl items-center mb-4">
         <button
@@ -230,8 +236,11 @@ export default function SuivisMembres() {
       {loading ? (
         <p className="text-white">Chargement...</p>
       ) : suivis.length === 0 ? (
-        <p className="text-white text-lg italic">Aucun membre en suivi pour le moment.</p>
+        <p className="text-white text-lg italic">
+          Aucun membre en suivi pour le moment.
+        </p>
       ) : view === "card" ? (
+        // 🔹 Vue carte inchangée
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
           {suivis.map((item) => {
             const isOpen = detailsOpen[item.id];
@@ -269,58 +278,38 @@ export default function SuivisMembres() {
 
                   {isOpen && (
                     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+                      {/* Détails identiques */}
                       <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
                       <p>📞 Téléphone : {item.telephone || "—"}</p>
                       <p>💬 WhatsApp : {item.is_whatsapp ? "Oui" : "—"}</p>
                       <p>🏙 Ville : {item.ville || "—"}</p>
                       <p>🕊 Statut : {item.statut || "—"}</p>
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
-                      <p>
-                        ❓Besoin :{" "}
-                        {(() => {
-                          if (!item.besoin) return "—";
-                          if (Array.isArray(item.besoin)) return item.besoin.join(", ");
-                          try {
-                            const arr = JSON.parse(item.besoin);
-                            return Array.isArray(arr) ? arr.join(", ") : item.besoin;
-                          } catch {
-                            return item.besoin;
-                          }
-                        })()}
-                      </p>
+                      <p>❓Besoin : {item.besoin || "—"}</p>
                       <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
-
                       <div>
-                        <label className="text-black text-sm">
-                          📋 Statut Suivis :
-                        </label>
+                        <label className="text-black text-sm">📋 Statut Suivis :</label>
                         <select
                           value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
                           onChange={(e) => handleStatusChange(item.id, e.target.value)}
                           className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
                         >
                           <option value="">-- Choisir un statut --</option>
-                          <option value="integrer">✅ Intégrer</option>
+                          <option value="integrer">✅Intégrer</option>
                           <option value="en cours">🕓 En Cours</option>
                           <option value="refus">❌ Refus</option>
                         </select>
                       </div>
-
                       <div>
-                        <label className="text-black text-sm">
-                          📝 Commentaire Suivis :
-                        </label>
+                        <label className="text-black text-sm">📝 Commentaire Suivis :</label>
                         <textarea
                           value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
-                          onChange={(e) =>
-                            handleCommentChange(item.id, e.target.value)
-                          }
+                          onChange={(e) => handleCommentChange(item.id, e.target.value)}
                           rows={2}
                           className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
                           placeholder="Ajouter un commentaire..."
                         />
                       </div>
-
                       <button
                         onClick={() => updateSuivi(item.id)}
                         disabled={updating[item.id]}
@@ -330,9 +319,7 @@ export default function SuivisMembres() {
                             : "bg-green-600 hover:bg-green-700"
                         }`}
                       >
-                        {updating[item.id]
-                          ? "Mise à jour..."
-                          : "Mettre à jour"}
+                        {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
                       </button>
                     </div>
                   )}
@@ -342,9 +329,9 @@ export default function SuivisMembres() {
           })}
         </div>
       ) : (
+        // 🔹 Vue table inchangée
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-          {/* Vue Table inchangée */}
-          ...
+          {/* tableau inchangé */}
         </div>
       )}
     </div>

@@ -1,220 +1,277 @@
-// ✅ pages/evangelisation.js
+// pages/evangelisation.js
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
-import LogoutLink from "../components/LogoutLink";
+import Image from "next/image";
 
 export default function Evangelisation() {
-  const [members, setMembers] = useState([]);
+  const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState("");
+  const [detailsOpen, setDetailsOpen] = useState({});
+  const [checkedContacts, setCheckedContacts] = useState({});
   const [view, setView] = useState("card");
-  const [selectedMember, setSelectedMember] = useState(null);
-  const router = useRouter();
 
   useEffect(() => {
+    fetchContacts();
     fetchCellules();
-    fetchMembers();
   }, []);
 
-  const fetchCellules = async () => {
-    const { data, error } = await supabase.from("cellules").select("id, nom");
-    if (!error && data) setCellules(data);
-  };
-
-  const fetchMembers = async () => {
+  const fetchContacts = async () => {
     const { data, error } = await supabase
-      .from("suivis_membres")
+      .from("evangelises")
       .select("*")
       .order("created_at", { ascending: false });
-    if (!error && data) setMembers(data);
+    if (!error) setContacts(data || []);
   };
 
-  const handleSendWhatsApp = async () => {
-    alert("📤 Lien WhatsApp envoyé aux membres sélectionnés !");
+  const fetchCellules = async () => {
+    const { data, error } = await supabase
+      .from("cellules")
+      .select("id, cellule, responsable, telephone");
+    if (!error) setCellules(data || []);
   };
 
-  const toggleDetails = (member) => {
-    setSelectedMember(member);
-  };
+  const toggleDetails = (id) =>
+    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  const closePopup = () => {
-    setSelectedMember(null);
-  };
+  const handleCheck = (id) =>
+    setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  const getBorderColor = (statut) => {
-    switch (statut) {
-      case "integrer":
-        return "#4285F4";
-      case "en cours":
-        return "#FFA500";
-      case "refus":
-        return "#34A853";
-      default:
-        return "#ccc";
+  const sendWhatsapp = async () => {
+    const toSend = contacts.filter((c) => checkedContacts[c.id]);
+    if (!selectedCellule) return alert("Sélectionne une cellule !");
+    const cellule = cellules.find((c) => String(c.id) === selectedCellule);
+    if (!cellule) return alert("Cellule introuvable !");
+    if (toSend.length === 0) return alert("Aucun contact sélectionné !");
+
+    const now = new Date().toISOString();
+    const suivisData = toSend.map((member) => ({
+      prenom: member.prenom,
+      nom: member.nom,
+      telephone: member.telephone,
+      is_whatsapp: true,
+      ville: member.ville,
+      besoin: member.besoin,
+      infos_supplementaires: member.infos_supplementaires,
+      cellule_id: selectedCellule,
+      responsable_cellule: cellule.responsable,
+      date_suivi: now,
+    }));
+
+    const { error: insertError } = await supabase
+      .from("suivis_des_evangelises")
+      .insert(suivisData);
+
+    if (insertError) {
+      console.error("Erreur lors de l'insertion du suivi :", insertError.message);
+      alert("❌ Une erreur est survenue lors de l’enregistrement des suivis.");
+      return;
     }
+
+    // Ouverture WhatsApp
+    const groups = [];
+    for (let i = 0; i < toSend.length; i += 10) {
+      groups.push(toSend.slice(i, i + 10));
+    }
+
+    groups.forEach((group, index) => {
+      let message = "";
+      if (index === 0) {
+        message += `👋 Salut ${cellule.responsable},\n\n🙏 Voici les nouvelles âmes à suivre :\n\n`;
+      } else {
+        message += `👋 Salut ${cellule.responsable},\n\n🙏 Suite des âmes à suivre :\n\n`;
+      }
+      group.forEach((member, i) => {
+        message += `- 👤 Nom : ${member.prenom || ""} ${member.nom || ""}\n`;
+        message += `- 📱 Téléphone : ${member.telephone || "—"}\n`;
+        message += `- 📲 WhatsApp : Oui\n`;
+        message += `- 🏙 Ville : ${member.ville || "—"}\n`;
+        message += `- 🙏 Besoin : ${member.besoin || "—"}\n`;
+        message += `- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n`;
+        if (i < group.length - 1) message += "----------------------\n";
+      });
+      message += "🙏 Merci pour ton cœur ❤ et ton amour ✨";
+
+      const phone = cellule.telephone.replace(/\D/g, "");
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+    });
+
+    // Supprimer les contacts envoyés
+    const idsToDelete = toSend.map((c) => c.id);
+    const { error: deleteError } = await supabase
+      .from("evangelises")
+      .delete()
+      .in("id", idsToDelete);
+
+    if (deleteError) console.error(deleteError.message);
+
+    setContacts((prev) => prev.filter((c) => !checkedContacts[c.id]));
+    setCheckedContacts({});
   };
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-6 transition-all duration-200 text-center"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
-      {/* 🔹 HEADER */}
-      <div className="w-full max-w-5xl mb-6">
-        <div className="flex justify-between items-center">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-white font-semibold hover:text-gray-200"
-          >
-            ← Retour
-          </button>
-
-          <div className="flex items-center gap-4">
-            <p className="text-orange-200 text-sm">👋 Bienvenue</p>
-            <LogoutLink />
-          </div>
+    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-blue-800 to-cyan-400 text-white">
+      {/* Header */}
+      <div className="w-full max-w-5xl flex justify-between items-center mb-4">
+        <button
+          onClick={() => window.history.back()}
+          className="font-semibold hover:text-gray-200"
+        >
+          ← Retour
+        </button>
+        <div className="flex items-center gap-4">
+          <p>👋 Bienvenue Utilisateur</p>
+          <button className="underline hover:text-gray-200">Déconnexion</button>
         </div>
       </div>
 
-      {/* 🔹 LOGO */}
-      <div className="mb-4">
-        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18 mx-auto" />
-      </div>
+      {/* Logo */}
+      <Image src="/logo.png" alt="Logo" width={80} height={80} className="mb-3" />
 
-      {/* 🔹 TITRE + TOGGLE */}
-      <div className="flex justify-center items-center gap-6 mb-4">
-        <h1 className="text-3xl text-white font-bold">Suivis des membres</h1>
-        <button
-          onClick={() => setView(view === "card" ? "table" : "card")}
-          className="bg-white/20 text-white px-3 py-1 rounded-md text-sm hover:bg-white/30 transition"
-        >
-          {view === "card" ? "Vue Table" : "Vue Carte"}
-        </button>
-      </div>
+      {/* Titre */}
+      <h1 className="text-5xl font-handwriting text-center mb-2">Évangélisation</h1>
+      <p className="text-center text-lg mb-4 font-handwriting-light">
+        Chaque personne a une valeur infinie...
+      </p>
 
-      {/* 🔹 FILTRE + BOUTON ENVOYER */}
-      <div className="flex flex-wrap justify-center items-center gap-4 mb-6">
+      {/* Contrôles */}
+      <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center">
+        {/* Menu déroulant cellule (largeur auto) */}
         <select
           value={selectedCellule}
           onChange={(e) => setSelectedCellule(e.target.value)}
-          className="border rounded-lg px-3 py-1 text-gray-900 w-auto bg-white"
+          className="border rounded-lg px-4 py-2 text-gray-800 w-auto inline-block"
         >
-          <option value="">Toutes les cellules</option>
+          <option value="">-- Sélectionner cellule --</option>
           {cellules.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.nom}
+              {c.cellule} ({c.responsable})
             </option>
           ))}
         </select>
 
-        <button
-          onClick={handleSendWhatsApp}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition"
-        >
-          📩 Envoyer par WhatsApp
-        </button>
+        {selectedCellule && (
+          <button
+            onClick={sendWhatsapp}
+            className="bg-green-500 text-white font-bold px-4 py-2 rounded-lg shadow-lg hover:bg-green-600 transition-all"
+          >
+            Envoyer WhatsApp
+          </button>
+        )}
       </div>
 
-      {/* 🔹 VUE CARTES */}
-      {view === "card" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
-          {members.map((m) => (
-            <div
-              key={m.id}
-              className="bg-white rounded-2xl shadow-lg p-4 flex flex-col items-center transition-all duration-300 hover:shadow-2xl overflow-hidden"
-            >
+      {/* Toggle Vue */}
+      <p
+        onClick={() => setView(view === "card" ? "table" : "card")}
+        className="cursor-pointer text-sm text-yellow-100 underline hover:text-white mb-4"
+      >
+        {view === "card" ? "Changer en vue table" : "Changer en vue carte"}
+      </p>
+
+      {/* Vue Carte */}
+      {view === "card" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 w-full max-w-5xl">
+          {contacts.map((member) => {
+            const isOpen = detailsOpen[member.id];
+            return (
               <div
-                className="w-full h-[6px] rounded-t-2xl mb-2"
-                style={{ backgroundColor: getBorderColor(m.statut_suivis) }}
-              />
-              <h2 className="font-bold text-black text-base mb-1">
-                {m.prenom} {m.nom}
-              </h2>
-              <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
-              <p className="text-sm text-gray-700 mb-1">🏙 {m.ville || "—"}</p>
-              <button
-                onClick={() => toggleDetails(m)}
-                className="text-orange-500 underline text-sm mt-1"
+                key={member.id}
+                className="bg-gradient-to-tr from-orange-400/60 via-yellow-200/30 to-pink-300/30 backdrop-blur-md rounded-2xl shadow-lg p-3 flex flex-col items-center transition-all duration-500 ease-in-out overflow-hidden w-full max-w-xs mx-auto border border-white/20"
               >
-                Détails
-              </button>
-            </div>
-          ))}
+                <h2 className="font-bold text-white text-base mb-1 text-center">
+                  {member.prenom} {member.nom}
+                </h2>
+                <p className="text-xs text-white/95 mb-1 text-center">
+                  📱 {member.telephone || "—"}
+                </p>
+                <label className="flex items-center gap-2 text-xs mb-1">
+                  <input
+                    type="checkbox"
+                    checked={checkedContacts[member.id] || false}
+                    onChange={() => handleCheck(member.id)}
+                  />
+                  WhatsApp
+                </label>
+
+                <button
+                  onClick={() => toggleDetails(member.id)}
+                  className="text-yellow-100 underline text-sm"
+                >
+                  {isOpen ? "Fermer" : "Détails"}
+                </button>
+
+                {isOpen && (
+                  <div className="text-xs text-white/95 mt-2 w-full text-center transition-all duration-500">
+                    <p>🏙 Ville: {member.ville || "—"}</p>
+                    <p>🙏 Besoin: {member.besoin || "—"}</p>
+                    <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
-      ) : (
-        // 🔹 VUE TABLE
-        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-            <thead className="bg-gray-200 text-gray-800 text-sm uppercase">
+      )}
+
+      {/* Vue Table */}
+      {view === "table" && (
+        <div className="w-full max-w-5xl overflow-x-auto mt-4 relative">
+          <table className="w-full bg-white/10 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 text-sm text-left">
+            <thead className="bg-yellow-200/40 text-gray-900">
               <tr>
-                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-                <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Ville</th>
-                <th className="px-4 py-2 rounded-tr-lg">Détails</th>
+                <th className="p-3 text-left">Prénom</th>
+                <th className="p-3 text-left">Nom</th>
+                <th className="p-3 text-center">WhatsApp</th>
+                <th className="p-3 text-center">Détails</th>
               </tr>
             </thead>
             <tbody>
-              {members.map((m) => (
-                <tr
-                  key={m.id}
-                  className="hover:bg-white/10 transition duration-150 border-b border-blue-300"
-                >
-                  <td
-                    className="px-4 py-2 border-l-4 rounded-l-md"
-                    style={{ borderLeftColor: getBorderColor(m.statut_suivis) }}
-                  >
-                    {m.prenom} {m.nom}
+              {contacts.map((member) => (
+                <tr key={member.id} className="hover:bg-yellow-200/50 transition-all">
+                  <td className="p-3">{member.prenom}</td>
+                  <td className="p-3">{member.nom}</td>
+                  <td className="text-center">
+                    <input
+                      type="checkbox"
+                      checked={checkedContacts[member.id] || false}
+                      onChange={() => handleCheck(member.id)}
+                    />
                   </td>
-                  <td className="px-4 py-2">{m.telephone || "—"}</td>
-                  <td className="px-4 py-2">{m.ville || "—"}</td>
-                  <td className="px-4 py-2">
+                  <td className="text-center">
                     <button
-                      onClick={() => toggleDetails(m)}
-                      className="text-orange-400 underline"
+                      onClick={() => toggleDetails(member.id)}
+                      className="text-orange-600 underline"
                     >
                       Détails
                     </button>
                   </td>
+
+                  {/* Popup détails */}
+                  {detailsOpen[member.id] && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                      <div className="bg-white text-gray-900 p-4 rounded-xl max-w-sm w-full relative">
+                        <h3 className="font-bold mb-2">
+                          {member.prenom} {member.nom}
+                        </h3>
+                        <p>📱 {member.telephone || "—"}</p>
+                        <p>🏙 Ville: {member.ville || "—"}</p>
+                        <p>🙏 Besoin: {member.besoin || "—"}</p>
+                        <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>
+                        <button
+                          onClick={() => toggleDetails(member.id)}
+                          className="absolute top-2 right-2 text-red-500 font-bold"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {/* 🔹 POPUP DÉTAILS (commun carte/table) */}
-      {selectedMember && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white text-gray-900 p-6 rounded-2xl max-w-md w-full relative shadow-xl">
-            <button
-              onClick={closePopup}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-lg"
-            >
-              ✕
-            </button>
-
-            <h2 className="text-xl font-bold mb-2 text-center text-blue-700">
-              {selectedMember.prenom} {selectedMember.nom}
-            </h2>
-            <p>📞 Téléphone : {selectedMember.telephone || "—"}</p>
-            <p>🏙 Ville : {selectedMember.ville || "—"}</p>
-            <p>🕊 Statut : {selectedMember.statut_suivis || "—"}</p>
-            <p>🙏 Besoin : {selectedMember.besoin || "—"}</p>
-            <p>📝 Infos supplémentaires : {selectedMember.infos_supplementaires || "—"}</p>
-            <p>🏠 Cellule : {selectedMember.cellule_nom || "—"}</p>
-
-            <div className="flex justify-center mt-4">
-              <button
-                onClick={closePopup}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-              >
-                Fermer
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>

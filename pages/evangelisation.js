@@ -1,5 +1,4 @@
 // pages/evangelisation.js
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -71,6 +70,7 @@ export default function Evangelisation() {
       return;
     }
 
+    // Ouverture WhatsApp
     const groups = [];
     for (let i = 0; i < toSend.length; i += 10) {
       groups.push(toSend.slice(i, i + 10));
@@ -78,10 +78,11 @@ export default function Evangelisation() {
 
     groups.forEach((group, index) => {
       let message = "";
-      message += index === 0
-        ? `👋 Salut ${cellule.responsable},\n\n🙏 Voici les nouvelles âmes à suivre :\n\n`
-        : `👋 Salut ${cellule.responsable},\n\n🙏 Suite des âmes à suivre :\n\n`;
-
+      if (index === 0) {
+        message += `👋 Salut ${cellule.responsable},\n\n🙏 Voici les nouvelles âmes à suivre :\n\n`;
+      } else {
+        message += `👋 Salut ${cellule.responsable},\n\n🙏 Suite des âmes à suivre :\n\n`;
+      }
       group.forEach((member, i) => {
         message += `- 👤 Nom : ${member.prenom || ""} ${member.nom || ""}\n`;
         message += `- 📱 Téléphone : ${member.telephone || "—"}\n`;
@@ -97,6 +98,7 @@ export default function Evangelisation() {
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
     });
 
+    // Supprimer les contacts envoyés
     const idsToDelete = toSend.map((c) => c.id);
     const { error: deleteError } = await supabase
       .from("evangelises")
@@ -111,37 +113,36 @@ export default function Evangelisation() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-blue-800 to-cyan-400 text-white">
-      {/* 🔹 Header */}
-      <div className="w-full max-w-5xl mb-4">
-        <div className="flex justify-between items-center">
-          <button
-            onClick={() => window.history.back()}
-            className="text-white hover:text-gray-200 transition-colors"
-          >
-            ← Retour
-          </button>
-          <div className="flex items-center gap-4 text-right">
-            <p>👋 Bienvenue Utilisateur</p>
-            <button className="underline hover:text-gray-200">Déconnexion</button>
-          </div>
+      {/* Header */}
+      <div className="w-full max-w-5xl flex justify-between items-center mb-4">
+        <button
+          onClick={() => window.history.back()}
+          className="font-semibold hover:text-gray-200"
+        >
+          ← Retour
+        </button>
+
+        <div className="flex items-center gap-4">
+          <p>👋 Bienvenue Utilisateur</p>
+          <button className="underline hover:text-gray-200">Déconnexion</button>
         </div>
       </div>
 
-      {/* 🔹 Logo */}
+      {/* Logo */}
       <Image src="/logo.png" alt="Logo" width={80} height={80} className="mb-3" />
 
-      {/* 🔹 Titre centré */}
-      <h1 className="text-4xl font-semibold text-center mb-2">Évangélisation</h1>
-      <p className="text-center text-lg mb-6 italic">
+      {/* Titre */}
+      <h1 className="text-5xl font-handwriting text-center mb-2">Évangélisation</h1>
+      <p className="text-center text-lg mb-4 font-handwriting-light">
         Chaque personne a une valeur infinie...
       </p>
 
-      {/* 🔹 Contrôles */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6 items-center justify-center">
+      {/* Contrôles */}
+      <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center justify-center">
         <select
           value={selectedCellule}
           onChange={(e) => setSelectedCellule(e.target.value)}
-          className="border rounded-lg px-3 py-2 text-gray-800 bg-white w-auto"
+          className="border rounded-lg px-4 py-2 text-gray-800 w-auto"
         >
           <option value="">-- Sélectionner cellule --</option>
           {cellules.map((c) => (
@@ -161,7 +162,10 @@ export default function Evangelisation() {
         )}
       </div>
 
-      {/* 🔹 Toggle Vue */}
+      {/* Toggle Vue */}
+      <h2 className="text-2xl font-semibold text-center mb-3">
+        Suivis des évangélisés
+      </h2>
       <p
         onClick={() => setView(view === "card" ? "table" : "card")}
         className="cursor-pointer text-sm text-yellow-100 underline hover:text-white mb-4 text-center"
@@ -169,7 +173,7 @@ export default function Evangelisation() {
         {view === "card" ? "Changer en vue table" : "Changer en vue carte"}
       </p>
 
-      {/* 🔹 Vue Carte */}
+      {/* Vue Carte */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 w-full max-w-5xl">
           {contacts.map((member) => {
@@ -201,24 +205,11 @@ export default function Evangelisation() {
                   {isOpen ? "Fermer" : "Détails"}
                 </button>
 
-                {/* Popup Détails */}
                 {isOpen && (
-                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white text-gray-900 p-4 rounded-xl max-w-sm w-full relative">
-                      <h3 className="font-bold mb-2">
-                        {member.prenom} {member.nom}
-                      </h3>
-                      <p>📱 {member.telephone || "—"}</p>
-                      <p>🏙 Ville: {member.ville || "—"}</p>
-                      <p>🙏 Besoin: {member.besoin || "—"}</p>
-                      <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>
-                      <button
-                        onClick={() => toggleDetails(member.id)}
-                        className="absolute top-2 right-2 text-red-500 font-bold"
-                      >
-                        ✕
-                      </button>
-                    </div>
+                  <div className="text-xs text-white/95 mt-2 w-full text-center transition-all duration-500">
+                    <p>🏙 Ville: {member.ville || "—"}</p>
+                    <p>🙏 Besoin: {member.besoin || "—"}</p>
+                    <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>
                   </div>
                 )}
               </div>
@@ -227,7 +218,7 @@ export default function Evangelisation() {
         </div>
       )}
 
-      {/* 🔹 Vue Table */}
+      {/* Vue Table */}
       {view === "table" && (
         <div className="w-full max-w-5xl overflow-x-auto mt-4 relative">
           <table className="w-full bg-white/10 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 text-sm text-left">
@@ -259,31 +250,37 @@ export default function Evangelisation() {
                       Détails
                     </button>
                   </td>
-
-                  {/* ✅ Popup Détails en Vue Table */}
-                  {detailsOpen[member.id] && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                      <div className="bg-white text-gray-900 p-4 rounded-xl max-w-sm w-full relative">
-                        <h3 className="font-bold mb-2">
-                          {member.prenom} {member.nom}
-                        </h3>
-                        <p>📱 {member.telephone || "—"}</p>
-                        <p>🏙 Ville: {member.ville || "—"}</p>
-                        <p>🙏 Besoin: {member.besoin || "—"}</p>
-                        <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>
-                        <button
-                          onClick={() => toggleDetails(member.id)}
-                          className="absolute top-2 right-2 text-red-500 font-bold"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </tr>
               ))}
             </tbody>
           </table>
+
+          {/* Popup détails en dehors du tableau */}
+          {contacts.map(
+            (member) =>
+              detailsOpen[member.id] && (
+                <div
+                  key={`popup-${member.id}`}
+                  className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+                >
+                  <div className="bg-white text-gray-900 p-4 rounded-xl max-w-sm w-full relative">
+                    <h3 className="font-bold mb-2">
+                      {member.prenom} {member.nom}
+                    </h3>
+                    <p>📱 {member.telephone || "—"}</p>
+                    <p>🏙 Ville: {member.ville || "—"}</p>
+                    <p>🙏 Besoin: {member.besoin || "—"}</p>
+                    <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>
+                    <button
+                      onClick={() => toggleDetails(member.id)}
+                      className="absolute top-2 right-2 text-red-500 font-bold"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )
+          )}
         </div>
       )}
     </div>

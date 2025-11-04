@@ -15,7 +15,6 @@ export default function Evangelisation() {
   const [detailsOpen, setDetailsOpen] = useState({});
   const [checkedContacts, setCheckedContacts] = useState({});
   const [view, setView] = useState("card");
-  const userName = "Utilisateur";
 
   useEffect(() => {
     fetchContacts();
@@ -114,6 +113,8 @@ export default function Evangelisation() {
     setContacts((prev) => prev.filter((c) => !checkedContacts[c.id]));
     setCheckedContacts({});
   };
+
+  const userName = "Utilisateur";
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-blue-800 to-cyan-400 text-white">
@@ -224,7 +225,7 @@ export default function Evangelisation() {
         </div>
       )}
 
-      {/* Vue Table (inchangée) */}
+      {/* Vue Table */}
       {view === "table" && (
         <div className="w-full max-w-5xl overflow-x-auto mt-4 relative">
           <table className="w-full bg-white/10 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 text-sm text-left">
@@ -256,34 +257,39 @@ export default function Evangelisation() {
                       Détails
                     </button>
                   </td>
-
-                  {/* Popup détails */}
-                  {detailsOpen[member.id] && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                      <div className="bg-white text-gray-900 p-4 rounded-xl max-w-sm w-full relative">
-                        <h3 className="font-bold mb-2">
-                          {member.prenom} {member.nom}
-                        </h3>
-                        <p>📱 {member.telephone || "—"}</p>
-                        <p>🏙 Ville: {member.ville || "—"}</p>
-                        <p>🙏 Besoin: {member.besoin || "—"}</p>
-                        <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>
-                        <button
-                          onClick={() => toggleDetails(member.id)}
-                          className="absolute top-2 right-2 text-red-500 font-bold"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </tr>
               ))}
             </tbody>
           </table>
+
+          {/* Popups rendues en dehors du tableau (overlay fixe) */}
+          {contacts.map(
+            (member) =>
+              detailsOpen[member.id] && (
+                <div
+                  key={`popup-${member.id}`}
+                  className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+                >
+                  <div className="bg-white text-gray-900 p-4 rounded-xl max-w-sm w-full relative">
+                    <h3 className="font-bold mb-2">
+                      {member.prenom} {member.nom}
+                    </h3>
+                    <p>📱 {member.telephone || "—"}</p>
+                    <p>🏙 Ville: {member.ville || "—"}</p>
+                    <p>🙏 Besoin: {member.besoin || "—"}</p>
+                    <p>📝 Infos supplémentaires: {member.infos_supplementaires || "—"}</p>
+                    <button
+                      onClick={() => toggleDetails(member.id)}
+                      className="absolute top-2 right-2 text-red-500 font-bold"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )
+          )}
         </div>
       )}
     </div>
   );
 }
-

@@ -102,9 +102,12 @@ export default function SuivisMembres() {
 
   try {
     // ✅ Si statut = integrer → déplacement vers table membres
-    if (newStatus === "integrer") {
-      const { error: insertError } = await supabase.from("membres").insert([
-        {
+    if (["Integrer", "Venu à l’église"].includes(newStatus)) {
+  console.log("➡️ Transfert vers membres avec cellule_id :", currentData.cellule_id);
+
+  // ✅ On insère le membre avec le cellule_id
+  const { error: insertError } = await supabase.from("membres").insert([
+    {
           nom: currentData.nom,
           prenom: currentData.prenom,
           telephone: currentData.telephone,

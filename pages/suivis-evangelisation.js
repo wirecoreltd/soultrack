@@ -1,3 +1,5 @@
+//pages/suivis-evangelisation.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -134,6 +136,7 @@ export default function SuivisEvangelisation() {
           evangeliste_nom: currentData.evangeliste_nom,
           comment: newComment || currentData.commentaire_evangelises,
           responsable_suivi: currentData.responsable_cellule,
+          cellule_id: currentData.cellule_id, // ✅ On ajoute la cellule !!
         },
       ]);
 

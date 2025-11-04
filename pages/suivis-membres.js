@@ -86,44 +86,79 @@ export default function SuivisMembres() {
   };
 
   const updateSuivi = async (id) => {
-    setMessage(null);
-    const newStatus = statusChanges[id];
-    const newComment = commentChanges[id];
+  setMessage(null);
+  const newStatus = statusChanges[id];
+  const newComment = commentChanges[id];
 
-    if (!newStatus && !newComment) {
-      setMessage({ type: "info", text: "Aucun changement détecté." });
-      return;
-    }
+  const currentData = suivis.find((s) => s.id === id);
+  if (!currentData) return;
 
-    setUpdating((prev) => ({ ...prev, [id]: true }));
+  if (!newStatus && !newComment) {
+    setMessage({ type: "info", text: "Aucun changement détecté." });
+    return;
+  }
 
-    try {
+  setUpdating((prev) => ({ ...prev, [id]: true }));
+
+  try {
+    // ✅ Si statut = integrer → déplacement vers table membres
+    if (newStatus === "integrer") {
+      const { error: insertError } = await supabase.from("membres").insert([
+        {
+          nom: currentData.nom,
+          prenom: currentData.prenom,
+          telephone: currentData.telephone,
+          email: currentData.email,
+          statut: "Membre Actif",
+          venu: "Oui", // ✔️ Automatique
+          besoin: currentData.besoin,
+          ville: currentData.ville,
+          formation: currentData.formation,
+          comment: newComment || currentData.commentaire_suivis,
+          cellule_id: currentData.cellule_id, // ✅ Affecte la cellule automatiquement
+          responsable_suivi: currentData.responsable_cellule,
+        },
+      ]);
+
+      if (insertError) throw insertError;
+
+      // ✅ On supprime le suivi après l’intégration
+      const { error: deleteError } = await supabase
+        .from("suivis_membres")
+        .delete()
+        .eq("id", id);
+
+      if (deleteError) throw deleteError;
+
+      setSuivis((prev) => prev.filter((s) => s.id !== id));
+      setMessage({ type: "success", text: "🎉 Membre intégré avec succès dans sa cellule !" });
+    } else {
+      // ✅ Sinon, juste mise à jour du suivi
       const payload = {};
-      if (newStatus) payload["statut_suivis"] = newStatus;
-      if (newComment) payload["commentaire_suivis"] = newComment;
-      payload["updated_at"] = new Date();
+      if (newStatus) payload.statut_suivis = newStatus;
+      if (newComment) payload.commentaire_suivis = newComment;
+      payload.updated_at = new Date();
 
-      const { data: updatedData, error: updateError } = await supabase
+      const { data: updated, error: updateError } = await supabase
         .from("suivis_membres")
         .update(payload)
         .eq("id", id)
         .select()
         .single();
 
-      if (updateError) {
-        console.error("Erreur update :", updateError);
-        setMessage({ type: "error", text: `Erreur mise à jour : ${updateError.message}` });
-      } else if (updatedData) {
-        setSuivis((prev) => prev.map((it) => (it.id === id ? updatedData : it)));
-        setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
-      }
-    } catch (err) {
-      console.error("Exception updateSuivi:", err);
-      setMessage({ type: "error", text: `Exception durant la mise à jour : ${err.message}` });
-    } finally {
-      setUpdating((prev) => ({ ...prev, [id]: false }));
+      if (updateError) throw updateError;
+
+      setSuivis((prev) => prev.map((s) => (s.id === id ? updated : s)));
+      setMessage({ type: "success", text: "✅ Suivi mis à jour." });
     }
-  };
+  } catch (err) {
+    console.error("Error :", err);
+    setMessage({ type: "error", text: `Erreur : ${err.message}` });
+  } finally {
+    setUpdating((prev) => ({ ...prev, [id]: false }));
+  }
+};
+
 
   return (
     <div

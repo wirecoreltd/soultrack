@@ -111,7 +111,7 @@ export default function SuivisMembres() {
           prenom: currentData.prenom,
           telephone: currentData.telephone,
           email: currentData.email,
-          statut: "Membre Actif",
+          statut: "integrer",
           venu: "Oui", // ✔️ Automatique
           besoin: currentData.besoin,
           ville: currentData.ville,

@@ -2,9 +2,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
-import AccessGuard from "../components/AccessGuard";
+import LogoutLink from "../components/LogoutLink";
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
@@ -15,36 +15,47 @@ export default function SuivisMembres() {
   const [updating, setUpdating] = useState({});
   const [view, setView] = useState("card");
   const [message, setMessage] = useState(null);
+  const [userName, setUserName] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
+    const name = localStorage.getItem("userName") || "Utilisateur";
+    const prenom = name.split(" ")[0];
+    setUserName(prenom);
     fetchSuivis();
   }, []);
 
   const fetchSuivis = async () => {
     setLoading(true);
     setMessage(null);
+
     try {
       const userEmail = localStorage.getItem("userEmail");
       const userRole = JSON.parse(localStorage.getItem("userRole") || "[]");
 
       if (!userEmail) throw new Error("Utilisateur non connecté");
 
+      // 🔹 Récupérer l'ID du profil connecté
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("id")
         .eq("email", userEmail)
         .single();
+
       if (profileError) throw profileError;
       const responsableId = profileData.id;
 
       let query = supabase.from("suivis_membres").select("*").order("created_at", { ascending: false });
 
+      // 🔹 Si ResponsableCellule → filtrer uniquement ses cellules
       if (userRole.includes("ResponsableCellule")) {
         const { data: cellulesData, error: cellulesError } = await supabase
           .from("cellules")
           .select("id")
           .eq("responsable_id", responsableId);
+
         if (cellulesError) throw cellulesError;
+
         const celluleIds = cellulesData.map((c) => c.id);
         query = query.in("cellule_id", celluleIds);
       }
@@ -73,9 +84,8 @@ export default function SuivisMembres() {
 
   const getBorderColor = (m) => {
     if (m.statut_suivis === "integrer") return "#4285F4";
-    if (m.statut_suivis === "en cours" || m.statut_suivis === "en attente") return "#FFA500";
-    if (m.statut_suivis === "refus") return "#EA5454";
-    if (m.statut_suivis === "suivi terminé" || m.statut_suivis === "termine") return "#34A853";
+    if (m.statut_suivis === "en cours") return "#FFA500";
+    if (m.statut_suivis === "refus") return "#34A853";    
     return "#ccc";
   };
 
@@ -83,6 +93,7 @@ export default function SuivisMembres() {
     setMessage(null);
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
+
     const currentData = suivis.find((s) => s.id === id);
     if (!currentData) return;
 
@@ -94,28 +105,25 @@ export default function SuivisMembres() {
     setUpdating((prev) => ({ ...prev, [id]: true }));
 
     try {
-      // ✅ Si statut = integrer → mise à jour cellule_id dans membres
-      if (newStatus === "integrer") {
-        console.log("➡️ Mise à jour cellule_id pour membre existant :", currentData.id);
-
-        // 🔹 Vérifier si membre existe déjà
-        const { data: existingMember, error: fetchMemberError } = await supabase
+      // ✅ Si statut = integrer → déplacement vers table membres
+      if (["integrer", "Venu à l’église"].includes(newStatus)) {
+        // 🔹 Vérifier si le membre existe déjà
+        const { data: existingMember } = await supabase
           .from("membres")
           .select("id")
-          .eq("telephone", currentData.telephone)
+          .eq("email", currentData.email)
           .single();
 
-        if (fetchMemberError && fetchMemberError.code !== "PGRST116") throw fetchMemberError;
-
         if (existingMember) {
-          // 🔹 Mettre à jour cellule_id seulement
+          // 🔹 Mise à jour de la cellule_id si déjà présent
           const { error: updateError } = await supabase
             .from("membres")
             .update({ cellule_id: currentData.cellule_id })
             .eq("id", existingMember.id);
+
           if (updateError) throw updateError;
         } else {
-          // 🔹 Insérer si membre n’existe pas
+          // 🔹 Insertion si nouveau membre
           const { error: insertError } = await supabase.from("membres").insert([
             {
               nom: currentData.nom,
@@ -127,26 +135,27 @@ export default function SuivisMembres() {
               besoin: currentData.besoin,
               ville: currentData.ville,
               formation: currentData.formation,
-              comment: newComment || currentData.commentaire_suivis || currentData.infos_supplementaires,
+              comment: newComment || currentData.commentaire_suivis,
               cellule_id: currentData.cellule_id,
               responsable_suivi: currentData.responsable_cellule,
-              infos_supplementaires: currentData.infos_supplementaires || null,
             },
           ]);
+
           if (insertError) throw insertError;
         }
 
-        // 🔹 Supprimer le suivi après intégration
+        // 🔹 Supprimer le suivi
         const { error: deleteError } = await supabase
           .from("suivis_membres")
           .delete()
           .eq("id", id);
+
         if (deleteError) throw deleteError;
 
         setSuivis((prev) => prev.filter((s) => s.id !== id));
         setMessage({ type: "success", text: "🎉 Membre intégré avec succès dans sa cellule !" });
       } else {
-        // ✅ Sinon, juste mise à jour du suivi
+        // 🔹 Sinon mise à jour du suivi
         const payload = {};
         if (newStatus) payload.statut_suivis = newStatus;
         if (newComment) payload.commentaire_suivis = newComment;
@@ -158,6 +167,7 @@ export default function SuivisMembres() {
           .eq("id", id)
           .select()
           .single();
+
         if (updateError) throw updateError;
 
         setSuivis((prev) => prev.map((s) => (s.id === id ? updated : s)));
@@ -165,31 +175,45 @@ export default function SuivisMembres() {
       }
     } catch (err) {
       console.error("Error :", err);
-      setMessage({ type: "error", text: `Erreur : ${err.message || err}` });
+      setMessage({ type: "error", text: `Erreur : ${err.message}` });
     } finally {
       setUpdating((prev) => ({ ...prev, [id]: false }));
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
-         style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+    <div
+      className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+    >
+      {/* 🔹 Top bar */}
       <div className="flex justify-between w-full max-w-5xl items-center mb-4">
-        <button onClick={() => window.history.back()}
-                className="flex items-center text-white font-semibold hover:text-gray-200">← Retour</button>
-        <button onClick={() => setView(view === "card" ? "table" : "card")}
-                className="text-white text-sm underline hover:text-gray-200">
-          {view === "card" ? "Vue Table" : "Vue Carte"}
+        <button
+          onClick={() => router.back()}
+          className="flex items-center text-white font-semibold hover:text-gray-200"
+        >
+          ← Retour
         </button>
+        <LogoutLink />
+      </div>
+      <div className="flex justify-end w-full max-w-5xl mb-6">
+        <p className="text-orange-200 text-sm">👋 Bienvenue {userName}</p>
       </div>
 
-      <h1 className="text-4xl font-handwriting text-white text-center mb-3">Liste des membres suivis</h1>
+      <h1 className="text-4xl font-handwriting text-white text-center mb-3">
+        Liste des membres suivis
+      </h1>
 
       {message && (
-        <div className={`mb-4 px-4 py-2 rounded-md text-sm ${
-          message.type === "error" ? "bg-red-200 text-red-800"
-            : message.type === "success" ? "bg-green-200 text-green-800"
-              : "bg-yellow-100 text-yellow-800"}`}>
+        <div
+          className={`mb-4 px-4 py-2 rounded-md text-sm ${
+            message.type === "error"
+              ? "bg-red-200 text-red-800"
+              : message.type === "success"
+              ? "bg-green-200 text-green-800"
+              : "bg-yellow-100 text-yellow-800"
+          }`}
+        >
           {message.text}
         </div>
       )}
@@ -203,60 +227,85 @@ export default function SuivisMembres() {
           {suivis.map((item) => {
             const isOpen = detailsOpen[item.id];
             return (
-              <div key={item.id} className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden">
-                <div className="w-full h-[6px] rounded-t-2xl" style={{ backgroundColor: getBorderColor(item) }} />
+              <div
+                key={item.id}
+                className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
+              >
+                <div
+                  className="w-full h-[6px] rounded-t-2xl"
+                  style={{ backgroundColor: getBorderColor(item) }}
+                />
                 <div className="p-4 flex flex-col items-center">
-                  <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>
+                  <h2 className="font-bold text-black text-base text-center mb-1">
+                    {item.prenom} {item.nom}
+                  </h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {item.cellule_nom || "—"}</p>
+                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {item.cellule_nom || "—"}</p>  
                   <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
-                  <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">
+                  <p className="text-sm text-gray-700 mb-1">
+                    📋 Statut Suivis : {item.statut_suivis || "—"}
+                  </p>
+                  <button
+                    onClick={() => toggleDetails(item.id)}
+                    className="text-orange-500 underline text-sm mt-1"
+                  >
                     {isOpen ? "Fermer détails" : "Détails"}
                   </button>
 
                   {isOpen && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
-                      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
-                        <button onClick={() => toggleDetails(item.id)}
-                                className="absolute top-3 right-3 text-gray-500 hover:text-gray-800">✕</button>
-                        <div className="text-gray-700 text-sm space-y-2 w-full">
-                          <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
-                          <p>📞 Téléphone : {item.telephone || "—"}</p>
-                          <p>💬 WhatsApp : {item.is_whatsapp ? "Oui" : "—"}</p>
-                          <p>🏙 Ville : {item.ville || "—"}</p>
-                          <p>🏠 Cellule : {item.cellule_nom || "—"}</p>
-                          <p>🕊 Statut : {item.statut || "—"}</p>
-                          <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
-                          <p>❓ Besoin : {Array.isArray(item.besoin) ? item.besoin.join(", ") : item.besoin || "—"}</p>
-                          <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
-                          <div>
-                            <label className="text-black text-sm">📋 Statut Suivis :</label>
-                            <select value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
-                                    onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                                    className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1">
-                              <option value="">-- Choisir un statut --</option>
-                              <option value="integrer">✅ Intégrer</option>
-                              <option value="en attente">🕓 En attente</option>
-                              <option value="suivi terminé">🏁 Terminé</option>
-                              <option value="inactif">❌ Inactif</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-black text-sm">📝 Commentaire Suivis :</label>
-                            <textarea value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
-                                      onChange={(e) => handleCommentChange(item.id, e.target.value)}
-                                      rows={2} className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
-                                      placeholder="Ajouter un commentaire..." />
-                          </div>
-                          <button onClick={() => updateSuivi(item.id)} disabled={updating[item.id]}
-                                  className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-                                    updating[item.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
-                                  }`}>
-                            {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
-                          </button>
-                        </div>
+                    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+                      <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
+                      <p>📞 Téléphone : {item.telephone || "—"}</p>
+                      <p>💬 WhatsApp : {item.is_whatsapp ? "Oui" : "—"}</p>
+                      <p>🏙 Ville : {item.ville || "—"}</p>
+                      <p>🕊 Statut : {item.statut || "—"}</p>
+                      <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
+                      <p>❓Besoin : {
+                          (() => {
+                            if (!item.besoin) return "—";
+                            if (Array.isArray(item.besoin)) return item.besoin.join(", ");
+                            try {
+                              const arr = JSON.parse(item.besoin);
+                              return Array.isArray(arr) ? arr.join(", ") : item.besoin;
+                            } catch { return item.besoin; }
+                          })()
+                        }
+                      </p>
+                      <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
+                      <div>
+                        <label className="text-black text-sm">📋 Statut Suivis :</label>
+                        <select
+                          value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
+                          onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                          className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+                        >
+                          <option value="">-- Choisir un statut --</option>
+                          <option value="integrer">✅ Intégrer</option>
+                          <option value="en cours">🕓 En Cours</option>
+                          <option value="refus">❌ Refus</option>                          
+                        </select>
                       </div>
+                      <div>
+                        <label className="text-black text-sm">📝 Commentaire Suivis :</label>
+                        <textarea
+                          value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
+                          onChange={(e) => handleCommentChange(item.id, e.target.value)}
+                          rows={2}
+                          className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
+                          placeholder="Ajouter un commentaire..."
+                        />
+                      </div>
+                      <button
+                        onClick={() => updateSuivi(item.id)}
+                        disabled={updating[item.id]}
+                        className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+                          updating[item.id]
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-green-600 hover:bg-green-700"
+                        }`}
+                      >
+                        {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
+                      </button>
                     </div>
                   )}
                 </div>
@@ -266,7 +315,7 @@ export default function SuivisMembres() {
         </div>
       ) : (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-          <table className="w-full text-sm text-left text-black border-separate border-spacing-0">
+          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
               <tr>
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
@@ -277,68 +326,98 @@ export default function SuivisMembres() {
             </thead>
             <tbody>
               {suivis.map((item) => (
-                <tr key={item.id} className="hover:bg-white/10 transition duration-150 border-b border-blue-300">
-                  <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(item) }}>
+                <tr
+                  key={item.id}
+                  className="hover:bg-white/10 transition duration-150 border-b border-blue-300"
+                >
+                  <td
+                    className="px-4 py-2 border-l-4 rounded-l-md"
+                    style={{ borderLeftColor: getBorderColor(item) }}
+                  >
                     {item.prenom} {item.nom}
                   </td>
                   <td className="px-4 py-2">{item.telephone}</td>
                   <td className="px-4 py-2">{item.statut || "—"}</td>
                   <td className="px-4 py-2">
-                    <button onClick={() => toggleDetails(item.id)}
-                            className="text-orange-500 underline text-sm">
+                    <button
+                      onClick={() => toggleDetails(item.id)}
+                      className="text-orange-500 underline text-sm"
+                    >
                       {detailsOpen[item.id] ? "Fermer détails" : "Détails"}
                     </button>
+
+                    {detailsOpen[item.id] && (
+                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
+                        <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
+                          <button
+                            onClick={() => toggleDetails(item.id)}
+                            className="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
+                          >
+                            ✕
+                          </button>
+                          <div className="text-gray-700 text-sm space-y-2 w-full">
+                            <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
+                            <p>📞 Téléphone : {item.telephone || "—"}</p>
+                            <p>💬 WhatsApp : {item.is_whatsapp ? "Oui" : "—"}</p>
+                            <p>🏙 Ville : {item.ville || "—"}</p>
+                            <p>🏠 Cellule : {item.cellule_nom || "—"}</p>
+                            <p>🕊 Statut : {item.statut || "—"}</p>
+                            <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
+                            <p>❓Besoin : {
+                                (() => {
+                                  if (!item.besoin) return "—";
+                                  if (Array.isArray(item.besoin)) return item.besoin.join(", ");
+                                  try {
+                                    const arr = JSON.parse(item.besoin);
+                                    return Array.isArray(arr) ? arr.join(", ") : item.besoin;
+                                  } catch { return item.besoin; }
+                                })()
+                              }
+                            </p>
+                            <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
+                            <div>
+                              <label className="text-black text-sm">📋 Statut Suivis :</label>
+                              <select
+                                value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
+                                onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                                className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+                              >
+                                <option value="">-- Choisir un statut --</option>
+                                <option value="integrer">✅ Intégrer</option>
+                                <option value="en cours">🕓 En Cours</option>
+                                <option value="refus">❌ Refus</option>                          
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-black text-sm">📝 Commentaire Suivis :</label>
+                              <textarea
+                                value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
+                                onChange={(e) => handleCommentChange(item.id, e.target.value)}
+                                rows={2}
+                                className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
+                                placeholder="Ajouter un commentaire..."
+                              />
+                            </div>
+                            <button
+                              onClick={() => updateSuivi(item.id)}
+                              disabled={updating[item.id]}
+                              className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+                                updating[item.id]
+                                  ? "bg-gray-400 cursor-not-allowed"
+                                  : "bg-green-600 hover:bg-green-700"
+                              }`}
+                            >
+                              {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-
-          {/* Popup modal pour table */}
-          {suivis.map(item => detailsOpen[item.id] && (
-            <div key={`modal-${item.id}`} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
-              <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
-                <button onClick={() => toggleDetails(item.id)}
-                        className="absolute top-3 right-3 text-gray-500 hover:text-gray-800">✕</button>
-                <div className="text-gray-700 text-sm space-y-2 w-full">
-                  <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
-                  <p>📞 Téléphone : {item.telephone || "—"}</p>
-                  <p>💬 WhatsApp : {item.is_whatsapp ? "Oui" : "—"}</p>
-                  <p>🏙 Ville : {item.ville || "—"}</p>
-                  <p>🏠 Cellule : {item.cellule_nom || "—"}</p>
-                  <p>🕊 Statut : {item.statut || "—"}</p>
-                  <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
-                  <p>❓ Besoin : {Array.isArray(item.besoin) ? item.besoin.join(", ") : item.besoin || "—"}</p>
-                  <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
-                  <div>
-                    <label className="text-black text-sm">📋 Statut Suivis :</label>
-                    <select value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
-                            onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                            className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1">
-                      <option value="">-- Choisir un statut --</option>
-                      <option value="integrer">✅ Intégrer</option>
-                      <option value="en attente">🕓 En attente</option>
-                      <option value="suivi terminé">🏁 Terminé</option>
-                      <option value="inactif">❌ Inactif</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-black text-sm">📝 Commentaire Suivis :</label>
-                    <textarea value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
-                              onChange={(e) => handleCommentChange(item.id, e.target.value)}
-                              rows={2} className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
-                              placeholder="Ajouter un commentaire..." />
-                  </div>
-                  <button onClick={() => updateSuivi(item.id)} disabled={updating[item.id]}
-                          className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-                            updating[item.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
-                          }`}>
-                    {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       )}
     </div>

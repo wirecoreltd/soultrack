@@ -78,10 +78,9 @@ export default function SuivisMembres() {
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
   const getBorderColor = (m) => {
-    if (m.statut_suivis === "actif") return "#4285F4";
-    if (m.statut_suivis === "en attente") return "#FFA500";
-    if (m.statut_suivis === "suivi terminé") return "#34A853";
-    if (m.statut_suivis === "inactif") return "#999999";
+    if (m.statut_suivis === "integrer") return "#4285F4";
+    if (m.statut_suivis === "en cours") return "#FFA500";
+    if (m.statut_suivis === "refus") return "#34A853";    
     return "#ccc";
   };
 
@@ -102,7 +101,7 @@ export default function SuivisMembres() {
 
   try {
     // ✅ Si statut = integrer → déplacement vers table membres
-    if (["Integrer", "Venu à l’église"].includes(newStatus)) {
+    if (["integrer", "Venu à l’église"].includes(newStatus)) {
   console.log("➡️ Transfert vers membres avec cellule_id :", currentData.cellule_id);
 
   // ✅ On insère le membre avec le cellule_id
@@ -274,7 +273,7 @@ export default function SuivisMembres() {
                           className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
                         >
                           <option value="">-- Choisir un statut --</option>
-                          <option value="actif">✅Intégrer</option>
+                          <option value="integrer">✅Intégrer</option>
                           <option value="en cours">🕓 En Cours</option>
                           <option value="refus">❌ Refus</option>                          
                         </select>
@@ -386,7 +385,7 @@ export default function SuivisMembres() {
             className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
           >
             <option value="">-- Choisir un statut --</option>
-            <option value="actif">✅ Actif</option>
+            <option value="integrer">✅ Intégrer</option>
             <option value="en attente">🕓 En attente</option>
             <option value="suivi terminé">🏁 Terminé</option>
             <option value="inactif">❌ Inactif</option>

@@ -28,14 +28,12 @@ export default function SuivisMembres() {
   const fetchSuivis = async () => {
     setLoading(true);
     setMessage(null);
-
     try {
       const userEmail = localStorage.getItem("userEmail");
       const userRole = JSON.parse(localStorage.getItem("userRole") || "[]");
 
       if (!userEmail) throw new Error("Utilisateur non connecté");
 
-      // 🔹 Récupérer l'ID du profil connecté
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("id")
@@ -47,7 +45,6 @@ export default function SuivisMembres() {
 
       let query = supabase.from("suivis_membres").select("*").order("created_at", { ascending: false });
 
-      // 🔹 Si ResponsableCellule → filtrer uniquement ses cellules
       if (userRole.includes("ResponsableCellule")) {
         const { data: cellulesData, error: cellulesError } = await supabase
           .from("cellules")
@@ -93,7 +90,6 @@ export default function SuivisMembres() {
     setMessage(null);
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
-
     const currentData = suivis.find((s) => s.id === id);
     if (!currentData) return;
 
@@ -105,25 +101,28 @@ export default function SuivisMembres() {
     setUpdating((prev) => ({ ...prev, [id]: true }));
 
     try {
-      // ✅ Si statut = integrer → déplacement vers table membres
       if (["integrer", "Venu à l’église"].includes(newStatus)) {
-        // 🔹 Vérifier si le membre existe déjà
-        const { data: existingMember } = await supabase
+        console.log("➡️ Transfert vers membres avec cellule_id :", currentData.cellule_id);
+
+        // Vérifier si membre existe déjà
+        const { data: existing, error: checkError } = await supabase
           .from("membres")
-          .select("id")
+          .select("*")
           .eq("email", currentData.email)
           .single();
 
-        if (existingMember) {
-          // 🔹 Mise à jour de la cellule_id si déjà présent
+        if (checkError && checkError.code !== "PGRST116") throw checkError;
+
+        if (existing) {
+          // Mettre à jour cellule_id uniquement
           const { error: updateError } = await supabase
             .from("membres")
             .update({ cellule_id: currentData.cellule_id })
-            .eq("id", existingMember.id);
+            .eq("email", currentData.email);
 
           if (updateError) throw updateError;
         } else {
-          // 🔹 Insertion si nouveau membre
+          // Insertion si n'existe pas
           const { error: insertError } = await supabase.from("membres").insert([
             {
               nom: currentData.nom,
@@ -135,27 +134,25 @@ export default function SuivisMembres() {
               besoin: currentData.besoin,
               ville: currentData.ville,
               formation: currentData.formation,
-              comment: newComment || currentData.commentaire_suivis,
-              cellule_id: currentData.cellule_id,
-              responsable_suivi: currentData.responsable_cellule,
+              comment: newComment || currentData.commentaire_suivis || currentData.infos_supplementaires,
+              cellule_id: currentData.cellule_id ?? null,
+              responsable_suivi: currentData.responsable_cellule ?? null,
+              infos_supplementaires: currentData.infos_supplementaires ?? null,
             },
           ]);
-
           if (insertError) throw insertError;
         }
 
-        // 🔹 Supprimer le suivi
+        // Supprimer le suivi
         const { error: deleteError } = await supabase
           .from("suivis_membres")
           .delete()
           .eq("id", id);
-
         if (deleteError) throw deleteError;
 
         setSuivis((prev) => prev.filter((s) => s.id !== id));
         setMessage({ type: "success", text: "🎉 Membre intégré avec succès dans sa cellule !" });
       } else {
-        // 🔹 Sinon mise à jour du suivi
         const payload = {};
         if (newStatus) payload.statut_suivis = newStatus;
         if (newComment) payload.commentaire_suivis = newComment;
@@ -183,27 +180,31 @@ export default function SuivisMembres() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
+      className="min-h-screen flex flex-col items-center p-6 text-center"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* 🔹 Top bar */}
-      <div className="flex justify-between w-full max-w-5xl items-center mb-4">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center text-white font-semibold hover:text-gray-200"
-        >
-          ← Retour
-        </button>
-        <LogoutLink />
-      </div>
-      <div className="flex justify-end w-full max-w-5xl mb-6">
-        <p className="text-orange-200 text-sm">👋 Bienvenue {userName}</p>
+      {/* Top bar */}
+      <div className="w-full max-w-5xl mb-6">
+        <div className="flex justify-between items-center">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center text-white hover:text-gray-200 transition-colors"
+          >
+            ← Retour
+          </button>
+          <LogoutLink />
+        </div>
+        <div className="flex justify-end mt-2">
+          <p className="text-orange-200 text-sm">👋 Bienvenue {userName}</p>
+        </div>
       </div>
 
-      <h1 className="text-4xl font-handwriting text-white text-center mb-3">
-        Liste des membres suivis
-      </h1>
+      {/* Logo */}
+      <div className="mb-6">
+        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18 mx-auto" />
+      </div>
 
+      {/* Message */}
       {message && (
         <div
           className={`mb-4 px-4 py-2 rounded-md text-sm ${
@@ -240,11 +241,9 @@ export default function SuivisMembres() {
                     {item.prenom} {item.nom}
                   </h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {item.cellule_nom || "—"}</p>  
+                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {item.cellule_nom || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">
-                    📋 Statut Suivis : {item.statut_suivis || "—"}
-                  </p>
+                  <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
                   <button
                     onClick={() => toggleDetails(item.id)}
                     className="text-orange-500 underline text-sm mt-1"
@@ -261,16 +260,13 @@ export default function SuivisMembres() {
                       <p>🕊 Statut : {item.statut || "—"}</p>
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
                       <p>❓Besoin : {
-                          (() => {
-                            if (!item.besoin) return "—";
-                            if (Array.isArray(item.besoin)) return item.besoin.join(", ");
-                            try {
-                              const arr = JSON.parse(item.besoin);
-                              return Array.isArray(arr) ? arr.join(", ") : item.besoin;
-                            } catch { return item.besoin; }
-                          })()
-                        }
-                      </p>
+                        (() => {
+                          if (!item.besoin) return "—";
+                          if (Array.isArray(item.besoin)) return item.besoin.join(", ");
+                          try { const arr = JSON.parse(item.besoin); return Array.isArray(arr) ? arr.join(", ") : item.besoin; } 
+                          catch { return item.besoin; }
+                        })()
+                      }</p>
                       <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
                       <div>
                         <label className="text-black text-sm">📋 Statut Suivis :</label>
@@ -282,7 +278,7 @@ export default function SuivisMembres() {
                           <option value="">-- Choisir un statut --</option>
                           <option value="integrer">✅ Intégrer</option>
                           <option value="en cours">🕓 En Cours</option>
-                          <option value="refus">❌ Refus</option>                          
+                          <option value="refus">❌ Refus</option>
                         </select>
                       </div>
                       <div>
@@ -326,14 +322,8 @@ export default function SuivisMembres() {
             </thead>
             <tbody>
               {suivis.map((item) => (
-                <tr
-                  key={item.id}
-                  className="hover:bg-white/10 transition duration-150 border-b border-blue-300"
-                >
-                  <td
-                    className="px-4 py-2 border-l-4 rounded-l-md"
-                    style={{ borderLeftColor: getBorderColor(item) }}
-                  >
+                <tr key={item.id} className="hover:bg-white/10 transition duration-150 border-b border-blue-300">
+                  <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(item) }}>
                     {item.prenom} {item.nom}
                   </td>
                   <td className="px-4 py-2">{item.telephone}</td>
@@ -364,16 +354,13 @@ export default function SuivisMembres() {
                             <p>🕊 Statut : {item.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
                             <p>❓Besoin : {
-                                (() => {
-                                  if (!item.besoin) return "—";
-                                  if (Array.isArray(item.besoin)) return item.besoin.join(", ");
-                                  try {
-                                    const arr = JSON.parse(item.besoin);
-                                    return Array.isArray(arr) ? arr.join(", ") : item.besoin;
-                                  } catch { return item.besoin; }
-                                })()
-                              }
-                            </p>
+                              (() => {
+                                if (!item.besoin) return "—";
+                                if (Array.isArray(item.besoin)) return item.besoin.join(", ");
+                                try { const arr = JSON.parse(item.besoin); return Array.isArray(arr) ? arr.join(", ") : item.besoin; } 
+                                catch { return item.besoin; }
+                              })()
+                            }</p>
                             <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
                             <div>
                               <label className="text-black text-sm">📋 Statut Suivis :</label>
@@ -385,7 +372,7 @@ export default function SuivisMembres() {
                                 <option value="">-- Choisir un statut --</option>
                                 <option value="integrer">✅ Intégrer</option>
                                 <option value="en cours">🕓 En Cours</option>
-                                <option value="refus">❌ Refus</option>                          
+                                <option value="refus">❌ Refus</option>
                               </select>
                             </div>
                             <div>

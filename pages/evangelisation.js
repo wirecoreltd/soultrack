@@ -150,9 +150,9 @@ export default function Evangelisation() {
 
                 <button
                   onClick={() => toggleDetails(member.id)}
-                  className="text-blue-600 text-sm font-semibold underline"
+                  className="text-orange-500 underline text-sm mt-1"
                 >
-                  {isOpen ? "🔒 Fermer" : "🔍 Détails"}
+                  {isOpen ? "🔒 Fermer" : "Détails"}
                 </button>
 
                 {isOpen && (

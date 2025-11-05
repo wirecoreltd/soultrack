@@ -104,6 +104,10 @@ export default function IndexPage() {
       <div className="mb-6">
         <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18 mx-auto" />
       </div>
+      {/* 🔹 Titre */}
+      <h1 className="text-3xl font-login text-white mb-6 text-center">
+        Évangélisation
+      </h1>
 
       {/* 🔹 Message motivant */}
       <p className="text-white text-lg italic mb-6 max-w-2xl leading-relaxed tracking-wide font-light">

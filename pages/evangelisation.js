@@ -156,9 +156,18 @@ export default function Evangelisation() {
                 </button>
 
                 {isOpen && (
-                  <div className="text-xs mt-2 text-center">
+                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                     <p>🏙 Ville: {member.ville || "—"}</p>
-                    <p>🙏 Besoin: {member.besoin || "—"}</p>
+                    <p>❓Besoin : {
+                          (() => {
+                            if (!member.besoin) return "—";
+                            if (Array.isArray(member.besoin)) return member.besoin.join(", ");
+                            try {
+                              const arr = JSON.parse(member.besoin);
+                              return Array.isArray(arr) ? arr.join(", ") : member.besoin;
+                            } catch { return member.besoin; }
+                          })()
+                        }</p>
                     <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
                   </div>
                 )}
@@ -214,10 +223,9 @@ export default function Evangelisation() {
                   key={`popup-${member.id}`}
                   className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
                 >
-                  <div className="bg-white text-gray-900 p-4 rounded-xl max-w-sm w-full relative shadow-lg">
-                    <h3 className="font-bold text-lg text-blue-700 mb-2">
-                      {member.prenom} {member.nom}
-                    </h3>
+                  <h2 className="text-lg font-bold text-gray-800 text-center">
+                            {m.prenom} {m.nom}                           
+                          </h2>
                     <p>📱 {member.telephone || "—"}</p>
                     <p>🏙 {member.ville || "—"}</p>
                     <p>🙏 {member.besoin || "—"}</p>

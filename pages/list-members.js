@@ -537,9 +537,9 @@ export default function ListMembers() {
             </tbody>
           </table>
         </div>
-      )} {/* ✅ fermeture du "view === table" */}
-    </div> {/* ✅ fermeture du div principal */}
+         )}
+      {/* ✅ fermeture du "view === table" */}
+    </div>
+    {/* ✅ fermeture du div principal */}
   );
 }
-
-

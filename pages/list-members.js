@@ -1,4 +1,4 @@
-// ✅ pages/list-members.js
+// pages/list-members.js
 
 "use client";
 import { useEffect, useState } from "react";
@@ -17,6 +17,7 @@ export default function ListMembers() {
   const [cellules, setCellules] = useState([]);
   const [selectedCellules, setSelectedCellules] = useState({});
   const [view, setView] = useState("card");
+  const [popupMember, setPopupMember] = useState(null);
   const [session, setSession] = useState(null);
 
   useEffect(() => {
@@ -123,43 +124,29 @@ export default function ListMembers() {
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
       {/* ==================== HEADER ==================== */}
-      <div className="w-full max-w-5xl mb-6">
-        <div className="flex justify-between items-center">
-          <button
-            onClick={() => {
-              if (typeof window !== "undefined") {
-                window.history.back();
-              }
-            }}
-            className="flex items-center text-white hover:text-gray-200 transition-colors"
-          >
-            ← Retour
-          </button>
-          <LogoutLink />
-        </div>
-        <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">
-            👋 Bienvenue {session?.user?.user_metadata?.prenom || "Utilisateur"}
-          </p>
-        </div>
+      <div className="flex justify-between w-full max-w-5xl items-center mb-4">
+        <button
+          onClick={() => window.history.back()}
+          className="flex items-center text-white hover:text-gray-200"
+        >
+          ← Retour
+        </button>
+        <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
       </div>
 
       {/* ==================== LOGO ==================== */}
-      <div className="mb-6">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} className="mx-auto" />
+      <div className="mt-2 mb-2">
+        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
 
-      {/* ==================== TITRE ==================== */}
-      <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">
-          List des Membres
-        </h1>
-        <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
-          Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
-        </p>
-      </div>
+      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">
+        Liste de Membres
+      </h1>
+      <p className="text-center text-white text-lg mb-2 font-handwriting-light">
+        Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
+      </p>
 
-      {/* ==================== CONTROLS ==================== */}
+      {/* ==================== FILTRE + RECHERCHE + TOGGLE ==================== */}
       <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">
         <div className="flex items-center space-x-2 mb-2 sm:mb-0">
           <select
@@ -235,29 +222,11 @@ export default function ListMembers() {
 
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                            <p> 💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                            <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
                             <p> 🏙 Ville : {m.ville || "—"}</p>
                             <p> 🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                            <p>❓Besoin : {
-                                (() => {
-                                  if (!m.besoin) return "—";
-                            
-                                  // Si c'est déjà un tableau → join directement
-                                  if (Array.isArray(m.besoin)) {
-                                    return m.besoin.join(", ");
-                                  }
-                            
-                                  // Sinon → essayer de parser la string JSON
-                                  try {
-                                    const arr = JSON.parse(m.besoin);
-                                    return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                                  } catch (e) {
-                                    return m.besoin; // fallback si parsing échoue
-                                  }
-                                })()
-                              }
-                            </p>
+                            <p>❓Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             <p className="mt-2 font-semibold text-bleu-600">Statut :</p>
@@ -358,29 +327,11 @@ export default function ListMembers() {
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                             <p> 📌 Prénom Nom : {m.prenom} {m.nom}</p>
                             <p> 📞 Téléphone : {m.telephone || "—"}</p>
-                            <p> 💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                            <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
                             <p> 🏙 Ville : {m.ville || "—"}</p>
                             <p> 🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                            <p>❓Besoin : {
-                                (() => {
-                                  if (!m.besoin) return "—";
-                            
-                                  // Si c'est déjà un tableau → join directement
-                                  if (Array.isArray(m.besoin)) {
-                                    return m.besoin.join(", ");
-                                  }
-                            
-                                  // Sinon → essayer de parser la string JSON
-                                  try {
-                                    const arr = JSON.parse(m.besoin);
-                                    return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                                  } catch (e) {
-                                    return m.besoin; // fallback si parsing échoue
-                                  }
-                                })()
-                              }
-                            </p>
+                            <p>❓ Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             <select
@@ -436,7 +387,7 @@ export default function ListMembers() {
         </div>
       )}
 
-            {/* ==================== VUE TABLE ==================== */}
+      {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
@@ -448,9 +399,7 @@ export default function ListMembers() {
                 <th className="px-4 py-2 rounded-tr-lg">Détails</th>
               </tr>
             </thead>
-
             <tbody>
-              {/* 💖 Ligne spéciale pour nouveaux membres */}
               {nouveauxFiltres.length > 0 && (
                 <tr>
                   <td colSpan={4} className="px-4 py-2 text-white font-semibold">
@@ -458,86 +407,104 @@ export default function ListMembers() {
                   </td>
                 </tr>
               )}
-
-              {/* 💖 Liste des nouveaux membres */}
+              {/* Nouveaux membres */}
               {nouveauxFiltres.map((m) => (
                 <tr
                   key={m.id}
-                  className="hover:bg-white/10 transition duration-150 border-b border-gray-300"
+                  className="hover:bg-white/10 transition duration-150 border-b border-blue-300"
                 >
                   <td
-                    className="px-4 py-2 border-l-4 rounded-l-md"
+                    className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
                     {m.prenom} {m.nom}
-                    {m.star && <span className="text-yellow-400">⭐</span>}
-                    {(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && (
-                      <span className="ml-1 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">
-                        Nouveau
-                      </span>
-                    )}
+                    {m.star && <span className="text-yellow-400 ml-1">⭐</span>}  
+                    <span className="bg-blue-500 text-white text-xs px-1 rounded">Nouveau</span>
                   </td>
-
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.statut || "—"}</td>
-                  <td className="px-4 py-2 rounded-r-md">
+                  <td className="px-4 py-2">
                     <button
                       onClick={() => toggleDetails(m.id)}
-                      className="text-orange-400 underline text-sm"
+                      className="text-orange-500 underline text-sm"
                     >
                       {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
                     </button>
-                  </td>
 
-                  {detailsOpen[m.id] && (
-                    <td colSpan={4}>
-                      <div
-                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-                        onClick={() => toggleDetails(m.id)}
-                      >
-                        <div
-                          className="bg-white text-black p-6 rounded-xl w-96 max-h-[90vh] overflow-y-auto relative space-y-2"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <h3 className="text-lg font-semibold text-center">
+                    {detailsOpen[m.id] && (
+                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
+                        <div className="bg-white text-black p-6 rounded-lg w-80 max-h-[90vh] overflow-y-auto relative">
+                          <button
+                            onClick={() => toggleDetails(m.id)}
+                            className="absolute top-2 right-2 text-red-500 font-bold"
+                          >
+                            ✕
+                          </button>
+                          <h3 className="text-lg font-semibold">
                             {m.prenom} {m.nom}
                           </h3>
-
-                          <p>📞 Téléphone : {m.telephone || "—"}</p>
-                          <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                          <p>📱 {m.telephone || "—"}</p>
+                          <p>💬 WhatsApp : {m.is_whatsapp || "—"}</p>
                           <p>🏙 Ville : {m.ville || "—"}</p>
-                          <p>🧩 Venu via : {m.venu || "—"}</p>
-                          <p>📝 Info : {m.infos_supplementaires || "—"}</p>
-
-                          <p className="mt-2 font-semibold">Changer statut :</p>
-                          <select
-                            value={m.statut}
-                            onChange={(e) =>
-                              handleChangeStatus(m.id, e.target.value)
-                            }
-                            className="border rounded-md px-2 py-1 text-sm w-full"
-                          >
-                            {statusOptions.map((s) => (
-                              <option key={s}>{s}</option>
-                            ))}
-                          </select>
-
-                          <button
-                            className="mt-4 w-full bg-gray-800 text-white py-1 rounded-lg"
-                            onClick={() => toggleDetails(m.id)}
-                          >
-                            Fermer
-                          </button>
+                          <p>🕊 Statut : {m.statut || "—"}</p>
+                          <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+                          <p>❓Besoin : {m.besoin || "—"}</p>
+                          <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
                         </div>
                       </div>
-                    </td>
-                  )}
+                    )}
+                  </td>
                 </tr>
               ))}
+
+              {/* Membres existants */}
+              {anciensFiltres.length > 0 && (
+                <>
+                  <tr>
+                    <td colSpan={4} className="px-4 py-2 font-semibold text-lg">
+                      <span
+                        style={{
+                          background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                          WebkitBackgroundClip: "text",
+                          color: "transparent",
+                        }}
+                      >
+                        Membres existants
+                      </span>
+                    </td>
+                  </tr>
+              
+                  {anciensFiltres.map((m) => (
+                    <tr
+                      key={m.id}
+                      className="hover:bg-white/10 transition duration-150 border-b border-gray-300"
+                    >
+                      <td
+                        className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
+                        style={{ borderLeftColor: getBorderColor(m) }}
+                      >
+                        {m.prenom} {m.nom}
+                        {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                      </td>
+                      <td className="px-4 py-2">{m.telephone || "—"}</td>
+                      <td className="px-4 py-2">{m.statut || "—"}</td>
+                      <td className="px-4 py-2">
+                        <button
+                          onClick={() => toggleDetails(m.id)}
+                          className="text-orange-500 underline text-sm"
+                        >
+                          {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              )}
+
             </tbody>
-           </table>
+          </table>
         </div>
       )}
     </div>
   );
-} 
+}

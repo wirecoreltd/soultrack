@@ -151,8 +151,10 @@ export default function ListMembers() {
 
       {/* ==================== TITRE ==================== */}
       <div className="text-center mb-6">
-        <h1 className="text-5xl sm:text-6xl font-handwriting text-white mb-2">List des Membres</h1>
-        <p className="text-white text-lg max-w-xl mx-auto italic">
+        <h1 className="text-3xl font-bold text-white mb-2">
+          List des Membres
+        </h1>
+        <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
           Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
         </p>
       </div>
@@ -478,46 +480,58 @@ export default function ListMembers() {
                       {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
                     </button>
               
-                    {detailsOpen[m.id] && (
-                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                        <div className="bg-white text-black p-6 rounded-xl w-96 max-h-[90vh] overflow-y-auto relative space-y-2">
-                          <button
-                            onClick={() => toggleDetails(m.id)}
-                            className="absolute top-2 right-2 text-red-500 font-bold"
+                      <td className="px-4 py-2">
+                      <button
+                        onClick={() => toggleDetails(m.id)}
+                        className="text-orange-400 underline text-sm"
+                      >
+                        {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
+                      </button>
+                    
+                      {detailsOpen[m.id] && (
+                        <div
+                          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+                          onClick={() => toggleDetails(m.id)}
+                        >
+                          <div
+                            className="bg-white text-black p-6 rounded-xl w-96 max-h-[90vh] overflow-y-auto relative space-y-2"
+                            onClick={(e) => e.stopPropagation()} // ✅ empêche la fermeture sur clic intérieur
                           >
-                            ✕
-                          </button>
-              
-                          <h2 className="text-lg font-bold text-gray-800 text-center">
-                            {m.prenom} {m.nom}
-                            {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                          </h2>
-              
-                          <p>📱 Téléphone : {m.telephone || "—"}</p>
-                          <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                          <p>🏙 Ville : {m.ville || "—"}</p>
-                          <p>🕊 Statut : {m.statut || "—"}</p>
-                          <p>🧩 Comment est-il venu : {m.venu || "—"}</p>                          
-                          <p>❓Besoin : {
-                              (() => {
-                                if (!m.besoin) return "—";
-                          
-                                // Si c'est déjà un tableau → join directement
-                                if (Array.isArray(m.besoin)) {
-                                  return m.besoin.join(", ");
-                                }
-                          
-                                // Sinon → essayer de parser la string JSON
-                                try {
-                                  const arr = JSON.parse(m.besoin);
-                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                                } catch (e) {
-                                  return m.besoin; // fallback si parsing échoue
-                                }
-                              })()
-                            }
-                          </p>
-                          <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                            <button
+                              onClick={() => toggleDetails(m.id)}
+                              className="absolute top-2 right-2 text-red-500 font-bold"
+                            >
+                              ✕
+                            </button>
+                    
+                            <h2 className="text-lg font-bold text-gray-800 text-center">
+                              {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                            </h2>
+                    
+                            <p>📱 Téléphone : {m.telephone || "—"}</p>
+                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                            <p>🏙 Ville : {m.ville || "—"}</p>
+                            <p>🕊 Statut : {m.statut || "—"}</p>
+                            <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+                            <p>
+                              ❓Besoin :{" "}
+                              {Array.isArray(m.besoin)
+                                ? m.besoin.join(", ")
+                                : (() => {
+                                    try {
+                                      const arr = JSON.parse(m.besoin);
+                                      return Array.isArray(arr) ? arr.join(", ") : "—";
+                                    } catch {
+                                      return "—";
+                                    }
+                                  })()}
+                            </p>
+                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                          </div>
+                        </div>
+                      )}
+</td>
+
               
                           <p className="mt-2 font-semibold text-blue-600">Changer Statut :</p>
                           <select

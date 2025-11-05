@@ -129,7 +129,7 @@ export default function AddEvangelise() {
           <label className="flex items-center gap-2 text-gray-700">
             <input
               type="checkbox"
-              className="w-5 h-5 accent-green-500 cursor-pointer"
+              className="w-5 h-5 accent-indigo-600 cursor-pointer"
               name="is_whatsapp"
               checked={formData.is_whatsapp}
               onChange={(e)=>setFormData({...formData,is_whatsapp:e.target.checked})}

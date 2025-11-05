@@ -44,24 +44,29 @@ export default function Evangelisation() {
   const handleCheck = (id) =>
     setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  const sendWhatsapp = async () => {
-    alert("Fonction OK ✅ (inchangée)");
-  };
+  const sendWhatsapp = () => alert("Fonction OK ✅");
 
   const userName = "Utilisateur";
+
+  const formatBesoin = (b) => {
+    if (!b) return "—";
+    if (Array.isArray(b)) return b.join(", ");
+    try {
+      const arr = JSON.parse(b);
+      return Array.isArray(arr) ? arr.join(", ") : b;
+    } catch {
+      return b;
+    }
+  };
 
   return (
     <div
       className="min-h-screen w-full flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* ✅ Top bar */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-white hover:text-gray-200 transition-colors"
-          >
+          <button onClick={() => router.back()} className="text-white">
             ← Retour
           </button>
           <LogoutLink />
@@ -71,24 +76,9 @@ export default function Evangelisation() {
         </div>
       </div>
 
-      {/* ✅ Logo */}
-      <Image
-        src="/logo.png"
-        alt="Logo"
-        width={90}
-        height={90}
-        className="mb-3 drop-shadow-lg"
-      />
+      <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
+      <h1 className="text-4xl text-white text-center mb-2">Évangélisation</h1>
 
-      {/* ✅ Titre */}
-      <h1 className="text-4xl md:text-5xl font-handwriting text-white text-center mb-2 drop-shadow-md">
-        Évangélisation
-      </h1>
-      <p className="text-center text-lg text-white/90 mb-4 max-w-lg">
-        ✨ Chaque âme compte éternellement… ✨
-      </p>
-
-      {/* ✅ Sélecteur + Bouton */}
       <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center">
         <select
           value={selectedCellule}
@@ -113,7 +103,6 @@ export default function Evangelisation() {
         )}
       </div>
 
-      {/* ✅ Toggle Vue */}
       <p
         onClick={() => setView(view === "card" ? "table" : "card")}
         className="cursor-pointer text-yellow-100 underline hover:text-white text-sm mb-4"
@@ -121,7 +110,7 @@ export default function Evangelisation() {
         {view === "card" ? "Vue Table" : "Vue Carte"}
       </p>
 
-      {/* ✅ Vue Carte */}
+      {/* ✅ VUE CARTE */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
           {contacts.map((member) => {
@@ -129,7 +118,7 @@ export default function Evangelisation() {
             return (
               <div
                 key={member.id}
-                className="bg-white text-gray-900 rounded-2xl shadow-xl p-4 border border-gray-200"
+                className="bg-white text-gray-900 rounded-2xl shadow-xl p-4"
               >
                 <h2 className="font-bold text-lg mb-1 text-center text-blue-800">
                   {member.prenom} {member.nom}
@@ -156,18 +145,9 @@ export default function Evangelisation() {
                 </button>
 
                 {isOpen && (
-                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+                  <div className="text-gray-700 text-sm mt-2 space-y-2">
                     <p>🏙 Ville: {member.ville || "—"}</p>
-                    <p>❓Besoin : {
-                          (() => {
-                            if (!member.besoin) return "—";
-                            if (Array.isArray(member.besoin)) return member.besoin.join(", ");
-                            try {
-                              const arr = JSON.parse(member.besoin);
-                              return Array.isArray(arr) ? arr.join(", ") : member.besoin;
-                            } catch { return member.besoin; }
-                          })()
-                        }</p>
+                    <p>❓Besoin : {formatBesoin(member.besoin)}</p>
                     <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
                   </div>
                 )}
@@ -177,10 +157,10 @@ export default function Evangelisation() {
         </div>
       )}
 
-      {/* ✅ Vue Table */}
+      {/* ✅ VUE TABLE */}
       {view === "table" && (
         <div className="w-full max-w-5xl overflow-x-auto mt-4">
-          <table className="w-full text-sm bg-white/10 backdrop-blur-sm rounded-xl shadow-lg border border-white/20">
+          <table className="w-full text-sm bg-white/10 rounded-xl">
             <thead className="bg-white/20 text-white">
               <tr>
                 <th className="p-3">Prénom</th>
@@ -202,7 +182,7 @@ export default function Evangelisation() {
                       onChange={() => handleCheck(member.id)}
                     />
                   </td>
-                  <td className="text-left">
+                  <td className="text-center">
                     <button
                       onClick={() => toggleDetails(member.id)}
                       className="text-yellow-300 underline"
@@ -215,44 +195,23 @@ export default function Evangelisation() {
             </tbody>
           </table>
 
-          {/* ✅ Popup Détails */}
-{contacts.map(
-  (member) =>
-    detailsOpen[member.id] && (
-      <div
-        key={`popup-${member.id}`}
-        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-      >
-        <div className="bg-white rounded-2xl shadow-xl p-6 relative w-80 text-gray-800">
-          <button
-            onClick={() => toggleDetails(member.id)}
-            className="absolute top-2 right-2 text-red-500 font-bold"
-          >
-            ✕
-          </button>
+          {/* ✅ POPUP DÉTAILS */}
+          {contacts.map(
+            (member) =>
+              detailsOpen[member.id] && (
+                <div
+                  key={member.id}
+                  className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+                >
+                  <div className="bg-white rounded-xl p-6 w-80 relative">
+                    <h2 className="text-lg font-bold text-gray-800 text-center">
+                      {member.prenom} {member.nom}
+                    </h2>
 
-          <h2 className="text-lg font-bold text-center mb-3">
-            {member.prenom} {member.nom}
-          </h2>
-
-          <p>📱 {member.telephone || "—"}</p>
-          <p>🏙 {member.ville || "—"}</p>
-          <p>🙏 {
-            (() => {
-              if (!member.besoin) return "—";
-              if (Array.isArray(member.besoin)) return member.besoin.join(", ");
-              try {
-                const arr = JSON.parse(member.besoin);
-                return Array.isArray(arr) ? arr.join(", ") : member.besoin;
-              } catch { return member.besoin; }
-            })()
-          }</p>
-          <p>📝 {member.infos_supplementaires || "—"}</p>
-        </div>
-      </div>
-    )
-)}
-
+                    <p>📱 {member.telephone || "—"}</p>
+                    <p>🏙 {member.ville || "—"}</p>
+                    <p>🙏 {formatBesoin(member.besoin)}</p>
+                    <p>📝 {member.infos_supplementaires || "—"}</p>
 
                     <button
                       onClick={() => toggleDetails(member.id)}

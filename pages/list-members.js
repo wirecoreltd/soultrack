@@ -436,7 +436,7 @@ export default function ListMembers() {
         </div>
       )}
 
-      {/* ==================== VUE TABLE ==================== */}
+            {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
@@ -459,7 +459,7 @@ export default function ListMembers() {
                 </tr>
               )}
 
-                            {/* 💖 Liste des nouveaux membres */}
+              {/* 💖 Liste des nouveaux membres */}
               {nouveauxFiltres.map((m) => (
                 <tr
                   key={m.id}
@@ -480,7 +480,6 @@ export default function ListMembers() {
 
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.statut || "—"}</td>
-
                   <td className="px-4 py-2 rounded-r-md">
                     <button
                       onClick={() => toggleDetails(m.id)}
@@ -538,8 +537,8 @@ export default function ListMembers() {
             </tbody>
           </table>
         </div>
-      )}
-    </div>  {/* ✅ fermeture du div principal */}
+      )} {/* ✅ fermeture du "view === table" */}
+    </div> {/* ✅ fermeture du div principal */}
   );
 }
 

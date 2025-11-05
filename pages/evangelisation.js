@@ -216,20 +216,43 @@ export default function Evangelisation() {
           </table>
 
           {/* ✅ Popup Détails */}
-          {contacts.map(
-            (member) =>
-              detailsOpen[member.id] && (
-                <div
-                  key={`popup-${member.id}`}
-                  className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-                >
-                  <h2 className="text-lg font-bold text-gray-800 text-center">
-                            {m.prenom} {m.nom}                           
-                          </h2>
-                    <p>📱 {member.telephone || "—"}</p>
-                    <p>🏙 {member.ville || "—"}</p>
-                    <p>🙏 {member.besoin || "—"}</p>
-                    <p>📝 {member.infos_supplementaires || "—"}</p>
+{contacts.map(
+  (member) =>
+    detailsOpen[member.id] && (
+      <div
+        key={`popup-${member.id}`}
+        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      >
+        <div className="bg-white rounded-2xl shadow-xl p-6 relative w-80 text-gray-800">
+          <button
+            onClick={() => toggleDetails(member.id)}
+            className="absolute top-2 right-2 text-red-500 font-bold"
+          >
+            ✕
+          </button>
+
+          <h2 className="text-lg font-bold text-center mb-3">
+            {member.prenom} {member.nom}
+          </h2>
+
+          <p>📱 {member.telephone || "—"}</p>
+          <p>🏙 {member.ville || "—"}</p>
+          <p>🙏 {
+            (() => {
+              if (!member.besoin) return "—";
+              if (Array.isArray(member.besoin)) return member.besoin.join(", ");
+              try {
+                const arr = JSON.parse(member.besoin);
+                return Array.isArray(arr) ? arr.join(", ") : member.besoin;
+              } catch { return member.besoin; }
+            })()
+          }</p>
+          <p>📝 {member.infos_supplementaires || "—"}</p>
+        </div>
+      </div>
+    )
+)}
+
 
                     <button
                       onClick={() => toggleDetails(member.id)}

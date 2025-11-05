@@ -106,7 +106,7 @@ export default function IndexPage() {
       </div>
       {/* 🔹 Titre */}
       <h1 className="text-3xl font-login text-white mb-6 text-center">
-        Évangélisation
+        Tableau De Bord
       </h1>
 
       {/* 🔹 Message motivant */}

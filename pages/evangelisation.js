@@ -146,7 +146,7 @@ export default function Evangelisation() {
 
                 {isOpen && (
                   <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-center flex flex-col items-center">
-                    <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                    <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🏙 Ville: {member.ville || "—"}</p>
                     <p>❓Besoin : {formatBesoin(member.besoin)}</p>
                     <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
@@ -210,7 +210,7 @@ export default function Evangelisation() {
                     </h2>
 
                     <p>📱 {member.telephone || "—"}</p>
-                    <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                    <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🏙 {member.ville || "—"}</p>
                     <p>🙏 {formatBesoin(member.besoin)}</p>
                     <p>📝 {member.infos_supplementaires || "—"}</p>

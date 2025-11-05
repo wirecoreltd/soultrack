@@ -147,6 +147,7 @@ export default function AjouterMembreCellule() {
             <input
               type="checkbox"
               name="is_whatsapp"
+              className="w-5 h-5 accent-indigo-600 cursor-pointer"
               checked={formData.is_whatsapp}
               onChange={handleChange}
             />

@@ -1,4 +1,4 @@
-// ✅ pages/evangelisation.js — VISUEL AMÉLIORÉ
+// ✅ pages/evangelisation.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -118,7 +118,7 @@ export default function Evangelisation() {
         onClick={() => setView(view === "card" ? "table" : "card")}
         className="cursor-pointer text-yellow-100 underline hover:text-white text-sm mb-4"
       >
-        {view === "card" ? "📋 Vue Table" : "🧩 Vue Carte"}
+        {view === "card" ? "Vue Table" : "Vue Carte"}
       </p>
 
       {/* ✅ Vue Carte */}
@@ -152,7 +152,7 @@ export default function Evangelisation() {
                   onClick={() => toggleDetails(member.id)}
                   className="text-orange-500 underline text-sm mt-1"
                 >
-                  {isOpen ? "🔒 Fermer" : "Détails"}
+                  {isOpen ? "Fermer Détails" : "Détails"}
                 </button>
 
                 {isOpen && (
@@ -193,12 +193,12 @@ export default function Evangelisation() {
                       onChange={() => handleCheck(member.id)}
                     />
                   </td>
-                  <td className="text-center">
+                  <td className="text-left">
                     <button
                       onClick={() => toggleDetails(member.id)}
                       className="text-yellow-300 underline"
                     >
-                      🔍
+                      Détails
                     </button>
                   </td>
                 </tr>

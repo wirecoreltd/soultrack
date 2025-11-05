@@ -21,14 +21,7 @@ export default function DetailsPopup({ member, onClose }) {
         <p>🧩 Comment est-il venu : {member.venu || "—"}</p>
         <p>❓Besoin : {member.besoin || "—"}</p>
         <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
-          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                            <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
-                            <p> 🏙 Ville : {m.ville || "—"}</p>
-                            <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                            <p>❓Besoin : {m.besoin || "—"}</p>
-                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-
-                            <p className="mt-2 font-semibold text-bleu-600">Statut :</p>
+                           <p className="mt-2 font-semibold text-bleu-600">Statut :</p>
                             <select
                               value={m.statut}
                               onChange={(e) => handleChangeStatus(m.id, e.target.value)}

@@ -134,18 +134,19 @@ export default function Evangelisation() {
                     checked={checkedContacts[member.id] || false}
                     onChange={() => handleCheck(member.id)}
                   />
-                  ✅ WhatsApp
+                  ✅ Envoyer ce Contact
                 </label>
 
                 <button
                   onClick={() => toggleDetails(member.id)}
-                  className="text-orange-500 underline text-sm mt-1"
+                  className="text-orange-500 underline text-sm mt-1 block mx-auto text-center"
                 >
                   {isOpen ? "Fermer Détails" : "Détails"}
                 </button>
 
                 {isOpen && (
-                  <div className="text-gray-700 text-sm mt-2 space-y-2">
+                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-center flex flex-col items-center">
+                    <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🏙 Ville: {member.ville || "—"}</p>
                     <p>❓Besoin : {formatBesoin(member.besoin)}</p>
                     <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
@@ -165,7 +166,7 @@ export default function Evangelisation() {
               <tr>
                 <th className="p-3">Prénom</th>
                 <th className="p-3">Nom</th>
-                <th className="p-3 text-center">WhatsApp</th>
+                <th className="p-3 text-center">Envoyer ce Contact</th>
                 <th className="p-3 text-center">Détails</th>
               </tr>
             </thead>
@@ -209,6 +210,7 @@ export default function Evangelisation() {
                     </h2>
 
                     <p>📱 {member.telephone || "—"}</p>
+                    <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🏙 {member.ville || "—"}</p>
                     <p>🙏 {formatBesoin(member.besoin)}</p>
                     <p>📝 {member.infos_supplementaires || "—"}</p>

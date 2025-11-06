@@ -38,7 +38,16 @@ export default function DetailsPopup({
           <p>💬 <strong>WhatsApp :</strong> {member.is_whatsapp ? "Oui" : "Non"}</p>
           <p>🏙 <strong>Ville :</strong> {member.ville || "—"}</p>
           <p>🧩 <strong>Comment est-il venu :</strong> {member.venu || "—"}</p>
-          <p>❓<strong>Besoin :</strong> {member.besoin || "—"}</p>
+          <p>❓Besoin : {
+                          (() => {
+                            if (!member.besoin) return "—";
+                            if (Array.isArray(member.besoin)) return member.besoin.join(", ");
+                            try {
+                              const arr = JSON.parse(member.besoin);
+                              return Array.isArray(arr) ? arr.join(", ") : member.besoin;
+                            } catch { return member.besoin; }
+                          })()
+                        }</p>
           <p>📝 <strong>Infos supplémentaires :</strong> {member.infos_supplementaires || "—"}</p>
         </div>
 
@@ -58,11 +67,11 @@ export default function DetailsPopup({
           {/* ==================== CELLULE ==================== */}
           <p className="mt-2 font-semibold text-green-600">Cellule :</p>
           <select
-            value={selectedCellules[m.id] || ""}
+            value={selectedCellules[member.id] || ""}
             onChange={(e) =>
               setSelectedCellules((prev) => ({
                 ...prev,
-                [m.id]: e.target.value,
+                [member.id]: e.target.value,
               }))
             }
             className="border rounded-lg px-2 py-1 text-sm w-full"

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import AccessGuard from "../components/AccessGuard";
+import LogoutLink from "../components/LogoutLink";
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);

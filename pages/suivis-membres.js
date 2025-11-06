@@ -362,8 +362,11 @@ export default function SuivisMembres() {
             </td>
           </tr>
         ))}
-      </tbody>
-    </table>
-  </div>
-)}
+              </tbody>
+      </table>
+    </div>
+  )}
+</div>
+);
+}
 

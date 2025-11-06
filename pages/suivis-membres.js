@@ -1,4 +1,4 @@
-// pages/suivis-membres.js
+// ✅ pages/suivis-membres.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -16,10 +16,36 @@ export default function SuivisMembres() {
   const [updating, setUpdating] = useState({});
   const [view, setView] = useState("card");
   const [message, setMessage] = useState(null);
+  const [prenom, setPrenom] = useState(""); // ✅ Nouveau
 
   useEffect(() => {
+    fetchUserPrenom(); // ✅ Récupérer prénom utilisateur connecté
     fetchSuivis();
   }, []);
+
+  const fetchUserPrenom = async () => {
+    try {
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
+
+      if (sessionError) throw sessionError;
+
+      const user = sessionData?.session?.user;
+      if (!user) return;
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("prenom")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (profile) setPrenom(profile.prenom || "");
+    } catch (err) {
+      console.error("Erreur récupération prénom :", err.message);
+    }
+  };
 
   const fetchSuivis = async () => {
     setLoading(true);
@@ -108,7 +134,7 @@ export default function SuivisMembres() {
       className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-       {/* ==================== HEADER ==================== */}
+      {/* ==================== HEADER ==================== */}
       <div className="w-full max-w-5xl mb-6">
         {/* 🔹 Top bar : bouton retour + logout */}
         <div className="flex justify-between items-center">
@@ -132,11 +158,7 @@ export default function SuivisMembres() {
 
       {/* ==================== LOGO ==================== */}
       <div className="mb-4">
-        <Image
-          src="/logo.png"
-          alt="SoulTrack Logo"
-          className="w-20 h-18 mx-auto"
-        />
+        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
 
       {/* ==================== TITRE + MESSAGE MOTIVANT ==================== */}
@@ -147,6 +169,7 @@ export default function SuivisMembres() {
         </p>
       </div>
 
+      {/* ==================== MESSAGE DE STATUS ==================== */}
       {message && (
         <div
           className={`mb-4 px-4 py-2 rounded-md text-sm ${
@@ -166,6 +189,7 @@ export default function SuivisMembres() {
       ) : suivis.length === 0 ? (
         <p className="text-white text-lg italic">Aucun membre en suivi pour le moment.</p>
       ) : view === "card" ? (
+        // ==================== VUE CARTE ====================
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
           {suivis.map((item) => {
             const isOpen = detailsOpen[item.id];
@@ -174,23 +198,21 @@ export default function SuivisMembres() {
                 key={item.id}
                 className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
               >
-                {/* ✅ Bande colorée collée à l'intérieur du haut */}
                 <div
                   className="w-full h-[6px] rounded-t-2xl"
-                  style={{
-                    backgroundColor: getBorderColor(item),
-                  }}
+                  style={{ backgroundColor: getBorderColor(item) }}
                 />
                 <div className="p-4 flex flex-col items-center">
                   <h2 className="font-bold text-black text-base text-center mb-1">
                     {item.prenom} {item.nom}
                   </h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {item.cellule_nom || "—"}</p>  
+                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {item.cellule_nom || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">
                     📋 Statut Suivis : {item.statut_suivis || "—"}
                   </p>
+
                   <button
                     onClick={() => toggleDetails(item.id)}
                     className="text-orange-500 underline text-sm mt-1"
@@ -264,7 +286,7 @@ export default function SuivisMembres() {
           })}
         </div>
       ) : (
-        // Vue Table identique
+        // ==================== VUE TABLE ====================
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
@@ -315,10 +337,18 @@ export default function SuivisMembres() {
                           <p className="text-black text-sm mb-1">
                             💬 WhatsApp : {item.whatsapp || "—"}
                           </p>
-                          <p className="text-black text-sm mb-1">🏙 Ville : {item.ville || "—"}</p>
-                          <p className="text-black text-sm mb-1">🕊 Statut : {item.statut || "—"}</p>
-                          <p className="text-black text-sm mb-1">🧩 Comment est-il venu : {item.venu || "—"}</p>
-                          <p className="text-black text-sm mb-1">📝 Infos : {item.infos_supplementaires || "—"}</p>
+                          <p className="text-black text-sm mb-1">
+                            🏙 Ville : {item.ville || "—"}
+                          </p>
+                          <p className="text-black text-sm mb-1">
+                            🕊 Statut : {item.statut || "—"}
+                          </p>
+                          <p className="text-black text-sm mb-1">
+                            🧩 Comment est-il venu : {item.venu || "—"}
+                          </p>
+                          <p className="text-black text-sm mb-1">
+                            📝 Infos : {item.infos_supplementaires || "—"}
+                          </p>
                           <div>
                             <label className="text-black text-sm">BESOIN :</label>
                             <select

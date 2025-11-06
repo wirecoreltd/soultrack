@@ -262,4 +262,8 @@ export default function Evangelisation() {
     </tbody>
   </table>
 </div>
+</div> // <-- ferme le <div> principal du return
+  );
+} // <-- ferme la fonction Evangelisation
+
 

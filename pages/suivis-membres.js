@@ -177,32 +177,44 @@ export default function SuivisMembres() {
       className="min-h-screen flex flex-col items-center p-6 text-center"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* Top bar */}
-      <div className="w-full max-w-5xl mb-6">
-        <div className="flex justify-between items-center">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-white hover:text-gray-200 transition-colors"
-          >
-            ← Retour
-          </button>
-          <LogoutLink />
-        </div>
-        <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">👋 Bienvenue {userName}</p>
-        </div>
-      </div>
+      {/* ==================== HEADER ==================== */}
+<div className="w-full max-w-5xl mb-6">
+  {/* 🔹 Top bar : bouton retour + logout */}
+  <div className="flex justify-between items-center">
+    <button
+      onClick={() => router.back()}
+      className="flex items-center text-white hover:text-gray-200 transition-colors"
+    >
+      ← Retour
+    </button>
 
-      {/* Logo */}
-      <div className="mb-6">
-        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18 mx-auto" />
-      </div>
+    <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
+  </div>
 
-      {/* Titre centré + toggle */}
-      <div className="flex flex-col md:flex-row items-center justify-center w-full max-w-5xl mb-4 space-y-2 md:space-y-0 md:justify-between">
-        <h1 className="text-4xl font-handwriting text-white text-center">
-          Suivis des membres
-        </h1>
+  {/* 🔹 Message de bienvenue avec prénom */}
+  <div className="flex justify-end mt-2">
+    <p className="text-orange-200 text-sm">
+      👋 Bienvenue {userName || "cher membre"}
+    </p>
+  </div>
+</div>
+
+{/* ==================== LOGO ==================== */}
+<div className="mb-4">
+  <img
+    src="/logo.png"
+    alt="Logo SoulTrack"
+    className="w-20 h-18 mx-auto"
+  />
+</div>
+
+{/* ==================== TITRE + MESSAGE MOTIVANT ==================== */}
+<div className="text-center mb-4">
+  <h1 className="text-3xl font-bold text-white mb-2">Suivis des Membres</h1>
+  <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
+    Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
+  </p>
+</div>
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
           className="text-white text-sm underline hover:text-gray-200"

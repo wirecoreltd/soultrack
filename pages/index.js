@@ -105,7 +105,7 @@ export default function IndexPage() {
         <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18 mx-auto" />
       </div>
       {/* 🔹 Titre */}
-      <h1 className="text-3xl font-login text-white mb-6 text-center">
+      <h1 className="text-3xl font-login text-white mb-6 text-center font-bold">
         Tableau De Bord
       </h1>
 

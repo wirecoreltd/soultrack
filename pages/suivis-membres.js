@@ -295,9 +295,9 @@ export default function SuivisMembres() {
             );
           })}
         </div>
-      ) : (
-      {/* VUE TABLE – contacts avec coin arrondi gauche */}
-{view === "table" && (
+            ) : (
+        // ✅ VUE TABLE – contacts avec coin arrondi gauche
+        view === "table" && (
   <div className="w-full max-w-6xl overflow-x-auto mt-4 transition duration-200">
     <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
       <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">

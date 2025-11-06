@@ -31,13 +31,14 @@ export default function DetailsPopup({
         <h3 className="text-lg font-semibold mb-3 text-center">
           {member.prenom || ""} {member.nom || ""}
         </h3>
-
+        <p className="text-sm text-gray-600 mb-2 text-center">
+                          📱 {m.telephone || "—"}
+                        </p>
         {/* Détails de base */}
-        <div className="space-y-2 text-sm">
-          <p>📱 <strong>Téléphone :</strong> {member.telephone || "—"}</p>
-          <p>💬 <strong>WhatsApp :</strong> {member.is_whatsapp ? "Oui" : "Non"}</p>
-          <p>🏙 <strong>Ville :</strong> {member.ville || "—"}</p>
-          <p>🧩 <strong>Comment est-il venu :</strong> {member.venu || "—"}</p>
+        <div className="space-y-2 text-sm">          
+          <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+          <p>🏙 Ville : {member.ville || "—"}</p>
+          <p>🧩 Comment est-il venu : {member.venu || "—"}</p>
           <p>❓Besoin : {
                           (() => {
                             if (!member.besoin) return "—";
@@ -48,12 +49,12 @@ export default function DetailsPopup({
                             } catch { return member.besoin; }
                           })()
                         }</p>
-          <p>📝 <strong>Infos supplémentaires :</strong> {member.infos_supplementaires || "—"}</p>
+          <p>📝 Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
         </div>
 
         {/* ==================== STATUT ==================== */}
         <div className="mt-4">
-          <p className="mt-2 font-semibold text-blue-600">Statut :</p>
+          <p className="mt-2 font-semibold text-black-600">Statut :</p>
           <select
             value={member.statut || ""}
             onChange={(e) => handleChangeStatus(member.id, e.target.value)}

@@ -158,75 +158,108 @@ export default function Evangelisation() {
         </div>
       )}
 
-      {/* ✅ VUE TABLE */}
-      {view === "table" && (
-        <div className="w-full max-w-5xl overflow-x-auto mt-4">
-          <table className="w-full text-sm bg-white/10 rounded-xl">
-            <thead className="bg-white/20 text-white">
-              <tr>
-                <th className="p-3">Prénom</th>
-                <th className="p-3">Nom</th>
-                <th className="p-3 text-center">Envoyer ce Contact</th>
-                <th className="p-3 text-center">Détails</th>
-              </tr>
-            </thead>
+      {/* ==================== VUE TABLE ==================== */}
+<div className="w-full max-w-5xl overflow-x-auto mt-4">
+  <table className="w-full text-sm bg-white/10 rounded-xl">
+    <thead className="bg-white/20 text-white">
+      <tr>
+        <th className="p-3">Prénom</th>
+        <th className="p-3">Nom</th>
+        <th className="p-3 text-center">Téléphone</th>
+        <th className="p-3 text-center">Statut</th>
+        <th className="p-3 text-center">Détails</th>
+      </tr>
+    </thead>
 
-            <tbody>
-              {contacts.map((member) => (
-                <tr key={member.id} className="hover:bg-white/20">
-                  <td className="p-3">{member.prenom}</td>
-                  <td className="p-3">{member.nom}</td>
-                  <td className="text-center">
-                    <input
-                      type="checkbox"
-                      checked={checkedContacts[member.id] || false}
-                      onChange={() => handleCheck(member.id)}
-                    />
-                  </td>
-                  <td className="text-center">
-                    <button
-                      onClick={() => toggleDetails(member.id)}
-                      className="text-yellow-300 underline"
+    <tbody>
+      {suivis.map((item) => (
+        <tr key={item.id} className="hover:bg-white/20">
+          <td className="p-3">{item.prenom}</td>
+          <td className="p-3">{item.nom}</td>
+          <td className="p-3 text-center">{item.telephone || "—"}</td>
+          <td className="p-3 text-center">{item.statut || "—"}</td>
+          <td className="p-3 text-center">
+            <button
+              onClick={() => toggleDetails(item.id)}
+              className="text-yellow-300 underline"
+            >
+              {detailsOpen[item.id] ? "Fermer détails" : "Détails"}
+            </button>
+
+            {detailsOpen[item.id] && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-xl p-6 w-80 relative">
+                  <button
+                    onClick={() => toggleDetails(item.id)}
+                    className="absolute top-2 right-2 text-red-500 font-bold"
+                  >
+                    ✕
+                  </button>
+                  <h2 className="text-lg font-bold text-gray-800 text-center">
+                    {item.prenom} {item.nom}
+                  </h2>
+                  <p>📞 {item.telephone || "—"}</p>
+                  <p>💬 WhatsApp : {item.whatsapp || "—"}</p>
+                  <p>🏙 Ville : {item.ville || "—"}</p>
+                  <p>🕊 Statut : {item.statut_suivis || "—"}</p>
+                  <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
+                  <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
+                  <div>
+                    <label className="text-black text-sm">BESOIN :</label>
+                    <select
+                      value={item.besoin || ""}
+                      className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
                     >
-                      Détails
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* ✅ POPUP DÉTAILS */}
-          {contacts.map(
-            (member) =>
-              detailsOpen[member.id] && (
-                <div
-                  key={member.id}
-                  className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-                >
-                  <div className="bg-white rounded-xl p-6 w-80 relative">
-                    <h2 className="text-lg font-bold text-gray-800 text-center">
-                      {member.prenom} {member.nom}
-                    </h2>
-
-                    <p>📱 {member.telephone || "—"}</p>
-                    <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p>🏙 {member.ville || "—"}</p>
-                    <p>🙏 {formatBesoin(member.besoin)}</p>
-                    <p>📝 {member.infos_supplementaires || "—"}</p>
-
-                    <button
-                      onClick={() => toggleDetails(member.id)}
-                      className="absolute top-2 right-2 text-red-500 font-bold"
-                    >
-                      ✕
-                    </button>
+                      <option value="">-- Sélectionner --</option>
+                      <option value="Finances">Finances</option>
+                      <option value="Santé">Santé</option>
+                      <option value="Travail">Travail</option>
+                      <option value="Les Enfants">Les Enfants</option>
+                      <option value="La Famille">La Famille</option>
+                    </select>
                   </div>
+                  <div>
+                    <label className="text-black text-sm">📋 Statut Suivis :</label>
+                    <select
+                      value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
+                      onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                      className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+                    >
+                      <option value="">-- Choisir un statut --</option>
+                      <option value="actif">✅ Actif</option>
+                      <option value="en attente">🕓 En attente</option>
+                      <option value="suivi terminé">🏁 Terminé</option>
+                      <option value="inactif">❌ Inactif</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-black text-sm">📝 Commentaire Suivis :</label>
+                    <textarea
+                      value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
+                      onChange={(e) => handleCommentChange(item.id, e.target.value)}
+                      rows={2}
+                      className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
+                      placeholder="Ajouter un commentaire..."
+                    />
+                  </div>
+                  <button
+                    onClick={() => updateSuivi(item.id)}
+                    disabled={updating[item.id]}
+                    className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+                      updating[item.id]
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-green-600 hover:bg-green-700"
+                    }`}
+                  >
+                    {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
+                  </button>
                 </div>
-              )
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
+              </div>
+            )}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+

@@ -193,8 +193,7 @@ export default function SuivisMembres() {
           {message.text}
         </div>
       )}
-
-      {loading ? (
+            {loading ? (
         <p className="text-white">Chargement...</p>
       ) : suivis.length === 0 ? (
         <p className="text-white text-lg italic">Aucun membre en suivi pour le moment.</p>
@@ -295,78 +294,51 @@ export default function SuivisMembres() {
             );
           })}
         </div>
-            ) : (
-        // ✅ VUE TABLE – contacts avec coin arrondi gauche
-        view === "table" && (
-  <div className="w-full max-w-6xl overflow-x-auto mt-4 transition duration-200">
-    <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-      <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
-        <tr>
-          <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-          <th className="px-4 py-2">Téléphone</th>
-          <th className="px-4 py-2 text-center">Envoyer ce Contact</th>
-          <th className="px-4 py-2 rounded-tr-lg text-center">Détails</th>
-        </tr>
-      </thead>
-      <tbody>
-        {contacts.map((member) => (
-          <tr
-            key={member.id}
-            className="hover:bg-white/10 transition duration-150 border-b border-blue-300"
-          >
-            <td
-              className="px-4 py-2 border-l-4 rounded-l-md"
-              style={{ borderLeftColor: member.is_whatsapp ? "#10B981" : "#F59E0B" }} // couleur selon statut
-            >
-              {member.prenom} {member.nom}
-            </td>
-            <td className="px-4 py-2">{member.telephone || "—"}</td>
-            <td className="px-4 py-2 text-center">
-              <input
-                type="checkbox"
-                checked={checkedContacts[member.id] || false}
-                onChange={() => handleCheck(member.id)}
-              />
-            </td>
-            <td className="px-4 py-2 text-center">
-              <button
-                onClick={() => toggleDetails(member.id)}
-                className="text-orange-500 underline text-sm"
-              >
-                {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-              </button>
-
-              {/* POPUP DÉTAILS */}
-              {detailsOpen[member.id] && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
-                  <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
+      ) : (
+        // ✅ VUE TABLE
+        <div className="w-full max-w-6xl overflow-x-auto mt-4 transition duration-200">
+          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
+              <tr>
+                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+                <th className="px-4 py-2">Téléphone</th>
+                <th className="px-4 py-2 text-center">Envoyer ce Contact</th>
+                <th className="px-4 py-2 rounded-tr-lg text-center">Détails</th>
+              </tr>
+            </thead>
+            <tbody>
+              {suivis.map((member) => (
+                <tr
+                  key={member.id}
+                  className="hover:bg-white/10 transition duration-150 border-b border-blue-300"
+                >
+                  <td
+                    className="px-4 py-2 border-l-4 rounded-l-md"
+                    style={{ borderLeftColor: "#10B981" }}
+                  >
+                    {member.prenom} {member.nom}
+                  </td>
+                  <td className="px-4 py-2">{member.telephone || "—"}</td>
+                  <td className="px-4 py-2 text-center">
+                    <input type="checkbox" />
+                  </td>
+                  <td className="px-4 py-2 text-center">
                     <button
                       onClick={() => toggleDetails(member.id)}
-                      className="absolute top-3 right-3 text-red-500 font-bold text-xl"
+                      className="text-orange-500 underline text-sm"
                     >
-                      ✖
+                      {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                     </button>
-                    <h2 className="text-xl font-bold mb-2 text-black text-center">
-                      {member.prenom} {member.nom}
-                    </h2>
-                    <p className="text-black text-sm mb-1">📱 {member.telephone || "—"}</p>
-                    <p className="text-black text-sm mb-1">
-                      💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}
-                    </p>
-                    <p className="text-black text-sm mb-1">🏙 Ville : {member.ville || "—"}</p>
-                    <p className="text-black text-sm mb-1">❓ Besoin : {formatBesoin(member.besoin)}</p>
-                    <p className="text-black text-sm mb-1">📝 Infos : {member.infos_supplementaires || "—"}</p>
-                  </div>
-                </div>
-              )}
-            </td>
-          </tr>
-        ))}
-              </tbody>
-      </table>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
-  )}
-</div>
-);
+  );
 }
+
+      
 

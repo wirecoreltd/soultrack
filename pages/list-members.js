@@ -140,12 +140,11 @@ export default function ListMembers() {
         <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
 
-      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">
-        Liste de Membres
-      </h1>
-      <p className="text-center text-white text-lg mb-2 font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
-      </p>
+      <h1 className="text-3xl font-login text-white mb-6 text-center">
+        Liste des Membres
+      </h1
+        <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
+          Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️        
 
       {/* ==================== FILTRE + RECHERCHE + TOGGLE ==================== */}
       <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">

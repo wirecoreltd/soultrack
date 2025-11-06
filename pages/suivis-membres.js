@@ -296,108 +296,128 @@ export default function SuivisMembres() {
           })}
         </div>
       ) : (
-        {/* ==================== VUE TABLE ==================== */}
-<div className="w-full max-w-5xl overflow-x-auto mt-4">
-  <table className="w-full text-sm bg-white/10 rounded-xl">
-    <thead className="bg-white/20 text-white">
-      <tr>
-        <th className="p-3">Prénom</th>
-        <th className="p-3">Nom</th>
-        <th className="p-3 text-center">Téléphone</th>
-        <th className="p-3 text-center">Statut</th>
-        <th className="p-3 text-center">Détails</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      {suivis.map((item) => (
-        <tr key={item.id} className="hover:bg-white/20">
-          <td className="p-3">{item.prenom}</td>
-          <td className="p-3">{item.nom}</td>
-          <td className="p-3 text-center">{item.telephone || "—"}</td>
-          <td className="p-3 text-center">{item.statut || "—"}</td>
-          <td className="p-3 text-center">
-            <button
-              onClick={() => toggleDetails(item.id)}
-              className="text-yellow-300 underline"
-            >
-              {detailsOpen[item.id] ? "Fermer détails" : "Détails"}
-            </button>
-
-            {detailsOpen[item.id] && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                <div className="bg-white rounded-xl p-6 w-80 relative">
-                  <button
-                    onClick={() => toggleDetails(item.id)}
-                    className="absolute top-2 right-2 text-red-500 font-bold"
+        // ==================== VUE TABLE ====================
+        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
+              <tr>
+                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+                <th className="px-4 py-2">Téléphone</th>
+                <th className="px-4 py-2">Statut</th>
+                <th className="px-4 py-2 rounded-tr-lg">Détails</th>
+              </tr>
+            </thead>
+            <tbody>
+              {suivis.map((item) => (
+                <tr
+                  key={item.id}
+                  className="hover:bg-white/10 transition duration-150 border-b border-blue-300"
+                >
+                  <td
+                    className="px-4 py-2 border-l-4 rounded-l-md"
+                    style={{ borderLeftColor: getBorderColor(item) }}
                   >
-                    ✕
-                  </button>
-                  <h2 className="text-lg font-bold text-gray-800 text-center">
                     {item.prenom} {item.nom}
-                  </h2>
-                  <p>📞 {item.telephone || "—"}</p>
-                  <p>💬 WhatsApp : {item.whatsapp || "—"}</p>
-                  <p>🏙 Ville : {item.ville || "—"}</p>
-                  <p>🕊 Statut : {item.statut_suivis || "—"}</p>
-                  <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
-                  <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
-                  <div>
-                    <label className="text-black text-sm">BESOIN :</label>
-                    <select
-                      value={item.besoin || ""}
-                      className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+                  </td>
+                  <td className="px-4 py-2">{item.telephone}</td>
+                  <td className="px-4 py-2">{item.statut || "—"}</td>
+                  <td className="px-4 py-2">
+                    <button
+                      onClick={() => toggleDetails(item.id)}
+                      className="text-orange-500 underline text-sm"
                     >
-                      <option value="">-- Sélectionner --</option>
-                      <option value="Finances">Finances</option>
-                      <option value="Santé">Santé</option>
-                      <option value="Travail">Travail</option>
-                      <option value="Les Enfants">Les Enfants</option>
-                      <option value="La Famille">La Famille</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-black text-sm">📋 Statut Suivis :</label>
-                    <select
-                      value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
-                      onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                      className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
-                    >
-                      <option value="">-- Choisir un statut --</option>
-                      <option value="actif">✅ Actif</option>
-                      <option value="en attente">🕓 En attente</option>
-                      <option value="suivi terminé">🏁 Terminé</option>
-                      <option value="inactif">❌ Inactif</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-black text-sm">📝 Commentaire Suivis :</label>
-                    <textarea
-                      value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
-                      onChange={(e) => handleCommentChange(item.id, e.target.value)}
-                      rows={2}
-                      className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
-                      placeholder="Ajouter un commentaire..."
-                    />
-                  </div>
-                  <button
-                    onClick={() => updateSuivi(item.id)}
-                    disabled={updating[item.id]}
-                    className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-                      updating[item.id]
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-green-600 hover:bg-green-700"
-                    }`}
-                  >
-                    {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
-                  </button>
-                </div>
-              </div>
-            )}
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
+                      {detailsOpen[item.id] ? "Fermer détails" : "Détails"}
+                    </button>
 
+                    {detailsOpen[item.id] && (
+                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
+                        <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
+                          <button
+                            onClick={() => toggleDetails(item.id)}
+                            className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+                          >
+                            ✖
+                          </button>
+                          <h2 className="text-xl font-bold mb-2 text-black">
+                            {item.prenom} {item.nom}
+                          </h2>
+                          <p className="text-black text-sm mb-1">
+                            📞 {item.telephone || "—"}
+                          </p>
+                          <p className="text-black text-sm mb-1">
+                            💬 WhatsApp : {item.whatsapp || "—"}
+                          </p>
+                          <p className="text-black text-sm mb-1">
+                            🏙 Ville : {item.ville || "—"}
+                          </p>
+                          <p className="text-black text-sm mb-1">
+                            🕊 Statut : {item.statut || "—"}
+                          </p>
+                          <p className="text-black text-sm mb-1">
+                            🧩 Comment est-il venu : {item.venu || "—"}
+                          </p>
+                          <p className="text-black text-sm mb-1">
+                            📝 Infos : {item.infos_supplementaires || "—"}
+                          </p>
+                          <div>
+                            <label className="text-black text-sm">BESOIN :</label>
+                            <select
+                              value={item.besoin || ""}
+                              className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+                            >
+                              <option value="">-- Sélectionner --</option>
+                              <option value="Finances">Finances</option>
+                              <option value="Santé">Santé</option>
+                              <option value="Travail">Travail</option>
+                              <option value="Les Enfants">Les Enfants</option>
+                              <option value="La Famille">La Famille</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-black text-sm">📋 Statut Suivis :</label>
+                            <select
+                              value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
+                              onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                              className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+                            >
+                              <option value="">-- Choisir un statut --</option>
+                              <option value="actif">✅ Actif</option>
+                              <option value="en attente">🕓 En attente</option>
+                              <option value="suivi terminé">🏁 Terminé</option>
+                              <option value="inactif">❌ Inactif</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-black text-sm">📝 Commentaire Suivis :</label>
+                            <textarea
+                              value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
+                              onChange={(e) => handleCommentChange(item.id, e.target.value)}
+                              rows={2}
+                              className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
+                              placeholder="Ajouter un commentaire..."
+                            />
+                          </div>
+                          <button
+                            onClick={() => updateSuivi(item.id)}
+                            disabled={updating[item.id]}
+                            className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+                              updating[item.id]
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-green-600 hover:bg-green-700"
+                            }`}
+                          >
+                            {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}

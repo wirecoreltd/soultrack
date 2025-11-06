@@ -58,11 +58,11 @@ export default function DetailsPopup({
           {/* ==================== CELLULE ==================== */}
           <p className="mt-2 font-semibold text-green-600">Cellule :</p>
           <select
-            value={selectedCellules[member.id] || ""}
+            value={selectedCellules[m.id] || ""}
             onChange={(e) =>
               setSelectedCellules((prev) => ({
                 ...prev,
-                [member.id]: e.target.value,
+                [m.id]: e.target.value,
               }))
             }
             className="border rounded-lg px-2 py-1 text-sm w-full"

@@ -168,6 +168,16 @@ export default function SuivisMembres() {
           Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
         </p>
       </div>
+      {/* ==================== BOUTON TOGGLE VUE CARTE / TABLE ==================== */}
+        <div className="mb-4 flex justify-end w-full max-w-6xl">
+          <button
+            onClick={() => setView(view === "card" ? "table" : "card")}
+            className="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition"
+          >
+            {view === "card" ? "Voir en tableau" : "Voir en cartes"}
+          </button>
+          </div>
+
 
       {/* ==================== MESSAGE DE STATUS ==================== */}
       {message && (

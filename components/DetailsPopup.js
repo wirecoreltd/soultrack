@@ -32,7 +32,7 @@ export default function DetailsPopup({
           {member.prenom || ""} {member.nom || ""}
         </h3>
         <p className="text-sm text-gray-600 mb-2 text-center">
-                          📱 {m.telephone || "—"}
+                          📱 {member.telephone || "—"}
                         </p>
         {/* Détails de base */}
         <div className="space-y-2 text-sm">          

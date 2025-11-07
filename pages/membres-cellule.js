@@ -1,5 +1,4 @@
 // ✅ /pages/membres-cellule.js
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -23,7 +22,7 @@ export default function MembresCellule() {
 
         if (!userEmail) throw new Error("Utilisateur non connecté");
 
-        // 🔹 Récupération du profil connecté
+        // 🔹 Récupérer l'ID du profil connecté
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("id, prenom")
@@ -31,8 +30,9 @@ export default function MembresCellule() {
           .single();
 
         if (profileError) throw profileError;
+
+        setPrenom(profileData?.prenom || "cher membre");
         const responsableId = profileData.id;
-        setPrenom(profileData.prenom || "");
 
         let membresData = [];
 
@@ -47,7 +47,7 @@ export default function MembresCellule() {
               telephone,
               ville,
               cellule_id,
-              cellules (id, cellule, responsable)
+              cellules (cellule)
             `)
             .not("cellule_id", "is", null);
 
@@ -62,11 +62,7 @@ export default function MembresCellule() {
             .select("id, cellule")
             .eq("responsable_id", responsableId);
 
-          if (cellulesError) {
-            setMessage("Erreur lors de la récupération des cellules.");
-            setMembres([]);
-            return;
-          }
+          if (cellulesError) throw cellulesError;
 
           if (!cellulesData || cellulesData.length === 0) {
             setMessage("Vous n’êtes responsable d’aucune cellule pour le moment.");
@@ -99,6 +95,7 @@ export default function MembresCellule() {
 
         setMembres(membresData || []);
       } catch (err) {
+        console.error("❌ Erreur:", err.message || err);
         setMessage("Erreur lors de la récupération des membres.");
         setMembres([]);
       } finally {
@@ -109,18 +106,13 @@ export default function MembresCellule() {
     fetchMembres();
   }, []);
 
-  if (loading)
-    return <p className="text-center mt-10 text-gray-700">Chargement...</p>;
-
-  if (message)
-    return <p className="text-center text-gray-600 mt-10">{message}</p>;
+  if (loading) return <p className="text-center mt-10 text-white">Chargement...</p>;
+  if (message) return <p className="text-center text-white mt-10">{message}</p>;
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
+      className="min-h-screen flex flex-col items-center p-6"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
       {/* ==================== HEADER ==================== */}
       <div className="w-full max-w-5xl mb-6">
@@ -136,72 +128,52 @@ export default function MembresCellule() {
         </div>
 
         <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">
-            👋 Bienvenue {prenom || "cher membre"}
-          </p>
+          <p className="text-orange-200 text-sm">👋 Bienvenue {prenom}</p>
         </div>
       </div>
 
       {/* ==================== LOGO ==================== */}
       <div className="mb-4">
-        <Image
-          src="/logo.png"
-          alt="SoulTrack Logo"
-          width={80}
-          height={80}
-          className="mx-auto"
-        />
+        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
 
       {/* ==================== TITRE ==================== */}
-      <div className="text-center mb-4">
-        <h1 className="text-3xl font-bold text-white mb-2">
-          Liste des Membres
-        </h1>
-        <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
+      <div className="text-center mb-6">
+        <h1 className="text-3xl font-bold text-white mb-2">👥 Membres de ma/mes cellule(s)</h1>
+        <p className="text-white text-lg max-w-xl mx-auto italic">
           Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
         </p>
       </div>
 
-      {/* ==================== TABLEAU ==================== */}
-      <div className="p-6 w-full max-w-5xl rounded-3xl shadow-2xl">
-        <h2 className="text-2xl font-semibold text-indigo-100 mb-4 text-center">
-          👥 Membres de ma/mes cellule(s)
-        </h2>
-
-        <div className="overflow-x-auto rounded-2xl border border-gray-100 bg-transparent">
-          <table className="min-w-full text-sm">
-            <thead className="bg-indigo-600 text-white rounded-t-2xl">
-              <tr>
-                <th className="py-3 px-4 text-left rounded-tl-2xl">Nom complet</th>
-                <th className="py-3 px-4 text-left">Téléphone</th>
-                <th className="py-3 px-4 text-left">Ville</th>
-                <th className="py-3 px-4 text-left rounded-tr-2xl">Cellule</th>
+      {/* ==================== TABLE DES MEMBRES ==================== */}
+      <div className="w-full max-w-6xl overflow-x-auto">
+        <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+          <thead className="bg-white/10 text-white uppercase text-sm">
+            <tr>
+              <th className="py-3 px-4 rounded-tl-lg">Nom complet</th>
+              <th className="py-3 px-4">Téléphone</th>
+              <th className="py-3 px-4">Ville</th>
+              <th className="py-3 px-4 rounded-tr-lg">Cellule</th>
+            </tr>
+          </thead>
+          <tbody>
+            {membres.map((membre, index) => (
+              <tr
+                key={membre.id}
+                className={`border-b ${
+                  index % 2 === 0 ? "bg-white/5" : "bg-transparent"
+                } hover:bg-white/10 transition-all`}
+              >
+                <td className="py-3 px-4 font-semibold text-white">
+                  {membre.nom} {membre.prenom}
+                </td>
+                <td className="py-3 px-4">{membre.telephone || "—"}</td>
+                <td className="py-3 px-4">{membre.ville || "—"}</td>
+                <td className="py-3 px-4">{membre.cellules?.cellule || "—"}</td>
               </tr>
-            </thead>
-            <tbody>
-              {membres.map((membre) => (
-                <tr
-                  key={membre.id}
-                  className="border-b border-indigo-200 hover:bg-indigo-50/30 transition-all"
-                >
-                  <td className="py-3 px-4 font-semibold text-white">
-                    {membre.nom} {membre.prenom}
-                  </td>
-                  <td className="py-3 px-4 text-white/90">
-                    {membre.telephone || "—"}
-                  </td>
-                  <td className="py-3 px-4 text-white/90">
-                    {membre.ville || "—"}
-                  </td>
-                  <td className="py-3 px-4 text-indigo-100 font-medium">
-                    {membre.cellules?.cellule || "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

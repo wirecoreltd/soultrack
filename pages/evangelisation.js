@@ -193,47 +193,47 @@ export default function Evangelisation() {
           </table>
 
           {/* POPUP DÉTAILS */}
-          {contacts.map(
-  (member) =>
-    detailsOpen[member.id] && (
-      <div
-        key={member.id}
-        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200"
-      >
-        <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
-          <button
-            onClick={() => toggleDetails(member.id)}
-            className="absolute top-3 right-3 text-red-500 font-bold text-xl"
-          >
-            ✖
-          </button>
-
-          <h2 className="font-bold text-lg mb-1 text-center text-black-800">
-            {member.prenom} {member.nom}
-          </h2>
-
-          <p className="text-sm text-center mb-2">📱 {member.telephone || "—"}</p>
-          <label className="flex items-center justify-center gap-2 text-sm mb-2">
-            <input
-              type="checkbox"
-              checked={checkedContacts[member.id] || false}
-              onChange={() => handleCheck(member.id)}
-            />
-            ✅ Envoyer ce Contact
-          </label>
-
-          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-left flex flex-col items-left">
-            <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-            <p>🏙 Ville: {member.ville || "—"}</p>
-            <p>❓Besoin : {formatBesoin(member.besoin)}</p>
-            <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
-          </div>
-        </div>
-      </div>
-    )
-)}
-</div>  // ✅ cette balise ferme le conteneur de la vue table
-)}       // ✅ ferme le bloc {view === "table" && ( ... )}
-</div>   // ✅ ferme le conteneur principal
-);       // ✅ ferme le return
+                    {contacts.map(
+                      (member) =>
+                        detailsOpen[member.id] && (
+                          <div
+                            key={member.id}
+                            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200"
+                          >
+                            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
+                              <button
+                                onClick={() => toggleDetails(member.id)}
+                                className="absolute top-3 right-3 text-red-500 font-bold text-xl"
+                              >
+                                ✖
+                              </button>
+          
+                              <h2 className="font-bold text-lg mb-1 text-center text-black-800">
+                                {member.prenom} {member.nom}
+                              </h2>
+          
+                              <p className="text-sm text-center mb-2">📱 {member.telephone || "—"}</p>
+                              <label className="flex items-center justify-center gap-2 text-sm mb-2">
+                                <input
+                                  type="checkbox"
+                                  checked={checkedContacts[member.id] || false}
+                                  onChange={() => handleCheck(member.id)}
+                                />
+                                ✅ Envoyer ce Contact
+                              </label>
+          
+                              <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-left flex flex-col items-left">
+                                <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+                                <p>🏙 Ville: {member.ville || "—"}</p>
+                                <p>❓Besoin : {formatBesoin(member.besoin)}</p>
+                                <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                    )}
+                  </div>
+                )}
+              </div>
+            );
 }

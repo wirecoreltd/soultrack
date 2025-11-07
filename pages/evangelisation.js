@@ -207,16 +207,29 @@ export default function Evangelisation() {
                     >
                       ✖
                     </button>
-                    <h2 className="text-xl font-bold mb-2 text-black text-center">
-                      {member.prenom} {member.nom}
                     </h2>
-                    <p className="text-black text-sm mb-1">📱 {member.telephone || "—"}</p>
-                    <p className="text-black text-sm mb-1 text-left">
-                      💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}
-                    </p>
-                    <p className="text-black text-sm mb-1">🏙 Ville : {member.ville || "—"}</p>
-                    <p className="text-black text-sm mb-1">❓ Besoin : {formatBesoin(member.besoin)}</p>
-                    <p className="text-black text-sm mb-1">📝 Infos : {member.infos_supplementaires || "—"}</p>
+                <p className="text-sm text-center mb-2">📱 {member.telephone || "—"}</p>
+                <label className="flex items-center justify-center gap-2 text-sm mb-2">
+                  <input
+                    type="checkbox"
+                    checked={checkedContacts[member.id] || false}
+                    onChange={() => handleCheck(member.id)}
+                  />
+                  ✅ Envoyer ce Contact
+                </label>
+                <button
+                  onClick={() => toggleDetails(member.id)}
+                  className="text-orange-500 underline text-sm mt-1 block mx-auto text-center"
+                >
+                  {isOpen ? "Fermer Détails" : "Détails"}
+                </button>
+
+                {isOpen && (
+                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-left flex flex-col items-left">
+                    <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+                    <p>🏙 Ville: {member.ville || "—"}</p>
+                    <p>❓Besoin : {formatBesoin(member.besoin)}</p>
+                    <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
                   </div>
                 </div>
               )

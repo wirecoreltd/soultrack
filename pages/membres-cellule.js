@@ -1,4 +1,5 @@
 // ✅ /pages/membres-cellule.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -21,8 +22,6 @@ export default function MembresCellule() {
         const userRole = JSON.parse(localStorage.getItem("userRole") || "[]");
 
         if (!userEmail) throw new Error("Utilisateur non connecté");
-        console.log("📧 Email du user:", userEmail);
-        console.log("🛡️ Rôles du user:", userRole);
 
         // 🔹 Récupération du profil connecté
         const { data: profileData, error: profileError } = await supabase
@@ -34,7 +33,6 @@ export default function MembresCellule() {
         if (profileError) throw profileError;
         const responsableId = profileData.id;
         setPrenom(profileData.prenom || "");
-        console.log("🆔 ID du responsable:", responsableId);
 
         let membresData = [];
 
@@ -55,7 +53,6 @@ export default function MembresCellule() {
 
           if (error) throw error;
           membresData = data;
-          console.log("✅ Membres récupérés (Admin):", membresData);
         }
 
         // 🔹 ResponsableCellule → membres de ses cellules
@@ -66,7 +63,6 @@ export default function MembresCellule() {
             .eq("responsable_id", responsableId);
 
           if (cellulesError) {
-            console.error("❌ Erreur récupération cellules:", cellulesError);
             setMessage("Erreur lors de la récupération des cellules.");
             setMembres([]);
             return;
@@ -78,7 +74,6 @@ export default function MembresCellule() {
             return;
           }
 
-          console.log("🏠 Cellules trouvées:", cellulesData);
           const celluleIds = cellulesData.map((c) => c.id);
 
           const { data, error } = await supabase
@@ -100,13 +95,10 @@ export default function MembresCellule() {
           if (!membresData || membresData.length === 0) {
             setMessage("Aucun membre assigné à vos cellules.");
           }
-
-          console.log("✅ Membres récupérés (ResponsableCellule):", membresData);
         }
 
         setMembres(membresData || []);
       } catch (err) {
-        console.error("❌ Erreur générale:", err.message || err);
         setMessage("Erreur lors de la récupération des membres.");
         setMembres([]);
       } finally {
@@ -172,12 +164,12 @@ export default function MembresCellule() {
       </div>
 
       {/* ==================== TABLEAU ==================== */}
-      <div className="p-6 w-full max-w-5xl bg-white rounded-3xl shadow-2xl">
-        <h2 className="text-2xl font-semibold text-indigo-700 mb-4 text-center">
+      <div className="p-6 w-full max-w-5xl rounded-3xl shadow-2xl">
+        <h2 className="text-2xl font-semibold text-indigo-100 mb-4 text-center">
           👥 Membres de ma/mes cellule(s)
         </h2>
 
-        <div className="overflow-x-auto rounded-2xl border border-gray-100">
+        <div className="overflow-x-auto rounded-2xl border border-gray-100 bg-transparent">
           <table className="min-w-full text-sm">
             <thead className="bg-indigo-600 text-white rounded-t-2xl">
               <tr>
@@ -191,14 +183,18 @@ export default function MembresCellule() {
               {membres.map((membre) => (
                 <tr
                   key={membre.id}
-                  className="border-b hover:bg-indigo-50 transition-all"
+                  className="border-b border-indigo-200 hover:bg-indigo-50/30 transition-all"
                 >
-                  <td className="py-3 px-4 font-semibold text-gray-700">
+                  <td className="py-3 px-4 font-semibold text-white">
                     {membre.nom} {membre.prenom}
                   </td>
-                  <td className="py-3 px-4">{membre.telephone || "—"}</td>
-                  <td className="py-3 px-4">{membre.ville || "—"}</td>
-                  <td className="py-3 px-4 text-indigo-700 font-medium">
+                  <td className="py-3 px-4 text-white/90">
+                    {membre.telephone || "—"}
+                  </td>
+                  <td className="py-3 px-4 text-white/90">
+                    {membre.ville || "—"}
+                  </td>
+                  <td className="py-3 px-4 text-indigo-100 font-medium">
                     {membre.cellules?.cellule || "—"}
                   </td>
                 </tr>

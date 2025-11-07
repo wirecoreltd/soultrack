@@ -119,7 +119,7 @@ export default function Evangelisation() {
             const isOpen = detailsOpen[member.id];
             return (
               <div key={member.id} className="bg-white text-gray-900 rounded-2xl shadow-xl p-4">
-                <h2 className="font-bold text-lg mb-1 text-center text-blue-800">
+                <h2 className="font-bold text-lg mb-1 text-center text-black-800">
                   {member.prenom} {member.nom}
                 </h2>
                 <p className="text-sm text-center mb-2">📱 {member.telephone || "—"}</p>
@@ -139,7 +139,7 @@ export default function Evangelisation() {
                 </button>
 
                 {isOpen && (
-                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-center flex flex-col items-center">
+                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-left flex flex-col items-left">
                     <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🏙 Ville: {member.ville || "—"}</p>
                     <p>❓Besoin : {formatBesoin(member.besoin)}</p>
@@ -211,7 +211,7 @@ export default function Evangelisation() {
                       {member.prenom} {member.nom}
                     </h2>
                     <p className="text-black text-sm mb-1">📱 {member.telephone || "—"}</p>
-                    <p className="text-black text-sm mb-1">
+                    <p className="text-black text-sm mb-1 text-left">
                       💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}
                     </p>
                     <p className="text-black text-sm mb-1">🏙 Ville : {member.ville || "—"}</p>

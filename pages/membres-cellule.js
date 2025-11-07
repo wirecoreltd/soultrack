@@ -1,13 +1,16 @@
-//pages/membres-cellule.js
+// ✅ /pages/membres-cellule.js
 "use client";
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
+import Image from "next/image";
+import LogoutLink from "../components/LogoutLink";
 
 export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [prenom, setPrenom] = useState("");
 
   useEffect(() => {
     const fetchMembres = async () => {
@@ -21,15 +24,16 @@ export default function MembresCellule() {
         console.log("📧 Email du user:", userEmail);
         console.log("🛡️ Rôles du user:", userRole);
 
-        // 🔹 Récupérer l'ID du profil connecté
+        // 🔹 Récupération du profil connecté
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id")
+          .select("id, prenom")
           .eq("email", userEmail)
           .single();
 
         if (profileError) throw profileError;
         const responsableId = profileData.id;
+        setPrenom(profileData.prenom || "");
         console.log("🆔 ID du responsable:", responsableId);
 
         let membresData = [];
@@ -54,7 +58,7 @@ export default function MembresCellule() {
           console.log("✅ Membres récupérés (Admin):", membresData);
         }
 
-        // 🔹 ResponsableCellule → membres de toutes ses cellules
+        // 🔹 ResponsableCellule → membres de ses cellules
         else if (userRole.includes("ResponsableCellule")) {
           const { data: cellulesData, error: cellulesError } = await supabase
             .from("cellules")
@@ -75,7 +79,7 @@ export default function MembresCellule() {
           }
 
           console.log("🏠 Cellules trouvées:", cellulesData);
-          const celluleIds = cellulesData.map(c => c.id);
+          const celluleIds = cellulesData.map((c) => c.id);
 
           const { data, error } = await supabase
             .from("membres")
@@ -96,6 +100,7 @@ export default function MembresCellule() {
           if (!membresData || membresData.length === 0) {
             setMessage("Aucun membre assigné à vos cellules.");
           }
+
           console.log("✅ Membres récupérés (ResponsableCellule):", membresData);
         }
 
@@ -112,17 +117,21 @@ export default function MembresCellule() {
     fetchMembres();
   }, []);
 
-  if (loading) return <p className="text-center mt-10">Chargement...</p>;
-  if (message) return <p className="text-center text-gray-600 mt-10">{message}</p>;
+  if (loading)
+    return <p className="text-center mt-10 text-gray-700">Chargement...</p>;
+
+  if (message)
+    return <p className="text-center text-gray-600 mt-10">{message}</p>;
 
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+      style={{
+        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
+      }}
     >
       {/* ==================== HEADER ==================== */}
       <div className="w-full max-w-5xl mb-6">
-        {/* 🔹 Top bar : bouton retour + logout */}
         <div className="flex justify-between items-center">
           <button
             onClick={() => window.history.back()}
@@ -134,7 +143,6 @@ export default function MembresCellule() {
           <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
         </div>
 
-        {/* 🔹 Message de bienvenue avec prénom */}
         <div className="flex justify-end mt-2">
           <p className="text-orange-200 text-sm">
             👋 Bienvenue {prenom || "cher membre"}
@@ -144,41 +152,61 @@ export default function MembresCellule() {
 
       {/* ==================== LOGO ==================== */}
       <div className="mb-4">
-        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
+        <Image
+          src="/logo.png"
+          alt="SoulTrack Logo"
+          width={80}
+          height={80}
+          className="mx-auto"
+        />
       </div>
 
-      {/* ==================== TITRE + MESSAGE MOTIVANT ==================== */}
+      {/* ==================== TITRE ==================== */}
       <div className="text-center mb-4">
-        <h1 className="text-3xl font-bold text-white mb-2">Liste des Membres</h1>
+        <h1 className="text-3xl font-bold text-white mb-2">
+          Liste des Membres
+        </h1>
         <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
           Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
         </p>
       </div>
-    <div className="p-6 min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50">
-      <h2 className="text-3xl font-bold text-center text-indigo-700 mb-6">👥 Membres de ma/mes cellule(s)</h2>
-      <div className="overflow-x-auto bg-white rounded-3xl shadow-2xl p-6">
-        <table className="min-w-full text-sm">
-          <thead className="bg-indigo-600 text-white">
-            <tr>
-              <th className="py-3 px-4 text-left">Nom complet</th>
-              <th className="py-3 px-4 text-left">Téléphone</th>
-              <th className="py-3 px-4 text-left">Ville</th>
-              <th className="py-3 px-4 text-left">Cellule</th>
-            </tr>
-          </thead>
-          <tbody>
-            {membres.map((membre) => (
-              <tr key={membre.id} className="border-b hover:bg-indigo-50 transition-all">
-                <td className="py-3 px-4 font-semibold text-gray-700">{membre.nom} {membre.prenom}</td>
-                <td className="py-3 px-4">{membre.telephone || "—"}</td>
-                <td className="py-3 px-4">{membre.ville || "—"}</td>
-                <td className="py-3 px-4 text-indigo-700 font-medium">{membre.cellules?.cellule || "—"}</td>
+
+      {/* ==================== TABLEAU ==================== */}
+      <div className="p-6 w-full max-w-5xl bg-white rounded-3xl shadow-2xl">
+        <h2 className="text-2xl font-semibold text-indigo-700 mb-4 text-center">
+          👥 Membres de ma/mes cellule(s)
+        </h2>
+
+        <div className="overflow-x-auto rounded-2xl border border-gray-100">
+          <table className="min-w-full text-sm">
+            <thead className="bg-indigo-600 text-white rounded-t-2xl">
+              <tr>
+                <th className="py-3 px-4 text-left rounded-tl-2xl">Nom complet</th>
+                <th className="py-3 px-4 text-left">Téléphone</th>
+                <th className="py-3 px-4 text-left">Ville</th>
+                <th className="py-3 px-4 text-left rounded-tr-2xl">Cellule</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {membres.map((membre) => (
+                <tr
+                  key={membre.id}
+                  className="border-b hover:bg-indigo-50 transition-all"
+                >
+                  <td className="py-3 px-4 font-semibold text-gray-700">
+                    {membre.nom} {membre.prenom}
+                  </td>
+                  <td className="py-3 px-4">{membre.telephone || "—"}</td>
+                  <td className="py-3 px-4">{membre.ville || "—"}</td>
+                  <td className="py-3 px-4 text-indigo-700 font-medium">
+                    {membre.cellules?.cellule || "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
 }
-

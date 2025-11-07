@@ -161,10 +161,10 @@ export default function MembresCellule() {
                 <td className="py-3 px-4">{membre.telephone || "—"}</td>
                 <td className="py-3 px-4">{membre.ville || "—"}</td>
                 <td className="py-3 px-4">{membre.cellules?.cellule || "—"}</td>
-                <td className="py-3 px-4 text-center">
+                <td className="py-3 px-4">
                   <button
                     onClick={() => setSelectedMembre(membre)}
-                    className="text-blue-300 hover:text-orange-500 hover:underline transition"
+                    className="text-orange-300 hover:text-orange-500 hover:underline transition"
                   >
                     Détails
                   </button>

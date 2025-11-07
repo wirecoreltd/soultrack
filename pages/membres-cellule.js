@@ -148,12 +148,13 @@ export default function MembresCellule() {
       {/* ==================== TABLE DES MEMBRES ==================== */}
       <div className="w-full max-w-6xl overflow-x-auto">
         <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-          <thead className="bg-white/10 text-white uppercase text-sm">
+          <thead className="bg-white/10 text-Black uppercase text-sm">
             <tr>
               <th className="py-3 px-4 rounded-tl-lg">Nom complet</th>
               <th className="py-3 px-4">Téléphone</th>
               <th className="py-3 px-4">Ville</th>
               <th className="py-3 px-4 rounded-tr-lg">Cellule</th>
+              <th className="py-3 px-4 rounded-tr-lg text-orange">Détails</th>
             </tr>
           </thead>
           <tbody>
@@ -164,7 +165,7 @@ export default function MembresCellule() {
                   index % 2 === 0 ? "bg-white/5" : "bg-transparent"
                 } hover:bg-white/10 transition-all`}
               >
-                <td className="py-3 px-4 font-semibold text-white">
+                <td className="py-3 px-4 font-semibold text-Black">
                   {membre.nom} {membre.prenom}
                 </td>
                 <td className="py-3 px-4">{membre.telephone || "—"}</td>

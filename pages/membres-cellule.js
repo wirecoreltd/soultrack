@@ -144,7 +144,7 @@ export default function MembresCellule() {
               <th className="py-3 px-4">Téléphone</th>
               <th className="py-3 px-4">Ville</th>
               <th className="py-3 px-4">Cellule</th>
-              <th className="py-3 px-4 rounded-tr-lg text-center">Détails</th> {/* ✅ Colonne ajoutée */}
+              <th className="py-3 px-4 rounded-tr-lg">Détails</th> {/* ✅ Colonne ajoutée */}
             </tr>
           </thead>
           <tbody>
@@ -155,7 +155,7 @@ export default function MembresCellule() {
                   index % 2 === 0 ? "bg-white/5" : "bg-transparent"
                 } hover:bg-white/10 transition-all`}
               >
-                <td className="py-3 px-4 font-semibold text-black">
+                <td className="py-3 px-4 text-black">
                   {membre.nom} {membre.prenom}
                 </td>
                 <td className="py-3 px-4">{membre.telephone || "—"}</td>
@@ -164,7 +164,7 @@ export default function MembresCellule() {
                 <td className="py-3 px-4 text-center">
                   <button
                     onClick={() => setSelectedMembre(membre)}
-                    className="text-blue-300 hover:text-blue-500 hover:underline transition"
+                    className="text-blue-300 hover:text-orange-500 hover:underline transition"
                   >
                     Détails
                   </button>

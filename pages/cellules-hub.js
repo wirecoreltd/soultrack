@@ -11,19 +11,18 @@ export default function MembresCellule() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
-  const [selectedMembre, setSelectedMembre] = useState(null); // ✅ popup membre sélectionné
+  const [selectedMembre, setSelectedMembre] = useState(null); // ✅ membre sélectionné pour popup
 
   useEffect(() => {
     const fetchMembres = async () => {
       setLoading(true);
-
       try {
         const userEmail = localStorage.getItem("userEmail");
         const userRole = JSON.parse(localStorage.getItem("userRole") || "[]");
 
         if (!userEmail) throw new Error("Utilisateur non connecté");
 
-        // 🔹 Récupérer le profil connecté
+        // 🔹 Récupération du profil connecté
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("id, prenom")
@@ -42,7 +41,7 @@ export default function MembresCellule() {
           const { data, error } = await supabase
             .from("membres")
             .select(`
-              id, nom, prenom, telephone, ville, statut, venu, infos_supplementaires, besoin, cellule_id,
+              id, nom, prenom, telephone, ville, statut, venu, infos_supplementaires, besoin,
               cellules (cellule)
             `)
             .not("cellule_id", "is", null);
@@ -71,7 +70,7 @@ export default function MembresCellule() {
           const { data, error } = await supabase
             .from("membres")
             .select(`
-              id, nom, prenom, telephone, ville, statut, venu, infos_supplementaires, besoin, cellule_id,
+              id, nom, prenom, telephone, ville, statut, venu, infos_supplementaires, besoin,
               cellules (cellule)
             `)
             .in("cellule_id", celluleIds);
@@ -136,7 +135,7 @@ export default function MembresCellule() {
         </p>
       </div>
 
-      {/* ==================== TABLE DES MEMBRES ==================== */}
+      {/* ==================== TABLE ==================== */}
       <div className="w-full max-w-6xl overflow-x-auto">
         <table className="w-full text-sm text-left text-black border-separate border-spacing-0">
           <thead className="bg-white/10 text-black uppercase text-sm">
@@ -145,7 +144,7 @@ export default function MembresCellule() {
               <th className="py-3 px-4">Téléphone</th>
               <th className="py-3 px-4">Ville</th>
               <th className="py-3 px-4">Cellule</th>
-              <th className="py-3 px-4 rounded-tr-lg">Détails</th>
+              <th className="py-3 px-4 rounded-tr-lg text-center">Détails</th> {/* ✅ Colonne ajoutée */}
             </tr>
           </thead>
           <tbody>
@@ -162,11 +161,13 @@ export default function MembresCellule() {
                 <td className="py-3 px-4">{membre.telephone || "—"}</td>
                 <td className="py-3 px-4">{membre.ville || "—"}</td>
                 <td className="py-3 px-4">{membre.cellules?.cellule || "—"}</td>
-                <td
-                  className="py-3 px-4 text-blue-300 hover:underline cursor-pointer"
-                  onClick={() => setSelectedMembre(membre)}
-                >
-                  Détails
+                <td className="py-3 px-4 text-center">
+                  <button
+                    onClick={() => setSelectedMembre(membre)}
+                    className="text-blue-300 hover:text-blue-500 hover:underline transition"
+                  >
+                    Détails
+                  </button>
                 </td>
               </tr>
             ))}
@@ -177,7 +178,13 @@ export default function MembresCellule() {
       {/* ==================== POPUP DÉTAILS ==================== */}
       {selectedMembre && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-[90%] max-w-md shadow-xl text-gray-800">
+          <div className="bg-white rounded-2xl p-6 w-[90%] max-w-md shadow-xl text-gray-800 relative">
+            <button
+              onClick={() => setSelectedMembre(null)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+            >
+              ✖
+            </button>
             <h2 className="text-xl font-bold mb-4 text-center text-indigo-600">
               🧾 Détails du membre
             </h2>

@@ -232,3 +232,8 @@ export default function Evangelisation() {
       </div>
     )
 )}
+</div>  // ✅ cette balise ferme le conteneur de la vue table
+)}       // ✅ ferme le bloc {view === "table" && ( ... )}
+</div>   // ✅ ferme le conteneur principal
+);       // ✅ ferme le return
+}

@@ -116,6 +116,44 @@ export default function MembresCellule() {
   if (message) return <p className="text-center text-gray-600 mt-10">{message}</p>;
 
   return (
+    <div
+      className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+    >
+      {/* ==================== HEADER ==================== */}
+      <div className="w-full max-w-5xl mb-6">
+        {/* 🔹 Top bar : bouton retour + logout */}
+        <div className="flex justify-between items-center">
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center text-white hover:text-gray-200 transition-colors"
+          >
+            ← Retour
+          </button>
+
+          <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
+        </div>
+
+        {/* 🔹 Message de bienvenue avec prénom */}
+        <div className="flex justify-end mt-2">
+          <p className="text-orange-200 text-sm">
+            👋 Bienvenue {prenom || "cher membre"}
+          </p>
+        </div>
+      </div>
+
+      {/* ==================== LOGO ==================== */}
+      <div className="mb-4">
+        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
+      </div>
+
+      {/* ==================== TITRE + MESSAGE MOTIVANT ==================== */}
+      <div className="text-center mb-4">
+        <h1 className="text-3xl font-bold text-white mb-2">Liste des Membres</h1>
+        <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
+          Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
+        </p>
+      </div>
     <div className="p-6 min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50">
       <h2 className="text-3xl font-bold text-center text-indigo-700 mb-6">👥 Membres de ma/mes cellule(s)</h2>
       <div className="overflow-x-auto bg-white rounded-3xl shadow-2xl p-6">

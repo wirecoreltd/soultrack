@@ -260,10 +260,9 @@ export default function SuivisMembres() {
                           className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
                         >
                           <option value="">-- Choisir un statut --</option>
-                          <option value="actif">✅ Actif</option>
+                          <option value="integrer">✅ Intégrer</option>
                           <option value="en attente">🕓 En attente</option>
-                          <option value="suivi terminé">🏁 Terminé</option>
-                          <option value="inactif">❌ Inactif</option>
+                          <option value="refus">❌ Refus</option>                          
                         </select>
                       </div>
                       <div>

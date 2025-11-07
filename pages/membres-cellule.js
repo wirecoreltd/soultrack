@@ -147,14 +147,13 @@ export default function MembresCellule() {
 
       {/* ==================== TABLE DES MEMBRES ==================== */}
       <div className="w-full max-w-6xl overflow-x-auto">
-        <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+        <table className="w-full text-sm text-left text-black border-separate border-spacing-0">
           <thead className="bg-white/10 text-Black uppercase text-sm">
             <tr>
               <th className="py-3 px-4 rounded-tl-lg">Nom complet</th>
               <th className="py-3 px-4">Téléphone</th>
               <th className="py-3 px-4">Ville</th>
-              <th className="py-3 px-4 rounded-tr-lg">Cellule</th>
-              <th className="py-3 px-4 rounded-tr-lg text-orange">Détails</th>
+              <th className="py-3 px-4 rounded-tr-lg">Cellule</th>              
             </tr>
           </thead>
           <tbody>

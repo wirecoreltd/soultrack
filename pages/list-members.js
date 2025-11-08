@@ -1,4 +1,4 @@
-// pages/list-members.js
+// ✅ /pages/list-members.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -68,10 +68,12 @@ export default function ListMembers() {
     );
   };
 
+  // ✅ Ajout ici : fermeture auto du popup après envoi depuis vue table
   const handleStatusUpdateFromEnvoyer = (id, currentStatus) => {
     if (currentStatus === "visiteur" || currentStatus === "veut rejoindre ICC") {
       handleChangeStatus(id, "actif");
     }
+    setPopupMember(null); // ✅ ferme le popup automatiquement
   };
 
   const getBorderColor = (m) => {

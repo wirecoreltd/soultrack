@@ -16,10 +16,10 @@ export default function SuivisMembres() {
   const [updating, setUpdating] = useState({});
   const [view, setView] = useState("card");
   const [message, setMessage] = useState(null);
-  const [prenom, setPrenom] = useState(""); // ✅ Nouveau
+  const [prenom, setPrenom] = useState("");
 
   useEffect(() => {
-    fetchUserPrenom(); // ✅ Récupérer prénom utilisateur connecté
+    fetchUserPrenom();
     fetchSuivis();
   }, []);
 
@@ -89,6 +89,7 @@ export default function SuivisMembres() {
     return "#ccc";
   };
 
+  // ✅ Modifié selon ta demande
   const updateSuivi = async (id) => {
     setMessage(null);
     const newStatus = statusChanges[id];
@@ -118,8 +119,17 @@ export default function SuivisMembres() {
         console.error("Erreur update :", updateError);
         setMessage({ type: "error", text: `Erreur mise à jour : ${updateError.message}` });
       } else if (updatedData) {
-        setSuivis((prev) => prev.map((it) => (it.id === id ? updatedData : it)));
-        setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
+        // ✅ Si statut = "integrer" ou "refus", on le retire de la liste
+        if (["integrer", "refus"].includes(updatedData.statut_suivis)) {
+          setSuivis((prev) => prev.filter((it) => it.id !== id));
+          setMessage({
+            type: "success",
+            text: `Le contact a été ${updatedData.statut_suivis === "integrer" ? "intégré" : "refusé"} et retiré de la liste.`,
+          });
+        } else {
+          setSuivis((prev) => prev.map((it) => (it.id === id ? updatedData : it)));
+          setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
+        }
       }
     } catch (err) {
       console.error("Exception updateSuivi:", err);
@@ -136,7 +146,6 @@ export default function SuivisMembres() {
     >
       {/* ==================== HEADER ==================== */}
       <div className="w-full max-w-5xl mb-6">
-        {/* 🔹 Top bar : bouton retour + logout */}
         <div className="flex justify-between items-center">
           <button
             onClick={() => window.history.back()}
@@ -148,7 +157,6 @@ export default function SuivisMembres() {
           <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
         </div>
 
-        {/* 🔹 Message de bienvenue avec prénom */}
         <div className="flex justify-end mt-2">
           <p className="text-orange-200 text-sm">
             👋 Bienvenue {prenom || "cher membre"}
@@ -168,16 +176,16 @@ export default function SuivisMembres() {
           Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
         </p>
       </div>
-      {/* ==================== BOUTON TOGGLE VUE CARTE / TABLE ==================== */}
-        <div className="mb-4 flex justify-end w-full max-w-6xl">
-          <button
+
+      {/* ==================== BOUTON TOGGLE VUE ==================== */}
+      <div className="mb-4 flex justify-end w-full max-w-6xl">
+        <button
           onClick={() => setView(view === "card" ? "table" : "card")}
           className="text-white text-sm underline hover:text-gray-200"
         >
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
-          </div>
-
+      </div>
 
       {/* ==================== MESSAGE DE STATUS ==================== */}
       {message && (
@@ -193,7 +201,8 @@ export default function SuivisMembres() {
           {message.text}
         </div>
       )}
-            {loading ? (
+
+      {loading ? (
         <p className="text-white">Chargement...</p>
       ) : suivis.length === 0 ? (
         <p className="text-white text-lg italic">Aucun membre en suivi pour le moment.</p>
@@ -262,7 +271,7 @@ export default function SuivisMembres() {
                           <option value="">-- Choisir un statut --</option>
                           <option value="integrer">✅ Intégrer</option>
                           <option value="en attente">🕓 En attente</option>
-                          <option value="refus">❌ Refus</option>                          
+                          <option value="refus">❌ Refus</option>
                         </select>
                       </div>
                       <div>
@@ -338,6 +347,3 @@ export default function SuivisMembres() {
     </div>
   );
 }
-
-      
-

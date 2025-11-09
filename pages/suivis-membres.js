@@ -55,31 +55,38 @@ export default function SuivisMembres() {
     }
   };
 
-  // ✅ Filtrage des suivis selon rôle
+  // ✅ Correction : filtrage selon la cellule du responsable
   const fetchSuivis = async () => {
     setLoading(true);
     setMessage(null);
     try {
-      let query = supabase.from("suivis_membres").select("*").order("created_at", { ascending: false });
+      let query = supabase
+        .from("suivis_membres")
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (role === "Responsable") {
-        // Récupère la cellule du responsable
+        // 🔹 Récupération de la cellule du responsable
         const { data: userData } = await supabase.auth.getUser();
         const userId = userData?.user?.id;
 
         if (userId) {
           const { data: cellule, error: celluleError } = await supabase
             .from("cellules")
-            .select("id")
+            .select("id, nom")
             .eq("responsable_id", userId)
             .single();
 
           if (celluleError) throw celluleError;
 
           if (cellule) {
-            query = query.eq("cellule_id", cellule.id);
+            // 🔹 Filtrage uniquement des membres de cette cellule
+            query = query.eq("cellule_nom", cellule.nom);
           } else {
-            setMessage({ type: "info", text: "Aucune cellule trouvée pour ce responsable." });
+            setMessage({
+              type: "info",
+              text: "Aucune cellule trouvée pour ce responsable.",
+            });
             setSuivis([]);
             setLoading(false);
             return;
@@ -90,14 +97,20 @@ export default function SuivisMembres() {
       const { data, error } = await query;
       if (error) {
         console.error("Erreur chargement suivis :", error);
-        setMessage({ type: "error", text: `Erreur chargement : ${error.message}` });
+        setMessage({
+          type: "error",
+          text: `Erreur chargement : ${error.message}`,
+        });
         setSuivis([]);
       } else {
         setSuivis(data || []);
       }
     } catch (err) {
       console.error("Exception fetchSuivis:", err);
-      setMessage({ type: "error", text: `Exception fetch: ${err.message}` });
+      setMessage({
+        type: "error",
+        text: `Exception fetch: ${err.message}`,
+      });
       setSuivis([]);
     } finally {
       setLoading(false);
@@ -149,22 +162,37 @@ export default function SuivisMembres() {
 
       if (updateError) {
         console.error("Erreur update :", updateError);
-        setMessage({ type: "error", text: `Erreur mise à jour : ${updateError.message}` });
+        setMessage({
+          type: "error",
+          text: `Erreur mise à jour : ${updateError.message}`,
+        });
       } else if (updatedData) {
         if (["integrer", "refus"].includes(updatedData.statut_suivis)) {
           setSuivis((prev) => prev.filter((it) => it.id !== id));
           setMessage({
             type: "success",
-            text: `Le contact a été ${updatedData.statut_suivis === "integrer" ? "intégré" : "refusé"} et retiré de la liste.`,
+            text: `Le contact a été ${
+              updatedData.statut_suivis === "integrer"
+                ? "intégré"
+                : "refusé"
+            } et retiré de la liste.`,
           });
         } else {
-          setSuivis((prev) => prev.map((it) => (it.id === id ? updatedData : it)));
-          setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
+          setSuivis((prev) =>
+            prev.map((it) => (it.id === id ? updatedData : it))
+          );
+          setMessage({
+            type: "success",
+            text: "Mise à jour enregistrée avec succès.",
+          });
         }
       }
     } catch (err) {
       console.error("Exception updateSuivi:", err);
-      setMessage({ type: "error", text: `Exception durant la mise à jour : ${err.message}` });
+      setMessage({
+        type: "error",
+        text: `Exception durant la mise à jour : ${err.message}`,
+      });
     } finally {
       setUpdating((prev) => ({ ...prev, [id]: false }));
     }
@@ -173,7 +201,9 @@ export default function SuivisMembres() {
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+      style={{
+        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
+      }}
     >
       {/* ==================== HEADER ==================== */}
       <div className="w-full max-w-5xl mb-6">
@@ -197,12 +227,18 @@ export default function SuivisMembres() {
 
       {/* ==================== LOGO ==================== */}
       <div className="mb-4">
-        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
+        <Image
+          src="/logo.png"
+          alt="SoulTrack Logo"
+          className="w-20 h-18 mx-auto"
+        />
       </div>
 
       {/* ==================== TITRE ==================== */}
       <div className="text-center mb-4">
-        <h1 className="text-3xl font-bold text-white mb-2">Liste des Membres</h1>
+        <h1 className="text-3xl font-bold text-white mb-2">
+          Liste des Membres
+        </h1>
         <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
           Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
         </p>
@@ -236,7 +272,9 @@ export default function SuivisMembres() {
       {loading ? (
         <p className="text-white">Chargement...</p>
       ) : suivis.length === 0 ? (
-        <p className="text-white text-lg italic">Aucun membre en suivi pour le moment.</p>
+        <p className="text-white text-lg italic">
+          Aucun membre en suivi pour le moment.
+        </p>
       ) : view === "card" ? (
         // ✅ Vue Carte
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
@@ -255,9 +293,15 @@ export default function SuivisMembres() {
                   <h2 className="font-bold text-black text-base text-center mb-1">
                     {item.prenom} {item.nom}
                   </h2>
-                  <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {item.cellule_nom || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
+                  <p className="text-sm text-gray-700 mb-1">
+                    📞 {item.telephone || "—"}
+                  </p>
+                  <p className="text-sm text-gray-700 mb-1">
+                    🏠 Cellule : {item.cellule_nom || "—"}
+                  </p>
+                  <p className="text-sm text-gray-700 mb-1">
+                    🕊 Statut : {item.statut || "—"}
+                  </p>
                   <p className="text-sm text-gray-700 mb-1">
                     📋 Statut Suivis : {item.statut_suivis || "—"}
                   </p>
@@ -271,7 +315,9 @@ export default function SuivisMembres() {
 
                   {isOpen && (
                     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                      <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
+                      <p>
+                        📌 Prénom Nom : {item.prenom} {item.nom}
+                      </p>
                       <p>📞 Téléphone : {item.telephone || "—"}</p>
                       <p>💬 WhatsApp : {item.whatsapp || "—"}</p>
                       <p>🏙 Ville : {item.ville || "—"}</p>
@@ -293,10 +339,16 @@ export default function SuivisMembres() {
                         </select>
                       </div>
                       <div>
-                        <label className="text-black text-sm">📋 Statut Suivis :</label>
+                        <label className="text-black text-sm">
+                          📋 Statut Suivis :
+                        </label>
                         <select
-                          value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
-                          onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                          value={
+                            statusChanges[item.id] ?? item.statut_suivis ?? ""
+                          }
+                          onChange={(e) =>
+                            handleStatusChange(item.id, e.target.value)
+                          }
                           className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
                         >
                           <option value="">-- Choisir un statut --</option>
@@ -306,10 +358,18 @@ export default function SuivisMembres() {
                         </select>
                       </div>
                       <div>
-                        <label className="text-black text-sm">📝 Commentaire Suivis :</label>
+                        <label className="text-black text-sm">
+                          📝 Commentaire Suivis :
+                        </label>
                         <textarea
-                          value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
-                          onChange={(e) => handleCommentChange(item.id, e.target.value)}
+                          value={
+                            commentChanges[item.id] ??
+                            item.commentaire_suivis ??
+                            ""
+                          }
+                          onChange={(e) =>
+                            handleCommentChange(item.id, e.target.value)
+                          }
                           rows={2}
                           className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
                           placeholder="Ajouter un commentaire..."
@@ -324,7 +384,9 @@ export default function SuivisMembres() {
                             : "bg-green-600 hover:bg-green-700"
                         }`}
                       >
-                        {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
+                        {updating[item.id]
+                          ? "Mise à jour..."
+                          : "Mettre à jour"}
                       </button>
                     </div>
                   )}
@@ -341,8 +403,12 @@ export default function SuivisMembres() {
               <tr>
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2 text-center">Envoyer ce Contact</th>
-                <th className="px-4 py-2 rounded-tr-lg text-center">Détails</th>
+                <th className="px-4 py-2 text-center">
+                  Envoyer ce Contact
+                </th>
+                <th className="px-4 py-2 rounded-tr-lg text-center">
+                  Détails
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -357,7 +423,9 @@ export default function SuivisMembres() {
                   >
                     {member.prenom} {member.nom}
                   </td>
-                  <td className="px-4 py-2">{member.telephone || "—"}</td>
+                  <td className="px-4 py-2">
+                    {member.telephone || "—"}
+                  </td>
                   <td className="px-4 py-2 text-center">
                     <input type="checkbox" />
                   </td>
@@ -366,7 +434,9 @@ export default function SuivisMembres() {
                       onClick={() => toggleDetails(member.id)}
                       className="text-orange-500 underline text-sm"
                     >
-                      {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+                      {detailsOpen[member.id]
+                        ? "Fermer détails"
+                        : "Détails"}
                     </button>
                   </td>
                 </tr>

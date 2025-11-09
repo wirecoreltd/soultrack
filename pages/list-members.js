@@ -257,7 +257,16 @@ export default function ListMembers() {
                             <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
                             <p> 🏙 Ville : {m.ville || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                            <p>❓Besoin : {m.besoin || "—"}</p>
+                            <p>❓Besoin : {
+                              (() => {
+                                if (!m.besoin) return "—";
+                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                                try {
+                                  const arr = JSON.parse(m.besoin);
+                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                                } catch { return m.besoin; }
+                              })()
+                            }</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             <p className="mt-2 font-semibold text-bleu-600">Statut :</p>
@@ -361,7 +370,16 @@ export default function ListMembers() {
                             <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
                             <p> 🏙 Ville : {m.ville || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                            <p>❓ Besoin : {m.besoin || "—"}</p>
+                            <p>❓Besoin : {
+                              (() => {
+                                if (!m.besoin) return "—";
+                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                                try {
+                                  const arr = JSON.parse(m.besoin);
+                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                                } catch { return m.besoin; }
+                              })()
+                            }</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             <select

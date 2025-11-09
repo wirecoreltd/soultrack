@@ -40,10 +40,8 @@ export default function MembresHub() {
 
         {/* Ligne du dessous : Bienvenue aligné à droite */}
         <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">
-            👋 Bienvenue {userName}
-          </p>
-        </div>
+          <p className="text-orange-200 text-sm">👋 Bienvenue {prenom}</p>
+        </div>      
       </div>
 
       {/* 🔹 Logo centré */}

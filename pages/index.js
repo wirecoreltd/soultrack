@@ -1,4 +1,4 @@
-//✅/pages/index.js
+//✅ /pages/index.js
 
 "use client";
 
@@ -28,13 +28,15 @@ const roleCards = {
 
 export default function IndexPage() {
   const [userName, setUserName] = useState("");
+  const [prenom, setPrenom] = useState(""); // ✅ ajout du prénom
   const [roles, setRoles] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
     const name = localStorage.getItem("userName") || "Utilisateur";
-    const prenom = name.split(" ")[0];
-    setUserName(prenom);
+    const firstName = name.split(" ")[0];
+    setUserName(name);
+    setPrenom(firstName); // ✅ sauvegarde du prénom
 
     const storedRoles = localStorage.getItem("userRole");
     if (storedRoles) {
@@ -95,7 +97,7 @@ export default function IndexPage() {
         {/* Ligne du dessous : Bienvenue aligné à droite */}
         <div className="flex justify-end mt-2">
           <p className="text-orange-200 text-sm">
-            👋 Bienvenue {username}
+            👋 Bienvenue {prenom}
           </p>
         </div>
       </div>
@@ -104,6 +106,7 @@ export default function IndexPage() {
       <div className="mb-6">
         <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18 mx-auto" />
       </div>
+
       {/* 🔹 Titre */}
       <h1 className="text-3xl font-login text-white mb-6 text-center font-bold">
         Tableau De Bord
@@ -111,7 +114,8 @@ export default function IndexPage() {
 
       {/* 🔹 Message motivant */}
       <p className="text-white text-lg italic mb-6 max-w-2xl leading-relaxed tracking-wide font-light">
-        La famille est le premier lieu où l'amour, le soutien et la foi se transmettent. Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté.
+        La famille est le premier lieu où l'amour, le soutien et la foi se transmettent. 
+        Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté.
       </p>
 
       {/* 🔹 Cartes des fonctionnalités */}
@@ -137,4 +141,3 @@ export default function IndexPage() {
     </div>
   );
 }
-

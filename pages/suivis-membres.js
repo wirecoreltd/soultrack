@@ -272,6 +272,16 @@ export default function SuivisMembres() {
                       <p>🏙 Ville : {item.ville || "—"}</p>
                       <p>🕊 Statut : {item.statut || "—"}</p>
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
+                      <p>❓Besoin : {
+                              (() => {
+                                if (!item.besoin) return "—";
+                                if (Array.isArray(item.besoin)) return item.besoin.join(", ");
+                                try {
+                                  const arr = JSON.parse(item.besoin);
+                                  return Array.isArray(arr) ? arr.join(", ") : item.besoin;
+                                } catch { return item.besoin; }
+                              })()
+                            }</p>
                       <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
 
                       <label className="text-black text-sm">📋 Statut Suivis :</label>

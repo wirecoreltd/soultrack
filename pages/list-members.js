@@ -365,8 +365,7 @@ export default function ListMembers() {
 
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                            <p> 📌 Prénom Nom : {m.prenom} {m.nom}</p>
-                            <p> 📞 Téléphone : {m.telephone || "—"}</p>
+                            
                             <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
                             <p> 🏙 Ville : {m.ville || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>

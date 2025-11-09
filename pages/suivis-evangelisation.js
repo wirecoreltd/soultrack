@@ -212,7 +212,16 @@ export default function SuivisEvangelisation() {
                 {isOpen && (
                   <div className="text-gray-600 text-sm text-center mt-2 space-y-2 w-full">
                     <p>🏙 Ville : {item.ville || "—"}</p>
-                    <p>🙏 Besoin : {item.besoin || "—"}</p>
+                    <p>❓Besoin : {
+                              (() => {
+                                if (!item.besoin) return "—";
+                                if (Array.isArray(item.besoin)) return item.besoin.join(", ");
+                                try {
+                                  const arr = JSON.parse(item.besoin);
+                                  return Array.isArray(arr) ? arr.join(", ") : item.besoin;
+                                } catch { return item.besoin; }
+                              })()
+                            }</p>
                     <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
 
                     <div className="mt-2">

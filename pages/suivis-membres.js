@@ -17,13 +17,18 @@ export default function SuivisMembres() {
   const [view, setView] = useState("card");
   const [message, setMessage] = useState(null);
   const [prenom, setPrenom] = useState("");
+  const [role, setRole] = useState(""); // ✅ Nouveau
 
   useEffect(() => {
-    fetchUserPrenom();
-    fetchSuivis();
+    fetchUserPrenomEtRole();
   }, []);
 
-  const fetchUserPrenom = async () => {
+  useEffect(() => {
+    if (role) fetchSuivis();
+  }, [role]);
+
+  // ✅ Récupération prénom + rôle
+  const fetchUserPrenomEtRole = async () => {
     try {
       const { data: sessionData, error: sessionError } =
         await supabase.auth.getSession();
@@ -35,27 +40,54 @@ export default function SuivisMembres() {
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("prenom")
+        .select("prenom, role")
         .eq("id", user.id)
         .single();
 
       if (profileError) throw profileError;
 
-      if (profile) setPrenom(profile.prenom || "");
+      if (profile) {
+        setPrenom(profile.prenom || "");
+        setRole(profile.role || "");
+      }
     } catch (err) {
-      console.error("Erreur récupération prénom :", err.message);
+      console.error("Erreur récupération profil :", err.message);
     }
   };
 
+  // ✅ Filtrage des suivis selon rôle
   const fetchSuivis = async () => {
     setLoading(true);
     setMessage(null);
     try {
-      const { data, error } = await supabase
-        .from("suivis_membres")
-        .select("*")
-        .order("created_at", { ascending: false });
+      let query = supabase.from("suivis_membres").select("*").order("created_at", { ascending: false });
 
+      if (role === "Responsable") {
+        // Récupère la cellule du responsable
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData?.user?.id;
+
+        if (userId) {
+          const { data: cellule, error: celluleError } = await supabase
+            .from("cellules")
+            .select("id")
+            .eq("responsable_id", userId)
+            .single();
+
+          if (celluleError) throw celluleError;
+
+          if (cellule) {
+            query = query.eq("cellule_id", cellule.id);
+          } else {
+            setMessage({ type: "info", text: "Aucune cellule trouvée pour ce responsable." });
+            setSuivis([]);
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
+      const { data, error } = await query;
       if (error) {
         console.error("Erreur chargement suivis :", error);
         setMessage({ type: "error", text: `Erreur chargement : ${error.message}` });
@@ -89,7 +121,7 @@ export default function SuivisMembres() {
     return "#ccc";
   };
 
-  // ✅ Modifié selon ta demande
+  // ✅ Garde la logique d’origine avec la suppression automatique
   const updateSuivi = async (id) => {
     setMessage(null);
     const newStatus = statusChanges[id];
@@ -119,7 +151,6 @@ export default function SuivisMembres() {
         console.error("Erreur update :", updateError);
         setMessage({ type: "error", text: `Erreur mise à jour : ${updateError.message}` });
       } else if (updatedData) {
-        // ✅ Si statut = "integrer" ou "refus", on le retire de la liste
         if (["integrer", "refus"].includes(updatedData.statut_suivis)) {
           setSuivis((prev) => prev.filter((it) => it.id !== id));
           setMessage({
@@ -169,7 +200,7 @@ export default function SuivisMembres() {
         <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
 
-      {/* ==================== TITRE + MESSAGE MOTIVANT ==================== */}
+      {/* ==================== TITRE ==================== */}
       <div className="text-center mb-4">
         <h1 className="text-3xl font-bold text-white mb-2">Liste des Membres</h1>
         <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
@@ -177,7 +208,7 @@ export default function SuivisMembres() {
         </p>
       </div>
 
-      {/* ==================== BOUTON TOGGLE VUE ==================== */}
+      {/* ==================== TOGGLE VUE ==================== */}
       <div className="mb-4 flex justify-end w-full max-w-6xl">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
@@ -187,7 +218,7 @@ export default function SuivisMembres() {
         </button>
       </div>
 
-      {/* ==================== MESSAGE DE STATUS ==================== */}
+      {/* ==================== MESSAGE ==================== */}
       {message && (
         <div
           className={`mb-4 px-4 py-2 rounded-md text-sm ${
@@ -207,7 +238,7 @@ export default function SuivisMembres() {
       ) : suivis.length === 0 ? (
         <p className="text-white text-lg italic">Aucun membre en suivi pour le moment.</p>
       ) : view === "card" ? (
-        // ==================== VUE CARTE ====================
+        // ✅ Vue Carte
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
           {suivis.map((item) => {
             const isOpen = detailsOpen[item.id];
@@ -303,7 +334,7 @@ export default function SuivisMembres() {
           })}
         </div>
       ) : (
-        // ✅ VUE TABLE
+        // ✅ Vue Table
         <div className="w-full max-w-6xl overflow-x-auto mt-4 transition duration-200">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">

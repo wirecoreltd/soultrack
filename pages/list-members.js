@@ -15,8 +15,6 @@ export default function ListMembers() {
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
-  const [cellules, setCellules] = useState([]);
-  const [selectedCellules, setSelectedCellules] = useState({});
   const [view, setView] = useState("card");
   const [popupMember, setPopupMember] = useState(null);
   const [session, setSession] = useState(null);
@@ -25,9 +23,7 @@ export default function ListMembers() {
   // 🔹 Charger session, prénom et membres
   useEffect(() => {
     const fetchSessionAndProfile = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
 
       if (session?.user) {
@@ -42,7 +38,6 @@ export default function ListMembers() {
 
     fetchSessionAndProfile();
     fetchMembers();
-    fetchCellules();
   }, []);
 
   const fetchMembers = async () => {
@@ -51,13 +46,6 @@ export default function ListMembers() {
       .select("*")
       .order("created_at", { ascending: false });
     if (!error && data) setMembers(data);
-  };
-
-  const fetchCellules = async () => {
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("id, cellule, responsable, telephone");
-    if (!error && data) setCellules(data);
   };
 
   const handleChangeStatus = async (id, newStatus) => {
@@ -107,31 +95,10 @@ export default function ListMembers() {
     (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
   );
 
-  const nouveauxFiltres = filterBySearch(
-    filter ? nouveaux.filter((m) => m.statut === filter) : nouveaux
-  );
-
-  const anciensFiltres = filterBySearch(
-    filter ? anciens.filter((m) => m.statut === filter) : anciens
-  );
-
+  const nouveauxFiltres = filterBySearch(nouveaux);
+  const anciensFiltres = filterBySearch(anciens);
   const allMembersOrdered = [...nouveaux, ...anciens];
-
-  const filteredMembers = filterBySearch(
-    filter
-      ? allMembersOrdered.filter((m) => m.statut === filter)
-      : allMembersOrdered
-  );
-
-  const statusOptions = [
-    "actif",
-    "Integrer",
-    "ancien",
-    "veut rejoindre ICC",
-    "visiteur",
-    "a déjà mon église",
-  ];
-
+  const filteredMembers = filterBySearch(allMembersOrdered);
   const totalCount = filteredMembers.length;
 
   const toggleDetails = (id) => {
@@ -152,7 +119,6 @@ export default function ListMembers() {
           >
             ← Retour
           </button>
-
           <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
         </div>
 
@@ -179,17 +145,6 @@ export default function ListMembers() {
       {/* ==================== FILTRE + RECHERCHE ==================== */}
       <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">
         <div className="flex items-center space-x-2 mb-2 sm:mb-0">
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="px-3 py-2 rounded-lg border text-sm"
-          >
-            <option value="">Tous les statuts</option>
-            {statusOptions.map((s) => (
-              <option key={s}>{s}</option>
-            ))}
-          </select>
-
           <input
             type="text"
             value={search}
@@ -197,7 +152,6 @@ export default function ListMembers() {
             placeholder="Rechercher par nom..."
             className="px-3 py-2 rounded-lg border text-sm w-48"
           />
-
           <span className="text-white text-sm">({totalCount})</span>
         </div>
 
@@ -212,7 +166,6 @@ export default function ListMembers() {
       {/* ==================== VUE CARTE ==================== */}
       {view === "card" && (
         <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
-          {/* 🔹 Nouveaux membres */}
           {nouveauxFiltres.length > 0 && (
             <div>
               <p className="text-white text-lg mb-2 ml-1">
@@ -244,6 +197,7 @@ export default function ListMembers() {
                         <p className="text-sm text-gray-600 mb-2 text-center">
                           🕊 Statut : {m.statut || "—"}
                         </p>
+
                         <button
                           onClick={() => toggleDetails(m.id)}
                           className="text-orange-500 underline text-sm"
@@ -252,78 +206,29 @@ export default function ListMembers() {
                         </button>
 
                         {isOpen && (
-                          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+                          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-center">
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                            <p>
-                              ❓Besoin :{" "}
-                              {(() => {
-                                if (!m.besoin) return "—";
-                                if (Array.isArray(m.besoin))
-                                  return m.besoin.join(", ");
-                                try {
-                                  const arr = JSON.parse(m.besoin);
-                                  return Array.isArray(arr)
-                                    ? arr.join(", ")
-                                    : m.besoin;
-                                } catch {
-                                  return m.besoin;
-                                }
-                              })()}
-                            </p>
+                            <p>❓Besoin : {Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                            <p className="mt-2 font-semibold text-bleu-600">
-                              Statut :
-                            </p>
-                            <select
-                              value={m.statut}
-                              onChange={(e) =>
-                                handleChangeStatus(m.id, e.target.value)
-                              }
-                              className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
-                            >
-                              {statusOptions.map((s) => (
-                                <option key={s}>{s}</option>
-                              ))}
-                            </select>
-
+                            {/* ✅ Cellule fixe */}
                             <p className="mt-2 font-semibold text-green-600">
                               Cellule :
                             </p>
-                            <select
-                              value={selectedCellules[m.id] || ""}
-                              onChange={(e) =>
-                                setSelectedCellules((prev) => ({
-                                  ...prev,
-                                  [m.id]: e.target.value,
-                                }))
-                              }
-                              className="border rounded-lg px-2 py-1 text-sm w-full"
-                            >
-                              <option value="">
-                                -- Sélectionner cellule --
-                              </option>
-                              {cellules.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {c.cellule} ({c.responsable})
-                                </option>
-                              ))}
-                            </select>
+                            <p className="border rounded-lg px-2 py-1 text-sm w-full bg-gray-50">
+                              Rose Hill - Fabrice - Oui
+                            </p>
 
-                            {selectedCellules[m.id] && (
-                              <div className="mt-2">
-                                <BoutonEnvoyer
-                                  membre={m}
-                                  cellule={cellules.find(
-                                    (c) => c.id === selectedCellules[m.id]
-                                  )}
-                                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                                  session={session}
-                                />
-                              </div>
-                            )}
+                            <div className="mt-2">
+                              <BoutonEnvoyer
+                                membre={m}
+                                cellule={{ cellule: "Rose Hill", responsable: "Fabrice" }}
+                                onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                                session={session}
+                              />
+                            </div>
                           </div>
                         )}
                       </div>
@@ -338,15 +243,7 @@ export default function ListMembers() {
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
               <h3 className="text-white text-lg mb-3 font-semibold">
-                <span
-                  style={{
-                    background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                    WebkitBackgroundClip: "text",
-                    color: "transparent",
-                  }}
-                >
-                  Membres existants
-                </span>
+                Membres existants
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -361,9 +258,7 @@ export default function ListMembers() {
                       <div className="flex flex-col items-center">
                         <h2 className="text-lg font-bold text-gray-800 text-center">
                           {m.prenom} {m.nom}
-                          {m.star && (
-                            <span className="text-yellow-400 ml-1">⭐</span>
-                          )}
+                          {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                         </h2>
 
                         <p className="text-sm text-gray-600 mb-2 text-center">
@@ -381,75 +276,29 @@ export default function ListMembers() {
                         </button>
 
                         {isOpen && (
-                          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+                          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-center">
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                            <p>
-                              ❓Besoin :{" "}
-                              {(() => {
-                                if (!m.besoin) return "—";
-                                if (Array.isArray(m.besoin))
-                                  return m.besoin.join(", ");
-                                try {
-                                  const arr = JSON.parse(m.besoin);
-                                  return Array.isArray(arr)
-                                    ? arr.join(", ")
-                                    : m.besoin;
-                                } catch {
-                                  return m.besoin;
-                                }
-                              })()}
-                            </p>
+                            <p>❓Besoin : {Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                            <select
-                              value={m.statut}
-                              onChange={(e) =>
-                                handleChangeStatus(m.id, e.target.value)
-                              }
-                              className="border rounded-md px-2 py-1 text-xs text-gray-700 w-full"
-                            >
-                              {statusOptions.map((s) => (
-                                <option key={s}>{s}</option>
-                              ))}
-                            </select>
-
+                            {/* ✅ Cellule fixe */}
                             <p className="mt-2 font-semibold text-green-600">
                               Cellule :
                             </p>
-                            <select
-                              value={selectedCellules[m.id] || ""}
-                              onChange={(e) =>
-                                setSelectedCellules((prev) => ({
-                                  ...prev,
-                                  [m.id]: e.target.value,
-                                }))
-                              }
-                              className="border rounded-lg px-2 py-1 text-sm w-full"
-                            >
-                              <option value="">
-                                -- Sélectionner cellule --
-                              </option>
-                              {cellules.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {c.cellule} ({c.responsable})
-                                </option>
-                              ))}
-                            </select>
+                            <p className="border rounded-lg px-2 py-1 text-sm w-full bg-gray-50">
+                              Rose Hill - Fabrice - Oui
+                            </p>
 
-                            {selectedCellules[m.id] && (
-                              <div className="mt-2">
-                                <BoutonEnvoyer
-                                  membre={m}
-                                  cellule={cellules.find(
-                                    (c) => c.id === selectedCellules[m.id]
-                                  )}
-                                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                                  session={session}
-                                />
-                              </div>
-                            )}
+                            <div className="mt-2">
+                              <BoutonEnvoyer
+                                membre={m}
+                                cellule={{ cellule: "Rose Hill", responsable: "Fabrice" }}
+                                onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                                session={session}
+                              />
+                            </div>
                           </div>
                         )}
                       </div>
@@ -475,19 +324,8 @@ export default function ListMembers() {
               </tr>
             </thead>
             <tbody>
-              {nouveauxFiltres.length > 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-2 text-white font-semibold">
-                    💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-                  </td>
-                </tr>
-              )}
-
               {nouveauxFiltres.map((m) => (
-                <tr
-                  key={m.id}
-                  className="bg-white/10 hover:bg-white/20 transition duration-150"
-                >
+                <tr key={m.id} className="bg-white/10 hover:bg-white/20 transition">
                   <td className="px-4 py-2">{m.prenom} {m.nom}</td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.statut || "—"}</td>
@@ -502,19 +340,8 @@ export default function ListMembers() {
                 </tr>
               ))}
 
-              {anciensFiltres.length > 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-2 text-white font-semibold">
-                    Membres existants
-                  </td>
-                </tr>
-              )}
-
               {anciensFiltres.map((m) => (
-                <tr
-                  key={m.id}
-                  className="bg-white/10 hover:bg-white/20 transition duration-150"
-                >
+                <tr key={m.id} className="bg-white/10 hover:bg-white/20 transition">
                   <td className="px-4 py-2">{m.prenom} {m.nom}</td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.statut || "—"}</td>
@@ -538,7 +365,7 @@ export default function ListMembers() {
           membre={popupMember}
           onClose={() => setPopupMember(null)}
           onStatusUpdate={handleStatusUpdateFromEnvoyer}
-          cellules={cellules}
+          cellule={{ cellule: "Rose Hill", responsable: "Fabrice" }}
           session={session}
         />
       )}

@@ -1,4 +1,3 @@
-// ✅ /pages/list-members.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,7 +8,7 @@ import LogoutLink from "../components/LogoutLink";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import DetailsPopup from "../components/DetailsPopup";
-import EditMemberPopup from "../components/EditMemberPopup"; // 🆕 import ajouté
+import EditMemberPopup from "../components/EditMemberPopup";
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
@@ -22,8 +21,8 @@ export default function ListMembers() {
   const [popupMember, setPopupMember] = useState(null);
   const [session, setSession] = useState(null);
   const [prenom, setPrenom] = useState("");
-  const [editMember, setEditMember] = useState(null); // 🆕 pour EditMemberPopup
-  const [refreshKey, setRefreshKey] = useState(0); // 🆕 pour recharger les membres après modif
+  const [editMember, setEditMember] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const fetchSessionAndProfile = async () => {
@@ -46,7 +45,6 @@ export default function ListMembers() {
     fetchCellules();
   }, []);
 
-  // 🆕 recharge les membres après modification
   useEffect(() => {
     fetchMembers();
   }, [refreshKey]);
@@ -121,13 +119,6 @@ export default function ListMembers() {
     filter ? anciens.filter((m) => m.statut === filter) : anciens
   );
 
-  const allMembersOrdered = [...nouveaux, ...anciens];
-  const filteredMembers = filterBySearch(
-    filter
-      ? allMembersOrdered.filter((m) => m.statut === filter)
-      : allMembersOrdered
-  );
-
   const statusOptions = [
     "actif",
     "Integrer",
@@ -137,7 +128,7 @@ export default function ListMembers() {
     "a déjà mon église",
   ];
 
-  const totalCount = filteredMembers.length;
+  const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
 
   const toggleDetails = (id) => {
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -168,17 +159,11 @@ export default function ListMembers() {
       </div>
 
       <div className="mb-4">
-        <Image
-          src="/logo.png"
-          alt="SoulTrack Logo"
-          className="w-20 h-18 mx-auto"
-        />
+        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
 
       <div className="text-center mb-4">
-        <h1 className="text-3xl font-bold text-white mb-2">
-          Liste des Membres
-        </h1>
+        <h1 className="text-3xl font-bold text-white mb-2">Liste des Membres</h1>
         <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
           Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
         </p>
@@ -271,7 +256,6 @@ export default function ListMembers() {
                               })()}
                             </p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-
                             <p className="mt-2 font-semibold text-bleu-600">Statut :</p>
                             <select
                               value={m.statut}
@@ -282,7 +266,6 @@ export default function ListMembers() {
                                 <option key={s}>{s}</option>
                               ))}
                             </select>
-
                             <p className="mt-2 font-semibold text-green-600">Cellule :</p>
                             <select
                               value={selectedCellules[m.id] || ""}
@@ -301,12 +284,13 @@ export default function ListMembers() {
                                 </option>
                               ))}
                             </select>
-
                             {selectedCellules[m.id] && (
                               <div className="mt-2">
                                 <BoutonEnvoyer
                                   membre={m}
-                                  cellule={cellules.find((c) => c.id === selectedCellules[m.id])}
+                                  cellule={cellules.find(
+                                    (c) => c.id === selectedCellules[m.id]
+                                  )}
                                   onStatusUpdate={handleStatusUpdateFromEnvoyer}
                                   session={session}
                                 />
@@ -321,6 +305,18 @@ export default function ListMembers() {
               </div>
             </div>
           )}
+
+          {/* ----------------- Membres existants ----------------- */}
+          {anciensFiltres.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-white text-lg mb-3 font-semibold">
+                <span
+                  style={{
+                    background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                    WebkitBackgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
                   Membres existants
                 </span>
               </h3>
@@ -352,33 +348,12 @@ export default function ListMembers() {
                         >
                           {isOpen ? "Fermer détails" : "Détails"}
                         </button>
-
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                            <p>
-                              💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}
-                            </p>
+                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                            <p>
-                              ❓Besoin :{" "}
-                              {(() => {
-                                if (!m.besoin) return "—";
-                                if (Array.isArray(m.besoin))
-                                  return m.besoin.join(", ");
-                                try {
-                                  const arr = JSON.parse(m.besoin);
-                                  return Array.isArray(arr)
-                                    ? arr.join(", ")
-                                    : m.besoin;
-                                } catch {
-                                  return m.besoin;
-                                }
-                              })()}
-                            </p>
-                            <p>
-                              📝 Infos : {m.infos_supplementaires || "—"}
-                            </p>
+                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
                             <p className="mt-2 text-black-600">
                               🏠 Cellule :{" "}
                               <span className="text-gray-700 font-normal ml-1">
@@ -392,8 +367,6 @@ export default function ListMembers() {
                                 })()}
                               </span>
                             </p>
-
-                            {/* 🆕 Bouton pour ouvrir EditMemberPopup */}
                             <div className="text-center mt-3">
                               <button
                                 onClick={() => setEditMember(m)}

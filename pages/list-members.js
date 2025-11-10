@@ -308,92 +308,208 @@ export default function ListMembers() {
           )}
 
           {/* ----------------- Membres existants ----------------- */}
-          {anciensFiltres.length > 0 && (
-            <div className="mt-8">
-              <h3 className="text-white text-lg mb-3 font-semibold">
-                <span
-                  style={{
-                    background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                    WebkitBackgroundClip: "text",
-                    color: "transparent",
-                  }}
-                >
-                  Membres existants
-                </span>
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {anciensFiltres.map((m) => {
-                  const isOpen = detailsOpen[m.id];
-                  return (
-                    <div
-                      key={m.id}
-                      className="bg-white p-3 rounded-xl shadow-md border-l-4 transition duration-200 overflow-hidden relative"
-                      style={{ borderLeftColor: getBorderColor(m) }}
-                    >
-                      <div className="flex flex-col items-center">
-                        <h2 className="text-lg font-bold text-gray-800 text-center">
-                          {m.prenom} {m.nom}
-                          {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                        </h2>
-
-                        <p className="text-sm text-gray-600 mb-2 text-center">
-                          📱 {m.telephone || "—"}
-                        </p>
-                        <p className="text-sm text-gray-600 mb-2 text-center">
-                          🕊 Statut : {m.statut || "—"}
-                        </p>
-                        <button
-                          onClick={() => toggleDetails(m.id)}
-                          className="text-orange-500 underline text-sm"
-                        >
-                          {isOpen ? "Fermer détails" : "Détails"}
-                        </button>
-
-                        {isOpen && (
-                          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                            <p>🏙 Ville : {m.ville || "—"}</p>
-                            <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                            <p>❓Besoin : {
-                              (() => {
-                                if (!m.besoin) return "—";
-                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                                try {
-                                  const arr = JSON.parse(m.besoin);
-                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                                } catch { return m.besoin; }
-                              })()
-                            }</p>
-                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-
-                            {/* ✅ NOUVELLE VERSION ICI */}
-                            <p className="mt-2 font-semibold text-gray-700">
-                              🕊 Statut : <span className="text-black-600 font-medium">{m.statut || "—"}</span>
-                            </p>
-
-                            <p className="mt-2 text-black-600">
-                              Cellule :
-                              <span className="text-gray-700 font-normal ml-1">
-                                {(() => {
-                                  const cellule = cellules.find((c) => c.id === m.cellule_id);
-                                  return cellule
-                                    ? `${cellule.cellule} (${cellule.responsable || "—"})`
-                                    : "—";
-                                })()}
-                              </span>
-                            </p>
-                            {/* ✅ FIN MODIFICATION */}
+          
+          {anciensFiltres.map((m) => {
+            const isOpen = detailsOpen[m.id];
+            return (
+              <div
+                key={m.id}
+                className="bg-white p-3 rounded-xl shadow-md border-l-4 transition duration-200 overflow-hidden relative"
+                style={{ borderLeftColor: getBorderColor(m) }}
+              >
+                <div className="flex flex-col items-center">
+                  <h2 className="text-lg font-bold text-gray-800 text-center">
+                    {m.prenom} {m.nom}
+                    {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                  </h2>
+          
+                  <p className="text-sm text-gray-600 mb-2 text-center">
+                    📱 {m.telephone || "—"}
+                  </p>
+                  <p className="text-sm text-gray-600 mb-2 text-center">
+                    🕊 Statut : {m.statut || "—"}
+                  </p>
+                  <button
+                    onClick={() => toggleDetails(m.id)}
+                    className="text-orange-500 underline text-sm"
+                  >
+                    {isOpen ? "Fermer détails" : "Détails"}
+                  </button>
+          
+                  {isOpen && (
+                    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+                      <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                      <p>🏙 Ville : {m.ville || "—"}</p>
+                      <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+                      <p>
+                        ❓Besoin :{" "}
+                        {(() => {
+                          if (!m.besoin) return "—";
+                          if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                          try {
+                            const arr = JSON.parse(m.besoin);
+                            return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                          } catch {
+                            return m.besoin;
+                          }
+                        })()}
+                      </p>
+                      <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+          
+                      {/* ✅ NOUVELLE VERSION ICI */}
+                      <p className="mt-2 font-semibold text-gray-700">
+                        🕊 Statut :{" "}
+                        <span className="text-black-600 font-medium">
+                          {m.statut || "—"}
+                        </span>
+                      </p>
+          
+                      <p className="mt-2 text-black-600">
+                        Cellule :
+                        <span className="text-gray-700 font-normal ml-1">
+                          {(() => {
+                            const cellule = cellules.find((c) => c.id === m.cellule_id);
+                            return cellule
+                              ? `${cellule.cellule} (${cellule.responsable || "—"})`
+                              : "—";
+                          })()}
+                        </span>
+                      </p>
+          
+                      {/* ===================== MODIFIER CONTACT ===================== */}
+                      <div className="mt-3 border-t border-gray-200 pt-3">
+                        <h4 className="text-sm font-semibold text-blue-700 mb-2 text-center">
+                          ✏️ Modifier contact
+                        </h4>
+          
+                        <div className="space-y-2 text-xs">
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              defaultValue={m.prenom}
+                              placeholder="Prénom"
+                              onBlur={(e) =>
+                                supabase
+                                  .from("membres")
+                                  .update({ prenom: e.target.value })
+                                  .eq("id", m.id)
+                              }
+                              className="w-1/2 border rounded-md px-2 py-1"
+                            />
+                            <input
+                              type="text"
+                              defaultValue={m.nom}
+                              placeholder="Nom"
+                              onBlur={(e) =>
+                                supabase
+                                  .from("membres")
+                                  .update({ nom: e.target.value })
+                                  .eq("id", m.id)
+                              }
+                              className="w-1/2 border rounded-md px-2 py-1"
+                            />
                           </div>
-                        )}
+          
+                          <input
+                            type="text"
+                            defaultValue={m.ville}
+                            placeholder="Ville"
+                            onBlur={(e) =>
+                              supabase
+                                .from("membres")
+                                .update({ ville: e.target.value })
+                                .eq("id", m.id)
+                            }
+                            className="w-full border rounded-md px-2 py-1"
+                          />
+          
+                          <input
+                            type="text"
+                            defaultValue={m.telephone}
+                            placeholder="Téléphone"
+                            onBlur={(e) =>
+                              supabase
+                                .from("membres")
+                                .update({ telephone: e.target.value })
+                                .eq("id", m.id)
+                            }
+                            className="w-full border rounded-md px-2 py-1"
+                          />
+          
+                          <textarea
+                            defaultValue={m.besoin}
+                            placeholder="Besoin"
+                            onBlur={(e) =>
+                              supabase
+                                .from("membres")
+                                .update({ besoin: e.target.value })
+                                .eq("id", m.id)
+                            }
+                            className="w-full border rounded-md px-2 py-1 h-12 resize-none"
+                          />
+          
+                          <select
+                            defaultValue={m.cellule_id || ""}
+                            onChange={(e) =>
+                              supabase
+                                .from("membres")
+                                .update({ cellule_id: e.target.value })
+                                .eq("id", m.id)
+                            }
+                            className="w-full border rounded-md px-2 py-1"
+                          >
+                            <option value="">-- Sélectionner cellule --</option>
+                            {cellules.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.cellule} ({c.responsable})
+                              </option>
+                            ))}
+                          </select>
+          
+                          <select
+                            defaultValue={m.statut}
+                            onChange={(e) =>
+                              supabase
+                                .from("membres")
+                                .update({ statut: e.target.value })
+                                .eq("id", m.id)
+                            }
+                            className="w-full border rounded-md px-2 py-1"
+                          >
+                            {statusOptions.map((s) => (
+                              <option key={s}>{s}</option>
+                            ))}
+                          </select>
+          
+                          <textarea
+                            defaultValue={m.infos_supplementaires}
+                            placeholder="Infos supplémentaires"
+                            onBlur={(e) =>
+                              supabase
+                                .from("membres")
+                                .update({
+                                  infos_supplementaires: e.target.value,
+                                })
+                                .eq("id", m.id)
+                            }
+                            className="w-full border rounded-md px-2 py-1 h-16 resize-none"
+                          />
+          
+                          <button
+                            onClick={() => fetchMembers()}
+                            className="w-full mt-1 bg-green-600 hover:bg-green-700 text-white py-1.5 rounded-md font-semibold text-sm"
+                          >
+                            💾 Enregistrer
+                          </button>
+                        </div>
                       </div>
+                      {/* ===================== FIN MODIFIER CONTACT ===================== */}
                     </div>
-                  );
-                })}
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      )}
+            );
+})}
 
       {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (

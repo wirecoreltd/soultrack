@@ -368,17 +368,19 @@ export default function ListMembers() {
 
                             {/* ✅ NOUVELLE VERSION ICI */}
                             <p className="mt-2 font-semibold text-gray-700">
-                              🕊 Statut : <span className="text-blue-600 font-medium">{m.statut || "—"}</span>
+                              🕊 Statut : <span className="text-black-600 font-medium">{m.statut || "—"}</span>
                             </p>
 
-                            <p className="mt-2 font-semibold text-green-600">Cellule :</p>
-                            <p className="text-gray-700">
-                              {(() => {
-                                const cellule = cellules.find((c) => c.id === m.cellule_id);
-                                return cellule
-                                  ? `${cellule.cellule} (${cellule.responsable || "—"})`
-                                  : "—";
-                              })()}
+                            <p className="mt-2 text-black-600">
+                              Cellule :
+                              <span className="text-gray-700 font-normal ml-1">
+                                {(() => {
+                                  const cellule = cellules.find((c) => c.id === m.cellule_id);
+                                  return cellule
+                                    ? `${cellule.cellule} (${cellule.responsable || "—"})`
+                                    : "—";
+                                })()}
+                              </span>
                             </p>
                             {/* ✅ FIN MODIFICATION */}
                           </div>

@@ -445,7 +445,7 @@ export default function ListMembers() {
                   <td className="px-4 py-2">{m.prenom} {m.nom}</td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">
-                    Statut : {m.statut} — Cellule : Rose Hill — Responsable : Fabrice — WhatsApp : Oui
+                    Cellule : {m.cellule || "—"} — Responsable : {m.responsable || "—"}
                   </td>
                   <td className="px-4 py-2">
                     <button onClick={() => setPopupMember(m)} className="text-orange-400 underline text-xs">

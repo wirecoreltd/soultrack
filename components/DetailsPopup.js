@@ -1,6 +1,7 @@
 "use client";
 
 import BoutonEnvoyer from "./BoutonEnvoyer";
+import { useState } from "react";
 
 export default function DetailsPopup({
   member,
@@ -13,7 +14,13 @@ export default function DetailsPopup({
   handleStatusUpdateFromEnvoyer,
   session,
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   if (!member) return null;
+
+  const toggleDetails = () => {
+    setIsOpen((prev) => !prev);
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
@@ -29,79 +36,87 @@ export default function DetailsPopup({
 
         {/* Titre */}
         <h2 className="text-lg font-bold text-gray-800 text-center">
-                          {m.prenom} {m.nom}
-                        </h2>
-                        <p className="text-sm text-gray-600 mb-2 text-center">
-                          📱 {m.telephone || "—"}
-                        </p>
-                        <p className="text-sm text-gray-600 mb-2 text-center">
-                          🕊 Statut : {m.statut || "—"}
-                        </p>
-                        <button
-                          onClick={() => toggleDetails(m.id)}
-                          className="text-orange-500 underline text-sm"
-                        >
-                          {isOpen ? "Fermer détails" : "Détails"}
-                        </button>
-                        {isOpen && (
-                          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                            <p>🏙 Ville : {m.ville || "—"}</p>
-                            <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                            <p>
-                              ❓Besoin :{" "}
-                              {(() => {
-                                if (!m.besoin) return "—";
-                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                                try {
-                                  const arr = JSON.parse(m.besoin);
-                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                                } catch {
-                                  return m.besoin;
-                                }
-                              })()}
-                            </p>
-                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+          {member.prenom} {member.nom}
+        </h2>
+        <p className="text-sm text-gray-600 mb-2 text-center">
+          📱 {member.telephone || "—"}
+        </p>
+        <p className="text-sm text-gray-600 mb-2 text-center">
+          🕊 Statut : {member.statut || "—"}
+        </p>
 
-                            <p className="mt-2 font-semibold text-bleu-600">Statut :</p>
-                            <select
-                              value={m.statut}
-                              onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                              className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
-                            >
-                              {statusOptions.map((s) => (
-                                <option key={s}>{s}</option>
-                              ))}
-                            </select>
+        <button
+          onClick={toggleDetails}
+          className="text-orange-500 underline text-sm"
+        >
+          {isOpen ? "Fermer détails" : "Détails"}
+        </button>
 
-                            <p className="mt-2 font-semibold text-green-600">Cellule :</p>
-                            <select
-                              value={selectedCellules[m.id] || ""}
-                              onChange={(e) =>
-                                setSelectedCellules((prev) => ({
-                                  ...prev,
-                                  [m.id]: e.target.value,
-                                }))
-                              }
-                              className="border rounded-lg px-2 py-1 text-sm w-full"
-                            >
-                              <option value="">-- Sélectionner cellule --</option>
-                              {cellules.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {c.cellule} ({c.responsable})
-                                </option>
-                              ))}
-                            </select>
+        {isOpen && (
+          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+            <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+            <p>🏙 Ville : {member.ville || "—"}</p>
+            <p>🧩 Comment est-il venu : {member.venu || "—"}</p>
+            <p>
+              ❓Besoin :{" "}
+              {(() => {
+                if (!member.besoin) return "—";
+                if (Array.isArray(member.besoin))
+                  return member.besoin.join(", ");
+                try {
+                  const arr = JSON.parse(member.besoin);
+                  return Array.isArray(arr) ? arr.join(", ") : member.besoin;
+                } catch {
+                  return member.besoin;
+                }
+              })()}
+            </p>
+            <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
 
-                            {selectedCellules[m.id] && (
-                              <div className="mt-2">
-                                <BoutonEnvoyer
-                                  membre={m}
-                                  cellule={cellules.find((c) => c.id === selectedCellules[m.id])}
-                                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                                  session={session}
-                                />
-                              </div>
+            <p className="mt-2 font-semibold text-bleu-600">Statut :</p>
+            <select
+              value={member.statut}
+              onChange={(e) => handleChangeStatus(member.id, e.target.value)}
+              className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
+            >
+              {statusOptions.map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+            </select>
+
+            <p className="mt-2 font-semibold text-green-600">Cellule :</p>
+            <select
+              value={selectedCellules[member.id] || ""}
+              onChange={(e) =>
+                setSelectedCellules((prev) => ({
+                  ...prev,
+                  [member.id]: e.target.value,
+                }))
+              }
+              className="border rounded-lg px-2 py-1 text-sm w-full"
+            >
+              <option value="">-- Sélectionner cellule --</option>
+              {cellules.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.cellule} ({c.responsable})
+                </option>
+              ))}
+            </select>
+
+            {selectedCellules[member.id] && (
+              <div className="mt-2">
+                <BoutonEnvoyer
+                  membre={member}
+                  cellule={cellules.find(
+                    (c) => c.id === selectedCellules[member.id]
+                  )}
+                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                  session={session}
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

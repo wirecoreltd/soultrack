@@ -508,8 +508,10 @@ export default function ListMembers() {
                   )}
                 </div>
               </div>
-            );
-})}
+              );
+          })}
+        </div>
+      )}                
 
       {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (

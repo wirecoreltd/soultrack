@@ -32,70 +32,52 @@ export default function DetailsPopup({
           {member.prenom || ""} {member.nom || ""}
         </h3>
         <p className="text-sm text-gray-600 mb-2 text-center">
-                          📱 {member.telephone || "—"}
-                        </p>
+          📱 {member.telephone || "—"}
+        </p>
+
         {/* Détails de base */}
-        <div className="space-y-2 text-sm">          
+        <div className="space-y-2 text-sm">
           <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
           <p>🏙 Ville : {member.ville || "—"}</p>
           <p>🧩 Comment est-il venu : {member.venu || "—"}</p>
-          <p>❓Besoin : {
-                          (() => {
-                            if (!member.besoin) return "—";
-                            if (Array.isArray(member.besoin)) return member.besoin.join(", ");
-                            try {
-                              const arr = JSON.parse(member.besoin);
-                              return Array.isArray(arr) ? arr.join(", ") : member.besoin;
-                            } catch { return member.besoin; }
-                          })()
-                        }</p>
+          <p>
+            ❓Besoin :{" "}
+            {(() => {
+              if (!member.besoin) return "—";
+              if (Array.isArray(member.besoin)) return member.besoin.join(", ");
+              try {
+                const arr = JSON.parse(member.besoin);
+                return Array.isArray(arr) ? arr.join(", ") : member.besoin;
+              } catch {
+                return member.besoin;
+              }
+            })()}
+          </p>
           <p>📝 Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
         </div>
 
-        {/* ==================== STATUT ==================== */}
-        <div className="mt-4">
-          <p className="mt-2 font-semibold text-black-600">Statut :</p>
-          <select
-            value={member.statut || ""}
-            onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-            className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
-          >
-            {statusOptions.map((s) => (
-              <option key={s}>{s}</option>
-            ))}
-          </select>
+        {/* ==================== STATUT ET CELLULE ==================== */}
+        <div className="mt-4 space-y-2 text-sm">
+          {/* Statut affiché en lecture seule */}
+          <p className="mt-2 font-semibold text-gray-800">
+            Statut :{" "}
+            <span className="text-blue-600 font-medium">
+              {member.statut || "—"}
+            </span>
+          </p>
 
-          {/* ==================== CELLULE ==================== */}
-          <p className="mt-2 font-semibold text-green-600">Cellule :</p>
-          <select
-            value={selectedCellules[member.id] || ""}
-            onChange={(e) =>
-              setSelectedCellules((prev) => ({
-                ...prev,
-                [member.id]: e.target.value,
-              }))
-            }
-            className="border rounded-lg px-2 py-1 text-sm w-full"
-          >
-            <option value="">-- Sélectionner cellule --</option>
-            {cellules.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.cellule} ({c.responsable})
-              </option>
-            ))}
-          </select>
-
-          {/* ==================== BOUTON ENVOYER ==================== */}
-          {selectedCellules[member.id] && (
-            <div className="mt-2">
-              <BoutonEnvoyer
-                membre={member}
-                cellule={cellules.find((c) => c.id === selectedCellules[member.id])}
-                onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                session={session}
-              />
-            </div>
-          )}
+          {/* Cellule affichée sur la même ligne */}
+          <p className="mt-2 font-semibold text-green-600">
+            Cellule :
+            <span className="text-gray-700 font-normal ml-1">
+              {(() => {
+                const cellule = cellules.find((c) => c.id === member.cellule_id);
+                return cellule
+                  ? `${cellule.cellule} (${cellule.responsable || "—"})`
+                  : "—";
+              })()}
+            </span>
+          </p>
         </div>
       </div>
     </div>

@@ -22,7 +22,6 @@ export default function ListMembers() {
   const [session, setSession] = useState(null);
   const [prenom, setPrenom] = useState("");
 
-  // 🔹 Charge session, prénom et membres
   useEffect(() => {
     const fetchSessionAndProfile = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -35,9 +34,7 @@ export default function ListMembers() {
           .eq("id", session.user.id)
           .single();
 
-        if (!error && data) {
-          setPrenom(data.prenom);
-        }
+        if (!error && data) setPrenom(data.prenom);
       }
     };
 
@@ -68,12 +65,11 @@ export default function ListMembers() {
     );
   };
 
-  // ✅ Ajout ici : fermeture auto du popup après envoi depuis vue table
   const handleStatusUpdateFromEnvoyer = (id, currentStatus) => {
     if (currentStatus === "visiteur" || currentStatus === "veut rejoindre ICC") {
       handleChangeStatus(id, "actif");
     }
-    setPopupMember(null); // ✅ ferme le popup automatiquement
+    setPopupMember(null);
   };
 
   const getBorderColor = (m) => {
@@ -139,9 +135,7 @@ export default function ListMembers() {
       className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* ==================== HEADER ==================== */}
       <div className="w-full max-w-5xl mb-6">
-        {/* 🔹 Top bar : bouton retour + logout */}
         <div className="flex justify-between items-center">
           <button
             onClick={() => window.history.back()}
@@ -153,7 +147,6 @@ export default function ListMembers() {
           <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
         </div>
 
-        {/* 🔹 Message de bienvenue avec prénom */}
         <div className="flex justify-end mt-2">
           <p className="text-orange-200 text-sm">
             👋 Bienvenue {prenom || "cher membre"}
@@ -161,16 +154,10 @@ export default function ListMembers() {
         </div>
       </div>
 
-      {/* ==================== LOGO ==================== */}
       <div className="mb-4">
-        <Image
-          src="/logo.png"
-          alt="SoulTrack Logo"
-          className="w-20 h-18 mx-auto"
-        />
+        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
 
-      {/* ==================== TITRE + MESSAGE MOTIVANT ==================== */}
       <div className="text-center mb-4">
         <h1 className="text-3xl font-bold text-white mb-2">Liste des Membres</h1>
         <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
@@ -178,7 +165,6 @@ export default function ListMembers() {
         </p>
       </div>
 
-      {/* ==================== FILTRE + RECHERCHE + TOGGLE ==================== */}
       <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">
         <div className="flex items-center space-x-2 mb-2 sm:mb-0">
           <select
@@ -255,7 +241,7 @@ export default function ListMembers() {
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                            <p> 🏙 Ville : {m.ville || "—"}</p>
+                            <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
                             <p>❓Besoin : {
                               (() => {
@@ -365,9 +351,8 @@ export default function ListMembers() {
 
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                            
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                            <p> 🏙 Ville : {m.ville || "—"}</p>
+                            <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
                             <p>❓Besoin : {
                               (() => {
@@ -381,47 +366,21 @@ export default function ListMembers() {
                             }</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                            <select
-                              value={m.statut}
-                              onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                              className="border rounded-md px-2 py-1 text-xs text-gray-700 w-full"
-                            >
-                              {statusOptions.map((s) => (
-                                <option key={s}>{s}</option>
-                              ))}
-                            </select>
+                            {/* ✅ NOUVELLE VERSION ICI */}
+                            <p className="mt-2 font-semibold text-gray-700">
+                              🕊 Statut : <span className="text-blue-600 font-medium">{m.statut || "—"}</span>
+                            </p>
 
                             <p className="mt-2 font-semibold text-green-600">Cellule :</p>
-                            <select
-                              value={selectedCellules[m.id] || ""}
-                              onChange={(e) =>
-                                setSelectedCellules((prev) => ({
-                                  ...prev,
-                                  [m.id]: e.target.value,
-                                }))
-                              }
-                              className="border rounded-lg px-2 py-1 text-sm w-full"
-                            >
-                              <option value="">-- Sélectionner cellule --</option>
-                              {cellules.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {c.cellule} ({c.responsable})
-                                </option>
-                              ))}
-                            </select>
-
-                            {selectedCellules[m.id] && (
-                              <div className="mt-2">
-                                <BoutonEnvoyer
-                                  membre={m}
-                                  cellule={cellules.find(
-                                    (c) => c.id === selectedCellules[m.id]
-                                  )}
-                                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                                  session={session}
-                                />
-                              </div>
-                            )}
+                            <p className="text-gray-700">
+                              {(() => {
+                                const cellule = cellules.find((c) => c.id === m.cellule_id);
+                                return cellule
+                                  ? `${cellule.cellule} (${cellule.responsable || "—"})`
+                                  : "—";
+                              })()}
+                            </p>
+                            {/* ✅ FIN MODIFICATION */}
                           </div>
                         )}
                       </div>
@@ -526,7 +485,6 @@ export default function ListMembers() {
             </tbody>
           </table>
 
-          {/* ✅ POPUP DÉTAILS CORRIGÉE */}
           {popupMember && (
             <DetailsPopup
               member={popupMember}

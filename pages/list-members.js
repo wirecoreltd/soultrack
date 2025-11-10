@@ -354,13 +354,9 @@ export default function ListMembers() {
                                 }
                               })()}
                             </p>
-                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-
-                            <p className="mt-2 font-semibold text-gray-700">
-                              🕊 Statut : <span className="text-black-600 font-medium">{m.statut || "—"}</span>
-                            </p>
+                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>                            
                             <p className="mt-2 text-black-600">
-                              Cellule :{" "}
+                              🏠 Cellule :{" "}
                               <span className="text-gray-700 font-normal ml-1">
                                 {(() => {
                                   const cellule = cellules.find((c) => c.id === m.cellule_id);

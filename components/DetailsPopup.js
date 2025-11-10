@@ -57,17 +57,10 @@ export default function DetailsPopup({
         </div>
 
         {/* ==================== STATUT ET CELLULE ==================== */}
-        <div className="mt-4 space-y-2 text-sm">
-          {/* Statut affiché en lecture seule */}
-          <p className="mt-2 font-semibold text-gray-800">
-            Statut :{" "}
-            <span className="text-blue-600 font-medium">
-              {member.statut || "—"}
-            </span>
-          </p>
+        <div className="mt-4 space-y-2 text-sm">        
 
           {/* Cellule affichée sur la même ligne */}
-          <p className="mt-2 font-semibold text-green-600">
+          <p className="mt-2 text-black-600">
             Cellule :
             <span className="text-gray-700 font-normal ml-1">
               {(() => {

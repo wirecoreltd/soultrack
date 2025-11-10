@@ -22,6 +22,7 @@ export default function ListMembers() {
   const [session, setSession] = useState(null);
   const [prenom, setPrenom] = useState("");
 
+  // 🔹 Charger session, prénom et membres
   useEffect(() => {
     const fetchSessionAndProfile = async () => {
       const {
@@ -142,7 +143,7 @@ export default function ListMembers() {
       className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* HEADER */}
+      {/* ==================== HEADER ==================== */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
           <button
@@ -151,8 +152,10 @@ export default function ListMembers() {
           >
             ← Retour
           </button>
+
           <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
         </div>
+
         <div className="flex justify-end mt-2">
           <p className="text-orange-200 text-sm">
             👋 Bienvenue {prenom || "cher membre"}
@@ -160,12 +163,12 @@ export default function ListMembers() {
         </div>
       </div>
 
-      {/* LOGO */}
+      {/* ==================== LOGO ==================== */}
       <div className="mb-4">
         <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
 
-      {/* TITRE */}
+      {/* ==================== TITRE ==================== */}
       <div className="text-center mb-4">
         <h1 className="text-3xl font-bold text-white mb-2">Liste des Membres</h1>
         <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
@@ -173,7 +176,7 @@ export default function ListMembers() {
         </p>
       </div>
 
-      {/* FILTRE + RECHERCHE */}
+      {/* ==================== FILTRE + RECHERCHE ==================== */}
       <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">
         <div className="flex items-center space-x-2 mb-2 sm:mb-0">
           <select
@@ -186,6 +189,7 @@ export default function ListMembers() {
               <option key={s}>{s}</option>
             ))}
           </select>
+
           <input
             type="text"
             value={search}
@@ -193,8 +197,10 @@ export default function ListMembers() {
             placeholder="Rechercher par nom..."
             className="px-3 py-2 rounded-lg border text-sm w-48"
           />
+
           <span className="text-white text-sm">({totalCount})</span>
         </div>
+
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
           className="text-white text-sm underline hover:text-gray-200"
@@ -203,10 +209,10 @@ export default function ListMembers() {
         </button>
       </div>
 
-      {/* VUE CARTE */}
+      {/* ==================== VUE CARTE ==================== */}
       {view === "card" && (
         <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
-          {/* Nouveaux membres */}
+          {/* 🔹 Nouveaux membres */}
           {nouveauxFiltres.length > 0 && (
             <div>
               <p className="text-white text-lg mb-2 ml-1">
@@ -227,6 +233,7 @@ export default function ListMembers() {
                           Nouveau
                         </span>
                       )}
+
                       <div className="flex flex-col items-center">
                         <h2 className="text-lg font-bold text-gray-800 text-center">
                           {m.prenom} {m.nom}
@@ -243,6 +250,7 @@ export default function ListMembers() {
                         >
                           {isOpen ? "Fermer détails" : "Détails"}
                         </button>
+
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
@@ -252,10 +260,13 @@ export default function ListMembers() {
                               ❓Besoin :{" "}
                               {(() => {
                                 if (!m.besoin) return "—";
-                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                                if (Array.isArray(m.besoin))
+                                  return m.besoin.join(", ");
                                 try {
                                   const arr = JSON.parse(m.besoin);
-                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                                  return Array.isArray(arr)
+                                    ? arr.join(", ")
+                                    : m.besoin;
                                 } catch {
                                   return m.besoin;
                                 }
@@ -263,8 +274,9 @@ export default function ListMembers() {
                             </p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                            {/* Statut et Cellule restent modifiables pour nouveaux membres */}
-                            <p className="mt-2 font-semibold text-bleu-600">Statut :</p>
+                            <p className="mt-2 font-semibold text-bleu-600">
+                              Statut :
+                            </p>
                             <select
                               value={m.statut}
                               onChange={(e) =>
@@ -277,7 +289,9 @@ export default function ListMembers() {
                               ))}
                             </select>
 
-                            <p className="mt-2 font-semibold text-green-600">Cellule :</p>
+                            <p className="mt-2 font-semibold text-green-600">
+                              Cellule :
+                            </p>
                             <select
                               value={selectedCellules[m.id] || ""}
                               onChange={(e) =>
@@ -288,7 +302,9 @@ export default function ListMembers() {
                               }
                               className="border rounded-lg px-2 py-1 text-sm w-full"
                             >
-                              <option value="">-- Sélectionner cellule --</option>
+                              <option value="">
+                                -- Sélectionner cellule --
+                              </option>
                               {cellules.map((c) => (
                                 <option key={c.id} value={c.id}>
                                   {c.cellule} ({c.responsable})
@@ -318,7 +334,7 @@ export default function ListMembers() {
             </div>
           )}
 
-          {/* Membres existants */}
+          {/* 🔹 Membres existants */}
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
               <h3 className="text-white text-lg mb-3 font-semibold">
@@ -345,7 +361,9 @@ export default function ListMembers() {
                       <div className="flex flex-col items-center">
                         <h2 className="text-lg font-bold text-gray-800 text-center">
                           {m.prenom} {m.nom}
-                          {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                          {m.star && (
+                            <span className="text-yellow-400 ml-1">⭐</span>
+                          )}
                         </h2>
 
                         <p className="text-sm text-gray-600 mb-2 text-center">
@@ -371,10 +389,13 @@ export default function ListMembers() {
                               ❓Besoin :{" "}
                               {(() => {
                                 if (!m.besoin) return "—";
-                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                                if (Array.isArray(m.besoin))
+                                  return m.besoin.join(", ");
                                 try {
                                   const arr = JSON.parse(m.besoin);
-                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                                  return Array.isArray(arr)
+                                    ? arr.join(", ")
+                                    : m.besoin;
                                 } catch {
                                   return m.besoin;
                                 }
@@ -382,10 +403,53 @@ export default function ListMembers() {
                             </p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                            {/* ✅ Membres existants : texte fixe au lieu des dropdowns */}
-                            <p className="mt-2 font-semibold text-gray-800">
-                              Statut : {m.statut} — Cellule : Rose Hill — Responsable : Fabrice — WhatsApp : Oui
+                            <select
+                              value={m.statut}
+                              onChange={(e) =>
+                                handleChangeStatus(m.id, e.target.value)
+                              }
+                              className="border rounded-md px-2 py-1 text-xs text-gray-700 w-full"
+                            >
+                              {statusOptions.map((s) => (
+                                <option key={s}>{s}</option>
+                              ))}
+                            </select>
+
+                            <p className="mt-2 font-semibold text-green-600">
+                              Cellule :
                             </p>
+                            <select
+                              value={selectedCellules[m.id] || ""}
+                              onChange={(e) =>
+                                setSelectedCellules((prev) => ({
+                                  ...prev,
+                                  [m.id]: e.target.value,
+                                }))
+                              }
+                              className="border rounded-lg px-2 py-1 text-sm w-full"
+                            >
+                              <option value="">
+                                -- Sélectionner cellule --
+                              </option>
+                              {cellules.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.cellule} ({c.responsable})
+                                </option>
+                              ))}
+                            </select>
+
+                            {selectedCellules[m.id] && (
+                              <div className="mt-2">
+                                <BoutonEnvoyer
+                                  membre={m}
+                                  cellule={cellules.find(
+                                    (c) => c.id === selectedCellules[m.id]
+                                  )}
+                                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                                  session={session}
+                                />
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -398,7 +462,7 @@ export default function ListMembers() {
         </div>
       )}
 
-      {/* VUE TABLE */}
+      {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
@@ -420,12 +484,18 @@ export default function ListMembers() {
               )}
 
               {nouveauxFiltres.map((m) => (
-                <tr key={m.id} className="bg-white/10 hover:bg-white/20 transition duration-150">
+                <tr
+                  key={m.id}
+                  className="bg-white/10 hover:bg-white/20 transition duration-150"
+                >
                   <td className="px-4 py-2">{m.prenom} {m.nom}</td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.statut || "—"}</td>
                   <td className="px-4 py-2">
-                    <button onClick={() => setPopupMember(m)} className="text-orange-400 underline text-xs">
+                    <button
+                      onClick={() => setPopupMember(m)}
+                      className="text-orange-400 underline text-xs"
+                    >
                       Voir plus
                     </button>
                   </td>
@@ -441,14 +511,18 @@ export default function ListMembers() {
               )}
 
               {anciensFiltres.map((m) => (
-                <tr key={m.id} className="bg-white/10 hover:bg-white/20 transition duration-150">
+                <tr
+                  key={m.id}
+                  className="bg-white/10 hover:bg-white/20 transition duration-150"
+                >
                   <td className="px-4 py-2">{m.prenom} {m.nom}</td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
+                  <td className="px-4 py-2">{m.statut || "—"}</td>
                   <td className="px-4 py-2">
-                    Cellule : {m.cellule || "—"} — Responsable : {m.responsable || "—"}
-                  </td>
-                  <td className="px-4 py-2">
-                    <button onClick={() => setPopupMember(m)} className="text-orange-400 underline text-xs">
+                    <button
+                      onClick={() => setPopupMember(m)}
+                      className="text-orange-400 underline text-xs"
+                    >
                       Voir plus
                     </button>
                   </td>

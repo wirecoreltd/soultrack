@@ -47,7 +47,7 @@ export default function DetailsPopup({
 
         <button
           onClick={toggleDetails}
-          className="text-orange-500 underline text-sm"
+          className="text-orange-500 text-center underline text-sm"
         >
           {isOpen ? "Fermer détails" : "Détails"}
         </button>

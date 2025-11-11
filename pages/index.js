@@ -1,5 +1,4 @@
 //✅ /pages/index.js
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -29,26 +28,49 @@ const roleCards = {
 
 export default function IndexPage() {
   const [userName, setUserName] = useState("");
-  const [prenom, setPrenom] = useState(""); // ✅ ajout du prénom
+  const [prenom, setPrenom] = useState("");
   const [roles, setRoles] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
-    setPrenom(profileData?.prenom || "cher membre");
-        const responsableId = profileData.id;
-    const firstName = name.split(" ")[0];
-    setUserName(name);
-    setPrenom(firstName); // ✅ sauvegarde du prénom
-
-    const storedRoles = localStorage.getItem("userRole");
-    if (storedRoles) {
+    const fetchUser = async () => {
       try {
-        const parsedRoles = JSON.parse(storedRoles);
-        setRoles(Array.isArray(parsedRoles) ? parsedRoles : [parsedRoles]);
-      } catch {
-        setRoles([storedRoles]);
+        const userEmail = localStorage.getItem("userEmail");
+        if (!userEmail) {
+          setPrenom("cher membre");
+          return;
+        }
+
+        // 🔹 Récupération du profil connecté
+        const { data: profileData, error } = await supabase
+          .from("profiles")
+          .select("nom, prenom")
+          .eq("email", userEmail)
+          .single();
+
+        if (error) throw error;
+
+        const fullName = profileData?.nom ? `${profileData.nom} ${profileData.prenom}` : "Utilisateur";
+        setUserName(fullName);
+        setPrenom(profileData?.prenom || "cher membre");
+
+        // 🔹 Récupération des rôles depuis le localStorage
+        const storedRoles = localStorage.getItem("userRole");
+        if (storedRoles) {
+          try {
+            const parsedRoles = JSON.parse(storedRoles);
+            setRoles(Array.isArray(parsedRoles) ? parsedRoles : [parsedRoles]);
+          } catch {
+            setRoles([storedRoles]);
+          }
+        }
+      } catch (err) {
+        console.error("Erreur récupération utilisateur :", err);
+        setPrenom("cher membre");
       }
-    }
+    };
+
+    fetchUser();
   }, []);
 
   const handleRedirect = (path) => {
@@ -84,7 +106,6 @@ export default function IndexPage() {
     >
       {/* 🔹 Top bar */}
       <div className="w-full max-w-5xl mb-6">
-        {/* Ligne principale : Retour à gauche, Déconnexion à droite */}
         <div className="flex justify-between items-center">
           <button
             onClick={() => router.back()}
@@ -92,13 +113,11 @@ export default function IndexPage() {
           >
             ← Retour
           </button>
-
           <LogoutLink />
         </div>
 
-        {/* Ligne du dessous : Bienvenue aligné à droite */}
         <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">👋 Bienvenue {prenom || "cher membre"}</p>
+          <p className="text-orange-200 text-sm">👋 Bienvenue {prenom}</p>
         </div>
       </div>
 

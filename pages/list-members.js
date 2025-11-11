@@ -212,7 +212,7 @@ export default function ListMembers() {
         </button>
       </div>
 
-      {/* VUE CARTE */}
+            {/* VUE CARTE */}
       {view === "card" && (
         <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
           {nouveauxFiltres.length > 0 && (
@@ -273,31 +273,33 @@ export default function ListMembers() {
         </div>
       )}
 
-      {/* ✅ Popup Édition en dehors des vues */}
-        {editMember && (
-          <EditMemberPopup
-            member={editMember}
-            onClose={() => setEditMember(null)}
-            onUpdateMember={(updatedMember) => {
-              setMembers((prevMembers) =>
-                prevMembers.map((m) =>
-                  m.id === updatedMember.id ? updatedMember : m
-                )
-              );
-              setMessage("✅ Modifications enregistrées !");
-              setTimeout(() => setMessage(""), 2000);
-              setEditMember(null);
-            }}
-            statusOptions={statusOptions}
-            cellules={cellules}
-            selectedCellules={selectedCellules}
-            setSelectedCellules={setSelectedCellules}
-            handleChangeStatus={handleChangeStatus}
-            handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
-            session={session}
-          />
-        )}
-
+      {/* ✅ Popup Édition global pour cartes et table */}
+      {editMember && (
+        <EditMemberPopup
+          member={editMember}
+          onClose={() => setEditMember(null)}
+          onUpdateMember={(updatedMember) => {
+            // Mise à jour instantanée dans la liste
+            setMembers(prevMembers =>
+              prevMembers.map(m =>
+                m.id === updatedMember.id ? updatedMember : m
+              )
+            );
+            // Message de succès
+            setMessage("✅ Modifications enregistrées !");
+            setTimeout(() => setMessage(""), 2000);
+            // Fermer le popup
+            setEditMember(null);
+          }}
+          statusOptions={statusOptions}
+          cellules={cellules}
+          selectedCellules={selectedCellules}
+          setSelectedCellules={setSelectedCellules}
+          handleChangeStatus={handleChangeStatus}
+          handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
+          session={session}
+        />
+      )}
 
       {/* VUE TABLE */}
       {view === "table" && (
@@ -344,6 +346,7 @@ export default function ListMembers() {
             </tbody>
           </table>
 
+          {/* Détails popup pour table */}
           {popupMember && (
             <DetailsPopup
               member={popupMember}
@@ -359,6 +362,4 @@ export default function ListMembers() {
           )}
         </div>
       )}
-    </div>
-  );
-}
+

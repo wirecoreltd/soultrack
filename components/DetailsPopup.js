@@ -25,7 +25,6 @@ export default function DetailsPopup({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
       <div className="bg-white text-black p-6 rounded-lg w-80 max-h-[90vh] overflow-y-auto relative shadow-xl">
-        {/* Bouton de fermeture */}
         <button
           onClick={onClose}
           className="absolute top-2 right-2 text-red-500 font-bold hover:text-red-700"
@@ -34,7 +33,6 @@ export default function DetailsPopup({
           ✕
         </button>
 
-        {/* Titre */}
         <h2 className="text-lg font-bold text-gray-800 text-center">
           {member.prenom} {member.nom}
         </h2>
@@ -45,7 +43,6 @@ export default function DetailsPopup({
           🕊 Statut : {member.statut || "—"}
         </p>
 
-        {/* ====================== NOUVEAUX MEMBRES ====================== */}
         {isNouveau ? (
           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
             <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
@@ -116,7 +113,6 @@ export default function DetailsPopup({
             )}
           </div>
         ) : (
-          /* ====================== MEMBRES EXISTANTS ====================== */
           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
             <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
             <p>🏙 Ville : {member.ville || "—"}</p>
@@ -139,14 +135,13 @@ export default function DetailsPopup({
                 onClick={() => setEditMember(member)}
                 className="text-blue-600 underline text-sm hover:text-blue-800"
               >
-                ✏️ Modifier le contact
+                Modifier
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* ====================== POPUP MODIFICATION ====================== */}
       {editMember && (
         <EditMemberPopup
           member={editMember}

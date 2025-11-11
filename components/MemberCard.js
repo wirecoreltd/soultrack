@@ -15,7 +15,6 @@ export default function MemberCard({
   onEdit,
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [message, setMessage] = useState("");
 
   const isNouveau =
     member.statut === "visiteur" || member.statut === "veut rejoindre ICC";
@@ -31,11 +30,6 @@ export default function MemberCard({
     return "#ccc";
   };
 
-  const handleSuccess = (text) => {
-    setMessage(text);
-    setTimeout(() => setMessage(""), 2000);
-  };
-
   return (
     <div
       className={`bg-white rounded-xl shadow-md border-l-4 overflow-hidden transition-all duration-300 relative ${
@@ -43,7 +37,6 @@ export default function MemberCard({
       }`}
       style={{ borderLeftColor: getBorderColor() }}
     >
-      {/* Badge Nouveau */}
       {isNouveau && (
         <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
           Nouveau
@@ -61,7 +54,6 @@ export default function MemberCard({
           🕊 Statut : {member.statut || "—"}
         </p>
 
-        {/* Toggle détails */}
         <button
           onClick={() => setIsOpen((prev) => !prev)}
           className="text-orange-500 underline text-sm mb-2"
@@ -78,7 +70,6 @@ export default function MemberCard({
 
             {isNouveau ? (
               <>
-                {/* Statut */}
                 <p className="mt-2 font-semibold text-blue-600">Statut :</p>
                 <select
                   value={member.statut}
@@ -92,7 +83,6 @@ export default function MemberCard({
                   ))}
                 </select>
 
-                {/* Cellule */}
                 <p className="mt-2 font-semibold text-green-600">Cellule :</p>
                 <select
                   value={selectedCellules[member.id] || ""}
@@ -112,7 +102,6 @@ export default function MemberCard({
                   ))}
                 </select>
 
-                {/* BoutonEnvoyer pour nouveau membre */}
                 {selectedCellules[member.id] && (
                   <div className="mt-2 w-full">
                     <BoutonEnvoyer
@@ -120,24 +109,16 @@ export default function MemberCard({
                       cellule={cellules.find(
                         (c) => c.id === selectedCellules[member.id]
                       )}
-                      onStatusUpdate={(updatedMember) => {
+                      onStatusUpdate={(updatedMember) =>
                         handleStatusUpdateFromEnvoyer(
                           member.id,
                           member.statut,
                           updatedMember
-                        );
-                        handleSuccess("✅ Changement effectué !");
-                      }}
+                        )
+                      }
                       session={session}
                     />
                   </div>
-                )}
-
-                {/* Message de succès */}
-                {message && (
-                  <p className="text-green-600 text-center mt-1 text-sm">
-                    {message}
-                  </p>
                 )}
               </>
             ) : (

@@ -274,29 +274,30 @@ export default function ListMembers() {
       )}
 
       {/* ✅ Popup Édition en dehors des vues */}
-      {editMember && (
-        <EditMemberPopup
-          member={editMember}
-          onClose={() => setEditMember(null)}
-          onUpdateMember={(updatedMember) => {
-            setMembers((prevMembers) =>
-              prevMembers.map((m) =>
-                m.id === updatedMember.id ? updatedMember : m
-              )
-            );
-            setMessage("✅ Modifications enregistrées !");
-            setTimeout(() => setMessage(""), 2000);
-            setEditMember(null);
-          }}
-          statusOptions={statusOptions}
-          cellules={cellules}
-          selectedCellules={selectedCellules}
-          setSelectedCellules={setSelectedCellules}
-          handleChangeStatus={handleChangeStatus}
-          handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
-          session={session}
-        />
-      )}
+        {editMember && (
+          <EditMemberPopup
+            member={editMember}
+            onClose={() => setEditMember(null)}
+            onUpdateMember={(updatedMember) => {
+              setMembers((prevMembers) =>
+                prevMembers.map((m) =>
+                  m.id === updatedMember.id ? updatedMember : m
+                )
+              );
+              setMessage("✅ Modifications enregistrées !");
+              setTimeout(() => setMessage(""), 2000);
+              setEditMember(null);
+            }}
+            statusOptions={statusOptions}
+            cellules={cellules}
+            selectedCellules={selectedCellules}
+            setSelectedCellules={setSelectedCellules}
+            handleChangeStatus={handleChangeStatus}
+            handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
+            session={session}
+          />
+        )}
+
 
       {/* VUE TABLE */}
       {view === "table" && (

@@ -1,5 +1,3 @@
-// components/MemberCard.js
-
 "use client";
 
 import { useState } from "react";
@@ -17,6 +15,7 @@ export default function MemberCard({
   onEdit,
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [message, setMessage] = useState("");
 
   const isNouveau =
     member.statut === "visiteur" || member.statut === "veut rejoindre ICC";
@@ -30,6 +29,11 @@ export default function MemberCard({
     if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
       return "#34A853";
     return "#ccc";
+  };
+
+  const handleSuccess = (text) => {
+    setMessage(text);
+    setTimeout(() => setMessage(""), 2000);
   };
 
   return (
@@ -116,16 +120,24 @@ export default function MemberCard({
                       cellule={cellules.find(
                         (c) => c.id === selectedCellules[member.id]
                       )}
-                      onStatusUpdate={(updatedMember) =>
+                      onStatusUpdate={(updatedMember) => {
                         handleStatusUpdateFromEnvoyer(
                           member.id,
                           member.statut,
                           updatedMember
-                        )
-                      }
+                        );
+                        handleSuccess("✅ Changement effectué !");
+                      }}
                       session={session}
                     />
                   </div>
+                )}
+
+                {/* Message de succès */}
+                {message && (
+                  <p className="text-green-600 text-center mt-1 text-sm">
+                    {message}
+                  </p>
                 )}
               </>
             ) : (
@@ -144,4 +156,3 @@ export default function MemberCard({
     </div>
   );
 }
-

@@ -14,12 +14,16 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     infos_supplementaires: member.infos_supplementaires || "",
   });
 
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async () => {
+    setLoading(true);
     const { error, data } = await supabase
       .from("membres")
       .update(formData)
@@ -30,10 +34,18 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     if (error) {
       alert("❌ Erreur lors de la mise à jour : " + error.message);
     } else {
-      // Mise à jour instantanée dans ListMembers
-      onUpdateMember(data);
-      onClose();
+      // ✅ Mise à jour instantanée dans la liste
+      if (onUpdateMember) onUpdateMember(data);
+
+      // ✅ Message succès
+      setMessage("✅ Changement enregistré !");
+      setTimeout(() => {
+        setMessage("");
+        onClose();
+      }, 1500);
     }
+
+    setLoading(false);
   };
 
   return (
@@ -110,11 +122,22 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </select>
         </div>
 
+        {message && (
+          <p className="text-green-600 text-center mt-3 font-semibold">
+            {message}
+          </p>
+        )}
+
         <button
           onClick={handleSubmit}
-          className="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+          disabled={loading}
+          className={`mt-4 w-full text-white py-2 rounded transition font-bold ${
+            loading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
         >
-          Enregistrer
+          {loading ? "Enregistrement..." : "Enregistrer"}
         </button>
       </div>
     </div>

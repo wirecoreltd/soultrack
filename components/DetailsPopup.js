@@ -132,11 +132,11 @@ export default function DetailsPopup({
 
             <div className="text-center mt-3">
               <button
-                onClick={() => setEditMember(member)}
-                className="text-blue-600 underline text-sm hover:text-blue-800"
-              >
-                Modifier
-              </button>
+              onClick={() => setEditMember(m)}
+              className="text-blue-500 underline text-sm"
+            >
+              Modifier
+            </button>
             </div>
           </div>
         )}

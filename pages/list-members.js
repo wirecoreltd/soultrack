@@ -398,13 +398,11 @@
                   setSelectedCellules={setSelectedCellules}
                   handleChangeStatus={handleChangeStatus}
                   handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
-                  session={session}
-                />
-
-            />
-          )}
-        </div>
-      )}
-    </div>
-  );
+                  session={session}         
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          );
 }

@@ -1,4 +1,5 @@
 // pages/list-members.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -19,9 +20,9 @@ export default function ListMembers() {
   const [selectedCellules, setSelectedCellules] = useState({});
   const [view, setView] = useState("card");
   const [popupMember, setPopupMember] = useState(null);
-  const [editMember, setEditMember] = useState(null);
   const [session, setSession] = useState(null);
   const [prenom, setPrenom] = useState("");
+  const [editMember, setEditMember] = useState(null);
 
   useEffect(() => {
     const fetchSessionAndProfile = async () => {
@@ -38,6 +39,7 @@ export default function ListMembers() {
         if (!error && data) setPrenom(data.prenom);
       }
     };
+
     fetchSessionAndProfile();
     fetchMembers();
     fetchCellules();
@@ -69,11 +71,11 @@ export default function ListMembers() {
     if (currentStatus === "visiteur" || currentStatus === "veut rejoindre ICC") {
       handleChangeStatus(id, "actif");
     }
-    // mise à jour instantanée du membre
-    setMembers((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, ...updatedMember } : m))
-    );
-    setPopupMember(null);
+    if (updatedMember) {
+      setMembers((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, ...updatedMember } : m))
+      );
+    }
   };
 
   const getBorderColor = (m) => {
@@ -104,6 +106,7 @@ export default function ListMembers() {
   const nouveaux = members.filter(
     (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
   );
+
   const anciens = members.filter(
     (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
   );
@@ -111,6 +114,7 @@ export default function ListMembers() {
   const nouveauxFiltres = filterBySearch(
     filter ? nouveaux.filter((m) => m.statut === filter) : nouveaux
   );
+
   const anciensFiltres = filterBySearch(
     filter ? anciens.filter((m) => m.statut === filter) : anciens
   );
@@ -125,6 +129,38 @@ export default function ListMembers() {
   ];
 
   const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
+
+  const renderMemberRow = (membre, isNouveau) => (
+    <tr
+      key={membre.id}
+      className="hover:bg-white/10 transition duration-150 border-b border-gray-300"
+    >
+      <td
+        className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
+        style={{ borderLeftColor: getBorderColor(membre) }}
+      >
+        {membre.prenom} {membre.nom}
+        {membre.star && <span className="text-yellow-400 ml-1">⭐</span>}
+        {isNouveau && (
+          <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">
+            Nouveau
+          </span>
+        )}
+      </td>
+      <td className="px-4 py-2">{membre.telephone || "—"}</td>
+      <td className="px-4 py-2">{membre.statut || "—"}</td>
+      <td className="px-4 py-2">
+        <button
+          onClick={() =>
+            setPopupMember(popupMember?.id === membre.id ? null : membre)
+          }
+          className="text-orange-500 underline text-sm"
+        >
+          {popupMember?.id === membre.id ? "Fermer détails" : "Détails"}
+        </button>
+      </td>
+    </tr>
+  );
 
   return (
     <div
@@ -162,7 +198,6 @@ export default function ListMembers() {
         </p>
       </div>
 
-      {/* Filtres et bascule vue */}
       <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">
         <div className="flex items-center space-x-2 mb-2 sm:mb-0">
           <select
@@ -283,44 +318,42 @@ export default function ListMembers() {
               </tr>
             </thead>
             <tbody>
+              {/* Nouveaux */}
               {nouveauxFiltres.length > 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-2 text-white font-semibold">
-                    💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-                  </td>
-                </tr>
+                <>
+                  <tr>
+                    <td colSpan={4} className="px-4 py-2 text-white font-semibold">
+                      💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+                    </td>
+                  </tr>
+                  {nouveauxFiltres.map((m) => renderMemberRow(m, true))}
+                </>
               )}
-              {[...nouveauxFiltres, ...anciensFiltres].map((m) => (
-                <tr
-                  key={m.id}
-                  className="hover:bg-white/10 transition duration-150 border-b border-gray-300"
-                >
-                  <td
-                    className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
-                    style={{ borderLeftColor: getBorderColor(m) }}
-                  >
-                    {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                    {m.statut === "visiteur" || m.statut === "veut rejoindre ICC" && (
-                      <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2">{m.telephone || "—"}</td>
-                  <td className="px-4 py-2">{m.statut || "—"}</td>
-                  <td className="px-4 py-2">
-                    <button
-                      onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
-                      className="text-orange-500 underline text-sm"
-                    >
-                      {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+
+              {/* Membres existants */}
+              {anciensFiltres.length > 0 && (
+                <>
+                  <tr>
+                    <td colSpan={4} className="px-4 py-2 font-semibold text-lg">
+                      <span
+                        style={{
+                          background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                          WebkitBackgroundClip: "text",
+                          color: "transparent",
+                        }}
+                      >
+                        Membres existants
+                      </span>
+                    </td>
+                  </tr>
+                  {anciensFiltres.map((m) => renderMemberRow(m, false))}
+                </>
+              )}
             </tbody>
           </table>
 
           {popupMember && (
-            <DetailsPopup              
+            <DetailsPopup
               member={popupMember}
               onClose={() => setPopupMember(null)}
               statusOptions={statusOptions || []}
@@ -329,7 +362,7 @@ export default function ListMembers() {
               setSelectedCellules={setSelectedCellules}
               handleChangeStatus={handleChangeStatus}
               handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
-              session={session}         
+              session={session}
             />
           )}
         </div>

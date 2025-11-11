@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import supabase from "../lib/supabaseClient";
 import LogoutLink from "../components/LogoutLink";
 
 const roleCards = {

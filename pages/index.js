@@ -34,7 +34,8 @@ export default function IndexPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const name = localStorage.getItem("userName") || "Utilisateur";
+    setPrenom(profileData?.prenom || "cher membre");
+        const responsableId = profileData.id;
     const firstName = name.split(" ")[0];
     setUserName(name);
     setPrenom(firstName); // ✅ sauvegarde du prénom

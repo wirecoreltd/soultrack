@@ -68,19 +68,20 @@ export default function ListMembers() {
   };
 
   const handleStatusUpdateFromEnvoyer = (id, currentStatus, updatedMember) => {
-    if (currentStatus === "visiteur" || currentStatus === "veut rejoindre ICC") {
-      handleChangeStatus(id, "actif");
-    }
-    if (updatedMember) {
-      setMembers(prev =>
-        prev.map(m => (m.id === id ? { ...m, ...updatedMember } : m))
-      );
-      // Mettre à jour popup si ouvert
-      if (popupMember?.id === id) setPopupMember({ ...popupMember, ...updatedMember });
-      setMessage("✅ Enregistrement réussi !");
-      setTimeout(() => setMessage(""), 2000);
-    }
-  };
+  if (!updatedMember) return;
+
+  // Mise à jour instantanée dans la liste
+  setMembers(prev =>
+    prev.map(m => (m.id === id ? { ...m, ...updatedMember } : m))
+  );
+
+  // Mise à jour popup si ouvert
+  if (popupMember?.id === id) setPopupMember({ ...popupMember, ...updatedMember });
+
+  // Message de succès global
+  setMessage("✅ Enregistrement réussi !");
+  setTimeout(() => setMessage(""), 2000);
+};
 
   const getBorderColor = (m) => {
     if (m.star) return "#FBC02D";

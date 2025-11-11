@@ -332,21 +332,13 @@ export default function ListMembers() {
           >
             {m.prenom} {m.nom}
             {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-            <span
-              className={`${
-                m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
-                  ? "bg-blue-500 text-white text-xs px-1 rounded ml-2"
-                  : ""
-              }`}
-            >
-              {m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
-                ? "Nouveau"
-                : ""}
+            <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">
+              Nouveau
             </span>
           </td>
           <td className="px-4 py-2">{m.telephone || "—"}</td>
           <td className="px-4 py-2">{m.statut || "—"}</td>
-          <td className="px-4 py-2 flex gap-2">
+          <td className="px-4 py-2">
             <button
               onClick={() =>
                 setPopupMember(popupMember?.id === m.id ? null : m)
@@ -354,12 +346,6 @@ export default function ListMembers() {
               className="text-orange-500 underline text-sm"
             >
               {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-            </button>
-            <button
-              onClick={() => setEditMember(m)}
-              className="text-blue-500 underline text-sm"
-            >
-              Modifier
             </button>
           </td>
         </tr>
@@ -417,6 +403,7 @@ export default function ListMembers() {
     </>
   )}
 </tbody>
+
 
           </table>
 

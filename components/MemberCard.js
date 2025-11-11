@@ -88,8 +88,17 @@ export default function MemberCard({
             <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
             <p>🏙 Ville : {member.ville || "—"}</p>
             <p>🧩 Comment est-il venu : {member.venu || "—"}</p>
+            <p>❓Besoin : {
+                              (() => {
+                                if (!member.besoin) return "—";
+                                if (Array.isArray(member.besoin)) return member.besoin.join(", ");
+                                try {
+                                  const arr = JSON.parse(member.besoin);
+                                  return Array.isArray(arr) ? arr.join(", ") : member.besoin;
+                                } catch { return member.besoin; }
+                              })()
+                            }</p>
             <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
-
             {isNouveau ? (
               <>
                 {/* Statut */}
@@ -144,7 +153,7 @@ export default function MemberCard({
               <div className="text-center mt-3">
                 <button
                   onClick={() => onEdit(member)}
-                  className="text-blue-600 underline text-sm hover:text-blue-800"
+                  className="text-orange-600 text-sm hover:text-blue-800"
                 >
                   ✏️ Modifier le contact
                 </button>

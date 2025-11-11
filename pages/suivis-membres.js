@@ -27,7 +27,6 @@ export default function SuivisMembres() {
 
         if (!userEmail) throw new Error("Utilisateur non connecté");
 
-        // 🔹 Récupération du profil connecté
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("id, prenom")
@@ -42,7 +41,6 @@ export default function SuivisMembres() {
 
         let suivisData = [];
 
-        // 🔹 ADMIN → tous les suivis
         if (userRole.includes("Administrateur")) {
           const { data, error } = await supabase
             .from("suivis_membres")
@@ -51,10 +49,7 @@ export default function SuivisMembres() {
 
           if (error) throw error;
           suivisData = data;
-        }
-
-        // 🔹 ResponsableCellule → suivis des membres de ses cellules
-        else if (userRole.includes("ResponsableCellule")) {
+        } else if (userRole.includes("ResponsableCellule")) {
           const { data: cellulesData, error: cellulesError } = await supabase
             .from("cellules")
             .select("id")
@@ -98,7 +93,6 @@ export default function SuivisMembres() {
     fetchSuivis();
   }, []);
 
-  // ✅ Gestion détails / mise à jour
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -118,6 +112,7 @@ export default function SuivisMembres() {
 
   const updateSuivi = async (id) => {
     setMessage(null);
+
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
 
@@ -129,10 +124,11 @@ export default function SuivisMembres() {
     setUpdating((prev) => ({ ...prev, [id]: true }));
 
     try {
-      const payload = {};
-      if (newStatus) payload["statut_suivis"] = newStatus;
-      if (newComment) payload["commentaire_suivis"] = newComment;
-      payload["updated_at"] = new Date();
+      const payload = {
+        statut_suivis: newStatus?.trim() || null,
+        commentaire_suivis: newComment?.trim() || null,
+        updated_at: new Date(),
+      };
 
       const { data: updatedData, error: updateError } = await supabase
         .from("suivis_membres")
@@ -143,38 +139,107 @@ export default function SuivisMembres() {
 
       if (updateError) {
         console.error("Erreur update :", updateError);
-        setMessage({ type: "error", text: `Erreur mise à jour : ${updateError.message}` });
+        setMessage({
+          type: "error",
+          text: `Erreur mise à jour : ${updateError.message}`,
+        });
       } else if (updatedData) {
-        if (["integrer", "refus"].includes(updatedData.statut_suivis)) {
+        if (updatedData.statut_suivis === "integrer") {
+          try {
+            const userEmail = localStorage.getItem("userEmail");
+
+            const { data: profileData, error: profileError } = await supabase
+              .from("profiles")
+              .select("id")
+              .eq("email", userEmail)
+              .single();
+
+            if (profileError) throw profileError;
+            const responsableId = profileData?.id;
+
+            const { data: celluleData, error: celluleError } = await supabase
+              .from("cellules")
+              .select("id")
+              .eq("responsable_id", responsableId)
+              .maybeSingle();
+
+            if (celluleError) throw celluleError;
+            const celluleId = celluleData?.id;
+
+            if (!celluleId) {
+              setMessage({
+                type: "error",
+                text: "⚠️ Aucune cellule trouvée pour ce responsable.",
+              });
+            } else {
+              const { data: membreData, error: membreError } = await supabase
+                .from("membres")
+                .select("id")
+                .eq("telephone", updatedData.telephone)
+                .maybeSingle();
+
+              if (membreError) throw membreError;
+
+              if (membreData) {
+                const { error: updateMembreError } = await supabase
+                  .from("membres")
+                  .update({ cellule_id: celluleId })
+                  .eq("id", membreData.id);
+
+                if (updateMembreError) throw updateMembreError;
+
+                setMessage({
+                  type: "success",
+                  text: "✅ Membre intégré et rattaché à votre cellule.",
+                });
+              } else {
+                setMessage({
+                  type: "error",
+                  text: "⚠️ Aucun membre correspondant trouvé à rattacher.",
+                });
+              }
+            }
+
+            setSuivis((prev) => prev.filter((it) => it.id !== id));
+          } catch (err) {
+            console.error("Erreur rattachement cellule :", err);
+            setMessage({
+              type: "error",
+              text: `⚠️ Erreur rattachement cellule : ${err.message}`,
+            });
+          }
+        } else if (updatedData.statut_suivis === "refus") {
           setSuivis((prev) => prev.filter((it) => it.id !== id));
           setMessage({
             type: "success",
-            text: `Le contact a été ${
-              updatedData.statut_suivis === "integrer" ? "intégré" : "refusé"
-            } et retiré de la liste.`,
+            text: "❌ Membre refusé et retiré de la liste.",
           });
         } else {
           setSuivis((prev) =>
             prev.map((it) => (it.id === id ? updatedData : it))
           );
-          setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
+          setMessage({
+            type: "success",
+            text: "✅ Mise à jour enregistrée avec succès.",
+          });
         }
       }
     } catch (err) {
       console.error("Exception updateSuivi:", err);
-      setMessage({ type: "error", text: `Exception durant la mise à jour : ${err.message}` });
+      setMessage({
+        type: "error",
+        text: `Exception durant la mise à jour : ${err.message}`,
+      });
     } finally {
       setUpdating((prev) => ({ ...prev, [id]: false }));
     }
   };
 
-  // ✅ Rendu
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* ==================== HEADER ==================== */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
           <button
@@ -192,12 +257,10 @@ export default function SuivisMembres() {
         </div>
       </div>
 
-      {/* ==================== LOGO ==================== */}
       <div className="mb-4">
         <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
 
-      {/* ==================== TITRE ==================== */}
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-white mb-2">📋 Suivis des Membres</h1>
         <p className="text-white text-lg max-w-xl mx-auto italic">
@@ -205,7 +268,6 @@ export default function SuivisMembres() {
         </p>
       </div>
 
-      {/* ==================== TOGGLE VUE ==================== */}
       <div className="mb-4 flex justify-end w-full max-w-6xl">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
@@ -215,7 +277,6 @@ export default function SuivisMembres() {
         </button>
       </div>
 
-      {/* ==================== MESSAGE ==================== */}
       {message && (
         <div
           className={`mb-4 px-4 py-2 rounded-md text-sm ${
@@ -230,7 +291,6 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {/* ==================== CONTENU ==================== */}
       {loading ? (
         <p className="text-white">Chargement...</p>
       ) : suivis.length === 0 ? (

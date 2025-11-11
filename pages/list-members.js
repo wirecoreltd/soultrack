@@ -389,8 +389,7 @@
           </table>
 
           {popupMember && (
-            <DetailsPopup
-              <DetailsPopup
+            <DetailsPopup              
                   member={popupMember}
                   onClose={() => setPopupMember(null)}
                   statusOptions={statusOptions || []}

@@ -1,205 +1,121 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function EditMemberPopup({ member, onClose, cellules = [], onUpdate }) {
+export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   const [formData, setFormData] = useState({
-    prenom: "",
-    nom: "",
-    telephone: "",
-    ville: "",
-    statut: "",
-    cellule_id: "",
-    is_whatsapp: false,
-    infos_supplementaires: "",
-    venu: "",
-    besoin: "",
+    prenom: member.prenom || "",
+    nom: member.nom || "",
+    telephone: member.telephone || "",
+    statut: member.statut || "",
+    ville: member.ville || "",
+    venu: member.venu || "",
+    infos_supplementaires: member.infos_supplementaires || "",
   });
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (member) {
-      setFormData({
-        prenom: member.prenom || "",
-        nom: member.nom || "",
-        telephone: member.telephone || "",
-        ville: member.ville || "",
-        statut: member.statut || "",
-        cellule_id: member.cellule_id || "",
-        is_whatsapp: member.is_whatsapp || false,
-        infos_supplementaires: member.infos_supplementaires || "",
-        venu: member.venu || "",
-        besoin: member.besoin || "",
-      });
-    }
-  }, [member]);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleSubmit = async () => {
+    const { error, data } = await supabase
+      .from("membres")
+      .update(formData)
+      .eq("id", member.id)
+      .select()
+      .single();
 
-    try {
-      const { data, error } = await supabase
-        .from("membres")
-        .update({
-          prenom: formData.prenom,
-          nom: formData.nom,
-          telephone: formData.telephone,
-          ville: formData.ville,
-          statut: formData.statut,
-          cellule_id: formData.cellule_id || null, // <-- envoyer null si aucune cellule
-          is_whatsapp: formData.is_whatsapp,
-          infos_supplementaires: formData.infos_supplementaires,
-          venu: formData.venu,
-          besoin: formData.besoin,
-        })
-        .eq("id", member.id);
-
-      if (error) throw error;
-
-      if (onUpdate) onUpdate(data[0]); // Mise à jour côté parent
+    if (error) {
+      alert("❌ Erreur lors de la mise à jour : " + error.message);
+    } else {
+      // Mise à jour instantanée dans ListMembers
+      onUpdateMember(data);
       onClose();
-    } catch (err) {
-      alert("❌ Erreur lors de la mise à jour : " + err.message);
-      console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
-
-  if (!member) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white text-black p-6 rounded-lg w-80 max-h-[90vh] overflow-y-auto relative shadow-xl">
-        {/* Bouton fermer */}
+      <div className="bg-white p-6 rounded-lg w-80 max-h-[90vh] overflow-y-auto shadow-xl relative">
         <button
           onClick={onClose}
           className="absolute top-2 right-2 text-red-500 font-bold hover:text-red-700"
-          aria-label="Fermer"
+          aria-label="Fermer la fenêtre"
         >
           ✕
         </button>
 
-        <h2 className="text-lg font-bold text-center mb-4">
+        <h2 className="text-lg font-bold text-gray-800 text-center mb-4">
           Modifier {member.prenom} {member.nom}
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-2 text-sm">
+        <div className="flex flex-col space-y-2 text-sm">
           <input
-            type="text"
             name="prenom"
-            placeholder="Prénom"
             value={formData.prenom}
             onChange={handleChange}
-            className="border rounded px-2 py-1 w-full"
-            required
+            placeholder="Prénom"
+            className="border rounded px-2 py-1"
           />
           <input
-            type="text"
             name="nom"
-            placeholder="Nom"
             value={formData.nom}
             onChange={handleChange}
-            className="border rounded px-2 py-1 w-full"
-            required
+            placeholder="Nom"
+            className="border rounded px-2 py-1"
           />
           <input
-            type="text"
             name="telephone"
-            placeholder="Téléphone"
             value={formData.telephone}
             onChange={handleChange}
-            className="border rounded px-2 py-1 w-full"
+            placeholder="Téléphone"
+            className="border rounded px-2 py-1"
           />
           <input
-            type="text"
             name="ville"
-            placeholder="Ville"
             value={formData.ville}
             onChange={handleChange}
-            className="border rounded px-2 py-1 w-full"
+            placeholder="Ville"
+            className="border rounded px-2 py-1"
+          />
+          <input
+            name="venu"
+            value={formData.venu}
+            onChange={handleChange}
+            placeholder="Comment est-il venu"
+            className="border rounded px-2 py-1"
+          />
+          <input
+            name="infos_supplementaires"
+            value={formData.infos_supplementaires}
+            onChange={handleChange}
+            placeholder="Infos supplémentaires"
+            className="border rounded px-2 py-1"
           />
           <select
             name="statut"
             value={formData.statut}
             onChange={handleChange}
-            className="border rounded px-2 py-1 w-full"
+            className="border rounded px-2 py-1"
           >
             <option value="">-- Statut --</option>
-            <option value="actif">Actif</option>
-            <option value="Integrer">Intégré</option>
-            <option value="ancien">Ancien</option>
-            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-            <option value="visiteur">Visiteur</option>
-            <option value="a déjà mon église">A déjà mon église</option>
+            <option value="actif">actif</option>
+            <option value="Integrer">Integrer</option>
+            <option value="ancien">ancien</option>
+            <option value="veut rejoindre ICC">veut rejoindre ICC</option>
+            <option value="visiteur">visiteur</option>
+            <option value="a déjà mon église">a déjà mon église</option>
           </select>
+        </div>
 
-          <select
-            name="cellule_id"
-            value={formData.cellule_id}
-            onChange={handleChange}
-            className="border rounded px-2 py-1 w-full"
-          >
-            <option value="">-- Sélectionner cellule --</option>
-            {cellules.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.cellule} ({c.responsable})
-              </option>
-            ))}
-          </select>
-
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="is_whatsapp"
-              checked={formData.is_whatsapp}
-              onChange={handleChange}
-            />
-            <label>💬 WhatsApp</label>
-          </div>
-
-          <textarea
-            name="infos_supplementaires"
-            placeholder="Infos supplémentaires"
-            value={formData.infos_supplementaires}
-            onChange={handleChange}
-            className="border rounded px-2 py-1 w-full"
-          />
-          <input
-            type="text"
-            name="venu"
-            placeholder="Comment est-il venu"
-            value={formData.venu}
-            onChange={handleChange}
-            className="border rounded px-2 py-1 w-full"
-          />
-          <input
-            type="text"
-            name="besoin"
-            placeholder="Besoin"
-            value={formData.besoin}
-            onChange={handleChange}
-            className="border rounded px-2 py-1 w-full"
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded w-full hover:bg-blue-700"
-          >
-            {loading ? "Enregistrement..." : "Enregistrer"}
-          </button>
-        </form>
+        <button
+          onClick={handleSubmit}
+          className="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+        >
+          Enregistrer
+        </button>
       </div>
     </div>
   );

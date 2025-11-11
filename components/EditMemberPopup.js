@@ -68,15 +68,21 @@ export default function EditMemberPopup({ member, cellules = [], onClose, onUpda
           : formData.besoin,
     };
 
-    const { error, data } = await supabase
-      .from("membres")
-      .update({
-        ...dataToSend,
-        besoin: JSON.stringify(dataToSend.besoin),
-      })
-      .eq("id", member.id)
-      .select()
-      .single();
+    // ✅ Convertir les champs vides en null
+const cleanData = Object.fromEntries(
+  Object.entries(formData).map(([key, value]) => [
+    key,
+    value === "" ? null : value,
+  ])
+);
+
+const { error, data } = await supabase
+  .from("membres")
+  .update(cleanData)
+  .eq("id", member.id)
+  .select()
+  .single();
+
 
     if (error) {
       alert("❌ Erreur lors de la mise à jour : " + error.message);

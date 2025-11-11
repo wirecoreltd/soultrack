@@ -1,5 +1,3 @@
-//pages/list-members.js
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -79,14 +77,19 @@ export default function ListMembers() {
     setPopupMember(null);
   };
 
+  const updateMemberInState = (updatedMember) => {
+    setMembers((prev) =>
+      prev.map((m) => (m.id === updatedMember.id ? updatedMember : m))
+    );
+  };
+
   const getBorderColor = (m) => {
     if (m.star) return "#FBC02D";
     if (m.statut === "actif") return "#4285F4";
     if (m.statut === "a déjà mon église") return "#EA4335";
     if (m.statut === "Integrer") return "#FFA500";
     if (m.statut === "ancien") return "#999999";
-    if (m.statut === "veut rejoindre ICC" || m.statut === "visiteur")
-      return "#34A853";
+    if (m.statut === "veut rejoindre ICC" || m.statut === "visiteur") return "#34A853";
     return "#ccc";
   };
 
@@ -138,7 +141,6 @@ export default function ListMembers() {
         background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
       }}
     >
-      {/* Header */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
           <button
@@ -150,9 +152,7 @@ export default function ListMembers() {
           <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
         </div>
         <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">
-            👋 Bienvenue {prenom || "cher membre"}
-          </p>
+          <p className="text-orange-200 text-sm">👋 Bienvenue {prenom || "cher membre"}</p>
         </div>
       </div>
 
@@ -207,18 +207,34 @@ export default function ListMembers() {
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {nouveauxFiltres.map((m) => (
-                  <MemberCard
+                  <div
                     key={m.id}
-                    member={m}
-                    statusOptions={statusOptions}
-                    cellules={cellules}
-                    selectedCellules={selectedCellules}
-                    setSelectedCellules={setSelectedCellules}
-                    handleChangeStatus={handleChangeStatus}
-                    handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
-                    session={session}
-                    onEdit={setEditMember}
-                  />
+                    className="bg-white p-3 rounded-xl shadow-md border-l-4 transition duration-200 overflow-hidden relative"
+                    style={{ borderLeftColor: getBorderColor(m) }}
+                  >
+                    {(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && (
+                      <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
+                        Nouveau
+                      </span>
+                    )}
+                    <div className="flex flex-col items-center">
+                      <h2 className="text-lg font-bold text-gray-800 text-center">
+                        {m.prenom} {m.nom}
+                      </h2>
+                      <p className="text-sm text-gray-600 mb-2 text-center">
+                        📱 {m.telephone || "—"}
+                      </p>
+                      <p className="text-sm text-gray-600 mb-2 text-center">
+                        🕊 Statut : {m.statut || "—"}
+                      </p>
+                      <button
+                        onClick={() => setPopupMember(m)}
+                        className="text-orange-500 underline text-sm"
+                      >
+                        Détails
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -240,28 +256,39 @@ export default function ListMembers() {
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {anciensFiltres.map((m) => (
-                  <MemberCard
+                  <div
                     key={m.id}
-                    member={m}
-                    statusOptions={statusOptions}
-                    cellules={cellules}
-                    selectedCellules={selectedCellules}
-                    setSelectedCellules={setSelectedCellules}
-                    handleChangeStatus={handleChangeStatus}
-                    handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
-                    session={session}
-                    onEdit={setEditMember}
-                  />
+                    className="bg-white p-3 rounded-xl shadow-md border-l-4 transition duration-200 overflow-hidden relative"
+                    style={{ borderLeftColor: getBorderColor(m) }}
+                  >
+                    <div className="flex flex-col items-center">
+                      <h2 className="text-lg font-bold text-gray-800 text-center">
+                        {m.prenom} {m.nom}{" "}
+                        {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                      </h2>
+                      <p className="text-sm text-gray-600 mb-2 text-center">
+                        📱 {m.telephone || "—"}
+                      </p>
+                      <p className="text-sm text-gray-600 mb-2 text-center">
+                        🕊 Statut : {m.statut || "—"}
+                      </p>
+                      <button
+                        onClick={() => setPopupMember(m)}
+                        className="text-orange-500 underline text-sm"
+                      >
+                        Détails
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Popup modification */}
-          {editMember && (
-            <EditMemberPopup
-              member={editMember}
-              onClose={() => setEditMember(null)}
+          {popupMember && (
+            <DetailsPopup
+              member={popupMember}
+              onClose={() => setPopupMember(null)}
               statusOptions={statusOptions}
               cellules={cellules}
               selectedCellules={selectedCellules}
@@ -269,6 +296,10 @@ export default function ListMembers() {
               handleChangeStatus={handleChangeStatus}
               handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
               session={session}
+              onEdit={() => {
+                setEditMember(popupMember);
+                setPopupMember(null); // fermer le rectangle details
+              }}
             />
           )}
         </div>
@@ -360,152 +391,38 @@ export default function ListMembers() {
                     </tr>
                   ))}
                 </>
-              )}
+              ))}
             </tbody>
           </table>
 
           {popupMember && (
-            <DetailsPopup              
-                  member={popupMember}
-                  onClose={() => setPopupMember(null)}
-                  statusOptions={statusOptions || []}
-                  cellules={cellules || []}
-                  selectedCellules={selectedCellules || {}}
-                  setSelectedCellules={setSelectedCellules}
-                  handleChangeStatus={handleChangeStatus}
-                  handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
-                  session={session}         
-                    />
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        }
+            <DetailsPopup
+              member={popupMember}
+              onClose={() => setPopupMember(null)}
+              statusOptions={statusOptions || []}
+              cellules={cellules || []}
+              selectedCellules={selectedCellules || {}}
+              setSelectedCellules={setSelectedCellules}
+              handleChangeStatus={handleChangeStatus}
+              handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
+              session={session}
+              onEdit={() => {
+                setEditMember(popupMember);
+                setPopupMember(null);
+              }}
+            />
+          )}
+        </div>
+      )}
 
-
-/* ==================== Composant MemberCard ==================== */
-function MemberCard({
-  member,
-  statusOptions,
-  cellules,
-  selectedCellules,
-  setSelectedCellules,
-  handleChangeStatus,
-  handleStatusUpdateFromEnvoyer,
-  session,
-  onEdit,
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const isNouveau =
-    member.statut === "visiteur" || member.statut === "veut rejoindre ICC";
-
-  const getBorderColor = () => {
-    if (member.star) return "#FBC02D";
-    if (member.statut === "actif") return "#4285F4";
-    if (member.statut === "a déjà mon église") return "#EA4335";
-    if (member.statut === "Integrer") return "#FFA500";
-    if (member.statut === "ancien") return "#999999";
-    if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
-      return "#34A853";
-    return "#ccc";
-  };
-
-  return (
-    <div
-      className={`bg-white rounded-xl shadow-md border-l-4 overflow-hidden transition-all duration-300 ${
-        isOpen ? "max-h-[900px]" : "max-h-[150px]"
-      }`}
-      style={{ borderLeftColor: getBorderColor() }}
-    >
-      <div className="p-4 flex flex-col items-center relative">
-        {isNouveau && (
-          <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
-            Nouveau
-          </span>
-        )}
-        <h2 className="text-lg font-bold text-gray-800 text-center">
-          {member.prenom} {member.nom} {member.star && "⭐"}
-        </h2>
-        <p className="text-sm text-gray-600 mb-2 text-center">
-          📱 {member.telephone || "—"}
-        </p>
-        <p className="text-sm text-gray-600 mb-2 text-center">
-          🕊 Statut : {member.statut || "—"}
-        </p>
-
-        <button
-          onClick={() => setIsOpen((prev) => !prev)}
-          className="text-orange-500 underline text-sm mb-2"
-        >
-          {isOpen ? "Fermer détails" : "Détails"}
-        </button>
-
-        {isOpen && (
-          <div className="text-gray-700 text-sm mt-2 w-full space-y-2">
-            <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-            <p>🏙 Ville : {member.ville || "—"}</p>
-            <p>🧩 Comment est-il venu : {member.venu || "—"}</p>
-            <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
-
-            {isNouveau ? (
-              <>
-                <p className="mt-2 font-semibold text-blue-600">Statut :</p>
-                <select
-                  value={member.statut}
-                  onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-                  className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
-                >
-                  {statusOptions.map((s) => (
-                    <option key={s}>{s}</option>
-                  ))}
-                </select>
-
-                <p className="mt-2 font-semibold text-green-600">Cellule :</p>
-                <select
-                  value={selectedCellules[member.id] || ""}
-                  onChange={(e) =>
-                    setSelectedCellules((prev) => ({
-                      ...prev,
-                      [member.id]: e.target.value,
-                    }))
-                  }
-                  className="border rounded-lg px-2 py-1 text-sm w-full"
-                >
-                  <option value="">-- Sélectionner cellule --</option>
-                  {cellules.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.cellule} ({c.responsable})
-                    </option>
-                  ))}
-                </select>
-
-                {selectedCellules[member.id] && (
-                  <div className="mt-2">
-                    <BoutonEnvoyer
-                      membre={member}
-                      cellule={cellules.find(
-                        (c) => c.id === selectedCellules[member.id]
-                      )}
-                      onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                      session={session}
-                    />
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center mt-3">
-                <button
-                  onClick={() => onEdit(member)}
-                  className="text-blue-600 underline text-sm hover:text-blue-800"
-                >
-                  ✏️ Modifier le contact
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      {/* Popup de modification */}
+      {editMember && (
+        <EditMemberPopup
+          member={editMember}
+          onClose={() => setEditMember(null)}
+          onUpdateMember={updateMemberInState}
+        />
+      )}
     </div>
   );
 }

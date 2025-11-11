@@ -34,17 +34,19 @@ export default function MemberCard({
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-md border-l-4 overflow-hidden transition-all duration-300 ${
+      className={`bg-white rounded-xl shadow-md border-l-4 overflow-hidden transition-all duration-300 relative ${
         isOpen ? "max-h-[900px]" : "max-h-[150px]"
       }`}
       style={{ borderLeftColor: getBorderColor() }}
     >
+      {/* Badge Nouveau */}
+      {isNouveau && (
+        <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
+          Nouveau
+        </span>
+      )}
+
       <div className="p-4 flex flex-col items-center">
-        {isNouveau && (
-          <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
-            Nouveau
-          </span>
-        )}
         <h2 className="text-lg font-bold text-gray-800 text-center">
           {member.prenom} {member.nom} {member.star && "⭐"}
         </h2>
@@ -55,6 +57,7 @@ export default function MemberCard({
           🕊 Statut : {member.statut || "—"}
         </p>
 
+        {/* Toggle détails */}
         <button
           onClick={() => setIsOpen((prev) => !prev)}
           className="text-orange-500 underline text-sm mb-2"
@@ -71,10 +74,13 @@ export default function MemberCard({
 
             {isNouveau ? (
               <>
+                {/* Statut */}
                 <p className="mt-2 font-semibold text-blue-600">Statut :</p>
                 <select
                   value={member.statut}
-                  onChange={(e) => handleChangeStatus(member.id, e.target.value)}
+                  onChange={(e) =>
+                    handleChangeStatus(member.id, e.target.value)
+                  }
                   className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
                 >
                   {statusOptions.map((s) => (
@@ -82,6 +88,7 @@ export default function MemberCard({
                   ))}
                 </select>
 
+                {/* Cellule */}
                 <p className="mt-2 font-semibold text-green-600">Cellule :</p>
                 <select
                   value={selectedCellules[member.id] || ""}
@@ -101,12 +108,21 @@ export default function MemberCard({
                   ))}
                 </select>
 
+                {/* BoutonEnvoyer pour nouveau membre */}
                 {selectedCellules[member.id] && (
-                  <div className="mt-2">
+                  <div className="mt-2 w-full">
                     <BoutonEnvoyer
                       membre={member}
-                      cellule={cellules.find((c) => c.id === selectedCellules[member.id])}
-                      onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                      cellule={cellules.find(
+                        (c) => c.id === selectedCellules[member.id]
+                      )}
+                      onStatusUpdate={(updatedMember) =>
+                        handleStatusUpdateFromEnvoyer(
+                          member.id,
+                          member.statut,
+                          updatedMember
+                        )
+                      }
                       session={session}
                     />
                   </div>
@@ -128,3 +144,4 @@ export default function MemberCard({
     </div>
   );
 }
+

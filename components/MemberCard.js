@@ -1,3 +1,5 @@
+// components/MemberCard.js
+
 "use client";
 
 import { useState } from "react";
@@ -15,6 +17,7 @@ export default function MemberCard({
   onEdit,
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [localMessage, setLocalMessage] = useState("");
 
   const isNouveau =
     member.statut === "visiteur" || member.statut === "veut rejoindre ICC";
@@ -30,6 +33,18 @@ export default function MemberCard({
     return "#ccc";
   };
 
+  const handleLocalStatusChange = async (id, newStatus) => {
+    await handleChangeStatus(id, newStatus);
+    setLocalMessage("✅ Changement effectué !");
+    setTimeout(() => setLocalMessage(""), 2000);
+  };
+
+  const handleEnvoyerCallback = (updatedMember) => {
+    handleStatusUpdateFromEnvoyer(member.id, member.statut, updatedMember);
+    setLocalMessage("✅ Enregistrement réussi !");
+    setTimeout(() => setLocalMessage(""), 2000);
+  };
+
   return (
     <div
       className={`bg-white rounded-xl shadow-md border-l-4 overflow-hidden transition-all duration-300 relative ${
@@ -37,6 +52,7 @@ export default function MemberCard({
       }`}
       style={{ borderLeftColor: getBorderColor() }}
     >
+      {/* Badge Nouveau */}
       {isNouveau && (
         <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
           Nouveau
@@ -54,6 +70,12 @@ export default function MemberCard({
           🕊 Statut : {member.statut || "—"}
         </p>
 
+        {/* Message local */}
+        {localMessage && (
+          <p className="text-green-500 font-semibold mb-2">{localMessage}</p>
+        )}
+
+        {/* Toggle détails */}
         <button
           onClick={() => setIsOpen((prev) => !prev)}
           className="text-orange-500 underline text-sm mb-2"
@@ -70,11 +92,12 @@ export default function MemberCard({
 
             {isNouveau ? (
               <>
+                {/* Statut */}
                 <p className="mt-2 font-semibold text-blue-600">Statut :</p>
                 <select
                   value={member.statut}
                   onChange={(e) =>
-                    handleChangeStatus(member.id, e.target.value)
+                    handleLocalStatusChange(member.id, e.target.value)
                   }
                   className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
                 >
@@ -83,6 +106,7 @@ export default function MemberCard({
                   ))}
                 </select>
 
+                {/* Cellule */}
                 <p className="mt-2 font-semibold text-green-600">Cellule :</p>
                 <select
                   value={selectedCellules[member.id] || ""}
@@ -102,6 +126,7 @@ export default function MemberCard({
                   ))}
                 </select>
 
+                {/* BoutonEnvoyer pour nouveau membre */}
                 {selectedCellules[member.id] && (
                   <div className="mt-2 w-full">
                     <BoutonEnvoyer
@@ -109,13 +134,7 @@ export default function MemberCard({
                       cellule={cellules.find(
                         (c) => c.id === selectedCellules[member.id]
                       )}
-                      onStatusUpdate={(updatedMember) =>
-                        handleStatusUpdateFromEnvoyer(
-                          member.id,
-                          member.statut,
-                          updatedMember
-                        )
-                      }
+                      onStatusUpdate={handleEnvoyerCallback}
                       session={session}
                     />
                   </div>

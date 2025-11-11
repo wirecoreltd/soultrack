@@ -112,7 +112,6 @@ export default function SuivisMembres() {
 
   const updateSuivi = async (id) => {
     setMessage(null);
-
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
 
@@ -124,11 +123,40 @@ export default function SuivisMembres() {
     setUpdating((prev) => ({ ...prev, [id]: true }));
 
     try {
-      const payload = {
-        statut_suivis: newStatus?.trim() || null,
-        commentaire_suivis: newComment?.trim() || null,
-        updated_at: new Date(),
-      };
+      const payload = {};
+      if (newStatus) payload["statut_suivis"] = newStatus;
+      if (newComment) payload["commentaire_suivis"] = newComment;
+      payload["updated_at"] = new Date();
+
+      // 🔹 Rattachement cellule automatique si intégration
+      if (newStatus === "integrer") {
+        const userEmail = localStorage.getItem("userEmail");
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("email", userEmail)
+          .single();
+
+        const responsableId = profileData.id;
+
+        const { data: cellulesData, error: celluleError } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", responsableId);
+
+        if (celluleError) throw celluleError;
+
+        if (!cellulesData || cellulesData.length === 0) {
+          setMessage({
+            type: "error",
+            text: "⚠️ Aucune cellule trouvée pour ce responsable.",
+          });
+          setUpdating((prev) => ({ ...prev, [id]: false }));
+          return;
+        }
+
+        payload["cellule_id"] = cellulesData[0].id; // On prend la première cellule
+      }
 
       const { data: updatedData, error: updateError } = await supabase
         .from("suivis_membres")
@@ -139,97 +167,24 @@ export default function SuivisMembres() {
 
       if (updateError) {
         console.error("Erreur update :", updateError);
-        setMessage({
-          type: "error",
-          text: `Erreur mise à jour : ${updateError.message}`,
-        });
+        setMessage({ type: "error", text: `Erreur mise à jour : ${updateError.message}` });
       } else if (updatedData) {
-        if (updatedData.statut_suivis === "integrer") {
-          try {
-            const userEmail = localStorage.getItem("userEmail");
-
-            const { data: profileData, error: profileError } = await supabase
-              .from("profiles")
-              .select("id")
-              .eq("email", userEmail)
-              .single();
-
-            if (profileError) throw profileError;
-            const responsableId = profileData?.id;
-
-            const { data: celluleData, error: celluleError } = await supabase
-              .from("cellules")
-              .select("id")
-              .eq("responsable_id", responsableId)
-              .maybeSingle();
-
-            if (celluleError) throw celluleError;
-            const celluleId = celluleData?.id;
-
-            if (!celluleId) {
-              setMessage({
-                type: "error",
-                text: "⚠️ Aucune cellule trouvée pour ce responsable.",
-              });
-            } else {
-              const { data: membreData, error: membreError } = await supabase
-                .from("membres")
-                .select("id")
-                .eq("telephone", updatedData.telephone)
-                .maybeSingle();
-
-              if (membreError) throw membreError;
-
-              if (membreData) {
-                const { error: updateMembreError } = await supabase
-                  .from("membres")
-                  .update({ cellule_id: celluleId })
-                  .eq("id", membreData.id);
-
-                if (updateMembreError) throw updateMembreError;
-
-                setMessage({
-                  type: "success",
-                  text: "✅ Membre intégré et rattaché à votre cellule.",
-                });
-              } else {
-                setMessage({
-                  type: "error",
-                  text: "⚠️ Aucun membre correspondant trouvé à rattacher.",
-                });
-              }
-            }
-
-            setSuivis((prev) => prev.filter((it) => it.id !== id));
-          } catch (err) {
-            console.error("Erreur rattachement cellule :", err);
-            setMessage({
-              type: "error",
-              text: `⚠️ Erreur rattachement cellule : ${err.message}`,
-            });
-          }
-        } else if (updatedData.statut_suivis === "refus") {
+        if (["integrer", "refus"].includes(updatedData.statut_suivis)) {
           setSuivis((prev) => prev.filter((it) => it.id !== id));
           setMessage({
             type: "success",
-            text: "❌ Membre refusé et retiré de la liste.",
+            text: `Le contact a été ${updatedData.statut_suivis === "integrer" ? "intégré" : "refusé"} et retiré de la liste.`,
           });
         } else {
           setSuivis((prev) =>
             prev.map((it) => (it.id === id ? updatedData : it))
           );
-          setMessage({
-            type: "success",
-            text: "✅ Mise à jour enregistrée avec succès.",
-          });
+          setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
         }
       }
     } catch (err) {
       console.error("Exception updateSuivi:", err);
-      setMessage({
-        type: "error",
-        text: `Exception durant la mise à jour : ${err.message}`,
-      });
+      setMessage({ type: "error", text: `Exception durant la mise à jour : ${err.message}` });
     } finally {
       setUpdating((prev) => ({ ...prev, [id]: false }));
     }

@@ -153,7 +153,7 @@ export default function MemberCard({
               <div className="text-center mt-3">
                 <button
                   onClick={() => onEdit(member)}
-                  className="text-orange-600 text-sm hover:text-blue-800"
+                  className="text-orange-600 text-sm text-center hover:text-blue-800"
                 >
                   ✏️ Modifier le contact
                 </button>

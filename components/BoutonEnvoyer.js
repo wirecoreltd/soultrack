@@ -1,5 +1,3 @@
-// components/BoutonEnvoyer.js
-
 "use client";
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -23,7 +21,6 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
     try {
       const now = new Date().toISOString();
 
-      // ✅ Champs correspondant aux colonnes existantes
       const suiviData = {
         prenom: membre.prenom,
         nom: membre.nom,
@@ -34,7 +31,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
         infos_supplementaires: membre.infos_supplementaires,
         cellule_id: cellule.id,
         cellule_nom: cellule.cellule,
-        responsable: cellule.responsable, // colonne existante dans suivis_membres
+        responsable: cellule.responsable,
       };
 
       const { error: insertError } = await supabase
@@ -64,9 +61,15 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
         "_blank"
       );
 
-      // Mise à jour du statut si callback fourni
+      // Callback pour mettre à jour le membre dans le state
       if (onStatusUpdate) {
-        onStatusUpdate(membre.id, membre.statut);
+        onStatusUpdate({
+          ...membre,
+          statut: "actif",
+          cellule_id: cellule.id,
+          cellule_nom: cellule.cellule,
+          responsable: cellule.responsable,
+        });
       }
     } catch (error) {
       console.error("Erreur lors de l'envoi WhatsApp :", error.message);

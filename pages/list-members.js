@@ -390,15 +390,18 @@
 
           {popupMember && (
             <DetailsPopup
-              member={popupMember}
-              onClose={() => setPopupMember(null)}
-              statusOptions={statusOptions}
-              cellules={cellules}
-              selectedCellules={selectedCellules}
-              setSelectedCellules={setSelectedCellules}
-              handleChangeStatus={handleChangeStatus}
-              handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
-              session={session}
+              <DetailsPopup
+                  member={popupMember}
+                  onClose={() => setPopupMember(null)}
+                  statusOptions={statusOptions || []}
+                  cellules={cellules || []}
+                  selectedCellules={selectedCellules || {}}
+                  setSelectedCellules={setSelectedCellules}
+                  handleChangeStatus={handleChangeStatus}
+                  handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
+                  session={session}
+                />
+
             />
           )}
         </div>

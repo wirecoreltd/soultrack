@@ -3,53 +3,76 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function EditMemberPopup({
-  member,
-  cellules = [],
-  onClose,
-  onUpdateMember,
-}) {
+export default function EditMemberPopup({ member, cellules = [], onClose, onUpdateMember }) {
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+
+  const initialBesoin =
+    typeof member.besoin === "string"
+      ? JSON.parse(member.besoin || "[]")
+      : member.besoin || [];
 
   const [formData, setFormData] = useState({
     prenom: member.prenom || "",
     nom: member.nom || "",
     telephone: member.telephone || "",
     ville: member.ville || "",
-    besoin: Array.isArray(member.besoin)
-      ? member.besoin
-      : member.besoin
-      ? JSON.parse(member.besoin)
-      : [],
+    besoin: initialBesoin,
+    autreBesoin: "",
     infos_supplementaires: member.infos_supplementaires || "",
     statut: member.statut || "",
     cellule_id: member.cellule_id || "",
   });
 
+  const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Gestion du changement classique (input/select)
+  // ✅ Gestion des checkboxes besoins
+  const handleBesoinChange = (e) => {
+    const { value, checked } = e.target;
+
+    if (value === "Autre") {
+      setShowAutre(checked);
+      if (!checked) {
+        setFormData((prev) => ({
+          ...prev,
+          autreBesoin: "",
+          besoin: prev.besoin.filter((b) => b !== "Autre"),
+        }));
+      }
+    }
+
+    setFormData((prev) => {
+      const updatedBesoin = checked
+        ? [...prev.besoin, value]
+        : prev.besoin.filter((b) => b !== value);
+      return { ...prev, besoin: updatedBesoin };
+    });
+  };
+
+  // ✅ Gestion du reste des champs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🔹 Gestion du multi-select pour les besoins
-  const handleBesoinsChange = (e) => {
-    const selectedOptions = Array.from(e.target.selectedOptions, (opt) => opt.value);
-    setFormData((prev) => ({ ...prev, besoin: selectedOptions }));
-  };
-
-  // 🔹 Enregistrement
+  // ✅ Soumission
   const handleSubmit = async () => {
     setLoading(true);
+
+    const dataToSend = {
+      ...formData,
+      besoin:
+        formData.autreBesoin && showAutre
+          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
+          : formData.besoin,
+    };
 
     const { error, data } = await supabase
       .from("membres")
       .update({
-        ...formData,
-        besoin: JSON.stringify(formData.besoin),
+        ...dataToSend,
+        besoin: JSON.stringify(dataToSend.besoin),
       })
       .eq("id", member.id)
       .select()
@@ -71,7 +94,7 @@ export default function EditMemberPopup({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-80 max-h-[90vh] overflow-y-auto shadow-xl relative">
+      <div className="bg-white p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto shadow-xl relative">
         {/* Bouton fermer */}
         <button
           onClick={onClose}
@@ -114,21 +137,50 @@ export default function EditMemberPopup({
             className="border rounded px-2 py-1"
           />
 
-          {/* 🔹 Sélecteur multi besoins */}
-          <label className="font-semibold mt-2">Besoins :</label>
-          <select
-            multiple
-            value={formData.besoin}
-            onChange={handleBesoinsChange}
-            className="border rounded px-2 py-1 h-24"
-          >
-            {besoinsOptions.map((b) => (
-              <option key={b} value={b}>
-                {b}
-              </option>
+          {/* ✅ BESOINS */}
+          <div className="mt-2">
+            <p className="font-semibold mb-2">Besoins :</p>
+            {besoinsOptions.map((item) => (
+              <label key={item} className="flex items-center gap-3 mb-2">
+                <input
+                  type="checkbox"
+                  name="besoin"
+                  value={item}
+                  checked={formData.besoin.includes(item)}
+                  onChange={handleBesoinChange}
+                  className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+                />
+                <span>{item}</span>
+              </label>
             ))}
-          </select>
 
+            {/* ✅ Checkbox Autre */}
+            <label className="flex items-center gap-3 mb-2">
+              <input
+                type="checkbox"
+                name="besoin"
+                value="Autre"
+                checked={showAutre}
+                onChange={handleBesoinChange}
+                className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+              />
+              Autre
+            </label>
+
+            {/* ✅ Champ libre si Autre */}
+            {showAutre && (
+              <input
+                type="text"
+                name="autreBesoin"
+                value={formData.autreBesoin}
+                onChange={handleChange}
+                placeholder="Précisez..."
+                className="border rounded px-2 py-1 w-full"
+              />
+            )}
+          </div>
+
+          {/* Infos supplémentaires */}
           <textarea
             name="infos_supplementaires"
             value={formData.infos_supplementaires}
@@ -138,6 +190,7 @@ export default function EditMemberPopup({
             rows={3}
           />
 
+          {/* Statut */}
           <select
             name="statut"
             value={formData.statut}
@@ -146,14 +199,14 @@ export default function EditMemberPopup({
           >
             <option value="">-- Statut --</option>
             <option value="actif">actif</option>
-            <option value="integrer">Integrer</option>
+            <option value="Integrer">Integrer</option>
             <option value="ancien">ancien</option>
             <option value="veut rejoindre ICC">veut rejoindre ICC</option>
             <option value="visiteur">visiteur</option>
-            <option value="a déjà son église">a déjà son église</option>
+            <option value="a déjà mon église">a déjà mon église</option>
           </select>
 
-          {/* 🔹 Sélecteur cellule */}
+          {/* Cellule */}
           <select
             name="cellule_id"
             value={formData.cellule_id}
@@ -169,12 +222,14 @@ export default function EditMemberPopup({
           </select>
         </div>
 
+        {/* Message succès */}
         {message && (
           <p className="text-green-600 text-center mt-3 font-semibold">
             {message}
           </p>
         )}
 
+        {/* Bouton enregistrer */}
         <button
           onClick={handleSubmit}
           disabled={loading}

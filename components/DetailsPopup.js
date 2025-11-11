@@ -1,7 +1,9 @@
+//components/DetailsPopup.js
 "use client";
 
 import BoutonEnvoyer from "./BoutonEnvoyer";
 import { useState } from "react";
+import EditMemberPopup from "./EditMemberPopup";
 
 export default function DetailsPopup({
   member,
@@ -15,6 +17,7 @@ export default function DetailsPopup({
   session,
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [editMember, setEditMember] = useState(null);
 
   if (!member) return null;
 
@@ -47,7 +50,7 @@ export default function DetailsPopup({
 
         <button
           onClick={toggleDetails}
-          className="text-orange-500 text-center underline text-sm"
+          className="text-orange-500 text-center underline text-sm mb-2"
         >
           {isOpen ? "Fermer détails" : "Détails"}
         </button>
@@ -73,7 +76,8 @@ export default function DetailsPopup({
             </p>
             <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
 
-            <p className="mt-2 font-semibold text-bleu-600">Statut :</p>
+            {/* Sélecteur Statut */}
+            <p className="mt-2 font-semibold text-blue-600">Statut :</p>
             <select
               value={member.statut}
               onChange={(e) => handleChangeStatus(member.id, e.target.value)}
@@ -84,6 +88,7 @@ export default function DetailsPopup({
               ))}
             </select>
 
+            {/* Sélecteur Cellule */}
             <p className="mt-2 font-semibold text-green-600">Cellule :</p>
             <select
               value={selectedCellules[member.id] || ""}
@@ -103,6 +108,7 @@ export default function DetailsPopup({
               ))}
             </select>
 
+            {/* Bouton Envoyer */}
             {selectedCellules[member.id] && (
               <div className="mt-2">
                 <BoutonEnvoyer
@@ -115,9 +121,28 @@ export default function DetailsPopup({
                 />
               </div>
             )}
+
+            {/* Bouton Modifier */}
+            <div className="text-center mt-4">
+              <button
+                onClick={() => setEditMember(member)}
+                className="text-blue-600 underline text-sm hover:text-blue-800"
+              >
+                ✏️ Modifier le contact
+              </button>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Popup d’édition intégré */}
+      {editMember && (
+        <EditMemberPopup
+          member={editMember}
+          cellules={cellules}
+          onClose={() => setEditMember(null)}
+        />
+      )}
     </div>
   );
 }

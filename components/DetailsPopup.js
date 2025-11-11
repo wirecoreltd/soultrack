@@ -1,9 +1,7 @@
-//components/DetailsPopup.js
 "use client";
 
 import BoutonEnvoyer from "./BoutonEnvoyer";
 import { useState } from "react";
-import EditMemberPopup from "./EditMemberPopup";
 
 export default function DetailsPopup({
   member,
@@ -16,14 +14,12 @@ export default function DetailsPopup({
   handleStatusUpdateFromEnvoyer,
   session,
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [editMember, setEditMember] = useState(null);
+  const [isOpen, setIsOpen] = useState(true);
 
   if (!member) return null;
 
-  const toggleDetails = () => {
-    setIsOpen((prev) => !prev);
-  };
+  const isNouveau =
+    member.statut === "visiteur" || member.statut === "veut rejoindre ICC";
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
@@ -48,14 +44,8 @@ export default function DetailsPopup({
           🕊 Statut : {member.statut || "—"}
         </p>
 
-        <button
-          onClick={toggleDetails}
-          className="text-orange-500 text-center underline text-sm mb-2"
-        >
-          {isOpen ? "Fermer détails" : "Détails"}
-        </button>
-
-        {isOpen && (
+        {/* ====================== NOUVEAUX MEMBRES ====================== */}
+        {isNouveau ? (
           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
             <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
             <p>🏙 Ville : {member.ville || "—"}</p>
@@ -76,7 +66,6 @@ export default function DetailsPopup({
             </p>
             <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
 
-            {/* Sélecteur Statut */}
             <p className="mt-2 font-semibold text-blue-600">Statut :</p>
             <select
               value={member.statut}
@@ -88,7 +77,6 @@ export default function DetailsPopup({
               ))}
             </select>
 
-            {/* Sélecteur Cellule */}
             <p className="mt-2 font-semibold text-green-600">Cellule :</p>
             <select
               value={selectedCellules[member.id] || ""}
@@ -108,7 +96,6 @@ export default function DetailsPopup({
               ))}
             </select>
 
-            {/* Bouton Envoyer */}
             {selectedCellules[member.id] && (
               <div className="mt-2">
                 <BoutonEnvoyer
@@ -121,11 +108,29 @@ export default function DetailsPopup({
                 />
               </div>
             )}
+          </div>
+        ) : (
+          /* ====================== MEMBRES EXISTANTS ====================== */
+          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+            <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+            <p>🏙 Ville : {member.ville || "—"}</p>
+            <p>🧩 Comment est-il venu : {member.venu || "—"}</p>
+            <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
+            <p className="mt-2 text-black-600">
+              🏠 Cellule :{" "}
+              <span className="text-gray-700 font-normal ml-1">
+                {(() => {
+                  const cellule = cellules.find((c) => c.id === member.cellule_id);
+                  return cellule
+                    ? `${cellule.cellule} (${cellule.responsable || "—"})`
+                    : "—";
+                })()}
+              </span>
+            </p>
 
-            {/* Bouton Modifier */}
-            <div className="text-center mt-4">
+            <div className="text-center mt-3">
               <button
-                onClick={() => setEditMember(member)}
+                onClick={() => alert("Ouverture du popup de modification")}
                 className="text-blue-600 underline text-sm hover:text-blue-800"
               >
                 ✏️ Modifier le contact
@@ -134,15 +139,6 @@ export default function DetailsPopup({
           </div>
         )}
       </div>
-
-      {/* Popup d’édition intégré */}
-      {editMember && (
-        <EditMemberPopup
-          member={editMember}
-          cellules={cellules}
-          onClose={() => setEditMember(null)}
-        />
-      )}
     </div>
   );
 }

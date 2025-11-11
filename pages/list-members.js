@@ -280,21 +280,40 @@ export default function ListMembers() {
             </div>
           )}
 
-          {editMember && (
-            <EditMemberPopup
-              member={editMember}
-              onClose={() => setEditMember(null)}
-              statusOptions={statusOptions}
-              cellules={cellules}
-              selectedCellules={selectedCellules}
-              setSelectedCellules={setSelectedCellules}
-              handleChangeStatus={handleChangeStatus}
-              handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
-              session={session}
-            />
-          )}
-        </div>
-      )}
+         {editMember && (
+  <EditMemberPopup
+    member={editMember}
+    onClose={() => setEditMember(null)}
+    onUpdateMember={(updatedMember) => {
+      // 🔄 Mise à jour instantanée dans la liste des membres
+      setMembers((prevMembers) =>
+        prevMembers.map((m) =>
+          m.id === updatedMember.id ? updatedMember : m
+        )
+      );
+
+      // 🔄 Si besoin, tu peux aussi gérer ici les filtres (facultatif)
+      // setFilteredMembers((prev) =>
+      //   prev.map((m) => (m.id === updatedMember.id ? updatedMember : m))
+      // );
+
+      // ✅ Message de succès global
+      setMessage("✅ Modifications enregistrées !");
+      setTimeout(() => setMessage(""), 2000);
+
+      // ❌ Fermer le popup
+      setEditMember(null);
+    }}
+    statusOptions={statusOptions}
+    cellules={cellules}
+    selectedCellules={selectedCellules}
+    setSelectedCellules={setSelectedCellules}
+    handleChangeStatus={handleChangeStatus}
+    handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
+    session={session}
+  />
+)}
+
 
       {/* VUE TABLE */}
       {view === "table" && (

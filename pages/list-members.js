@@ -1,5 +1,4 @@
 // pages/list-members.js
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,6 +8,7 @@ import BoutonEnvoyer from "../components/BoutonEnvoyer";
 import LogoutLink from "../components/LogoutLink";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import DetailsPopup from "../components/DetailsPopup";
 import EditMemberPopup from "../components/EditMemberPopup";
 
 export default function ListMembers() {
@@ -18,6 +18,7 @@ export default function ListMembers() {
   const [cellules, setCellules] = useState([]);
   const [selectedCellules, setSelectedCellules] = useState({});
   const [view, setView] = useState("card");
+  const [popupMember, setPopupMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
   const [session, setSession] = useState(null);
   const [prenom, setPrenom] = useState("");
@@ -37,7 +38,6 @@ export default function ListMembers() {
         if (!error && data) setPrenom(data.prenom);
       }
     };
-
     fetchSessionAndProfile();
     fetchMembers();
     fetchCellules();
@@ -59,32 +59,21 @@ export default function ListMembers() {
   };
 
   const handleChangeStatus = async (id, newStatus) => {
-    // Update supabase
-    const { data, error } = await supabase
-      .from("membres")
-      .update({ statut: newStatus })
-      .eq("id", id)
-      .select();
-
-    if (!error && data && data.length > 0) {
-      // Mise à jour instantanée côté client
-      setMembers((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
-      );
-    }
+    await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
+    setMembers((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
+    );
   };
 
   const handleStatusUpdateFromEnvoyer = (id, currentStatus, updatedMember) => {
     if (currentStatus === "visiteur" || currentStatus === "veut rejoindre ICC") {
       handleChangeStatus(id, "actif");
     }
-    if (updatedMember) {
-      // Mise à jour instantanée si modifié via bouton Envoyer
-      setMembers((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, ...updatedMember } : m))
-      );
-    }
-    setEditMember(null);
+    // mise à jour instantanée du membre
+    setMembers((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, ...updatedMember } : m))
+    );
+    setPopupMember(null);
   };
 
   const getBorderColor = (m) => {
@@ -115,7 +104,6 @@ export default function ListMembers() {
   const nouveaux = members.filter(
     (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
   );
-
   const anciens = members.filter(
     (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
   );
@@ -123,7 +111,6 @@ export default function ListMembers() {
   const nouveauxFiltres = filterBySearch(
     filter ? nouveaux.filter((m) => m.statut === filter) : nouveaux
   );
-
   const anciensFiltres = filterBySearch(
     filter ? anciens.filter((m) => m.statut === filter) : anciens
   );
@@ -175,6 +162,7 @@ export default function ListMembers() {
         </p>
       </div>
 
+      {/* Filtres et bascule vue */}
       <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">
         <div className="flex items-center space-x-2 mb-2 sm:mb-0">
           <select
@@ -282,7 +270,7 @@ export default function ListMembers() {
         </div>
       )}
 
-     {/* ==================== VUE TABLE ==================== */}
+      {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
@@ -302,17 +290,19 @@ export default function ListMembers() {
                   </td>
                 </tr>
               )}
-              {nouveauxFiltres.map((m) => (
+              {[...nouveauxFiltres, ...anciensFiltres].map((m) => (
                 <tr
                   key={m.id}
-                  className="hover:bg-white/10 transition duration-150 border-b border-blue-300"
+                  className="hover:bg-white/10 transition duration-150 border-b border-gray-300"
                 >
                   <td
                     className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
                     {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                    <span className="bg-blue-500 text-white text-xs px-1 rounded">Nouveau</span>
+                    {m.statut === "visiteur" || m.statut === "veut rejoindre ICC" && (
+                      <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
+                    )}
                   </td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.statut || "—"}</td>
@@ -326,70 +316,27 @@ export default function ListMembers() {
                   </td>
                 </tr>
               ))}
-
-              {anciensFiltres.length > 0 && (
-                <>
-                  <tr>
-                    <td colSpan={4} className="px-4 py-2 font-semibold text-lg">
-                      <span
-                        style={{
-                          background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                          WebkitBackgroundClip: "text",
-                          color: "transparent",
-                        }}
-                      >
-                        Membres existants
-                      </span>
-                    </td>
-                  </tr>
-
-                  {anciensFiltres.map((m) => (
-                    <tr
-                      key={m.id}
-                      className="hover:bg-white/10 transition duration-150 border-b border-gray-300"
-                    >
-                      <td
-                        className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
-                        style={{ borderLeftColor: getBorderColor(m) }}
-                      >
-                        {m.prenom} {m.nom}
-                        {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                      </td>
-                      <td className="px-4 py-2">{m.telephone || "—"}</td>
-                      <td className="px-4 py-2">{m.statut || "—"}</td>
-                      <td className="px-4 py-2">
-                        <button
-                          onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
-                          className="text-orange-500 underline text-sm"
-                        >
-                          {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </>
-              )}
             </tbody>
           </table>
 
           {popupMember && (
             <DetailsPopup              
-                  member={popupMember}
-                  onClose={() => setPopupMember(null)}
-                  statusOptions={statusOptions || []}
-                  cellules={cellules || []}
-                  selectedCellules={selectedCellules || {}}
-                  setSelectedCellules={setSelectedCellules}
-                  handleChangeStatus={handleChangeStatus}
-                  handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
-                  session={session}         
-                    />
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        }
+              member={popupMember}
+              onClose={() => setPopupMember(null)}
+              statusOptions={statusOptions || []}
+              cellules={cellules || []}
+              selectedCellules={selectedCellules || {}}
+              setSelectedCellules={setSelectedCellules}
+              handleChangeStatus={handleChangeStatus}
+              handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
+              session={session}         
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ==================== Composant MemberCard ==================== */
 function MemberCard({
@@ -494,10 +441,10 @@ function MemberCard({
                       cellule={cellules.find(
                         (c) => c.id === selectedCellules[member.id]
                       )}
-                      onStatusUpdate={(id, currentStatus, updatedMember) =>
+                      onStatusUpdate={(updatedMember) =>
                         handleStatusUpdateFromEnvoyer(
-                          id,
-                          currentStatus,
+                          member.id,
+                          member.statut,
                           updatedMember
                         )
                       }

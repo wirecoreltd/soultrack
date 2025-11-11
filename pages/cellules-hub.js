@@ -1,8 +1,3 @@
-Skip to content
-Chat history
-
-You said:
-pourquoi dans le bienvenue... le prenom de la personne ne 'saffice mais c'est utilisatuer qui s'affiche?
 //✅ /pages/index.js
 
 "use client";

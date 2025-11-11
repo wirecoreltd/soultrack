@@ -15,7 +15,8 @@ export default function DetailsPopup({
   handleStatusUpdateFromEnvoyer,
   session,
 }) {
-  const [isEditing, setIsEditing] = useState(false); // ✅ état du popup d’édition
+  const [isOpen, setIsOpen] = useState(true);
+  const [editMember, setEditMember] = useState(null);
 
   if (!member) return null;
 
@@ -24,7 +25,6 @@ export default function DetailsPopup({
 
   return (
     <>
-      {/* ================= POPUP DÉTAILS ================= */}
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
         <div className="bg-white text-black p-6 rounded-lg w-80 max-h-[90vh] overflow-y-auto relative shadow-xl">
           {/* Bouton de fermeture */}
@@ -47,7 +47,7 @@ export default function DetailsPopup({
             🕊 Statut : {member.statut || "—"}
           </p>
 
-          {/* ================= NOUVEAUX MEMBRES ================= */}
+          {/* ====================== NOUVEAUX MEMBRES ====================== */}
           {isNouveau ? (
             <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
               <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
@@ -57,8 +57,7 @@ export default function DetailsPopup({
                 ❓Besoin :{" "}
                 {(() => {
                   if (!member.besoin) return "—";
-                  if (Array.isArray(member.besoin))
-                    return member.besoin.join(", ");
+                  if (Array.isArray(member.besoin)) return member.besoin.join(", ");
                   try {
                     const arr = JSON.parse(member.besoin);
                     return Array.isArray(arr) ? arr.join(", ") : member.besoin;
@@ -72,19 +71,16 @@ export default function DetailsPopup({
               <p className="mt-2 font-semibold text-blue-600">Statut :</p>
               <select
                 value={member.statut}
-                onChange={(e) =>
-                  handleChangeStatus(member.id, e.target.value)
-                }
+                onChange={(e) => handleChangeStatus(member.id, e.target.value)}
                 className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
               >
-                {statusOptions.map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
+                {Array.isArray(statusOptions) &&
+                  statusOptions.map((s) => <option key={s}>{s}</option>)}
               </select>
 
               <p className="mt-2 font-semibold text-green-600">Cellule :</p>
               <select
-                value={selectedCellules[member.id] || ""}
+                value={selectedCellules?.[member.id] || ""}
                 onChange={(e) =>
                   setSelectedCellules((prev) => ({
                     ...prev,
@@ -94,14 +90,15 @@ export default function DetailsPopup({
                 className="border rounded-lg px-2 py-1 text-sm w-full"
               >
                 <option value="">-- Sélectionner cellule --</option>
-                {cellules.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.cellule} ({c.responsable})
-                  </option>
-                ))}
+                {Array.isArray(cellules) &&
+                  cellules.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.cellule} ({c.responsable})
+                    </option>
+                  ))}
               </select>
 
-              {selectedCellules[member.id] && (
+              {selectedCellules?.[member.id] && (
                 <div className="mt-2">
                   <BoutonEnvoyer
                     membre={member}
@@ -115,7 +112,7 @@ export default function DetailsPopup({
               )}
             </div>
           ) : (
-            /* ================= MEMBRES EXISTANTS ================= */
+            /* ====================== MEMBRES EXISTANTS ====================== */
             <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
               <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
               <p>🏙 Ville : {member.ville || "—"}</p>
@@ -125,9 +122,9 @@ export default function DetailsPopup({
                 🏠 Cellule :{" "}
                 <span className="text-gray-700 font-normal ml-1">
                   {(() => {
-                    const cellule = cellules.find(
-                      (c) => c.id === member.cellule_id
-                    );
+                    const cellule = Array.isArray(cellules)
+                      ? cellules.find((c) => c.id === member.cellule_id)
+                      : null;
                     return cellule
                       ? `${cellule.cellule} (${cellule.responsable || "—"})`
                       : "—";
@@ -137,7 +134,7 @@ export default function DetailsPopup({
 
               <div className="text-center mt-3">
                 <button
-                  onClick={() => setIsEditing(true)} // ✅ ouvre le popup d’édition
+                  onClick={() => setEditMember(member)}
                   className="text-blue-600 underline text-sm hover:text-blue-800"
                 >
                   ✏️ Modifier le contact
@@ -148,12 +145,11 @@ export default function DetailsPopup({
         </div>
       </div>
 
-      {/* ✅ POPUP MODIFICATION */}
-      {isEditing && (
+      {/* Popup de modification */}
+      {editMember && (
         <EditMemberPopup
-          member={member}
-          onClose={() => setIsEditing(false)}
-          session={session}
+          member={editMember}
+          onClose={() => setEditMember(null)}
         />
       )}
     </>

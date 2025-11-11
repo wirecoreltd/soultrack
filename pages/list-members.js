@@ -1,11 +1,8 @@
-// pages/list-members.js
-
 "use client";
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
-import BoutonEnvoyer from "../components/BoutonEnvoyer";
 import LogoutLink from "../components/LogoutLink";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -68,20 +65,14 @@ export default function ListMembers() {
   };
 
   const handleStatusUpdateFromEnvoyer = (id, currentStatus, updatedMember) => {
-  if (!updatedMember) return;
-
-  // Mise à jour instantanée dans la liste
-  setMembers(prev =>
-    prev.map(m => (m.id === id ? { ...m, ...updatedMember } : m))
-  );
-
-  // Mise à jour popup si ouvert
-  if (popupMember?.id === id) setPopupMember({ ...popupMember, ...updatedMember });
-
-  // Message de succès global
-  setMessage("✅ Enregistrement réussi !");
-  setTimeout(() => setMessage(""), 2000);
-};
+    if (!updatedMember) return;
+    setMembers(prev =>
+      prev.map(m => (m.id === id ? { ...m, ...updatedMember } : m))
+    );
+    if (popupMember?.id === id) setPopupMember({ ...popupMember, ...updatedMember });
+    setMessage("✅ Enregistrement réussi !");
+    setTimeout(() => setMessage(""), 2000);
+  };
 
   const getBorderColor = (m) => {
     if (m.star) return "#FBC02D";
@@ -279,41 +270,33 @@ export default function ListMembers() {
               </div>
             </div>
           )}
+        </div>
+      )}
 
-         {editMember && (
-  <EditMemberPopup
-    member={editMember}
-    onClose={() => setEditMember(null)}
-    onUpdateMember={(updatedMember) => {
-      // 🔄 Mise à jour instantanée dans la liste des membres
-      setMembers((prevMembers) =>
-        prevMembers.map((m) =>
-          m.id === updatedMember.id ? updatedMember : m
-        )
-      );
-
-      // 🔄 Si besoin, tu peux aussi gérer ici les filtres (facultatif)
-      // setFilteredMembers((prev) =>
-      //   prev.map((m) => (m.id === updatedMember.id ? updatedMember : m))
-      // );
-
-      // ✅ Message de succès global
-      setMessage("✅ Modifications enregistrées !");
-      setTimeout(() => setMessage(""), 2000);
-
-      // ❌ Fermer le popup
-      setEditMember(null);
-    }}
-    statusOptions={statusOptions}
-    cellules={cellules}
-    selectedCellules={selectedCellules}
-    setSelectedCellules={setSelectedCellules}
-    handleChangeStatus={handleChangeStatus}
-    handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
-    session={session}
-  />
-)}
-
+      {/* ✅ Popup Édition en dehors des vues */}
+      {editMember && (
+        <EditMemberPopup
+          member={editMember}
+          onClose={() => setEditMember(null)}
+          onUpdateMember={(updatedMember) => {
+            setMembers((prevMembers) =>
+              prevMembers.map((m) =>
+                m.id === updatedMember.id ? updatedMember : m
+              )
+            );
+            setMessage("✅ Modifications enregistrées !");
+            setTimeout(() => setMessage(""), 2000);
+            setEditMember(null);
+          }}
+          statusOptions={statusOptions}
+          cellules={cellules}
+          selectedCellules={selectedCellules}
+          setSelectedCellules={setSelectedCellules}
+          handleChangeStatus={handleChangeStatus}
+          handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
+          session={session}
+        />
+      )}
 
       {/* VUE TABLE */}
       {view === "table" && (

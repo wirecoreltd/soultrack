@@ -45,15 +45,13 @@ export default function SuivisMembres() {
             .from("suivis_membres")
             .select("*")
             .order("created_at", { ascending: false });
-
           if (error) throw error;
           suivisData = data;
         } else if (userRole.includes("ResponsableCellule")) {
           const { data: cellulesData, error: cellulesError } = await supabase
             .from("cellules")
-            .select("id")
+            .select("id, prenom_responsable")
             .eq("responsable_id", responsableId);
-
           if (cellulesError) throw cellulesError;
 
           if (!cellulesData || cellulesData.length === 0) {
@@ -67,10 +65,9 @@ export default function SuivisMembres() {
 
           const { data, error } = await supabase
             .from("suivis_membres")
-            .select("*")
+            .select("*, cellule:cellule_id(id, nom, prenom_responsable)")
             .in("cellule_id", celluleIds)
             .order("created_at", { ascending: false });
-
           if (error) throw error;
           suivisData = data;
 
@@ -101,13 +98,13 @@ export default function SuivisMembres() {
   const handleCommentChange = (id, value) =>
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
+  // Nouvelle fonction pour couleurs selon statut_suivis
   const getBorderColor = (m) => {
-    if (m.star) return "#FBC02D";
-    if (m.statut === "refus") return "#EA4335";
-    if (m.statut === "Integrer") return "#FFA500";
-    if (m.statut === "en attente") return "#999999";
-    if (m.statut) return "#34A853";
-    return "#ccc";
+    if (m.statut_suivis === "refus") return "#EA4335";        // rouge
+    if (m.statut_suivis === "integrer") return "#FFA500";    // orange
+    if (m.statut_suivis === "en attente") return "#999999";  // gris
+    if (m.statut_suivis === "actif") return "#34A853";       // vert
+    return "#ccc";                                           // default
   };
 
   const updateSuivi = async (id) => {
@@ -128,7 +125,6 @@ export default function SuivisMembres() {
         .select("*")
         .eq("id", id)
         .single();
-
       if (fetchError || !suiviData) throw new Error("Impossible de récupérer le suivi.");
 
       const payload = { updated_at: new Date() };
@@ -163,16 +159,13 @@ export default function SuivisMembres() {
         .eq("id", id)
         .select()
         .single();
-
       if (updateError) throw updateError;
 
       if (["integrer", "refus"].includes(updatedSuivi.statut_suivis)) {
         setSuivis((prev) => prev.filter((it) => it.id !== id));
         setMessage({
           type: "success",
-          text: `Le contact a été ${
-            updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"
-          } et retiré de la liste.`,
+          text: `Le contact a été ${updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"} et retiré de la liste.`,
         });
       } else {
         setSuivis((prev) => prev.map((it) => (it.id === id ? updatedSuivi : it)));
@@ -264,14 +257,10 @@ export default function SuivisMembres() {
                     {item.prenom} {item.nom}
                   </h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
+                  <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
+                  <p className="text-sm text-gray-700 mb-1">👤 Statut membre : {item.statut || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">
-                    📋 Statut Suivis : {item.statut_suivis || "—"}
-                  </p>
-                  <p className="text-sm text-gray-700 mb-1">
-                    🕊 Statut Membre : {item.statut || "—"}
-                  </p>
-                  <p className="text-sm text-gray-700 mb-1">
-                    🏠 Cellule - Responsable : {item.cellule_nom || "—"} - {item.responsable_prenom || "—"}
+                    🏠 {item.cellule?.nom || "—"} - Responsable : {item.cellule?.prenom_responsable || "—"}
                   </p>
 
                   <button
@@ -285,8 +274,8 @@ export default function SuivisMembres() {
                     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                       <p>📌 Prénom : {item.prenom}</p>
                       <p>📞 Téléphone : {item.telephone || "—"}</p>
-                      <p>🏙 Ville : {item.ville || "—"}</p>
-                      <p>🕊 Statut : {item.statut || "—"}</p>
+                      <p>🏙  Ville : {item.ville || "—"}</p>
+                      <p>🕊  Statut : {item.statut || "—"}</p>
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
                       <p>❓ Besoin : {item.besoin || "—"}</p>
                       <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
@@ -315,9 +304,7 @@ export default function SuivisMembres() {
                         onClick={() => updateSuivi(item.id)}
                         disabled={updating[item.id]}
                         className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-                          updating[item.id]
-                            ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-green-600 hover:bg-green-700"
+                          updating[item.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
                         }`}
                       >
                         {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
@@ -340,7 +327,7 @@ export default function SuivisMembres() {
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
                 <th className="px-4 py-2">Statut Suivis</th>
-                <th className="px-4 py-2">Statut Membre</th>
+                <th className="px-4 py-2">Statut membre</th>
                 <th className="px-4 py-2">Cellule - Responsable</th>
                 <th className="px-4 py-2 rounded-tr-lg">Détails</th>
               </tr>
@@ -361,13 +348,12 @@ export default function SuivisMembres() {
                         style={{ borderLeftColor: getBorderColor(m) }}
                       >
                         {m.prenom} {m.nom}
-                        {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                       </td>
                       <td className="px-4 py-2">{m.telephone || "—"}</td>
                       <td className="px-4 py-2">{m.statut_suivis || "—"}</td>
                       <td className="px-4 py-2">{m.statut || "—"}</td>
                       <td className="px-4 py-2">
-                        {m.cellule_nom || "—"} - {m.responsable_prenom || "—"}
+                        {m.cellule?.nom || "—"} - {m.cellule?.prenom_responsable || "—"}
                       </td>
                       <td className="px-4 py-2">
                         <button
@@ -381,6 +367,7 @@ export default function SuivisMembres() {
                       </td>
                     </tr>
 
+                    {/* POPUP DETAILS identique à la carte */}
                     {detailsOpen[m.id] && (
                       <tr>
                         <td colSpan={6}>
@@ -396,13 +383,13 @@ export default function SuivisMembres() {
                               </button>
 
                               <h2 className="font-bold text-black text-base text-center mb-1">
-                                {m.prenom} {m.nom} {m.cellule_nom ? `(${m.cellule_nom})` : ""}
+                                {m.prenom} {m.nom}
                               </h2>
                               <p>📞 {m.telephone || "—"}</p>
                               <p>📋 Statut Suivis : {m.statut_suivis || "—"}</p>
-                              <p>🕊 Statut Membre : {m.statut || "—"}</p>
-                              <p>🏠 Cellule - Responsable : {m.cellule_nom || "—"} - {m.responsable_prenom || "—"}</p>
-                              <p>🏙 Ville : {m.ville || "—"}</p>
+                              <p>👤 Statut membre : {m.statut || "—"}</p>
+                              <p>🏠 Cellule : {m.cellule?.nom || "—"} - Responsable : {m.cellule?.prenom_responsable || "—"}</p>
+                              <p>🏙  Ville : {m.ville || "—"}</p>
                               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
                               <p>❓ Besoin : {m.besoin || "—"}</p>
                               <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
@@ -431,9 +418,7 @@ export default function SuivisMembres() {
                                 onClick={() => updateSuivi(m.id)}
                                 disabled={updating[m.id]}
                                 className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-                                  updating[m.id]
-                                    ? "bg-gray-400 cursor-not-allowed"
-                                    : "bg-green-600 hover:bg-green-700"
+                                  updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
                                 }`}
                               >
                                 {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}

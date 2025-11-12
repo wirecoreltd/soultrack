@@ -321,7 +321,7 @@ export default function SuivisMembres() {
       {/* VUE TABLE */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200 relative">
-          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+          <table className="w-full text-sm text-left text-black border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
               <tr>
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>

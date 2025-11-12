@@ -241,11 +241,8 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {loading ? (
-        <p className="text-white">Chargement...</p>
-      ) : suivis.length === 0 ? (
-        <p className="text-white text-lg italic">Aucun membre en suivi pour le moment.</p>
-      ) : view === "card" ? (
+      {/* VUE CARTE */}
+      {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
           {suivis.map((item) => {
             const isOpen = detailsOpen[item.id];
@@ -260,15 +257,13 @@ export default function SuivisMembres() {
                 />
                 <div className="p-4 flex flex-col items-center">
                   <h2 className="font-bold text-black text-base text-center mb-1">
-                    {item.prenom} {item.nom}
+                    {item.prenom} {item.cellule_nom ? `(${item.cellule_nom})` : ""}
                   </h2>
-                  <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">🕊 {item.statut || "—"}</p>  
                   <p className="text-sm text-gray-700 mb-1">
-                    📋 Statut Suivis : {item.statut_suivis || "—"}
+                    📞 {item.telephone || "—"}
                   </p>
                   <p className="text-sm text-gray-700 mb-1">
-                    🏠 {item.cellule_nom || "—"} - {item.responsable || ""}
+                    📋 Statut Suivis : {item.statut_suivis || "—"}
                   </p>
 
                   <button
@@ -279,22 +274,14 @@ export default function SuivisMembres() {
                   </button>
 
                   {isOpen && (
-                    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">                     
-                      <p>🏙 Ville : {item.ville || "—"}</p>                      
+                    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+                      {/* détails internes */}
+                      <p>📌 Prénom : {item.prenom}</p>
+                      <p>📞 Téléphone : {item.telephone || "—"}</p>
+                      <p>🏙 Ville : {item.ville || "—"}</p>
+                      <p>🕊 Statut : {item.statut || "—"}</p>
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
-                      <p>
-                        ❓Besoin :{" "}
-                        {(() => {
-                          if (!item.besoin) return "—";
-                          if (Array.isArray(item.besoin)) return item.besoin.join(", ");
-                          try {
-                            const arr = JSON.parse(item.besoin);
-                            return Array.isArray(arr) ? arr.join(", ") : item.besoin;
-                          } catch {
-                            return item.besoin;
-                          }
-                        })()}
-                      </p>
+                      <p>❓Besoin : {item.besoin || "—"}</p>
                       <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
 
                       <label className="text-black text-sm">📋 Statut Suivis :</label>
@@ -303,7 +290,8 @@ export default function SuivisMembres() {
                         onChange={(e) => handleStatusChange(item.id, e.target.value)}
                         className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
                       >
-                        <option value="">-- Choisir un statut --</option>                       
+                        <option value="">-- Choisir un statut --</option>
+                        <option value="envoye">📤 Envoyé</option>
                         <option value="en attente">🕓 En attente</option>
                         <option value="integrer">✅ Intégrer</option>
                         <option value="refus">❌ Refus</option>
@@ -335,7 +323,57 @@ export default function SuivisMembres() {
             );
           })}
         </div>
-      ) : null}
+      )}
+
+      {/* VUE TABLE */}
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
+              <tr>
+                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+                <th className="px-4 py-2">Téléphone</th>
+                <th className="px-4 py-2">Statut Suivis</th>
+                <th className="px-4 py-2 rounded-tr-lg">Détails</th>
+              </tr>
+            </thead>
+            <tbody>
+              {suivis.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-2 text-white text-center">
+                    Aucun membre en suivi
+                  </td>
+                </tr>
+              ) : (
+                suivis.map((m) => (
+                  <tr
+                    key={m.id}
+                    className="hover:bg-white/10 transition duration-150 border-b border-gray-300"
+                  >
+                    <td
+                      className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
+                      style={{ borderLeftColor: getBorderColor(m) }}
+                    >
+                      {m.prenom} {m.nom}
+                      {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                    </td>
+                    <td className="px-4 py-2">{m.telephone || "—"}</td>
+                    <td className="px-4 py-2">{m.statut_suivis || "—"}</td>
+                    <td className="px-4 py-2">
+                      <button
+                        onClick={() => toggleDetails(m.id)}
+                        className="text-orange-500 underline text-sm"
+                      >
+                        {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

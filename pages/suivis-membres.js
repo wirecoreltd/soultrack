@@ -256,7 +256,7 @@ export default function SuivisMembres() {
       ) : view === "card" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
 
-        {suivis.map((item) => {
+       {suivis.map((item) => {
   const isOpen = detailsOpen[item.id];
   return (
     <div
@@ -268,7 +268,6 @@ export default function SuivisMembres() {
         style={{ backgroundColor: getBorderColor(item) }}
       />
       <div className="p-4 flex flex-col items-center">
-        {/* Affichage : prénom + cellule si disponible */}
         <h2 className="font-bold text-black text-base text-center mb-1">
           {item.prenom} {item.cellule_nom ? `(${item.cellule_nom})` : ""}
         </h2>
@@ -291,16 +290,14 @@ export default function SuivisMembres() {
             <p>🏙 Ville : {item.ville || "—"}</p>
             <p>🕊 Statut : {item.statut || "—"}</p>
             <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
-            <p>❓Besoin : {
-              (() => {
-                if (!item.besoin) return "—";
-                if (Array.isArray(item.besoin)) return item.besoin.join(", ");
-                try {
-                  const arr = JSON.parse(item.besoin);
-                  return Array.isArray(arr) ? arr.join(", ") : item.besoin;
-                } catch { return item.besoin; }
-              })()
-            }</p>
+            <p>❓Besoin : {(() => {
+              if (!item.besoin) return "—";
+              if (Array.isArray(item.besoin)) return item.besoin.join(", ");
+              try {
+                const arr = JSON.parse(item.besoin);
+                return Array.isArray(arr) ? arr.join(", ") : item.besoin;
+              } catch { return item.besoin; }
+            })()}</p>
             <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
 
             <label className="text-black text-sm">📋 Statut Suivis :</label>
@@ -341,3 +338,5 @@ export default function SuivisMembres() {
   );
 })}
 
+</div> {/* <-- fermeture de la grille */}
+</div> {/* <-- fermeture du return principal du composant */}

@@ -1,5 +1,3 @@
-// ✅ /pages/suivis-membres.js
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -110,89 +108,92 @@ export default function SuivisMembres() {
     if (m.statut_suivis === "inactif") return "#999999";
     return "#ccc";
   };
-  
+
   const updateSuivi = async (id) => {
-  setMessage(null);
-  const newStatus = statusChanges[id];
-  const newComment = commentChanges[id];
+    setMessage(null);
+    const newStatus = statusChanges[id];
+    const newComment = commentChanges[id];
 
-  if (!newStatus && !newComment) {
-    setMessage({ type: "info", text: "Aucun changement détecté." });
-    return;
-  }
+    if (!newStatus && !newComment) {
+      setMessage({ type: "info", text: "Aucun changement détecté." });
+      return;
+    }
 
-  setUpdating((prev) => ({ ...prev, [id]: true }));
+    setUpdating((prev) => ({ ...prev, [id]: true }));
 
-  try {
-    // 1️⃣ Récupération du suivi
-    const { data: suiviData, error: fetchError } = await supabase
-      .from("suivis_membres")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (fetchError || !suiviData) throw new Error("Impossible de récupérer le suivi.");
-
-    const payload = { updated_at: new Date() };
-    if (newStatus) payload.statut_suivis = newStatus;
-    if (newComment) payload.commentaire_suivis = newComment;
-
-    // 2️⃣ Si intégration et pas de cellule assignée, on prend la cellule du responsable
-    let celluleIdToUpdate = suiviData.cellule_id;
-    if (newStatus === "integrer" && !celluleIdToUpdate) {
-      const userEmail = localStorage.getItem("userEmail");
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", userEmail)
+    try {
+      const { data: suiviData, error: fetchError } = await supabase
+        .from("suivis_membres")
+        .select("*")
+        .eq("id", id)
         .single();
 
-      const { data: cellulesData } = await supabase
-        .from("cellules")
-        .select("id")
-        .eq("responsable_id", profileData.id);
+      if (fetchError || !suiviData)
+        throw new Error("Impossible de récupérer le suivi.");
 
-      if (!cellulesData || cellulesData.length === 0)
-        throw new Error("⚠️ Aucune cellule trouvée pour ce responsable.");
+      const payload = { updated_at: new Date() };
+      if (newStatus) payload.statut_suivis = newStatus;
+      if (newComment) payload.commentaire_suivis = newComment;
 
-      celluleIdToUpdate = cellulesData[0].id;
-    }
+      let celluleIdToUpdate = suiviData.cellule_id;
+      if (newStatus === "integrer" && !celluleIdToUpdate) {
+        const userEmail = localStorage.getItem("userEmail");
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("email", userEmail)
+          .single();
 
-    if (celluleIdToUpdate) payload.cellule_id = celluleIdToUpdate;
+        const { data: cellulesData } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", profileData.id);
 
-    // 3️⃣ Mise à jour du suivi (triggers SQL feront le reste)
-    const { data: updatedSuivi, error: updateError } = await supabase
-      .from("suivis_membres")
-      .update(payload)
-      .eq("id", id)
-      .select()
-      .single();
+        if (!cellulesData || cellulesData.length === 0)
+          throw new Error("⚠️ Aucune cellule trouvée pour ce responsable.");
 
-    if (updateError) throw updateError;
+        celluleIdToUpdate = cellulesData[0].id;
+      }
 
-    // 4️⃣ Mise à jour de l'affichage côté front
-    if (["integrer", "refus"].includes(updatedSuivi.statut_suivis)) {
-      setSuivis((prev) => prev.filter((it) => it.id !== id));
+      if (celluleIdToUpdate) payload.cellule_id = celluleIdToUpdate;
+
+      const { data: updatedSuivi, error: updateError } = await supabase
+        .from("suivis_membres")
+        .update(payload)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      if (["integrer", "refus"].includes(updatedSuivi.statut_suivis)) {
+        setSuivis((prev) => prev.filter((it) => it.id !== id));
+        setMessage({
+          type: "success",
+          text: `Le contact a été ${
+            updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"
+          } et retiré de la liste.`,
+        });
+      } else {
+        setSuivis((prev) =>
+          prev.map((it) => (it.id === id ? updatedSuivi : it))
+        );
+        setMessage({
+          type: "success",
+          text: "Mise à jour enregistrée avec succès.",
+        });
+      }
+    } catch (err) {
+      console.error("Exception updateSuivi:", err);
       setMessage({
-        type: "success",
-        text: `Le contact a été ${
-          updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"
-        } et retiré de la liste.`,
+        type: "error",
+        text: `Erreur durant la mise à jour : ${err.message}`,
       });
-    } else {
-      setSuivis((prev) => prev.map((it) => (it.id === id ? updatedSuivi : it)));
-      setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
+    } finally {
+      setUpdating((prev) => ({ ...prev, [id]: false }));
     }
+  };
 
-  } catch (err) {
-    console.error("Exception updateSuivi:", err);
-    setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
-  } finally {
-    setUpdating((prev) => ({ ...prev, [id]: false }));
-  }
-};
-
-  
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
@@ -252,91 +253,109 @@ export default function SuivisMembres() {
       {loading ? (
         <p className="text-white">Chargement...</p>
       ) : suivis.length === 0 ? (
-        <p className="text-white text-lg italic">Aucun membre en suivi pour le moment.</p>
+        <p className="text-white text-lg italic">
+          Aucun membre en suivi pour le moment.
+        </p>
       ) : view === "card" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
+          {suivis.map((item) => {
+            const isOpen = detailsOpen[item.id];
+            return (
+              <div
+                key={item.id}
+                className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
+              >
+                <div
+                  className="w-full h-[6px] rounded-t-2xl"
+                  style={{ backgroundColor: getBorderColor(item) }}
+                />
+                <div className="p-4 flex flex-col items-center">
+                  <h2 className="font-bold text-black text-base text-center mb-1">
+                    {item.prenom} {item.cellule_nom ? `(${item.cellule_nom})` : ""}
+                  </h2>
+                  <p className="text-sm text-gray-700 mb-1">
+                    📞 {item.telephone || "—"}
+                  </p>
+                  <p className="text-sm text-gray-700 mb-1">
+                    📋 Statut Suivis : {item.statut_suivis || "—"}
+                  </p>
 
-       {suivis.map((item) => {
-  const isOpen = detailsOpen[item.id];
-  return (
-    <div
-      key={item.id}
-      className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
-    >
-      <div
-        className="w-full h-[6px] rounded-t-2xl"
-        style={{ backgroundColor: getBorderColor(item) }}
-      />
-      <div className="p-4 flex flex-col items-center">
-        <h2 className="font-bold text-black text-base text-center mb-1">
-          {item.prenom} {item.cellule_nom ? `(${item.cellule_nom})` : ""}
-        </h2>
-        <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-        <p className="text-sm text-gray-700 mb-1">
-          📋 Statut Suivis : {item.statut_suivis || "—"}
-        </p>
+                  <button
+                    onClick={() => toggleDetails(item.id)}
+                    className="text-orange-500 underline text-sm mt-1"
+                  >
+                    {isOpen ? "Fermer détails" : "Détails"}
+                  </button>
 
-        <button
-          onClick={() => toggleDetails(item.id)}
-          className="text-orange-500 underline text-sm mt-1"
-        >
-          {isOpen ? "Fermer détails" : "Détails"}
-        </button>
+                  {isOpen && (
+                    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+                      <p>📌 Prénom : {item.prenom}</p>
+                      <p>📞 Téléphone : {item.telephone || "—"}</p>
+                      <p>🏙 Ville : {item.ville || "—"}</p>
+                      <p>🕊 Statut : {item.statut || "—"}</p>
+                      <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
+                      <p>
+                        ❓Besoin :{" "}
+                        {(() => {
+                          if (!item.besoin) return "—";
+                          if (Array.isArray(item.besoin)) return item.besoin.join(", ");
+                          try {
+                            const arr = JSON.parse(item.besoin);
+                            return Array.isArray(arr) ? arr.join(", ") : item.besoin;
+                          } catch {
+                            return item.besoin;
+                          }
+                        })()}
+                      </p>
+                      <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
 
-        {isOpen && (
-          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-            <p>📌 Prénom : {item.prenom}</p>
-            <p>📞 Téléphone : {item.telephone || "—"}</p>
-            <p>🏙 Ville : {item.ville || "—"}</p>
-            <p>🕊 Statut : {item.statut || "—"}</p>
-            <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
-            <p>❓Besoin : {(() => {
-              if (!item.besoin) return "—";
-              if (Array.isArray(item.besoin)) return item.besoin.join(", ");
-              try {
-                const arr = JSON.parse(item.besoin);
-                return Array.isArray(arr) ? arr.join(", ") : item.besoin;
-              } catch { return item.besoin; }
-            })()}</p>
-            <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
+                      <label className="text-black text-sm">
+                        📋 Statut Suivis :
+                      </label>
+                      <select
+                        value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
+                        onChange={(e) =>
+                          handleStatusChange(item.id, e.target.value)
+                        }
+                        className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+                      >
+                        <option value="">-- Choisir un statut --</option>
+                        <option value="integrer">✅ Intégrer</option>
+                        <option value="en attente">🕓 En attente</option>
+                        <option value="refus">❌ Refus</option>
+                      </select>
 
-            <label className="text-black text-sm">📋 Statut Suivis :</label>
-            <select
-              value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
-              onChange={(e) => handleStatusChange(item.id, e.target.value)}
-              className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
-            >
-              <option value="">-- Choisir un statut --</option>
-              <option value="integrer">✅ Intégrer</option>
-              <option value="en attente">🕓 En attente</option>
-              <option value="refus">❌ Refus</option>
-            </select>
+                      <label className="text-black text-sm mt-2">
+                        📝 Commentaire :
+                      </label>
+                      <textarea
+                        value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
+                        onChange={(e) =>
+                          handleCommentChange(item.id, e.target.value)
+                        }
+                        rows={2}
+                        className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
+                      />
 
-            <label className="text-black text-sm mt-2">📝 Commentaire :</label>
-            <textarea
-              value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
-              onChange={(e) => handleCommentChange(item.id, e.target.value)}
-              rows={2}
-              className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
-            />
-
-            <button
-              onClick={() => updateSuivi(item.id)}
-              disabled={updating[item.id]}
-              className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-                updating[item.id]
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-green-600 hover:bg-green-700"
-              }`}
-            >
-              {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
-            </button>
-          </div>
-        )}
-      </div>
+                      <button
+                        onClick={() => updateSuivi(item.id)}
+                        disabled={updating[item.id]}
+                        className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+                          updating[item.id]
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-green-600 hover:bg-green-700"
+                        }`}
+                      >
+                        {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
-})}
-
-</div> {/* <-- fermeture de la grille */}
-</div> {/* <-- fermeture du return principal du composant */}
+}

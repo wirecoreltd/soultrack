@@ -387,8 +387,7 @@ export default function SuivisMembres() {
                               </h2>
                               <p>📞 {m.telephone || "—"}</p>
                               <p>👤 Statut : {m.statut || "—"}</p>  
-                              <p>📋 Statut Suivis : {m.statut_suivis || "—"}</p>                              
-                              <p>🏠 {m.cellule?.nom || "—"} - Responsable : {=m.cellule?.prenom_responsable || "—"}</p>
+                              <p>📋 Statut Suivis : {m.statut_suivis || "—"}</p>                          
                               <p>🏙  Ville : {m.ville || "—"}</p>
                               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
                               <p>❓ Besoin : {m.besoin || "—"}</p>

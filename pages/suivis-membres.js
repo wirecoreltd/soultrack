@@ -260,7 +260,7 @@ export default function SuivisMembres() {
                   <p className="text-sm text-gray-700 mb-1">👤 Statut : {item.statut || "—"}</p>  
                   <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>                  
                   <p className="text-sm text-gray-700 mb-1">
-                    🏠 {item.cellule?.nom || "—"} - Responsable : {item.cellule?.prenom_responsable || "—"}
+                    🏠 {m.cellule?.[0]?.nom || "—"} - Responsable : {m.cellule?.[0]?.prenom_responsable || "—"}
                   </p>
 
                   <button

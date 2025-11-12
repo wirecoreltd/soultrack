@@ -108,91 +108,88 @@ export default function SuivisMembres() {
     if (m.statut_suivis === "inactif") return "#999999";
     return "#ccc";
   };
-
-  const updateSuivi = async (id) => {
-    setMessage(null);
-    const newStatus = statusChanges[id];
-    const newComment = commentChanges[id];
-
-    if (!newStatus && !newComment) {
-      setMessage({ type: "info", text: "Aucun changement détecté." });
-      return;
-    }
-
-    setUpdating((prev) => ({ ...prev, [id]: true }));
-
-    try {
-      const { data: suiviData, error: fetchError } = await supabase
-        .from("suivis_membres")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (fetchError || !suiviData)
-        throw new Error("Impossible de récupérer le suivi.");
-
-      const payload = { updated_at: new Date() };
-      if (newStatus) payload.statut_suivis = newStatus;
-      if (newComment) payload.commentaire_suivis = newComment;
-
-      let celluleIdToUpdate = suiviData.cellule_id;
-      if (newStatus === "integrer" && !celluleIdToUpdate) {
-        const userEmail = localStorage.getItem("userEmail");
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("email", userEmail)
+    
+      const updateSuivi = async (id) => {
+      setMessage(null);
+      const newStatus = statusChanges[id];
+      const newComment = commentChanges[id];
+    
+      if (!newStatus && !newComment) {
+        setMessage({ type: "info", text: "Aucun changement détecté." });
+        return;
+      }
+    
+      setUpdating((prev) => ({ ...prev, [id]: true }));
+    
+      try {
+        // Récupération du suivi
+        const { data: suiviData, error: fetchError } = await supabase
+          .from("suivis_membres")
+          .select("*")
+          .eq("id", id)
           .single();
-
-        const { data: cellulesData } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("responsable_id", profileData.id);
-
-        if (!cellulesData || cellulesData.length === 0)
-          throw new Error("⚠️ Aucune cellule trouvée pour ce responsable.");
-
-        celluleIdToUpdate = cellulesData[0].id;
+    
+        if (fetchError || !suiviData) throw new Error("Impossible de récupérer le suivi.");
+    
+        const payload = { updated_at: new Date() };
+        if (newStatus) payload.statut_suivis = newStatus; // envoie le libellé
+        if (newComment) payload.commentaire_suivis = newComment;
+    
+        // Si intégration et pas de cellule assignée
+        let celluleIdToUpdate = suiviData.cellule_id;
+        if (newStatus === "integrer" && !celluleIdToUpdate) {
+          const userEmail = localStorage.getItem("userEmail");
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("email", userEmail)
+            .single();
+    
+          const { data: cellulesData } = await supabase
+            .from("cellules")
+            .select("id")
+            .eq("responsable_id", profileData.id);
+    
+          if (!cellulesData || cellulesData.length === 0)
+            throw new Error("⚠️ Aucune cellule trouvée pour ce responsable.");
+    
+          celluleIdToUpdate = cellulesData[0].id;
+        }
+    
+        if (celluleIdToUpdate) payload.cellule_id = celluleIdToUpdate;
+    
+        // Mise à jour du suivi
+        const { data: updatedSuivi, error: updateError } = await supabase
+          .from("suivis_membres")
+          .update(payload)
+          .eq("id", id)
+          .select()
+          .single();
+    
+        if (updateError) throw updateError;
+    
+        // Mise à jour front
+        if (["integrer", "refus"].includes(updatedSuivi.statut_suivis)) {
+          setSuivis((prev) => prev.filter((it) => it.id !== id));
+          setMessage({
+            type: "success",
+            text: `Le contact a été ${
+              updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"
+            } et retiré de la liste.`,
+          });
+        } else {
+          setSuivis((prev) => prev.map((it) => (it.id === id ? updatedSuivi : it)));
+          setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
+        }
+    
+      } catch (err) {
+        console.error("Exception updateSuivi:", err);
+        setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
+      } finally {
+        setUpdating((prev) => ({ ...prev, [id]: false }));
       }
+};
 
-      if (celluleIdToUpdate) payload.cellule_id = celluleIdToUpdate;
-
-      const { data: updatedSuivi, error: updateError } = await supabase
-        .from("suivis_membres")
-        .update(payload)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
-
-      if (["integrer", "refus"].includes(updatedSuivi.statut_suivis)) {
-        setSuivis((prev) => prev.filter((it) => it.id !== id));
-        setMessage({
-          type: "success",
-          text: `Le contact a été ${
-            updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"
-          } et retiré de la liste.`,
-        });
-      } else {
-        setSuivis((prev) =>
-          prev.map((it) => (it.id === id ? updatedSuivi : it))
-        );
-        setMessage({
-          type: "success",
-          text: "Mise à jour enregistrée avec succès.",
-        });
-      }
-    } catch (err) {
-      console.error("Exception updateSuivi:", err);
-      setMessage({
-        type: "error",
-        text: `Erreur durant la mise à jour : ${err.message}`,
-      });
-    } finally {
-      setUpdating((prev) => ({ ...prev, [id]: false }));
-    }
-  };
 
   return (
     <div
@@ -309,21 +306,19 @@ export default function SuivisMembres() {
                       </p>
                       <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
 
-                      <label className="text-black text-sm">
-                        📋 Statut Suivis :
-                      </label>
+                     <label className="text-black text-sm">📋 Statut Suivis :</label>
                       <select
                         value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
-                        onChange={(e) =>
-                          handleStatusChange(item.id, e.target.value)
-                        }
+                        onChange={(e) => handleStatusChange(item.id, e.target.value)}
                         className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
                       >
                         <option value="">-- Choisir un statut --</option>
-                        <option value="integrer">✅ Intégrer</option>
+                        <option value="envoye">📤 Envoyé</option>
                         <option value="en attente">🕓 En attente</option>
+                        <option value="integrer">✅ Intégrer</option>
                         <option value="refus">❌ Refus</option>
                       </select>
+
 
                       <label className="text-black text-sm mt-2">
                         📝 Commentaire :

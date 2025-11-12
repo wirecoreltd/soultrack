@@ -383,7 +383,7 @@ export default function SuivisMembres() {
                               </button>
 
                               <h2 className="font-bold text-black text-base text-center mb-1">
-                              {item.prenom} {item.nom}
+                              {m.prenom} {m.nom}
                               </h2>
                               <p>📞 {m.telephone || "—"}</p>
                               <p>👤 Statut : {m.statut || "—"}</p>  

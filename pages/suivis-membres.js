@@ -1,7 +1,7 @@
 "use client";
 
+import React from "react"; // <-- nécessaire pour React.Fragment
 import { useEffect, useState } from "react";
-import React from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
@@ -46,6 +46,7 @@ export default function SuivisMembres() {
             .from("suivis_membres")
             .select("*")
             .order("created_at", { ascending: false });
+
           if (error) throw error;
           suivisData = data;
         } else if (userRole.includes("ResponsableCellule")) {
@@ -53,6 +54,7 @@ export default function SuivisMembres() {
             .from("cellules")
             .select("id")
             .eq("responsable_id", responsableId);
+
           if (cellulesError) throw cellulesError;
 
           if (!cellulesData || cellulesData.length === 0) {
@@ -69,6 +71,7 @@ export default function SuivisMembres() {
             .select("*")
             .in("cellule_id", celluleIds)
             .order("created_at", { ascending: false });
+
           if (error) throw error;
           suivisData = data;
 
@@ -183,49 +186,6 @@ export default function SuivisMembres() {
     }
   };
 
-  // Component pour afficher les détails (popup ou section)
-  const Details = ({ m }) => (
-    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-      <p>📌 Prénom : {m.prenom}</p>
-      <p>📞 Téléphone : {m.telephone || "—"}</p>
-      <p>🏙 Ville : {m.ville || "—"}</p>
-      <p>🕊 Statut : {m.statut || "—"}</p>
-      <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-      <p>❓ Besoin : {m.besoin || "—"}</p>
-      <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-
-      <label className="text-black text-sm">📋 Statut Suivis :</label>
-      <select
-        value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
-        onChange={(e) => handleStatusChange(m.id, e.target.value)}
-        className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
-      >
-        <option value="">-- Choisir un statut --</option>
-        <option value="en attente">🕓 En attente</option>
-        <option value="integrer">✅ Intégrer</option>
-        <option value="refus">❌ Refus</option>
-      </select>
-
-      <label className="text-black text-sm mt-2">📝 Commentaire :</label>
-      <textarea
-        value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
-        onChange={(e) => handleCommentChange(m.id, e.target.value)}
-        rows={2}
-        className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
-      />
-
-      <button
-        onClick={() => updateSuivi(m.id)}
-        disabled={updating[m.id]}
-        className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-          updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
-        }`}
-      >
-        {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
-      </button>
-    </div>
-  );
-
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
@@ -288,35 +248,86 @@ export default function SuivisMembres() {
       {/* VUE CARTE */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
-          {suivis.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
-            >
+          {suivis.map((item) => {
+            const isOpen = detailsOpen[item.id];
+            return (
               <div
-                className="w-full h-[6px] rounded-t-2xl"
-                style={{ backgroundColor: getBorderColor(item) }}
-              />
-              <div className="p-4 flex flex-col items-center">
-                <h2 className="font-bold text-black text-base text-center mb-1">
-                  {item.prenom} {item.cellule_nom ? `(${item.cellule_nom})` : ""}
-                </h2>
-                <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">
-                  📋 Statut Suivis : {item.statut_suivis || "—"}
-                </p>
+                key={item.id}
+                className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
+              >
+                <div
+                  className="w-full h-[6px] rounded-t-2xl"
+                  style={{ backgroundColor: getBorderColor(item) }}
+                />
+                <div className="p-4 flex flex-col items-center">
+                  <h2 className="font-bold text-black text-base text-center mb-1">
+                    {item.prenom} {item.nom}
+                  </h2>
+                  <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
+                  <p className="text-sm text-gray-700 mb-1">
+                    📋 Statut Suivis : {item.statut_suivis || "—"}
+                  </p>
+                  <p className="text-sm text-gray-700 mb-1">
+                    🕊 Statut Membres : {item.statut || "—"}
+                  </p>
+                  <p className="text-sm text-gray-700 mb-1">
+                    🏢 Cellule - Responsable : {item.cellule_nom || "—"} - {item.responsable_prenom || "—"}
+                  </p>
 
-                <button
-                  onClick={() => toggleDetails(item.id)}
-                  className="text-orange-500 underline text-sm mt-1"
-                >
-                  {detailsOpen[item.id] ? "Fermer détails" : "Détails"}
-                </button>
+                  <button
+                    onClick={() => toggleDetails(item.id)}
+                    className="text-orange-500 underline text-sm mt-1"
+                  >
+                    {isOpen ? "Fermer détails" : "Détails"}
+                  </button>
 
-                {detailsOpen[item.id] && <Details m={item} />}
+                  {isOpen && (
+                    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+                      <p>📌 Prénom : {item.prenom}</p>
+                      <p>📞 Téléphone : {item.telephone || "—"}</p>
+                      <p>🏙 Ville : {item.ville || "—"}</p>
+                      <p>🕊 Statut : {item.statut || "—"}</p>
+                      <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
+                      <p>❓ Besoin : {item.besoin || "—"}</p>
+                      <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
+
+                      <label className="text-black text-sm">📋 Statut Suivis :</label>
+                      <select
+                        value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
+                        onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                        className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+                      >
+                        <option value="">-- Choisir un statut --</option>
+                        <option value="en attente">🕓 En attente</option>
+                        <option value="integrer">✅ Intégrer</option>
+                        <option value="refus">❌ Refus</option>
+                      </select>
+
+                      <label className="text-black text-sm mt-2">📝 Commentaire :</label>
+                      <textarea
+                        value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
+                        onChange={(e) => handleCommentChange(item.id, e.target.value)}
+                        rows={2}
+                        className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
+                      />
+
+                      <button
+                        onClick={() => updateSuivi(item.id)}
+                        disabled={updating[item.id]}
+                        className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+                          updating[item.id]
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-green-600 hover:bg-green-700"
+                        }`}
+                      >
+                        {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -329,13 +340,15 @@ export default function SuivisMembres() {
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
                 <th className="px-4 py-2">Statut Suivis</th>
+                <th className="px-4 py-2">Statut Membres</th>
+                <th className="px-4 py-2">Cellule - Responsable</th>
                 <th className="px-4 py-2 rounded-tr-lg">Détails</th>
               </tr>
             </thead>
             <tbody>
               {suivis.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-2 text-white text-center">
+                  <td colSpan={6} className="px-4 py-2 text-white text-center">
                     Aucun membre en suivi
                   </td>
                 </tr>
@@ -352,6 +365,8 @@ export default function SuivisMembres() {
                       </td>
                       <td className="px-4 py-2">{m.telephone || "—"}</td>
                       <td className="px-4 py-2">{m.statut_suivis || "—"}</td>
+                      <td className="px-4 py-2">{m.statut || "—"}</td>
+                      <td className="px-4 py-2">{m.cellule_nom || "—"} - {m.responsable_prenom || "—"}</td>
                       <td className="px-4 py-2">
                         <button
                           onClick={() =>
@@ -366,7 +381,7 @@ export default function SuivisMembres() {
 
                     {detailsOpen[m.id] && (
                       <tr>
-                        <td colSpan={4}>
+                        <td colSpan={6}>
                           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                             <div className="bg-white rounded-2xl p-6 w-full max-w-md relative">
                               <button
@@ -377,16 +392,47 @@ export default function SuivisMembres() {
                               >
                                 ✖
                               </button>
-                              <h2 className="font-bold text-black text-base text-center mb-1">
-                                {m.prenom} {m.cellule_nom ? `(${m.cellule_nom})` : ""}
-                              </h2>
-                              <p className="text-sm text-gray-700 mb-1">
-                                📞 {m.telephone || "—"}
-                              </p>
-                              <p className="text-sm text-gray-700 mb-1">
-                                📋 Statut Suivis : {m.statut_suivis || "—"}
-                              </p>
-                              <Details m={m} />
+
+                              {/* Détails identiques à vue carte */}
+                              <p>📌 Prénom : {m.prenom}</p>
+                              <p>📞 Téléphone : {m.telephone || "—"}</p>
+                              <p>🏙 Ville : {m.ville || "—"}</p>
+                              <p>🕊 Statut : {m.statut || "—"}</p>
+                              <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+                              <p>❓ Besoin : {m.besoin || "—"}</p>
+                              <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+
+                              <label className="text-black text-sm">📋 Statut Suivis :</label>
+                              <select
+                                value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
+                                onChange={(e) => handleStatusChange(m.id, e.target.value)}
+                                className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+                              >
+                                <option value="">-- Choisir un statut --</option>
+                                <option value="en attente">🕓 En attente</option>
+                                <option value="integrer">✅ Intégrer</option>
+                                <option value="refus">❌ Refus</option>
+                              </select>
+
+                              <label className="text-black text-sm mt-2">📝 Commentaire :</label>
+                              <textarea
+                                value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
+                                onChange={(e) => handleCommentChange(m.id, e.target.value)}
+                                rows={2}
+                                className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
+                              />
+
+                              <button
+                                onClick={() => updateSuivi(m.id)}
+                                disabled={updating[m.id]}
+                                className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+                                  updating[m.id]
+                                    ? "bg-gray-400 cursor-not-allowed"
+                                    : "bg-green-600 hover:bg-green-700"
+                                }`}
+                              >
+                                {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
+                              </button>
                             </div>
                           </div>
                         </td>

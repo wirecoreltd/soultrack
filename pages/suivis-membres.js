@@ -263,11 +263,12 @@ export default function SuivisMembres() {
                     {item.prenom} {item.nom}
                   </h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
+                  <p className="text-sm text-gray-700 mb-1">🕊 {item.statut || "—"}</p>  
                   <p className="text-sm text-gray-700 mb-1">
                     📋 Statut Suivis : {item.statut_suivis || "—"}
                   </p>
                   <p className="text-sm text-gray-700 mb-1">
-                    🏠 Cellule - Responsable : {item.cellule_nom || "—"} {item.responsable || ""}
+                    🏠 {item.cellule_nom || "—"} - {item.responsable || ""}
                   </p>
 
                   <button
@@ -279,8 +280,7 @@ export default function SuivisMembres() {
 
                   {isOpen && (
                     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">                     
-                      <p>🏙 Ville : {item.ville || "—"}</p>
-                      <p>🕊 Statut : {item.statut || "—"}</p>
+                      <p>🏙 Ville : {item.ville || "—"}</p>                      
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
                       <p>
                         ❓Besoin :{" "}

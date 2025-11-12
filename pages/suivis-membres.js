@@ -98,7 +98,6 @@ export default function SuivisMembres() {
   const handleCommentChange = (id, value) =>
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
-  // Nouvelle fonction pour couleurs selon statut_suivis
   const getBorderColor = (m) => {
     if (m.statut_suivis === "refus") return "#EA4335";        // rouge
     if (m.statut_suivis === "integrer") return "#FFA500";    // orange
@@ -165,7 +164,9 @@ export default function SuivisMembres() {
         setSuivis((prev) => prev.filter((it) => it.id !== id));
         setMessage({
           type: "success",
-          text: `Le contact a été ${updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"} et retiré de la liste.`,
+          text: `Le contact a été ${
+            updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"
+          } et retiré de la liste.`,
         });
       } else {
         setSuivis((prev) => prev.map((it) => (it.id === id ? updatedSuivi : it)));
@@ -257,8 +258,8 @@ export default function SuivisMembres() {
                     {item.prenom} {item.nom}
                   </h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">👤 Statut : {item.statut || "—"}</p>  
-                  <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>                  
+                  <p className="text-sm text-gray-700 mb-1">👤 Statut : {item.statut || "—"}</p>
+                  <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">
                     🏠 {item.cellule?.[0]?.nom || "—"} - Responsable : {item.cellule?.[0]?.prenom_responsable || "—"}
                   </p>
@@ -272,6 +273,7 @@ export default function SuivisMembres() {
 
                   {isOpen && (
                     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+                      {/* détails internes */}
                       <p>📌 Prénom : {item.prenom}</p>
                       <p>📞 Téléphone : {item.telephone || "—"}</p>
                       <p>🏙  Ville : {item.ville || "—"}</p>
@@ -279,6 +281,7 @@ export default function SuivisMembres() {
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
                       <p>❓ Besoin : {item.besoin || "—"}</p>
                       <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
+                      <p>🏠 Cellule : {item.cellule?.[0]?.nom || "—"} - Responsable : {item.cellule?.[0]?.prenom_responsable || "—"}</p>
 
                       <label className="text-black text-sm">📋 Statut Suivis :</label>
                       <select
@@ -383,11 +386,12 @@ export default function SuivisMembres() {
                               </button>
 
                               <h2 className="font-bold text-black text-base text-center mb-1">
-                              {m.prenom} {m.nom}
+                                {m.prenom} {m.nom}
                               </h2>
                               <p>📞 {m.telephone || "—"}</p>
-                              <p>👤 Statut : {m.statut || "—"}</p>  
-                              <p>📋 Statut Suivis : {m.statut_suivis || "—"}</p>                          
+                              <p>👤 Statut : {m.statut || "—"}</p>
+                              <p>📋 Statut Suivis : {m.statut_suivis || "—"}</p>
+                              <p>🏠 Cellule : {m.cellule?.[0]?.nom || "—"} - Responsable : {m.cellule?.[0]?.prenom_responsable || "—"}</p>
                               <p>🏙  Ville : {m.ville || "—"}</p>
                               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
                               <p>❓ Besoin : {m.besoin || "—"}</p>

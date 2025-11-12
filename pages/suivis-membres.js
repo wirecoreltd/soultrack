@@ -109,7 +109,6 @@ export default function SuivisMembres() {
     if (m.statut_suivis === "inactif") return "#999999";
     return "#ccc";
   };
-
   const updateSuivi = async (id) => {
   setMessage(null);
   const newStatus = statusChanges[id];
@@ -123,13 +122,13 @@ export default function SuivisMembres() {
   setUpdating((prev) => ({ ...prev, [id]: true }));
 
   try {
-    // 🔹 1️⃣ Préparer payload pour suivis_membres
+    // 1️⃣ Préparer le payload pour suivis_membres
     const payload = {};
     if (newStatus) payload["statut_suivis"] = newStatus;
     if (newComment) payload["commentaire_suivis"] = newComment;
     payload["updated_at"] = new Date();
 
-    // 🔹 2️⃣ Si intégration, récupérer cellule du responsable
+    // 🔹 Rattachement cellule automatique si intégration
     let celluleId = null;
     if (newStatus === "integrer") {
       const userEmail = localStorage.getItem("userEmail");
@@ -158,10 +157,10 @@ export default function SuivisMembres() {
       }
 
       celluleId = cellulesData[0].id;
-      payload["cellule_id"] = celluleId;
+      payload["cellule_id"] = celluleId; // mettre à jour suivis_membres
     }
 
-    // 🔹 3️⃣ Mettre à jour le suivi
+    // 2️⃣ Mettre à jour suivis_membres
     const { data: updatedData, error: updateError } = await supabase
       .from("suivis_membres")
       .update(payload)
@@ -176,36 +175,36 @@ export default function SuivisMembres() {
       return;
     }
 
-    // 🔹 4️⃣ Si le suivi est intégré ou refusé, mettre à jour la table membres
-    if (updatedData && updatedData.membre_id) {
-     
+    // 3️⃣ Mettre à jour la table membres uniquement si statut = integrer
+    if (newStatus === "integrer" && updatedData.membre_id) {
+      const membreUpdate = {};
+      if (updatedData.statut_suivis) membreUpdate.statut_suivis = updatedData.statut_suivis;
+      if (celluleId) membreUpdate.cellule_id = celluleId;
+
+      const { error: membreError } = await supabase
+        .from("membres")
+        .update(membreUpdate)
+        .eq("id", updatedData.membre_id);
+
+      if (membreError) {
+        console.error("Erreur update membre :", membreError);
+        setMessage({ type: "error", text: `Erreur mise à jour membre : ${membreError.message}` });
+        setUpdating((prev) => ({ ...prev, [id]: false }));
+        return;
+      }
     }
 
-    // 🔹 5️⃣ Mettre à jour l'affichage
+    // 4️⃣ Mettre à jour l'UI
     if (["integrer", "refus"].includes(updatedData.statut_suivis)) {
       setSuivis((prev) => prev.filter((it) => it.id !== id));
       setMessage({
         type: "success",
         text: `Le contact a été ${updatedData.statut_suivis === "integrer" ? "intégré" : "refusé"} et retiré de la liste.`,
       });
-    } else {const membreUpdate = {};
-if (newStatus === "integrer") {
-  membreUpdate.statut_suivis = updatedData.statut_suivis; // integer, id du statut
-  if (celluleId) membreUpdate.cellule_id = celluleId;
-}
-
-// Mettre à jour seulement ces colonnes
-await supabase
-  .from("membres")
-  .update(membreUpdate)
-  .eq("id", updatedData.membre_id);
-
-      setSuivis((prev) =>
-        prev.map((it) => (it.id === id ? updatedData : it))
-      );
+    } else {
+      setSuivis((prev) => prev.map((it) => (it.id === id ? updatedData : it)));
       setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
     }
-
   } catch (err) {
     console.error("Exception updateSuivi:", err);
     setMessage({ type: "error", text: `Exception durant la mise à jour : ${err.message}` });
@@ -213,7 +212,6 @@ await supabase
     setUpdating((prev) => ({ ...prev, [id]: false }));
   }
 };
-
 
   return (
     <div

@@ -255,94 +255,89 @@ export default function SuivisMembres() {
         <p className="text-white text-lg italic">Aucun membre en suivi pour le moment.</p>
       ) : view === "card" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
-          {suivis.map((item) => {
-            const isOpen = detailsOpen[item.id];
-            return (
-              <div
-                key={item.id}
-                className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
-              >
-                <div
-                  className="w-full h-[6px] rounded-t-2xl"
-                  style={{ backgroundColor: getBorderColor(item) }}
-                />
-                <div className="p-4 flex flex-col items-center">
-                  <h2 className="font-bold text-black text-base text-center mb-1">
-                    {item.prenom} {item.nom}
-                  </h2>
-                  <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">🏠 Cellule : {item.cellule_nom || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">
-                    📋 Statut Suivis : {item.statut_suivis || "—"}
-                  </p>
 
-                  <button
-                    onClick={() => toggleDetails(item.id)}
-                    className="text-orange-500 underline text-sm mt-1"
-                  >
-                    {isOpen ? "Fermer détails" : "Détails"}
-                  </button>
+        {suivis.map((item) => {
+  const isOpen = detailsOpen[item.id];
+  return (
+    <div
+      key={item.id}
+      className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
+    >
+      <div
+        className="w-full h-[6px] rounded-t-2xl"
+        style={{ backgroundColor: getBorderColor(item) }}
+      />
+      <div className="p-4 flex flex-col items-center">
+        {/* Affichage : prénom + cellule si disponible */}
+        <h2 className="font-bold text-black text-base text-center mb-1">
+          {item.prenom} {item.cellule_nom ? `(${item.cellule_nom})` : ""}
+        </h2>
+        <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
+        <p className="text-sm text-gray-700 mb-1">
+          📋 Statut Suivis : {item.statut_suivis || "—"}
+        </p>
 
-                  {isOpen && (
-                    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                      <p>📌 Prénom Nom : {item.prenom} {item.nom}</p>
-                      <p>📞 Téléphone : {item.telephone || "—"}</p>
-                      <p>🏙 Ville : {item.ville || "—"}</p>
-                      <p>🕊 Statut : {item.statut || "—"}</p>
-                      <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
-                      <p>❓Besoin : {
-                        (() => {
-                          if (!item.besoin) return "—";
-                          if (Array.isArray(item.besoin)) return item.besoin.join(", ");
-                          try {
-                            const arr = JSON.parse(item.besoin);
-                            return Array.isArray(arr) ? arr.join(", ") : item.besoin;
-                          } catch { return item.besoin; }
-                        })()
-                      }</p>
-                      <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
+        <button
+          onClick={() => toggleDetails(item.id)}
+          className="text-orange-500 underline text-sm mt-1"
+        >
+          {isOpen ? "Fermer détails" : "Détails"}
+        </button>
 
-                      <label className="text-black text-sm">📋 Statut Suivis :</label>
-                      <select
-                        value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
-                        onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                        className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
-                      >
-                        <option value="">-- Choisir un statut --</option>
-                        <option value="integrer">✅ Intégrer</option>
-                        <option value="en attente">🕓 En attente</option>
-                        <option value="refus">❌ Refus</option>
-                      </select>
+        {isOpen && (
+          <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+            <p>📌 Prénom : {item.prenom}</p>
+            <p>📞 Téléphone : {item.telephone || "—"}</p>
+            <p>🏙 Ville : {item.ville || "—"}</p>
+            <p>🕊 Statut : {item.statut || "—"}</p>
+            <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
+            <p>❓Besoin : {
+              (() => {
+                if (!item.besoin) return "—";
+                if (Array.isArray(item.besoin)) return item.besoin.join(", ");
+                try {
+                  const arr = JSON.parse(item.besoin);
+                  return Array.isArray(arr) ? arr.join(", ") : item.besoin;
+                } catch { return item.besoin; }
+              })()
+            }</p>
+            <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
 
-                      <label className="text-black text-sm mt-2">📝 Commentaire :</label>
-                      <textarea
-                        value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
-                        onChange={(e) => handleCommentChange(item.id, e.target.value)}
-                        rows={2}
-                        className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
-                      />
+            <label className="text-black text-sm">📋 Statut Suivis :</label>
+            <select
+              value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
+              onChange={(e) => handleStatusChange(item.id, e.target.value)}
+              className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+            >
+              <option value="">-- Choisir un statut --</option>
+              <option value="integrer">✅ Intégrer</option>
+              <option value="en attente">🕓 En attente</option>
+              <option value="refus">❌ Refus</option>
+            </select>
 
-                      <button
-                        onClick={() => updateSuivi(item.id)}
-                        disabled={updating[item.id]}
-                        className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-                          updating[item.id]
-                            ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-green-600 hover:bg-green-700"
-                        }`}
-                      >
-                        {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <p className="text-white">Vue table en préparation...</p>
-      )}
+            <label className="text-black text-sm mt-2">📝 Commentaire :</label>
+            <textarea
+              value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
+              onChange={(e) => handleCommentChange(item.id, e.target.value)}
+              rows={2}
+              className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
+            />
+
+            <button
+              onClick={() => updateSuivi(item.id)}
+              disabled={updating[item.id]}
+              className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+                updating[item.id]
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-700"
+              }`}
+            >
+              {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
-}
+})}
+

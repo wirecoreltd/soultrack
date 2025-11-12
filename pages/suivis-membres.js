@@ -126,20 +126,19 @@ export default function SuivisMembres() {
     // 1️⃣ Récupérer le suivi existant
     const { data: suiviData, error: fetchError } = await supabase
       .from("suivis_membres")
-      .select("id, membre_id")
+      .select("id, membre_id, cellule_id, statut_suivis")
       .eq("id", id)
       .single();
 
     if (fetchError || !suiviData) throw new Error("Impossible de récupérer le suivi.");
 
-    // 2️⃣ Préparer le payload minimal
     const payload = { updated_at: new Date() };
     if (newStatus) payload.statut_suivis = newStatus;
     if (newComment) payload.commentaire_suivis = newComment;
 
     let celluleIdToUpdate = null;
 
-    // 3️⃣ Si intégration, récupérer la cellule du responsable
+    // 2️⃣ Si le statut est "integrer", récupérer la cellule du responsable
     if (newStatus === "integrer") {
       const userEmail = localStorage.getItem("userEmail");
       const { data: profileData, error: profileError } = await supabase
@@ -162,17 +161,17 @@ export default function SuivisMembres() {
       payload.cellule_id = celluleIdToUpdate;
     }
 
-    // 4️⃣ Mise à jour dans suivis_membres
+    // 3️⃣ Mise à jour dans suivis_membres (uniquement colonnes nécessaires)
     const { data: updatedSuivi, error: updateError } = await supabase
       .from("suivis_membres")
       .update(payload)
       .eq("id", id)
-      .select()
+      .select("id, statut_suivis, cellule_id, commentaire_suivis")
       .single();
 
     if (updateError) throw updateError;
 
-    // 5️⃣ Mise à jour synchronisée dans membres
+    // 4️⃣ Mettre à jour la table membres si membre_id existe
     if (suiviData.membre_id) {
       const membrePayload = {};
       if (newStatus) membrePayload.statut_suivis = newStatus;
@@ -186,7 +185,7 @@ export default function SuivisMembres() {
       if (membreError) console.error("Erreur update membre :", membreError);
     }
 
-    // 6️⃣ Mise à jour de l'affichage
+    // 5️⃣ Mise à jour de l'affichage
     if (["integrer", "refus"].includes(updatedSuivi.statut_suivis)) {
       setSuivis((prev) => prev.filter((it) => it.id !== id));
       setMessage({
@@ -197,7 +196,6 @@ export default function SuivisMembres() {
       setSuivis((prev) => prev.map((it) => (it.id === id ? updatedSuivi : it)));
       setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
     }
-
   } catch (err) {
     console.error("Exception updateSuivi:", err);
     setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
@@ -205,6 +203,7 @@ export default function SuivisMembres() {
     setUpdating((prev) => ({ ...prev, [id]: false }));
   }
 };
+
 
   return (
     <div

@@ -110,8 +110,8 @@ export default function SuivisMembres() {
     if (m.statut_suivis === "inactif") return "#999999";
     return "#ccc";
   };
-
-   const updateSuivi = async (id) => {
+  
+  const updateSuivi = async (id) => {
   setMessage(null);
   const newStatus = statusChanges[id];
   const newComment = commentChanges[id];
@@ -124,23 +124,22 @@ export default function SuivisMembres() {
   setUpdating((prev) => ({ ...prev, [id]: true }));
 
   try {
-    // 1️⃣ Récupérer le suivi existant
+    // 1️⃣ Récupération du suivi existant
     const { data: suiviData, error: fetchError } = await supabase
       .from("suivis_membres")
-      .select("*")
+      .select("id, membre_id")
       .eq("id", id)
       .single();
 
     if (fetchError || !suiviData) throw new Error("Impossible de récupérer le suivi.");
 
     const payload = { updated_at: new Date() };
-
     if (newStatus) payload.statut_suivis = newStatus;
     if (newComment) payload.commentaire_suivis = newComment;
 
     let celluleIdToUpdate = null;
 
-    // 2️⃣ Si le statut est "integrer", récupérer la cellule du responsable (si elle existe)
+    // 2️⃣ Si intégration, récupérer cellule du responsable
     if (newStatus === "integrer") {
       const userEmail = localStorage.getItem("userEmail");
       const { data: profileData, error: profileError } = await supabase
@@ -151,21 +150,19 @@ export default function SuivisMembres() {
 
       if (profileError || !profileData) throw new Error("Impossible de récupérer le profil du responsable.");
 
-      const { data: cellulesData } = await supabase
+      const { data: cellulesData, error: celluleError } = await supabase
         .from("cellules")
         .select("id")
         .eq("responsable_id", profileData.id);
 
-      if (cellulesData && cellulesData.length > 0) {
-        celluleIdToUpdate = cellulesData[0].id;
-        payload.cellule_id = celluleIdToUpdate;
-      } else {
-        // Aucun cellule → on laisse cellule_id null
-        console.warn("⚠️ Aucun cellule trouvée pour le responsable, membre intégré sans cellule.");
-      }
+      if (celluleError) throw celluleError;
+      if (!cellulesData || cellulesData.length === 0) throw new Error("⚠️ Aucune cellule trouvée pour ce responsable.");
+
+      celluleIdToUpdate = cellulesData[0].id;
+      payload.cellule_id = celluleIdToUpdate;
     }
 
-    // 3️⃣ Mettre à jour suivis_membres
+    // 3️⃣ Mise à jour du suivi
     const { data: updatedSuivi, error: updateError } = await supabase
       .from("suivis_membres")
       .update(payload)
@@ -175,7 +172,7 @@ export default function SuivisMembres() {
 
     if (updateError) throw updateError;
 
-    // 4️⃣ Mettre à jour la table membres si membre_id existe
+    // 4️⃣ Mise à jour dans la table membres si membre_id existe
     if (suiviData.membre_id) {
       const membrePayload = {};
       if (newStatus) membrePayload.statut_suivis = newStatus;
@@ -189,7 +186,7 @@ export default function SuivisMembres() {
       if (membreError) console.error("Erreur update membre :", membreError);
     }
 
-    // 5️⃣ Mettre à jour l'affichage
+    // 5️⃣ Mise à jour de l'affichage
     if (["integrer", "refus"].includes(updatedSuivi.statut_suivis)) {
       setSuivis((prev) => prev.filter((it) => it.id !== id));
       setMessage({
@@ -207,9 +204,7 @@ export default function SuivisMembres() {
   } finally {
     setUpdating((prev) => ({ ...prev, [id]: false }));
   }
-};
-
-
+};  
 
   return (
     <div

@@ -111,84 +111,100 @@ export default function SuivisMembres() {
   };
 
   const updateSuivi = async (id) => {
-    setMessage(null);
-    const newStatus = statusChanges[id];
-    const newComment = commentChanges[id];
+  setMessage(null);
+  const newStatus = statusChanges[id];
+  const newComment = commentChanges[id];
 
-    if (!newStatus && !newComment) {
-      setMessage({ type: "info", text: "Aucun changement détecté." });
-      return;
-    }
+  if (!newStatus && !newComment) {
+    setMessage({ type: "info", text: "Aucun changement détecté." });
+    return;
+  }
 
-    setUpdating((prev) => ({ ...prev, [id]: true }));
+  setUpdating((prev) => ({ ...prev, [id]: true }));
 
-    try {
-      const payload = {};
-      if (newStatus) payload["statut_suivis"] = newStatus;
-      if (newComment) payload["commentaire_suivis"] = newComment;
-      payload["updated_at"] = new Date();
+  try {
+    const payload = {};
+    if (newStatus) payload["statut_suivis"] = newStatus;
+    if (newComment) payload["commentaire_suivis"] = newComment;
+    payload["updated_at"] = new Date();
 
-      // 🔹 Rattachement cellule automatique si intégration
-      if (newStatus === "integrer") {
-        const userEmail = localStorage.getItem("userEmail");
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("email", userEmail)
-          .single();
+    let celluleIdToAssign = null;
 
-        const responsableId = profileData.id;
-
-        const { data: cellulesData, error: celluleError } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("responsable_id", responsableId);
-
-        if (celluleError) throw celluleError;
-
-        if (!cellulesData || cellulesData.length === 0) {
-          setMessage({
-            type: "error",
-            text: "⚠️ Aucune cellule trouvée pour ce responsable.",
-          });
-          setUpdating((prev) => ({ ...prev, [id]: false }));
-          return;
-        }
-
-        payload["cellule_id"] = cellulesData[0].id; // On prend la première cellule
-      }
-
-      const { data: updatedData, error: updateError } = await supabase
-        .from("suivis_membres")
-        .update(payload)
-        .eq("id", id)
-        .select()
+    // 🔹 Rattachement cellule automatique si intégration
+    if (newStatus === "integrer") {
+      const userEmail = localStorage.getItem("userEmail");
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", userEmail)
         .single();
+      if (profileError) throw profileError;
 
-      if (updateError) {
-        console.error("Erreur update :", updateError);
-        setMessage({ type: "error", text: `Erreur mise à jour : ${updateError.message}` });
-      } else if (updatedData) {
-        if (["integrer", "refus"].includes(updatedData.statut_suivis)) {
-          setSuivis((prev) => prev.filter((it) => it.id !== id));
-          setMessage({
-            type: "success",
-            text: `Le contact a été ${updatedData.statut_suivis === "integrer" ? "intégré" : "refusé"} et retiré de la liste.`,
-          });
-        } else {
-          setSuivis((prev) =>
-            prev.map((it) => (it.id === id ? updatedData : it))
-          );
-          setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
-        }
+      const responsableId = profileData.id;
+
+      const { data: cellulesData, error: celluleError } = await supabase
+        .from("cellules")
+        .select("id")
+        .eq("responsable_id", responsableId);
+      if (celluleError) throw celluleError;
+
+      if (!cellulesData || cellulesData.length === 0) {
+        setMessage({
+          type: "error",
+          text: "⚠️ Aucune cellule trouvée pour ce responsable.",
+        });
+        setUpdating((prev) => ({ ...prev, [id]: false }));
+        return;
       }
-    } catch (err) {
-      console.error("Exception updateSuivi:", err);
-      setMessage({ type: "error", text: `Exception durant la mise à jour : ${err.message}` });
-    } finally {
-      setUpdating((prev) => ({ ...prev, [id]: false }));
+
+      celluleIdToAssign = cellulesData[0].id;
+      payload["cellule_id"] = celluleIdToAssign;
     }
-  };
+
+    // 🔹 Mise à jour de suivis_membres
+    const { data: updatedData, error: updateError } = await supabase
+      .from("suivis_membres")
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    // 🔹 Mise à jour correspondante dans la table membres
+    if (updatedData?.membre_id) {
+      const membrePayload = {};
+      if (newStatus === "integrer") membrePayload["cellule_id"] = celluleIdToAssign;
+      if (newStatus) membrePayload["statut_suivis"] = newStatus;
+
+      await supabase
+        .from("membres")
+        .update(membrePayload)
+        .eq("id", updatedData.membre_id);
+    }
+
+    // 🔹 Actualisation UI
+    if (["integrer", "refus"].includes(updatedData.statut_suivis)) {
+      setSuivis((prev) => prev.filter((it) => it.id !== id));
+      setMessage({
+        type: "success",
+        text: `Le contact a été ${updatedData.statut_suivis === "integrer" ? "intégré" : "refusé"} et retiré de la liste.`,
+      });
+    } else {
+      setSuivis((prev) =>
+        prev.map((it) => (it.id === id ? updatedData : it))
+      );
+      setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
+    }
+
+  } catch (err) {
+    console.error("Exception updateSuivi:", err);
+    setMessage({ type: "error", text: `Exception durant la mise à jour : ${err.message}` });
+  } finally {
+    setUpdating((prev) => ({ ...prev, [id]: false }));
+  }
+};
+
 
   return (
     <div

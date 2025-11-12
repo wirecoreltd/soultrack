@@ -260,7 +260,7 @@ export default function SuivisMembres() {
                   <p className="text-sm text-gray-700 mb-1">👤 Statut : {item.statut || "—"}</p>  
                   <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>                  
                   <p className="text-sm text-gray-700 mb-1">
-                    🏠 {m.cellule?.[0]?.nom || "—"} - Responsable : {m.cellule?.[0]?.prenom_responsable || "—"}
+                    🏠 {item.cellule?.[0]?.nom || "—"} - Responsable : {item.cellule?.[0]?.prenom_responsable || "—"}
                   </p>
 
                   <button
@@ -353,7 +353,7 @@ export default function SuivisMembres() {
                       <td className="px-4 py-2">{m.statut_suivis || "—"}</td>
                       <td className="px-4 py-2">{m.statut || "—"}</td>
                       <td className="px-4 py-2">
-                        {m.cellule?.nom || "—"} - {m.cellule?.prenom_responsable || "—"}
+                        {m.cellule?.[0]?.nom || "—"} - {m.cellule?.[0]?.prenom_responsable || "—"}
                       </td>
                       <td className="px-4 py-2">
                         <button

@@ -123,26 +123,23 @@ export default function SuivisMembres() {
   setUpdating((prev) => ({ ...prev, [id]: true }));
 
   try {
-    // 1️⃣ Récupération du suivi existant
+    // 1️⃣ Récupérer le suivi existant
     const { data: suiviData, error: fetchError } = await supabase
       .from("suivis_membres")
-      .select("*")
+      .select("id, membre_id")
       .eq("id", id)
       .single();
 
-    if (fetchError || !suiviData) {
-      throw new Error("Impossible de récupérer le suivi.");
-    }
+    if (fetchError || !suiviData) throw new Error("Impossible de récupérer le suivi.");
 
+    // 2️⃣ Préparer le payload minimal
     const payload = { updated_at: new Date() };
-
-    // Mise à jour du statut et du commentaire uniquement
     if (newStatus) payload.statut_suivis = newStatus;
     if (newComment) payload.commentaire_suivis = newComment;
 
     let celluleIdToUpdate = null;
 
-    // Si on choisit "integrer", rattacher automatiquement une cellule
+    // 3️⃣ Si intégration, récupérer la cellule du responsable
     if (newStatus === "integrer") {
       const userEmail = localStorage.getItem("userEmail");
       const { data: profileData, error: profileError } = await supabase
@@ -159,17 +156,13 @@ export default function SuivisMembres() {
         .eq("responsable_id", profileData.id);
 
       if (celluleError) throw celluleError;
-      if (!cellulesData || cellulesData.length === 0) {
-        setMessage({ type: "error", text: "⚠️ Aucune cellule trouvée pour ce responsable." });
-        setUpdating((prev) => ({ ...prev, [id]: false }));
-        return;
-      }
+      if (!cellulesData || cellulesData.length === 0) throw new Error("Aucune cellule trouvée pour ce responsable.");
 
       celluleIdToUpdate = cellulesData[0].id;
       payload.cellule_id = celluleIdToUpdate;
     }
 
-    // 2️⃣ Mise à jour dans suivis_membres
+    // 4️⃣ Mise à jour dans suivis_membres
     const { data: updatedSuivi, error: updateError } = await supabase
       .from("suivis_membres")
       .update(payload)
@@ -179,7 +172,7 @@ export default function SuivisMembres() {
 
     if (updateError) throw updateError;
 
-    // 3️⃣ Mise à jour synchronisée dans membres si membre_id existe
+    // 5️⃣ Mise à jour synchronisée dans membres
     if (suiviData.membre_id) {
       const membrePayload = {};
       if (newStatus) membrePayload.statut_suivis = newStatus;
@@ -193,7 +186,7 @@ export default function SuivisMembres() {
       if (membreError) console.error("Erreur update membre :", membreError);
     }
 
-    // 4️⃣ Mise à jour de l'affichage côté frontend
+    // 6️⃣ Mise à jour de l'affichage
     if (["integrer", "refus"].includes(updatedSuivi.statut_suivis)) {
       setSuivis((prev) => prev.filter((it) => it.id !== id));
       setMessage({
@@ -204,6 +197,7 @@ export default function SuivisMembres() {
       setSuivis((prev) => prev.map((it) => (it.id === id ? updatedSuivi : it)));
       setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
     }
+
   } catch (err) {
     console.error("Exception updateSuivi:", err);
     setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
@@ -211,6 +205,7 @@ export default function SuivisMembres() {
     setUpdating((prev) => ({ ...prev, [id]: false }));
   }
 };
+
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"

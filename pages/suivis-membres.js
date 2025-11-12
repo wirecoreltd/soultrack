@@ -178,17 +178,7 @@ export default function SuivisMembres() {
 
     // 🔹 4️⃣ Si le suivi est intégré ou refusé, mettre à jour la table membres
     if (updatedData && updatedData.membre_id) {
-      const membreUpdate = {};
-
-      if (newStatus === "integrer") {
-        membreUpdate.statut_suivis = updatedData.statut_suivis; // id de statut
-        if (celluleId) membreUpdate.cellule_id = celluleId;
-      }
-
-      await supabase
-        .from("membres")
-        .update(membreUpdate)
-        .eq("id", updatedData.membre_id);
+     
     }
 
     // 🔹 5️⃣ Mettre à jour l'affichage
@@ -198,7 +188,18 @@ export default function SuivisMembres() {
         type: "success",
         text: `Le contact a été ${updatedData.statut_suivis === "integrer" ? "intégré" : "refusé"} et retiré de la liste.`,
       });
-    } else {
+    } else {const membreUpdate = {};
+if (newStatus === "integrer") {
+  membreUpdate.statut_suivis = updatedData.statut_suivis; // integer, id du statut
+  if (celluleId) membreUpdate.cellule_id = celluleId;
+}
+
+// Mettre à jour seulement ces colonnes
+await supabase
+  .from("membres")
+  .update(membreUpdate)
+  .eq("id", updatedData.membre_id);
+
       setSuivis((prev) =>
         prev.map((it) => (it.id === id ? updatedData : it))
       );

@@ -1,4 +1,5 @@
 // ✅ /pages/suivis-membres.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -109,101 +110,101 @@ export default function SuivisMembres() {
     if (m.statut_suivis === "inactif") return "#999999";
     return "#ccc";
   };
-  
+
   const updateSuivi = async (id) => {
-  setMessage(null);
-  const newStatus = statusChanges[id];
-  const newComment = commentChanges[id];
+    setMessage(null);
+    const newStatus = statusChanges[id];
+    const newComment = commentChanges[id];
 
-  if (!newStatus && !newComment) {
-    setMessage({ type: "info", text: "Aucun changement détecté." });
-    return;
-  }
+    if (!newStatus && !newComment) {
+      setMessage({ type: "info", text: "Aucun changement détecté." });
+      return;
+    }
 
-  setUpdating((prev) => ({ ...prev, [id]: true }));
+    setUpdating((prev) => ({ ...prev, [id]: true }));
 
-  try {
-    // 1️⃣ Récupérer le suivi existant
-    const { data: suiviData, error: fetchError } = await supabase
-      .from("suivis_membres")
-      .select("id, membre_id, cellule_id, statut_suivis")
-      .eq("id", id)
-      .single();
-
-    if (fetchError || !suiviData) throw new Error("Impossible de récupérer le suivi.");
-
-    const payload = { updated_at: new Date() };
-    if (newStatus) payload.statut_suivis = newStatus;
-    if (newComment) payload.commentaire_suivis = newComment;
-
-    let celluleIdToUpdate = null;
-
-    // 2️⃣ Si le statut est "integrer", récupérer la cellule du responsable
-    if (newStatus === "integrer") {
-      const userEmail = localStorage.getItem("userEmail");
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", userEmail)
+    try {
+      // 1️⃣ Récupérer le suivi existant
+      const { data: suiviData, error: fetchError } = await supabase
+        .from("suivis_membres")
+        .select("id, membre_id, cellule_id, statut_suivis")
+        .eq("id", id)
         .single();
 
-      if (profileError || !profileData) throw new Error("Impossible de récupérer le profil du responsable.");
+      if (fetchError || !suiviData) throw new Error("Impossible de récupérer le suivi.");
 
-      const { data: cellulesData, error: celluleError } = await supabase
-        .from("cellules")
-        .select("id")
-        .eq("responsable_id", profileData.id);
+      const payload = { updated_at: new Date() };
+      if (newStatus) payload.statut_suivis = newStatus;
+      if (newComment) payload.commentaire_suivis = newComment;
 
-      if (celluleError) throw celluleError;
-      if (!cellulesData || cellulesData.length === 0) throw new Error("Aucune cellule trouvée pour ce responsable.");
+      let celluleIdToUpdate = null;
 
-      celluleIdToUpdate = cellulesData[0].id;
-      payload.cellule_id = celluleIdToUpdate;
+      // 2️⃣ Si le statut est "integrer", récupérer la cellule du responsable
+      if (newStatus === "integrer") {
+        const userEmail = localStorage.getItem("userEmail");
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("email", userEmail)
+          .single();
+
+        if (profileError || !profileData) throw new Error("Impossible de récupérer le profil du responsable.");
+
+        const { data: cellulesData, error: celluleError } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", profileData.id);
+
+        if (celluleError) throw celluleError;
+        if (!cellulesData || cellulesData.length === 0) throw new Error("Aucune cellule trouvée pour ce responsable.");
+
+        celluleIdToUpdate = cellulesData[0].id;
+        payload.cellule_id = celluleIdToUpdate;
+      }
+
+      // 3️⃣ Mise à jour dans suivis_membres
+      const { data: updatedSuivi, error: updateError } = await supabase
+        .from("suivis_membres")
+        .update(payload)
+        .eq("id", id)
+        .select("id, statut_suivis, cellule_id, commentaire_suivis")
+        .single();
+
+      if (updateError) throw updateError;
+
+      // 4️⃣ Mise à jour synchronisée dans membres si membre_id existe
+      if (suiviData.membre_id) {
+        const membrePayload = {};
+        if (newStatus) membrePayload.statut_suivis = newStatus;
+        if (celluleIdToUpdate) membrePayload.cellule_id = celluleIdToUpdate;
+
+        const { error: membreError } = await supabase
+          .from("membres")
+          .update(membrePayload)
+          .eq("id", suiviData.membre_id);
+
+        if (membreError) console.error("Erreur update membre :", membreError);
+      }
+
+      // 5️⃣ Mise à jour de l'affichage
+      if (["integrer", "refus"].includes(updatedSuivi.statut_suivis)) {
+        setSuivis((prev) => prev.filter((it) => it.id !== id));
+        setMessage({
+          type: "success",
+          text: `Le contact a été ${updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"} et retiré de la liste.`,
+        });
+      } else {
+        setSuivis((prev) => prev.map((it) => (it.id === id ? updatedSuivi : it)));
+        setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
+      }
+
+    } catch (err) {
+      console.error("Exception updateSuivi:", err);
+      setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
+    } finally {
+      setUpdating((prev) => ({ ...prev, [id]: false }));
     }
-
-    // 3️⃣ Mise à jour dans suivis_membres (uniquement colonnes nécessaires)
-    const { data: updatedSuivi, error: updateError } = await supabase
-      .from("suivis_membres")
-      .update(payload)
-      .eq("id", id)
-      .select("id, statut_suivis, cellule_id, commentaire_suivis")
-      .single();
-
-    if (updateError) throw updateError;
-
-    // 4️⃣ Mettre à jour la table membres si membre_id existe
-    if (suiviData.membre_id) {
-      const membrePayload = {};
-      if (newStatus) membrePayload.statut_suivis = newStatus;
-      if (celluleIdToUpdate) membrePayload.cellule_id = celluleIdToUpdate;
-
-      const { error: membreError } = await supabase
-        .from("membres")
-        .update(membrePayload)
-        .eq("id", suiviData.membre_id);
-
-      if (membreError) console.error("Erreur update membre :", membreError);
-    }
-
-    // 5️⃣ Mise à jour de l'affichage
-    if (["integrer", "refus"].includes(updatedSuivi.statut_suivis)) {
-      setSuivis((prev) => prev.filter((it) => it.id !== id));
-      setMessage({
-        type: "success",
-        text: `Le contact a été ${updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"} et retiré de la liste.`,
-      });
-    } else {
-      setSuivis((prev) => prev.map((it) => (it.id === id ? updatedSuivi : it)));
-      setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
-    }
-  } catch (err) {
-    console.error("Exception updateSuivi:", err);
-    setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
-  } finally {
-    setUpdating((prev) => ({ ...prev, [id]: false }));
-  }
-};
-
+  };
 
   return (
     <div
@@ -303,15 +304,15 @@ export default function SuivisMembres() {
                       <p>🕊 Statut : {item.statut || "—"}</p>
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
                       <p>❓Besoin : {
-                              (() => {
-                                if (!item.besoin) return "—";
-                                if (Array.isArray(item.besoin)) return item.besoin.join(", ");
-                                try {
-                                  const arr = JSON.parse(item.besoin);
-                                  return Array.isArray(arr) ? arr.join(", ") : item.besoin;
-                                } catch { return item.besoin; }
-                              })()
-                            }</p>
+                        (() => {
+                          if (!item.besoin) return "—";
+                          if (Array.isArray(item.besoin)) return item.besoin.join(", ");
+                          try {
+                            const arr = JSON.parse(item.besoin);
+                            return Array.isArray(arr) ? arr.join(", ") : item.besoin;
+                          } catch { return item.besoin; }
+                        })()
+                      }</p>
                       <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
 
                       <label className="text-black text-sm">📋 Statut Suivis :</label>

@@ -134,21 +134,39 @@ export default function SuivisMembres() {
       throw new Error("Impossible de récupérer le suivi.");
     }
 
-    const payload = {};
-    if (newStatus) payload["statut_suivis"] = newStatus;
-    if (newComment) payload["commentaire_suivis"] = newComment;
-    payload["updated_at"] = new Date();
+    const payload = { updated_at: new Date() };
 
-    let celluleIdToUpdate = suiviData.cellule_id;
+// Seulement si le statut a changé
+if (newStatus) payload.statut_suivis = newStatus;
 
-    // 🔹 2. Si le statut est "integrer", rattacher la cellule du responsable
-    if (newStatus === "integrer") {
-      const userEmail = localStorage.getItem("userEmail");
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", userEmail)
-        .single();
+// Seulement si le commentaire a changé
+if (newComment) payload.commentaire_suivis = newComment;
+
+// Si intégration, rattachement cellule
+if (newStatus === "integrer") {
+  const userEmail = localStorage.getItem("userEmail");
+  const { data: profileData } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("email", userEmail)
+    .single();
+
+  const { data: cellulesData } = await supabase
+    .from("cellules")
+    .select("id")
+    .eq("responsable_id", profileData.id);
+
+  if (!cellulesData || cellulesData.length === 0) throw new Error("Aucune cellule trouvée");
+  payload.cellule_id = cellulesData[0].id;
+}
+
+// Ne PAS inclure prenom/nom ou autres colonnes inutiles
+const { data: updatedData, error: updateError } = await supabase
+  .from("suivis_membres")
+  .update(payload)
+  .eq("id", id)
+  .select()
+  .single();
 
       if (profileError || !profileData) throw new Error("Impossible de récupérer le profil du responsable.");
 

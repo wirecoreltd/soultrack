@@ -114,7 +114,6 @@ export default function SuivisMembres() {
   setMessage(null);
   const newStatus = statusChanges[id];
   const newComment = commentChanges[id];
-  let celluleIdToUpdate = null;
 
   if (!newStatus && !newComment) {
     setMessage({ type: "info", text: "Aucun changement détecté." });
@@ -124,61 +123,83 @@ export default function SuivisMembres() {
   setUpdating((prev) => ({ ...prev, [id]: true }));
 
   try {
-    // 1️⃣ Récupérer le suivi
+    // 1️⃣ Récupération du suivi existant
     const { data: suiviData, error: fetchError } = await supabase
       .from("suivis_membres")
       .select("*")
       .eq("id", id)
       .single();
-    if (fetchError || !suiviData) throw new Error("Impossible de récupérer le suivi.");
 
-    // 2️⃣ Préparer payload
+    if (fetchError || !suiviData) {
+      throw new Error("Impossible de récupérer le suivi.");
+    }
+
     const payload = { updated_at: new Date() };
+
+    // Mise à jour du statut et du commentaire uniquement
     if (newStatus) payload.statut_suivis = newStatus;
     if (newComment) payload.commentaire_suivis = newComment;
 
-    // 3️⃣ Si intégration, récupérer cellule
+    let celluleIdToUpdate = null;
+
+    // Si on choisit "integrer", rattacher automatiquement une cellule
     if (newStatus === "integrer") {
       const userEmail = localStorage.getItem("userEmail");
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("id")
         .eq("email", userEmail)
         .single();
-      const { data: cellulesData } = await supabase
+
+      if (profileError || !profileData) throw new Error("Impossible de récupérer le profil du responsable.");
+
+      const { data: cellulesData, error: celluleError } = await supabase
         .from("cellules")
         .select("id")
         .eq("responsable_id", profileData.id);
-      if (!cellulesData || cellulesData.length === 0) throw new Error("Aucune cellule trouvée");
+
+      if (celluleError) throw celluleError;
+      if (!cellulesData || cellulesData.length === 0) {
+        setMessage({ type: "error", text: "⚠️ Aucune cellule trouvée pour ce responsable." });
+        setUpdating((prev) => ({ ...prev, [id]: false }));
+        return;
+      }
+
       celluleIdToUpdate = cellulesData[0].id;
       payload.cellule_id = celluleIdToUpdate;
     }
 
-    // 4️⃣ Mettre à jour suivi
+    // 2️⃣ Mise à jour dans suivis_membres
     const { data: updatedSuivi, error: updateError } = await supabase
       .from("suivis_membres")
       .update(payload)
       .eq("id", id)
       .select()
       .single();
+
     if (updateError) throw updateError;
 
-    // 5️⃣ Mettre à jour membre si membre_id existe
+    // 3️⃣ Mise à jour synchronisée dans membres si membre_id existe
     if (suiviData.membre_id) {
       const membrePayload = {};
       if (newStatus) membrePayload.statut_suivis = newStatus;
       if (celluleIdToUpdate) membrePayload.cellule_id = celluleIdToUpdate;
+
       const { error: membreError } = await supabase
         .from("membres")
         .update(membrePayload)
         .eq("id", suiviData.membre_id);
+
       if (membreError) console.error("Erreur update membre :", membreError);
     }
 
-    // 6️⃣ Mise à jour affichage
+    // 4️⃣ Mise à jour de l'affichage côté frontend
     if (["integrer", "refus"].includes(updatedSuivi.statut_suivis)) {
       setSuivis((prev) => prev.filter((it) => it.id !== id));
-      setMessage({ type: "success", text: `Le contact a été ${updatedSuivi.statut_suivis} et retiré de la liste.` });
+      setMessage({
+        type: "success",
+        text: `Le contact a été ${updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"} et retiré de la liste.`,
+      });
     } else {
       setSuivis((prev) => prev.map((it) => (it.id === id ? updatedSuivi : it)));
       setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
@@ -190,8 +211,6 @@ export default function SuivisMembres() {
     setUpdating((prev) => ({ ...prev, [id]: false }));
   }
 };
-
-
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"

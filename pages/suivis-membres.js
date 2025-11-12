@@ -260,7 +260,7 @@ export default function SuivisMembres() {
                   <p className="text-sm text-gray-700 mb-1">👤 Statut : {item.statut || "—"}</p>  
                   <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>                  
                   <p className="text-sm text-gray-700 mb-1">
-                    🏠 {item.cellule?.nom || "—"} - {item.cellule?.prenom_responsable || "—"}
+                    🏠 {item.cellule?.nom || "—"} - Responsable : {item.cellule?.prenom_responsable || "—"}
                   </p>
 
                   <button
@@ -383,12 +383,12 @@ export default function SuivisMembres() {
                               </button>
 
                               <h2 className="font-bold text-black text-base text-center mb-1">
-                                {m.prenom} {m.nom}
+                              {item.prenom} {item.nom}
                               </h2>
                               <p>📞 {m.telephone || "—"}</p>
                               <p>👤 Statut : {m.statut || "—"}</p>  
                               <p>📋 Statut Suivis : {m.statut_suivis || "—"}</p>                              
-                              <p>🏠 Cellule : {m.cellule?.nom || "—"} - {m.cellule?.prenom_responsable || "—"}</p>
+                              <p>🏠 {item.cellule?.nom || "—"} - Responsable : {item.cellule?.prenom_responsable || "—"}</p>
                               <p>🏙  Ville : {m.ville || "—"}</p>
                               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
                               <p>❓ Besoin : {m.besoin || "—"}</p>

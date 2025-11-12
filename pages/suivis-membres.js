@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react"; // <-- nécessaire pour React.Fragment
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
@@ -103,10 +102,11 @@ export default function SuivisMembres() {
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
   const getBorderColor = (m) => {
-    if (m.statut_suivis === "actif") return "#4285F4";
-    if (m.statut_suivis === "en attente") return "#FFA500";
-    if (m.statut_suivis === "suivi terminé") return "#34A853";
-    if (m.statut_suivis === "inactif") return "#999999";
+    if (m.star) return "#FBC02D";
+    if (m.statut === "refus") return "#EA4335";
+    if (m.statut === "Integrer") return "#FFA500";
+    if (m.statut === "en attente") return "#999999";
+    if (m.statut) return "#34A853";
     return "#ccc";
   };
 
@@ -268,10 +268,10 @@ export default function SuivisMembres() {
                     📋 Statut Suivis : {item.statut_suivis || "—"}
                   </p>
                   <p className="text-sm text-gray-700 mb-1">
-                    🕊 Statut Membres : {item.statut || "—"}
+                    🕊 Statut Membre : {item.statut || "—"}
                   </p>
                   <p className="text-sm text-gray-700 mb-1">
-                    🏢 Cellule - Responsable : {item.cellule_nom || "—"} - {item.responsable_prenom || "—"}
+                    🏠 Cellule - Responsable : {item.cellule_nom || "—"} - {item.responsable_prenom || "—"}
                   </p>
 
                   <button
@@ -340,7 +340,7 @@ export default function SuivisMembres() {
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
                 <th className="px-4 py-2">Statut Suivis</th>
-                <th className="px-4 py-2">Statut Membres</th>
+                <th className="px-4 py-2">Statut Membre</th>
                 <th className="px-4 py-2">Cellule - Responsable</th>
                 <th className="px-4 py-2 rounded-tr-lg">Détails</th>
               </tr>
@@ -366,7 +366,9 @@ export default function SuivisMembres() {
                       <td className="px-4 py-2">{m.telephone || "—"}</td>
                       <td className="px-4 py-2">{m.statut_suivis || "—"}</td>
                       <td className="px-4 py-2">{m.statut || "—"}</td>
-                      <td className="px-4 py-2">{m.cellule_nom || "—"} - {m.responsable_prenom || "—"}</td>
+                      <td className="px-4 py-2">
+                        {m.cellule_nom || "—"} - {m.responsable_prenom || "—"}
+                      </td>
                       <td className="px-4 py-2">
                         <button
                           onClick={() =>
@@ -393,11 +395,14 @@ export default function SuivisMembres() {
                                 ✖
                               </button>
 
-                              {/* Détails identiques à vue carte */}
-                              <p>📌 Prénom : {m.prenom}</p>
-                              <p>📞 Téléphone : {m.telephone || "—"}</p>
+                              <h2 className="font-bold text-black text-base text-center mb-1">
+                                {m.prenom} {m.nom} {m.cellule_nom ? `(${m.cellule_nom})` : ""}
+                              </h2>
+                              <p>📞 {m.telephone || "—"}</p>
+                              <p>📋 Statut Suivis : {m.statut_suivis || "—"}</p>
+                              <p>🕊 Statut Membre : {m.statut || "—"}</p>
+                              <p>🏠 Cellule - Responsable : {m.cellule_nom || "—"} - {m.responsable_prenom || "—"}</p>
                               <p>🏙 Ville : {m.ville || "—"}</p>
-                              <p>🕊 Statut : {m.statut || "—"}</p>
                               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
                               <p>❓ Besoin : {m.besoin || "—"}</p>
                               <p>📝 Infos : {m.infos_supplementaires || "—"}</p>

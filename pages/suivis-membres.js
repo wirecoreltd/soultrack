@@ -324,8 +324,7 @@ export default function SuivisMembres() {
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
                 <th className="px-4 py-2">Statut Suivis</th>
-                <th className="px-4 py-2">Statut membre</th>
-                <th className="px-4 py-2">Cellule - Responsable</th>
+                <th className="px-4 py-2">Statut membre</th>                
                 <th className="px-4 py-2 rounded-tr-lg">Détails</th>
               </tr>
             </thead>
@@ -380,9 +379,11 @@ export default function SuivisMembres() {
                                 {m.prenom} {m.nom}
                               </h2>
                               <p className="text-sm text-gray-700 mb-1 text-center">📞 {m.telephone || "—"}</p>
-                              <p>👤 Statut : {m.statut || "—"}</p>
-                              <p>📋 Statut Suivis : {m.statut_suivis || "—"}</p>
-                              <p>🏠 Cellule : {m.cellule?.[0]?.nom || "—"} - Responsable : {m.cellule?.[0]?.prenom_responsable || "—"}</p>
+                              <p className="text-sm text-gray-700 mb-1 text-center">👤 {m.statut || "—"}</p>
+                              <p className="text-sm text-gray-700 mb-1 text-center">📋 {m.statut_suivis || "—"}</p>
+                              <p className="text-sm text-gray-700 mb-1">
+                              🏠 {item.cellule_nom} - {item.responsable_prenom}
+                              </p> 
                               <p>🏙  Ville : {m.ville || "—"}</p>
                               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
                               <p>❓ Besoin : {m.besoin || "—"}</p>

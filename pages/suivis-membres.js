@@ -348,10 +348,7 @@ export default function SuivisMembres() {
                       </td>
                       <td className="px-4 py-2">{m.telephone || "—"}</td>
                       <td className="px-4 py-2">{m.statut_suivis || "—"}</td>
-                      <td className="px-4 py-2">{m.statut || "—"}</td>
-                      <td className="px-4 py-2">
-                        {m.cellule?.[0]?.nom || "—"} - {m.cellule?.[0]?.prenom_responsable || "—"}
-                      </td>
+                      <td className="px-4 py-2">{m.statut || "—"}</td>                      
                       <td className="px-4 py-2">
                         <button
                           onClick={() =>
@@ -382,7 +379,7 @@ export default function SuivisMembres() {
                               <h2 className="font-bold text-black text-base text-center mb-1">
                                 {m.prenom} {m.nom}
                               </h2>
-                              <p>📞 {m.telephone || "—"}</p>
+                              <p className="text-sm text-gray-700 mb-1 text-center">📞 {m.telephone || "—"}</p>
                               <p>👤 Statut : {m.statut || "—"}</p>
                               <p>📋 Statut Suivis : {m.statut_suivis || "—"}</p>
                               <p>🏠 Cellule : {m.cellule?.[0]?.nom || "—"} - Responsable : {m.cellule?.[0]?.prenom_responsable || "—"}</p>

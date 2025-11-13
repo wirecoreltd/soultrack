@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import React from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
@@ -45,7 +46,6 @@ export default function SuivisMembres() {
             .from("suivis_membres")
             .select("*")
             .order("created_at", { ascending: false });
-
           if (error) throw error;
           suivisData = data;
         } else if (userRole.includes("ResponsableCellule")) {
@@ -53,7 +53,6 @@ export default function SuivisMembres() {
             .from("cellules")
             .select("id")
             .eq("responsable_id", responsableId);
-
           if (cellulesError) throw cellulesError;
 
           if (!cellulesData || cellulesData.length === 0) {
@@ -70,7 +69,6 @@ export default function SuivisMembres() {
             .select("*")
             .in("cellule_id", celluleIds)
             .order("created_at", { ascending: false });
-
           if (error) throw error;
           suivisData = data;
 
@@ -185,11 +183,55 @@ export default function SuivisMembres() {
     }
   };
 
+  // Component pour afficher les détails (popup ou section)
+  const Details = ({ m }) => (
+    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+      <p>📌 Prénom : {m.prenom}</p>
+      <p>📞 Téléphone : {m.telephone || "—"}</p>
+      <p>🏙 Ville : {m.ville || "—"}</p>
+      <p>🕊 Statut : {m.statut || "—"}</p>
+      <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+      <p>❓ Besoin : {m.besoin || "—"}</p>
+      <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+
+      <label className="text-black text-sm">📋 Statut Suivis :</label>
+      <select
+        value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
+        onChange={(e) => handleStatusChange(m.id, e.target.value)}
+        className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+      >
+        <option value="">-- Choisir un statut --</option>
+        <option value="en attente">🕓 En attente</option>
+        <option value="integrer">✅ Intégrer</option>
+        <option value="refus">❌ Refus</option>
+      </select>
+
+      <label className="text-black text-sm mt-2">📝 Commentaire :</label>
+      <textarea
+        value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
+        onChange={(e) => handleCommentChange(m.id, e.target.value)}
+        rows={2}
+        className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
+      />
+
+      <button
+        onClick={() => updateSuivi(m.id)}
+        disabled={updating[m.id]}
+        className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+          updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+        }`}
+      >
+        {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
+      </button>
+    </div>
+  );
+
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
+      {/* Header */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
           <button
@@ -198,19 +240,19 @@ export default function SuivisMembres() {
           >
             ← Retour
           </button>
-
           <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
         </div>
-
         <div className="flex justify-end mt-2">
           <p className="text-orange-200 text-sm">👋 Bienvenue {prenom}</p>
         </div>
       </div>
 
+      {/* Logo */}
       <div className="mb-4">
         <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
 
+      {/* Titre */}
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-white mb-2">📋 Suivis des Membres</h1>
         <p className="text-white text-lg max-w-xl mx-auto italic">
@@ -218,6 +260,7 @@ export default function SuivisMembres() {
         </p>
       </div>
 
+      {/* Switch view */}
       <div className="mb-4 flex justify-end w-full max-w-6xl">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
@@ -227,6 +270,7 @@ export default function SuivisMembres() {
         </button>
       </div>
 
+      {/* Message */}
       {message && (
         <div
           className={`mb-4 px-4 py-2 rounded-md text-sm ${
@@ -241,104 +285,120 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {loading ? (
-        <p className="text-white">Chargement...</p>
-      ) : suivis.length === 0 ? (
-        <p className="text-white text-lg italic">Aucun membre en suivi pour le moment.</p>
-      ) : view === "card" ? (
+      {/* VUE CARTE */}
+      {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
-          {suivis.map((item) => {
-            const isOpen = detailsOpen[item.id];
-            return (
+          {suivis.map((item) => (
+            <div
+              key={item.id}
+              className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
+            >
               <div
-                key={item.id}
-                className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
-              >
-                <div
-                  className="w-full h-[6px] rounded-t-2xl"
-                  style={{ backgroundColor: getBorderColor(item) }}
-                />
-                <div className="p-4 flex flex-col items-center">
-                  <h2 className="font-bold text-black text-base text-center mb-1">
-                    {item.prenom} {item.nom}
-                  </h2>
-                  <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">
-                    📋 Statut Suivis : {item.statut_suivis || "—"}
-                  </p>
-                  <p className="text-sm text-gray-700 mb-1">
-                    🏠 Cellule - Responsable : {item.cellule_nom || "—"} {item.responsable || ""}
-                  </p>
+                className="w-full h-[6px] rounded-t-2xl"
+                style={{ backgroundColor: getBorderColor(item) }}
+              />
+              <div className="p-4 flex flex-col items-center">
+                <h2 className="font-bold text-black text-base text-center mb-1">
+                  {item.prenom} {item.cellule_nom ? `(${item.cellule_nom})` : ""}
+                </h2>
+                <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
+                <p className="text-sm text-gray-700 mb-1">
+                  📋 Statut Suivis : {item.statut_suivis || "—"}
+                </p>
 
-                  <button
-                    onClick={() => toggleDetails(item.id)}
-                    className="text-orange-500 underline text-sm mt-1"
-                  >
-                    {isOpen ? "Fermer détails" : "Détails"}
-                  </button>
+                <button
+                  onClick={() => toggleDetails(item.id)}
+                  className="text-orange-500 underline text-sm mt-1"
+                >
+                  {detailsOpen[item.id] ? "Fermer détails" : "Détails"}
+                </button>
 
-                  {isOpen && (
-                    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                      <p>📌 Prénom : {item.prenom}</p>
-                      <p>📞 Téléphone : {item.telephone || "—"}</p>
-                      <p>🏙 Ville : {item.ville || "—"}</p>
-                      <p>🕊 Statut : {item.statut || "—"}</p>
-                      <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
-                      <p>
-                        ❓Besoin :{" "}
-                        {(() => {
-                          if (!item.besoin) return "—";
-                          if (Array.isArray(item.besoin)) return item.besoin.join(", ");
-                          try {
-                            const arr = JSON.parse(item.besoin);
-                            return Array.isArray(arr) ? arr.join(", ") : item.besoin;
-                          } catch {
-                            return item.besoin;
-                          }
-                        })()}
-                      </p>
-                      <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
-
-                      <label className="text-black text-sm">📋 Statut Suivis :</label>
-                      <select
-                        value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
-                        onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                        className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
-                      >
-                        <option value="">-- Choisir un statut --</option>
-                        <option value="envoye">📤 Envoyé</option>
-                        <option value="en attente">🕓 En attente</option>
-                        <option value="integrer">✅ Intégrer</option>
-                        <option value="refus">❌ Refus</option>
-                      </select>
-
-                      <label className="text-black text-sm mt-2">📝 Commentaire :</label>
-                      <textarea
-                        value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
-                        onChange={(e) => handleCommentChange(item.id, e.target.value)}
-                        rows={2}
-                        className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
-                      />
-
-                      <button
-                        onClick={() => updateSuivi(item.id)}
-                        disabled={updating[item.id]}
-                        className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-                          updating[item.id]
-                            ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-green-600 hover:bg-green-700"
-                        }`}
-                      >
-                        {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
-                      </button>
-                    </div>
-                  )}
-                </div>
+                {detailsOpen[item.id] && <Details m={item} />}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
-      ) : null}
+      )}
+
+      {/* VUE TABLE */}
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto transition duration-200 relative">
+          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
+              <tr>
+                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+                <th className="px-4 py-2">Téléphone</th>
+                <th className="px-4 py-2">Statut Suivis</th>
+                <th className="px-4 py-2 rounded-tr-lg">Détails</th>
+              </tr>
+            </thead>
+            <tbody>
+              {suivis.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-2 text-white text-center">
+                    Aucun membre en suivi
+                  </td>
+                </tr>
+              ) : (
+                suivis.map((m) => (
+                  <React.Fragment key={m.id}>
+                    <tr className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
+                      <td
+                        className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
+                        style={{ borderLeftColor: getBorderColor(m) }}
+                      >
+                        {m.prenom} {m.nom}
+                        {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                      </td>
+                      <td className="px-4 py-2">{m.telephone || "—"}</td>
+                      <td className="px-4 py-2">{m.statut_suivis || "—"}</td>
+                      <td className="px-4 py-2">
+                        <button
+                          onClick={() =>
+                            setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))
+                          }
+                          className="text-orange-500 underline text-sm"
+                        >
+                          {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
+                        </button>
+                      </td>
+                    </tr>
+
+                    {detailsOpen[m.id] && (
+                      <tr>
+                        <td colSpan={4}>
+                          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                            <div className="bg-white rounded-2xl p-6 w-full max-w-md relative">
+                              <button
+                                onClick={() =>
+                                  setDetailsOpen((prev) => ({ ...prev, [m.id]: false }))
+                                }
+                                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 font-bold"
+                              >
+                                ✖
+                              </button>
+                              <h2 className="font-bold text-black text-base text-center mb-1">
+                                {m.prenom} {m.cellule_nom ? `(${m.cellule_nom})` : ""}
+                              </h2>
+                              <p className="text-sm text-gray-700 mb-1">
+                                📞 {m.telephone || "—"}
+                              </p>
+                              <p className="text-sm text-gray-700 mb-1">
+                                📋 Statut Suivis : {m.statut_suivis || "—"}
+                              </p>
+                              <Details m={m} />
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

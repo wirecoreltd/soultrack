@@ -281,8 +281,9 @@ export default function SuivisMembres() {
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
                       <p>❓ Besoin : {item.besoin || "—"}</p>
                       <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
-                      <p>🏠 Cellule : {item.cellule?.[0]?.nom || "—"} - Responsable : {item.cellule?.[0]?.prenom_responsable || "—"}</p>
-
+                      <p className="text-sm text-gray-700 mb-1">
+                    🏠 Cellule : {item.cellule?.nom || "—"} - Responsable : {item.cellule?.prenom_responsable || "—"}
+                  </p>
                       <label className="text-black text-sm">📋 Statut Suivis :</label>
                       <select
                         value={statusChanges[item.id] ?? item.statut_suivis ?? ""}

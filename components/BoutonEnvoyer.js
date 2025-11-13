@@ -2,7 +2,7 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session }) {
+export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, onEnvoyer, session }) {
   const [loading, setLoading] = useState(false);
 
   const sendToWhatsapp = async () => {
@@ -31,7 +31,8 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
         infos_supplementaires: membre.infos_supplementaires,
         cellule_id: cellule.id,
         cellule_nom: cellule.cellule,
-        responsable: cellule.responsable,       
+        responsable: cellule.responsable,
+        date_envoi: now,
       };
 
       const { error: insertError } = await supabase
@@ -56,25 +57,29 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
       message += "🙏 Merci pour ton cœur ❤ et ton amour ✨";
 
       const phone = cellule.telephone.replace(/\D/g, "");
-      window.open(
-        `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
-        "_blank"
-      );
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
 
-      // ✅ Callback pour mettre à jour le membre dans la liste
+      // ✅ Mettre à jour le statut du membre si nécessaire
       if (onStatusUpdate) {
         onStatusUpdate(
           membre.id,
           membre.statut,
           {
             ...membre,
-            statut: "actif", // devient actif automatiquement
+            statut: "actif",
             cellule_id: cellule.id,
             cellule_nom: cellule.cellule,
             responsable: cellule.responsable,
           }
         );
       }
+
+      // ✅ Retirer le membre de la liste (solution 2)
+      if (onEnvoyer) {
+        onEnvoyer(membre.id);
+      }
+
+      alert("✅ Message envoyé et suivi enregistré !");
     } catch (error) {
       console.error("Erreur lors de l'envoi WhatsApp :", error.message);
       alert("❌ Une erreur est survenue.");

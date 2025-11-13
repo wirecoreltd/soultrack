@@ -108,88 +108,82 @@ export default function SuivisMembres() {
     if (m.statut_suivis === "inactif") return "#999999";
     return "#ccc";
   };
-    
-      const updateSuivi = async (id) => {
-      setMessage(null);
-      const newStatus = statusChanges[id];
-      const newComment = commentChanges[id];
-    
-      if (!newStatus && !newComment) {
-        setMessage({ type: "info", text: "Aucun changement détecté." });
-        return;
-      }
-    
-      setUpdating((prev) => ({ ...prev, [id]: true }));
-    
-      try {
-        // Récupération du suivi
-        const { data: suiviData, error: fetchError } = await supabase
-          .from("suivis_membres")
-          .select("*")
-          .eq("id", id)
-          .single();
-    
-        if (fetchError || !suiviData) throw new Error("Impossible de récupérer le suivi.");
-    
-        const payload = { updated_at: new Date() };
-        if (newStatus) payload.statut_suivis = newStatus; // envoie le libellé
-        if (newComment) payload.commentaire_suivis = newComment;
-    
-        // Si intégration et pas de cellule assignée
-        let celluleIdToUpdate = suiviData.cellule_id;
-        if (newStatus === "integrer" && !celluleIdToUpdate) {
-          const userEmail = localStorage.getItem("userEmail");
-          const { data: profileData } = await supabase
-            .from("profiles")
-            .select("id")
-            .eq("email", userEmail)
-            .single();
-    
-          const { data: cellulesData } = await supabase
-            .from("cellules")
-            .select("id")
-            .eq("responsable_id", profileData.id);
-    
-          if (!cellulesData || cellulesData.length === 0)
-            throw new Error("⚠️ Aucune cellule trouvée pour ce responsable.");
-    
-          celluleIdToUpdate = cellulesData[0].id;
-        }
-    
-        if (celluleIdToUpdate) payload.cellule_id = celluleIdToUpdate;
-    
-        // Mise à jour du suivi
-        const { data: updatedSuivi, error: updateError } = await supabase
-          .from("suivis_membres")
-          .update(payload)
-          .eq("id", id)
-          .select()
-          .single();
-    
-        if (updateError) throw updateError;
-    
-        // Mise à jour front
-        if (["integrer", "refus"].includes(updatedSuivi.statut_suivis)) {
-          setSuivis((prev) => prev.filter((it) => it.id !== id));
-          setMessage({
-            type: "success",
-            text: `Le contact a été ${
-              updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"
-            } et retiré de la liste.`,
-          });
-        } else {
-          setSuivis((prev) => prev.map((it) => (it.id === id ? updatedSuivi : it)));
-          setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
-        }
-    
-      } catch (err) {
-        console.error("Exception updateSuivi:", err);
-        setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
-      } finally {
-        setUpdating((prev) => ({ ...prev, [id]: false }));
-      }
-};
 
+  const updateSuivi = async (id) => {
+    setMessage(null);
+    const newStatus = statusChanges[id];
+    const newComment = commentChanges[id];
+
+    if (!newStatus && !newComment) {
+      setMessage({ type: "info", text: "Aucun changement détecté." });
+      return;
+    }
+
+    setUpdating((prev) => ({ ...prev, [id]: true }));
+
+    try {
+      const { data: suiviData, error: fetchError } = await supabase
+        .from("suivis_membres")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (fetchError || !suiviData) throw new Error("Impossible de récupérer le suivi.");
+
+      const payload = { updated_at: new Date() };
+      if (newStatus) payload.statut_suivis = newStatus;
+      if (newComment) payload.commentaire_suivis = newComment;
+
+      let celluleIdToUpdate = suiviData.cellule_id;
+      if (newStatus === "integrer" && !celluleIdToUpdate) {
+        const userEmail = localStorage.getItem("userEmail");
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("email", userEmail)
+          .single();
+
+        const { data: cellulesData } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", profileData.id);
+
+        if (!cellulesData || cellulesData.length === 0)
+          throw new Error("⚠️ Aucune cellule trouvée pour ce responsable.");
+
+        celluleIdToUpdate = cellulesData[0].id;
+      }
+
+      if (celluleIdToUpdate) payload.cellule_id = celluleIdToUpdate;
+
+      const { data: updatedSuivi, error: updateError } = await supabase
+        .from("suivis_membres")
+        .update(payload)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      if (["integrer", "refus"].includes(updatedSuivi.statut_suivis)) {
+        setSuivis((prev) => prev.filter((it) => it.id !== id));
+        setMessage({
+          type: "success",
+          text: `Le contact a été ${
+            updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"
+          } et retiré de la liste.`,
+        });
+      } else {
+        setSuivis((prev) => prev.map((it) => (it.id === id ? updatedSuivi : it)));
+        setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
+      }
+    } catch (err) {
+      console.error("Exception updateSuivi:", err);
+      setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
+    } finally {
+      setUpdating((prev) => ({ ...prev, [id]: false }));
+    }
+  };
 
   return (
     <div
@@ -250,9 +244,7 @@ export default function SuivisMembres() {
       {loading ? (
         <p className="text-white">Chargement...</p>
       ) : suivis.length === 0 ? (
-        <p className="text-white text-lg italic">
-          Aucun membre en suivi pour le moment.
-        </p>
+        <p className="text-white text-lg italic">Aucun membre en suivi pour le moment.</p>
       ) : view === "card" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
           {suivis.map((item) => {
@@ -268,13 +260,14 @@ export default function SuivisMembres() {
                 />
                 <div className="p-4 flex flex-col items-center">
                   <h2 className="font-bold text-black text-base text-center mb-1">
-                    {item.prenom} {item.cellule_nom ? `(${item.cellule_nom})` : ""}
+                    {item.prenom} {item.nom}
                   </h2>
-                  <p className="text-sm text-gray-700 mb-1">
-                    📞 {item.telephone || "—"}
-                  </p>
+                  <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">
                     📋 Statut Suivis : {item.statut_suivis || "—"}
+                  </p>
+                  <p className="text-sm text-gray-700 mb-1">
+                    🏠 Cellule - Responsable : {item.cellule_nom || "—"} {item.responsable || ""}
                   </p>
 
                   <button
@@ -306,7 +299,7 @@ export default function SuivisMembres() {
                       </p>
                       <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
 
-                     <label className="text-black text-sm">📋 Statut Suivis :</label>
+                      <label className="text-black text-sm">📋 Statut Suivis :</label>
                       <select
                         value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
                         onChange={(e) => handleStatusChange(item.id, e.target.value)}
@@ -319,15 +312,10 @@ export default function SuivisMembres() {
                         <option value="refus">❌ Refus</option>
                       </select>
 
-
-                      <label className="text-black text-sm mt-2">
-                        📝 Commentaire :
-                      </label>
+                      <label className="text-black text-sm mt-2">📝 Commentaire :</label>
                       <textarea
                         value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
-                        onChange={(e) =>
-                          handleCommentChange(item.id, e.target.value)
-                        }
+                        onChange={(e) => handleCommentChange(item.id, e.target.value)}
                         rows={2}
                         className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
                       />

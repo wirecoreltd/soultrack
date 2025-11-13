@@ -133,26 +133,36 @@ export default function SuivisMembres() {
       if (newComment) payload.commentaire_suivis = newComment;
 
       let celluleIdToUpdate = suiviData.cellule_id;
-      if (newStatus === "integrer" && !celluleIdToUpdate) {
-        const userEmail = localStorage.getItem("userEmail");
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("email", userEmail)
-          .single();
 
-        const { data: cellulesData } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("responsable_id", profileData.id);
+// Si le statut devient "integrer" et que le contact n'a pas encore de cellule
+if (newStatus === "integrer" && !celluleIdToUpdate) {
+  const userEmail = localStorage.getItem("userEmail");
+  const { data: profileData, error: profileError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("email", userEmail)
+    .single();
+  
+  if (profileError || !profileData)
+    throw new Error("⚠️ Impossible de récupérer le profil du responsable.");
 
-        if (!cellulesData || cellulesData.length === 0)
-          throw new Error("⚠️ Aucune cellule trouvée pour ce responsable.");
+  // Récupère la cellule du responsable
+  const { data: cellulesData, error: cellulesError } = await supabase
+    .from("cellules")
+    .select("id, nom")
+    .eq("responsable_id", profileData.id)
+    .limit(1)
+    .single(); // une seule cellule par responsable
 
-        celluleIdToUpdate = cellulesData[0].id;
-      }
+  if (cellulesError || !cellulesData)
+    throw new Error("⚠️ Aucune cellule trouvée pour ce responsable.");
 
-      if (celluleIdToUpdate) payload.cellule_id = celluleIdToUpdate;
+  celluleIdToUpdate = cellulesData.id;
+}
+
+// Met à jour la cellule si nécessaire
+if (celluleIdToUpdate) payload.cellule_id = celluleIdToUpdate;
+
 
       const { data: updatedSuivi, error: updateError } = await supabase
         .from("suivis_membres")

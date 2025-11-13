@@ -31,8 +31,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
         infos_supplementaires: membre.infos_supplementaires,
         cellule_id: cellule.id,
         cellule_nom: cellule.cellule,
-        responsable: cellule.responsable,
-        date_envoi: now,
+        responsable: cellule.responsable,       
       };
 
       const { error: insertError } = await supabase

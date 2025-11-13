@@ -64,11 +64,12 @@ export default function SuivisMembres() {
           const celluleIds = cellulesData.map((c) => c.id);
 
           const { data, error } = await supabase
-            .from("suivis_membres")
-            .select("*, cellule:cellule_id(id, nom, prenom_responsable)")
-            .in("cellule_id", celluleIds)
-            .order("created_at", { ascending: false });
-          if (error) throw error;
+          .from("suivis_membres")
+          .select("*, cellule:cellule_id(id, nom, prenom_responsable)")
+          .in("cellule_id", celluleIds)
+          .eq("cellule.responsable_id", responsableId)
+          .order("created_at", { ascending: false });
+                  if (error) throw error;
           suivisData = data;
 
           if (!suivisData || suivisData.length === 0) {

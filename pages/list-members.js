@@ -65,14 +65,29 @@ export default function ListMembers() {
   };
 
   const handleStatusUpdateFromEnvoyer = (id, currentStatus, updatedMember) => {
-    if (!updatedMember) return;
-    setMembers(prev =>
-      prev.map(m => (m.id === id ? { ...m, ...updatedMember } : m))
-    );
-    if (popupMember?.id === id) setPopupMember({ ...popupMember, ...updatedMember });
-    setMessage("✅ Enregistrement réussi !");
-    setTimeout(() => setMessage(""), 2000);
-  };
+  if (!updatedMember) return;
+
+  // ✅ Met à jour le membre dans la liste locale
+  setMembers(prev =>
+    prev.map(m =>
+      m.id === id
+        ? {
+            ...m,
+            ...updatedMember,
+            statut: updatedMember.statut || "actif", // devient "actif" par défaut
+          }
+        : m
+    )
+  );
+
+  // ✅ Met à jour la fiche si le popup est ouvert
+  if (popupMember?.id === id)
+    setPopupMember({ ...popupMember, ...updatedMember });
+
+  // ✅ Message visuel
+  setMessage("✅ Envoyé sur WhatsApp et enregistré !");
+  setTimeout(() => setMessage(""), 2000);
+};
 
   const getBorderColor = (m) => {
     if (m.star) return "#FBC02D";

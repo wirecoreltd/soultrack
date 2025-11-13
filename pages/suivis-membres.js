@@ -260,10 +260,17 @@ export default function SuivisMembres() {
                   <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">👤 Statut : {item.statut || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">
-                    🏠 {item.cellule?.[0]?.nom || "—"} - Responsable : {item.cellule?.[0]?.prenom_responsable || "—"}
+                  <p className="mt-2 text-black-600">
+                    🏠 Cellule :{" "}
+                    <span className="text-gray-700 font-normal ml-1">
+                      {(() => {
+                        const cellule = cellules.find((c) => c.id === member.cellule_id);
+                        return cellule
+                          ? `${cellule.cellule} (${cellule.responsable || "—"})`
+                          : "—";
+                      })()}
+                    </span>
                   </p>
-
                   <button
                     onClick={() => toggleDetails(item.id)}
                     className="text-orange-500 underline text-sm mt-1"

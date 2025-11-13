@@ -50,7 +50,7 @@ export default function SuivisMembres() {
         } else if (userRole.includes("ResponsableCellule")) {
           const { data: cellulesData, error: cellulesError } = await supabase
             .from("cellules")
-            .select("id, prenom_responsable, nom")
+            .select("id, prenom_responsable")
             .eq("responsable_id", responsableId);
           if (cellulesError) throw cellulesError;
 
@@ -130,33 +130,27 @@ export default function SuivisMembres() {
       if (newStatus) payload.statut_suivis = newStatus;
       if (newComment) payload.commentaire_suivis = newComment;
 
-      // --- LOGIQUE CELLULE ---
       let celluleIdToUpdate = suiviData.cellule_id;
-
-      // Si statut “integrer” et pas de cellule, attribue celle du responsable
       if (newStatus === "integrer" && !celluleIdToUpdate) {
         const userEmail = localStorage.getItem("userEmail");
-        const { data: profileData, error: profileError } = await supabase
+        const { data: profileData } = await supabase
           .from("profiles")
           .select("id")
           .eq("email", userEmail)
           .single();
-        if (profileError || !profileData)
-          throw new Error("⚠️ Impossible de récupérer le profil du responsable.");
 
-        const { data: cellulesData, error: cellulesError } = await supabase
+        const { data: cellulesData } = await supabase
           .from("cellules")
           .select("id")
           .eq("responsable_id", profileData.id);
 
-        if (cellulesError || !cellulesData || cellulesData.length === 0)
+        if (!cellulesData || cellulesData.length === 0)
           throw new Error("⚠️ Aucune cellule trouvée pour ce responsable.");
 
         celluleIdToUpdate = cellulesData[0].id;
       }
 
       if (celluleIdToUpdate) payload.cellule_id = celluleIdToUpdate;
-      // --- FIN LOGIQUE CELLULE ---
 
       const { data: updatedSuivi, error: updateError } = await supabase
         .from("suivis_membres")
@@ -278,6 +272,8 @@ export default function SuivisMembres() {
 
                   {isOpen && (
                     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+                      {/* détails internes */}                  
+                      
                       <p>🏙  Ville : {item.ville || "—"}</p>                     
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
                       <p>❓ Besoin : {item.besoin || "—"}</p>
@@ -350,8 +346,8 @@ export default function SuivisMembres() {
                         {m.prenom} {m.nom}
                       </td>
                       <td className="px-4 py-2">{m.telephone || "—"}</td>
-                      <td className="px-4 py-2">{m.statut || "—"}</td>
-                      <td className="px-4 py-2">{m.statut_suivis || "—"}</td>                      
+                      <td className="px-4 py-2">{m.statut_suivis || "—"}</td>
+                      <td className="px-4 py-2">{m.statut || "—"}</td>                      
                       <td className="px-4 py-2">
                         <button
                           onClick={() =>
@@ -364,6 +360,7 @@ export default function SuivisMembres() {
                       </td>
                     </tr>
 
+                    {/* POPUP DETAILS identique à la carte */}
                     {detailsOpen[m.id] && (
                       <tr>
                         <td colSpan={6}>

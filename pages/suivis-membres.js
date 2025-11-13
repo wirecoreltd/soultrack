@@ -44,6 +44,7 @@ export default function SuivisMembres() {
           const { data, error } = await supabase
             .from("suivis_membres")
             .select("*")
+            .not("statut_suivis", "in", '("integrer","refus")') // 🔥 exclure les intégrés et refusés
             .order("created_at", { ascending: false });
 
           if (error) throw error;
@@ -69,6 +70,7 @@ export default function SuivisMembres() {
             .from("suivis_membres")
             .select("*")
             .in("cellule_id", celluleIds)
+            .not("statut_suivis", "in", '("integrer","refus")') // 🔥 exclure les intégrés et refusés
             .order("created_at", { ascending: false });
 
           if (error) throw error;
@@ -165,6 +167,7 @@ export default function SuivisMembres() {
 
       if (updateError) throw updateError;
 
+      // 🔥 Si statut = intégré ou refusé → on le retire de la liste affichée
       if (["integrer", "refus"].includes(updatedSuivi.statut_suivis)) {
         setSuivis((prev) => prev.filter((it) => it.id !== id));
         setMessage({
@@ -174,12 +177,20 @@ export default function SuivisMembres() {
           } et retiré de la liste.`,
         });
       } else {
-        setSuivis((prev) => prev.map((it) => (it.id === id ? updatedSuivi : it)));
-        setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
+        setSuivis((prev) =>
+          prev.map((it) => (it.id === id ? updatedSuivi : it))
+        );
+        setMessage({
+          type: "success",
+          text: "Mise à jour enregistrée avec succès.",
+        });
       }
     } catch (err) {
       console.error("Exception updateSuivi:", err);
-      setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
+      setMessage({
+        type: "error",
+        text: `Erreur durant la mise à jour : ${err.message}`,
+      });
     } finally {
       setUpdating((prev) => ({ ...prev, [id]: false }));
     }
@@ -244,7 +255,9 @@ export default function SuivisMembres() {
       {loading ? (
         <p className="text-white">Chargement...</p>
       ) : suivis.length === 0 ? (
-        <p className="text-white text-lg italic">Aucun membre en suivi pour le moment.</p>
+        <p className="text-white text-lg italic">
+          Aucun membre en suivi pour le moment.
+        </p>
       ) : view === "card" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
           {suivis.map((item) => {
@@ -262,12 +275,15 @@ export default function SuivisMembres() {
                   <h2 className="font-bold text-black text-base text-center mb-1">
                     {item.prenom} {item.nom}
                   </h2>
-                  <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
+                  <p className="text-sm text-gray-700 mb-1">
+                    📞 {item.telephone || "—"}
+                  </p>
                   <p className="text-sm text-gray-700 mb-1">
                     📋 Statut Suivis : {item.statut_suivis || "—"}
                   </p>
                   <p className="text-sm text-gray-700 mb-1">
-                    🏠 Cellule - Responsable : {item.cellule_nom || "—"} {item.responsable || ""}
+                    🏠 Cellule - Responsable : {item.cellule_nom || "—"}{" "}
+                    {item.responsable || ""}
                   </p>
 
                   <button
@@ -315,7 +331,9 @@ export default function SuivisMembres() {
                       <label className="text-black text-sm mt-2">📝 Commentaire :</label>
                       <textarea
                         value={commentChanges[item.id] ?? item.commentaire_suivis ?? ""}
-                        onChange={(e) => handleCommentChange(item.id, e.target.value)}
+                        onChange={(e) =>
+                          handleCommentChange(item.id, e.target.value)
+                        }
                         rows={2}
                         className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
                       />
@@ -329,7 +347,9 @@ export default function SuivisMembres() {
                             : "bg-green-600 hover:bg-green-700"
                         }`}
                       >
-                        {updating[item.id] ? "Mise à jour..." : "Mettre à jour"}
+                        {updating[item.id]
+                          ? "Mise à jour..."
+                          : "Mettre à jour"}
                       </button>
                     </div>
                   )}

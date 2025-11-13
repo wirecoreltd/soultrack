@@ -262,8 +262,7 @@ export default function SuivisMembres() {
                   <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">
                     🏠 {item.cellule_nom} - {item.responsable_prenom}
-                  </p>
-                    // 🏠 Cellule - Responsable : {item.cellule_nom || "—"} - {item.responsable_prenom || "—"}//
+                  </p>                    
                   <button
                     onClick={() => toggleDetails(item.id)}
                     className="text-orange-500 underline text-sm mt-1"
@@ -273,18 +272,12 @@ export default function SuivisMembres() {
 
                   {isOpen && (
                     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-                      {/* détails internes */}
-                      <p>📌 Prénom : {item.prenom}</p>
-                      <p>📞 Téléphone : {item.telephone || "—"}</p>
-                      <p>🏙  Ville : {item.ville || "—"}</p>
-                      <p>🕊  Statut : {item.statut || "—"}</p>
+                      {/* détails internes */}                  
+                      
+                      <p>🏙  Ville : {item.ville || "—"}</p>                     
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
                       <p>❓ Besoin : {item.besoin || "—"}</p>
-                      <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
-                      <p className="text-sm text-gray-700 mb-1">
-                    🏠 Cellule : {item.cellule?.nom || "—"} - Responsable : {item.cellule?.prenom_responsable || "—"}
-                  </p>
-                      <label className="text-black text-sm">📋 Statut Suivis :</label>
+                      <p>📝 Infos : {item.infos_supplementaires || "—"}</p>                     
                       <select
                         value={statusChanges[item.id] ?? item.statut_suivis ?? ""}
                         onChange={(e) => handleStatusChange(item.id, e.target.value)}

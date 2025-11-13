@@ -22,18 +22,20 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, onEnvoy
       const now = new Date().toISOString();
 
       const suiviData = {
-        prenom: membre.prenom,
-        nom: membre.nom,
-        telephone: membre.telephone,
-        is_whatsapp: true,
-        ville: membre.ville,
-        besoin: membre.besoin,
-        infos_supplementaires: membre.infos_supplementaires,
-        cellule_id: cellule.id,
-        cellule_nom: cellule.cellule,
-        responsable: cellule.responsable,
-        date_envoi: now,
-      };
+  membre_id: membre.id,
+  prenom: membre.prenom,
+  nom: membre.nom,
+  telephone: membre.telephone,
+  is_whatsapp: true,
+  ville: membre.ville,
+  besoin: membre.besoin,
+  infos_supplementaires: membre.infos_supplementaires,
+  cellule_id: cellule.id,
+  cellule_nom: cellule.cellule,
+  responsable: cellule.responsable,  
+  statut: "envoye", // ✅ requis par ta table
+};
+
 
       const { error: insertError } = await supabase
         .from("suivis_membres")

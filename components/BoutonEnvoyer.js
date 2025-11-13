@@ -32,6 +32,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
         cellule_id: cellule.id,
         cellule_nom: cellule.cellule,
         responsable: cellule.responsable,
+        date_envoi: now,
       };
 
       const { error: insertError } = await supabase
@@ -45,7 +46,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
         return;
       }
 
-      // Création du message WhatsApp
+      // ✅ Message WhatsApp formaté
       let message = `👋 Salut ${cellule.responsable},\n\n🙏 Nous avons un nouveau membre à suivre :\n\n`;
       message += `- 👤 Nom : ${membre.prenom || ""} ${membre.nom || ""}\n`;
       message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
@@ -61,15 +62,19 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
         "_blank"
       );
 
-      // Callback pour mettre à jour le membre dans le state
+      // ✅ Callback pour mettre à jour le membre dans la liste
       if (onStatusUpdate) {
-        onStatusUpdate({
-          ...membre,
-          statut: "actif",
-          cellule_id: cellule.id,
-          cellule_nom: cellule.cellule,
-          responsable: cellule.responsable,
-        });
+        onStatusUpdate(
+          membre.id,
+          membre.statut,
+          {
+            ...membre,
+            statut: "actif", // devient actif automatiquement
+            cellule_id: cellule.id,
+            cellule_nom: cellule.cellule,
+            responsable: cellule.responsable,
+          }
+        );
       }
     } catch (error) {
       console.error("Erreur lors de l'envoi WhatsApp :", error.message);

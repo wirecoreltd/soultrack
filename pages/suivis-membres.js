@@ -264,7 +264,7 @@ export default function SuivisMembres() {
                     🏠 Cellule :{" "}
                     <span className="text-gray-700 font-normal ml-1">
                       {(() => {
-                        const cellule = cellules.find((c) => c.id === member.cellule_id);
+                        const cellule = cellules.find((c) => c.id === item.cellule_id);
                         return cellule
                           ? `${cellule.cellule} (${cellule.responsable || "—"})`
                           : "—";

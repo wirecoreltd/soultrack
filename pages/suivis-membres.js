@@ -382,7 +382,7 @@ export default function SuivisMembres() {
                               <p className="text-sm text-gray-700 mb-1 text-center">👤 {m.statut || "—"}</p>
                               <p className="text-sm text-gray-700 mb-1 text-center">📋 {m.statut_suivis || "—"}</p>
                               <p className="text-sm text-gray-700 mb-1">
-                              🏠 {mm.cellule_nom} - {m.responsable_prenom}
+                              🏠 {m.cellule_nom} - {m.responsable_prenom}
                               </p> 
                               <p>🏙  Ville : {m.ville || "—"}</p>
                               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>

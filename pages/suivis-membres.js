@@ -48,10 +48,12 @@ export default function SuivisMembres() {
           if (error) throw error;
           suivisData = data;
         } else if (userRole.includes("ResponsableCellule")) {
+          // Récupération des cellules gérées par ce responsable
           const { data: cellulesData, error: cellulesError } = await supabase
             .from("cellules")
-            .select("id, prenom_responsable")
+            .select("id, cellule, responsable")
             .eq("responsable_id", responsableId);
+
           if (cellulesError) throw cellulesError;
 
           if (!cellulesData || cellulesData.length === 0) {
@@ -63,13 +65,17 @@ export default function SuivisMembres() {
 
           const celluleIds = cellulesData.map((c) => c.id);
 
+          // On ne prend que les suivis rattachés à ces cellules
           const { data, error } = await supabase
-          .from("suivis_membres")
-          .select("*, cellule:cellule_id(id, nom, prenom_responsable)")
-          .in("cellule_id", celluleIds)
-          .eq("cellule.responsable_id", responsableId)
-          .order("created_at", { ascending: false });
-                  if (error) throw error;
+            .from("suivis_membres")
+            .select(`
+              *,
+              cellule:cellule_id (id, cellule, responsable)
+            `)
+            .in("cellule_id", celluleIds)
+            .order("created_at", { ascending: false });
+
+          if (error) throw error;
           suivisData = data;
 
           if (!suivisData || suivisData.length === 0) {
@@ -168,9 +174,7 @@ export default function SuivisMembres() {
         setSuivis((prev) => prev.filter((it) => it.id !== id));
         setMessage({
           type: "success",
-          text: `Le contact a été ${
-            updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"
-          } et retiré de la liste.`,
+          text: `Le contact a été ${updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"} et retiré de la liste.`,
         });
 
         // ✅ Sécurité : on refiltre après mise à jour
@@ -272,7 +276,7 @@ export default function SuivisMembres() {
                   <p className="text-sm text-gray-700 mb-1">👤 Statut : {item.statut || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">
-                    🏠 {item.cellule_nom} - {item.responsable_prenom}
+                    🏠 {item.cellule_nom} - {item.responsable_prenom || item.cellule?.responsable || "—"}
                   </p>                    
                   <button
                     onClick={() => toggleDetails(item.id)}
@@ -390,7 +394,7 @@ export default function SuivisMembres() {
                               <p className="text-sm text-gray-700 mb-1 text-center">👤 Statut : {m.statut || "—"}</p>
                               <p className="text-sm text-gray-700 mb-1 text-center">📋 Statut Suivis : {m.statut_suivis || "—"}</p>
                               <p className="text-sm text-gray-700 mb-1">
-                              🏠 {m.cellule_nom} - {m.responsable_prenom}
+                              🏠 {m.cellule_nom} - {m.responsable_prenom || m.cellule?.responsable || "—"}
                               </p> 
                               <p>🏙  Ville : {m.ville || "—"}</p>
                               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>

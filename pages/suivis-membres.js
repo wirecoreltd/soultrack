@@ -98,7 +98,6 @@ export default function SuivisMembres() {
   const handleCommentChange = (id, value) =>
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
-  // Nouvelle fonction pour couleurs selon statut_suivis
   const getBorderColor = (m) => {
     if (m.statut_suivis === "refus") return "#EA4335";        // rouge
     if (m.statut_suivis === "integrer") return "#FFA500";    // orange
@@ -165,7 +164,9 @@ export default function SuivisMembres() {
         setSuivis((prev) => prev.filter((it) => it.id !== id));
         setMessage({
           type: "success",
-          text: `Le contact a été ${updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"} et retiré de la liste.`,
+          text: `Le contact a été ${
+            updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"
+          } et retiré de la liste.`,
         });
       } else {
         setSuivis((prev) => prev.map((it) => (it.id === id ? updatedSuivi : it)));
@@ -257,10 +258,10 @@ export default function SuivisMembres() {
                     {item.prenom} {item.nom}
                   </h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
+                  <p className="text-sm text-gray-700 mb-1">👤 Statut : {item.statut || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">👤 Statut membre : {item.statut || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">
-                    🏠 Cellule : {item.cellule?.nom || "—"} - Responsable : {item.cellule?.prenom_responsable || "—"}
+                    🏠 {item.cellule?.[0]?.nom || "—"} - Responsable : {item.cellule?.[0]?.prenom_responsable || "—"}
                   </p>
 
                   <button
@@ -272,13 +273,15 @@ export default function SuivisMembres() {
 
                   {isOpen && (
                     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+                      {/* détails internes */}
                       <p>📌 Prénom : {item.prenom}</p>
                       <p>📞 Téléphone : {item.telephone || "—"}</p>
-                      <p>🏙 Ville : {item.ville || "—"}</p>
-                      <p>🕊 Statut : {item.statut || "—"}</p>
+                      <p>🏙  Ville : {item.ville || "—"}</p>
+                      <p>🕊  Statut : {item.statut || "—"}</p>
                       <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
                       <p>❓ Besoin : {item.besoin || "—"}</p>
                       <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
+                      <p>🏠 Cellule : {item.cellule?.[0]?.nom || "—"} - Responsable : {item.cellule?.[0]?.prenom_responsable || "—"}</p>
 
                       <label className="text-black text-sm">📋 Statut Suivis :</label>
                       <select
@@ -321,7 +324,7 @@ export default function SuivisMembres() {
       {/* VUE TABLE */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200 relative">
-          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+          <table className="w-full text-sm text-left text-black border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
               <tr>
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
@@ -353,7 +356,7 @@ export default function SuivisMembres() {
                       <td className="px-4 py-2">{m.statut_suivis || "—"}</td>
                       <td className="px-4 py-2">{m.statut || "—"}</td>
                       <td className="px-4 py-2">
-                        {m.cellule?.nom || "—"} - {m.cellule?.prenom_responsable || "—"}
+                        {m.cellule?.[0]?.nom || "—"} - {m.cellule?.[0]?.prenom_responsable || "—"}
                       </td>
                       <td className="px-4 py-2">
                         <button
@@ -386,10 +389,10 @@ export default function SuivisMembres() {
                                 {m.prenom} {m.nom}
                               </h2>
                               <p>📞 {m.telephone || "—"}</p>
+                              <p>👤 Statut : {m.statut || "—"}</p>
                               <p>📋 Statut Suivis : {m.statut_suivis || "—"}</p>
-                              <p>👤 Statut membre : {m.statut || "—"}</p>
-                              <p>🏠 Cellule : {m.cellule?.nom || "—"} - Responsable : {m.cellule?.prenom_responsable || "—"}</p>
-                              <p>🏙 Ville : {m.ville || "—"}</p>
+                              <p>🏠 Cellule : {m.cellule?.[0]?.nom || "—"} - Responsable : {m.cellule?.[0]?.prenom_responsable || "—"}</p>
+                              <p>🏙  Ville : {m.ville || "—"}</p>
                               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
                               <p>❓ Besoin : {m.besoin || "—"}</p>
                               <p>📝 Infos : {m.infos_supplementaires || "—"}</p>

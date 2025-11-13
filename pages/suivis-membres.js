@@ -323,8 +323,8 @@ export default function SuivisMembres() {
               <tr>
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Statut Suivis</th>
-                <th className="px-4 py-2">Statut membre</th>                
+                <th className="px-4 py-2">Statut</th>  
+                <th className="px-4 py-2">Statut Suivis</th>                              
                 <th className="px-4 py-2 rounded-tr-lg">Détails</th>
               </tr>
             </thead>
@@ -382,7 +382,7 @@ export default function SuivisMembres() {
                               <p className="text-sm text-gray-700 mb-1 text-center">👤 {m.statut || "—"}</p>
                               <p className="text-sm text-gray-700 mb-1 text-center">📋 {m.statut_suivis || "—"}</p>
                               <p className="text-sm text-gray-700 mb-1">
-                              🏠 {item.cellule_nom} - {item.responsable_prenom}
+                              🏠 {mm.cellule_nom} - {m.responsable_prenom}
                               </p> 
                               <p>🏙  Ville : {m.ville || "—"}</p>
                               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>

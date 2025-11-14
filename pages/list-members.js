@@ -1,3 +1,5 @@
+//pages/list-members.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -275,9 +277,14 @@ export default function ListMembers() {
                       <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
                       <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
                       <td className="px-4 py-2 flex items-center gap-2">
-                        <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">{popupMember?.id === m.id ? "Fermer détails" : "Détails"}</button>
-                        <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">✏️ Modifier</button>
+                        <button
+                          onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
+                          className="text-orange-500 underline text-sm"
+                        >
+                          {popupMember?.id === m.id ? "Fermer les détails" : "Détails"}
+                        </button>
                       </td>
+
                     </tr>
                   ))}
                 </>

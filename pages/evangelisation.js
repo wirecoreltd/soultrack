@@ -95,12 +95,13 @@ export default function Evangelisation() {
         </select>
 
         {selectedCellule && (
-          <button
-            onClick={sendWhatsapp}
-            className="bg-green-500 text-white font-bold px-4 py-2 rounded-xl shadow-md hover:bg-green-600 transition-all"
-          >
-            ✅ Envoyer WhatsApp
-          </button>
+          <BoutonEnvoyerContacts
+            contacts={contacts}
+            checkedContacts={checkedContacts}
+            cellule={cellules.find(c => c.id === selectedCellule)}
+            onEnvoye={(id) => setContacts(prev => prev.filter(c => c.id !== id))}
+            showToast={(msg) => alert(msg)}
+          />
         )}
       </div>
 

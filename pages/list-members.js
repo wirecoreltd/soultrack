@@ -236,7 +236,7 @@ export default function ListMembers() {
           <table className="w-full text-sm text-left border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase">
               <tr>
-                <th className="px-4 py-2 text-white rounded-tl-lg">Nom complet</th>
+                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
                 <th className="px-4 py-2">Statut</th>
                 <th className="px-4 py-2 rounded-tr-lg">Actions</th>
@@ -249,7 +249,7 @@ export default function ListMembers() {
               )}
               {nouveauxFiltres.map(m => (
                 <tr key={m.id} className="border-b border-gray-300">
-                  <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>
+                  <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white " style={{ borderLeftColor: getBorderColor(m) }}>
                     {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                     <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
                   </td>

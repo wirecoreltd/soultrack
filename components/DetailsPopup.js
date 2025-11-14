@@ -136,10 +136,10 @@ export default function DetailsPopup({
 
             <div className="text-center mt-3">
               <button
-                onClick={() => setEditMember(member)}
-                className="text-blue-600 underline text-sm hover:text-blue-800"
+                onClick={onClose} // <-- ferme le popup
+                className="text-red-500 underline text-sm hover:text-red-700"
               >
-                ✏️ Modifier le contact
+                Fermer les détails
               </button>
             </div>
           </div>

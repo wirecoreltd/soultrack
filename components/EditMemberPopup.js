@@ -69,34 +69,48 @@ export default function EditMemberPopup({ member, cellules = [], onClose, onUpda
     };
 
     // ✅ Convertir les champs vides en null
-const cleanData = {
-  ...formData,
-  prenom: formData.prenom || member.prenom,
-  nom: formData.nom || member.nom,
-};
-
-    
-const { error, data } = await supabase
-  .from("membres")
-  .update(cleanData)
-  .eq("id", member.id)
-  .select()
-  .single();
-
-
-    if (error) {
-      alert("❌ Erreur lors de la mise à jour : " + error.message);
-    } else {
-      if (onUpdateMember) onUpdateMember(data);
-      setMessage("✅ Changement enregistré !");
-      setTimeout(() => {
-        setMessage("");
-        onClose();
-      }, 1500);
-    }
-
-    setLoading(false);
-  };
+      const cleanData = {
+        ...formData,
+        prenom: formData.prenom || member.prenom,
+        nom: formData.nom || member.nom,
+      
+        // pour les autres champs : si vide = null
+        ville: formData.ville === "" ? null : formData.ville,
+        telephone: formData.telephone === "" ? null : formData.telephone,
+        infos_supplementaires:
+          formData.infos_supplementaires === ""
+            ? null
+            : formData.infos_supplementaires,
+        statut: formData.statut === "" ? null : formData.statut,
+        cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
+        besoin:
+          formData.autreBesoin && showAutre
+            ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
+            : formData.besoin,
+      };
+      
+          
+      const { error, data } = await supabase
+        .from("membres")
+        .update(cleanData)
+        .eq("id", member.id)
+        .select()
+        .single();
+      
+      
+          if (error) {
+            alert("❌ Erreur lors de la mise à jour : " + error.message);
+          } else {
+            if (onUpdateMember) onUpdateMember(data);
+            setMessage("✅ Changement enregistré !");
+            setTimeout(() => {
+              setMessage("");
+              onClose();
+            }, 1500);
+          }
+      
+          setLoading(false);
+        };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

@@ -193,7 +193,7 @@ export default function SuivisMembres() {
       <p>❓Besoin : {
                       (() => {
                       if (!m.besoin) return "—";
-                      if (Array.isArray(item.besoin)) return m.besoin.join(", ");
+                      if (Array.isArray(m.besoin)) return m.besoin.join(", ");
                       try {
                        const arr = JSON.parse(m.besoin);
                        return Array.isArray(arr) ? arr.join(", ") : m.besoin;

@@ -295,7 +295,7 @@ export default function SuivisMembres() {
                   {item.prenom} {item.nom}
                 </h2>
                 <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">🕊 {item.statu || "—"}</p>
+                <p className="text-sm text-gray-700 mb-1">🕊 {item.statut || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">
                   📋 Statut Suivis : {item.statut_suivis || "—"}
                 </p>

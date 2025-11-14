@@ -51,22 +51,31 @@ export default function ListMembers() {
   useEffect(() => { fetchMembers(); }, [refreshKey]);
 
   const fetchMembers = async () => {
-    const { data } = await supabase
+  try {
+    const { data, error } = await supabase
       .from("membres")
       .select(`
         *,
-        statuts_suivis:statut_suivis(libelle)
+        statut_suivi(libelle)  -- <-- remplace "statut_suivi" par le nom exact de la relation dans Supabase
       `)
       .order("created_at", { ascending: false });
 
-    if (data) {
-      const membersWithSuivis = data.map(m => ({
-        ...m,
-        statutSuivisLabel: m.statuts_suivis?.[0]?.libelle || "—"
-      }));
-      setMembers(membersWithSuivis);
+    if (error) {
+      console.error("Erreur fetchMembers:", error);
+      return;
     }
-  };
+
+    // Ajout d'un champ lisible pour le statut suivi
+    const membersWithSuivis = data.map(m => ({
+      ...m,
+      statutSuivisLabel: m.statut_suivi?.libelle || "—"  // même ici, adapte "statut_suivi" selon le nom exact
+    }));
+
+    setMembers(membersWithSuivis);
+  } catch (err) {
+    console.error("Erreur fetchMembers:", err);
+  }
+};
 
   const fetchCellules = async () => {
     const { data } = await supabase.from("cellules").select("id, cellule, responsable, telephone");

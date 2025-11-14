@@ -149,7 +149,7 @@ export default function ListMembers() {
           {/* Nouveaux Membres */}
           {nouveauxFiltres.length > 0 && (
             <div>
-              <p className="text-white text-lg mb-2 ml-1">💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}</p>
+              <p className="text-white text-lg mb-4 ml-1">💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {nouveauxFiltres.map(m => {
                   const isOpen = detailsOpen[m.id];
@@ -236,7 +236,7 @@ export default function ListMembers() {
           <table className="w-full text-sm text-left border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase">
               <tr>
-                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+                <th className="px-4 py-2 text-white rounded-tl-lg">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
                 <th className="px-4 py-2">Statut</th>
                 <th className="px-4 py-2 rounded-tr-lg">Actions</th>

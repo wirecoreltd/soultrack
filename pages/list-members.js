@@ -315,9 +315,18 @@ export default function ListMembers() {
 
           {/* ---------------------------------- ANCIENS ---------------------------------- */}
           {anciensFiltres.length > 0 && (
-            <div>
-              <h3 className="text-white text-lg font-semibold mb-3">Membres existants</h3>
-
+            <div className="mt-8">
+              <h3 className="text-white text-lg mb-3 font-semibold">
+                <span
+                  style={{
+                    background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                    WebkitBackgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
+                  Membres existants
+                </span>
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {anciensFiltres.map((m) => {
                   const isOpen = detailsOpen[m.id];
@@ -426,12 +435,19 @@ export default function ListMembers() {
               ))}
 
               {anciensFiltres.length > 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-2 font-semibold text-white">
-                    Membres existants
-                  </td>
-                </tr>
-              )}
+                <div className="mt-8">
+              <h3 className="text-white text-lg mb-3 font-semibold">
+                <span
+                  style={{
+                    background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                    WebkitBackgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
+                  Membres existants
+                </span>
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
               {anciensFiltres.map((m) => (
                 <tr key={m.id} className="border-b border-gray-300">

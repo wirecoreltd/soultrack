@@ -212,6 +212,186 @@ export default function ListMembers() {
         </button>
       </div>
 
+      {/* ================================ VUE CARTE ================================ */}
+      {view === "card" && (
+        <div className="w-full max-w-5xl space-y-8">
+          {/* NOUVEAUX MEMBRES */}
+          {nouveauxFiltres.length > 0 && (
+            <div>
+              <p className="text-white text-lg mb-2 ml-1">
+                💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {nouveauxFiltres.map((m) => {
+                  const isOpen = detailsOpen[m.id];
+                  return (
+                    <div
+                      key={m.id}
+                      className="bg-white p-3 rounded-xl shadow-md border-l-4 relative"
+                      style={{ borderLeftColor: getBorderColor(m) }}
+                    >
+                      <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] px-6 py-1 rotate-45">
+                        Nouveau
+                      </span>
+                      <div className="flex flex-col items-center">
+                        <h2 className="text-lg font-bold text-center">
+                          {m.prenom} {m.nom}
+                        </h2>
+                        <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
+                        <p className="text-sm text-gray-600">🕊 Statut : {m.statut}</p>
+                        <button
+                          onClick={() => toggleDetails(m.id)}
+                          className="text-orange-500 underline text-sm"
+                        >
+                          {isOpen ? "Fermer détails" : "Détails"}
+                        </button>
+
+                        {isOpen && (
+                          <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
+                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                            <p>🏙 Ville : {m.ville || "—"}</p>
+                            <p>🧩 Venu : {m.venu || "—"}</p>
+                            <p>
+                              ❓ Besoin :{" "}
+                              {(() => {
+                                if (!m.besoin) return "—";
+                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                                try {
+                                  const arr = JSON.parse(m.besoin);
+                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                                } catch {
+                                  return m.besoin;
+                                }
+                              })()}
+                            </p>
+
+                            <p className="font-semibold text-green-600">Cellule :</p>
+                            <select
+                              value={selectedCellules[m.id] || ""}
+                              onChange={(e) =>
+                                setSelectedCellules((prev) => ({
+                                  ...prev,
+                                  [m.id]: e.target.value,
+                                }))
+                              }
+                              className="border rounded px-2 py-1 text-sm w-full"
+                            >
+                              <option value="">-- Choisir cellule --</option>
+                              {cellules.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.cellule} ({c.responsable})
+                                </option>
+                              ))}
+                            </select>
+
+                            {selectedCellules[m.id] && (
+                              <div className="pt-2">
+                                <BoutonEnvoyer
+                                  membre={m}
+                                  cellule={cellules.find(
+                                    (c) => c.id === selectedCellules[m.id]
+                                  )}
+                                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                                  session={session}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ANCIENS MEMBRES */}
+          {anciensFiltres.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-white text-lg mb-3 font-semibold">
+                <span
+                  style={{
+                    background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                    WebkitBackgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
+                  Membres existants
+                </span>
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {anciensFiltres.map((m) => {
+                  const isOpen = detailsOpen[m.id];
+                  return (
+                    <div
+                      key={m.id}
+                      className="bg-white p-3 rounded-xl shadow-md border-l-4"
+                      style={{ borderLeftColor: getBorderColor(m) }}
+                    >
+                      <div className="flex flex-col items-center">
+                        <h2 className="text-lg font-bold text-center">
+                          {m.prenom} {m.nom}{" "}
+                          {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                        </h2>
+                        <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
+                        <p className="text-sm text-gray-600">🕊 Statut : {m.statut}</p>
+                        <button
+                          onClick={() => toggleDetails(m.id)}
+                          className="text-orange-500 underline text-sm"
+                        >
+                          {isOpen ? "Fermer détails" : "Détails"}
+                        </button>
+
+                        {isOpen && (
+                          <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
+                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                            <p>🏙 Ville : {m.ville || "—"}</p>
+                            <p>🧩 Venu : {m.venu || "—"}</p>
+                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                            <p className="font-semibold">🏠 Cellule :</p>
+                            <p>
+                              {(() => {
+                                const cellule = cellules.find(
+                                  (c) => c.id === m.cellule_id
+                                );
+                                return cellule
+                                  ? `${cellule.cellule} (${cellule.responsable || "—"})`
+                                  : "—";
+                              })()}
+                            </p>
+
+                            <div className="text-center mt-3">
+                              <button
+                                onClick={() => setEditMember(m)}
+                                className="text-blue-600 underline text-sm"
+                              >
+                                ✏️ Modifier le contact
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+        export default function ListMembers() {
+  // ... tout ton code useState, useEffect, fonctions, filtres etc.
+
+  return (
+    <div
+      className="min-h-screen flex flex-col items-center p-6"
+      style={{
+        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
+      }}
+    >
+      {/* ... top bar, logo, search, vue carte ... */}
+
       {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
@@ -340,5 +520,3 @@ export default function ListMembers() {
     </div> // <-- fermeture du div principal
   ); // <-- fermeture du return
 } // <-- fermeture de ListMembers()
-
-          

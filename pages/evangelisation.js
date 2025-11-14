@@ -96,14 +96,24 @@ export default function Evangelisation() {
         </select>
 
         {selectedCellule && (
-          <BoutonEnvoyerContacts
-            contacts={contacts}
-            checkedContacts={checkedContacts}
-            cellule={cellules.find(c => c.id === selectedCellule)}
-            onEnvoye={(id) => setContacts(prev => prev.filter(c => c.id !== id))}
-            showToast={(msg) => alert(msg)}
-          />
-        )}
+  <BoutonEnvoyerContacts
+    contacts={contacts}
+    checkedContacts={checkedContacts}
+    cellule={cellules.find(c => c.id === selectedCellule)}
+    onEnvoye={(id) => {
+      // Retirer le contact envoyé
+      setContacts(prev => prev.filter(c => c.id !== id));
+
+      // Supprimer également le checkbox correspondant
+      setCheckedContacts(prev => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      });
+    }}
+    showToast={(msg) => alert(msg)}
+  />
+)}
       </div>
 
       {/* BASCULE VUE */}

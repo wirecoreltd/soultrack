@@ -45,6 +45,7 @@ export default function SuivisMembres() {
           const { data, error } = await supabase
             .from("suivis_membres")
             .select("*")
++           .not("statut_suivis", "in", '("integrer","refus")') // 👈 AJOUT
             .order("created_at", { ascending: false });
           if (error) throw error;
           suivisData = data;
@@ -68,6 +69,7 @@ export default function SuivisMembres() {
             .from("suivis_membres")
             .select("*")
             .in("cellule_id", celluleIds)
++           .not("statut_suivis", "in", '("integrer","refus")') // 👈 AJOUT
             .order("created_at", { ascending: false });
           if (error) throw error;
           suivisData = data;
@@ -183,7 +185,6 @@ export default function SuivisMembres() {
     }
   };
 
-  // Component pour afficher les détails (popup ou section)
   const Details = ({ m }) => (
     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
       <p>📌 Prénom : {m.prenom}</p>
@@ -231,7 +232,6 @@ export default function SuivisMembres() {
       className="min-h-screen flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* Header */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
           <button
@@ -247,12 +247,10 @@ export default function SuivisMembres() {
         </div>
       </div>
 
-      {/* Logo */}
       <div className="mb-4">
         <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
 
-      {/* Titre */}
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-white mb-2">📋 Suivis des Membres</h1>
         <p className="text-white text-lg max-w-xl mx-auto italic">
@@ -260,7 +258,6 @@ export default function SuivisMembres() {
         </p>
       </div>
 
-      {/* Switch view */}
       <div className="mb-4 flex justify-end w-full max-w-6xl">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
@@ -270,7 +267,6 @@ export default function SuivisMembres() {
         </button>
       </div>
 
-      {/* Message */}
       {message && (
         <div
           className={`mb-4 px-4 py-2 rounded-md text-sm ${
@@ -285,7 +281,6 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {/* VUE CARTE */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
           {suivis.map((item) => (
@@ -320,7 +315,6 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {/* VUE TABLE */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200 relative">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">

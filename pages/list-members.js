@@ -1,5 +1,27 @@
 "use client";
 
+/**
+ * Page: Liste des Membres
+ * Description:
+ * Cette page affiche tous les membres de l'application SoulTrack sous deux vues : carte et tableau.
+ * - Vue Carte : Affiche les membres sous forme de cartes individuelles avec détails extensibles.
+ * - Vue Table : Affiche les membres dans un tableau avec actions rapides.
+ * 
+ * Fonctionnalités :
+ * - Recherche par nom complet et filtre par statut.
+ * - Gestion des statuts des membres (visiteur, actif, Integrer, ancien, etc.).
+ * - Attribution d'un membre à une cellule avec bouton d'envoi.
+ * - Détails popup pour chaque membre.
+ * - Modification des informations d'un membre via EditMemberPopup.
+ * - Affichage de toasts pour les actions réussies.
+ * - Support de la session utilisateur pour personnalisation du prénom.
+ * 
+ * Dépendances :
+ * - Supabase pour la récupération des données.
+ * - date-fns pour le formatage des dates.
+ * - Composants : BoutonEnvoyer, LogoutLink, DetailsPopup, EditMemberPopup
+ */
+
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -27,6 +49,7 @@ export default function ListMembers() {
   // Toast
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setShowingToast(true);
@@ -51,31 +74,9 @@ export default function ListMembers() {
   useEffect(() => { fetchMembers(); }, [refreshKey]);
 
   const fetchMembers = async () => {
-  try {
-    const { data, error } = await supabase
-      .from("membres")
-      .select(`
-        *,
-        statut_suivi(libelle)  -- <-- remplace "statut_suivi" par le nom exact de la relation dans Supabase
-      `)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Erreur fetchMembers:", error);
-      return;
-    }
-
-    // Ajout d'un champ lisible pour le statut suivi
-    const membersWithSuivis = data.map(m => ({
-      ...m,
-      statutSuivisLabel: m.statut_suivi?.libelle || "—"  // même ici, adapte "statut_suivi" selon le nom exact
-    }));
-
-    setMembers(membersWithSuivis);
-  } catch (err) {
-    console.error("Erreur fetchMembers:", err);
-  }
-};
+    const { data } = await supabase.from("membres").select("*").order("created_at", { ascending: false });
+    if (data) setMembers(data);
+  };
 
   const fetchCellules = async () => {
     const { data } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
@@ -188,7 +189,6 @@ export default function ListMembers() {
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🧩 Venu : {m.venu || "—"}</p>
                             <p>❓ Besoin : {m.besoin || "—"}</p>
-                            <p>📊 Statut suivi : {m.statutSuivisLabel}</p>
                             <p className="font-semibold text-green-600">Cellule :</p>
                             <select value={selectedCellules[m.id] || ""} onChange={e => setSelectedCellules(prev => ({ ...prev, [m.id]: e.target.value }))} className="border rounded px-2 py-1 text-sm w-full">
                               <option value="">-- Choisir cellule --</option>
@@ -235,7 +235,6 @@ export default function ListMembers() {
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🧩 Venu : {m.venu || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                            <p>📊 Statut suivi : {m.statutSuivisLabel}</p>
                             <p className="font-semibold">🏠 Cellule :</p>
                             <p>{(() => { const c = cellules.find(c => c.id === m.cellule_id); return c ? `${c.cellule} (${c.responsable || "—"})` : "—"; })()}</p>
                             <div className="text-center mt-3">
@@ -262,11 +261,14 @@ export default function ListMembers() {
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
                 <th className="px-4 py-2">Statut</th>
-                <th className="px-4 py-2">Suivi</th>
                 <th className="px-4 py-2 rounded-tr-lg">Actions</th>
               </tr>
             </thead>
             <tbody>
+              {/* Nouveaux Membres */}
+              {nouveauxFiltres.length > 0 && (
+                <tr><td colSpan={4} className="px-4 py-2 text-white font-semibold">💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}</td></tr>
+              )}
               {nouveauxFiltres.map(m => (
                 <tr key={m.id} className="border-b border-gray-300">
                   <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white " style={{ borderLeftColor: getBorderColor(m) }}>
@@ -275,25 +277,29 @@ export default function ListMembers() {
                   </td>
                   <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
                   <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
-                  <td className="px-4 py-2 text-white">{m.statutSuivisLabel}</td>
                   <td className="px-4 py-2 flex items-center gap-2">
                     <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">{popupMember?.id === m.id ? "Fermer détails" : "Détails"}</button>
                     <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">| Modifier</button>
                   </td>
                 </tr>
               ))}
-              {anciensFiltres.map(m => (
-                <tr key={m.id} className="border-b border-gray-300">
-                  <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}</td>
-                  <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
-                  <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
-                  <td className="px-4 py-2 text-white">{m.statutSuivisLabel}</td>
-                  <td className="px-4 py-2 flex items-center gap-2">
-                    <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">{popupMember?.id === m.id ? "Fermer détails" : "Détails"}</button>
-                    <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm"> Modifier</button>
-                  </td>
-                </tr>
-              ))}
+              {/* Anciens Membres */}
+              {anciensFiltres.length > 0 && (
+                <>
+                  <tr><td colSpan={4} className="px-4 py-2 font-semibold text-lg text-white"><span style={{ background: "linear-gradient(to right, #3B82F6, #D1D5DB)", WebkitBackgroundClip: "text", color: "transparent" }}>Membres existants</span></td></tr>
+                  {anciensFiltres.map(m => (
+                    <tr key={m.id} className="border-b border-gray-300">
+                      <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}</td>
+                      <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
+                      <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
+                      <td className="px-4 py-2 flex items-center gap-2">
+                        <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">{popupMember?.id === m.id ? "Fermer détails" : "Détails"}</button>
+                        <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm"> Modifier</button>
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              )}
             </tbody>
           </table>
         </div>

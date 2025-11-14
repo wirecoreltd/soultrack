@@ -77,6 +77,12 @@ export default function ListMembers() {
     catch { return ""; }
   };
 
+  const triggerToast = (message) => {
+  setToastMessage(message);
+  setShowToast(true);
+  setTimeout(() => setShowToast(false), 3000); // disparaît après 3 secondes
+  };
+
   const filterBySearch = (list) => list.filter(m => `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase()));
 
   const nouveaux = members.filter(m => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");

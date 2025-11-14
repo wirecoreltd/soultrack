@@ -20,7 +20,9 @@ export default function BoutonEnvoyerContacts({ contacts, checkedContacts, cellu
     setLoading(true);
 
     try {
-      // 1️⃣ Enregistrement dans la base
+      const idsEnvoyes = contactsACocher.map(c => c.id);
+
+      // 1️⃣ Enregistrement dans la table suivis_des_evangelises
       const insertData = contactsACocher.map(contact => ({
         prenom: contact.prenom,
         nom: contact.nom,
@@ -35,32 +37,47 @@ export default function BoutonEnvoyerContacts({ contacts, checkedContacts, cellu
         date_suivi: new Date().toISOString(),
       }));
 
-      const { error } = await supabase
+      const { error: insertError } = await supabase
         .from("suivis_des_evangelises")
         .insert(insertData);
 
-      if (error) {
-        console.error("Erreur insertion :", error.message);
+      if (insertError) {
+        console.error("Erreur insertion :", insertError.message);
         alert("❌ Une erreur est survenue !");
         setLoading(false);
         return;
       }
 
-      // 2️⃣ Créer un message WhatsApp regroupé
-      let message = `👋 Salut ${cellule.responsable},\n\n🙏 Nouveaux contacts à suivre :\n\n`;
+      // 2️⃣ Supprimer les contacts envoyés de evangelises
+      const { error: deleteError } = await supabase
+        .from("evangelises")
+        .delete()
+        .in("id", idsEnvoyes);
+
+      if (deleteError) console.error("Erreur suppression :", deleteError.message);
+
+      // 3️⃣ Générer le message WhatsApp
+      const intro = contactsACocher.length === 1 
+        ? "une nouvelle âme"
+        : "des nouvelles âmes";
+
+      let message = `👋 Salut ${cellule.responsable},\n\n🙏 Nous avons ${intro} qui sont venu Christ à suivre :\n\n`;
+
       contactsACocher.forEach(contact => {
-        message += `- 👤 ${contact.prenom} ${contact.nom}\n`;
-        message += `- 📱 ${contact.telephone || "—"}\n`;
+        message += `- 👤 Nom : ${contact.prenom} ${contact.nom}\n`;
+        message += `- 📱 Téléphone : ${contact.telephone || "—"}\n`;
+        message += `- 📲 WhatsApp : ${contact.is_whatsapp ? "Oui" : "Non"}\n`;
         message += `- 🏙 Ville : ${contact.ville || "—"}\n`;
         message += `- 🙏 Besoin : ${contact.besoin || "—"}\n`;
-        message += `- 📝 Infos : ${contact.infos_supplementaires || "—"}\n\n`;
+        message += `- 📝 Infos supplémentaires : ${contact.infos_supplementaires || "—"}\n\n`;
       });
+
       message += "🙏 Merci pour ton cœur ❤ et ton amour ✨";
 
       const phone = cellule.telephone.replace(/\D/g, "");
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
 
-      // 3️⃣ Retirer les contacts envoyés de la liste
+      // 4️⃣ Mettre à jour la page côté client
       if (onEnvoye) {
         contactsACocher.forEach(c => onEnvoye(c.id));
       }

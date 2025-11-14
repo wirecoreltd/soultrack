@@ -23,7 +23,16 @@ export default function ListMembers() {
   const [session, setSession] = useState(null);
   const [prenom, setPrenom] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Toast
   const [toastMessage, setToastMessage] = useState("");
+  const [showingToast, setShowingToast] = useState(false);
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setShowingToast(true);
+    setTimeout(() => setShowingToast(false), 3500);
+  };
 
   // ==================== FETCH SESSION & MEMBERS ====================
   useEffect(() => {
@@ -61,12 +70,6 @@ export default function ListMembers() {
   const handleStatusUpdateFromEnvoyer = (id, currentStatus) => {
     if (currentStatus === "visiteur" || currentStatus === "veut rejoindre ICC") handleChangeStatus(id, "actif");
     setPopupMember(null);
-    showToast("✅ Message envoyé et suivi enregistré !");
-  };
-
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(""), 3000);
   };
 
   const getBorderColor = (m) => {
@@ -99,9 +102,10 @@ export default function ListMembers() {
   // ==================== RETURN ====================
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+      
       {/* Toast */}
-      {toastMessage && (
-        <div className="absolute top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow z-50">
+      {showingToast && (
+        <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
           {toastMessage}
         </div>
       )}
@@ -142,7 +146,7 @@ export default function ListMembers() {
       {/* ==================== VUE CARTE ==================== */}
       {view === "card" && (
         <div className="w-full max-w-5xl space-y-8">
-          {/* Cartes Nouveaux Membres */}
+          {/* Nouveaux Membres */}
           {nouveauxFiltres.length > 0 && (
             <div>
               <p className="text-white text-lg mb-2 ml-1">💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}</p>
@@ -168,18 +172,26 @@ export default function ListMembers() {
                               <option value="">-- Choisir cellule --</option>
                               {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>)}
                             </select>
-                            {selectedCellules[m.id] && <div className="pt-2"><BoutonEnvoyer membre={m} cellule={cellules.find(c => c.id === selectedCellules[m.id])} onStatusUpdate={handleStatusUpdateFromEnvoyer} session={session} /></div>}
+                            {selectedCellules[m.id] && <div className="pt-2">
+                              <BoutonEnvoyer 
+                                membre={m} 
+                                cellule={cellules.find(c => c.id === selectedCellules[m.id])} 
+                                onStatusUpdate={handleStatusUpdateFromEnvoyer} 
+                                session={session} 
+                                showToast={showToast}
+                              />
+                            </div>}
                           </div>
                         )}
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             </div>
           )}
 
-          {/* Cartes Anciens Membres */}
+          {/* Anciens Membres */}
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
               <h3 className="text-white text-lg mb-3 font-semibold">
@@ -210,7 +222,7 @@ export default function ListMembers() {
                         )}
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             </div>
@@ -243,14 +255,13 @@ export default function ListMembers() {
                   </td>
                   <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
                   <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
-                  <td className="px-4 py-2 flex gap-2">
+                  <td className="px-4 py-2 flex items-center gap-2">
                     <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">{popupMember?.id === m.id ? "Fermer détails" : "Détails"}</button>
                     <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">✏️ Modifier</button>
                   </td>
                 </tr>
               ))}
-
-              {/* Membres existants */}
+              {/* Anciens Membres */}
               {anciensFiltres.length > 0 && (
                 <>
                   <tr><td colSpan={4} className="px-4 py-2 font-semibold text-lg text-white"><span style={{ background: "linear-gradient(to right, #3B82F6, #D1D5DB)", WebkitBackgroundClip: "text", color: "transparent" }}>Membres existants</span></td></tr>
@@ -259,7 +270,7 @@ export default function ListMembers() {
                       <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}</td>
                       <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
                       <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
-                      <td className="px-4 py-2 flex gap-2">
+                      <td className="px-4 py-2 flex items-center gap-2">
                         <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">{popupMember?.id === m.id ? "Fermer détails" : "Détails"}</button>
                         <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">✏️ Modifier</button>
                       </td>
@@ -273,7 +284,6 @@ export default function ListMembers() {
       )}
 
       {popupMember && <DetailsPopup member={popupMember} onClose={() => setPopupMember(null)} statusOptions={statusOptions} cellules={cellules} selectedCellules={selectedCellules} setSelectedCellules={setSelectedCellules} handleChangeStatus={handleChangeStatus} handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer} session={session} />}
-
       {editMember && <EditMemberPopup member={editMember} cellules={cellules} onClose={() => setEditMember(null)} onUpdateMember={updated => { setMembers(prev => prev.map(m => (m.id === updated.id ? updated : m))); setEditMember(null); }} />}
     </div>
   );

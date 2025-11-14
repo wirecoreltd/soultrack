@@ -66,11 +66,12 @@ export default function DetailsPopup({
             <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
 
             <p className="mt-2 font-semibold text-blue-600">Statut :</p>            
-                <option value="">-- Statut --</option>
-                <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                <option value="a deja son eglise">A déjà son église</option>
-                <option value="visiteur">Visiteur</option>
-              </select>
+                 <select name="statut" value={formData.statut} onChange={(e)=>setFormData({...formData, statut:e.target.value})} className="input">
+                  <option value="">-- Statut --</option>
+                  <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                  <option value="a deja son eglise">A déjà son église</option>
+                  <option value="visiteur">Visiteur</option>
+                </select>
             )}
 
             <p className="mt-2 font-semibold text-green-600">Cellule :</p>

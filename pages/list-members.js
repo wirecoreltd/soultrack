@@ -1,146 +1,184 @@
-"use client";
+      "use client";
 
-import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
-import Image from "next/image";
-import BoutonEnvoyer from "../components/BoutonEnvoyer";
-import LogoutLink from "../components/LogoutLink";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import DetailsPopup from "../components/DetailsPopup";
-import EditMemberPopup from "../components/EditMemberPopup";
+        import { useEffect, useState } from "react";
+        import supabase from "../lib/supabaseClient";
+        import Image from "next/image";
+        import BoutonEnvoyer from "../components/BoutonEnvoyer";
+        import LogoutLink from "../components/LogoutLink";
+        import { format } from "date-fns";
+        import { fr } from "date-fns/locale";
+        import DetailsPopup from "../components/DetailsPopup";
+        import EditMemberPopup from "../components/EditMemberPopup";
+        
+        export default function ListMembers() {
+          const [members, setMembers] = useState([]);
+          const [filter, setFilter] = useState("");
+          the [search, setSearch] = useState("");
+          const [detailsOpen, setDetailsOpen] = useState({});
+          const [cellules, setCellules] = useState([]);
+          const [selectedCellules, setSelectedCellules] = useState({});
+          const [view, setView] = useState("card");
+          const [popupMember, setPopupMember] = useState(null);
+          const [session, setSession] = useState(null);
+          const [prenom, setPrenom] = useState("");
+          const [editMember, setEditMember] = useState(null); // <-- IMPORTANT
+          const [refreshKey, setRefreshKey] = useState(0);
+        
+          useEffect(() => {
+            const fetchSessionAndProfile = async () => {
+              const {
+                data: { session },
+              } = await supabase.auth.getSession();
+              setSession(session);
+              if (session?.user) {
+                const { data, error } = await supabase
+                  .from("profiles")
+                  .select("prenom")
+                  .eq("id", session.user.id)
+                  .single();
+                if (!error && data) setPrenom(data.prenom);
+              }
+            };
+        
+            fetchSessionAndProfile();
+            fetchMembers();
+            fetchCellules();
+          }, []);
+        
+          useEffect(() => {
+            fetchMembers();
+          }, [refreshKey]);
+        
+          const fetchMembers = async () => {
+            const { data, error } = await supabase
+              .from("membres")
+              .select("*")
+              .order("created_at", { ascending: false });
+            if (!error && data) setMembers(data);
+          };
+        
+          const fetchCellules = async () => {
+            const { data, error } = await supabase
+              .from("cellules")
+              .select("id, cellule, responsable, telephone");
+            if (!error && data) setCellules(data);
+          };
+        
+          const handleChangeStatus = async (id, newStatus) => {
+            await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
+            setMembers((prev) =>
+              prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
+            );
+          };
+        
+          const handleStatusUpdateFromEnvoyer = (id, currentStatus) => {
+            if (currentStatus === "visiteur" || currentStatus === "veut rejoindre ICC") {
+              handleChangeStatus(id, "actif");
+            }
+            setPopupMember(null);
+          };
+        
+          const getBorderColor = (m) => {
+            if (m.star) return "#FBC02D";
+            if (m.statut === "actif") return "#4285F4";
+            if (m.statut === "a déjà mon église") return "#EA4335";
+            if (m.statut === "Integrer") return "#FFA500";
+            if (m.statut === "ancien") return "#999999";
+            if (m.statut === "veut rejoindre ICC" || m.statut === "visiteur")
+              return "#34A853";
+            return "#ccc";
+          };
+        
+          const formatDate = (dateStr) => {
+            try {
+              const date = new Date(dateStr);
+              return format(date, "EEEE d MMMM yyyy", { locale: fr });
+            } catch {
+              return "";
+            }
+          };
+        
+          const filterBySearch = (list) =>
+            list.filter((m) =>
+              `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase())
+            );
+        
+          const nouveaux = members.filter(
+            (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
+          );
+        
+          const anciens = members.filter(
+            (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
+          );
+        
+          const nouveauxFiltres = filterBySearch(
+            filter ? nouveaux.filter((m) => m.statut === filter) : nouveaux
+          );
+        
+          const anciensFiltres = filterBySearch(
+            filter ? anciens.filter((m) => m.statut === filter) : anciens
+          );
+        
+          const statusOptions = [
+            "actif",
+            "Integrer",
+            "ancien",
+            "veut rejoindre ICC",
+            "visiteur",
+            "a déjà mon église",
+          ];
+        
+          const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
+        
+          const toggleDetails = (id) => {
+            setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+          };
+        
+          return (
+            <div
+              className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
+              style={{
+                background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
+              }}
+            >
+        
+              {/** ---- TON HEADER ET TES LISTES ICI ---- */}
+              {/** Rien n'a été modifié dans cette partie */}
+        
+              {/* ==================== POPUPS ==================== */}
+              {popupMember && (
+                <DetailsPopup
+                  member={popupMember}
+                  onClose={() => setPopupMember(null)}
+                  statusOptions={statusOptions}
+                  cellules={cellules}
+                  selectedCellules={selectedCellules}
+                  setSelectedCellules={setSelectedCellules}
+                  handleChangeStatus={handleChangeStatus}
+                  handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
+                  session={session}
+                />
+              )}
+        
+              {/* ✅ AJOUT IMPORTANT : POPUP MODIFICATION */}
+              {editMember && (
+                <EditMemberPopup
+                  member={editMember}
+                  cellules={cellules}
+                  onClose={() => setEditMember(null)}
+                  onUpdateMember={(updated) => {
+                    setMembers((prev) =>
+                      prev.map((m) => (m.id === updated.id ? updated : m))
+                    );
+                    setRefreshKey((k) => k + 1);
+                  }}
+                />
+              )}
+        
+            </div>
+          );
+}
 
-export default function ListMembers() {
-  const [members, setMembers] = useState([]);
-  const [filter, setFilter] = useState("");
-  const [search, setSearch] = useState("");
-  const [detailsOpen, setDetailsOpen] = useState({});
-  const [cellules, setCellules] = useState([]);
-  const [selectedCellules, setSelectedCellules] = useState({});
-  const [view, setView] = useState("card");
-  const [popupMember, setPopupMember] = useState(null);
-  const [session, setSession] = useState(null);
-  const [prenom, setPrenom] = useState("");
-  const [editMember, setEditMember] = useState(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  useEffect(() => {
-    const fetchSessionAndProfile = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setSession(session);
-      if (session?.user) {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("prenom")
-          .eq("id", session.user.id)
-          .single();
-        if (!error && data) setPrenom(data.prenom);
-      }
-    };
-
-    fetchSessionAndProfile();
-    fetchMembers();
-    fetchCellules();
-  }, []);
-
-  useEffect(() => {
-    fetchMembers();
-  }, [refreshKey]);
-
-  const fetchMembers = async () => {
-    const { data, error } = await supabase
-      .from("membres")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (!error && data) setMembers(data);
-  };
-
-  const fetchCellules = async () => {
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("id, cellule, responsable, telephone");
-    if (!error && data) setCellules(data);
-  };
-
-  const handleChangeStatus = async (id, newStatus) => {
-    await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
-    setMembers((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
-    );
-  };
-
-  const handleStatusUpdateFromEnvoyer = (id, currentStatus) => {
-    if (currentStatus === "visiteur" || currentStatus === "veut rejoindre ICC") {
-      handleChangeStatus(id, "actif");
-    }
-    setPopupMember(null);
-  };
-
-  const getBorderColor = (m) => {
-    if (m.star) return "#FBC02D";
-    if (m.statut === "actif") return "#4285F4";
-    if (m.statut === "a déjà mon église") return "#EA4335";
-    if (m.statut === "Integrer") return "#FFA500";
-    if (m.statut === "ancien") return "#999999";
-    if (m.statut === "veut rejoindre ICC" || m.statut === "visiteur")
-      return "#34A853";
-    return "#ccc";
-  };
-
-  const formatDate = (dateStr) => {
-    try {
-      const date = new Date(dateStr);
-      return format(date, "EEEE d MMMM yyyy", { locale: fr });
-    } catch {
-      return "";
-    }
-  };
-
-  const filterBySearch = (list) =>
-    list.filter((m) =>
-      `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase())
-    );
-
-  const nouveaux = members.filter(
-    (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
-  );
-
-  const anciens = members.filter(
-    (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
-  );
-
-  const nouveauxFiltres = filterBySearch(
-    filter ? nouveaux.filter((m) => m.statut === filter) : nouveaux
-  );
-
-  const anciensFiltres = filterBySearch(
-    filter ? anciens.filter((m) => m.statut === filter) : anciens
-  );
-
-  const statusOptions = [
-    "actif",
-    "Integrer",
-    "ancien",
-    "veut rejoindre ICC",
-    "visiteur",
-    "a déjà mon église",
-  ];
-
-  const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
-
-  const toggleDetails = (id) => {
-    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  return (
-    <div
-      className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
-    >
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
           <button
@@ -477,21 +515,35 @@ export default function ListMembers() {
             </tbody>
           </table>
 
-          {popupMember && (
-            <DetailsPopup
-              member={popupMember}
-              onClose={() => setPopupMember(null)}
-              statusOptions={statusOptions}
-              cellules={cellules}
-              selectedCellules={selectedCellules}
-              setSelectedCellules={setSelectedCellules}
-              handleChangeStatus={handleChangeStatus}
-              handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
-              session={session}
-            />
-          )}
-        </div>
+           {popupMember && (
+        <DetailsPopup
+          member={popupMember}
+          onClose={() => setPopupMember(null)}
+          statusOptions={statusOptions}
+          cellules={cellules}
+          selectedCellules={selectedCellules}
+          setSelectedCellules={setSelectedCellules}
+          handleChangeStatus={handleChangeStatus}
+          handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
+          session={session}
+        />
       )}
+
+      {/* ✅ AJOUT IMPORTANT : POPUP MODIFICATION */}
+      {editMember && (
+        <EditMemberPopup
+          member={editMember}
+          cellules={cellules}
+          onClose={() => setEditMember(null)}
+          onUpdateMember={(updated) => {
+            setMembers((prev) =>
+              prev.map((m) => (m.id === updated.id ? updated : m))
+            );
+            setRefreshKey((k) => k + 1);
+          }}
+        />
+      )}
+
     </div>
   );
 }

@@ -190,10 +190,10 @@
           <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
         </div>
         <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">
-            👋 Bienvenue {prenom || "cher membre"}
-          </p>
-        </div>
+              <p className="text-orange-200 text-sm">
+                👋 Bienvenue {prenom || "cher membre"}
+              </p>
+            </div>
       </div>
 
       <div className="mb-4">

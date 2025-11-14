@@ -65,16 +65,11 @@ export default function DetailsPopup({
             </p>
             <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
 
-            <p className="mt-2 font-semibold text-blue-600">Statut :</p>
-            {Array.isArray(statusOptions) && statusOptions.length > 0 && (
-              <select
-                value={member.statut}
-                onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-                className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
-              >
-                {statusOptions.map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
+            <p className="mt-2 font-semibold text-blue-600">Statut :</p>            
+                <option value="">-- Statut --</option>
+                <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                <option value="a deja son eglise">A déjà son église</option>
+                <option value="visiteur">Visiteur</option>
               </select>
             )}
 

@@ -485,9 +485,11 @@ export default function ListMembers() {
               handleChangeStatus={handleChangeStatus}
               handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
               session={session}
-            />
+             />
           )}
         </div>
       )}
-      }
+    </div>  // <-- fermeture du container principal
+  );
+}
           

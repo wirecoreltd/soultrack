@@ -2,7 +2,7 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, onEnvoyer, session }) {
+export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, onEnvoyer, session, showToast }) {
   const [loading, setLoading] = useState(false);
 
   const sendToWhatsapp = async () => {
@@ -22,20 +22,19 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, onEnvoy
       const now = new Date().toISOString();
 
       const suiviData = {
-  membre_id: membre.id,
-  prenom: membre.prenom,
-  nom: membre.nom,
-  telephone: membre.telephone,
-  is_whatsapp: true,
-  ville: membre.ville,
-  besoin: membre.besoin,
-  infos_supplementaires: membre.infos_supplementaires,
-  cellule_id: cellule.id,
-  cellule_nom: cellule.cellule,
-  responsable: cellule.responsable,  
-  statut: "envoye", // ✅ requis par ta table
-};
-
+        membre_id: membre.id,
+        prenom: membre.prenom,
+        nom: membre.nom,
+        telephone: membre.telephone,
+        is_whatsapp: true,
+        ville: membre.ville,
+        besoin: membre.besoin,
+        infos_supplementaires: membre.infos_supplementaires,
+        cellule_id: cellule.id,
+        cellule_nom: cellule.cellule,
+        responsable: cellule.responsable,  
+        statut: "envoye",
+      };
 
       const { error: insertError } = await supabase
         .from("suivis_membres")
@@ -48,7 +47,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, onEnvoy
         return;
       }
 
-      // ✅ Message WhatsApp formaté
+      // Message WhatsApp
       let message = `👋 Salut ${cellule.responsable},\n\n🙏 Nous avons un nouveau membre à suivre :\n\n`;
       message += `- 👤 Nom : ${membre.prenom || ""} ${membre.nom || ""}\n`;
       message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
@@ -61,7 +60,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, onEnvoy
       const phone = cellule.telephone.replace(/\D/g, "");
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
 
-      // ✅ Mettre à jour le statut du membre si nécessaire
+      // Mettre à jour le statut
       if (onStatusUpdate) {
         onStatusUpdate(
           membre.id,
@@ -76,12 +75,12 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, onEnvoy
         );
       }
 
-      // ✅ Retirer le membre de la liste (solution 2)
       if (onEnvoyer) {
         onEnvoyer(membre.id);
       }
 
-      triggerToast("✅ Message envoyé et suivi enregistré !");
+      // ✅ Afficher toast via la fonction passée depuis le parent
+      if (showToast) showToast("✅ Message envoyé et suivi enregistré !");
     } catch (error) {
       console.error("Erreur lors de l'envoi WhatsApp :", error.message);
       alert("❌ Une erreur est survenue.");
@@ -89,12 +88,6 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, onEnvoy
       setLoading(false);
     }
   };
-  
-  {showToast && (
-  <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
-    {toastMessage}
-  </div>
-)}
 
   return (
     <button

@@ -190,7 +190,16 @@ export default function SuivisMembres() {
     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">      
       <p>🏙 Ville : {m.ville || "—"}</p>      
       <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-      <p>❓ Besoin : {m.besoin || "—"}</p>
+      <p>❓Besoin : {
+                      (() => {
+                      if (!m.besoin) return "—";
+                      if (Array.isArray(item.besoin)) return m.besoin.join(", ");
+                      try {
+                       const arr = JSON.parse(m.besoin);
+                       return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                      } catch { return m.besoin; }
+                      })()
+                      }</p>
       <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
       <label className="text-black text-sm">📋 Statut Suivis :</label>

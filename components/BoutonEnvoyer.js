@@ -81,7 +81,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, onEnvoy
         onEnvoyer(membre.id);
       }
 
-      alert("✅ Message envoyé et suivi enregistré !");
+      triggerToast("✅ Message envoyé et suivi enregistré !");
     } catch (error) {
       console.error("Erreur lors de l'envoi WhatsApp :", error.message);
       alert("❌ Une erreur est survenue.");
@@ -89,6 +89,12 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, onEnvoy
       setLoading(false);
     }
   };
+  
+  {showToast && (
+  <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
+    {toastMessage}
+  </div>
+)}
 
   return (
     <button

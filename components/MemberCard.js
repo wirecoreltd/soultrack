@@ -70,6 +70,16 @@ export default function MemberCard({
             <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
             <p>🏙 Ville : {member.ville || "—"}</p>
             <p>🧩 Comment est-il venu : {member.venu || "—"}</p>
+            <p>❓Besoin : {
+                              (() => {
+                                if (!member.besoin) return "—";
+                                if (Array.isArray(member.besoin)) return member.besoin.join(", ");
+                                try {
+                                  const arr = JSON.parse(member.besoin);
+                                  return Array.isArray(arr) ? arr.join(", ") : member.besoin;
+                                } catch { return member.besoin; }
+                              })()
+                            }</p>
             <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
 
             {isNouveau ? (

@@ -69,13 +69,13 @@ export default function EditMemberPopup({ member, cellules = [], onClose, onUpda
     };
 
     // ✅ Convertir les champs vides en null
-const cleanData = Object.fromEntries(
-  Object.entries(formData).map(([key, value]) => [
-    key,
-    value === "" ? null : value,
-  ])
-);
+const cleanData = {
+  ...formData,
+  prenom: formData.prenom || member.prenom,
+  nom: formData.nom || member.nom,
+};
 
+    
 const { error, data } = await supabase
   .from("membres")
   .update(cleanData)

@@ -103,16 +103,11 @@ export default function MemberCard({
               <>
                 {/* Statut */}
                 <p className="mt-2 font-semibold text-blue-600">Statut :</p>
-                <select
-                  value={member.statut}
-                  onChange={(e) =>
-                    handleLocalStatusChange(member.id, e.target.value)
-                  }
-                  className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
-                >
-                  {statusOptions.map((s) => (
-                    <option key={s}>{s}</option>
-                  ))}
+                <select name="statut" value={formData.statut} onChange={(e)=>setFormData({...formData, statut:e.target.value})} className="input">
+                  <option value="">-- Statut --</option>
+                  <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                  <option value="a deja son eglise">A déjà son église</option>
+                  <option value="visiteur">Visiteur</option>
                 </select>
 
                 {/* Cellule */}

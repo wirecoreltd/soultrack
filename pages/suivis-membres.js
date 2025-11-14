@@ -187,11 +187,8 @@ export default function SuivisMembres() {
   };
 
   const Details = ({ m }) => (
-    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-      <p>📌 Prénom : {m.prenom}</p>
-      <p>📞 Téléphone : {m.telephone || "—"}</p>
-      <p>🏙 Ville : {m.ville || "—"}</p>
-      <p>🕊 Statut : {m.statut || "—"}</p>
+    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">      
+      <p>🏙 Ville : {m.ville || "—"}</p>      
       <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
       <p>❓ Besoin : {m.besoin || "—"}</p>
       <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
@@ -295,9 +292,10 @@ export default function SuivisMembres() {
               />
               <div className="p-4 flex flex-col items-center">
                 <h2 className="font-bold text-black text-base text-center mb-1">
-                  {item.prenom} {item.cellule_nom ? `(${item.cellule_nom})` : ""}
+                  {item.prenom} {item.cellule_nom"}
                 </h2>
                 <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
+                <p className="text-sm text-gray-700 mb-1">🕊 {item.m.statu || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">
                   📋 Statut Suivis : {item.statut_suivis || "—"}
                 </p>

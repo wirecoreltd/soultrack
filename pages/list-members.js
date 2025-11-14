@@ -1,116 +1,136 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
-import Image from "next/image";
-import BoutonEnvoyer from "../components/BoutonEnvoyer";
-import LogoutLink from "../components/LogoutLink";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import DetailsPopup from "../components/DetailsPopup";
-import EditMemberPopup from "../components/EditMemberPopup";
-
-export default function ListMembers() {
-  const [members, setMembers] = useState([]);
-  const [filter, setFilter] = useState("");
-  const [search, setSearch] = useState("");
-  const [detailsOpen, setDetailsOpen] = useState({});
-  const [cellules, setCellules] = useState([]);
-  const [selectedCellules, setSelectedCellules] = useState({});
-  const [view, setView] = useState("card");
-  const [popupMember, setPopupMember] = useState(null);
-  const [editMember, setEditMember] = useState(null);
-  const [session, setSession] = useState(null);
-  const [prenom, setPrenom] = useState("");
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  // ==================== FETCH SESSION & MEMBERS ====================
-  useEffect(() => {
-    const fetchSessionAndProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      if (session?.user) {
-        const { data } = await supabase.from("profiles").select("prenom").eq("id", session.user.id).single();
-        if (data) setPrenom(data.prenom);
+      "use client";
+      
+      import { useEffect, useState } from "react";
+      import supabase from "../lib/supabaseClient";
+      import Image from "next/image";
+      import BoutonEnvoyer from "../components/BoutonEnvoyer";
+      import LogoutLink from "../components/LogoutLink";
+      import { format } from "date-fns";
+      import { fr } from "date-fns/locale";
+      import DetailsPopup from "../components/DetailsPopup";
+      import EditMemberPopup from "../components/EditMemberPopup";
+      
+      export default function ListMembers() {
+        const [members, setMembers] = useState([]);
+        const [filter, setFilter] = useState("");
+        const [search, setSearch] = useState("");
+        const [detailsOpen, setDetailsOpen] = useState({});
+        const [cellules, setCellules] = useState([]);
+        const [selectedCellules, setSelectedCellules] = useState({});
+        const [view, setView] = useState("card");
+        const [popupMember, setPopupMember] = useState(null);
+        const [editMember, setEditMember] = useState(null);
+        const [session, setSession] = useState(null);
+        const [prenom, setPrenom] = useState("");
+        const [refreshKey, setRefreshKey] = useState(0);
+      
+        // ==================== TOAST ====================
+        const [showToast, setShowToast] = useState(false);
+        const [toastMessage, setToastMessage] = useState("");
+      
+        const triggerToast = (message) => {
+          setToastMessage(message);
+          setShowToast(true);
+          setTimeout(() => setShowToast(false), 3000); // disparaît après 3 sec
+        };
+      
+        // ==================== FETCH SESSION & MEMBERS ====================
+        useEffect(() => {
+          const fetchSessionAndProfile = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            setSession(session);
+            if (session?.user) {
+              const { data } = await supabase.from("profiles").select("prenom").eq("id", session.user.id).single();
+              if (data) setPrenom(data.prenom);
+            }
+          };
+          fetchSessionAndProfile();
+          fetchMembers();
+          fetchCellules();
+        }, []);
+      
+        useEffect(() => { fetchMembers(); }, [refreshKey]);
+      
+        const fetchMembers = async () => {
+          const { data } = await supabase.from("membres").select("*").order("created_at", { ascending: false });
+          if (data) setMembers(data);
+        };
+      
+        const fetchCellules = async () => {
+          const { data } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
+          if (data) setCellules(data);
+        };
+      
+        // ==================== UTILS ====================
+        const handleChangeStatus = async (id, newStatus) => {
+          await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
+          setMembers(prev => prev.map(m => (m.id === id ? { ...m, statut: newStatus } : m)));
+        };
+      
+        const handleStatusUpdateFromEnvoyer = (id, currentStatus) => {
+          if (currentStatus === "visiteur" || currentStatus === "veut rejoindre ICC") handleChangeStatus(id, "actif");
+          setPopupMember(null);
+          triggerToast("✅ Message envoyé et suivi enregistré !"); // <-- trigger toast ici
+        };
+      
+        const getBorderColor = (m) => {
+          if (m.star) return "#FBC02D";
+          if (m.statut === "actif") return "#4285F4";
+          if (m.statut === "a déjà mon église") return "#EA4335";
+          if (m.statut === "Integrer") return "#FFA500";
+          if (m.statut === "ancien") return "#999999";
+          if (m.statut === "veut rejoindre ICC" || m.statut === "visiteur") return "#34A853";
+          return "#ccc";
+        };
+      
+        const formatDate = (dateStr) => {
+          try { return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr }); }
+          catch { return ""; }
+        };
+      
+        const filterBySearch = (list) => list.filter(m => `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase()));
+      
+        const nouveaux = members.filter(m => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");
+        const anciens = members.filter(m => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC");
+      
+        const nouveauxFiltres = filterBySearch(filter ? nouveaux.filter(m => m.statut === filter) : nouveaux);
+        const anciensFiltres = filterBySearch(filter ? anciens.filter(m => m.statut === filter) : anciens);
+      
+        const statusOptions = ["actif","Integrer","ancien","veut rejoindre ICC","visiteur","a déjà mon église"];
+        const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
+        const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
+      
+        // ==================== RETURN ====================
+        return (
+          <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+            
+            {/* TOAST */}
+            {showToast && (
+              <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
+                {toastMessage}
+              </div>
+            )}
+      
+            {/* Top bar */}
+            <div className="w-full max-w-5xl mb-6">
+              <div className="flex justify-between items-center">
+                <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-gray-200">← Retour</button>
+                <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20" />
+              </div>
+              <div className="flex justify-end mt-2">
+                <p className="text-orange-200 text-sm">👋 Bienvenue {prenom || "cher membre"}</p>
+              </div>
+            </div>
+      
+            {/* Logo */}
+            <div className="mb-4"><Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" /></div>
+      
+            {/* ... reste du code identique ... */}
+      
+          </div>
+        );
       }
-    };
-    fetchSessionAndProfile();
-    fetchMembers();
-    fetchCellules();
-  }, []);
 
-  useEffect(() => { fetchMembers(); }, [refreshKey]);
-
-  const fetchMembers = async () => {
-    const { data } = await supabase.from("membres").select("*").order("created_at", { ascending: false });
-    if (data) setMembers(data);
-  };
-
-  const fetchCellules = async () => {
-    const { data } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
-    if (data) setCellules(data);
-  };
-
-  // ==================== UTILS ====================
-  const handleChangeStatus = async (id, newStatus) => {
-    await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
-    setMembers(prev => prev.map(m => (m.id === id ? { ...m, statut: newStatus } : m)));
-  };
-
-  const handleStatusUpdateFromEnvoyer = (id, currentStatus) => {
-    if (currentStatus === "visiteur" || currentStatus === "veut rejoindre ICC") handleChangeStatus(id, "actif");
-    setPopupMember(null);
-  };
-
-  const getBorderColor = (m) => {
-    if (m.star) return "#FBC02D";
-    if (m.statut === "actif") return "#4285F4";
-    if (m.statut === "a déjà mon église") return "#EA4335";
-    if (m.statut === "Integrer") return "#FFA500";
-    if (m.statut === "ancien") return "#999999";
-    if (m.statut === "veut rejoindre ICC" || m.statut === "visiteur") return "#34A853";
-    return "#ccc";
-  };
-
-  const formatDate = (dateStr) => {
-    try { return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr }); }
-    catch { return ""; }
-  };
-
-  const triggerToast = (message) => {
-  setToastMessage(message);
-  setShowToast(true);
-  setTimeout(() => setShowToast(false), 3000); // disparaît après 3 secondes
-  };
-
-  const filterBySearch = (list) => list.filter(m => `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase()));
-
-  const nouveaux = members.filter(m => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");
-  const anciens = members.filter(m => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC");
-
-  const nouveauxFiltres = filterBySearch(filter ? nouveaux.filter(m => m.statut === filter) : nouveaux);
-  const anciensFiltres = filterBySearch(filter ? anciens.filter(m => m.statut === filter) : anciens);
-
-  const statusOptions = ["actif","Integrer","ancien","veut rejoindre ICC","visiteur","a déjà mon église"];
-  const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
-  const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
-
-  // ==================== RETURN ====================
-  return (
-    <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-      {/* Top bar */}
-      <div className="w-full max-w-5xl mb-6">
-        <div className="flex justify-between items-center">
-          <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-gray-200">← Retour</button>
-          <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20" />
-        </div>
-        <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">👋 Bienvenue {prenom || "cher membre"}</p>
-        </div>
-      </div>
-
-      {/* Logo */}
-      <div className="mb-4"><Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" /></div>
 
       {/* Titre */}
       <div className="text-center mb-4">

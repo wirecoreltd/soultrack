@@ -27,7 +27,9 @@ export default function ListMembers() {
   // ========================== LOADING SESSION + PROFILE ==========================
   useEffect(() => {
     const fetchSessionAndProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       setSession(session);
 
       if (session?.user) {
@@ -45,7 +47,6 @@ export default function ListMembers() {
     fetchCellules();
   }, []);
 
-  // Refresh après update
   useEffect(() => {
     fetchMembers();
   }, [refreshKey]);
@@ -214,17 +215,15 @@ export default function ListMembers() {
       {/* ================================ VUE CARTE ================================ */}
       {view === "card" && (
         <div className="w-full max-w-5xl space-y-8">
-          {/* ---------------------------------- NOUVEAUX ---------------------------------- */}
+          {/* NOUVEAUX MEMBRES */}
           {nouveauxFiltres.length > 0 && (
             <div>
               <p className="text-white text-lg mb-2 ml-1">
                 💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
               </p>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {nouveauxFiltres.map((m) => {
                   const isOpen = detailsOpen[m.id];
-
                   return (
                     <div
                       key={m.id}
@@ -234,15 +233,12 @@ export default function ListMembers() {
                       <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] px-6 py-1 rotate-45">
                         Nouveau
                       </span>
-
                       <div className="flex flex-col items-center">
                         <h2 className="text-lg font-bold text-center">
                           {m.prenom} {m.nom}
                         </h2>
-
                         <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
                         <p className="text-sm text-gray-600">🕊 Statut : {m.statut}</p>
-
                         <button
                           onClick={() => toggleDetails(m.id)}
                           className="text-orange-500 underline text-sm"
@@ -255,8 +251,6 @@ export default function ListMembers() {
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🧩 Venu : {m.venu || "—"}</p>
-
-                            {/* BESOINS */}
                             <p>
                               ❓ Besoin :{" "}
                               {(() => {
@@ -271,7 +265,6 @@ export default function ListMembers() {
                               })()}
                             </p>
 
-                            {/* CELLULE */}
                             <p className="font-semibold text-green-600">Cellule :</p>
                             <select
                               value={selectedCellules[m.id] || ""}
@@ -313,7 +306,7 @@ export default function ListMembers() {
             </div>
           )}
 
-          {/* ---------------------------------- ANCIENS ---------------------------------- */}
+          {/* ANCIENS MEMBRES */}
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
               <h3 className="text-white text-lg mb-3 font-semibold">
@@ -330,7 +323,6 @@ export default function ListMembers() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {anciensFiltres.map((m) => {
                   const isOpen = detailsOpen[m.id];
-
                   return (
                     <div
                       key={m.id}
@@ -339,13 +331,11 @@ export default function ListMembers() {
                     >
                       <div className="flex flex-col items-center">
                         <h2 className="text-lg font-bold text-center">
-                          {m.prenom} {m.nom}
+                          {m.prenom} {m.nom}{" "}
                           {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                         </h2>
-
                         <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
                         <p className="text-sm text-gray-600">🕊 Statut : {m.statut}</p>
-
                         <button
                           onClick={() => toggleDetails(m.id)}
                           className="text-orange-500 underline text-sm"
@@ -359,7 +349,6 @@ export default function ListMembers() {
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🧩 Venu : {m.venu || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-
                             <p className="font-semibold">🏠 Cellule :</p>
                             <p>
                               {(() => {
@@ -372,7 +361,6 @@ export default function ListMembers() {
                               })()}
                             </p>
 
-                            {/* BOUTON EDIT */}
                             <div className="text-center mt-3">
                               <button
                                 onClick={() => setEditMember(m)}
@@ -405,8 +393,8 @@ export default function ListMembers() {
                 <th className="px-4 py-2">Détails</th>
               </tr>
             </thead>
-
             <tbody>
+              {/* NOUVEAUX */}
               {nouveauxFiltres.length > 0 && (
                 <tr>
                   <td colSpan={4} className="px-4 py-2 font-semibold text-white">
@@ -414,7 +402,6 @@ export default function ListMembers() {
                   </td>
                 </tr>
               )}
-
               {nouveauxFiltres.map((m) => (
                 <tr key={m.id} className="border-b border-blue-300">
                   <td className="px-4 py-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
@@ -434,38 +421,41 @@ export default function ListMembers() {
                 </tr>
               ))}
 
+              {/* ANCIENS */}
               {anciensFiltres.length > 0 && (
-                <div className="mt-8">
-              <h3 className="text-white text-lg mb-3 font-semibold">
-                <span
-                  style={{
-                    background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                    WebkitBackgroundClip: "text",
-                    color: "transparent",
-                  }}
-                >
-                  Membres existants
-                </span>
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-              {anciensFiltres.map((m) => (
-                <tr key={m.id} className="border-b border-gray-300">
-                  <td className="px-4 py-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
-                    {m.prenom} {m.nom}
-                  </td>
-                  <td className="px-4 py-2">{m.telephone}</td>
-                  <td className="px-4 py-2">{m.statut}</td>
-                  <td className="px-4 py-2">
-                    <button
-                      onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
-                      className="underline text-orange-500"
-                    >
-                      {popupMember?.id === m.id ? "Fermer" : "Détails"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                <>
+                  <tr>
+                    <td colSpan={4} className="px-4 py-2 font-semibold text-lg">
+                      <span
+                        style={{
+                          background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                          WebkitBackgroundClip: "text",
+                          color: "transparent",
+                        }}
+                      >
+                        Membres existants
+                      </span>
+                    </td>
+                  </tr>
+                  {anciensFiltres.map((m) => (
+                    <tr key={m.id} className="border-b border-gray-300">
+                      <td className="px-4 py-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
+                        {m.prenom} {m.nom}
+                      </td>
+                      <td className="px-4 py-2">{m.telephone}</td>
+                      <td className="px-4 py-2">{m.statut}</td>
+                      <td className="px-4 py-2">
+                        <button
+                          onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
+                          className="underline text-orange-500"
+                        >
+                          {popupMember?.id === m.id ? "Fermer" : "Détails"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              )}
             </tbody>
           </table>
 

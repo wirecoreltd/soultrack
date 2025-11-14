@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
+import BoutonEnvoyerContacts from "../components/BoutonEnvoyerContacts";
 
 export default function Evangelisation() {
   const router = useRouter();

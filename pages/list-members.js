@@ -474,8 +474,6 @@ export default function ListMembers() {
               )}
             </tbody>
           </table>
-      
-          {/* Popups */}
           {popupMember && (
             <DetailsPopup
               member={popupMember}
@@ -490,4 +488,5 @@ export default function ListMembers() {
             />
           )}
         </div>
-)}
+      )}
+          

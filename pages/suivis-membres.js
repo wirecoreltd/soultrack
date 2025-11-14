@@ -45,6 +45,7 @@ export default function SuivisMembres() {
           const { data, error } = await supabase
             .from("suivis_membres")
             .select("*")
+            .not("statut_suivis", "in", ["integrer", "refus"]) // <-- filtrage ajouté
             .order("created_at", { ascending: false });
           if (error) throw error;
           suivisData = data;
@@ -68,6 +69,7 @@ export default function SuivisMembres() {
             .from("suivis_membres")
             .select("*")
             .in("cellule_id", celluleIds)
+            .not("statut_suivis", "in", ["integrer", "refus"]) // <-- filtrage ajouté
             .order("created_at", { ascending: false });
           if (error) throw error;
           suivisData = data;
@@ -183,7 +185,6 @@ export default function SuivisMembres() {
     }
   };
 
-  // Component pour afficher les détails (popup ou section)
   const Details = ({ m }) => (
     <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
       <p>📌 Prénom : {m.prenom}</p>

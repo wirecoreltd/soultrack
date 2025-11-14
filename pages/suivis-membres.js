@@ -191,15 +191,15 @@ export default function SuivisMembres() {
       <p>🏙 Ville : {m.ville || "—"}</p>      
       <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
       <p>❓Besoin : {
-                      (() => {
-                      if (!m.besoin) return "—";
-                      if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                      try {
-                       const arr = JSON.parse(m.besoin);
-                       return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                      } catch { return m.besoin; }
-                      })()
-                      }</p>
+                              (() => {
+                                if (!m.besoin) return "—";
+                                if (Array.isArray(.besoin)) return m.besoin.join(", ");
+                                try {
+                                  const arr = JSON.parse(m.besoin);
+                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                                } catch { return m.besoin; }
+                              })()
+                            }</p>
       <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
       <label className="text-black text-sm">📋 Statut Suivis :</label>

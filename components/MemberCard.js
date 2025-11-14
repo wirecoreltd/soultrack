@@ -17,7 +17,6 @@ export default function MemberCard({
   onEdit,
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [localMessage, setLocalMessage] = useState("");
 
   const isNouveau =
     member.statut === "visiteur" || member.statut === "veut rejoindre ICC";
@@ -31,18 +30,6 @@ export default function MemberCard({
     if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
       return "#34A853";
     return "#ccc";
-  };
-
-  const handleLocalStatusChange = async (id, newStatus) => {
-    await handleChangeStatus(id, newStatus);
-    setLocalMessage("✅ Changement effectué !");
-    setTimeout(() => setLocalMessage(""), 2000);
-  };
-
-  const handleEnvoyerCallback = (updatedMember) => {
-    handleStatusUpdateFromEnvoyer(member.id, member.statut, updatedMember);
-    setLocalMessage("✅ Enregistrement réussi !");
-    setTimeout(() => setLocalMessage(""), 2000);
   };
 
   return (
@@ -70,11 +57,6 @@ export default function MemberCard({
           🕊 Statut : {member.statut || "—"}
         </p>
 
-        {/* Message local */}
-        {localMessage && (
-          <p className="text-green-500 font-semibold mb-2">{localMessage}</p>
-        )}
-
         {/* Toggle détails */}
         <button
           onClick={() => setIsOpen((prev) => !prev)}
@@ -88,26 +70,22 @@ export default function MemberCard({
             <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
             <p>🏙 Ville : {member.ville || "—"}</p>
             <p>🧩 Comment est-il venu : {member.venu || "—"}</p>
-            <p>❓Besoin : {
-                              (() => {
-                                if (!member.besoin) return "—";
-                                if (Array.isArray(member.besoin)) return member.besoin.join(", ");
-                                try {
-                                  const arr = JSON.parse(member.besoin);
-                                  return Array.isArray(arr) ? arr.join(", ") : member.besoin;
-                                } catch { return member.besoin; }
-                              })()
-                            }</p>
             <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
+
             {isNouveau ? (
               <>
                 {/* Statut */}
                 <p className="mt-2 font-semibold text-blue-600">Statut :</p>
-                <select name="statut" value={formData.statut} onChange={(e)=>setFormData({...formData, statut:e.target.value})} className="input">
-                  <option value="">-- Statut --</option>
-                  <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                  <option value="a deja son eglise">A déjà son église</option>
-                  <option value="visiteur">Visiteur</option>
+                <select
+                  value={member.statut}
+                  onChange={(e) =>
+                    handleChangeStatus(member.id, e.target.value)
+                  }
+                  className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
+                >
+                  {statusOptions.map((s) => (
+                    <option key={s}>{s}</option>
+                  ))}
                 </select>
 
                 {/* Cellule */}
@@ -138,7 +116,13 @@ export default function MemberCard({
                       cellule={cellules.find(
                         (c) => c.id === selectedCellules[member.id]
                       )}
-                      onStatusUpdate={handleEnvoyerCallback}
+                      onStatusUpdate={(updatedMember) =>
+                        handleStatusUpdateFromEnvoyer(
+                          member.id,
+                          member.statut,
+                          updatedMember
+                        )
+                      }
                       session={session}
                     />
                   </div>
@@ -148,7 +132,7 @@ export default function MemberCard({
               <div className="text-center mt-3">
                 <button
                   onClick={() => onEdit(member)}
-                  className="text-orange-600 text-sm text-center hover:text-blue-800"
+                  className="text-blue-600 underline text-sm hover:text-blue-800"
                 >
                   ✏️ Modifier le contact
                 </button>
@@ -160,3 +144,4 @@ export default function MemberCard({
     </div>
   );
 }
+

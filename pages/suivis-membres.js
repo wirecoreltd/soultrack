@@ -45,7 +45,7 @@ export default function SuivisMembres() {
           const { data, error } = await supabase
             .from("suivis_membres")
             .select("*")
-+           .not("statut_suivis", "in", '("integrer","refus")') // 👈 AJOUT
+            .not("statut_suivis", "in", '("integrer","refus")')
             .order("created_at", { ascending: false });
           if (error) throw error;
           suivisData = data;
@@ -69,8 +69,9 @@ export default function SuivisMembres() {
             .from("suivis_membres")
             .select("*")
             .in("cellule_id", celluleIds)
-+           .not("statut_suivis", "in", '("integrer","refus")') // 👈 AJOUT
+            .not("statut_suivis", "in", '("integrer","refus")')
             .order("created_at", { ascending: false });
+
           if (error) throw error;
           suivisData = data;
 

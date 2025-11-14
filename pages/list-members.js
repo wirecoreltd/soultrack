@@ -281,9 +281,29 @@
         </div>
       )}
 
-      {popupMember && <DetailsPopup member={popupMember} onClose={() => setPopupMember(null)} statusOptions={statusOptions} cellules={cellules} selectedCellules={selectedCellules} setSelectedCellules={setSelectedCellules} handleChangeStatus={handleChangeStatus} handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer} session={session} />}
+      {/* POPUPS */}
+{popupMember && (
+  <DetailsPopup
+    member={popupMember}
+    onClose={() => setPopupMember(null)}
+    statusOptions={statusOptions}
+    cellules={cellules}
+    selectedCellules={selectedCellules}
+    setSelectedCellules={setSelectedCellules}
+    handleChangeStatus={handleChangeStatus}
+    handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
+    session={session}
+  />
+)}
 
-      {editMember && <EditMemberPopup member={editMember} cellules={cellules} onClose={() => setEditMember(null)} onUpdateMember={updated => { setMembers(prev => prev.map(m => (m.id === updated.id ? updated : m))); setEditMember(null); }} />}
-    </div>
-  );
-}
+{editMember && (
+  <EditMemberPopup
+    member={editMember}
+    cellules={cellules}
+    onClose={() => setEditMember(null)}
+    onUpdateMember={(updated) => {
+      setMembers((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+      setEditMember(null);
+    }}
+  />
+)}

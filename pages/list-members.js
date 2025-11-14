@@ -336,10 +336,12 @@ export default function ListMembers() {
                     className="text-red-500 underline text-sm"
                   >
                     Fermer les détails
-                  </button>
-                </div>
-              </DetailsPopup>
-            )}
-          </div>
-)}
-
+                </button>
+              </div>
+            </DetailsPopup>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

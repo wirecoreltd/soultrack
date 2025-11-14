@@ -300,7 +300,7 @@ export default function SuivisMembres() {
                   📋 Statut Suivis : {item.statut_suivis || "—"}
                 </p>
                  <p className="font-semibold mt-2">
-                    {item.cellule_nom} – {item.responsable_nom}
+                    {item.cellule_nom} – {item.responsable}
                   </p> 
                   
 

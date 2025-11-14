@@ -24,15 +24,7 @@ export default function DetailsPopup({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
-      <div className="bg-white text-black p-6 rounded-lg w-80 max-h-[90vh] overflow-y-auto relative shadow-xl">
-        {/* Bouton de fermeture */}
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-red-500 font-bold hover:text-red-700"
-          aria-label="Fermer la fenêtre"
-        >
-          ✕
-        </button>
+      <div className="bg-white text-black p-6 rounded-lg w-80 max-h-[90vh] overflow-y-auto relative shadow-xl">       
 
         {/* Titre */}
         <h2 className="text-lg font-bold text-gray-800 text-center">

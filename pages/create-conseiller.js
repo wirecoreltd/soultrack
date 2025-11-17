@@ -103,9 +103,13 @@ export default function CreateConseiller() {
 //
           {/* 🔘 Boutons Annuler / Ajouter */}
           <div className="flex justify-between mt-2">
-            <button type="button" onClick={handleCancel} className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
-              Annuler
-            </button>
+           <button
+            type="button"
+            onClick={handleCancel}
+            className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+          >
+            Annuler
+          </button>
             <button
               type="submit"
               disabled={loading}

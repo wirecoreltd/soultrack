@@ -198,6 +198,7 @@ export default function ListMembers() {
                                 } catch { return m.besoin; }
                               })()
                             }</p>
+                            <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
                             <p className="font-semibold text-green-600">Cellule :</p>
                             <select value={selectedCellules[m.id] || ""} onChange={e => setSelectedCellules(prev => ({ ...prev, [m.id]: e.target.value }))} className="border rounded px-2 py-1 text-sm w-full">
                               <option value="">-- Choisir cellule --</option>

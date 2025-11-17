@@ -1,28 +1,29 @@
+// pages/create-conseiller.js
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 export default function CreateConseiller() {
   const router = useRouter();
-  const [userId, setUserId] = useState(null); // ID du responsable connecté
-  const [membresStar, setMembresStar] = useState([]);
-  const [selectedMembre, setSelectedMembre] = useState("");
+  const [responsableId, setResponsableId] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [selectedMember, setSelectedMember] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // ✅ Récupérer le userId côté client uniquement
+  // ➤ Récupère l'ID du responsable connecté
   useEffect(() => {
-    const id = supabase.auth.getUser?.()?.id || localStorage.getItem("userId");
-    setUserId(id);
+    const profile = JSON.parse(localStorage.getItem("profile"));
+    if (profile?.id) setResponsableId(profile.id);
   }, []);
 
-  // 🔹 Charger les membres "star" pour le menu déroulant
+  // ➤ Charge les membres "star = Oui"
   useEffect(() => {
-    const fetchMembresStar = async () => {
+    async function fetchStarMembers() {
       const { data, error } = await supabase
         .from("membres")
         .select("id, prenom, nom, email")
@@ -31,16 +32,16 @@ export default function CreateConseiller() {
       if (error) {
         console.error(error);
       } else {
-        setMembresStar(data);
+        setMembers(data);
       }
-    };
-    fetchMembresStar();
+    }
+    fetchStarMembers();
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedMembre || !email || !password) {
-      alert("Veuillez remplir tous les champs !");
+    if (!selectedMember || !email || !password) {
+      setMessage("❌ Remplissez tous les champs !");
       return;
     }
 
@@ -52,10 +53,10 @@ export default function CreateConseiller() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          membre_id: selectedMembre,
+          membre_id: selectedMember,
           email,
           password,
-          responsable_id: userId,
+          responsable_id: responsableId,
         }),
       });
 
@@ -63,11 +64,11 @@ export default function CreateConseiller() {
 
       if (res.ok) {
         setMessage("✅ Conseiller créé avec succès !");
-        setSelectedMembre("");
+        setSelectedMember("");
         setEmail("");
         setPassword("");
       } else {
-        setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
+        setMessage(`❌ Erreur : ${data?.error || "Réponse vide du serveur"}`);
       }
     } catch (err) {
       setMessage("❌ " + err.message);
@@ -80,30 +81,21 @@ export default function CreateConseiller() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg relative">
 
-        {/* 🔙 Retour */}
-        <button
-          onClick={() => router.back()}
-          className="absolute top-4 left-4 flex items-center text-black font-semibold hover:text-gray-800"
-        >
-          ← Retour
-        </button>
-
-        <h1 className="text-3xl font-bold text-center mb-6">
-          Créer un Conseiller
-        </h1>
+        <h1 className="text-3xl font-bold text-center mb-4">Créer un Conseiller</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* 🔹 Menu déroulant membres star */}
+
+          {/* Sélection du membre */}
           <select
-            value={selectedMembre}
-            onChange={(e) => setSelectedMembre(e.target.value)}
+            value={selectedMember}
+            onChange={(e) => setSelectedMember(e.target.value)}
             className="input"
             required
           >
-            <option value="">-- Sélectionner un membre star --</option>
-            {membresStar.map((m) => (
+            <option value="">-- Sélectionnez un membre (star = Oui) --</option>
+            {members.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.prenom} {m.nom} ({m.email || "sans email"})
+                {m.prenom} {m.nom} ({m.email})
               </option>
             ))}
           </select>
@@ -126,34 +118,32 @@ export default function CreateConseiller() {
             required
           />
 
-          {/* 🔘 Boutons Annuler / Ajouter */}
-          <div className="flex justify-between mt-2">
+          <div className="flex gap-4 mt-2">
             <button
               type="button"
               onClick={() => router.back()}
-              className="w-1/2 mr-2 py-3 rounded-2xl text-black font-bold border border-gray-400 hover:bg-gray-100 transition-all"
+              className="flex-1 py-3 rounded-2xl text-black border border-gray-400 hover:bg-gray-100 transition-all"
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={loading}
-              className={`w-1/2 ml-2 py-3 rounded-2xl text-white font-bold shadow-md transition-all bg-gradient-to-r
+              className={`flex-1 py-3 rounded-2xl text-white shadow-md transition-all
                 ${loading
-                  ? "from-gray-400 to-gray-500"
-                  : "from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600"
+                  ? "bg-gray-400"
+                  : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600"
                 }`}
             >
-              {loading ? "Ajout..." : "Ajouter"}
+              {loading ? "Création..." : "Créer"}
             </button>
           </div>
-
-          {message && (
-            <p className="text-center mt-4 text-sm font-semibold">{message}</p>
-          )}
         </form>
 
-        {/* Styles input */}
+        {message && (
+          <p className="mt-4 text-center font-semibold text-gray-700">{message}</p>
+        )}
+
         <style jsx>{`
           .input {
             width: 100%;

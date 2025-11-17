@@ -117,7 +117,7 @@ export default function ListMembers() {
   const nouveauxFiltres = filterBySearch(filter ? nouveaux.filter(m => m.statut === filter) : nouveaux);
   const anciensFiltres = filterBySearch(filter ? anciens.filter(m => m.statut === filter) : anciens);
 
-  const statusOptions = ["actif","Integrer","ancien","veut rejoindre ICC","visiteur","a déjà mon église"];
+  const statusOptions = ["actif","Integrer","ancien","veut rejoindre ICC","visiteur","a déjà son église"];
   const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
   const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
 

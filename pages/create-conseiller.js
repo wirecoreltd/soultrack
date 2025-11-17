@@ -3,182 +3,168 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 
 export default function CreateConseiller() {
-  const [selectedMemberId, setSelectedMemberId] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [userId, setUserId] = useState(null);
-
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [membersStar, setMembersStar] = useState([]);
+  const [formData, setFormData] = useState({
+    membre_id: "",
+    email: "",
+    password: "",
+  });
 
-  // 🔹 Récupérer l'utilisateur connecté
+  // Récupérer les membres "star"
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) {
-        alert("Impossible de récupérer vos informations. Connectez-vous ou réessayez.");
-        return;
-      }
-      setUserId(user.id);
-    };
-    fetchUser();
-  }, []);
-
-  // 🔹 Charger les membres "star" disponibles
-  useEffect(() => {
-    const fetchMembers = async () => {
+    const fetchStarMembers = async () => {
       const { data, error } = await supabase
         .from("membres")
-        .select("id, prenom, nom, telephone")
+        .select("id, prenom, nom")
         .eq("star", true);
+
       if (error) {
         console.error(error);
-        return;
+      } else {
+        setMembersStar(data || []);
       }
-      setMembers(data);
     };
-    fetchMembers();
+    fetchStarMembers();
   }, []);
+
+  // ID du responsable connecté (profil)
+  const [responsableId, setResponsableId] = useState(null);
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const user = supabase.auth.getUser(); // ou getUser() selon la version
+      const session = await user;
+      if (session?.data?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("email", session.data.user.email)
+          .single();
+        if (profile) setResponsableId(profile.id);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedMemberId || !email || !password) {
-      return alert("Remplissez tous les champs !");
-    }
-    if (!userId) {
-      return alert("Impossible de récupérer votre ID utilisateur.");
+    if (!formData.membre_id || !formData.email || !formData.password) {
+      return setMessage("Remplissez tous les champs !");
     }
 
     setLoading(true);
+    setMessage("⏳ Création en cours...");
 
-    // 🔹 On récupère le membre sélectionné
-    const selectedMember = members.find((m) => m.id === selectedMemberId);
+    try {
+      // 1️⃣ Créer l'utilisateur dans Auth
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: formData.email,
+        password: formData.password,
+        email_confirm: true,
+      });
 
-    // 🔹 Créer le conseiller dans profiles
-    const { error } = await supabase
-      .from("profiles")
-      .insert([{
-        prenom: selectedMember.prenom,
-        nom: selectedMember.nom,
-        telephone: selectedMember.telephone,
-        email,
-        password_hash: password,
+      if (authError) throw authError;
+
+      const userId = authData.user.id;
+
+      // 2️⃣ Créer le profil dans profiles
+      const { data: member } = await supabase
+        .from("membres")
+        .select("prenom, nom, telephone")
+        .eq("id", formData.membre_id)
+        .single();
+
+      await supabase.from("profiles").insert([{
+        id: userId,
+        email: formData.email,
+        prenom: member.prenom,
+        nom: member.nom,
+        telephone: member.telephone,
         role: "Conseiller",
-        responsable_id: userId,
+        responsable_id: responsableId,
       }]);
 
-    setLoading(false);
-
-    if (error) {
-      console.error(error);
-      alert("Erreur lors de l'ajout du conseiller !");
-    } else {
-      setSuccess(true);
-      setSelectedMemberId("");
-      setEmail("");
-      setPassword("");
-      setTimeout(() => setSuccess(false), 3000);
+      setMessage("✅ Conseiller créé avec succès !");
+      setFormData({ membre_id: "", email: "", password: "" });
+    } catch (err) {
+      console.error(err);
+      setMessage("❌ Erreur: " + (err.message || "Erreur inconnue"));
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg relative">
+      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg">
+        <h1 className="text-3xl font-bold text-center mb-4">Créer un Conseiller</h1>
 
-        {/* 🔙 Bouton Retour */}
-        <button
-          onClick={() => router.back()}
-          className="absolute top-4 left-4 flex items-center text-black font-semibold hover:text-gray-800 transition-colors"
-        >
-          ← Retour
-        </button>
-
-        {/* 🟣 Logo */}
-        <div className="flex justify-center mb-6">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
-        </div>
-
-        <h1 className="text-3xl font-bold text-center mb-2">
-          Ajouter un Conseiller
-        </h1>
-        <p className="text-center text-gray-500 italic mb-6">
-          Sélectionnez un membre "star" pour le transformer en conseiller.
-        </p>
-
-        {/* FORMULAIRE */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-
-          {/* 🔹 Sélection membre */}
+          {/* Menu déroulant : choisir le membre star */}
           <select
-            value={selectedMemberId}
-            onChange={(e) => setSelectedMemberId(e.target.value)}
+            name="membre_id"
+            value={formData.membre_id}
+            onChange={handleChange}
             className="input"
             required
           >
             <option value="">-- Sélectionnez un membre star --</option>
-            {members.map((m) => (
+            {membersStar.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.prenom} {m.nom} ({m.telephone || "—"})
+                {m.prenom} {m.nom}
               </option>
             ))}
           </select>
 
-          {/* 🔹 Email */}
           <input
             type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            name="email"
+            placeholder="Email du conseiller"
+            value={formData.email}
+            onChange={handleChange}
             className="input"
             required
           />
-
-          {/* 🔹 Mot de passe */}
           <input
             type="password"
+            name="password"
             placeholder="Mot de passe"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={formData.password}
+            onChange={handleChange}
             className="input"
             required
           />
 
-          {/* 🔘 Boutons Annuler / Ajouter */}
-          <div className="flex justify-between mt-2">
+          <div className="flex gap-4 mt-2">
             <button
               type="button"
               onClick={() => router.back()}
-              className="w-1/2 mr-2 py-3 rounded-2xl text-black font-bold border border-gray-400 hover:bg-gray-100 transition-all"
+              className="flex-1 py-3 rounded-2xl border border-gray-400 text-black hover:bg-gray-100"
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={loading}
-              className={`w-1/2 ml-2 py-3 rounded-2xl text-white font-bold shadow-md transition-all bg-gradient-to-r
-                ${loading
-                  ? "from-gray-400 to-gray-500"
-                  : "from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600"
-                }`}
+              className={`flex-1 py-3 rounded-2xl text-white font-bold shadow-md transition-all ${
+                loading ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"
+              }`}
             >
-              {loading ? "Ajout..." : "Ajouter"}
+              {loading ? "Création..." : "Créer"}
             </button>
           </div>
-
-          {/* Message Confirm */}
-          {success && (
-            <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
-              ✅ Conseiller ajouté avec succès !
-            </p>
-          )}
         </form>
 
-        {/* Styles globaux */}
+        {message && <p className="mt-4 text-center font-semibold">{message}</p>}
+
         <style jsx>{`
           .input {
             width: 100%;
@@ -186,7 +172,7 @@ export default function CreateConseiller() {
             border-radius: 12px;
             padding: 12px;
             text-align: left;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             color: black;
           }
         `}</style>

@@ -34,14 +34,14 @@ export default function CreateConseiller() {
       alert("Erreur lors de l'ajout du conseiller !");
     } else {
       setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
 
       // Reset fields
       setPrenom("");
       setNom("");
       setTelephone("");
 
-      router.push("/");
+      // Masquer le message après 3 secondes
+      setTimeout(() => setSuccess(false), 3000);
     }
   };
 
@@ -64,7 +64,7 @@ export default function CreateConseiller() {
         </div>
 
         {/* 📝 Titre */}
-        <h1 className="text-3xl font-bold text-center mb-4">
+        <h1 className="text-3xl font-bold text-center mb-2">
           Ajouter un Conseiller
         </h1>
         <p className="text-center text-gray-500 italic mb-6">
@@ -73,6 +73,7 @@ export default function CreateConseiller() {
 
         {/* FORMULAIRE */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
           <input
             type="text"
             placeholder="Prénom"
@@ -100,26 +101,35 @@ export default function CreateConseiller() {
             required
           />
 
-          {/* 🔘 Boutons */}
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-3 rounded-2xl text-white font-bold shadow-md transition-all bg-gradient-to-r
-             ${loading
-                ? "from-gray-400 to-gray-500"
-                : "from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600"
-              }`}
-          >
-            {loading ? "Création..." : "Créer le Conseiller"}
-          </button>
-        </form>
+          {/* 🔘 Boutons Annuler / Ajouter */}
+          <div className="flex justify-between mt-2">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="w-1/2 mr-2 py-3 rounded-2xl text-black font-bold border border-gray-400 hover:bg-gray-100 transition-all"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-1/2 ml-2 py-3 rounded-2xl text-white font-bold shadow-md transition-all bg-gradient-to-r
+                ${loading
+                  ? "from-gray-400 to-gray-500"
+                  : "from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600"
+                }`}
+            >
+              {loading ? "Ajout..." : "Ajouter"}
+            </button>
+          </div>
 
-        {/* Message Confirm */}
-        {success && (
-          <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
-            ✅ Conseiller ajouté avec succès !
-          </p>
-        )}
+          {/* Message Confirm */}
+          {success && (
+            <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
+              ✅ Conseiller ajouté avec succès !
+            </p>
+          )}
+        </form>
 
         {/* Styles globaux */}
         <style jsx>{`

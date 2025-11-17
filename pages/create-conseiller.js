@@ -9,6 +9,10 @@ export default function CreateConseiller() {
   const [prenom, setPrenom] = useState("");
   const [nom, setNom] = useState("");
   const [telephone, setTelephone] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [starMemberId, setStarMemberId] = useState("");
+  const [starMembers, setStarMembers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [userId, setUserId] = useState(null);
@@ -28,9 +32,26 @@ export default function CreateConseiller() {
     fetchUser();
   }, []);
 
+  // 🔹 Charger les membres "star" pour le menu déroulant
+  useEffect(() => {
+    const fetchStarMembers = async () => {
+      const { data, error } = await supabase
+        .from("membres")
+        .select("id, prenom, nom")
+        .eq("star", true);
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+      setStarMembers(data || []);
+    };
+    fetchStarMembers();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!prenom || !nom || !telephone) {
+    if (!prenom || !nom || !telephone || !email || !password || !starMemberId) {
       return alert("Remplissez tous les champs !");
     }
     if (!userId) {
@@ -39,14 +60,18 @@ export default function CreateConseiller() {
 
     setLoading(true);
 
+    // 🔹 Créer le conseiller dans profiles
     const { error } = await supabase
       .from("profiles")
       .insert([{
         prenom,
         nom,
         telephone,
+        email,
         role: "Conseiller",
-        responsable_id: userId
+        responsable_id: userId,
+        star_member_id: starMemberId, // relier le conseiller au membre "star" choisi
+        password_hash: password // pour l'instant stocké en clair (à sécuriser)
       }]);
 
     setLoading(false);
@@ -59,6 +84,9 @@ export default function CreateConseiller() {
       setPrenom("");
       setNom("");
       setTelephone("");
+      setEmail("");
+      setPassword("");
+      setStarMemberId("");
 
       setTimeout(() => setSuccess(false), 3000);
     }
@@ -117,6 +145,39 @@ export default function CreateConseiller() {
             className="input"
             required
           />
+
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="input"
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Mot de passe"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="input"
+            required
+          />
+
+          {/* 🔹 Menu déroulant pour choisir un membre "star" */}
+          <select
+            value={starMemberId}
+            onChange={(e) => setStarMemberId(e.target.value)}
+            className="input"
+            required
+          >
+            <option value="">Sélectionnez un membre Star</option>
+            {starMembers.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.prenom} {m.nom}
+              </option>
+            ))}
+          </select>
 
           {/* 🔘 Boutons Annuler / Ajouter */}
           <div className="flex justify-between mt-2">

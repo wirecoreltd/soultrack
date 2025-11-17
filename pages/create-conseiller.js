@@ -16,6 +16,11 @@ export default function CreateConseiller() {
 
   const router = useRouter();
 
+  // 🟤 Fonction Annuler
+  const handleCancel = () => {
+    router.back(); // Retour à la page précédente
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!prenom || !nom || !telephone)
@@ -100,23 +105,25 @@ export default function CreateConseiller() {
             className="input"
             required
           />
-//
+
           {/* 🔘 Boutons Annuler / Ajouter */}
           <div className="flex justify-between mt-2">
-           <button
-            type="button"
-            onClick={handleCancel}
-            className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
-          >
-            Annuler
-          </button>
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            >
+              Annuler
+            </button>
+
             <button
               type="submit"
               disabled={loading}
               className={`w-1/2 ml-2 py-3 rounded-2xl text-white font-bold shadow-md transition-all bg-gradient-to-r
-                ${loading
-                  ? "from-gray-400 to-gray-500"
-                  : "from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600"
+                ${
+                  loading
+                    ? "from-gray-400 to-gray-500"
+                    : "from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600"
                 }`}
             >
               {loading ? "Ajout..." : "Ajouter"}

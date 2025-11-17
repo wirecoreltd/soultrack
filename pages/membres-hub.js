@@ -1,5 +1,3 @@
-//* ✅ pages/membres-hub.js
-
 "use client";
 
 import Link from "next/link";
@@ -26,7 +24,6 @@ export default function MembresHub() {
     >
       {/* 🔹 Top bar */}
       <div className="w-full max-w-5xl mb-6">
-        {/* Ligne principale : Retour à gauche, Déconnexion à droite */}
         <div className="flex justify-between items-center">
           <button
             onClick={() => router.back()}
@@ -38,7 +35,6 @@ export default function MembresHub() {
           <LogoutLink />
         </div>
 
-        {/* Ligne du dessous : Bienvenue aligné à droite */}
         <div className="flex justify-end mt-2">
           <p className="text-orange-200 text-sm">
             👋 Bienvenue {userName}
@@ -92,9 +88,8 @@ export default function MembresHub() {
             Suivis des membres
           </div>
         </Link>
-      </div>
 
-      <Link
+        <Link
           href="/create-conseiller"
           className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#FBBF24] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
         >
@@ -122,4 +117,3 @@ export default function MembresHub() {
     </div>
   );
 }
-

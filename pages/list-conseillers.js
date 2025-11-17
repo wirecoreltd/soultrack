@@ -11,38 +11,49 @@ export default function ListConseillers() {
 
   const router = useRouter();
 
-  // =============================
-  // 1️⃣ Charger tous les conseillers
-  // =============================
   const fetchConseillers = async () => {
     setLoading(true);
 
-    // ➤ Récupérer tous les conseillers
+    // 1️⃣ Charger tous les conseillers
     const { data: profiles, error } = await supabase
       .from("profiles")
       .select("id, prenom, nom, email, telephone, responsable_id")
       .eq("role", "Conseiller");
 
     if (error) {
-      console.error(error);
+      console.error("Erreur profils :", error);
+      setLoading(false);
       return;
     }
 
-    // ➤ Récupérer aussi les responsables correspondants
-    const responsablesIds = profiles.map((p) => p.responsable_id).filter(Boolean);
+    // Si aucun conseiller → stop logique
+    if (!profiles || profiles.length === 0) {
+      setConseillers([]);
+      setLoading(false);
+      return;
+    }
 
-    const { data: responsables } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom")
-      .in("id", responsablesIds);
+    // 2️⃣ Récupérer les responsables
+    const responsablesIds = profiles
+      .map((p) => p.responsable_id)
+      .filter((id) => id !== null);
 
-    // ➤ Préparer un dictionnaire pour accès rapide
-    const responsableMap = {};
-    responsables?.forEach((r) => {
-      responsableMap[r.id] = `${r.prenom} ${r.nom}`;
-    });
+    let responsableMap = {};
 
-    // ➤ Récupérer combien de contacts sont attribués à chaque conseiller
+    if (responsablesIds.length > 0) {
+      const { data: responsables, error: respErr } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom")
+        .in("id", responsablesIds);
+
+      if (!respErr && responsables) {
+        responsables.forEach((r) => {
+          responsableMap[r.id] = `${r.prenom} ${r.nom}`;
+        });
+      }
+    }
+
+    // 3️⃣ Compter les contacts assignés à chaque conseiller
     const conseillersIds = profiles.map((p) => p.id);
 
     const { data: membres } = await supabase
@@ -50,16 +61,18 @@ export default function ListConseillers() {
       .select("id, conseiller_id")
       .in("conseiller_id", conseillersIds);
 
-    // ➤ Compter les membres par conseiller
     const countMap = {};
     membres?.forEach((m) => {
       countMap[m.conseiller_id] = (countMap[m.conseiller_id] || 0) + 1;
     });
 
-    // ➤ Fusionner les données
+    // 4️⃣ Fusion finale
     const list = profiles.map((p) => ({
       ...p,
-      responsable_nom: responsableMap[p.responsable_id] || "—",
+      responsable_nom:
+        p.responsable_id && responsableMap[p.responsable_id]
+          ? responsableMap[p.responsable_id]
+          : "Aucun",
       totalContacts: countMap[p.id] || 0,
     }));
 
@@ -73,7 +86,6 @@ export default function ListConseillers() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
-
       {/* TOP BAR */}
       <div className="w-full max-w-4xl mx-auto mb-6 flex items-center justify-between">
         <button
@@ -97,7 +109,6 @@ export default function ListConseillers() {
 
       {/* LISTE */}
       <div className="w-full max-w-4xl mx-auto">
-
         {loading ? (
           <p className="text-center text-gray-600">Chargement...</p>
         ) : conseillers.length === 0 ? (
@@ -113,15 +124,12 @@ export default function ListConseillers() {
                   {c.prenom} {c.nom}
                 </h2>
 
-                <p className="text-gray-700">
-                  📞 {c.telephone || "—"}
-                </p>
-                <p className="text-gray-700">
-                  ✉️ {c.email || "—"}
-                </p>
+                <p className="text-gray-700">📞 {c.telephone || "—"}</p>
+                <p className="text-gray-700">✉️ {c.email || "—"}</p>
 
                 <p className="text-gray-700 mt-2">
-                  👤 Responsable : <span className="font-semibold">{c.responsable_nom}</span>
+                  👤 Responsable :
+                  <span className="font-semibold"> {c.responsable_nom}</span>
                 </p>
 
                 <p className="text-gray-800 mt-2 font-semibold">

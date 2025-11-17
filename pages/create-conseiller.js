@@ -1,50 +1,51 @@
-// pages/create-conseiller.js
 "use client";
 
 import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import supabase from "../lib/supabaseClient";
 
 export default function CreateConseiller() {
+  const router = useRouter();
+  const [userId, setUserId] = useState(null); // ID du responsable connecté
   const [membresStar, setMembresStar] = useState([]);
   const [selectedMembre, setSelectedMembre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [message, setMessage] = useState("");
 
-  const router = useRouter();
-
-  const userId = supabase.auth.getUser?.()?.id || localStorage.getItem("userId");
-
-  // 🔹 Charger tous les membres « star »
-  const fetchMembresStar = async () => {
-    const { data, error } = await supabase
-      .from("membres")
-      .select("id, prenom, nom, email, telephone")
-      .eq("star", true);
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-    setMembresStar(data);
-  };
-
+  // ✅ Récupérer le userId côté client uniquement
   useEffect(() => {
+    const id = supabase.auth.getUser?.()?.id || localStorage.getItem("userId");
+    setUserId(id);
+  }, []);
+
+  // 🔹 Charger les membres "star" pour le menu déroulant
+  useEffect(() => {
+    const fetchMembresStar = async () => {
+      const { data, error } = await supabase
+        .from("membres")
+        .select("id, prenom, nom, email")
+        .eq("star", true);
+
+      if (error) {
+        console.error(error);
+      } else {
+        setMembresStar(data);
+      }
+    };
     fetchMembresStar();
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedMembre || !email || !password) {
-      setErrorMessage("Veuillez sélectionner un membre et remplir l'email + mot de passe");
+      alert("Veuillez remplir tous les champs !");
       return;
     }
 
     setLoading(true);
-    setErrorMessage("");
+    setMessage("⏳ Création en cours...");
 
     try {
       const res = await fetch("/api/create-conseiller", {
@@ -58,19 +59,18 @@ export default function CreateConseiller() {
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
-      if (!res.ok) throw new Error(data?.error || "Erreur serveur");
-
-      setSuccess(true);
-      setSelectedMembre("");
-      setEmail("");
-      setPassword("");
-
-      setTimeout(() => setSuccess(false), 3000);
+      if (res.ok) {
+        setMessage("✅ Conseiller créé avec succès !");
+        setSelectedMembre("");
+        setEmail("");
+        setPassword("");
+      } else {
+        setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
+      }
     } catch (err) {
-      console.error(err);
-      setErrorMessage(err.message);
+      setMessage("❌ " + err.message);
     } finally {
       setLoading(false);
     }
@@ -79,30 +79,31 @@ export default function CreateConseiller() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg relative">
-        {/* 🔙 Bouton Retour */}
+
+        {/* 🔙 Retour */}
         <button
           onClick={() => router.back()}
-          className="absolute top-4 left-4 flex items-center text-black font-semibold hover:text-gray-800 transition-colors"
+          className="absolute top-4 left-4 flex items-center text-black font-semibold hover:text-gray-800"
         >
           ← Retour
         </button>
 
-        <h1 className="text-3xl font-bold text-center mb-4">
+        <h1 className="text-3xl font-bold text-center mb-6">
           Créer un Conseiller
         </h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <label className="font-semibold">Sélectionner un membre (star)</label>
+          {/* 🔹 Menu déroulant membres star */}
           <select
-            className="input"
             value={selectedMembre}
             onChange={(e) => setSelectedMembre(e.target.value)}
+            className="input"
             required
           >
-            <option value="">-- Choisir un membre --</option>
+            <option value="">-- Sélectionner un membre star --</option>
             {membresStar.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.prenom} {m.nom} ({m.telephone || "—"})
+                {m.prenom} {m.nom} ({m.email || "sans email"})
               </option>
             ))}
           </select>
@@ -125,7 +126,7 @@ export default function CreateConseiller() {
             required
           />
 
-          {/* Boutons */}
+          {/* 🔘 Boutons Annuler / Ajouter */}
           <div className="flex justify-between mt-2">
             <button
               type="button"
@@ -143,21 +144,16 @@ export default function CreateConseiller() {
                   : "from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600"
                 }`}
             >
-              {loading ? "Création..." : "Créer"}
+              {loading ? "Ajout..." : "Ajouter"}
             </button>
           </div>
 
-          {success && (
-            <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
-              ✅ Conseiller créé avec succès !
-            </p>
-          )}
-
-          {errorMessage && (
-            <p className="text-red-600 font-semibold text-center mt-2">{errorMessage}</p>
+          {message && (
+            <p className="text-center mt-4 text-sm font-semibold">{message}</p>
           )}
         </form>
 
+        {/* Styles input */}
         <style jsx>{`
           .input {
             width: 100%;

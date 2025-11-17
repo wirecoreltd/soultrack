@@ -24,8 +24,8 @@ export default function MemberCard({
   const getBorderColor = () => {
     if (member.star) return "#FBC02D";
     if (member.statut === "actif") return "#4285F4";
-    if (member.statut === "a déjà mon église") return "#EA4335";
-    if (member.statut === "Integrer") return "#FFA500";
+    if (member.statut === "a déjà son église") return "#f21705";
+    if (member.statut === "integrer") return "#FFA500";
     if (member.statut === "ancien") return "#999999";
     if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
       return "#34A853";

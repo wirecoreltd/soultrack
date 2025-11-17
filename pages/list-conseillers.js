@@ -1,108 +1,58 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function ListConseillers() {
   const [conseillers, setConseillers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
-    fetchConseillers();
+    const fetchUserAndConseillers = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { data: userData } = await supabase
+        .from("responsables")
+        .select("id, prenom, cellule_id")
+        .eq("email", session.user.email)
+        .single();
+
+      setUser(userData);
+
+      const { data: conseillersData } = await supabase
+        .from("conseillers")
+        .select("*")
+        .eq("created_by", userData.id);
+
+      setConseillers(conseillersData || []);
+    };
+    fetchUserAndConseillers();
   }, []);
-
-  const fetchConseillers = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("conseillers")
-      .select("*")
-      .order("prenom", { ascending: true });
-
-    if (error) {
-      console.error(error);
-      alert("Erreur lors de la récupération des conseillers.");
-    } else {
-      setConseillers(data);
-    }
-    setLoading(false);
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm("Voulez-vous vraiment supprimer ce conseiller ?")) return;
-
-    const { error } = await supabase
-      .from("conseillers")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      console.error(error);
-      alert("Erreur lors de la suppression !");
-    } else {
-      setConseillers(prev => prev.filter(c => c.id !== id));
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100">
       <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">Liste des Conseillers</h1>
-        <button
-          onClick={() => router.push("/create-conseiller")}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
-        >
-          + Ajouter un Conseiller
-        </button>
+        <button onClick={() => router.back()} className="text-black hover:text-gray-800 font-semibold">← Retour</button>
+        <h1 className="text-2xl font-bold text-black">Mes Conseillers</h1>
       </div>
 
-      {loading ? (
-        <p>Chargement...</p>
-      ) : (
-        <div className="w-full max-w-5xl overflow-x-auto">
-          <table className="w-full table-auto border-collapse border border-gray-300">
-            <thead className="bg-gray-200 text-gray-800">
-              <tr>
-                <th className="px-4 py-2 border">Prénom</th>
-                <th className="px-4 py-2 border">Nom</th>
-                <th className="px-4 py-2 border">Téléphone</th>
-                <th className="px-4 py-2 border">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {conseillers.map(c => (
-                <tr key={c.id} className="hover:bg-gray-100">
-                  <td className="px-4 py-2 border">{c.prenom}</td>
-                  <td className="px-4 py-2 border">{c.nom}</td>
-                  <td className="px-4 py-2 border">{c.telephone}</td>
-                  <td className="px-4 py-2 border flex gap-2">
-                    <button
-                      onClick={() => router.push(`/edit-conseiller/${c.id}`)}
-                      className="bg-yellow-400 hover:bg-yellow-500 text-white px-2 py-1 rounded"
-                    >
-                      Modifier
-                    </button>
-                    <button
-                      onClick={() => handleDelete(c.id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
-                    >
-                      Supprimer
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {conseillers.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="text-center py-4 text-gray-500">
-                    Aucun conseiller trouvé
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+      {conseillers.length === 0 && (
+        <p className="text-gray-700 text-lg mt-10">Aucun conseiller assigné pour le moment.</p>
       )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 w-full max-w-5xl">
+        {conseillers.map(c => (
+          <div key={c.id} className="bg-white rounded-xl shadow-md p-4">
+            <h2 className="text-lg font-bold">{c.prenom} {c.nom}</h2>
+            <p>📱 {c.telephone}</p>
+            <p>Disponibilité : {c.disponible ? "✅" : "❌"}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

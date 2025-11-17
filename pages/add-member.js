@@ -161,7 +161,7 @@ export default function AddMember() {
           <select name="statut" value={formData.statut} onChange={(e)=>setFormData({...formData, statut:e.target.value})} className="input">
             <option value="">-- Statut --</option>
             <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-            <option value="a deja son eglise">A déjà son église</option>
+            <option value="a déjà son église">A déjà son église</option>
             <option value="visiteur">Visiteur</option>
           </select>
 

@@ -7,51 +7,130 @@ import { useRouter } from "next/navigation";
 
 export default function ListConseillers() {
   const [conseillers, setConseillers] = useState([]);
-  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   const router = useRouter();
 
+  // =============================
+  // 1️⃣ Charger tous les conseillers
+  // =============================
+  const fetchConseillers = async () => {
+    setLoading(true);
+
+    // ➤ Récupérer tous les conseillers
+    const { data: profiles, error } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom, email, telephone, responsable_id")
+      .eq("role", "Conseiller");
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    // ➤ Récupérer aussi les responsables correspondants
+    const responsablesIds = profiles.map((p) => p.responsable_id).filter(Boolean);
+
+    const { data: responsables } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom")
+      .in("id", responsablesIds);
+
+    // ➤ Préparer un dictionnaire pour accès rapide
+    const responsableMap = {};
+    responsables?.forEach((r) => {
+      responsableMap[r.id] = `${r.prenom} ${r.nom}`;
+    });
+
+    // ➤ Récupérer combien de contacts sont attribués à chaque conseiller
+    const conseillersIds = profiles.map((p) => p.id);
+
+    const { data: membres } = await supabase
+      .from("membres")
+      .select("id, conseiller_id")
+      .in("conseiller_id", conseillersIds);
+
+    // ➤ Compter les membres par conseiller
+    const countMap = {};
+    membres?.forEach((m) => {
+      countMap[m.conseiller_id] = (countMap[m.conseiller_id] || 0) + 1;
+    });
+
+    // ➤ Fusionner les données
+    const list = profiles.map((p) => ({
+      ...p,
+      responsable_nom: responsableMap[p.responsable_id] || "—",
+      totalContacts: countMap[p.id] || 0,
+    }));
+
+    setConseillers(list);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchUserAndConseillers = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-
-      const { data: userData } = await supabase
-        .from("responsables")
-        .select("id, prenom, cellule_id")
-        .eq("email", session.user.email)
-        .single();
-
-      setUser(userData);
-
-      const { data: conseillersData } = await supabase
-        .from("conseillers")
-        .select("*")
-        .eq("created_by", userData.id);
-
-      setConseillers(conseillersData || []);
-    };
-    fetchUserAndConseillers();
+    fetchConseillers();
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100">
-      <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
-        <button onClick={() => router.back()} className="text-black hover:text-gray-800 font-semibold">← Retour</button>
-        <h1 className="text-2xl font-bold text-black">Mes Conseillers</h1>
+    <div className="min-h-screen bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
+
+      {/* TOP BAR */}
+      <div className="w-full max-w-4xl mx-auto mb-6 flex items-center justify-between">
+        <button
+          onClick={() => router.back()}
+          className="text-black font-semibold hover:text-gray-700"
+        >
+          ← Retour
+        </button>
+
+        <h1 className="text-3xl font-bold text-center">
+          Liste des Conseillers
+        </h1>
+
+        <button
+          onClick={() => router.push("/create-conseiller")}
+          className="px-4 py-2 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600"
+        >
+          + Ajouter
+        </button>
       </div>
 
-      {conseillers.length === 0 && (
-        <p className="text-gray-700 text-lg mt-10">Aucun conseiller assigné pour le moment.</p>
-      )}
+      {/* LISTE */}
+      <div className="w-full max-w-4xl mx-auto">
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 w-full max-w-5xl">
-        {conseillers.map(c => (
-          <div key={c.id} className="bg-white rounded-xl shadow-md p-4">
-            <h2 className="text-lg font-bold">{c.prenom} {c.nom}</h2>
-            <p>📱 {c.telephone}</p>
-            <p>Disponibilité : {c.disponible ? "✅" : "❌"}</p>
+        {loading ? (
+          <p className="text-center text-gray-600">Chargement...</p>
+        ) : conseillers.length === 0 ? (
+          <p className="text-center text-gray-600">Aucun conseiller trouvé.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {conseillers.map((c) => (
+              <div
+                key={c.id}
+                className="bg-white p-5 rounded-2xl shadow-md border border-gray-200"
+              >
+                <h2 className="text-xl font-bold mb-1">
+                  {c.prenom} {c.nom}
+                </h2>
+
+                <p className="text-gray-700">
+                  📞 {c.telephone || "—"}
+                </p>
+                <p className="text-gray-700">
+                  ✉️ {c.email || "—"}
+                </p>
+
+                <p className="text-gray-700 mt-2">
+                  👤 Responsable : <span className="font-semibold">{c.responsable_nom}</span>
+                </p>
+
+                <p className="text-gray-800 mt-2 font-semibold">
+                  🔔 Contacts assignés : {c.totalContacts}
+                </p>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
     </div>
   );

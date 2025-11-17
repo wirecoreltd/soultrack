@@ -1,51 +1,128 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function CreateConseiller() {
-  const [prenom, setPrenom] = useState("");
-  const [nom, setNom] = useState("");
-  const [telephone, setTelephone] = useState("");
+  const [membresStar, setMembresStar] = useState([]);
+  const [selectedMembreId, setSelectedMembreId] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   const router = useRouter();
 
+  // =====================
+  // 1️⃣ Récupérer les membres STAR
+  // =====================
+  const fetchMembresStar = async () => {
+    const { data, error } = await supabase
+      .from("membres")
+      .select("id, prenom, nom, telephone, email")
+      .eq("star", true);
+
+    if (!error) setMembresStar(data);
+  };
+
+  // =====================
+  // 2️⃣ Récupérer le profil connecté (responsable)
+  // =====================
+  const getCurrentProfile = async () => {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user?.user?.id) return null;
+
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.user.id)
+      .single();
+
+    return data;
+  };
+
+  useEffect(() => {
+    fetchMembresStar();
+  }, []);
+
+  // =====================
+  // 3️⃣ Soumission du formulaire
+  // =====================
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!prenom || !nom || !telephone)
-      return alert("Remplissez tous les champs !");
+    if (!selectedMembreId) return alert("Sélectionnez un membre !");
 
     setLoading(true);
 
-    const { error } = await supabase
-      .from("conseillers")
-      .insert([{ prenom, nom, telephone, disponible: true }]);
+    // ➤ Récupérer les infos du membre sélectionné
+    const { data: membre } = await supabase
+      .from("membres")
+      .select("*")
+      .eq("id", selectedMembreId)
+      .single();
+
+    if (!membre) {
+      setLoading(false);
+      return alert("Membre introuvable.");
+    }
+
+    // ➤ Vérifier si ce membre a déjà un profil
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("email", membre.email)
+      .maybeSingle();
+
+    let profileId = existingProfile?.id;
+
+    // ➤ 3A : Créer un profile si inexistant
+    if (!profileId) {
+      const { data: newProfile, error: profileError } = await supabase
+        .from("profiles")
+        .insert([
+          {
+            email: membre.email,
+            prenom: membre.prenom,
+            nom: membre.nom,
+            telephone: membre.telephone,
+            role: "Conseiller",
+          },
+        ])
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error(profileError);
+        setLoading(false);
+        return alert("Erreur lors de la création du profil !");
+      }
+
+      profileId = newProfile.id;
+    }
+
+    // ➤ 3B : Lier le conseiller à son responsable
+    const responsable = await getCurrentProfile();
+
+    await supabase
+      .from("profiles")
+      .update({ responsable_id: responsable.id })
+      .eq("id", profileId);
+
+    // ➤ 3C : Mettre à jour le membre pour le relier au conseiller
+    await supabase
+      .from("membres")
+      .update({ conseiller_id: profileId })
+      .eq("id", membre.id);
 
     setLoading(false);
+    setSuccess(true);
+    setSelectedMembreId("");
 
-    if (error) {
-      console.error(error);
-      alert("Erreur lors de l'ajout du conseiller !");
-    } else {
-      setSuccess(true);
-
-      // Reset fields
-      setPrenom("");
-      setNom("");
-      setTelephone("");
-
-      // Masquer le message après 3 secondes
-      setTimeout(() => setSuccess(false), 3000);
-    }
+    setTimeout(() => setSuccess(false), 3000);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
-
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg relative">
 
         {/* 🔙 Bouton Retour */}
@@ -61,75 +138,42 @@ export default function CreateConseiller() {
           <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
         </div>
 
-        {/* 📝 Titre */}
-        <h1 className="text-3xl font-bold text-center mb-2">
+        <h1 className="text-3xl font-bold text-center mb-4">
           Ajouter un Conseiller
         </h1>
-        <p className="text-center text-gray-500 italic mb-6">
-          « Les ouvriers sont peu nombreux » – Matthieu 9:37
-        </p>
 
-        {/* FORMULAIRE */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
-          <input
-            type="text"
-            placeholder="Prénom"
-            value={prenom}
-            onChange={(e) => setPrenom(e.target.value)}
+          {/* Sélection du membre STAR */}
+          <select
+            value={selectedMembreId}
+            onChange={(e) => setSelectedMembreId(e.target.value)}
             className="input"
-            required
-          />
+          >
+            <option value="">Sélectionner un membre STAR</option>
+            {membresStar.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.prenom} {m.nom} — {m.telephone}
+              </option>
+            ))}
+          </select>
 
-          <input
-            type="text"
-            placeholder="Nom"
-            value={nom}
-            onChange={(e) => setNom(e.target.value)}
-            className="input"
-            required
-          />
+          {/* Boutons */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 rounded-2xl text-white font-bold bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600"
+          >
+            {loading ? "Création..." : "Créer le Conseiller"}
+          </button>
 
-          <input
-            type="text"
-            placeholder="Téléphone"
-            value={telephone}
-            onChange={(e) => setTelephone(e.target.value)}
-            className="input"
-            required
-          />
-
-          {/* 🔘 Boutons Annuler / Ajouter */}
-          <div className="flex justify-between mt-2">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="w-1/2 mr-2 py-3 rounded-2xl text-black font-bold border border-gray-400 hover:bg-gray-100 transition-all"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-1/2 ml-2 py-3 rounded-2xl text-white font-bold shadow-md transition-all bg-gradient-to-r
-                ${loading
-                  ? "from-gray-400 to-gray-500"
-                  : "from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600"
-                }`}
-            >
-              {loading ? "Ajout..." : "Ajouter"}
-            </button>
-          </div>
-
-          {/* Message Confirm */}
           {success && (
             <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
-              ✅ Conseiller ajouté avec succès !
+              ✅ Conseiller créé avec succès !
             </p>
           )}
         </form>
 
-        {/* Styles globaux */}
         <style jsx>{`
           .input {
             width: 100%;
@@ -137,7 +181,6 @@ export default function CreateConseiller() {
             border-radius: 12px;
             padding: 12px;
             text-align: left;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             color: black;
           }
         `}</style>

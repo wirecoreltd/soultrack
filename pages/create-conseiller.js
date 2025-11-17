@@ -11,76 +11,88 @@ export default function CreateConseiller() {
   const [telephone, setTelephone] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [user, setUser] = useState(null);
+  const [responsable, setResponsable] = useState(null);
 
   const router = useRouter();
 
-  // ==================== FETCH RESPONSABLE CONNECTÉ ====================
+  // =================== Récupération du responsable connecté ===================
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: userData, error } = await supabase.auth.getUser();
-      if (error || !userData) {
-        console.error("Utilisateur non trouvé :", error);
+    const fetchResponsable = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
+        alert("❌ Vous n'êtes pas connecté !");
         return;
       }
 
-      // Récupérer le responsable correspondant à l'email connecté
-      const { data, error: fetchError } = await supabase
+      const email = sessionData.session.user.email;
+
+      const { data: respData, error } = await supabase
         .from("responsables")
         .select("id, prenom, cellule_id")
-        .eq("email", userData.email)
+        .eq("email", email)
         .single();
 
-      if (fetchError || !data) {
-        console.error("Responsable non trouvé :", fetchError);
+      if (error || !respData) {
+        console.error(error);
+        alert("❌ Impossible de récupérer vos informations. Connectez-vous ou réessayez.");
         return;
       }
 
-      setUser(data);
+      setResponsable(respData);
     };
-    fetchUser();
+
+    fetchResponsable();
   }, []);
 
-  // ==================== HANDLE SUBMIT ====================
+  // =================== Création du conseiller ===================
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!prenom || !nom || !telephone) return alert("Remplissez tous les champs !");
-    if (!user) return alert("Impossible de récupérer vos informations. Connectez-vous ou réessayez.");
+
+    if (!prenom || !nom || !telephone) {
+      alert("❌ Remplissez tous les champs !");
+      return;
+    }
+
+    if (!responsable) {
+      alert("❌ Impossible de créer le conseiller sans responsable.");
+      return;
+    }
 
     setLoading(true);
 
     const { error } = await supabase
       .from("conseillers")
-      .insert([{
-        prenom,
-        nom,
-        telephone,
-        disponible: true,
-        responsable_id: user.id // Lié au responsable connecté
-      }]);
+      .insert([
+        {
+          prenom,
+          nom,
+          telephone,
+          disponible: true,
+          responsable_id: responsable.id, // association avec le responsable connecté
+        },
+      ]);
 
     setLoading(false);
 
     if (error) {
       console.error(error);
-      alert("Erreur lors de l'ajout du conseiller !");
+      alert("❌ Erreur lors de l'ajout du conseiller !");
     } else {
       setSuccess(true);
 
-      // Reset fields
+      // Réinitialiser les champs
       setPrenom("");
       setNom("");
       setTelephone("");
 
+      // Masquer le message après 3s
       setTimeout(() => setSuccess(false), 3000);
-      router.push("/list-conseillers");
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg relative">
-
         {/* 🔙 Bouton Retour */}
         <button
           onClick={() => router.back()}
@@ -129,30 +141,30 @@ export default function CreateConseiller() {
             required
           />
 
-          {/* 🔘 Boutons */}
+          {/* Boutons Annuler / Ajouter */}
           <div className="flex justify-between gap-4">
             <button
               type="button"
               onClick={() => router.back()}
-              className="flex-1 py-3 rounded-2xl text-black font-bold shadow-md transition-all border border-gray-400 hover:bg-gray-100"
+              className="w-1/2 py-3 rounded-2xl text-white font-bold shadow-md transition-all bg-gray-400 hover:bg-gray-500"
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={loading}
-              className={`flex-1 py-3 rounded-2xl text-white font-bold shadow-md transition-all bg-gradient-to-r
-               ${loading
-                  ? "from-gray-400 to-gray-500"
-                  : "from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600"
-                }`}
+              className={`w-1/2 py-3 rounded-2xl text-white font-bold shadow-md transition-all ${
+                loading
+                  ? "bg-gray-400"
+                  : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600"
+              }`}
             >
               {loading ? "Création..." : "Ajouter"}
             </button>
           </div>
         </form>
 
-        {/* Message Confirm */}
+        {/* Message succès */}
         {success && (
           <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
             ✅ Conseiller ajouté avec succès !

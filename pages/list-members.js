@@ -188,7 +188,7 @@ export default function ListMembers() {
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🧩 Venu : {m.venu || "—"}</p>
-                            p>❓Besoin : {
+                            <p>❓Besoin : {
                               (() => {
                                 if (!m.besoin) return "—";
                                 if (Array.isArray(m.besoin)) return m.besoin.join(", ");
@@ -243,7 +243,7 @@ export default function ListMembers() {
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🧩 Venu : {m.venu || "—"}</p>
-                            p>❓Besoin : {
+                            <p>❓Besoin : {
                               (() => {
                                 if (!m.besoin) return "—";
                                 if (Array.isArray(m.besoin)) return m.besoin.join(", ");

@@ -97,7 +97,7 @@ export default function ListMembers() {
   const getBorderColor = (m) => {
     if (m.star) return "#FBC02D";
     if (m.statut === "actif") return "#4285F4";
-    if (m.statut === "a déjà mon église") return "#EA4335";
+    if (m.statut === "a déjà son église") return "#EA4335";
     if (m.statut === "Integrer") return "#FFA500";
     if (m.statut === "ancien") return "#999999";
     if (m.statut === "veut rejoindre ICC" || m.statut === "visiteur") return "#34A853";
@@ -188,7 +188,16 @@ export default function ListMembers() {
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🧩 Venu : {m.venu || "—"}</p>
-                            <p>❓ Besoin : {m.besoin || "—"}</p>
+                            p>❓Besoin : {
+                              (() => {
+                                if (!m.besoin) return "—";
+                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                                try {
+                                  const arr = JSON.parse(m.besoin);
+                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                                } catch { return m.besoin; }
+                              })()
+                            }</p>
                             <p className="font-semibold text-green-600">Cellule :</p>
                             <select value={selectedCellules[m.id] || ""} onChange={e => setSelectedCellules(prev => ({ ...prev, [m.id]: e.target.value }))} className="border rounded px-2 py-1 text-sm w-full">
                               <option value="">-- Choisir cellule --</option>
@@ -234,6 +243,16 @@ export default function ListMembers() {
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>🧩 Venu : {m.venu || "—"}</p>
+                            p>❓Besoin : {
+                              (() => {
+                                if (!m.besoin) return "—";
+                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                                try {
+                                  const arr = JSON.parse(m.besoin);
+                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                                } catch { return m.besoin; }
+                              })()
+                            }</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
                             <p className="font-semibold">🏠 Cellule :</p>
                             <p>{(() => { const c = cellules.find(c => c.id === m.cellule_id); return c ? `${c.cellule} (${c.responsable || "—"})` : "—"; })()}</p>

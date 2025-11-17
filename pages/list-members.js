@@ -97,7 +97,7 @@ export default function ListMembers() {
   const getBorderColor = (m) => {
     if (m.star) return "#FBC02D";
     if (m.statut === "actif") return "#4285F4";
-    if (m.statut === "a déjà son église") return "#EA4335";
+    if (m.statut === "a déjà son église") return "#f21705";
     if (m.statut === "integrer") return "#FFA500";
     if (m.statut === "ancien") return "#999999";
     if (m.statut === "veut rejoindre ICC" || m.statut === "visiteur") return "#34A853";

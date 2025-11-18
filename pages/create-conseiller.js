@@ -20,19 +20,16 @@ export default function CreateConseiller() {
     if (profile?.id) setResponsableId(profile.id);
   }, []);
 
-  // ➤ Charge les membres "star = Oui"
+  // ➤ Charge les membres "star = true"
   useEffect(() => {
     async function fetchStarMembers() {
       const { data, error } = await supabase
         .from("membres")
-        .select("id, prenom, nom, telephone")
+        .select("id, prenom, nom")
         .eq("star", true);
 
-      if (error) {
-        console.error(error);
-      } else {
-        setMembers(data);
-      }
+      if (error) console.error(error);
+      else setMembers(data);
     }
     fetchStarMembers();
   }, []);
@@ -79,12 +76,9 @@ export default function CreateConseiller() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg relative">
-
         <h1 className="text-3xl font-bold text-center mb-4">Créer un Conseiller</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-
-          {/* Sélection du membre */}
           <select
             value={selectedMember}
             onChange={(e) => setSelectedMember(e.target.value)}
@@ -94,7 +88,7 @@ export default function CreateConseiller() {
             <option value="">-- Sélectionnez un membre (star = Oui) --</option>
             {members.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.prenom} {m.nom} ({m.telephone})
+                {m.prenom} {m.nom}
               </option>
             ))}
           </select>

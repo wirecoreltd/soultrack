@@ -13,7 +13,21 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Champs manquants" });
     }
 
-    // 1️⃣ Créer l'utilisateur dans Supabase Auth
+    // 1️⃣ Récupérer les infos du membre automatiquement
+    const { data: membre, error: membreError } = await supabase
+      .from("membres")
+      .select("prenom, nom, telephone")
+      .eq("id", membre_id)
+      .single();
+
+    if (membreError || !membre) {
+      console.error("Erreur membre :", membreError);
+      return res.status(400).json({ error: "Membre introuvable" });
+    }
+
+    const { prenom, nom, telephone } = membre;
+
+    // 2️⃣ Créer l'utilisateur dans Supabase Auth
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -24,12 +38,15 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: authError.message });
     }
 
-    // 2️⃣ Mettre à jour la table profiles
+    // 3️⃣ Insérer dans profiles avec les infos du membre
     const { error: profileError } = await supabase
       .from("profiles")
       .insert([{
-        id: authUser.user.id,     // L'ID généré par Auth
+        id: authUser.user.id,     
         email,
+        prenom,
+        nom,
+        telephone,
         role: "Conseiller",
         responsable_id,
         membre_id,
@@ -40,7 +57,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: profileError.message });
     }
 
-    return res.status(200).json({ message: "✅ Conseiller créé avec succès !" });
+    return res.status(200).json({ message: "Conseiller créé avec succès" });
+
   } catch (err) {
     console.error("Unexpected Error:", err);
     return res.status(500).json({ error: err.message });

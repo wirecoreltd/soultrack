@@ -1,10 +1,8 @@
-// pages/create-conseiller.js
-
 "use client";
 
 import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import supabase from "../lib/supabaseClient";
 
 export default function CreateConseiller() {
   const router = useRouter();
@@ -16,13 +14,13 @@ export default function CreateConseiller() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ➤ Récupère l'ID du responsable connecté
+  // Récupérer l'ID du responsable connecté depuis localStorage
   useEffect(() => {
     const profile = JSON.parse(localStorage.getItem("profile"));
     if (profile?.id) setResponsableId(profile.id);
   }, []);
 
-  // ➤ Charge les membres "star = Oui"
+  // Charger les membres "star = Oui"
   useEffect(() => {
     async function fetchStarMembers() {
       const { data, error } = await supabase
@@ -30,11 +28,8 @@ export default function CreateConseiller() {
         .select("id, prenom, nom, email, telephone")
         .eq("star", true);
 
-      if (error) {
-        console.error(error);
-      } else {
-        setMembers(data);
-      }
+      if (error) console.error(error);
+      else setMembers(data);
     }
     fetchStarMembers();
   }, []);
@@ -50,25 +45,14 @@ export default function CreateConseiller() {
     setMessage("⏳ Création en cours...");
 
     try {
-      // Récupérer les infos du membre sélectionné
-      const member = members.find((m) => m.id === selectedMember);
-      if (!member) {
-        setMessage("❌ Membre sélectionné introuvable");
-        setLoading(false);
-        return;
-      }
-
-      // Créer le conseiller dans Supabase Auth via API
       const res = await fetch("/api/create-conseiller", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          membre_id: selectedMember,
           email,
           password,
           responsable_id: responsableId,
-          prenom: member.prenom,
-          nom: member.nom,
-          telephone: member.telephone,
         }),
       });
 
@@ -112,6 +96,7 @@ export default function CreateConseiller() {
             ))}
           </select>
 
+          {/* Email et mot de passe */}
           <input
             type="email"
             placeholder="Email du conseiller"
@@ -170,4 +155,3 @@ export default function CreateConseiller() {
     </div>
   );
 }
-

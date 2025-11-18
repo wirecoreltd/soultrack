@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 
@@ -14,13 +14,13 @@ export default function CreateConseiller() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ➤ Récupérer l'ID du responsable connecté
+  // ➤ Récupère l'ID du responsable connecté
   useEffect(() => {
     const profile = JSON.parse(localStorage.getItem("profile"));
     if (profile?.id) setResponsableId(profile.id);
   }, []);
 
-  // ➤ Charger les membres star = true
+  // ➤ Charge les membres "star = Oui"
   useEffect(() => {
     async function fetchStarMembers() {
       const { data, error } = await supabase
@@ -28,15 +28,17 @@ export default function CreateConseiller() {
         .select("id, prenom, nom, telephone")
         .eq("star", true);
 
-      if (error) console.error(error);
-      else setMembers(data);
+      if (error) {
+        console.error(error);
+      } else {
+        setMembers(data);
+      }
     }
     fetchStarMembers();
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!selectedMember || !email || !password) {
       setMessage("❌ Remplissez tous les champs !");
       return;
@@ -77,9 +79,12 @@ export default function CreateConseiller() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg relative">
+
         <h1 className="text-3xl font-bold text-center mb-4">Créer un Conseiller</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+          {/* Sélection du membre */}
           <select
             value={selectedMember}
             onChange={(e) => setSelectedMember(e.target.value)}

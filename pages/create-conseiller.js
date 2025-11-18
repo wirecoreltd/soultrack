@@ -1,30 +1,64 @@
-// pages/admin/create-internal-user.js
-
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import supabase from "../lib/supabaseClient";
 
-export default function CreateInternalUser() {
+export default function CreateConseiller() {
   const router = useRouter();
+  const [members, setMembers] = useState([]);
+  const [selectedMemberId, setSelectedMemberId] = useState("");
   const [formData, setFormData] = useState({
     prenom: "",
     nom: "",
+    telephone: "",
     email: "",
     password: "",
-    telephone: "",
-    role: "",
-    cellule_nom: "",
-    cellule_zone: "",
   });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // ➤ Charge les membres star = true
+  useEffect(() => {
+    async function fetchStarMembers() {
+      const { data, error } = await supabase
+        .from("membres")
+        .select("id, prenom, nom, telephone")
+        .eq("star", true);
+
+      if (error) console.error(error);
+      else setMembers(data);
+    }
+    fetchStarMembers();
+  }, []);
+
+  // ➤ Quand on sélectionne un membre, remplir prenom, nom, telephone
+  useEffect(() => {
+    if (!selectedMemberId) {
+      setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
+      return;
+    }
+    const member = members.find((m) => m.id === selectedMemberId);
+    if (member) {
+      setFormData({
+        ...formData,
+        prenom: member.prenom,
+        nom: member.nom,
+        telephone: member.telephone,
+      });
+    }
+  }, [selectedMemberId]);
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedMemberId || !formData.email || !formData.password) {
+      setMessage("❌ Remplissez tous les champs !");
+      return;
+    }
+
     setLoading(true);
     setMessage("⏳ Création en cours...");
 
@@ -32,22 +66,23 @@ export default function CreateInternalUser() {
       const res = await fetch("/api/create-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          role: "Conseiller", // rôle fixe
+        }),
       });
 
       const data = await res.json().catch(() => null);
 
       if (res.ok) {
-        setMessage("✅ Utilisateur créé avec succès !");
+        setMessage("✅ Conseiller créé avec succès !");
+        setSelectedMemberId("");
         setFormData({
           prenom: "",
           nom: "",
+          telephone: "",
           email: "",
           password: "",
-          telephone: "",
-          role: "",
-          cellule_nom: "",
-          cellule_zone: "",
         });
       } else {
         setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
@@ -59,13 +94,11 @@ export default function CreateInternalUser() {
     }
   };
 
-  const handleCancel = () => router.push("/"); // Retour à l'accueil ou page admin
+  const handleCancel = () => router.push("/");
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
-
-        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
           className="absolute top-4 left-4 flex items-center text-gray-700 hover:text-gray-900 transition-colors"
@@ -73,22 +106,36 @@ export default function CreateInternalUser() {
           ← Retour
         </button>
 
-        {/* Logo centré */}
         <div className="flex justify-center mb-6">
           <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
         </div>
 
-        {/* Titre */}
-        <h1 className="text-3xl font-bold text-center mb-6">Créer un utilisateur</h1>
+        <h1 className="text-3xl font-bold text-center mb-6">Créer un Conseiller</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
+          {/* Sélection membre star */}
+          <select
+            value={selectedMemberId}
+            onChange={(e) => setSelectedMemberId(e.target.value)}
+            className="input"
+            required
+          >
+            <option value="">-- Sélectionnez un membre (star = Oui) --</option>
+            {members.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.prenom} {m.nom}
+              </option>
+            ))}
+          </select>
+
+          {/* Affichage automatique des infos */}
           <input
             name="prenom"
             placeholder="Prénom"
             value={formData.prenom}
             onChange={handleChange}
             className="input"
-            required
+            readOnly
           />
           <input
             name="nom"
@@ -96,11 +143,21 @@ export default function CreateInternalUser() {
             value={formData.nom}
             onChange={handleChange}
             className="input"
-            required
+            readOnly
           />
           <input
+            name="telephone"
+            placeholder="Téléphone"
+            value={formData.telephone}
+            onChange={handleChange}
+            className="input"
+            readOnly
+          />
+
+          {/* Email et mot de passe */}
+          <input
             name="email"
-            placeholder="Email"
+            placeholder="Email du conseiller"
             value={formData.email}
             onChange={handleChange}
             className="input"
@@ -115,48 +172,7 @@ export default function CreateInternalUser() {
             className="input"
             required
           />
-          <input
-            name="telephone"
-            placeholder="Téléphone"
-            value={formData.telephone}
-            onChange={handleChange}
-            className="input"
-          />
 
-          <select
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            className="input"
-            required
-          >
-            <option value="">-- Sélectionne un rôle --</option>
-            <option value="Administrateur">Administrateur</option>
-            <option value="ResponsableIntegration">Responsable Intégration</option>
-            <option value="ResponsableCellule">Responsable de Cellule</option>
-            <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
-          </select>
-
-          {formData.role === "ResponsableCellule" && (
-            <div className="space-y-3 border-t pt-3">
-              <input
-                name="cellule_nom"
-                placeholder="Nom de la cellule"
-                value={formData.cellule_nom}
-                onChange={handleChange}
-                className="input"
-              />
-              <input
-                name="cellule_zone"
-                placeholder="Zone / Localisation"
-                value={formData.cellule_zone}
-                onChange={handleChange}
-                className="input"
-              />
-            </div>
-          )}
-
-          {/* Boutons côte à côte: Annuler à gauche, Créer à droite */}
           <div className="flex gap-4 mt-4">
             <button
               type="button"
@@ -165,7 +181,6 @@ export default function CreateInternalUser() {
             >
               Annuler
             </button>
-
             <button
               type="submit"
               disabled={loading}
@@ -195,3 +210,4 @@ export default function CreateInternalUser() {
     </div>
   );
 }
+

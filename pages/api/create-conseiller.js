@@ -1,4 +1,5 @@
 // /pages/api/create-conseiller.js
+
 import supabase from "../../lib/supabaseClient";
 
 export default async function handler(req, res) {
@@ -7,27 +8,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { membre_id, email, password, responsable_id } = req.body;
+    const { email, password, prenom, nom, telephone, responsable_id } = req.body;
 
-    if (!membre_id || !email || !password || !responsable_id) {
+    // ✅ Vérification des champs
+    if (!email || !password || !prenom || !nom || !responsable_id) {
       return res.status(400).json({ error: "Champs manquants" });
     }
 
-    // 1️⃣ Récupérer les infos du membre automatiquement
-    const { data: membre, error: membreError } = await supabase
-      .from("membres")
-      .select("prenom, nom, telephone")
-      .eq("id", membre_id)
-      .single();
-
-    if (membreError || !membre) {
-      console.error("Erreur membre :", membreError);
-      return res.status(400).json({ error: "Membre introuvable" });
-    }
-
-    const { prenom, nom, telephone } = membre;
-
-    // 2️⃣ Créer l'utilisateur dans Supabase Auth
+    // 1️⃣ Créer l'utilisateur dans Supabase Auth
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -38,18 +26,17 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: authError.message });
     }
 
-    // 3️⃣ Insérer dans profiles avec les infos du membre
+    // 2️⃣ Insérer dans profiles
     const { error: profileError } = await supabase
       .from("profiles")
       .insert([{
-        id: authUser.user.id,     
+        id: authUser.user.id,   // ID généré par Auth
         email,
         prenom,
         nom,
         telephone,
         role: "Conseiller",
         responsable_id,
-        membre_id,
       }]);
 
     if (profileError) {
@@ -57,10 +44,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: profileError.message });
     }
 
-    return res.status(200).json({ message: "Conseiller créé avec succès" });
+    return res.status(200).json({ message: "✅ Conseiller créé avec succès !" });
 
   } catch (err) {
     console.error("Unexpected Error:", err);
     return res.status(500).json({ error: err.message });
   }
 }
+

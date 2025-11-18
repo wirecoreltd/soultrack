@@ -1,4 +1,5 @@
 // components/MemberCard.js
+// components/MemberCard.js
 
 "use client";
 
@@ -9,14 +10,16 @@ export default function MemberCard({
   member,
   statusOptions,
   cellules,
-  selectedCellules,
-  setSelectedCellules,
+  conseillers,
+  selectedDestinations,
+  setSelectedDestinations,
   handleChangeStatus,
   handleStatusUpdateFromEnvoyer,
   session,
   onEdit,
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [sendTo, setSendTo] = useState("cellule"); // cellule ou conseiller
 
   const isNouveau =
     member.statut === "visiteur" || member.statut === "veut rejoindre ICC";
@@ -32,6 +35,8 @@ export default function MemberCard({
     return "#ccc";
   };
 
+  const selectedDest = selectedDestinations[member.id] || "";
+
   return (
     <div
       className={`bg-white rounded-xl shadow-md border-l-4 overflow-hidden transition-all duration-300 relative ${
@@ -39,7 +44,6 @@ export default function MemberCard({
       }`}
       style={{ borderLeftColor: getBorderColor() }}
     >
-      {/* Badge Nouveau */}
       {isNouveau && (
         <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] font-bold px-6 py-1 rotate-45 shadow-md">
           Nouveau
@@ -57,7 +61,6 @@ export default function MemberCard({
           🕊 Statut : {member.statut || "—"}
         </p>
 
-        {/* Toggle détails */}
         <button
           onClick={() => setIsOpen((prev) => !prev)}
           className="text-orange-500 underline text-sm mb-2"
@@ -70,75 +73,109 @@ export default function MemberCard({
             <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
             <p>🏙 Ville : {member.ville || "—"}</p>
             <p>🧩 Comment est-il venu : {member.venu || "—"}</p>
-            <p>❓Besoin : {
-                              (() => {
-                                if (!member.besoin) return "—";
-                                if (Array.isArray(member.besoin)) return member.besoin.join(", ");
-                                try {
-                                  const arr = JSON.parse(member.besoin);
-                                  return Array.isArray(arr) ? arr.join(", ") : member.besoin;
-                                } catch { return member.besoin; }
-                              })()
-                            }</p>
+            <p>
+              ❓Besoin :{" "}
+              {(() => {
+                if (!member.besoin) return "—";
+                if (Array.isArray(member.besoin)) return member.besoin.join(", ");
+                try {
+                  const arr = JSON.parse(member.besoin);
+                  return Array.isArray(arr) ? arr.join(", ") : member.besoin;
+                } catch {
+                  return member.besoin;
+                }
+              })()}
+            </p>
             <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
 
-            {isNouveau ? (
-              <>
-                {/* Statut */}
-                <p className="mt-2 font-semibold text-blue-600">Statut :</p>
-                <select
-                  value={member.statut}
-                  onChange={(e) =>
-                    handleChangeStatus(member.id, e.target.value)
-                  }
-                  className="border rounded-md px-2 py-1 text-sm text-gray-700 w-full"
-                >
-                  {statusOptions.map((s) => (
-                    <option key={s}>{s}</option>
-                  ))}
-                </select>
+            {/* --- Choix Cellule / Conseiller --- */}
+            <div className="flex items-center gap-4 mt-2">
+              <label>
+                <input
+                  type="radio"
+                  name={`sendTo-${member.id}`}
+                  value="cellule"
+                  checked={sendTo === "cellule"}
+                  onChange={() => {
+                    setSendTo("cellule");
+                    setSelectedDestinations((prev) => ({ ...prev, [member.id]: "" }));
+                  }}
+                />{" "}
+                Cellule
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name={`sendTo-${member.id}`}
+                  value="conseiller"
+                  checked={sendTo === "conseiller"}
+                  onChange={() => {
+                    setSendTo("conseiller");
+                    setSelectedDestinations((prev) => ({ ...prev, [member.id]: "" }));
+                  }}
+                />{" "}
+                Conseiller
+              </label>
+            </div>
 
-                {/* Cellule */}
-                <p className="mt-2 font-semibold text-green-600">Cellule :</p>
-                <select
-                  value={selectedCellules[member.id] || ""}
-                  onChange={(e) =>
-                    setSelectedCellules((prev) => ({
-                      ...prev,
-                      [member.id]: e.target.value,
-                    }))
-                  }
-                  className="border rounded-lg px-2 py-1 text-sm w-full"
-                >
-                  <option value="">-- Sélectionner cellule --</option>
-                  {cellules.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.cellule} ({c.responsable})
-                    </option>
-                  ))}
-                </select>
+            {/* --- Dropdown selon choix --- */}
+            {sendTo === "cellule" && (
+              <select
+                value={selectedDest}
+                onChange={(e) =>
+                  setSelectedDestinations((prev) => ({
+                    ...prev,
+                    [member.id]: e.target.value,
+                  }))
+                }
+                className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
+              >
+                <option value="">-- Sélectionner cellule --</option>
+                {cellules.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.cellule} ({c.responsable})
+                  </option>
+                ))}
+              </select>
+            )}
 
-                {/* BoutonEnvoyer pour nouveau membre */}
-                {selectedCellules[member.id] && (
-                  <div className="mt-2 w-full">
-                    <BoutonEnvoyer
-                      membre={member}
-                      cellule={cellules.find(
-                        (c) => c.id === selectedCellules[member.id]
-                      )}
-                      onStatusUpdate={(updatedMember) =>
-                        handleStatusUpdateFromEnvoyer(
-                          member.id,
-                          member.statut,
-                          updatedMember
-                        )
-                      }
-                      session={session}
-                    />
-                  </div>
-                )}
-              </>
-            ) : (
+            {sendTo === "conseiller" && (
+              <select
+                value={selectedDest}
+                onChange={(e) =>
+                  setSelectedDestinations((prev) => ({
+                    ...prev,
+                    [member.id]: e.target.value,
+                  }))
+                }
+                className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
+              >
+                <option value="">-- Sélectionner un conseiller --</option>
+                {conseillers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.prenom} {c.nom}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {/* --- Bouton Envoyer --- */}
+            {selectedDest && (
+              <div className="mt-2 w-full">
+                <BoutonEnvoyer
+                  membre={member}
+                  cellule={sendTo === "cellule" ? cellules.find((c) => c.id === selectedDest) : null}
+                  conseiller={sendTo === "conseiller" ? conseillers.find((c) => c.id === selectedDest) : null}
+                  onStatusUpdate={(updatedMember) =>
+                    handleStatusUpdateFromEnvoyer(member.id, member.statut, updatedMember)
+                  }
+                  session={session}
+                />
+              </div>
+            )}
+
+            {/* --- Ancien membre --- */}
+            {!isNouveau && (
               <div className="text-center mt-3">
                 <button
                   onClick={() => onEdit(member)}
@@ -154,4 +191,5 @@ export default function MemberCard({
     </div>
   );
 }
+
 

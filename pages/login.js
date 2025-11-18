@@ -1,6 +1,8 @@
+//pages/login.js
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 
@@ -32,7 +34,7 @@ export default function LoginPage() {
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, role")
+        .select("id, role, prenom, nom, telephone")
         .eq("id", data.user.id)
         .single();
 
@@ -43,8 +45,12 @@ export default function LoginPage() {
       }
 
       const role = profile?.role || "Membre";
+
+      // ⬇️⬇️⬇️ **AJOUT IMPORTANT – SANS CASSER LE RESTE**
       localStorage.setItem("userRole", JSON.stringify([role]));
       localStorage.setItem("userId", profile.id);
+      localStorage.setItem("profile", JSON.stringify(profile)); // ⭐⭐ AJOUT ESSENTIEL
+      // ⬆️⬆️⬆️
 
       console.log("✅ Login réussi :", data.user.email, "| Role :", role);
 

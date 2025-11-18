@@ -1,4 +1,5 @@
 // pages/create-conseiller.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -26,7 +27,7 @@ export default function CreateConseiller() {
     async function fetchStarMembers() {
       const { data, error } = await supabase
         .from("membres")
-        .select("id, prenom, nom, email")
+        .select("id, prenom, nom, email, telephone")
         .eq("star", true);
 
       if (error) {
@@ -49,14 +50,25 @@ export default function CreateConseiller() {
     setMessage("⏳ Création en cours...");
 
     try {
+      // Récupérer les infos du membre sélectionné
+      const member = members.find((m) => m.id === selectedMember);
+      if (!member) {
+        setMessage("❌ Membre sélectionné introuvable");
+        setLoading(false);
+        return;
+      }
+
+      // Créer le conseiller dans Supabase Auth via API
       const res = await fetch("/api/create-conseiller", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          membre_id: selectedMember,
           email,
           password,
           responsable_id: responsableId,
+          prenom: member.prenom,
+          nom: member.nom,
+          telephone: member.telephone,
         }),
       });
 
@@ -158,3 +170,4 @@ export default function CreateConseiller() {
     </div>
   );
 }
+

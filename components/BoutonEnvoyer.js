@@ -28,23 +28,22 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, onEnvoy
         ville: membre.ville,
         besoin: membre.besoin,
         infos_supplementaires: membre.infos_supplementaires,
-        statut: "envoye", // <-- tel que demandé
+        statut: "envoye",
+        statut_suivis: "envoye",
         created_at: new Date().toISOString(),
       };
 
-      // si envoi vers cellule
+      // Si envoi vers cellule
       if (type === "cellule") {
         suiviData.cellule_id = cible.id;
         suiviData.cellule_nom = cible.cellule;
         suiviData.responsable = cible.responsable || null;
       } else {
-        // envoi vers conseiller
-        suiviData.conseiller_id = cible.id;
-        // responsable champ on peut mettre le nom du conseiller
+        // Envoi vers conseiller
         suiviData.responsable = `${cible.prenom || ""} ${cible.nom || ""}`.trim();
       }
 
-      // Insert dans suivi
+      // Insert dans suivis_membres
       const { error: insertError } = await supabase.from("suivis_membres").insert([suiviData]);
       if (insertError) {
         console.error("Erreur insertion suivi:", insertError);
@@ -62,7 +61,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, onEnvoy
       message += `- 🙏 Besoin : ${membre.besoin || "—"}\n\n`;
       message += `🙏 Merci !`;
 
-      // sélectionner le téléphone à utiliser (cellule.telephone ou conseiller.telephone)
+      // Sélectionner le téléphone à utiliser
       const phoneRaw = cible.telephone || "";
       const phone = phoneRaw.replace(/\D/g, "");
       if (!phone) {
@@ -71,7 +70,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, onEnvoy
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
       }
 
-      // callback pour mise à jour du statut côté parent
+      // Callback pour mise à jour du statut côté parent
       if (onEnvoyer) onEnvoyer(membre.id);
 
       if (showToast) showToast("✅ Message WhatsApp ouvert et suivi enregistré (statut → envoye)");

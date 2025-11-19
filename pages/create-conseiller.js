@@ -1,28 +1,24 @@
-// pages/create-conseiller.js
 "use client";
-
-import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import supabase from "../lib/supabaseClient";
 
 export default function CreateConseiller() {
   const router = useRouter();
-  const [responsableId, setResponsableId] = useState(null);
   const [members, setMembers] = useState([]);
   const [selectedMemberId, setSelectedMemberId] = useState("");
-  const [selectedMemberInfo, setSelectedMemberInfo] = useState({});
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState({
+    prenom: "",
+    nom: "",
+    telephone: "",
+    email: "",
+    password: "",
+  });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ➤ Récupère l'ID du responsable connecté
-  useEffect(() => {
-    const profile = JSON.parse(localStorage.getItem("profile"));
-    if (profile?.id) setResponsableId(profile.id);
-  }, []);
-
-  // ➤ Charge les membres "star = true"
+  // ➤ Charge les membres star = true
   useEffect(() => {
     async function fetchStarMembers() {
       const { data, error } = await supabase
@@ -36,16 +32,29 @@ export default function CreateConseiller() {
     fetchStarMembers();
   }, []);
 
-  // ➤ Met à jour les infos du membre sélectionné
+  // ➤ Quand on sélectionne un membre, remplir prenom, nom, telephone
   useEffect(() => {
-    if (!selectedMemberId) return;
+    if (!selectedMemberId) {
+      setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
+      return;
+    }
     const member = members.find((m) => m.id === selectedMemberId);
-    setSelectedMemberInfo(member || {});
-  }, [selectedMemberId, members]);
+    if (member) {
+      setFormData({
+        ...formData,
+        prenom: member.prenom,
+        nom: member.nom,
+        telephone: member.telephone,
+      });
+    }
+  }, [selectedMemberId]);
+
+  const handleChange = (e) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedMemberId || !email || !password) {
+    if (!selectedMemberId || !formData.email || !formData.password) {
       setMessage("❌ Remplissez tous les champs !");
       return;
     }
@@ -54,30 +63,29 @@ export default function CreateConseiller() {
     setMessage("⏳ Création en cours...");
 
     try {
-      const res = await fetch("/api/create-conseiller", {
+      const res = await fetch("/api/create-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          membre_id: selectedMemberId,
-          prenom: selectedMemberInfo.prenom,
-          nom: selectedMemberInfo.nom,
-          telephone: selectedMemberInfo.telephone,
-          email,
-          password,
-          responsable_id: responsableId,
+          ...formData,
+          role: "Conseiller", // rôle fixe
         }),
       });
 
       const data = await res.json().catch(() => null);
 
       if (res.ok) {
-        setMessage("✅ Conseiller créé et membre mis à jour avec succès !");
+        setMessage("✅ Conseiller créé avec succès !");
         setSelectedMemberId("");
-        setSelectedMemberInfo({});
-        setEmail("");
-        setPassword("");
+        setFormData({
+          prenom: "",
+          nom: "",
+          telephone: "",
+          email: "",
+          password: "",
+        });
       } else {
-        setMessage(`❌ Erreur : ${data?.error || "Réponse vide du serveur"}`);
+        setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
       }
     } catch (err) {
       setMessage("❌ " + err.message);
@@ -86,15 +94,26 @@ export default function CreateConseiller() {
     }
   };
 
+  const handleCancel = () => router.push("/");
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg relative">
+    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
+      <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
+        <button
+          onClick={() => router.back()}
+          className="absolute top-4 left-4 flex items-center text-gray-700 hover:text-gray-900 transition-colors"
+        >
+          ← Retour
+        </button>
 
-        <h1 className="text-3xl font-bold text-center mb-4">Créer un Conseiller</h1>
+        <div className="flex justify-center mb-6">
+          <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
+        </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <h1 className="text-3xl font-bold text-center mb-6">Créer un Conseiller</h1>
 
-          {/* Sélection du membre star */}
+        <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
+          {/* Sélection membre star */}
           <select
             value={selectedMemberId}
             onChange={(e) => setSelectedMemberId(e.target.value)}
@@ -109,50 +128,63 @@ export default function CreateConseiller() {
             ))}
           </select>
 
-          {/* Affichage des infos du membre */}
-          {selectedMemberId && (
-            <div className="p-3 bg-gray-50 rounded-lg text-gray-700">
-              <p><strong>Prénom:</strong> {selectedMemberInfo.prenom}</p>
-              <p><strong>Nom:</strong> {selectedMemberInfo.nom}</p>
-              <p><strong>Téléphone:</strong> {selectedMemberInfo.telephone}</p>
-            </div>
-          )}
-
+          {/* Affichage automatique des infos */}
           <input
-            type="email"
+            name="prenom"
+            placeholder="Prénom"
+            value={formData.prenom}
+            onChange={handleChange}
+            className="input"
+            readOnly
+          />
+          <input
+            name="nom"
+            placeholder="Nom"
+            value={formData.nom}
+            onChange={handleChange}
+            className="input"
+            readOnly
+          />
+          <input
+            name="telephone"
+            placeholder="Téléphone"
+            value={formData.telephone}
+            onChange={handleChange}
+            className="input"
+            readOnly
+          />
+
+          {/* Email et mot de passe */}
+          <input
+            name="email"
             placeholder="Email du conseiller"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={formData.email}
+            onChange={handleChange}
             className="input"
             required
           />
-
           <input
-            type="password"
+            name="password"
             placeholder="Mot de passe"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
             className="input"
             required
           />
 
-          <div className="flex gap-4 mt-2">
+          <div className="flex gap-4 mt-4">
             <button
               type="button"
-              onClick={() => router.back()}
-              className="flex-1 py-3 rounded-2xl text-black border border-gray-400 hover:bg-gray-100 transition-all"
+              onClick={handleCancel}
+              className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
             >
               Annuler
             </button>
-
             <button
               type="submit"
               disabled={loading}
-              className={`flex-1 py-3 rounded-2xl text-white shadow-md transition-all
-                ${loading
-                  ? "bg-gray-400"
-                  : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600"
-                }`}
+              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
             >
               {loading ? "Création..." : "Créer"}
             </button>
@@ -160,7 +192,7 @@ export default function CreateConseiller() {
         </form>
 
         {message && (
-          <p className="mt-4 text-center font-semibold text-gray-700">{message}</p>
+          <p className="mt-4 text-center text-sm text-gray-700">{message}</p>
         )}
 
         <style jsx>{`
@@ -169,6 +201,7 @@ export default function CreateConseiller() {
             border: 1px solid #ccc;
             border-radius: 12px;
             padding: 12px;
+            text-align: left;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             color: black;
           }

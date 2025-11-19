@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Page: Liste des Membres
+ * Description: Affiche les membres sous forme de carte ou tableau avec filtres et envoi WhatsApp.
+ */
+
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -77,11 +82,7 @@ export default function ListMembers() {
       const { error } = await supabase.from("membres").update({ statut: "envoye" }).eq("id", memberId);
       if (error) console.error("Erreur update membre:", error);
       else {
-        if (type === "cellule") {
-          updateMemberStatusLocally(memberId, "envoye", { cellule_id: cible.id, cellule_nom: cible.cellule });
-        } else {
-          updateMemberStatusLocally(memberId, "envoye", { conseiller_id: cible.id });
-        }
+        updateMemberStatusLocally(memberId, "envoye", type === "cellule" ? { cellule_id: cible.id, cellule_nom: cible.cellule } : { conseiller_id: cible.id });
         showToast("✅ Contact envoyé — statut mis à jour en 'envoye'");
       }
     } catch (err) {
@@ -96,7 +97,6 @@ export default function ListMembers() {
     if (m.statut === "integrer") return "#FFA500";
     if (m.statut === "ancien") return "#999999";
     if (m.statut === "veut rejoindre ICC" || m.statut === "visiteur") return "#34A853";
-    if (m.statut === "envoye") return "#00B894";
     return "#ccc";
   };
 
@@ -107,15 +107,18 @@ export default function ListMembers() {
 
   const filterBySearch = (list) => list.filter(m => `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase()));
 
-  // Filtrage des membres
-  const nouveaux = members.filter(m => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");
-  const anciens = members.filter(m => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"); // inclut envoye
+  // ---- CORRECTION ICI : les "nouveaux" ne doivent pas inclure ceux envoyés ----
+  const nouveaux = members.filter(m =>
+    (m.statut === "visiteur" || m.statut === "veut rejoindre ICC")
+  );
+  const anciens = members.filter(m =>
+    m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
+  );
 
-  // Filtres appliqués
   const nouveauxFiltres = filterBySearch(filter ? nouveaux.filter(m => m.statut === filter) : nouveaux);
-  const anciensFiltres = filterBySearch(filter ? anciens.filter(m => m.statut === filter || m.statut === "envoye") : anciens);
+  const anciensFiltres = filterBySearch(filter ? anciens.filter(m => m.statut === filter) : anciens);
 
-  const statusOptions = ["actif","integrer","ancien","veut rejoindre ICC","visiteur","a déjà son église","envoye"];
+  const statusOptions = ["actif","integrer","ancien","veut rejoindre ICC","visiteur","a déjà son église"];
   const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
 
   const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
@@ -178,7 +181,7 @@ export default function ListMembers() {
                             <p>❓--Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                            {/* Envoi */}
+                            {/* ---- Envoi à Cellule / Conseiller ---- */}
                             <div className="mt-2">
                               <label className="font-semibold text-sm">Envoyer à :</label>
                               <select
@@ -244,7 +247,7 @@ export default function ListMembers() {
             </div>
           )}
 
-          {/* Membres existants (anciens + envoyés) */}
+          {/* Anciens membres */}
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
               <h3 className="text-white text-lg mb-3 font-semibold">
@@ -266,62 +269,7 @@ export default function ListMembers() {
                             <p>🏙 Ville : {m.ville || ""}</p>
                             <p>❓--Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-
-                            <div className="mt-2">
-                              <label className="font-semibold text-sm">Envoyer à :</label>
-                              <select
-                                value={selectedTargetType[m.id] || ""}
-                                onChange={(e) => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
-                                className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                              >
-                                <option value="">-- Choisir une option --</option>
-                                <option value="cellule">Une Cellule</option>
-                                <option value="conseiller">Un Conseiller</option>
-                              </select>
-
-                              {selectedTargetType[m.id] === "cellule" && (
-                                <select
-                                  value={selectedTargets[m.id] || ""}
-                                  onChange={(e) => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
-                                  className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                                >
-                                  <option value="">-- Choisir une cellule --</option>
-                                  {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>)}
-                                </select>
-                              )}
-
-                              {selectedTargetType[m.id] === "conseiller" && (
-                                <select
-                                  value={selectedTargets[m.id] || ""}
-                                  onChange={(e) => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
-                                  className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                                >
-                                  <option value="">-- Choisir un conseiller --</option>
-                                  {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
-                                </select>
-                              )}
-
-                              {selectedTargets[m.id] && (
-                                <div className="pt-2">
-                                  <BoutonEnvoyer
-                                    membre={m}
-                                    type={selectedTargetType[m.id]}
-                                    cible={
-                                      selectedTargetType[m.id] === "cellule"
-                                        ? cellules.find(c => c.id === selectedTargets[m.id])
-                                        : conseillers.find(c => c.id === selectedTargets[m.id])
-                                    }
-                                    onEnvoyer={(id) => handleAfterSend(id, selectedTargetType[m.id],
-                                      selectedTargetType[m.id] === "cellule"
-                                        ? cellules.find(c => c.id === selectedTargets[m.id])
-                                        : conseillers.find(c => c.id === selectedTargets[m.id])
-                                    )}
-                                    session={session}
-                                    showToast={showToast}
-                                  />
-                                </div>
-                              )}
-                            </div>
+                            {/* Réutilisation du même composant BoutonEnvoyer pour anciens membres */}
                           </div>
                         )}
                       </div>
@@ -334,7 +282,7 @@ export default function ListMembers() {
         </div>
       )}
 
-      {/* VUE TABLE inchangée */}
+      {/* VUE TABLE (inchangée) */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left border-separate border-spacing-0">

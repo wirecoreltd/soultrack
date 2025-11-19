@@ -18,7 +18,7 @@ export default function CreateConseiller() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ➤ Charge les membres star = true pour le menu déroulant
+  // ➤ Charge les membres star = true
   useEffect(() => {
     async function fetchStarMembers() {
       const { data, error } = await supabase
@@ -32,7 +32,7 @@ export default function CreateConseiller() {
     fetchStarMembers();
   }, []);
 
-  // ➤ Remplit automatiquement prenom, nom, téléphone quand on sélectionne un membre
+  // ➤ Quand on sélectionne un membre, remplir prénom, nom, téléphone
   useEffect(() => {
     if (!selectedMemberId) {
       setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
@@ -63,13 +63,17 @@ export default function CreateConseiller() {
     setMessage("⏳ Création en cours...");
 
     try {
+      // ✅ Récupère l'utilisateur connecté pour responsable_id
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
       const res = await fetch("/api/create-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
           role: "Conseiller",
-          responsable_id: supabase.auth.user()?.id || null, // ⭐ ID du responsable connecté
+          responsable_id: user?.id || null, // ⭐ Responsable ID envoyé
         }),
       });
 
@@ -100,7 +104,6 @@ export default function CreateConseiller() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
-
         <button
           onClick={() => router.back()}
           className="absolute top-4 left-4 flex items-center text-gray-700 hover:text-gray-900 transition-colors"
@@ -115,8 +118,7 @@ export default function CreateConseiller() {
         <h1 className="text-3xl font-bold text-center mb-6">Créer un Conseiller</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
-
-          {/* Menu déroulant pour sélectionner un membre star */}
+          {/* Sélection membre star */}
           <select
             value={selectedMemberId}
             onChange={(e) => setSelectedMemberId(e.target.value)}
@@ -131,7 +133,7 @@ export default function CreateConseiller() {
             ))}
           </select>
 
-          {/* Remplissage automatique */}
+          {/* Affichage automatique des infos */}
           <input
             name="prenom"
             placeholder="Prénom"
@@ -176,7 +178,6 @@ export default function CreateConseiller() {
             required
           />
 
-          {/* Boutons */}
           <div className="flex gap-4 mt-4">
             <button
               type="button"

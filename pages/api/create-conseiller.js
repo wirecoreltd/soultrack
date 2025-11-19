@@ -1,3 +1,4 @@
+// pages/api/create-user.js
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -6,23 +7,13 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
+  if (req.method !== "POST")
     return res.status(405).json({ error: "Méthode non autorisée" });
-  }
 
   try {
-    const {
-      prenom,
-      nom,
-      email,
-      password,
-      role,
-      telephone,
-      cellule_nom,
-      cellule_zone,
-      responsable_id,
-    } = req.body;
+    const { prenom, nom, email, password, role, telephone, cellule_nom, cellule_zone, responsable_id } = req.body;
 
+    // ✅ Crée un utilisateur dans Auth
     const { data: userData, error: createError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -32,6 +23,7 @@ export default async function handler(req, res) {
     if (createError) throw createError;
     const user = userData.user;
 
+    // ✅ Ajoute dans la table profiles avec responsable_id
     const { error: profileError } = await supabase.from("profiles").insert({
       id: user.id,
       prenom,
@@ -44,7 +36,7 @@ export default async function handler(req, res) {
 
     if (profileError) throw profileError;
 
-    // Création cellule si rôle ResponsableCellule
+    // ✅ Si c’est un responsable, crée la cellule en même temps
     if (role === "ResponsableCellule" && cellule_nom) {
       const { error: celluleError } = await supabase.from("cellules").insert({
         cellule: cellule_nom,
@@ -53,6 +45,7 @@ export default async function handler(req, res) {
         responsable_id: user.id,
         telephone: telephone || "",
       });
+
       if (celluleError) throw celluleError;
     }
 

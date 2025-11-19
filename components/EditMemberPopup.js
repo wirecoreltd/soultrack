@@ -5,6 +5,12 @@ import supabase from "../lib/supabaseClient";
 
 export default function EditMemberPopup({ member, cellules = [], onClose, onUpdateMember }) {
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+  const [selectedTargetType, setSelectedTargetType] = useState({});
+  const [selectedTargets, setSelectedTargets] = useState([]);
+  const conseillers = []; // ou props.conseillers si tu les passes
+  const session = null; // ou passer depuis props
+  const showToast = () => {}; // fonction vide ou réelle
+  const handleAfterSend = () => {}; // fonction vide ou réelle
 
   const initialBesoin =
     typeof member.besoin === "string"

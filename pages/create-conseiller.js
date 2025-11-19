@@ -1,219 +1,117 @@
 "use client";
+
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 
-export default function CreateConseiller() {
-  const router = useRouter();
-  const [members, setMembers] = useState([]);
-  const [selectedMemberId, setSelectedMemberId] = useState("");
-  const [formData, setFormData] = useState({
-    prenom: "",
-    nom: "",
-    telephone: "",
-    email: "",
-    password: "",
-  });
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+export default function AjouterConseiller() {
+  const [prenom, setPrenom] = useState("");
+  const [nom, setNom] = useState("");
+  const [email, setEmail] = useState("");
+  const [telephone, setTelephone] = useState("");
+  const [responsables, setResponsables] = useState([]);
+  const [responsableId, setResponsableId] = useState("");
 
-  // ➤ Charge les membres star = true
   useEffect(() => {
-    async function fetchStarMembers() {
+    const fetchResponsables = async () => {
       const { data, error } = await supabase
-        .from("membres")
-        .select("id, prenom, nom, telephone")
-        .eq("star", true);
+        .from("profiles")
+        .select("id, prenom, nom")
+        .eq("role", "ResponsableIntegration");
 
-      if (error) console.error(error);
-      else setMembers(data);
-    }
-    fetchStarMembers();
+      if (!error) {
+        setResponsables(data);
+      }
+    };
+
+    fetchResponsables();
   }, []);
 
-  // ➤ Quand on sélectionne un membre, remplir prenom, nom, telephone
-  useEffect(() => {
-    if (!selectedMemberId) {
-      setFormData((prev) => ({ ...prev, prenom: "", nom: "", telephone: "" }));
-      return;
-    }
-
-    const member = members.find((m) => m.id === selectedMemberId);
-    if (member) {
-      setFormData((prev) => ({
-        ...prev,
-        prenom: member.prenom,
-        nom: member.nom,
-        telephone: member.telephone,
-      }));
-    }
-  }, [selectedMemberId, members]);
-
-  const handleChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-
-  // ➤ SUBMIT : créer conseiller + envoyer responsable_id
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedMemberId || !formData.email || !formData.password) {
-      setMessage("❌ Remplissez tous les champs !");
+
+    if (!responsableId) {
+      alert("Sélectionne un responsable !");
       return;
     }
 
-    setLoading(true);
-    setMessage("⏳ Création en cours...");
+    const { error } = await supabase.from("profiles").insert([
+      {
+        email,
+        prenom,
+        nom,
+        telephone,
+        role: "Conseiller",
+        responsable_id: responsableId,
+      },
+    ]);
 
-    try {
-      const res = await fetch("/api/create-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          role: "Conseiller",
-
-          // ⭐⭐ LIGNE CRUCIALE ⭐⭐
-          responsable_id: selectedMemberId,
-        }),
-      });
-
-      const data = await res.json().catch(() => null);
-
-      if (res.ok) {
-        setMessage("✅ Conseiller créé avec succès !");
-        setSelectedMemberId("");
-        setFormData({
-          prenom: "",
-          nom: "",
-          telephone: "",
-          email: "",
-          password: "",
-        });
-      } else {
-        setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
-      }
-    } catch (err) {
-      setMessage("❌ " + err.message);
-    } finally {
-      setLoading(false);
+    if (error) {
+      console.log(error);
+      alert("Erreur lors de la création !");
+    } else {
+      alert("Conseiller créé avec succès !");
+      setPrenom("");
+      setNom("");
+      setEmail("");
+      setTelephone("");
+      setResponsableId("");
     }
   };
 
-  const handleCancel = () => router.push("/");
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
-      <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
-        <button
-          onClick={() => router.back()}
-          className="absolute top-4 left-4 flex items-center text-gray-700 hover:text-gray-900 transition-colors"
+    <div className="p-6 max-w-xl mx-auto">
+      <h1 className="text-xl font-bold mb-4">Ajouter un Conseiller</h1>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input
+          className="w-full p-2 border rounded"
+          placeholder="Prénom"
+          value={prenom}
+          onChange={(e) => setPrenom(e.target.value)}
+        />
+
+        <input
+          className="w-full p-2 border rounded"
+          placeholder="Nom"
+          value={nom}
+          onChange={(e) => setNom(e.target.value)}
+        />
+
+        <input
+          className="w-full p-2 border rounded"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <input
+          className="w-full p-2 border rounded"
+          placeholder="Téléphone"
+          value={telephone}
+          onChange={(e) => setTelephone(e.target.value)}
+        />
+
+        <select
+          className="w-full p-2 border rounded"
+          value={responsableId}
+          onChange={(e) => setResponsableId(e.target.value)}
         >
-          ← Retour
+          <option value="">-- Sélectionne un Responsable --</option>
+
+          {responsables.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.prenom} {r.nom}
+            </option>
+          ))}
+        </select>
+
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          Créer le Conseiller
         </button>
-
-        <div className="flex justify-center mb-6">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
-        </div>
-
-        <h1 className="text-3xl font-bold text-center mb-6">
-          Créer un Conseiller
-        </h1>
-
-        <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
-          {/* Sélection membre star */}
-          <select
-            value={selectedMemberId}
-            onChange={(e) => setSelectedMemberId(e.target.value)}
-            className="input"
-            required
-          >
-            <option value="">-- Sélectionnez un membre (star = Oui) --</option>
-            {members.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.prenom} {m.nom}
-              </option>
-            ))}
-          </select>
-
-          {/* Affichage automatique des infos */}
-          <input
-            name="prenom"
-            placeholder="Prénom"
-            value={formData.prenom}
-            onChange={handleChange}
-            className="input"
-            readOnly
-          />
-          <input
-            name="nom"
-            placeholder="Nom"
-            value={formData.nom}
-            onChange={handleChange}
-            className="input"
-            readOnly
-          />
-          <input
-            name="telephone"
-            placeholder="Téléphone"
-            value={formData.telephone}
-            onChange={handleChange}
-            className="input"
-            readOnly
-          />
-
-          {/* Email et mot de passe */}
-          <input
-            name="email"
-            placeholder="Email du conseiller"
-            value={formData.email}
-            onChange={handleChange}
-            className="input"
-            required
-          />
-          <input
-            name="password"
-            placeholder="Mot de passe"
-            type="password"
-            value={formData.password}
-            onChange={handleChange}
-            className="input"
-            required
-          />
-
-          <div className="flex gap-4 mt-4">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
-            >
-              {loading ? "Création..." : "Créer"}
-            </button>
-          </div>
-        </form>
-
-        {message && (
-          <p className="mt-4 text-center text-sm text-gray-700">{message}</p>
-        )}
-
-        <style jsx>{`
-          .input {
-            width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            padding: 12px;
-            text-align: left;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            color: black;
-          }
-        `}</style>
-      </div>
+      </form>
     </div>
   );
 }

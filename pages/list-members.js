@@ -1,30 +1,5 @@
 "use client";
 
-/**
- * Page: Liste des Membres
- * Description:
- * Cette page affiche tous les membres de l'application SoulTrack sous deux vues : carte et tableau.
- * - Vue Carte : Affiche les membres sous forme de cartes individuelles avec détails extensibles.
- * - Vue Table : Affiche les membres dans un tableau avec actions rapides.
- * 
- * Fonctionnalités :
- * - Recherche par nom complet et filtre par statut.
- * - Gestion des statuts des membres (visiteur, actif, Integrer, ancien, etc.).
- * - Attribution d'un membre à une cellule avec bouton d'envoi.
- * - Détails popup pour chaque membre.
- * - Modification des informations d'un membre via EditMemberPopup.
- * - Affichage de toasts pour les actions réussies.
- * - Support de la session utilisateur pour personnalisation du prénom.
- * 
- * Dépendances :
- * - Supabase pour la récupération des données.
- * - date-fns pour le formatage des dates.
- * - Composants : BoutonEnvoyer, LogoutLink, DetailsPopup, EditMemberPopup
- */
-
-// pages/list-members.js
-"use client";
-
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -121,7 +96,7 @@ export default function ListMembers() {
     if (m.statut === "integrer") return "#FFA500";
     if (m.statut === "ancien") return "#999999";
     if (m.statut === "veut rejoindre ICC" || m.statut === "visiteur") return "#34A853";
-    if (m.statut === "envoye") return "#34A853"; // option pour envoyer → existant
+    if (m.statut === "envoye") return "#00B894";
     return "#ccc";
   };
 
@@ -132,15 +107,15 @@ export default function ListMembers() {
 
   const filterBySearch = (list) => list.filter(m => `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase()));
 
-  // ==== MODIFICATION ICI : gérer les membres envoyés ====
+  // Filtrage des membres
   const nouveaux = members.filter(m => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");
-  const anciens = members.filter(m => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC" && m.statut !== "envoye")
-                        .concat(members.filter(m => m.statut === "envoye"));
+  const anciens = members.filter(m => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"); // inclut envoye
 
+  // Filtres appliqués
   const nouveauxFiltres = filterBySearch(filter ? nouveaux.filter(m => m.statut === filter) : nouveaux);
-  const anciensFiltres = filterBySearch(filter ? anciens.filter(m => m.statut === filter) : anciens);
+  const anciensFiltres = filterBySearch(filter ? anciens.filter(m => m.statut === filter || m.statut === "envoye") : anciens);
 
-  const statusOptions = ["actif","integrer","ancien","veut rejoindre ICC","visiteur","a déjà son église"];
+  const statusOptions = ["actif","integrer","ancien","veut rejoindre ICC","visiteur","a déjà son église","envoye"];
   const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
 
   const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
@@ -200,14 +175,10 @@ export default function ListMembers() {
                           <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || ""}</p>
-                            <p>❓--Besoin : {(() => {
-                              if (!m.besoin) return "—";
-                              if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                              try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; }
-                            })()}</p>
+                            <p>❓--Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                            {/* ---- MODIFICATION UNIQUE : choix Cellule / Conseiller ---- */}
+                            {/* Envoi */}
                             <div className="mt-2">
                               <label className="font-semibold text-sm">Envoyer à :</label>
                               <select
@@ -273,7 +244,7 @@ export default function ListMembers() {
             </div>
           )}
 
-          {/* Anciens membres */}
+          {/* Membres existants (anciens + envoyés) */}
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
               <h3 className="text-white text-lg mb-3 font-semibold">
@@ -293,14 +264,9 @@ export default function ListMembers() {
                           <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || ""}</p>
-                            <p>❓--Besoin : {(() => {
-                              if (!m.besoin) return "—";
-                              if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                              try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; }
-                            })()}</p>
+                            <p>❓--Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                            {/* ---- MODIFICATION UNIQUE pour anciens membres ---- */}
                             <div className="mt-2">
                               <label className="font-semibold text-sm">Envoyer à :</label>
                               <select
@@ -356,7 +322,6 @@ export default function ListMembers() {
                                 </div>
                               )}
                             </div>
-
                           </div>
                         )}
                       </div>
@@ -369,7 +334,7 @@ export default function ListMembers() {
         </div>
       )}
 
-      {/* VUE TABLE (inchangée) */}
+      {/* VUE TABLE inchangée */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left border-separate border-spacing-0">

@@ -35,23 +35,25 @@ export default function CreateConseiller() {
   // ➤ Quand on sélectionne un membre, remplir prenom, nom, telephone
   useEffect(() => {
     if (!selectedMemberId) {
-      setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
+      setFormData((prev) => ({ ...prev, prenom: "", nom: "", telephone: "" }));
       return;
     }
+
     const member = members.find((m) => m.id === selectedMemberId);
     if (member) {
-      setFormData({
-        ...formData,
+      setFormData((prev) => ({
+        ...prev,
         prenom: member.prenom,
         nom: member.nom,
         telephone: member.telephone,
-      });
+      }));
     }
-  }, [selectedMemberId]);
+  }, [selectedMemberId, members]);
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
+  // ➤ SUBMIT : créer conseiller + envoyer responsable_id
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedMemberId || !formData.email || !formData.password) {
@@ -68,7 +70,10 @@ export default function CreateConseiller() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          role: "Conseiller", // rôle fixe
+          role: "Conseiller",
+
+          // ⭐⭐ LIGNE CRUCIALE ⭐⭐
+          responsable_id: selectedMemberId,
         }),
       });
 
@@ -110,7 +115,9 @@ export default function CreateConseiller() {
           <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
         </div>
 
-        <h1 className="text-3xl font-bold text-center mb-6">Créer un Conseiller</h1>
+        <h1 className="text-3xl font-bold text-center mb-6">
+          Créer un Conseiller
+        </h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
           {/* Sélection membre star */}
@@ -202,7 +209,7 @@ export default function CreateConseiller() {
             border-radius: 12px;
             padding: 12px;
             text-align: left;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             color: black;
           }
         `}</style>

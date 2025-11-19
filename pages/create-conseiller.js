@@ -17,6 +17,7 @@ export default function CreateConseiller() {
   });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [responsableId, setResponsableId] = useState(null);
 
   // ➤ Charge les membres star = true
   useEffect(() => {
@@ -32,7 +33,16 @@ export default function CreateConseiller() {
     fetchStarMembers();
   }, []);
 
-  // ➤ Quand on sélectionne un membre, remplir prénom, nom, téléphone
+  // ➤ Récupère l'utilisateur connecté pour mettre responsable_id
+  useEffect(() => {
+    async function fetchUser() {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) setResponsableId(data.user.id);
+    }
+    fetchUser();
+  }, []);
+
+  // ➤ Quand on sélectionne un membre, remplir prenom, nom, telephone
   useEffect(() => {
     if (!selectedMemberId) {
       setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
@@ -59,21 +69,22 @@ export default function CreateConseiller() {
       return;
     }
 
+    if (!responsableId) {
+      setMessage("❌ Impossible de récupérer l'ID du responsable !");
+      return;
+    }
+
     setLoading(true);
     setMessage("⏳ Création en cours...");
 
     try {
-      // ✅ Récupère l'utilisateur connecté pour responsable_id
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-
       const res = await fetch("/api/create-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          role: "Conseiller",
-          responsable_id: user?.id || null, // ⭐ Responsable ID envoyé
+          role: "Conseiller", // rôle fixe
+          responsable_id: responsableId, // <-- ici
         }),
       });
 

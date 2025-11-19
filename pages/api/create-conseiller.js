@@ -6,11 +6,13 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Méthode non autorisée" });
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Méthode non autorisée" });
 
   try {
     const { prenom, nom, email, password, role, telephone, responsable_id } = req.body;
 
+    // ✅ Crée l'utilisateur dans Auth
     const { data: userData, error: createError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -20,7 +22,7 @@ export default async function handler(req, res) {
     if (createError) throw createError;
     const user = userData.user;
 
-    // INSERT profiles avec responsable_id
+    // ✅ Insert dans profiles avec responsable_id
     const { error: profileError } = await supabase.from("profiles").insert({
       id: user.id,
       prenom,
@@ -28,7 +30,7 @@ export default async function handler(req, res) {
       telephone,
       role,
       email,
-      responsable_id: responsable_id || null,
+      responsable_id: responsable_id || null, // ⭐ responsable_id
     });
 
     if (profileError) throw profileError;

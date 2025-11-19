@@ -57,7 +57,7 @@ export default function LoginPage() {
       if (role === "ResponsableIntegration") router.push("/membres-hub");
       else if (role === "ResponsableEvangelisation") router.push("/evangelisation-hub");
       else if (role === "ResponsableCellule") router.push("/cellules-hub");
-      else if (role === "Conseiller") router.push("/membres-hub/suivis-membres");
+      else if (role === "Conseiller") router.push("/suivis-membres");
       else if (role === "Administrateur") router.push("/");
       else router.push("/");
     } catch (err) {

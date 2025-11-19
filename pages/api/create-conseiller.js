@@ -12,10 +12,19 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Méthode non autorisée" });
 
   try {
-    const { prenom, nom, email, password, role, telephone, cellule_nom, cellule_zone, responsable_id } = req.body;
-    // ➤ AJOUT ICI ↑ responsable_id récupéré
+    const { 
+      prenom, 
+      nom, 
+      email, 
+      password, 
+      role, 
+      telephone, 
+      cellule_nom, 
+      cellule_zone,
+      responsable_id     // ⭐ AJOUT
+    } = req.body;
 
-    // ✅ Crée un utilisateur dans Auth
+    // Création utilisateur authentification
     const { data: userData, error: createError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -25,7 +34,7 @@ export default async function handler(req, res) {
     if (createError) throw createError;
     const user = userData.user;
 
-    // ✅ Ajoute dans la table profiles
+    // ⭐ INSERT profiles AVEC responsable_id
     const { error: profileError } = await supabase.from("profiles").insert({
       id: user.id,
       prenom,
@@ -33,12 +42,12 @@ export default async function handler(req, res) {
       telephone,
       role,
       email,
-      responsable_id: responsable_id || null,   // ➤ AJOUT ICI !!!
+      responsable_id: responsable_id || null   // ⭐ AJOUT
     });
 
     if (profileError) throw profileError;
 
-    // ✅ Si c’est un responsable, crée la cellule en même temps
+    // Si responsable cellule → création cellule
     if (role === "ResponsableCellule" && cellule_nom) {
       const { error: celluleError } = await supabase.from("cellules").insert({
         cellule: cellule_nom,

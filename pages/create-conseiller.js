@@ -15,21 +15,20 @@ export default function CreateConseiller() {
     email: "",
     password: "",
   });
-  const [responsableId, setResponsableId] = useState(""); // ⭐ ID du responsable connecté
+  const [responsableId, setResponsableId] = useState(""); 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ➤ Récupère l'utilisateur connecté (responsable)
+  // ➤ Récupérer l'utilisateur connecté
   useEffect(() => {
     async function fetchUser() {
-      const { data, error } = await supabase.auth.getUser();
-      if (error) console.error(error);
-      else setResponsableId(data.user.id);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) setResponsableId(session.user.id);
     }
     fetchUser();
   }, []);
 
-  // ➤ Charge les membres star = true
+  // ➤ Récupérer les membres star = true
   useEffect(() => {
     async function fetchStarMembers() {
       const { data, error } = await supabase
@@ -44,23 +43,12 @@ export default function CreateConseiller() {
 
   // ➤ Remplissage automatique
   useEffect(() => {
-    if (!selectedMemberId) {
-      setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
-      return;
-    }
+    if (!selectedMemberId) return setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
     const member = members.find((m) => m.id === selectedMemberId);
-    if (member) {
-      setFormData({
-        ...formData,
-        prenom: member.prenom,
-        nom: member.nom,
-        telephone: member.telephone,
-      });
-    }
+    if (member) setFormData({ ...formData, prenom: member.prenom, nom: member.nom, telephone: member.telephone });
   }, [selectedMemberId]);
 
-  const handleChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,7 +56,6 @@ export default function CreateConseiller() {
       setMessage("❌ Remplissez tous les champs !");
       return;
     }
-
     setLoading(true);
     setMessage("⏳ Création en cours...");
 
@@ -76,15 +63,9 @@ export default function CreateConseiller() {
       const res = await fetch("/api/create-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          role: "Conseiller", // rôle fixe
-          responsable_id: responsableId, // ⭐ envoie l'id du responsable
-        }),
+        body: JSON.stringify({ ...formData, role: "Conseiller", responsable_id: responsableId }),
       });
-
       const data = await res.json().catch(() => null);
-
       if (res.ok) {
         setMessage("✅ Conseiller créé avec succès !");
         setSelectedMemberId("");
@@ -94,67 +75,32 @@ export default function CreateConseiller() {
       }
     } catch (err) {
       setMessage("❌ " + err.message);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
-
-  const handleCancel = () => router.push("/");
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
-        <button
-          onClick={() => router.back()}
-          className="absolute top-4 left-4 text-gray-700 hover:text-gray-900"
-        >
-          ← Retour
-        </button>
-
-        <div className="flex justify-center mb-6">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
-        </div>
-
+        <button onClick={() => router.back()} className="absolute top-4 left-4 text-gray-700 hover:text-gray-900">← Retour</button>
+        <div className="flex justify-center mb-6"><Image src="/logo.png" alt="Logo" width={80} height={80} /></div>
         <h1 className="text-3xl font-bold text-center mb-6">Créer un Conseiller</h1>
-
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
-          {/* Menu déroulant membres star = true */}
-          <select
-            value={selectedMemberId}
-            onChange={(e) => setSelectedMemberId(e.target.value)}
-            className="input"
-            required
-          >
+          <select value={selectedMemberId} onChange={(e) => setSelectedMemberId(e.target.value)} className="input" required>
             <option value="">-- Sélectionnez un membre (star = Oui) --</option>
-            {members.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.prenom} {m.nom}
-              </option>
-            ))}
+            {members.map((m) => (<option key={m.id} value={m.id}>{m.prenom} {m.nom}</option>))}
           </select>
-
-          {/* Remplissage automatique */}
           <input name="prenom" placeholder="Prénom" value={formData.prenom} readOnly className="input" />
           <input name="nom" placeholder="Nom" value={formData.nom} readOnly className="input" />
           <input name="telephone" placeholder="Téléphone" value={formData.telephone} readOnly className="input" />
-
-          {/* Email et mot de passe */}
           <input name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="input" required />
           <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
-
           <div className="flex gap-4 mt-4">
-            <button type="button" onClick={handleCancel} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-3 rounded-2xl">Annuler</button>
-            <button type="submit" disabled={loading} className="flex-1 bg-blue-400 hover:bg-blue-500 text-white py-3 rounded-2xl">
-              {loading ? "Création..." : "Créer"}
-            </button>
+            <button type="button" onClick={() => router.push("/")} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-3 rounded-2xl">Annuler</button>
+            <button type="submit" disabled={loading} className="flex-1 bg-blue-400 hover:bg-blue-500 text-white py-3 rounded-2xl">{loading ? "Création..." : "Créer"}</button>
           </div>
         </form>
-
         {message && <p className="mt-4 text-center text-sm text-gray-700">{message}</p>}
-
-        <style jsx>{`
-          .input { width: 100%; border: 1px solid #ccc; border-radius: 12px; padding: 12px; color: black; }
-        `}</style>
+        <style jsx>{`.input { width:100%; border:1px solid #ccc; border-radius:12px; padding:12px; color:black; }`}</style>
       </div>
     </div>
   );

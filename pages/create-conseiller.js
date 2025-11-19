@@ -1,117 +1,175 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function AjouterConseiller() {
-  const [prenom, setPrenom] = useState("");
-  const [nom, setNom] = useState("");
-  const [email, setEmail] = useState("");
-  const [telephone, setTelephone] = useState("");
-  const [responsables, setResponsables] = useState([]);
-  const [responsableId, setResponsableId] = useState("");
+export default function CreateConseiller() {
+  const [members, setMembers] = useState([]);
+  const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [formData, setFormData] = useState({
+    prenom: "",
+    nom: "",
+    telephone: "",
+    email: "",
+    password: "",
+  });
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [responsableId, setResponsableId] = useState(null);
 
+  // ➤ Récupérer l'utilisateur connecté pour le responsable_id
   useEffect(() => {
-    const fetchResponsables = async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom")
-        .eq("role", "ResponsableIntegration");
-
-      if (!error) {
-        setResponsables(data);
-      }
+    const fetchCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setResponsableId(user.id);
     };
-
-    fetchResponsables();
+    fetchCurrentUser();
   }, []);
+
+  // ➤ Charger les membres star = true
+  useEffect(() => {
+    const fetchStarMembers = async () => {
+      const { data, error } = await supabase
+        .from("membres")
+        .select("id, prenom, nom, telephone")
+        .eq("star", true);
+
+      if (error) console.error(error);
+      else setMembers(data);
+    };
+    fetchStarMembers();
+  }, []);
+
+  // ➤ Remplir automatiquement prénom, nom, téléphone quand on sélectionne un membre
+  useEffect(() => {
+    if (!selectedMemberId) {
+      setFormData({ prenom: "", nom: "", telephone: "", email: "", password: "" });
+      return;
+    }
+
+    const member = members.find((m) => m.id === selectedMemberId);
+    if (member) {
+      setFormData((prev) => ({
+        ...prev,
+        prenom: member.prenom,
+        nom: member.nom,
+        telephone: member.telephone,
+      }));
+    }
+  }, [selectedMemberId, members]);
+
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!responsableId) {
-      alert("Sélectionne un responsable !");
+    if (!selectedMemberId || !formData.email || !formData.password) {
+      setMessage("❌ Remplissez tous les champs !");
       return;
     }
 
-    const { error } = await supabase.from("profiles").insert([
-      {
-        email,
-        prenom,
-        nom,
-        telephone,
-        role: "Conseiller",
-        responsable_id: responsableId,
-      },
-    ]);
+    if (!responsableId) {
+      setMessage("❌ Impossible de récupérer l'utilisateur connecté !");
+      return;
+    }
 
-    if (error) {
-      console.log(error);
-      alert("Erreur lors de la création !");
-    } else {
-      alert("Conseiller créé avec succès !");
-      setPrenom("");
-      setNom("");
-      setEmail("");
-      setTelephone("");
-      setResponsableId("");
+    setLoading(true);
+    setMessage("⏳ Création en cours...");
+
+    try {
+      const { error } = await supabase.from("profiles").insert([
+        {
+          prenom: formData.prenom,
+          nom: formData.nom,
+          telephone: formData.telephone,
+          email: formData.email,
+          password_hash: formData.password, // si tu gères le hash côté API
+          role: "Conseiller",
+          responsable_id: responsableId,
+        },
+      ]);
+
+      if (error) {
+        setMessage("❌ " + error.message);
+      } else {
+        setMessage("✅ Conseiller créé avec succès !");
+        setSelectedMemberId("");
+        setFormData({ prenom: "", nom: "", telephone: "", email: "", password: "" });
+      }
+    } catch (err) {
+      setMessage("❌ " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="p-6 max-w-xl mx-auto">
-      <h1 className="text-xl font-bold mb-4">Ajouter un Conseiller</h1>
+      <h1 className="text-xl font-bold mb-4">Créer un Conseiller</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          className="w-full p-2 border rounded"
-          placeholder="Prénom"
-          value={prenom}
-          onChange={(e) => setPrenom(e.target.value)}
-        />
-
-        <input
-          className="w-full p-2 border rounded"
-          placeholder="Nom"
-          value={nom}
-          onChange={(e) => setNom(e.target.value)}
-        />
-
-        <input
-          className="w-full p-2 border rounded"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <input
-          className="w-full p-2 border rounded"
-          placeholder="Téléphone"
-          value={telephone}
-          onChange={(e) => setTelephone(e.target.value)}
-        />
-
+        {/* Sélection du membre star */}
         <select
           className="w-full p-2 border rounded"
-          value={responsableId}
-          onChange={(e) => setResponsableId(e.target.value)}
+          value={selectedMemberId}
+          onChange={(e) => setSelectedMemberId(e.target.value)}
         >
-          <option value="">-- Sélectionne un Responsable --</option>
-
-          {responsables.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.prenom} {r.nom}
+          <option value="">-- Sélectionnez un membre (star = Oui) --</option>
+          {members.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.prenom} {m.nom}
             </option>
           ))}
         </select>
 
+        {/* Champs remplis automatiquement */}
+        <input
+          className="w-full p-2 border rounded"
+          placeholder="Prénom"
+          value={formData.prenom}
+          readOnly
+        />
+        <input
+          className="w-full p-2 border rounded"
+          placeholder="Nom"
+          value={formData.nom}
+          readOnly
+        />
+        <input
+          className="w-full p-2 border rounded"
+          placeholder="Téléphone"
+          value={formData.telephone}
+          readOnly
+        />
+
+        {/* Email et mot de passe pour créer le conseiller */}
+        <input
+          className="w-full p-2 border rounded"
+          placeholder="Email"
+          value={formData.email}
+          name="email"
+          onChange={handleChange}
+          required
+        />
+        <input
+          className="w-full p-2 border rounded"
+          type="password"
+          placeholder="Mot de passe"
+          value={formData.password}
+          name="password"
+          onChange={handleChange}
+          required
+        />
+
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="bg-blue-600 text-white px-4 py-2 rounded w-full"
+          disabled={loading}
         >
-          Créer le Conseiller
+          {loading ? "Création..." : "Créer le Conseiller"}
         </button>
       </form>
+
+      {message && <p className="mt-4 text-center">{message}</p>}
     </div>
   );
 }

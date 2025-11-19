@@ -4,7 +4,15 @@ import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import BoutonEnvoyer from "./BoutonEnvoyer"; // Assure-toi que ce composant existe
 
-export default function EditMemberPopup({ member, cellules = [], conseillers = [], onClose, onUpdateMember, session, showToast }) {
+export default function EditMemberPopup({
+  member,
+  cellules = [],
+  conseillers = [],
+  onClose,
+  onUpdateMember,
+  session = null,
+  showToast = () => {},
+}) {
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
   const [selectedTargetType, setSelectedTargetType] = useState({});
   const [selectedTargets, setSelectedTargets] = useState({});
@@ -30,8 +38,10 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ✅ Gestion des checkboxes besoins
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
+
     if (value === "Autre") {
       setShowAutre(checked);
       if (!checked) {
@@ -51,16 +61,17 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
     });
   };
 
+  // ✅ Gestion du reste des champs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // ✅ Soumission
   const handleSubmit = async () => {
     setLoading(true);
 
     const cleanData = {
-      ...formData,
       prenom: formData.prenom || member.prenom,
       nom: formData.nom || member.nom,
       ville: formData.ville === "" ? null : formData.ville,
@@ -95,14 +106,12 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
     setLoading(false);
   };
 
-  const handleAfterSend = (id, type, cible) => {
-    // ta logique après envoi
-    if (showToast) showToast(`Envoyé à ${type}: ${cible?.nom || cible?.cellule}`);
-  };
+  const handleAfterSend = () => {}; // à compléter selon logique du BoutonEnvoyer
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto shadow-xl relative">
+        {/* Bouton fermer */}
         <button
           onClick={onClose}
           className="absolute top-2 right-2 text-red-500 font-bold hover:text-red-700"
@@ -114,6 +123,7 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
           Modifier {member.prenom} {member.nom}
         </h2>
 
+        {/* Formulaire */}
         <div className="flex flex-col space-y-2 text-sm">
           <input
             name="prenom"
@@ -144,6 +154,7 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
             className="border rounded px-2 py-1"
           />
 
+          {/* Besoins */}
           <div className="mt-2">
             <p className="font-semibold mb-2">Besoins :</p>
             {besoinsOptions.map((item) => (
@@ -160,6 +171,7 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
               </label>
             ))}
 
+            {/* Autre */}
             <label className="flex items-center gap-3 mb-2">
               <input
                 type="checkbox"
@@ -184,6 +196,7 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
             )}
           </div>
 
+          {/* Infos supplémentaires */}
           <textarea
             name="infos_supplementaires"
             value={formData.infos_supplementaires}
@@ -193,6 +206,7 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
             rows={3}
           />
 
+          {/* Statut */}
           <select
             name="statut"
             value={formData.statut}
@@ -208,13 +222,16 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
             <option value="a déjà mon église">a déjà mon église</option>
           </select>
 
-          {/* 🔹 Envoi Cellule / Conseiller */}
-          <div className="mt-4">
+          {/* Envoi Cellule / Conseiller */}
+          <div className="mt-2">
             <label className="font-semibold text-sm">Envoyer à :</label>
             <select
               value={selectedTargetType[member.id] || ""}
               onChange={(e) =>
-                setSelectedTargetType((prev) => ({ ...prev, [member.id]: e.target.value }))
+                setSelectedTargetType((prev) => ({
+                  ...prev,
+                  [member.id]: e.target.value,
+                }))
               }
               className="mt-1 w-full border rounded px-2 py-1 text-sm"
             >
@@ -283,19 +300,19 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
           </div>
         </div>
 
+        {/* Message succès */}
         {message && (
           <p className="text-green-600 text-center mt-3 font-semibold">
             {message}
           </p>
         )}
 
+        {/* Bouton enregistrer */}
         <button
           onClick={handleSubmit}
           disabled={loading}
           className={`mt-4 w-full text-white py-2 rounded transition font-bold ${
-            loading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700"
+            loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
           }`}
         >
           {loading ? "Enregistrement..." : "Enregistrer"}

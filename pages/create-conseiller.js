@@ -1,12 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 
 export default function CreateConseiller() {
   const router = useRouter();
   const [members, setMembers] = useState([]);
   const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [responsableId, setResponsableId] = useState("");
   const [formData, setFormData] = useState({
     prenom: "",
     nom: "",
@@ -16,9 +18,8 @@ export default function CreateConseiller() {
   });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [responsableId, setResponsableId] = useState(null);
 
-  // ➤ Récupérer le responsable connecté
+  // ➤ Récupérer l'ID du responsable connecté
   useEffect(() => {
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -27,7 +28,7 @@ export default function CreateConseiller() {
     fetchUser();
   }, []);
 
-  // ➤ Charger les membres star = true
+  // ➤ Charge les membres star = true
   useEffect(() => {
     const fetchStarMembers = async () => {
       const { data, error } = await supabase
@@ -35,30 +36,31 @@ export default function CreateConseiller() {
         .select("id, prenom, nom, telephone")
         .eq("star", true);
 
-      if (!error) setMembers(data);
-      else console.error(error);
+      if (error) console.error(error);
+      else setMembers(data);
     };
     fetchStarMembers();
   }, []);
 
-  // ➤ Remplir automatiquement prénom, nom, téléphone
+  // ➤ Remplit automatiquement prénom, nom, téléphone quand on sélectionne un membre
   useEffect(() => {
     if (!selectedMemberId) {
-      setFormData({ prenom: "", nom: "", telephone: "", email: "", password: "" });
+      setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
       return;
     }
     const member = members.find((m) => m.id === selectedMemberId);
     if (member) {
-      setFormData((prev) => ({
-        ...prev,
+      setFormData({
+        ...formData,
         prenom: member.prenom,
         nom: member.nom,
         telephone: member.telephone,
-      }));
+      });
     }
-  }, [selectedMemberId, members]);
+  }, [selectedMemberId]);
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -66,43 +68,37 @@ export default function CreateConseiller() {
       setMessage("❌ Remplissez tous les champs !");
       return;
     }
-    if (!responsableId) {
-      setMessage("❌ Impossible de récupérer le responsable connecté !");
-      return;
-    }
 
     setLoading(true);
     setMessage("⏳ Création en cours...");
 
     try {
-      // ➤ Création du user dans Supabase Auth
-      const { data: userData, error: createError } = await supabase.auth.admin.createUser({
-        email: formData.email,
-        password: formData.password,
-        email_confirm: true,
+      const res = await fetch("/api/create-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          role: "Conseiller",
+          responsable_id: responsableId,
+        }),
       });
 
-      if (createError) throw createError;
-      const user = userData.user;
+      const data = await res.json().catch(() => null);
 
-      // ➤ Ajout dans profiles avec responsable_id
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: user.id,
-        prenom: formData.prenom,
-        nom: formData.nom,
-        telephone: formData.telephone,
-        email: formData.email,
-        role: "Conseiller",
-        responsable_id: responsableId,
-      });
-
-      if (profileError) throw profileError;
-
-      setMessage("✅ Conseiller créé avec succès !");
-      setSelectedMemberId("");
-      setFormData({ prenom: "", nom: "", telephone: "", email: "", password: "" });
+      if (res.ok) {
+        setMessage("✅ Conseiller créé avec succès !");
+        setSelectedMemberId("");
+        setFormData({
+          prenom: "",
+          nom: "",
+          telephone: "",
+          email: "",
+          password: "",
+        });
+      } else {
+        setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
+      }
     } catch (err) {
-      console.error(err);
       setMessage("❌ " + err.message);
     } finally {
       setLoading(false);
@@ -112,19 +108,23 @@ export default function CreateConseiller() {
   const handleCancel = () => router.push("/");
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start p-6 bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200">
+    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
         <button
           onClick={() => router.back()}
-          className="absolute top-4 left-4 text-gray-700 hover:text-gray-900"
+          className="absolute top-4 left-4 flex items-center text-gray-700 hover:text-gray-900 transition-colors"
         >
           ← Retour
         </button>
 
+        <div className="flex justify-center mb-6">
+          <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
+        </div>
+
         <h1 className="text-3xl font-bold text-center mb-6">Créer un Conseiller</h1>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Menu déroulant membres star */}
+        <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
+          {/* Sélection membre star */}
           <select
             value={selectedMemberId}
             onChange={(e) => setSelectedMemberId(e.target.value)}
@@ -139,49 +139,73 @@ export default function CreateConseiller() {
             ))}
           </select>
 
-          {/* Champs remplis automatiquement */}
-          <input className="input" placeholder="Prénom" value={formData.prenom} readOnly />
-          <input className="input" placeholder="Nom" value={formData.nom} readOnly />
-          <input className="input" placeholder="Téléphone" value={formData.telephone} readOnly />
+          {/* Affichage automatique des infos */}
+          <input
+            name="prenom"
+            placeholder="Prénom"
+            value={formData.prenom}
+            onChange={handleChange}
+            className="input"
+            readOnly
+          />
+          <input
+            name="nom"
+            placeholder="Nom"
+            value={formData.nom}
+            onChange={handleChange}
+            className="input"
+            readOnly
+          />
+          <input
+            name="telephone"
+            placeholder="Téléphone"
+            value={formData.telephone}
+            onChange={handleChange}
+            className="input"
+            readOnly
+          />
 
           {/* Email et mot de passe */}
           <input
             name="email"
-            className="input"
             placeholder="Email du conseiller"
             value={formData.email}
             onChange={handleChange}
+            className="input"
             required
           />
           <input
             name="password"
-            type="password"
-            className="input"
             placeholder="Mot de passe"
+            type="password"
             value={formData.password}
             onChange={handleChange}
+            className="input"
             required
           />
 
+          {/* Boutons */}
           <div className="flex gap-4 mt-4">
             <button
               type="button"
               onClick={handleCancel}
-              className="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-3 rounded-2xl"
+              className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-2xl"
+              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
             >
               {loading ? "Création..." : "Créer"}
             </button>
           </div>
         </form>
 
-        {message && <p className="mt-4 text-center text-sm text-gray-700">{message}</p>}
+        {message && (
+          <p className="mt-4 text-center text-sm text-gray-700">{message}</p>
+        )}
 
         <style jsx>{`
           .input {
@@ -189,6 +213,7 @@ export default function CreateConseiller() {
             border: 1px solid #ccc;
             border-radius: 12px;
             padding: 12px;
+            text-align: left;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             color: black;
           }

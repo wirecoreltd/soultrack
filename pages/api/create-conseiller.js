@@ -1,4 +1,3 @@
-// pages/api/create-user.js
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -11,45 +10,30 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Méthode non autorisée" });
 
   try {
-    const { prenom, nom, email, password, role, telephone, cellule_nom, cellule_zone, responsable_id } = req.body;
+    const { prenom, nom, email, password, role, telephone, responsable_id } = req.body;
 
-    // ✅ Crée un utilisateur dans Auth
+    // Création utilisateur Auth
     const { data: userData, error: createError } = await supabase.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
     });
-
     if (createError) throw createError;
     const user = userData.user;
 
-    // ✅ Ajoute dans la table profiles avec responsable_id
+    // Création profile avec responsable_id
     const { error: profileError } = await supabase.from("profiles").insert({
       id: user.id,
       prenom,
       nom,
+      email,
       telephone,
       role,
-      email,
       responsable_id: responsable_id || null,
     });
-
     if (profileError) throw profileError;
 
-    // ✅ Si c’est un responsable, crée la cellule en même temps
-    if (role === "ResponsableCellule" && cellule_nom) {
-      const { error: celluleError } = await supabase.from("cellules").insert({
-        cellule: cellule_nom,
-        ville: cellule_zone || null,
-        responsable: `${prenom} ${nom}`,
-        responsable_id: user.id,
-        telephone: telephone || "",
-      });
-
-      if (celluleError) throw celluleError;
-    }
-
-    return res.status(200).json({ message: "Utilisateur créé avec succès" });
+    return res.status(200).json({ message: "Conseiller créé avec succès" });
   } catch (err) {
     console.error("Erreur création utilisateur:", err);
     return res.status(500).json({ error: err.message });

@@ -233,96 +233,124 @@ export default function ListMembers() {
             </div>
           )}
 
-          {/* Anciens membres avec option cellule/conseiller */}
-          {anciensFiltres.length > 0 && (
-            <div className="mt-8">
-              <h3 className="text-white text-lg mb-3 font-semibold">
-                <span style={{ background: "linear-gradient(to right, #3B82F6, #D1D5DB)", WebkitBackgroundClip: "text", color: "transparent" }}>Membres existants</span>
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {anciensFiltres.map(m => {
-                  const isOpen = detailsOpen[m.id];
-                  return (
-                    <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
-                      <div className="flex flex-col items-center">
-                        <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}</h2>
-                        <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
-                        <p className="text-sm text-gray-600">🕊 Statut : {m.statut}</p>
-                        <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">{isOpen ? "Fermer détails" : "Détails"}</button>
-                        {isOpen && (
-                          <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
-                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                            <p>🏙 Ville : {m.ville || ""}</p>
-                            <p>❓ Besoin : {m.besoin || "—"}</p>
-                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+          {/* Anciens membres avec dropdown statut et bouton Modifier */}
+{anciensFiltres.length > 0 && (
+  <div className="mt-8">
+    <h3 className="text-white text-lg mb-3 font-semibold">
+      <span style={{ background: "linear-gradient(to right, #3B82F6, #D1D5DB)", WebkitBackgroundClip: "text", color: "transparent" }}>Membres existants</span>
+    </h3>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {anciensFiltres.map(m => {
+        const isOpen = detailsOpen[m.id];
+        return (
+          <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
+            <div className="flex flex-col items-center">
+              <h2 className="text-lg font-bold text-center">
+                {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+              </h2>
+              <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
 
-                            {/* Envoi Cellule / Conseiller pour anciens membres */}
-                            <div className="mt-2">
-                              <label className="font-semibold text-sm">Envoyer à :</label>
-                              <select
-                                value={selectedTargetType[m.id] || ""}
-                                onChange={(e) => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
-                                className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                              >
-                                <option value="">-- Choisir une option --</option>
-                                <option value="cellule">Une Cellule</option>
-                                <option value="conseiller">Un Conseiller</option>
-                              </select>
-
-                              {selectedTargetType[m.id] === "cellule" && (
-                                <select
-                                  value={selectedTargets[m.id] || ""}
-                                  onChange={(e) => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
-                                  className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                                >
-                                  <option value="">-- Choisir une cellule --</option>
-                                  {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>)}
-                                </select>
-                              )}
-
-                              {selectedTargetType[m.id] === "conseiller" && (
-                                <select
-                                  value={selectedTargets[m.id] || ""}
-                                  onChange={(e) => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
-                                  className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                                >
-                                  <option value="">-- Choisir un conseiller --</option>
-                                  {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
-                                </select>
-                              )}
-
-                              {selectedTargets[m.id] && (
-                                <div className="pt-2">
-                                  <BoutonEnvoyer
-                                    membre={m}
-                                    type={selectedTargetType[m.id]}
-                                    cible={
-                                      selectedTargetType[m.id] === "cellule"
-                                        ? cellules.find(c => c.id === selectedTargets[m.id])
-                                        : conseillers.find(c => c.id === selectedTargets[m.id])
-                                    }
-                                    onEnvoyer={(id) => handleAfterSend(id, selectedTargetType[m.id],
-                                      selectedTargetType[m.id] === "cellule"
-                                        ? cellules.find(c => c.id === selectedTargets[m.id])
-                                        : conseillers.find(c => c.id === selectedTargets[m.id])
-                                    )}
-                                    session={session}
-                                    showToast={showToast}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+              {/* Dropdown Statut */}
+              <div className="w-full mt-1">
+                <label className="text-gray-600 text-sm font-semibold">🕊 Statut :</label>
+                <select
+                  value={m.statut || ""}
+                  onChange={async (e) => {
+                    const newStatut = e.target.value;
+                    const { error } = await supabase.from("membres").update({ statut: newStatut }).eq("id", m.id);
+                    if (error) {
+                      showToast("❌ Erreur lors de la mise à jour du statut");
+                    } else {
+                      updateMemberLocally(m.id, { statut: newStatut });
+                      showToast("✅ Statut mis à jour");
+                    }
+                  }}
+                  className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                >
+                  <option value="">-- Choisir un statut --</option>
+                  {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
               </div>
+
+              {/* Bouton détails */}
+              <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">{isOpen ? "Fermer détails" : "Détails"}</button>
+
+              {/* Bouton Modifier */}
+              <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm mt-2">Modifier</button>
+
+              {isOpen && (
+                <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
+                  <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                  <p>🏙 Ville : {m.ville || ""}</p>
+                  <p>❓ Besoin : {m.besoin || "—"}</p>
+                  <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+
+                  {/* Envoi Cellule / Conseiller */}
+                  <div className="mt-2">
+                    <label className="font-semibold text-sm">Envoyer à :</label>
+                    <select
+                      value={selectedTargetType[m.id] || ""}
+                      onChange={(e) => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
+                      className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                    >
+                      <option value="">-- Choisir une option --</option>
+                      <option value="cellule">Une Cellule</option>
+                      <option value="conseiller">Un Conseiller</option>
+                    </select>
+
+                    {selectedTargetType[m.id] === "cellule" && (
+                      <select
+                        value={selectedTargets[m.id] || ""}
+                        onChange={(e) => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
+                        className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                      >
+                        <option value="">-- Choisir une cellule --</option>
+                        {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>)}
+                      </select>
+                    )}
+
+                    {selectedTargetType[m.id] === "conseiller" && (
+                      <select
+                        value={selectedTargets[m.id] || ""}
+                        onChange={(e) => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
+                        className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                      >
+                        <option value="">-- Choisir un conseiller --</option>
+                        {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
+                      </select>
+                    )}
+
+                    {selectedTargets[m.id] && (
+                      <div className="pt-2">
+                        <BoutonEnvoyer
+                          membre={m}
+                          type={selectedTargetType[m.id]}
+                          cible={
+                            selectedTargetType[m.id] === "cellule"
+                              ? cellules.find(c => c.id === selectedTargets[m.id])
+                              : conseillers.find(c => c.id === selectedTargets[m.id])
+                          }
+                          onEnvoyer={(id) => handleAfterSend(id, selectedTargetType[m.id],
+                            selectedTargetType[m.id] === "cellule"
+                              ? cellules.find(c => c.id === selectedTargets[m.id])
+                              : conseillers.find(c => c.id === selectedTargets[m.id])
+                          )}
+                          session={session}
+                          showToast={showToast}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        );
+      })}
+    </div>
+  </div>
+)}
+
 
       {/* VUE TABLE */}
       {view === "table" && (

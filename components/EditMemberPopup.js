@@ -2,9 +2,13 @@
 
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
+import BoutonEnvoyer from "./BoutonEnvoyer"; // Assure-toi que le composant BoutonEnvoyer existe
 
 export default function EditMemberPopup({ member, cellules = [], conseillers = [], session, onClose, onUpdateMember, showToast }) {
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+
+  const [selectedTargetType, setSelectedTargetType] = useState({});
+  const [selectedTargets, setSelectedTargets] = useState({});
 
   const initialBesoin =
     typeof member.besoin === "string"
@@ -26,10 +30,6 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // Pour l'envoi à Cellule / Conseiller
-  const [selectedTargetType, setSelectedTargetType] = useState({});
-  const [selectedTargets, setSelectedTargets] = useState({});
 
   // ✅ Gestion des checkboxes besoins
   const handleBesoinChange = (e) => {
@@ -54,7 +54,7 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
     });
   };
 
-  // ✅ Gestion des autres champs
+  // ✅ Gestion du reste des champs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -73,9 +73,10 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
       infos_supplementaires: formData.infos_supplementaires === "" ? null : formData.infos_supplementaires,
       statut: formData.statut === "" ? null : formData.statut,
       cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
-      besoin: formData.autreBesoin && showAutre
-        ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
-        : formData.besoin,
+      besoin:
+        formData.autreBesoin && showAutre
+          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
+          : formData.besoin,
     };
 
     const { error, data } = await supabase
@@ -161,7 +162,6 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
               </label>
             ))}
 
-            {/* Checkbox Autre */}
             <label className="flex items-center gap-3 mb-2">
               <input
                 type="checkbox"
@@ -174,7 +174,6 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
               Autre
             </label>
 
-            {/* Champ libre si Autre */}
             {showAutre && (
               <input
                 type="text"
@@ -213,22 +212,20 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
             <option value="a déjà mon église">a déjà mon église</option>
           </select>
 
-          {/* Envoi Cellule / Conseiller */}
-          <div className="mt-2">
+          {/* Envoi Cellule / Conseiller / WhatsApp */}
+          <div className="mt-4">
             <label className="font-semibold text-sm">Envoyer à :</label>
             <select
               value={selectedTargetType[member.id] || ""}
               onChange={(e) =>
-                setSelectedTargetType((prev) => ({
-                  ...prev,
-                  [member.id]: e.target.value,
-                }))
+                setSelectedTargetType((prev) => ({ ...prev, [member.id]: e.target.value }))
               }
               className="mt-1 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Choisir une option --</option>
               <option value="cellule">Une Cellule</option>
               <option value="conseiller">Un Conseiller</option>
+              <option value="whatsapp">WhatsApp</option>
             </select>
 
             {(selectedTargetType[member.id] === "cellule" ||
@@ -243,9 +240,7 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
                 }
                 className="mt-1 w-full border rounded px-2 py-1 text-sm"
               >
-                <option value="">
-                  -- Choisir {selectedTargetType[member.id]} --
-                </option>
+                <option value="">-- Choisir {selectedTargetType[member.id]} --</option>
                 {selectedTargetType[member.id] === "cellule"
                   ? cellules.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -268,9 +263,7 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
                   cible={
                     selectedTargetType[member.id] === "cellule"
                       ? cellules.find((c) => c.id === selectedTargets[member.id])
-                      : conseillers.find(
-                          (c) => c.id === selectedTargets[member.id]
-                        )
+                      : conseillers.find((c) => c.id === selectedTargets[member.id])
                   }
                   onEnvoyer={(id) =>
                     handleAfterSend(
@@ -278,9 +271,7 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
                       selectedTargetType[member.id],
                       selectedTargetType[member.id] === "cellule"
                         ? cellules.find((c) => c.id === selectedTargets[member.id])
-                        : conseillers.find(
-                            (c) => c.id === selectedTargets[member.id]
-                          )
+                        : conseillers.find((c) => c.id === selectedTargets[member.id])
                     )
                   }
                   session={session}

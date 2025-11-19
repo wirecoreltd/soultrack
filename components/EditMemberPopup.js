@@ -2,13 +2,10 @@
 
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
-import BoutonEnvoyer from "./BoutonEnvoyer"; // Assure-toi que le composant BoutonEnvoyer existe
+import BoutonEnvoyer from "./BoutonEnvoyer"; // Assure-toi que ce composant existe
 
-export default function EditMemberPopup({ member, cellules = [], conseillers = [], session, onClose, onUpdateMember, showToast }) {
+export default function EditMemberPopup({ member, cellules = [], conseillers = [], onClose, onUpdateMember, session, showToast }) {
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
-
-  const [selectedTargetType, setSelectedTargetType] = useState({});
-  const [selectedTargets, setSelectedTargets] = useState({});
 
   const initialBesoin =
     typeof member.besoin === "string"
@@ -31,7 +28,10 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ Gestion des checkboxes besoins
+  // États pour le menu "Envoyer à"
+  const [selectedTargetType, setSelectedTargetType] = useState({});
+  const [selectedTargets, setSelectedTargets] = useState({});
+
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
 
@@ -54,13 +54,11 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
     });
   };
 
-  // ✅ Gestion du reste des champs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ✅ Soumission du formulaire
   const handleSubmit = async () => {
     setLoading(true);
 
@@ -73,10 +71,9 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
       infos_supplementaires: formData.infos_supplementaires === "" ? null : formData.infos_supplementaires,
       statut: formData.statut === "" ? null : formData.statut,
       cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
-      besoin:
-        formData.autreBesoin && showAutre
-          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
-          : formData.besoin,
+      besoin: formData.autreBesoin && showAutre
+        ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
+        : formData.besoin,
     };
 
     const { error, data } = await supabase
@@ -100,10 +97,11 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
     setLoading(false);
   };
 
+  const handleAfterSend = () => {};
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto shadow-xl relative">
-        {/* Bouton fermer */}
         <button
           onClick={onClose}
           className="absolute top-2 right-2 text-red-500 font-bold hover:text-red-700"
@@ -145,7 +143,7 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
             className="border rounded px-2 py-1"
           />
 
-          {/* ✅ BESOINS */}
+          {/* BESOINS */}
           <div className="mt-2">
             <p className="font-semibold mb-2">Besoins :</p>
             {besoinsOptions.map((item) => (
@@ -161,7 +159,6 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
                 <span>{item}</span>
               </label>
             ))}
-
             <label className="flex items-center gap-3 mb-2">
               <input
                 type="checkbox"
@@ -173,7 +170,6 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
               />
               Autre
             </label>
-
             {showAutre && (
               <input
                 type="text"
@@ -212,20 +208,22 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
             <option value="a déjà mon église">a déjà mon église</option>
           </select>
 
-          {/* Envoi Cellule / Conseiller / WhatsApp */}
-          <div className="mt-4">
+          {/* PARTIE "Envoyer à" EXACTEMENT COMME DEMANDÉ */}
+          <div className="mt-2">
             <label className="font-semibold text-sm">Envoyer à :</label>
             <select
               value={selectedTargetType[member.id] || ""}
               onChange={(e) =>
-                setSelectedTargetType((prev) => ({ ...prev, [member.id]: e.target.value }))
+                setSelectedTargetType((prev) => ({
+                  ...prev,
+                  [member.id]: e.target.value,
+                }))
               }
               className="mt-1 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Choisir une option --</option>
               <option value="cellule">Une Cellule</option>
               <option value="conseiller">Un Conseiller</option>
-              <option value="whatsapp">WhatsApp</option>
             </select>
 
             {(selectedTargetType[member.id] === "cellule" ||
@@ -240,7 +238,9 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
                 }
                 className="mt-1 w-full border rounded px-2 py-1 text-sm"
               >
-                <option value="">-- Choisir {selectedTargetType[member.id]} --</option>
+                <option value="">
+                  -- Choisir {selectedTargetType[member.id]} --
+                </option>
                 {selectedTargetType[member.id] === "cellule"
                   ? cellules.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -263,7 +263,9 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
                   cible={
                     selectedTargetType[member.id] === "cellule"
                       ? cellules.find((c) => c.id === selectedTargets[member.id])
-                      : conseillers.find((c) => c.id === selectedTargets[member.id])
+                      : conseillers.find(
+                          (c) => c.id === selectedTargets[member.id]
+                        )
                   }
                   onEnvoyer={(id) =>
                     handleAfterSend(
@@ -271,7 +273,9 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
                       selectedTargetType[member.id],
                       selectedTargetType[member.id] === "cellule"
                         ? cellules.find((c) => c.id === selectedTargets[member.id])
-                        : conseillers.find((c) => c.id === selectedTargets[member.id])
+                        : conseillers.find(
+                            (c) => c.id === selectedTargets[member.id]
+                          )
                     )
                   }
                   session={session}
@@ -281,7 +285,6 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
             )}
           </div>
 
-          {/* Message succès */}
           {message && (
             <p className="text-green-600 text-center mt-3 font-semibold">
               {message}

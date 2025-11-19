@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import supabase from "../lib/supabaseClient";
+import Image from "next/image";
 
 export default function CreateConseiller() {
   const router = useRouter();
@@ -15,19 +15,16 @@ export default function CreateConseiller() {
     email: "",
     password: "",
   });
+  const [responsableId, setResponsableId] = useState(""); // ⭐ ID du responsable connecté
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [responsableId, setResponsableId] = useState(null);
 
-  // ➤ Récupérer l'utilisateur connecté pour avoir son ID
+  // ➤ Récupère l'utilisateur connecté (responsable)
   useEffect(() => {
     async function fetchUser() {
       const { data, error } = await supabase.auth.getUser();
-      if (error) {
-        console.error("Erreur récupération utilisateur:", error);
-      } else {
-        setResponsableId(data.user.id);
-      }
+      if (error) console.error(error);
+      else setResponsableId(data.user.id);
     }
     fetchUser();
   }, []);
@@ -39,14 +36,13 @@ export default function CreateConseiller() {
         .from("membres")
         .select("id, prenom, nom, telephone")
         .eq("star", true);
-
       if (error) console.error(error);
       else setMembers(data);
     }
     fetchStarMembers();
   }, []);
 
-  // ➤ Quand on sélectionne un membre, remplir prenom, nom, telephone
+  // ➤ Remplissage automatique
   useEffect(() => {
     if (!selectedMemberId) {
       setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
@@ -73,11 +69,6 @@ export default function CreateConseiller() {
       return;
     }
 
-    if (!responsableId) {
-      setMessage("❌ Impossible de récupérer l'ID du responsable.");
-      return;
-    }
-
     setLoading(true);
     setMessage("⏳ Création en cours...");
 
@@ -87,8 +78,8 @@ export default function CreateConseiller() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          role: "Conseiller",
-          responsable_id: responsableId,
+          role: "Conseiller", // rôle fixe
+          responsable_id: responsableId, // ⭐ envoie l'id du responsable
         }),
       });
 
@@ -97,13 +88,7 @@ export default function CreateConseiller() {
       if (res.ok) {
         setMessage("✅ Conseiller créé avec succès !");
         setSelectedMemberId("");
-        setFormData({
-          prenom: "",
-          nom: "",
-          telephone: "",
-          email: "",
-          password: "",
-        });
+        setFormData({ prenom: "", nom: "", telephone: "", email: "", password: "" });
       } else {
         setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
       }
@@ -121,7 +106,7 @@ export default function CreateConseiller() {
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
         <button
           onClick={() => router.back()}
-          className="absolute top-4 left-4 flex items-center text-gray-700 hover:text-gray-900 transition-colors"
+          className="absolute top-4 left-4 text-gray-700 hover:text-gray-900"
         >
           ← Retour
         </button>
@@ -133,6 +118,7 @@ export default function CreateConseiller() {
         <h1 className="text-3xl font-bold text-center mb-6">Créer un Conseiller</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
+          {/* Menu déroulant membres star = true */}
           <select
             value={selectedMemberId}
             onChange={(e) => setSelectedMemberId(e.target.value)}
@@ -147,18 +133,18 @@ export default function CreateConseiller() {
             ))}
           </select>
 
-          <input name="prenom" placeholder="Prénom" value={formData.prenom} className="input" readOnly />
-          <input name="nom" placeholder="Nom" value={formData.nom} className="input" readOnly />
-          <input name="telephone" placeholder="Téléphone" value={formData.telephone} className="input" readOnly />
+          {/* Remplissage automatique */}
+          <input name="prenom" placeholder="Prénom" value={formData.prenom} readOnly className="input" />
+          <input name="nom" placeholder="Nom" value={formData.nom} readOnly className="input" />
+          <input name="telephone" placeholder="Téléphone" value={formData.telephone} readOnly className="input" />
 
-          <input name="email" placeholder="Email du conseiller" value={formData.email} onChange={handleChange} className="input" required />
+          {/* Email et mot de passe */}
+          <input name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="input" required />
           <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
 
           <div className="flex gap-4 mt-4">
-            <button type="button" onClick={handleCancel} className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200">
-              Annuler
-            </button>
-            <button type="submit" disabled={loading} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200">
+            <button type="button" onClick={handleCancel} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-3 rounded-2xl">Annuler</button>
+            <button type="submit" disabled={loading} className="flex-1 bg-blue-400 hover:bg-blue-500 text-white py-3 rounded-2xl">
               {loading ? "Création..." : "Créer"}
             </button>
           </div>
@@ -167,15 +153,7 @@ export default function CreateConseiller() {
         {message && <p className="mt-4 text-center text-sm text-gray-700">{message}</p>}
 
         <style jsx>{`
-          .input {
-            width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            padding: 12px;
-            text-align: left;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            color: black;
-          }
+          .input { width: 100%; border: 1px solid #ccc; border-radius: 12px; padding: 12px; color: black; }
         `}</style>
       </div>
     </div>

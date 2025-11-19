@@ -21,10 +21,10 @@ export default async function handler(req, res) {
       telephone, 
       cellule_nom, 
       cellule_zone,
-      responsable_id     // ⭐ AJOUT
+      responsable_id   // ✅ Responsable lié
     } = req.body;
 
-    // Création utilisateur authentification
+    // Crée l'utilisateur dans Auth
     const { data: userData, error: createError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     if (createError) throw createError;
     const user = userData.user;
 
-    // ⭐ INSERT profiles AVEC responsable_id
+    // Ajoute dans la table profiles
     const { error: profileError } = await supabase.from("profiles").insert({
       id: user.id,
       prenom,
@@ -42,12 +42,12 @@ export default async function handler(req, res) {
       telephone,
       role,
       email,
-      responsable_id: responsable_id || null   // ⭐ AJOUT
+      responsable_id: responsable_id || null  // ✅ Insertion du responsable_id
     });
 
     if (profileError) throw profileError;
 
-    // Si responsable cellule → création cellule
+    // Si c’est un responsable de cellule, créer la cellule
     if (role === "ResponsableCellule" && cellule_nom) {
       const { error: celluleError } = await supabase.from("cellules").insert({
         cellule: cellule_nom,

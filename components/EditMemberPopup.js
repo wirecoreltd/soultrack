@@ -3,14 +3,8 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function EditMemberPopup({ member, cellules = [], onClose, onUpdateMember }) {
+export default function EditMemberPopup({ member, cellules = [], conseillers = [], session, onClose, onUpdateMember, showToast }) {
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
-  const [selectedTargetType, setSelectedTargetType] = useState({});
-  const [selectedTargets, setSelectedTargets] = useState([]);
-  const conseillers = []; // ou props.conseillers si tu les passes
-  const session = null; // ou passer depuis props
-  const showToast = () => {}; // fonction vide ou réelle
-  const handleAfterSend = () => {}; // fonction vide ou réelle
 
   const initialBesoin =
     typeof member.besoin === "string"
@@ -32,6 +26,10 @@ export default function EditMemberPopup({ member, cellules = [], onClose, onUpda
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Pour l'envoi à Cellule / Conseiller
+  const [selectedTargetType, setSelectedTargetType] = useState({});
+  const [selectedTargets, setSelectedTargets] = useState({});
 
   // ✅ Gestion des checkboxes besoins
   const handleBesoinChange = (e) => {
@@ -56,67 +54,50 @@ export default function EditMemberPopup({ member, cellules = [], onClose, onUpda
     });
   };
 
-  // ✅ Gestion du reste des champs
+  // ✅ Gestion des autres champs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ✅ Soumission
+  // ✅ Soumission du formulaire
   const handleSubmit = async () => {
     setLoading(true);
 
-    const dataToSend = {
+    const cleanData = {
       ...formData,
-      besoin:
-        formData.autreBesoin && showAutre
-          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
-          : formData.besoin,
+      prenom: formData.prenom || member.prenom,
+      nom: formData.nom || member.nom,
+      ville: formData.ville === "" ? null : formData.ville,
+      telephone: formData.telephone === "" ? null : formData.telephone,
+      infos_supplementaires: formData.infos_supplementaires === "" ? null : formData.infos_supplementaires,
+      statut: formData.statut === "" ? null : formData.statut,
+      cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
+      besoin: formData.autreBesoin && showAutre
+        ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
+        : formData.besoin,
     };
 
-    // ✅ Convertir les champs vides en null
-      const cleanData = {
-        ...formData,
-        prenom: formData.prenom || member.prenom,
-        nom: formData.nom || member.nom,
-      
-        // pour les autres champs : si vide = null
-        ville: formData.ville === "" ? null : formData.ville,
-        telephone: formData.telephone === "" ? null : formData.telephone,
-        infos_supplementaires:
-          formData.infos_supplementaires === ""
-            ? null
-            : formData.infos_supplementaires,
-        statut: formData.statut === "" ? null : formData.statut,
-        cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
-        besoin:
-          formData.autreBesoin && showAutre
-            ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
-            : formData.besoin,
-      };
-      
-          
-      const { error, data } = await supabase
-        .from("membres")
-        .update(cleanData)
-        .eq("id", member.id)
-        .select()
-        .single();
-      
-      
-          if (error) {
-            alert("❌ Erreur lors de la mise à jour : " + error.message);
-          } else {
-            if (onUpdateMember) onUpdateMember(data);
-            setMessage("✅ Changement enregistré !");
-            setTimeout(() => {
-              setMessage("");
-              onClose();
-            }, 1500);
-          }
-      
-          setLoading(false);
-        };
+    const { error, data } = await supabase
+      .from("membres")
+      .update(cleanData)
+      .eq("id", member.id)
+      .select()
+      .single();
+
+    if (error) {
+      alert("❌ Erreur lors de la mise à jour : " + error.message);
+    } else {
+      if (onUpdateMember) onUpdateMember(data);
+      setMessage("✅ Changement enregistré !");
+      setTimeout(() => {
+        setMessage("");
+        onClose();
+      }, 1500);
+    }
+
+    setLoading(false);
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -180,7 +161,7 @@ export default function EditMemberPopup({ member, cellules = [], onClose, onUpda
               </label>
             ))}
 
-            {/* ✅ Checkbox Autre */}
+            {/* Checkbox Autre */}
             <label className="flex items-center gap-3 mb-2">
               <input
                 type="checkbox"
@@ -193,7 +174,7 @@ export default function EditMemberPopup({ member, cellules = [], onClose, onUpda
               Autre
             </label>
 
-            {/* ✅ Champ libre si Autre */}
+            {/* Champ libre si Autre */}
             {showAutre && (
               <input
                 type="text"
@@ -233,73 +214,102 @@ export default function EditMemberPopup({ member, cellules = [], onClose, onUpda
           </select>
 
           {/* Envoi Cellule / Conseiller */}
-            <div className="mt-2">
-              <label className="font-semibold text-sm">Envoyer à :</label>
+          <div className="mt-2">
+            <label className="font-semibold text-sm">Envoyer à :</label>
+            <select
+              value={selectedTargetType[member.id] || ""}
+              onChange={(e) =>
+                setSelectedTargetType((prev) => ({
+                  ...prev,
+                  [member.id]: e.target.value,
+                }))
+              }
+              className="mt-1 w-full border rounded px-2 py-1 text-sm"
+            >
+              <option value="">-- Choisir une option --</option>
+              <option value="cellule">Une Cellule</option>
+              <option value="conseiller">Un Conseiller</option>
+            </select>
+
+            {(selectedTargetType[member.id] === "cellule" ||
+              selectedTargetType[member.id] === "conseiller") && (
               <select
-                value={selectedTargetType[member.id] || ""}
-                onChange={(e) => setSelectedTargetType(prev => ({ ...prev, [member.id]: e.target.value }))}
+                value={selectedTargets[member.id] || ""}
+                onChange={(e) =>
+                  setSelectedTargets((prev) => ({
+                    ...prev,
+                    [member.id]: e.target.value,
+                  }))
+                }
                 className="mt-1 w-full border rounded px-2 py-1 text-sm"
               >
-                <option value="">-- Choisir une option --</option>
-                <option value="cellule">Une Cellule</option>
-                <option value="conseiller">Un Conseiller</option>
+                <option value="">
+                  -- Choisir {selectedTargetType[member.id]} --
+                </option>
+                {selectedTargetType[member.id] === "cellule"
+                  ? cellules.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.cellule} ({c.responsable})
+                      </option>
+                    ))
+                  : conseillers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.prenom} {c.nom}
+                      </option>
+                    ))}
               </select>
-            
-              {(selectedTargetType[member.id] === "cellule" || selectedTargetType[member.id] === "conseiller") && (
-                <select
-                  value={selectedTargets[member.id] || ""}
-                  onChange={(e) => setSelectedTargets(prev => ({ ...prev, [member.id]: e.target.value }))}
-                  className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                >
-                  <option value="">-- Choisir {selectedTargetType[member.id]} --</option>
-                  {selectedTargetType[member.id] === "cellule"
-                    ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>)
-                    : conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)
+            )}
+
+            {selectedTargets[member.id] && (
+              <div className="pt-2">
+                <BoutonEnvoyer
+                  membre={member}
+                  type={selectedTargetType[member.id]}
+                  cible={
+                    selectedTargetType[member.id] === "cellule"
+                      ? cellules.find((c) => c.id === selectedTargets[member.id])
+                      : conseillers.find(
+                          (c) => c.id === selectedTargets[member.id]
+                        )
                   }
-                </select>
-              )}
-            
-              {selectedTargets[member.id] && (
-                <div className="pt-2">
-                  <BoutonEnvoyer
-                    membre={member}
-                    type={selectedTargetType[member.id]}
-                    cible={selectedTargetType[member.id] === "cellule"
-                      ? cellules.find(c => c.id === selectedTargets[member.id])
-                      : conseillers.find(c => c.id === selectedTargets[member.id])
-                    }
-                    onEnvoyer={(id) => handleAfterSend(id, selectedTargetType[member.id],
+                  onEnvoyer={(id) =>
+                    handleAfterSend(
+                      id,
+                      selectedTargetType[member.id],
                       selectedTargetType[member.id] === "cellule"
-                        ? cellules.find(c => c.id === selectedTargets[member.id])
-                        : conseillers.find(c => c.id === selectedTargets[member.id])
-                    )}
-                    session={session}
-                    showToast={showToast}
-                  />
-                </div>
-              )}
-            </div>
+                        ? cellules.find((c) => c.id === selectedTargets[member.id])
+                        : conseillers.find(
+                            (c) => c.id === selectedTargets[member.id]
+                          )
+                    )
+                  }
+                  session={session}
+                  showToast={showToast}
+                />
+              </div>
+            )}
+          </div>
 
+          {/* Message succès */}
+          {message && (
+            <p className="text-green-600 text-center mt-3 font-semibold">
+              {message}
+            </p>
+          )}
 
-        {/* Message succès */}
-        {message && (
-          <p className="text-green-600 text-center mt-3 font-semibold">
-            {message}
-          </p>
-        )}
-
-        {/* Bouton enregistrer */}
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className={`mt-4 w-full text-white py-2 rounded transition font-bold ${
-            loading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          {loading ? "Enregistrement..." : "Enregistrer"}
-        </button>
+          {/* Bouton enregistrer */}
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className={`mt-4 w-full text-white py-2 rounded transition font-bold ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            {loading ? "Enregistrement..." : "Enregistrer"}
+          </button>
+        </div>
       </div>
     </div>
   );

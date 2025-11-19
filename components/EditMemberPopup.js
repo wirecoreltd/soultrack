@@ -6,6 +6,8 @@ import BoutonEnvoyer from "./BoutonEnvoyer"; // Assure-toi que ce composant exis
 
 export default function EditMemberPopup({ member, cellules = [], conseillers = [], onClose, onUpdateMember, session, showToast }) {
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+  const [selectedTargetType, setSelectedTargetType] = useState({});
+  const [selectedTargets, setSelectedTargets] = useState({});
 
   const initialBesoin =
     typeof member.besoin === "string"
@@ -28,13 +30,8 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // États pour le menu "Envoyer à"
-  const [selectedTargetType, setSelectedTargetType] = useState({});
-  const [selectedTargets, setSelectedTargets] = useState({});
-
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
-
     if (value === "Autre") {
       setShowAutre(checked);
       if (!checked) {
@@ -71,9 +68,10 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
       infos_supplementaires: formData.infos_supplementaires === "" ? null : formData.infos_supplementaires,
       statut: formData.statut === "" ? null : formData.statut,
       cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
-      besoin: formData.autreBesoin && showAutre
-        ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
-        : formData.besoin,
+      besoin:
+        formData.autreBesoin && showAutre
+          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
+          : formData.besoin,
     };
 
     const { error, data } = await supabase
@@ -97,7 +95,10 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
     setLoading(false);
   };
 
-  const handleAfterSend = () => {};
+  const handleAfterSend = (id, type, cible) => {
+    // ta logique après envoi
+    if (showToast) showToast(`Envoyé à ${type}: ${cible?.nom || cible?.cellule}`);
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -143,7 +144,6 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
             className="border rounded px-2 py-1"
           />
 
-          {/* BESOINS */}
           <div className="mt-2">
             <p className="font-semibold mb-2">Besoins :</p>
             {besoinsOptions.map((item) => (
@@ -159,6 +159,7 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
                 <span>{item}</span>
               </label>
             ))}
+
             <label className="flex items-center gap-3 mb-2">
               <input
                 type="checkbox"
@@ -170,6 +171,7 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
               />
               Autre
             </label>
+
             {showAutre && (
               <input
                 type="text"
@@ -182,7 +184,6 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
             )}
           </div>
 
-          {/* Infos supplémentaires */}
           <textarea
             name="infos_supplementaires"
             value={formData.infos_supplementaires}
@@ -192,7 +193,6 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
             rows={3}
           />
 
-          {/* Statut */}
           <select
             name="statut"
             value={formData.statut}
@@ -208,16 +208,13 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
             <option value="a déjà mon église">a déjà mon église</option>
           </select>
 
-          {/* PARTIE "Envoyer à" EXACTEMENT COMME DEMANDÉ */}
-          <div className="mt-2">
+          {/* 🔹 Envoi Cellule / Conseiller */}
+          <div className="mt-4">
             <label className="font-semibold text-sm">Envoyer à :</label>
             <select
               value={selectedTargetType[member.id] || ""}
               onChange={(e) =>
-                setSelectedTargetType((prev) => ({
-                  ...prev,
-                  [member.id]: e.target.value,
-                }))
+                setSelectedTargetType((prev) => ({ ...prev, [member.id]: e.target.value }))
               }
               className="mt-1 w-full border rounded px-2 py-1 text-sm"
             >
@@ -284,26 +281,25 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
               </div>
             )}
           </div>
-
-          {message && (
-            <p className="text-green-600 text-center mt-3 font-semibold">
-              {message}
-            </p>
-          )}
-
-          {/* Bouton enregistrer */}
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className={`mt-4 w-full text-white py-2 rounded transition font-bold ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {loading ? "Enregistrement..." : "Enregistrer"}
-          </button>
         </div>
+
+        {message && (
+          <p className="text-green-600 text-center mt-3 font-semibold">
+            {message}
+          </p>
+        )}
+
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className={`mt-4 w-full text-white py-2 rounded transition font-bold ${
+            loading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
+          {loading ? "Enregistrement..." : "Enregistrer"}
+        </button>
       </div>
     </div>
   );

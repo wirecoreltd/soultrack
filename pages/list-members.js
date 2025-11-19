@@ -132,7 +132,8 @@ export default function ListMembers() {
   const filterBySearch = (list) => list.filter(m => `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase()));
 
   const nouveaux = members.filter(m => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");
-  const anciens = members.filter(m => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC");
+  const anciens = members.filter(m => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC" && m.statut !== "envoye")
+                      .concat(members.filter(m => m.statut === "envoye"));
 
   const nouveauxFiltres = filterBySearch(filter ? nouveaux.filter(m => m.statut === filter) : nouveaux);
   const anciensFiltres = filterBySearch(filter ? anciens.filter(m => m.statut === filter) : anciens);

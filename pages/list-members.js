@@ -204,7 +204,7 @@ export default function ListMembers() {
                           <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
-                            <p>❓Besoin : {(() => {
+                            <p>❓--Besoin : {(() => {
                               if (!m.besoin) return "—";
                               if (Array.isArray(m.besoin)) return m.besoin.join(", ");
                               try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; }
@@ -300,7 +300,7 @@ export default function ListMembers() {
                         <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">{isOpen ? "Fermer détails" : "Détails"}</button>
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
-                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                            <p>💬 --WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
 
                             {/* ---- pareil que plus haut : choix Cellule / Conseiller pour anciens ---- */}

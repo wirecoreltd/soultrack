@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
-import BoutonEnvoyer from "./BoutonEnvoyer";
+import BoutonEnvoyer from "./BoutonEnvoyer"; // Assure-toi que ce composant existe
 
 export default function EditMemberPopup({
   member,
   cellules = [],
-  conseillers = [], // ✅ récupérer depuis props
+  conseillers = [],
   onClose,
   onUpdateMember,
   session = null,
@@ -38,6 +38,7 @@ export default function EditMemberPopup({
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ✅ Gestion des checkboxes besoins
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
 
@@ -60,11 +61,13 @@ export default function EditMemberPopup({
     });
   };
 
+  // ✅ Gestion du reste des champs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // ✅ Soumission
   const handleSubmit = async () => {
     setLoading(true);
 
@@ -103,7 +106,7 @@ export default function EditMemberPopup({
     setLoading(false);
   };
 
-  const handleAfterSend = () => {}; // fonction du BoutonEnvoyer
+  const handleAfterSend = () => {}; // à compléter selon logique du BoutonEnvoyer
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -122,9 +125,104 @@ export default function EditMemberPopup({
 
         {/* Formulaire */}
         <div className="flex flex-col space-y-2 text-sm">
-          {/* ...tous tes inputs existants restent inchangés... */}
+          <input
+            name="prenom"
+            value={formData.prenom}
+            onChange={handleChange}
+            placeholder="Prénom"
+            className="border rounded px-2 py-1"
+          />
+          <input
+            name="nom"
+            value={formData.nom}
+            onChange={handleChange}
+            placeholder="Nom"
+            className="border rounded px-2 py-1"
+          />
+          <input
+            name="ville"
+            value={formData.ville}
+            onChange={handleChange}
+            placeholder="Ville"
+            className="border rounded px-2 py-1"
+          />
+          <input
+            name="telephone"
+            value={formData.telephone}
+            onChange={handleChange}
+            placeholder="Téléphone"
+            className="border rounded px-2 py-1"
+          />
 
-          {/* Partie “Envoyer à” exactement comme ton code */}
+          {/* Besoins */}
+          <div className="mt-2">
+            <p className="font-semibold mb-2">Besoins :</p>
+            {besoinsOptions.map((item) => (
+              <label key={item} className="flex items-center gap-3 mb-2">
+                <input
+                  type="checkbox"
+                  name="besoin"
+                  value={item}
+                  checked={formData.besoin.includes(item)}
+                  onChange={handleBesoinChange}
+                  className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+                />
+                <span>{item}</span>
+              </label>
+            ))}
+
+            {/* Autre */}
+            <label className="flex items-center gap-3 mb-2">
+              <input
+                type="checkbox"
+                name="besoin"
+                value="Autre"
+                checked={showAutre}
+                onChange={handleBesoinChange}
+                className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+              />
+              Autre
+            </label>
+
+            {showAutre && (
+              <input
+                type="text"
+                name="autreBesoin"
+                value={formData.autreBesoin}
+                onChange={handleChange}
+                placeholder="Précisez..."
+                className="border rounded px-2 py-1 w-full"
+              />
+            )}
+          </div>
+
+          {/* Infos supplémentaires */}
+          <textarea
+            name="infos_supplementaires"
+            value={formData.infos_supplementaires}
+            onChange={handleChange}
+            placeholder="Infos supplémentaires"
+            className="border rounded px-2 py-1"
+            rows={3}
+          />
+
+          {/* Statut */}
+          <select
+            name="statut"
+            value={formData.statut}
+            onChange={handleChange}
+            className="border rounded px-2 py-1"
+          >
+            <option value="">-- Statut --</option>
+            <option value="actif">actif</option>
+            <option value="Integrer">Integrer</option>
+            <option value="ancien">ancien</option>
+            <option value="veut rejoindre ICC">veut rejoindre ICC</option>
+            <option value="visiteur">visiteur</option>
+            <option value="a déjà mon église">a déjà mon église</option>
+          </select>
+
+          {/* Envoi Cellule / Conseiller */}
           <div className="mt-2">
             <label className="font-semibold text-sm">Envoyer à :</label>
             <select
@@ -200,18 +298,25 @@ export default function EditMemberPopup({
               </div>
             )}
           </div>
-
-          {/* Bouton enregistrer */}
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className={`mt-4 w-full text-white py-2 rounded transition font-bold ${
-              loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {loading ? "Enregistrement..." : "Enregistrer"}
-          </button>
         </div>
+
+        {/* Message succès */}
+        {message && (
+          <p className="text-green-600 text-center mt-3 font-semibold">
+            {message}
+          </p>
+        )}
+
+        {/* Bouton enregistrer */}
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className={`mt-4 w-full text-white py-2 rounded transition font-bold ${
+            loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
+          {loading ? "Enregistrement..." : "Enregistrer"}
+        </button>
       </div>
     </div>
   );

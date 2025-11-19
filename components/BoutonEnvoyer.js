@@ -1,4 +1,5 @@
 // components/BoutonEnvoyer.js
+// components/BoutonEnvoyer.js
 "use client";
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -52,6 +53,16 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, onEnvoy
         return;
       }
 
+      // 🔹 Mise à jour du statut du membre dans la table "membres"
+      const { error: updateError } = await supabase.from("membres").update({ statut: "envoye" }).eq("id", membre.id);
+      if (updateError) {
+        console.error("Erreur update membre:", updateError);
+        alert("❌ Erreur lors de la mise à jour du statut du membre.");
+      } else {
+        // Callback pour mise à jour côté parent
+        if (onEnvoyer) onEnvoyer(membre.id);
+      }
+
       // Construire message WhatsApp
       let message = `👋 Salut ${cible.responsable || (cible.prenom ? `${cible.prenom} ${cible.nom || ""}` : "")},\n\n`;
       message += `🙏 Nouveau membre à suivre :\n`;
@@ -61,19 +72,13 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, onEnvoy
       message += `- 🙏 Besoin : ${membre.besoin || "—"}\n\n`;
       message += `🙏 Merci !`;
 
-      // Sélectionner le téléphone à utiliser
       const phoneRaw = cible.telephone || "";
       const phone = phoneRaw.replace(/\D/g, "");
-      if (!phone) {
-        alert("❌ La cible n'a pas de numéro valide.");
-      } else {
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
-      }
-
-      // Callback pour mise à jour du statut côté parent
-      if (onEnvoyer) onEnvoyer(membre.id);
+      if (phone) window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+      else alert("❌ La cible n'a pas de numéro valide.");
 
       if (showToast) showToast("✅ Message WhatsApp ouvert et suivi enregistré (statut → envoye)");
+
     } catch (err) {
       console.error("Erreur sendToWhatsapp:", err);
       alert("❌ Une erreur est survenue lors de l'envoi.");

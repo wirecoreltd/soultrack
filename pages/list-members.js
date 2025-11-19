@@ -79,11 +79,18 @@ export default function ListMembers() {
 
   const handleAfterSend = async (memberId, type, cible) => {
     try {
-      const { error } = await supabase.from("membres").update({ statut: "envoye" }).eq("id", memberId);
+      const { error } = await supabase
+        .from("membres")
+        .update({ statut_suivis: "envoye" }) // On ne touche pas au statut initial
+        .eq("id", memberId);
+
       if (error) console.error("Erreur update membre:", error);
       else {
-        updateMemberStatusLocally(memberId, "envoye", type === "cellule" ? { cellule_id: cible.id, cellule_nom: cible.cellule } : { conseiller_id: cible.id });
-        showToast("✅ Contact envoyé — statut mis à jour en 'envoye'");
+        updateMemberStatusLocally(memberId, null, type === "cellule"
+          ? { cellule_id: cible.id, cellule_nom: cible.cellule, statut_suivis: "envoye" }
+          : { conseiller_id: cible.id, statut_suivis: "envoye" }
+        );
+        showToast("✅ Contact envoyé — statut_suivis mis à jour");
       }
     } catch (err) {
       console.error("Exception handleAfterSend:", err);
@@ -107,12 +114,13 @@ export default function ListMembers() {
 
   const filterBySearch = (list) => list.filter(m => `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase()));
 
-  // ---- CORRECTION ICI : les "nouveaux" ne doivent pas inclure ceux envoyés ----
+  // ---- NOUVEAUX EXCLUANT CEUX DEJA ENVOYES ----
   const nouveaux = members.filter(m =>
-    (m.statut === "visiteur" || m.statut === "veut rejoindre ICC")
+    (m.statut === "visiteur" || m.statut === "veut rejoindre ICC") && !m.statut_suivis
   );
+
   const anciens = members.filter(m =>
-    m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
+    !(m.statut === "visiteur" || m.statut === "veut rejoindre ICC") || m.statut_suivis
   );
 
   const nouveauxFiltres = filterBySearch(filter ? nouveaux.filter(m => m.statut === filter) : nouveaux);
@@ -181,7 +189,7 @@ export default function ListMembers() {
                             <p>❓--Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                            {/* ---- Envoi à Cellule / Conseiller ---- */}
+                            {/* Envoi à Cellule / Conseiller */}
                             <div className="mt-2">
                               <label className="font-semibold text-sm">Envoyer à :</label>
                               <select
@@ -269,7 +277,6 @@ export default function ListMembers() {
                             <p>🏙 Ville : {m.ville || ""}</p>
                             <p>❓--Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                            {/* Réutilisation du même composant BoutonEnvoyer pour anciens membres */}
                           </div>
                         )}
                       </div>

@@ -1,5 +1,3 @@
-// ✅ pages/api/create-user.js
-
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -12,19 +10,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Méthode non autorisée" });
 
   try {
-    const { 
-      prenom, 
-      nom, 
-      email, 
-      password, 
-      role, 
-      telephone, 
-      cellule_nom, 
-      cellule_zone,
-      responsable_id   // ✅ Responsable lié
-    } = req.body;
+    const { prenom, nom, email, password, telephone, role, responsable_id } = req.body;
 
-    // Crée l'utilisateur dans Auth
+    // Création utilisateur Auth
     const { data: userData, error: createError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -34,7 +22,7 @@ export default async function handler(req, res) {
     if (createError) throw createError;
     const user = userData.user;
 
-    // Ajoute dans la table profiles
+    // Ajout dans profiles avec responsable_id
     const { error: profileError } = await supabase.from("profiles").insert({
       id: user.id,
       prenom,
@@ -42,27 +30,14 @@ export default async function handler(req, res) {
       telephone,
       role,
       email,
-      responsable_id: responsable_id || null  // ✅ Insertion du responsable_id
+      responsable_id: responsable_id || null
     });
 
     if (profileError) throw profileError;
 
-    // Si c’est un responsable de cellule, créer la cellule
-    if (role === "ResponsableCellule" && cellule_nom) {
-      const { error: celluleError } = await supabase.from("cellules").insert({
-        cellule: cellule_nom,
-        ville: cellule_zone || null,
-        responsable: `${prenom} ${nom}`,
-        responsable_id: user.id,
-        telephone: telephone || "",
-      });
-
-      if (celluleError) throw celluleError;
-    }
-
-    return res.status(200).json({ message: "Utilisateur créé avec succès" });
+    return res.status(200).json({ message: "Conseiller créé avec succès" });
   } catch (err) {
-    console.error("Erreur création utilisateur:", err);
+    console.error("Erreur création conseiller:", err);
     return res.status(500).json({ error: err.message });
   }
 }

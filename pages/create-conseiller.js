@@ -1,8 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 
 export default function CreateConseiller() {
+  const router = useRouter();
   const [members, setMembers] = useState([]);
   const [selectedMemberId, setSelectedMemberId] = useState("");
   const [formData, setFormData] = useState({
@@ -16,13 +18,13 @@ export default function CreateConseiller() {
   const [loading, setLoading] = useState(false);
   const [responsableId, setResponsableId] = useState(null);
 
-  // ➤ Récupérer l'utilisateur connecté pour le responsable_id
+  // ➤ Récupérer le responsable connecté
   useEffect(() => {
-    const fetchCurrentUser = async () => {
+    const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) setResponsableId(user.id);
     };
-    fetchCurrentUser();
+    fetchUser();
   }, []);
 
   // ➤ Charger les membres star = true
@@ -33,19 +35,18 @@ export default function CreateConseiller() {
         .select("id, prenom, nom, telephone")
         .eq("star", true);
 
-      if (error) console.error(error);
-      else setMembers(data);
+      if (!error) setMembers(data);
+      else console.error(error);
     };
     fetchStarMembers();
   }, []);
 
-  // ➤ Remplir automatiquement prénom, nom, téléphone quand on sélectionne un membre
+  // ➤ Remplir automatiquement prénom, nom, téléphone
   useEffect(() => {
     if (!selectedMemberId) {
       setFormData({ prenom: "", nom: "", telephone: "", email: "", password: "" });
       return;
     }
-
     const member = members.find((m) => m.id === selectedMemberId);
     if (member) {
       setFormData((prev) => ({
@@ -61,14 +62,12 @@ export default function CreateConseiller() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!selectedMemberId || !formData.email || !formData.password) {
       setMessage("❌ Remplissez tous les champs !");
       return;
     }
-
     if (!responsableId) {
-      setMessage("❌ Impossible de récupérer l'utilisateur connecté !");
+      setMessage("❌ Impossible de récupérer le responsable connecté !");
       return;
     }
 
@@ -76,100 +75,125 @@ export default function CreateConseiller() {
     setMessage("⏳ Création en cours...");
 
     try {
-      const { error } = await supabase.from("profiles").insert([
-        {
-          prenom: formData.prenom,
-          nom: formData.nom,
-          telephone: formData.telephone,
-          email: formData.email,
-          password_hash: formData.password, // si tu gères le hash côté API
-          role: "Conseiller",
-          responsable_id: responsableId,
-        },
-      ]);
+      // ➤ Création du user dans Supabase Auth
+      const { data: userData, error: createError } = await supabase.auth.admin.createUser({
+        email: formData.email,
+        password: formData.password,
+        email_confirm: true,
+      });
 
-      if (error) {
-        setMessage("❌ " + error.message);
-      } else {
-        setMessage("✅ Conseiller créé avec succès !");
-        setSelectedMemberId("");
-        setFormData({ prenom: "", nom: "", telephone: "", email: "", password: "" });
-      }
+      if (createError) throw createError;
+      const user = userData.user;
+
+      // ➤ Ajout dans profiles avec responsable_id
+      const { error: profileError } = await supabase.from("profiles").insert({
+        id: user.id,
+        prenom: formData.prenom,
+        nom: formData.nom,
+        telephone: formData.telephone,
+        email: formData.email,
+        role: "Conseiller",
+        responsable_id: responsableId,
+      });
+
+      if (profileError) throw profileError;
+
+      setMessage("✅ Conseiller créé avec succès !");
+      setSelectedMemberId("");
+      setFormData({ prenom: "", nom: "", telephone: "", email: "", password: "" });
     } catch (err) {
+      console.error(err);
       setMessage("❌ " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleCancel = () => router.push("/");
+
   return (
-    <div className="p-6 max-w-xl mx-auto">
-      <h1 className="text-xl font-bold mb-4">Créer un Conseiller</h1>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Sélection du membre star */}
-        <select
-          className="w-full p-2 border rounded"
-          value={selectedMemberId}
-          onChange={(e) => setSelectedMemberId(e.target.value)}
-        >
-          <option value="">-- Sélectionnez un membre (star = Oui) --</option>
-          {members.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.prenom} {m.nom}
-            </option>
-          ))}
-        </select>
-
-        {/* Champs remplis automatiquement */}
-        <input
-          className="w-full p-2 border rounded"
-          placeholder="Prénom"
-          value={formData.prenom}
-          readOnly
-        />
-        <input
-          className="w-full p-2 border rounded"
-          placeholder="Nom"
-          value={formData.nom}
-          readOnly
-        />
-        <input
-          className="w-full p-2 border rounded"
-          placeholder="Téléphone"
-          value={formData.telephone}
-          readOnly
-        />
-
-        {/* Email et mot de passe pour créer le conseiller */}
-        <input
-          className="w-full p-2 border rounded"
-          placeholder="Email"
-          value={formData.email}
-          name="email"
-          onChange={handleChange}
-          required
-        />
-        <input
-          className="w-full p-2 border rounded"
-          type="password"
-          placeholder="Mot de passe"
-          value={formData.password}
-          name="password"
-          onChange={handleChange}
-          required
-        />
-
+    <div className="min-h-screen flex flex-col items-center justify-start p-6 bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200">
+      <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
         <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded w-full"
-          disabled={loading}
+          onClick={() => router.back()}
+          className="absolute top-4 left-4 text-gray-700 hover:text-gray-900"
         >
-          {loading ? "Création..." : "Créer le Conseiller"}
+          ← Retour
         </button>
-      </form>
 
-      {message && <p className="mt-4 text-center">{message}</p>}
+        <h1 className="text-3xl font-bold text-center mb-6">Créer un Conseiller</h1>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {/* Menu déroulant membres star */}
+          <select
+            value={selectedMemberId}
+            onChange={(e) => setSelectedMemberId(e.target.value)}
+            className="input"
+            required
+          >
+            <option value="">-- Sélectionnez un membre (star = Oui) --</option>
+            {members.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.prenom} {m.nom}
+              </option>
+            ))}
+          </select>
+
+          {/* Champs remplis automatiquement */}
+          <input className="input" placeholder="Prénom" value={formData.prenom} readOnly />
+          <input className="input" placeholder="Nom" value={formData.nom} readOnly />
+          <input className="input" placeholder="Téléphone" value={formData.telephone} readOnly />
+
+          {/* Email et mot de passe */}
+          <input
+            name="email"
+            className="input"
+            placeholder="Email du conseiller"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+          <input
+            name="password"
+            type="password"
+            className="input"
+            placeholder="Mot de passe"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+
+          <div className="flex gap-4 mt-4">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-3 rounded-2xl"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-2xl"
+            >
+              {loading ? "Création..." : "Créer"}
+            </button>
+          </div>
+        </form>
+
+        {message && <p className="mt-4 text-center text-sm text-gray-700">{message}</p>}
+
+        <style jsx>{`
+          .input {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            color: black;
+          }
+        `}</style>
+      </div>
     </div>
   );
 }

@@ -19,29 +19,34 @@ export default function CreateConseiller() {
   const [loading, setLoading] = useState(false);
   const [responsableId, setResponsableId] = useState(null);
 
-  // ➤ Récupérer l'ID du responsable connecté
+  // ➤ Récupérer l'utilisateur connecté pour avoir son ID
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.id) setResponsableId(session.user.id);
-    };
+    async function fetchUser() {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error("Erreur récupération utilisateur:", error);
+      } else {
+        setResponsableId(data.user.id);
+      }
+    }
     fetchUser();
   }, []);
 
   // ➤ Charge les membres star = true
   useEffect(() => {
-    const fetchStarMembers = async () => {
+    async function fetchStarMembers() {
       const { data, error } = await supabase
         .from("membres")
         .select("id, prenom, nom, telephone")
         .eq("star", true);
+
       if (error) console.error(error);
       else setMembers(data);
-    };
+    }
     fetchStarMembers();
   }, []);
 
-  // ➤ Remplir les infos quand un membre est sélectionné
+  // ➤ Quand on sélectionne un membre, remplir prenom, nom, telephone
   useEffect(() => {
     if (!selectedMemberId) {
       setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
@@ -67,8 +72,9 @@ export default function CreateConseiller() {
       setMessage("❌ Remplissez tous les champs !");
       return;
     }
+
     if (!responsableId) {
-      setMessage("❌ Impossible de récupérer votre ID de responsable !");
+      setMessage("❌ Impossible de récupérer l'ID du responsable.");
       return;
     }
 
@@ -144,11 +150,14 @@ export default function CreateConseiller() {
           <input name="prenom" placeholder="Prénom" value={formData.prenom} className="input" readOnly />
           <input name="nom" placeholder="Nom" value={formData.nom} className="input" readOnly />
           <input name="telephone" placeholder="Téléphone" value={formData.telephone} className="input" readOnly />
+
           <input name="email" placeholder="Email du conseiller" value={formData.email} onChange={handleChange} className="input" required />
           <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
 
           <div className="flex gap-4 mt-4">
-            <button type="button" onClick={handleCancel} className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200">Annuler</button>
+            <button type="button" onClick={handleCancel} className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200">
+              Annuler
+            </button>
             <button type="submit" disabled={loading} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200">
               {loading ? "Création..." : "Créer"}
             </button>

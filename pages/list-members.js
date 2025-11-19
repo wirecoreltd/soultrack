@@ -121,6 +121,7 @@ export default function ListMembers() {
     if (m.statut === "integrer") return "#FFA500";
     if (m.statut === "ancien") return "#999999";
     if (m.statut === "veut rejoindre ICC" || m.statut === "visiteur") return "#34A853";
+    if (m.statut === "envoye") return "#34A853"; // option pour envoyer → existant
     return "#ccc";
   };
 
@@ -131,9 +132,10 @@ export default function ListMembers() {
 
   const filterBySearch = (list) => list.filter(m => `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase()));
 
+  // ==== MODIFICATION ICI : gérer les membres envoyés ====
   const nouveaux = members.filter(m => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");
   const anciens = members.filter(m => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC" && m.statut !== "envoye")
-                      .concat(members.filter(m => m.statut === "envoye"));
+                        .concat(members.filter(m => m.statut === "envoye"));
 
   const nouveauxFiltres = filterBySearch(filter ? nouveaux.filter(m => m.statut === filter) : nouveaux);
   const anciensFiltres = filterBySearch(filter ? anciens.filter(m => m.statut === filter) : anciens);
@@ -271,7 +273,7 @@ export default function ListMembers() {
             </div>
           )}
 
-          {/* Anciens membres : même logique */}
+          {/* Anciens membres */}
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
               <h3 className="text-white text-lg mb-3 font-semibold">
@@ -291,7 +293,11 @@ export default function ListMembers() {
                           <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || ""}</p>
-                            <p>❓--Besoin : {m.besoin || "—"}</p>
+                            <p>❓--Besoin : {(() => {
+                              if (!m.besoin) return "—";
+                              if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                              try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; }
+                            })()}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             {/* ---- MODIFICATION UNIQUE pour anciens membres ---- */}

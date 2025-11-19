@@ -19,30 +19,29 @@ export default function CreateConseiller() {
   const [loading, setLoading] = useState(false);
   const [responsableId, setResponsableId] = useState(null);
 
+  // ➤ Récupérer l'ID du responsable connecté
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) setResponsableId(session.user.id);
+    };
+    fetchUser();
+  }, []);
+
   // ➤ Charge les membres star = true
   useEffect(() => {
-    async function fetchStarMembers() {
+    const fetchStarMembers = async () => {
       const { data, error } = await supabase
         .from("membres")
         .select("id, prenom, nom, telephone")
         .eq("star", true);
-
       if (error) console.error(error);
       else setMembers(data);
-    }
+    };
     fetchStarMembers();
   }, []);
 
-  // ➤ Récupère l'utilisateur connecté pour mettre responsable_id
-  useEffect(() => {
-    async function fetchUser() {
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) setResponsableId(data.user.id);
-    }
-    fetchUser();
-  }, []);
-
-  // ➤ Quand on sélectionne un membre, remplir prenom, nom, telephone
+  // ➤ Remplir les infos quand un membre est sélectionné
   useEffect(() => {
     if (!selectedMemberId) {
       setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
@@ -68,9 +67,8 @@ export default function CreateConseiller() {
       setMessage("❌ Remplissez tous les champs !");
       return;
     }
-
     if (!responsableId) {
-      setMessage("❌ Impossible de récupérer l'ID du responsable !");
+      setMessage("❌ Impossible de récupérer votre ID de responsable !");
       return;
     }
 
@@ -83,8 +81,8 @@ export default function CreateConseiller() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          role: "Conseiller", // rôle fixe
-          responsable_id: responsableId, // <-- ici
+          role: "Conseiller",
+          responsable_id: responsableId,
         }),
       });
 
@@ -129,7 +127,6 @@ export default function CreateConseiller() {
         <h1 className="text-3xl font-bold text-center mb-6">Créer un Conseiller</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
-          {/* Sélection membre star */}
           <select
             value={selectedMemberId}
             onChange={(e) => setSelectedMemberId(e.target.value)}
@@ -144,72 +141,21 @@ export default function CreateConseiller() {
             ))}
           </select>
 
-          {/* Affichage automatique des infos */}
-          <input
-            name="prenom"
-            placeholder="Prénom"
-            value={formData.prenom}
-            onChange={handleChange}
-            className="input"
-            readOnly
-          />
-          <input
-            name="nom"
-            placeholder="Nom"
-            value={formData.nom}
-            onChange={handleChange}
-            className="input"
-            readOnly
-          />
-          <input
-            name="telephone"
-            placeholder="Téléphone"
-            value={formData.telephone}
-            onChange={handleChange}
-            className="input"
-            readOnly
-          />
-
-          {/* Email et mot de passe */}
-          <input
-            name="email"
-            placeholder="Email du conseiller"
-            value={formData.email}
-            onChange={handleChange}
-            className="input"
-            required
-          />
-          <input
-            name="password"
-            placeholder="Mot de passe"
-            type="password"
-            value={formData.password}
-            onChange={handleChange}
-            className="input"
-            required
-          />
+          <input name="prenom" placeholder="Prénom" value={formData.prenom} className="input" readOnly />
+          <input name="nom" placeholder="Nom" value={formData.nom} className="input" readOnly />
+          <input name="telephone" placeholder="Téléphone" value={formData.telephone} className="input" readOnly />
+          <input name="email" placeholder="Email du conseiller" value={formData.email} onChange={handleChange} className="input" required />
+          <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
 
           <div className="flex gap-4 mt-4">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
-            >
+            <button type="button" onClick={handleCancel} className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200">Annuler</button>
+            <button type="submit" disabled={loading} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200">
               {loading ? "Création..." : "Créer"}
             </button>
           </div>
         </form>
 
-        {message && (
-          <p className="mt-4 text-center text-sm text-gray-700">{message}</p>
-        )}
+        {message && <p className="mt-4 text-center text-sm text-gray-700">{message}</p>}
 
         <style jsx>{`
           .input {

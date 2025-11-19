@@ -1,8 +1,10 @@
+// pages/create-conseiller.js
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import supabase from "../lib/supabaseClient"; // adapte le chemin si nécessaire
+import supabase from "../lib/supabaseClient";
 
 export default function CreateConseiller() {
   const router = useRouter();
@@ -17,6 +19,16 @@ export default function CreateConseiller() {
   });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+  // ➤ Récupère l'utilisateur connecté pour responsable_id
+  useEffect(() => {
+    async function fetchUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setCurrentUserId(user.id);
+    }
+    fetchUser();
+  }, []);
 
   // ➤ Charge les membres star = true
   useEffect(() => {
@@ -32,7 +44,7 @@ export default function CreateConseiller() {
     fetchStarMembers();
   }, []);
 
-  // ➤ Remplit automatiquement le prénom, nom, téléphone
+  // ➤ Quand on sélectionne un membre, remplir prenom, nom, telephone
   useEffect(() => {
     if (!selectedMemberId) {
       setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
@@ -58,22 +70,22 @@ export default function CreateConseiller() {
       setMessage("❌ Remplissez tous les champs !");
       return;
     }
+    if (!currentUserId) {
+      setMessage("❌ Impossible de récupérer l'utilisateur connecté");
+      return;
+    }
 
     setLoading(true);
     setMessage("⏳ Création en cours...");
 
     try {
-      // Récupérer ID du responsable connecté
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-
-      const res = await fetch("/api/create-conseiller", {
+      const res = await fetch("/api/create-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          role: "Conseiller",
-          responsable_id: user.id, // ✅ Responsable
+          role: "Conseiller",       // rôle fixe
+          responsable_id: currentUserId, // ID du responsable
         }),
       });
 
@@ -118,6 +130,7 @@ export default function CreateConseiller() {
         <h1 className="text-3xl font-bold text-center mb-6">Créer un Conseiller</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
+          {/* Sélection membre star */}
           <select
             value={selectedMemberId}
             onChange={(e) => setSelectedMemberId(e.target.value)}
@@ -132,6 +145,7 @@ export default function CreateConseiller() {
             ))}
           </select>
 
+          {/* Affichage automatique des infos */}
           <input
             name="prenom"
             placeholder="Prénom"
@@ -157,6 +171,7 @@ export default function CreateConseiller() {
             readOnly
           />
 
+          {/* Email et mot de passe */}
           <input
             name="email"
             placeholder="Email du conseiller"
@@ -175,6 +190,7 @@ export default function CreateConseiller() {
             required
           />
 
+          {/* Boutons */}
           <div className="flex gap-4 mt-4">
             <button
               type="button"

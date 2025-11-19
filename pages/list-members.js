@@ -405,7 +405,11 @@ export default function ListMembers() {
 
       {editMember && <EditMemberPopup member={editMember} cellules={cellules} onClose={() => setEditMember(null)} onUpdateMember={updated => { setMembers(prev => prev.map(m => (m.id === updated.id ? updated : m))); setEditMember(null); }} />}
 
-      {showingToast && <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg">{toastMessage}</div>}
+      {showingToast && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg">
+          {toastMessage}
+        </div>
+      )}
     </div>
   );
 }

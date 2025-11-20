@@ -315,16 +315,7 @@ export default function ListMembers() {
                                     : conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)
                                   }
                                 </select>
-                              )}
-                              {/* --- BOUTON MODIFIER --- */}
-                                <div className="flex justify-center mt-4">
-                                  <button
-                                    onClick={() => openEditMemberPopup(member)}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg shadow-md transition"
-                                  >
-                                    Modifier
-                                  </button>
-                                </div>
+                              )}                         
 
 
                               {selectedTargets[m.id] && (
@@ -350,6 +341,7 @@ export default function ListMembers() {
                                   />
                                 </div>
                               )}
+                                <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
                             </div>
                           </div>
                         )}

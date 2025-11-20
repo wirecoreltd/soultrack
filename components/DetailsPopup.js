@@ -9,12 +9,6 @@ export default function DetailsPopup({
   onClose,
   statusOptions = [],
   cellules = [],
-  selectedCellules = {},
-  setSelectedCellules,
-  selectedTargetType = {},
-  setSelectedTargetType,
-  selectedTargets = {},
-  setSelectedTargets,
   conseillers = [],
   handleChangeStatus,
   handleAfterSend,
@@ -22,6 +16,10 @@ export default function DetailsPopup({
   showToast,
 }) {
   const [editMember, setEditMember] = useState(null);
+
+  // State local pour le popup
+  const [selectedTargetTypeLocal, setSelectedTargetTypeLocal] = useState({});
+  const [selectedTargetsLocal, setSelectedTargetsLocal] = useState({});
 
   if (!member) return null;
 
@@ -51,7 +49,7 @@ export default function DetailsPopup({
           🕊 Statut : {member.statut || "—"}
         </p>
 
-        {/* ====================== INFOS MEMBRE ====================== */}
+        {/* Infos membre */}
         <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
           <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
           <p>🏙 Ville : {member.ville || "—"}</p>
@@ -86,13 +84,13 @@ export default function DetailsPopup({
           )}
         </div>
 
-        {/* ====================== ENVOYER À (identique à la carte) ====================== */}
+        {/* ====================== ENVOYER À ====================== */}
         <div className="mt-2">
           <label className="font-semibold text-sm">Envoyer à :</label>
           <select
-            value={selectedTargetType[member.id] || ""}
+            value={selectedTargetTypeLocal[member.id] || ""}
             onChange={(e) =>
-              setSelectedTargetType(prev => ({ ...prev, [member.id]: e.target.value }))
+              setSelectedTargetTypeLocal(prev => ({ ...prev, [member.id]: e.target.value }))
             }
             className="mt-1 w-full border rounded px-2 py-1 text-sm"
           >
@@ -101,19 +99,19 @@ export default function DetailsPopup({
             <option value="conseiller">Un Conseiller</option>
           </select>
 
-          {(selectedTargetType[member.id] === "cellule" ||
-            selectedTargetType[member.id] === "conseiller") && (
+          {(selectedTargetTypeLocal[member.id] === "cellule" ||
+            selectedTargetTypeLocal[member.id] === "conseiller") && (
             <select
-              value={selectedTargets[member.id] || ""}
+              value={selectedTargetsLocal[member.id] || ""}
               onChange={(e) =>
-                setSelectedTargets(prev => ({ ...prev, [member.id]: e.target.value }))
+                setSelectedTargetsLocal(prev => ({ ...prev, [member.id]: e.target.value }))
               }
               className="mt-1 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">
-                -- Choisir {selectedTargetType[member.id]} --
+                -- Choisir {selectedTargetTypeLocal[member.id]} --
               </option>
-              {selectedTargetType[member.id] === "cellule"
+              {selectedTargetTypeLocal[member.id] === "cellule"
                 ? cellules.map(c => (
                     <option key={c.id} value={c.id}>
                       {c.cellule} ({c.responsable})
@@ -127,23 +125,23 @@ export default function DetailsPopup({
             </select>
           )}
 
-          {selectedTargets[member.id] && (
+          {selectedTargetsLocal[member.id] && (
             <div className="pt-2">
               <BoutonEnvoyer
                 membre={member}
-                type={selectedTargetType[member.id]}
+                type={selectedTargetTypeLocal[member.id]}
                 cible={
-                  selectedTargetType[member.id] === "cellule"
-                    ? cellules.find(c => c.id === selectedTargets[member.id])
-                    : conseillers.find(c => c.id === selectedTargets[member.id])
+                  selectedTargetTypeLocal[member.id] === "cellule"
+                    ? cellules.find(c => c.id === selectedTargetsLocal[member.id])
+                    : conseillers.find(c => c.id === selectedTargetsLocal[member.id])
                 }
                 onEnvoyer={(id) =>
                   handleAfterSend(
                     id,
-                    selectedTargetType[member.id],
-                    selectedTargetType[member.id] === "cellule"
-                      ? cellules.find(c => c.id === selectedTargets[member.id])
-                      : conseillers.find(c => c.id === selectedTargets[member.id])
+                    selectedTargetTypeLocal[member.id],
+                    selectedTargetTypeLocal[member.id] === "cellule"
+                      ? cellules.find(c => c.id === selectedTargetsLocal[member.id])
+                      : conseillers.find(c => c.id === selectedTargetsLocal[member.id])
                   )
                 }
                 session={session}
@@ -163,15 +161,15 @@ export default function DetailsPopup({
               Fermer les détails
             </button>
 
-            <button
-              onClick={() => setEditMember(member)}
-              className="text-blue-500 underline text-sm hover:text-blue-700"
-            >
-              Modifier
-            </button>
-          </div>
-        )}
-      </div>
+            //<button
+              //onClick={() => setEditMember(member)}
+             // className="text-blue-500 underline text-sm hover:text-blue-700"
+           // >
+            //  Modifier
+            //</button>
+         // </div>
+       // )}
+      //</div>
 
       {/* ====================== POPUP MODIFICATION ====================== */}
       {editMember && (

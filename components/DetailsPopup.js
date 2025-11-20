@@ -71,6 +71,7 @@ export default function DetailsPopup({
             </p>
             <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
 
+            {/* ====================== ENVOYER À ====================== */}
             <div className="mt-2">
               <label className="font-semibold text-sm">Envoyer à :</label>
               <select
@@ -156,12 +157,19 @@ export default function DetailsPopup({
               </span>
             </p>
 
-            <div className="text-center mt-3">
+            <div className="flex justify-between mt-3">
               <button
                 onClick={onClose}
                 className="text-red-500 underline text-sm hover:text-red-700"
               >
                 Fermer les détails
+              </button>
+
+              <button
+                onClick={() => setEditMember(member)}
+                className="text-blue-500 underline text-sm hover:text-blue-700"
+              >
+                Modifier
               </button>
             </div>
           </div>

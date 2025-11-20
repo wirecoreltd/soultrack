@@ -1,44 +1,35 @@
-// /pages/api/create-conseiller.js
-
 import { createClient } from "@supabase/supabase-js";
 
-// ❗ ICI ON UTILISE L’ANON KEY (OBLIGATOIRE pour que auth.uid() marche)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
-
 export default async function handler(req, res) {
-  if (req.method !== "POST")
+  if (req.method !== "POST") 
     return res.status(405).json({ error: "Méthode non autorisée" });
 
   try {
-    const { prenom, nom, telephone, email, password } = req.body;
+    const { prenom, nom, telephone, email, password, token } = req.body;
 
-    // 👉 1. Vérifier si un responsable est connecté
-    const {
-      data: { user: responsable },
-      error: userError,
-    } = await supabase.auth.getUser();
+    if (!token) return res.status(401).json({ error: "Token manquant" });
 
-    if (userError || !responsable) {
-      return res.status(401).json({ error: "Utilisateur non authentifié" });
-    }
+    // 🔹 Client Supabase avec token du front
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      }
+    );
 
-    // 👉 2. Créer l’utilisateur dans Auth
-    const {
-      data: newUser,
-      error: createError,
-    } = await supabase.auth.signUp({
+    // 🔹 Récupérer l'utilisateur connecté
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) return res.status(401).json({ error: "Utilisateur non authentifié" });
+
+    // 🔹 Créer le conseiller dans Auth
+    const { data: newUser, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
     });
+    if (signUpError) throw signUpError;
 
-    if (createError) throw createError;
-
-    // 👉 3. Insert dans profiles
-    // ❗ ATTENTION : on n’envoie PLUS responsable_id
-    // Le trigger SQL dans Supabase va le remplir automatiquement via auth.uid()
+    // 🔹 Insert dans profiles avec responsable_id
     const { error: insertError } = await supabase.from("profiles").insert({
       id: newUser.user.id,
       prenom,
@@ -46,13 +37,12 @@ export default async function handler(req, res) {
       telephone,
       role: "Conseiller",
       email,
+      responsable_id: user.id, // 🔹 automatiquement le responsable connecté
     });
-
     if (insertError) throw insertError;
 
-    return res.status(200).json({
-      message: "Conseiller créé avec succès",
-    });
+    return res.status(200).json({ message: "Conseiller créé avec succès" });
+
   } catch (err) {
     console.error("Erreur API:", err);
     return res.status(500).json({ error: err.message });

@@ -41,7 +41,7 @@ export default function SuivisMembres() {
 
         let suivisData = [];
 
-        if (userRole.includes("Administrateur")) {
+       if (userRole.includes("Administrateur") || userRole.includes("ResponsableIntegration")) {
           const { data, error } = await supabase
             .from("suivis_membres")
             .select("*")

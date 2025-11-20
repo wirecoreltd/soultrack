@@ -3,6 +3,10 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import BoutonEnvoyer from "./BoutonEnvoyer";
+import Image from "next/image";
+import LogoutLink from "./LogoutLink";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 export default function EditMemberPopup({
   member,
@@ -96,8 +100,8 @@ export default function EditMemberPopup({
         <h2 className="text-lg font-bold text-gray-800 text-center mb-4">Modifier {member.prenom} {member.nom}</h2>
 
         <div className="flex flex-col space-y-2 text-sm">
-          <input name="prenom" value={formData.prenom} onChange={handleChange} placeholder="Prénom" className="border rounded px-2 py-1" />
-          <input name="nom" value={formData.nom} onChange={handleChange} placeholder="Nom" className="border rounded px-2 py-1" />
+          <input name="prenom" value={formData.prenom} onChange={handleChange} placeholder="Prénom" className="border rounded px-2 py-1" /> Prénom :
+          <input name="nom" value={formData.nom} onChange={handleChange} placeholder="Nom" className="border rounded px-2 py-1" /> Nom :
           <input name="ville" value={formData.ville} onChange={handleChange} placeholder="Ville" className="border rounded px-2 py-1" />
           <input name="telephone" value={formData.telephone} onChange={handleChange} placeholder="Téléphone" className="border rounded px-2 py-1" />
 
@@ -176,7 +180,6 @@ export default function EditMemberPopup({
               </div>
             )}
           </div>
-
         </div>
 
         {message && <p className="text-green-600 text-center mt-3 font-semibold">{message}</p>}

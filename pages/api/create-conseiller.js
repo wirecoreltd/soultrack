@@ -1,41 +1,60 @@
-import supabaseAdmin from "../../lib/supabaseAdmin";
+// /pages/api/create-conseiller.js
+
+import { createClient } from "@supabase/supabase-js";
+
+// ❗ ICI ON UTILISE L’ANON KEY (OBLIGATOIRE pour que auth.uid() marche)
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 export default async function handler(req, res) {
   if (req.method !== "POST")
     return res.status(405).json({ error: "Méthode non autorisée" });
 
   try {
-    const { prenom, nom, email, password, role, telephone, responsable_id } = req.body;
+    const { prenom, nom, telephone, email, password } = req.body;
 
-    // 🌟 Création utilisateur ADMIN
-    const { data: userData, error: createError } =
-      await supabaseAdmin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-      });
+    // 👉 1. Vérifier si un responsable est connecté
+    const {
+      data: { user: responsable },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !responsable) {
+      return res.status(401).json({ error: "Utilisateur non authentifié" });
+    }
+
+    // 👉 2. Créer l’utilisateur dans Auth
+    const {
+      data: newUser,
+      error: createError,
+    } = await supabase.auth.signUp({
+      email,
+      password,
+    });
 
     if (createError) throw createError;
-    const user = userData.user;
 
-    // 🌟 Insert profile via ADMIN (ignore RLS)
-    const { error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .insert({
-        id: user.id,
-        prenom,
-        nom,
-        telephone,
-        role,
-        email,
-        responsable_id: responsable_id || null,
-      });
+    // 👉 3. Insert dans profiles
+    // ❗ ATTENTION : on n’envoie PLUS responsable_id
+    // Le trigger SQL dans Supabase va le remplir automatiquement via auth.uid()
+    const { error: insertError } = await supabase.from("profiles").insert({
+      id: newUser.user.id,
+      prenom,
+      nom,
+      telephone,
+      role: "Conseiller",
+      email,
+    });
 
-    if (profileError) throw profileError;
+    if (insertError) throw insertError;
 
-    return res.status(200).json({ message: "Utilisateur créé avec succès" });
+    return res.status(200).json({
+      message: "Conseiller créé avec succès",
+    });
   } catch (err) {
-    console.error("Erreur création utilisateur:", err);
+    console.error("Erreur API:", err);
     return res.status(500).json({ error: err.message });
   }
 }

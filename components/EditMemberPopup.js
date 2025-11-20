@@ -134,7 +134,7 @@ export default function EditMemberPopup({
         </h2>
 
         {/* Formulaire */}
-        <div className="flex flex-col space-y-2 text-sm">
+        <div className="flex flex-col space-y-2 text-sm"> Prénom :
           <input
             name="prenom"
             value={formData.prenom}

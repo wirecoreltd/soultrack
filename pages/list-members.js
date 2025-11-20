@@ -30,27 +30,9 @@ export default function ListMembers() {
   const [session, setSession] = useState(null);
   const [prenom, setPrenom] = useState("");
 
-  // Minimal local state / helpers used by DetailsPopup (non-intrusive defaults).
-  // If you already have implementations elsewhere, you can replace these.
-  const [selectedCellules, setSelectedCellules] = useState({});
-
-  const handleChangeStatus = async (memberId, newStatus) => {
-    try {
-      // attempt to update in DB and locally
-      await supabase.from("membres").update({ statut: newStatus }).eq("id", memberId);
-      setMembers(prev => prev.map(m => (m.id === memberId ? { ...m, statut: newStatus } : m)));
-    } catch (err) {
-      console.error("Erreur handleChangeStatus:", err);
-    }
-  };
-
-  const handleStatusUpdateFromEnvoyer = (memberId, newStatus) => {
-    // called after BoutonEnvoyer completes
-    setMembers(prev => prev.map(m => (m.id === memberId ? { ...m, statut: newStatus } : m)));
-  };
-
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setShowingToast(true);
@@ -131,6 +113,7 @@ export default function ListMembers() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+      
       {/* Top bar */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
@@ -165,7 +148,7 @@ export default function ListMembers() {
       {/* VUE CARTE */}
       {view === "card" && (
         <div className="w-full max-w-5xl space-y-8">
-          {/* Nouveaux membres */}
+          {/* Cartes Nouveaux Membres */}
           {nouveauxFiltres.length > 0 && (
             <div>
               <p className="text-white text-lg mb-4 ml-1">💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}</p>
@@ -183,18 +166,10 @@ export default function ListMembers() {
 
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
+                            {/* Infos membre */}
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || ""}</p>
-                            <p>❓Besoin : {
-                              (() => {
-                                if (!m.besoin) return "—";
-                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                                try {
-                                  const arr = JSON.parse(m.besoin);
-                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                                } catch { return m.besoin; }
-                              })()
-                            }</p>
+                            <p>❓Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             <div className="mt-2">
@@ -257,7 +232,7 @@ export default function ListMembers() {
             </div>
           )}
 
-          {/* Anciens membres */}
+          {/* Cartes Anciens Membres */}
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
               <h3 className="text-white text-lg mb-3 font-semibold">
@@ -274,21 +249,12 @@ export default function ListMembers() {
                         <p className="text-sm text-gray-600">🕊 Statut : {m.statut}</p>
 
                         <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">{isOpen ? "Fermer détails" : "Détails"}</button>
-
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
+                            {/* Infos membre */}
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || ""}</p>
-                            <p>❓Besoin : {
-                              (() => {
-                                if (!m.besoin) return "—";
-                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                                try {
-                                  const arr = JSON.parse(m.besoin);
-                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                                } catch { return m.besoin; }
-                              })()
-                            }</p>
+                            <p>❓Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             <div className="mt-2">
@@ -315,34 +281,23 @@ export default function ListMembers() {
                                     : conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)
                                   }
                                 </select>
-                              )}                         
-
+                              )}
 
                               {selectedTargets[m.id] && (
-                                <div className="pt-2">
-                                  <BoutonEnvoyer
-                                    membre={m}
-                                    type={selectedTargetType[m.id]}
-                                    cible={selectedTargetType[m.id] === "cellule"
-                                      ? cellules.find(c => c.id === selectedTargets[m.id])
-                                      : conseillers.find(c => c.id === selectedTargets[m.id])
-                                    }
-                                    onEnvoyer={(id) =>
-                                      handleAfterSend(
-                                        id,
-                                        selectedTargetType[m.id],
-                                        selectedTargetType[m.id] === "cellule"
-                                          ? cellules.find(c => c.id === selectedTargets[m.id])
-                                          : conseillers.find(c => c.id === selectedTargets[m.id])
-                                      )
-                                    }
-                                    session={session}
-                                    showToast={showToast}
-                                  />
-                                </div>
-                                
+                                <BoutonEnvoyer
+                                  membre={m}
+                                  type={selectedTargetType[m.id]}
+                                  cible={selectedTargetType[m.id] === "cellule"
+                                    ? cellules.find(c => c.id === selectedTargets[m.id])
+                                    : conseillers.find(c => c.id === selectedTargets[m.id])
+                                  }
+                                  onEnvoyer={handleAfterSend}
+                                  session={session}
+                                  showToast={showToast}
+                                />
                               )}
-                             <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm items-center">Modifier</button>   
+
+                              <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm mt-1">Modifier</button>
                             </div>
                           </div>
                         )}
@@ -356,158 +311,76 @@ export default function ListMembers() {
         </div>
       )}
 
-     {view === "table" && (
-  <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-    <table className="w-full text-sm text-left border-separate border-spacing-0">
-      <thead className="bg-gray-200 text-gray-800 text-sm uppercase">
-        <tr>
-          <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-          <th className="px-4 py-2">Téléphone</th>
-          <th className="px-4 py-2">Statut</th>
-          <th className="px-4 py-2 rounded-tr-lg">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {/* Nouveaux Membres */}
-        {nouveauxFiltres.length > 0 && (
-          <tr><td colSpan={4} className="px-4 py-2 text-white font-semibold">💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}</td></tr>
-        )}
-        {nouveauxFiltres.map(m => (
-          <tr key={m.id} className="border-b border-gray-300">
-            <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white" style={{ borderLeftColor: getBorderColor(m) }}>
-              {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-              <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
-            </td>
-            <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
-            <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
-            <td className="px-4 py-2 flex flex-col gap-1">
-              <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">
-                {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-              </button>
-              <div className="flex flex-col gap-1 mt-1">
-                <select
-                  value={selectedTargetType[m.id] || ""}
-                  onChange={(e) => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
-                  className="border rounded px-2 py-1 text-sm"
-                >
-                  <option value="">-- Choisir une option --</option>
-                  <option value="cellule">Une Cellule</option>
-                  <option value="conseiller">Un Conseiller</option>
-                </select>
-
-                {selectedTargetType[m.id] === "cellule" && (
-                  <select
-                    value={selectedTargets[m.id] || ""}
-                    onChange={(e) => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
-                    className="border rounded px-2 py-1 text-sm"
-                  >
-                    <option value="">-- Choisir une Cellule --</option>
-                    {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>)}
-                  </select>
-                )}
-
-                {selectedTargetType[m.id] === "conseiller" && (
-                  <select
-                    value={selectedTargets[m.id] || ""}
-                    onChange={(e) => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
-                    className="border rounded px-2 py-1 text-sm"
-                  >
-                    <option value="">-- Choisir un Conseiller --</option>
-                    {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
-                  </select>
-                )}
-
-                {selectedTargets[m.id] && (
-                  <BoutonEnvoyer
-                    membre={m}
-                    type={selectedTargetType[m.id]}
-                    cible={
-                      selectedTargetType[m.id] === "cellule"
-                        ? cellules.find(c => c.id === selectedTargets[m.id])
-                        : conseillers.find(c => c.id === selectedTargets[m.id])
-                    }
-                    onEnvoyer={handleAfterSend} // <-- corrigé
-                    session={session}
-                    showToast={showToast}
-                  />
-                )}
-              </div>
-            </td>
-          </tr>
-        ))}
-
-        {/* Anciens Membres */}
-        {anciensFiltres.length > 0 && (
-          <>
-            <tr><td colSpan={4} className="px-4 py-2 font-semibold text-lg text-white">
-              <span style={{ background: "linear-gradient(to right, #3B82F6, #D1D5DB)", WebkitBackgroundClip: "text", color: "transparent" }}>Membres existants</span>
-            </td></tr>
-            {anciensFiltres.map(m => (
-              <tr key={m.id} className="border-b border-gray-300">
-                <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white" style={{ borderLeftColor: getBorderColor(m) }}>
-                  {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                </td>
-                <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
-                <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
-                <td className="px-4 py-2 flex flex-col gap-1">
-                  <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">
-                    {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                  </button>
-                  <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
-                  <div className="flex flex-col gap-1 mt-1">
-                    <select
-                      value={selectedTargetType[m.id] || ""}
-                      onChange={(e) => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
-                      className="border rounded px-2 py-1 text-sm"
-                    >
-                      <option value="">-- Choisir une option --</option>
-                      <option value="cellule">Une Cellule</option>
-                      <option value="conseiller">Un Conseiller</option>
-                    </select>
-
-                    {selectedTargetType[m.id] === "cellule" && (
-                      <select
-                        value={selectedTargets[m.id] || ""}
-                        onChange={(e) => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
-                        className="border rounded px-2 py-1 text-sm"
-                      >
-                        <option value="">-- Choisir une Cellule --</option>
-                        {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>)}
-                      </select>
-                    )}
-
-                    {selectedTargetType[m.id] === "conseiller" && (
-                      <select
-                        value={selectedTargets[m.id] || ""}
-                        onChange={(e) => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
-                        className="border rounded px-2 py-1 text-sm"
-                      >
-                        <option value="">-- Choisir un Conseiller --</option>
-                        {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
-                      </select>
-                    )}
-
-                    {selectedTargets[m.id] && (
-                      <BoutonEnvoyer
-                        membre={m}
-                        type={selectedTargetType[m.id]}
-                        cible={
-                          selectedTargetType[m.id] === "cellule"
-                            ? cellules.find(c => c.id === selectedTargets[m.id])
-                            : conseillers.find(c => c.id === selectedTargets[m.id])
-                        }
-                        onEnvoyer={handleAfterSend}
-                        session={session}
-                        showToast={showToast}
-                      />
-                    )}
-                  </div>
-                </td>
+      {/* VUE TABLE */}
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+          <table className="w-full text-sm text-left border-separate border-spacing-0">
+            <thead className="bg-gray-200 text-gray-800 text-sm uppercase">
+              <tr>
+                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+                <th className="px-4 py-2">Téléphone</th>
+                <th className="px-4 py-2">Statut</th>
+                <th className="px-4 py-2 rounded-tr-lg">Actions</th>
               </tr>
-            ))}
-          </>
-        )}
-      </tbody>
-    </table>
-  </div>
-)}
+            </thead>
+            <tbody>
+              {/* Nouveaux Membres */}
+              {nouveauxFiltres.length > 0 && (
+                <tr><td colSpan={4} className="px-4 py-2 text-white font-semibold">💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}</td></tr>
+              )}
+              {nouveauxFiltres.map(m => (
+                <tr key={m.id} className="border-b border-gray-300">
+                  <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
+                  <td className="px-4 py-2">{m.telephone || "—"}</td>
+                  <td className="px-4 py-2">{m.statut}</td>
+                  <td className="px-4 py-2 border-r-4 rounded-r-md space-x-2">
+                    <button onClick={() => setPopupMember(m)} className="text-orange-500 underline text-sm">Détails</button>
+                    <button onClick={() => setEditMember(m)} className="text-blue-500 underline text-sm">Modifier</button>
+                  </td>
+                </tr>
+              ))}
+
+              {/* Anciens Membres */}
+              {anciensFiltres.length > 0 && (
+                <tr><td colSpan={4} className="px-4 py-2 text-white font-semibold">Membres existants</td></tr>
+              )}
+              {anciensFiltres.map(m => (
+                <tr key={m.id} className="border-b border-gray-300">
+                  <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom} {m.star && "⭐"}</td>
+                  <td className="px-4 py-2">{m.telephone || "—"}</td>
+                  <td className="px-4 py-2">{m.statut}</td>
+                  <td className="px-4 py-2 border-r-4 rounded-r-md space-x-2">
+                    <button onClick={() => setPopupMember(m)} className="text-orange-500 underline text-sm">Détails</button>
+                    <button onClick={() => setEditMember(m)} className="text-blue-500 underline text-sm">Modifier</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Popups */}
+      {editMember && (
+        <EditMemberPopup
+          membre={editMember}
+          onClose={() => setEditMember(null)}
+          onSave={(updatedMember) => updateMemberLocally(updatedMember.id, updatedMember)}
+        />
+      )}
+      {popupMember && (
+        <DetailsPopup
+          membre={popupMember}
+          onClose={() => setPopupMember(null)}
+        />
+      )}
+
+      {/* Toast */}
+      {showingToast && (
+        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg">
+          {toastMessage}
+        </div>
+      )}
+    </div>
+  );
+}

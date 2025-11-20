@@ -16,20 +16,19 @@ export default function DetailsPopup({
 }) {
   const [selectedTargetTypeLocal, setSelectedTargetTypeLocal] = useState({});
   const [selectedTargetsLocal, setSelectedTargetsLocal] = useState({});
+  const [loading, setLoading] = useState(false);
 
   if (!member) return null;
 
-  const isNouveau =
-    member.statut === "visiteur" || member.statut === "veut rejoindre ICC";
+  const isNouveau = member.statut === "visiteur" || member.statut === "veut rejoindre ICC";
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
-      <div className="bg-white text-black p-6 rounded-lg w-80 max-h-[90vh] overflow-y-auto relative shadow-xl">
+      <div className="bg-white text-black p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto relative shadow-xl">
         {/* Bouton de fermeture */}
         <button
           onClick={onClose}
           className="absolute top-2 right-2 text-red-500 font-bold hover:text-red-700"
-          aria-label="Fermer la fenêtre"
         >
           ✕
         </button>
@@ -38,6 +37,7 @@ export default function DetailsPopup({
         <h2 className="text-lg font-bold text-gray-800 text-center">
           {member.prenom} {member.nom}
         </h2>
+
         <p className="text-sm text-gray-600 mb-2 text-center">
           📱 {member.telephone || "—"}
         </p>
@@ -66,26 +66,24 @@ export default function DetailsPopup({
           )}
           <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
           {!isNouveau && (
-            <p className="mt-2 text-black-600">
+            <p className="mt-2">
               🏠 Cellule :{" "}
               <span className="text-gray-700 font-normal ml-1">
                 {(() => {
                   const cellule = cellules.find(c => c.id === member.cellule_id);
-                  return cellule
-                    ? `${cellule.cellule} (${cellule.responsable || "—"})`
-                    : "—";
+                  return cellule ? `${cellule.cellule} (${cellule.responsable || "—"})` : "—";
                 })()}
               </span>
             </p>
           )}
         </div>
 
-        {/* ====================== ENVOYER À ====================== */}
-        <div className="mt-2">
+        {/* ENVOYER À */}
+        <div className="mt-4">
           <label className="font-semibold text-sm">Envoyer à :</label>
           <select
             value={selectedTargetTypeLocal[member.id] || ""}
-            onChange={(e) =>
+            onChange={e =>
               setSelectedTargetTypeLocal(prev => ({ ...prev, [member.id]: e.target.value }))
             }
             className="mt-1 w-full border rounded px-2 py-1 text-sm"
@@ -99,7 +97,7 @@ export default function DetailsPopup({
             selectedTargetTypeLocal[member.id] === "conseiller") && (
             <select
               value={selectedTargetsLocal[member.id] || ""}
-              onChange={(e) =>
+              onChange={e =>
                 setSelectedTargetsLocal(prev => ({ ...prev, [member.id]: e.target.value }))
               }
               className="mt-1 w-full border rounded px-2 py-1 text-sm"

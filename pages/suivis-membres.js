@@ -23,11 +23,7 @@ export default function SuivisMembres() {
     setLoading(true);
     try {
       // Récupérer l'utilisateur connecté
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error("Utilisateur non connecté");
 
       // Récupérer le profil
@@ -36,7 +32,6 @@ export default function SuivisMembres() {
         .select("id, prenom, nom, role")
         .eq("id", user.id)
         .single();
-
       if (profileError || !profileData) throw profileError;
 
       const userRole = profileData.role;
@@ -45,65 +40,41 @@ export default function SuivisMembres() {
 
       let suivisData = [];
 
-      if (userRole === "Administrateur") {
-        // Tout voir
+      if (userRole === "Administrateur" || userRole === "ResponsableIntegration") {
+        // Voir tous les suivis
         const { data, error } = await supabase
           .from("suivis_membres")
           .select("*")
           .order("created_at", { ascending: false });
         if (error) throw error;
         suivisData = data;
-      } else if (
-        userRole === "ResponsableCellule" ||
-        userRole === "ResponsableIntegration"
-      ) {
-        // Récupérer les cellules dont il est responsable
-        const { data: cellulesData, error: cellulesError } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("responsable_id", profileData.id);
-
-        if (cellulesError) throw cellulesError;
-
-        const celluleIds = cellulesData?.map((c) => c.id) || [];
-
-        // 1️⃣ Suivis liés aux cellules
-        let suivisCellules = [];
-        if (celluleIds.length > 0) {
-          const { data: dataCellules, error: errCellules } = await supabase
-            .from("suivis_membres")
-            .select("*")
-            .in("cellule_id", celluleIds)
-            .order("created_at", { ascending: false });
-          if (errCellules) throw errCellules;
-          suivisCellules = dataCellules || [];
-        }
-
-        // 2️⃣ Suivis directement envoyés au responsable
-        const { data: suivisResponsable, error: errResp } = await supabase
-          .from("suivis_membres")
-          .select("*")
-          .eq("responsable_id", profileData.id)
-          .order("created_at", { ascending: false });
-        if (errResp) throw errResp;
-
-        // Fusionner et trier
-        suivisData = [...suivisCellules, ...suivisResponsable];
-        suivisData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-        if (suivisData.length === 0) {
-          setMessage("Vous n'avez aucun suivi pour le moment.");
-        }
       } else if (userRole === "Conseiller") {
-        // Contacts attribués à ce conseiller
+        // Voir uniquement ses suivis
         const { data, error } = await supabase
           .from("suivis_membres")
           .select("*")
           .eq("conseiller_id", profileData.id)
           .order("created_at", { ascending: false });
-
         if (error) throw error;
         suivisData = data;
+      } else if (userRole === "ResponsableCellule") {
+        // Suivis attribués à ses cellules
+        const { data: cellulesData, error: cellulesError } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", profileData.id);
+        if (cellulesError) throw cellulesError;
+
+        const celluleIds = cellulesData?.map(c => c.id) || [];
+        if (celluleIds.length > 0) {
+          const { data, error } = await supabase
+            .from("suivis_membres")
+            .select("*")
+            .in("cellule_id", celluleIds)
+            .order("created_at", { ascending: false });
+          if (error) throw error;
+          suivisData = data;
+        }
       }
 
       setSuivis(suivisData || []);
@@ -121,6 +92,7 @@ export default function SuivisMembres() {
 
   fetchSuivis();
 }, []);
+
 
 
   const toggleDetails = (id) =>

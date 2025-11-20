@@ -74,11 +74,14 @@ export default function ListMembers() {
     setMembers(prev => prev.map(m => (m.id === id ? { ...m, ...extra } : m)));
   };
 
-  const handleAfterSend = (memberId, type, cible) => {
-    if (type === "cellule") updateMemberLocally(memberId, { cellule_id: cible.id, cellule_nom: cible.cellule });
-    else updateMemberLocally(memberId, { conseiller_id: cible.id });
-    showToast("✅ Contact envoyé et suivi enregistré");
-  };
+  const handleAfterSend = (memberId, type, cible, newStatut) => {
+  const update = { statut: newStatut || "actif" };
+  if (type === "cellule") update.cellule_id = cible.id, update.cellule_nom = cible.cellule;
+  else if (type === "conseiller") update.conseiller_id = cible.id;
+  setMembers(prev => prev.map(m => (m.id === memberId ? { ...m, ...update } : m)));
+  showToast("✅ Contact envoyé et suivi enregistré");
+};
+
 
   const getBorderColor = (m) => {
     if (m.star) return "#FBC02D";

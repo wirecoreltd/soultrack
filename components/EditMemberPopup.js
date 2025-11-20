@@ -1,193 +1,313 @@
 "use client";
 
-import { useState, useEffect } from "react";
+/**
+ * Page: Liste des Membres
+ * Description: Affiche les membres sous forme de carte ou tableau avec filtres et envoi WhatsApp.
+ */
+
+import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
-import BoutonEnvoyer from "./BoutonEnvoyer";
 import Image from "next/image";
-import LogoutLink from "./LogoutLink";
+import BoutonEnvoyer from "../components/BoutonEnvoyer";
+import LogoutLink from "../components/LogoutLink";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import EditMemberPopup from "../components/EditMemberPopup";
 
-export default function EditMemberPopup({
-  member,
-  cellules = [],
-  conseillers = [],
-  onClose,
-  onUpdateMember,
-  session = null,
-  showToast = () => {},
-}) {
-  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
-  const initialBesoin = typeof member.besoin === "string" ? JSON.parse(member.besoin || "[]") : member.besoin || [];
+export default function ListMembers() {
+  const [members, setMembers] = useState([]);
+  const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [detailsOpen, setDetailsOpen] = useState({});
+  const [cellules, setCellules] = useState([]);
+  const [conseillers, setConseillers] = useState([]);
+  const [selectedTargets, setSelectedTargets] = useState({});
+  const [selectedTargetType, setSelectedTargetType] = useState({});
+  const [view, setView] = useState("card");
+  const [popupMember, setPopupMember] = useState(null);
+  const [editMember, setEditMember] = useState(null);
+  const [session, setSession] = useState(null);
+  const [prenom, setPrenom] = useState("");
 
-  const [formData, setFormData] = useState({
-    prenom: member.prenom || "",
-    nom: member.nom || "",
-    telephone: member.telephone || "",
-    ville: member.ville || "",
-    besoin: initialBesoin,
-    autreBesoin: "",
-    infos_supplementaires: member.infos_supplementaires || "",
-    statut: member.statut || "",
-  });
+  const [toastMessage, setToastMessage] = useState("");
+  const [showingToast, setShowingToast] = useState(false);
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setShowingToast(true);
+    setTimeout(() => setShowingToast(false), 3500);
+  };
 
-  const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  // Gestion Cellule / Conseiller
-  const [selectedTargetType, setSelectedTargetType] = useState(member.cellule_id ? "cellule" : member.conseiller_id ? "conseiller" : "");
-  const [selectedTarget, setSelectedTarget] = useState(member.cellule_id || member.conseiller_id || "");
-
-  const handleBesoinChange = (e) => {
-    const { value, checked } = e.target;
-    if (value === "Autre") {
-      setShowAutre(checked);
-      if (!checked) {
-        setFormData(prev => ({ ...prev, autreBesoin: "", besoin: prev.besoin.filter(b => b !== "Autre") }));
+  useEffect(() => {
+    const fetchSessionAndProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      if (session?.user) {
+        const { data } = await supabase.from("profiles").select("prenom").eq("id", session.user.id).single();
+        if (data) setPrenom(data.prenom);
       }
-    }
-    setFormData(prev => {
-      const updatedBesoin = checked ? [...prev.besoin, value] : prev.besoin.filter(b => b !== value);
-      return { ...prev, besoin: updatedBesoin };
-    });
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async () => {
-    setLoading(true);
-    const cleanData = {
-      prenom: formData.prenom || member.prenom,
-      nom: formData.nom || member.nom,
-      ville: formData.ville || null,
-      telephone: formData.telephone || null,
-      infos_supplementaires: formData.infos_supplementaires || null,
-      statut: formData.statut || null,
-      cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
-      conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
-      besoin: formData.autreBesoin && showAutre ? [...formData.besoin.filter(b => b !== "Autre"), formData.autreBesoin] : formData.besoin,
     };
+    fetchSessionAndProfile();
+    fetchMembers();
+    fetchCellules();
+    fetchConseillers();
+  }, []);
 
-    const { error, data } = await supabase
-      .from("membres")
-      .update(cleanData)
-      .eq("id", member.id)
-      .select()
-      .single();
-
-    if (error) {
-      alert("❌ Erreur lors de la mise à jour : " + error.message);
-    } else {
-      if (onUpdateMember) onUpdateMember(data);
-      setMessage("✅ Changement enregistré !");
-      setTimeout(() => { setMessage(""); onClose(); }, 1500);
-    }
-    setLoading(false);
+  const fetchMembers = async () => {
+    const { data } = await supabase.from("membres").select("*").order("created_at", { ascending: false });
+    if (data) setMembers(data);
   };
 
-  const handleAfterSend = (id, type, cible) => {
-    showToast("✅ Contact envoyé et suivi enregistré");
+  const fetchCellules = async () => {
+    const { data } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
+    if (data) setCellules(data);
   };
+
+  const fetchConseillers = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom, telephone")
+      .eq("role", "Conseiller");
+    if (data) setConseillers(data);
+  };
+
+  const updateMemberLocally = (id, extra = {}) => {
+    setMembers(prev => prev.map(m => (m.id === id ? { ...m, ...extra } : m)));
+  };
+
+  const handleAfterSend = (memberId, type, cible, newStatut) => {
+  const update = { statut: newStatut || "actif" };
+  if (type === "cellule") update.cellule_id = cible.id, update.cellule_nom = cible.cellule;
+  else if (type === "conseiller") update.conseiller_id = cible.id;
+  setMembers(prev => prev.map(m => (m.id === memberId ? { ...m, ...update } : m)));
+  showToast("✅ Contact envoyé et suivi enregistré");
+};
+
+
+  const getBorderColor = (m) => {
+    if (m.star) return "#FBC02D";
+    if (m.statut === "actif") return "#4285F4";
+    if (m.statut === "a déjà son église") return "#f21705";
+    if (m.statut === "ancien") return "#999999";
+    if (m.statut === "visiteur" || m.statut === "veut rejoindre ICC") return "#34A853";
+    return "#ccc";
+  };
+
+  const formatDate = (dateStr) => {
+    try { return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr }); }
+    catch { return ""; }
+  };
+
+  const filterBySearch = (list) => list.filter(m => `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase()));
+
+  const nouveaux = members.filter(m => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");
+  const anciens = members.filter(m => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC");
+
+  const nouveauxFiltres = filterBySearch(filter ? nouveaux.filter(m => m.statut === filter) : nouveaux);
+  const anciensFiltres = filterBySearch(filter ? anciens.filter(m => m.statut === filter) : anciens);
+
+  const statusOptions = ["actif","ancien","visiteur","veut rejoindre ICC","a déjà son église"];
+  const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
+
+  const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto shadow-xl relative">
-        <button onClick={onClose} className="absolute top-2 right-2 text-red-500 font-bold hover:text-red-700">✕</button>
-        <h2 className="text-lg font-bold text-gray-800 text-center mb-4">Modifier {member.prenom} {member.nom}</h2>
-
-        <div className="flex flex-col space-y-2 text-sm">
-          <input name="prenom" value={formData.prenom} onChange={handleChange} placeholder="Prénom" className="border rounded px-2 py-1" />
-          <input name="nom" value={formData.nom} onChange={handleChange} placeholder="Nom" className="border rounded px-2 py-1" />
-          <input name="ville" value={formData.ville} onChange={handleChange} placeholder="Ville" className="border rounded px-2 py-1" />
-          <input name="telephone" value={formData.telephone} onChange={handleChange} placeholder="Téléphone" className="border rounded px-2 py-1" />
-
-          {/* Besoins */}
-          <div className="mt-2">
-            <p className="font-semibold mb-2">Besoins :</p>
-            {besoinsOptions.map(item => (
-              <label key={item} className="flex items-center gap-3 mb-2">
-                <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} className="w-5 h-5 rounded border-gray-400 cursor-pointer" />
-                <span>{item}</span>
-              </label>
-            ))}
-            <label className="flex items-center gap-3 mb-2">
-              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} className="w-5 h-5 rounded border-gray-400 cursor-pointer" />
-              Autre
-            </label>
-            {showAutre && <input type="text" name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} placeholder="Précisez..." className="border rounded px-2 py-1 w-full" />}
-          </div>
-
-          <textarea name="infos_supplementaires" value={formData.infos_supplementaires} onChange={handleChange} placeholder="Infos supplémentaires" className="border rounded px-2 py-1" rows={3} />
-
-          <select name="statut" value={formData.statut} onChange={handleChange} className="border rounded px-2 py-1">
-            <option value="">-- Statut --</option>
-            <option value="actif">actif</option>
-            <option value="Integrer">Integrer</option>
-            <option value="ancien">ancien</option>
-            <option value="veut rejoindre ICC">veut rejoindre ICC</option>
-            <option value="visiteur">visiteur</option>
-            <option value="a déjà mon église">a déjà mon église</option>
-          </select>
-
-          {/* Envoi Cellule / Conseiller */}
-          <div className="mt-2">
-            <label className="font-semibold text-sm">Envoyer à :</label>
-            <select
-              value={selectedTargetType || ""}
-              onChange={(e) => setSelectedTargetType(e.target.value)}
-              className="mt-1 w-full border rounded px-2 py-1 text-sm"
-            >
-              <option value="">-- Choisir une option --</option>
-              <option value="cellule">Une Cellule</option>
-              <option value="conseiller">Un Conseiller</option>
-            </select>
-
-            {(selectedTargetType === "cellule" || selectedTargetType === "conseiller") && (
-              <select
-                value={selectedTarget || ""}
-                onChange={(e) => setSelectedTarget(e.target.value)}
-                className="mt-1 w-full border rounded px-2 py-1 text-sm"
-              >
-                <option value="">-- Choisir {selectedTargetType} --</option>
-                {selectedTargetType === "cellule"
-                  ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>)
-                  : conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)
-                }
-              </select>
-            )}
-
-            {selectedTarget && (
-              <div className="pt-2">
-                <BoutonEnvoyer
-                  membre={member}
-                  type={selectedTargetType}
-                  cible={selectedTargetType === "cellule"
-                    ? cellules.find(c => c.id === selectedTarget)
-                    : conseillers.find(c => c.id === selectedTarget)
-                  }
-                  onEnvoyer={(id) => handleAfterSend(id, selectedTargetType,
-                    selectedTargetType === "cellule"
-                      ? cellules.find(c => c.id === selectedTarget)
-                      : conseillers.find(c => c.id === selectedTarget)
-                  )}
-                  session={session}
-                  showToast={showToast}
-                />
-              </div>
-            )}
-          </div>
+    <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+      {/* Top bar */}
+      <div className="w-full max-w-5xl mb-6">
+        <div className="flex justify-between items-center">
+          <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-gray-200">← Retour</button>
+          <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20" />
         </div>
-
-        {message && <p className="text-green-600 text-center mt-3 font-semibold">{message}</p>}
-
-        <button onClick={handleSubmit} disabled={loading} className={`mt-4 w-full text-white py-2 rounded transition font-bold ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}>
-          {loading ? "Enregistrement..." : "Enregistrer"}
-        </button>
+        <div className="flex justify-end mt-2">
+          <p className="text-orange-200 text-sm">👋 Bienvenue {prenom || "cher membre"}</p>
+        </div>
       </div>
-    </div>
-  );
-}
+
+      <div className="mb-4"><Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" /></div>
+
+      <div className="text-center mb-4">
+        <h1 className="text-3xl font-bold text-white mb-2">Liste des Membres</h1>
+        <p className="text-white text-lg font-light italic max-w-xl mx-auto">Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️</p>
+      </div>
+
+      {/* Search & Filter */}
+      <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">
+        <div className="flex items-center space-x-2">
+          <select value={filter} onChange={e => setFilter(e.target.value)} className="px-3 py-2 rounded-lg border text-sm">
+            <option value="">Tous les statuts</option>
+            {statusOptions.map(s => <option key={s}>{s}</option>)}
+          </select>
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..." className="px-3 py-2 rounded-lg border text-sm w-48" />
+          <span className="text-white text-sm">({totalCount})</span>
+        </div>
+        <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline">{view === "card" ? "Vue Table" : "Vue Carte"}</button>
+      </div>
+
+      {/* VUE CARTE */}
+      {view === "card" && (
+        <div className="w-full max-w-5xl space-y-8">
+          {/* Nouveaux membres */}
+          {nouveauxFiltres.length > 0 && (
+            <div>
+              <p className="text-white text-lg mb-4 ml-1">💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {nouveauxFiltres.map(m => {
+                  const isOpen = detailsOpen[m.id];
+                  return (
+                    <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4 relative" style={{ borderLeftColor: getBorderColor(m) }}>
+                      <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] px-6 py-1 rotate-45">Nouveau</span>
+                      <div className="flex flex-col items-center">
+                        <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
+                        <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
+                        <p className="text-sm text-gray-600">🕊 Statut : {m.statut}</p>
+                        <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">{isOpen ? "Fermer détails" : "Détails"}</button>
+
+                        {isOpen && (
+                          <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
+                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                            <p>🏙 Ville : {m.ville || ""}</p>
+                            <p>❓ Besoin : {m.besoin || "—"}</p>
+                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+
+                            {/* Envoi Cellule / Conseiller */}
+                            <div className="mt-2">
+                              <label className="font-semibold text-sm">Envoyer à :</label>
+                              <select
+                                value={selectedTargetType[m.id] || ""}
+                                onChange={(e) => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
+                                className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                              >
+                                <option value="">-- Choisir une option --</option>
+                                <option value="cellule">Une Cellule</option>
+                                <option value="conseiller">Un Conseiller</option>
+                              </select>
+
+                              {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
+                                <select
+                                  value={selectedTargets[m.id] || ""}
+                                  onChange={(e) => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
+                                  className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                                >
+                                  <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
+                                  {selectedTargetType[m.id] === "cellule"
+                                    ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>)
+                                    : conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)
+                                  }
+                                </select>
+                              )}
+
+                              {selectedTargets[m.id] && (
+                                <div className="pt-2">
+                                  <BoutonEnvoyer
+                                    membre={m}
+                                    type={selectedTargetType[m.id]}
+                                    cible={selectedTargetType[m.id] === "cellule"
+                                      ? cellules.find(c => c.id === selectedTargets[m.id])
+                                      : conseillers.find(c => c.id === selectedTargets[m.id])
+                                    }
+                                    onEnvoyer={(id) => handleAfterSend(id, selectedTargetType[m.id],
+                                      selectedTargetType[m.id] === "cellule"
+                                        ? cellules.find(c => c.id === selectedTargets[m.id])
+                                        : conseillers.find(c => c.id === selectedTargets[m.id])
+                                    )}
+                                    session={session}
+                                    showToast={showToast}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Anciens membres */}
+          {anciensFiltres.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-white text-lg mb-3 font-semibold">
+                <span style={{ background: "linear-gradient(to right, #3B82F6, #D1D5DB)", WebkitBackgroundClip: "text", color: "transparent" }}>Membres existants</span>
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {anciensFiltres.map(m => {
+                  const isOpen = detailsOpen[m.id];
+                  return (
+                    <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
+                      <div className="flex flex-col items-center">
+                        <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}</h2>
+                        <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
+                        <p className="text-sm text-gray-600">🕊 Statut : {m.statut}</p>
+
+                        <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">{isOpen ? "Fermer détails" : "Détails"}</button>
+                        <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm mt-2">Modifier</button>
+
+                        {isOpen && (
+                          <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
+                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                            <p>🏙 Ville : {m.ville || ""}</p>
+                            <p>❓ Besoin : {m.besoin || "—"}</p>
+                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+
+                            <div className="mt-2">
+                              <label className="font-semibold text-sm">Envoyer à :</label>
+                              <select
+                                value={selectedTargetType[m.id] || ""}
+                                onChange={(e) => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
+                                className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                              >
+                                <option value="">-- Choisir une option --</option>
+                                <option value="cellule">Une Cellule</option>
+                                <option value="conseiller">Un Conseiller</option>
+                              </select>
+
+                              {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
+                                <select
+                                  value={selectedTargets[m.id] || ""}
+                                  onChange={(e) => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
+                                  className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                                >
+                                  <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
+                                  {selectedTargetType[m.id] === "cellule"
+                                    ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>)
+                                    : conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)
+                                  }
+                                </select>
+                              )}
+
+                              {selectedTargets[m.id] && (
+                                <div className="pt-2">
+                                  <BoutonEnvoyer
+                                    membre={m}
+                                    type={selectedTargetType[m.id]}
+                                    cible={selectedTargetType[m.id] === "cellule"
+                                      ? cellules.find(c => c.id === selectedTargets[m.id])
+                                      : conseillers.find(c => c.id === selectedTargets[m.id])
+                                    }
+                                    onEnvoyer={(id) => handleAfterSend(id, selectedTargetType[m.id],
+                                      selectedTargetType[m.id] === "cellule"
+                                        ? cellules.find(c => c.id === selectedTargets[m.id])
+                                        : conseillers.find(c => c.id === selectedTargets[m.id])
+                                    )}
+                                    session={session}
+                                    showToast={showToast}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}

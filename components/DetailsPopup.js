@@ -17,7 +17,6 @@ export default function DetailsPopup({
 }) {
   const [editMember, setEditMember] = useState(null);
 
-  // State local pour le popup
   const [selectedTargetTypeLocal, setSelectedTargetTypeLocal] = useState({});
   const [selectedTargetsLocal, setSelectedTargetsLocal] = useState({});
 
@@ -29,7 +28,6 @@ export default function DetailsPopup({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
       <div className="bg-white text-black p-6 rounded-lg w-80 max-h-[90vh] overflow-y-auto relative shadow-xl">
-        {/* Bouton de fermeture */}
         <button
           onClick={onClose}
           className="absolute top-2 right-2 text-red-500 font-bold hover:text-red-700"
@@ -38,7 +36,6 @@ export default function DetailsPopup({
           ✕
         </button>
 
-        {/* Titre */}
         <h2 className="text-lg font-bold text-gray-800 text-center">
           {member.prenom} {member.nom}
         </h2>
@@ -49,7 +46,6 @@ export default function DetailsPopup({
           🕊 Statut : {member.statut || "—"}
         </p>
 
-        {/* Infos membre */}
         <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
           <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
           <p>🏙 Ville : {member.ville || "—"}</p>
@@ -159,7 +155,16 @@ export default function DetailsPopup({
               className="text-red-500 underline text-sm hover:text-red-700"
             >
               Fermer les détails
-            </button>         
+            </button>
+            <button
+              onClick={() => setEditMember(member)}
+              className="text-blue-500 underline text-sm hover:text-blue-700"
+            >
+              Modifiier
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* ====================== POPUP MODIFICATION ====================== */}
       {editMember && (

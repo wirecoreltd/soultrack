@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import BoutonEnvoyer from "./BoutonEnvoyer";
 
@@ -31,24 +31,16 @@ export default function EditMemberPopup({
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ Pré-remplissage automatique du dropdown Envoyer à
-  const [selectedTargetType, setSelectedTargetType] = useState(
-    member.cellule_id ? "cellule" : member.conseiller_id ? "conseiller" : ""
-  );
-  const [selectedTarget, setSelectedTarget] = useState(
-    member.cellule_id || member.conseiller_id || ""
-  );
+  // ✅ Gestion de la sélection Cellule / Conseiller comme dans MemberCard
+  const [selectedTargetType, setSelectedTargetType] = useState(member.cellule_id ? "cellule" : member.conseiller_id ? "conseiller" : "");
+  const [selectedTarget, setSelectedTarget] = useState(member.cellule_id || member.conseiller_id || "");
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
     if (value === "Autre") {
       setShowAutre(checked);
       if (!checked) {
-        setFormData(prev => ({
-          ...prev,
-          autreBesoin: "",
-          besoin: prev.besoin.filter(b => b !== "Autre")
-        }));
+        setFormData(prev => ({ ...prev, autreBesoin: "", besoin: prev.besoin.filter(b => b !== "Autre") }));
       }
     }
     setFormData(prev => {
@@ -64,7 +56,6 @@ export default function EditMemberPopup({
 
   const handleSubmit = async () => {
     setLoading(true);
-
     const cleanData = {
       prenom: formData.prenom || member.prenom,
       nom: formData.nom || member.nom,
@@ -74,9 +65,7 @@ export default function EditMemberPopup({
       statut: formData.statut || null,
       cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
       conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
-      besoin: formData.autreBesoin && showAutre
-        ? [...formData.besoin.filter(b => b !== "Autre"), formData.autreBesoin]
-        : formData.besoin,
+      besoin: formData.autreBesoin && showAutre ? [...formData.besoin.filter(b => b !== "Autre"), formData.autreBesoin] : formData.besoin,
     };
 
     const { error, data } = await supabase
@@ -91,12 +80,8 @@ export default function EditMemberPopup({
     } else {
       if (onUpdateMember) onUpdateMember(data);
       setMessage("✅ Changement enregistré !");
-      setTimeout(() => {
-        setMessage("");
-        onClose();
-      }, 1500);
+      setTimeout(() => { setMessage(""); onClose(); }, 1500);
     }
-
     setLoading(false);
   };
 
@@ -129,9 +114,7 @@ export default function EditMemberPopup({
               <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} className="w-5 h-5 rounded border-gray-400 cursor-pointer" />
               Autre
             </label>
-            {showAutre && (
-              <input type="text" name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} placeholder="Précisez..." className="border rounded px-2 py-1 w-full" />
-            )}
+            {showAutre && <input type="text" name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} placeholder="Précisez..." className="border rounded px-2 py-1 w-full" />}
           </div>
 
           <textarea name="infos_supplementaires" value={formData.infos_supplementaires} onChange={handleChange} placeholder="Infos supplémentaires" className="border rounded px-2 py-1" rows={3} />
@@ -151,10 +134,7 @@ export default function EditMemberPopup({
             <label className="font-semibold text-sm">Envoyer à :</label>
             <select
               value={selectedTargetType}
-              onChange={e => {
-                setSelectedTargetType(e.target.value);
-                setSelectedTarget(""); // reset si on change le type
-              }}
+              onChange={e => { setSelectedTargetType(e.target.value); setSelectedTarget(""); }}
               className="mt-1 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Choisir une option --</option>
@@ -181,15 +161,8 @@ export default function EditMemberPopup({
                 <BoutonEnvoyer
                   membre={member}
                   type={selectedTargetType}
-                  cible={selectedTargetType === "cellule"
-                    ? cellules.find(c => c.id === selectedTarget)
-                    : conseillers.find(c => c.id === selectedTarget)
-                  }
-                  onEnvoyer={id => handleAfterSend(id, selectedTargetType,
-                    selectedTargetType === "cellule"
-                      ? cellules.find(c => c.id === selectedTarget)
-                      : conseillers.find(c => c.id === selectedTarget)
-                  )}
+                  cible={selectedTargetType === "cellule" ? cellules.find(c => c.id === selectedTarget) : conseillers.find(c => c.id === selectedTarget)}
+                  onEnvoyer={id => handleAfterSend(id, selectedTargetType, selectedTargetType === "cellule" ? cellules.find(c => c.id === selectedTarget) : conseillers.find(c => c.id === selectedTarget))}
                   session={session}
                   showToast={showToast}
                 />
@@ -200,11 +173,7 @@ export default function EditMemberPopup({
 
         {message && <p className="text-green-600 text-center mt-3 font-semibold">{message}</p>}
 
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className={`mt-4 w-full text-white py-2 rounded transition font-bold ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}
-        >
+        <button onClick={handleSubmit} disabled={loading} className={`mt-4 w-full text-white py-2 rounded transition font-bold ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}>
           {loading ? "Enregistrement..." : "Enregistrer"}
         </button>
       </div>

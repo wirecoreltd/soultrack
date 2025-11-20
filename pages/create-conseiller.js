@@ -15,39 +15,44 @@ export default function CreateConseiller() {
     email: "",
     password: "",
   });
-  const [responsableId, setResponsableId] = useState(""); // ID du responsable connecté
+  const [responsableId, setResponsableId] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ➤ Récupérer l'utilisateur connecté (responsable)
+  // ➤ Récupérer l'utilisateur connecté et son ID (responsable)
   useEffect(() => {
     async function fetchUser() {
-      const { data, error } = await supabase.auth.getUser();
-      if (error) console.error(error);
-      else if (data?.user) setResponsableId(data.user.id);
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) return console.error(error);
+      if (!session?.user) return setMessage("❌ Vous devez être connecté");
+      setResponsableId(session.user.id);
     }
     fetchUser();
   }, []);
 
-  // ➤ Récupérer les membres star = true
+  // ➤ Récupérer les membres avec star = true
   useEffect(() => {
     async function fetchStarMembers() {
       const { data, error } = await supabase
         .from("membres")
         .select("id, prenom, nom, telephone")
         .eq("star", true);
-
       if (error) console.error(error);
       else setMembers(data);
     }
     fetchStarMembers();
   }, []);
 
-  // ➤ Remplissage automatique quand un membre est sélectionné
+  // ➤ Remplissage automatique des infos
   useEffect(() => {
-    if (!selectedMemberId) return setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
+    if (!selectedMemberId) {
+      setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
+      return;
+    }
     const member = members.find((m) => m.id === selectedMemberId);
-    if (member) setFormData({ ...formData, prenom: member.prenom, nom: member.nom, telephone: member.telephone });
+    if (member) {
+      setFormData({ ...formData, prenom: member.prenom, nom: member.nom, telephone: member.telephone });
+    }
   }, [selectedMemberId]);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -58,7 +63,6 @@ export default function CreateConseiller() {
       setMessage("❌ Remplissez tous les champs !");
       return;
     }
-
     setLoading(true);
     setMessage("⏳ Création en cours...");
 
@@ -85,8 +89,6 @@ export default function CreateConseiller() {
     }
   };
 
-  const handleCancel = () => router.push("/");
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
@@ -103,19 +105,20 @@ export default function CreateConseiller() {
           <input name="prenom" placeholder="Prénom" value={formData.prenom} readOnly className="input" />
           <input name="nom" placeholder="Nom" value={formData.nom} readOnly className="input" />
           <input name="telephone" placeholder="Téléphone" value={formData.telephone} readOnly className="input" />
-
           <input name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="input" required />
           <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
 
           <div className="flex gap-4 mt-4">
-            <button type="button" onClick={handleCancel} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-3 rounded-2xl">Annuler</button>
+            <button type="button" onClick={() => router.push("/")} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-3 rounded-2xl">Annuler</button>
             <button type="submit" disabled={loading} className="flex-1 bg-blue-400 hover:bg-blue-500 text-white py-3 rounded-2xl">{loading ? "Création..." : "Créer"}</button>
           </div>
         </form>
 
         {message && <p className="mt-4 text-center text-sm text-gray-700">{message}</p>}
 
-        <style jsx>{`.input { width:100%; border:1px solid #ccc; border-radius:12px; padding:12px; color:black; }`}</style>
+        <style jsx>{`
+          .input { width:100%; border:1px solid #ccc; border-radius:12px; padding:12px; color:black; }
+        `}</style>
       </div>
     </div>
   );

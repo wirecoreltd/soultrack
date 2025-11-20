@@ -279,7 +279,7 @@ export default function ListMembers() {
                           <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || ""}</p>
-                            p>❓Besoin : {
+                            <p>❓Besoin : {
                               (() => {
                                 if (!m.besoin) return "—";
                                 if (Array.isArray(m.besoin)) return m.besoin.join(", ");

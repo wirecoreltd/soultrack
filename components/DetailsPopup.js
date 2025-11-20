@@ -151,14 +151,13 @@ export default function DetailsPopup({
           )}
         </div>
 
-        {/* ====================== BOUTONS MEMBRE EXISTANT ====================== */}
-        {!isNouveau && (
-          <div className="flex justify-between mt-3">
-            <button
-              onClick={onClose}
-              className="text-red-500 underline text-sm hover:text-red-700"
-            >
-              Fermer les détails
+        {/* ====================== BOUTON FERMER ====================== */}
+        <div className="flex justify-center mt-3">
+          <button
+            onClick={onClose}
+            className="text-red-500 underline text-sm hover:text-red-700"
+          >
+            Fermer les détails
           </button>
         </div>
       </div>

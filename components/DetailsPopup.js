@@ -159,17 +159,7 @@ export default function DetailsPopup({
               className="text-red-500 underline text-sm hover:text-red-700"
             >
               Fermer les détails
-            </button>
-
-            //<button
-              //onClick={() => setEditMember(member)}
-             // className="text-blue-500 underline text-sm hover:text-blue-700"
-           // >
-            //  Modifier
-            //</button>
-         // </div>
-       // )}
-      //</div>
+            </button>         
 
       {/* ====================== POPUP MODIFICATION ====================== */}
       {editMember && (

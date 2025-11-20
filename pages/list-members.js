@@ -316,6 +316,16 @@ export default function ListMembers() {
                                   }
                                 </select>
                               )}
+                              {/* --- BOUTON MODIFIER --- */}
+                                <div className="flex justify-center mt-4">
+                                  <button
+                                    onClick={() => openEditMemberPopup(member)}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg shadow-md transition"
+                                  >
+                                    Modifier
+                                  </button>
+                                </div>
+
 
                               {selectedTargets[m.id] && (
                                 <div className="pt-2">

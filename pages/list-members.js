@@ -340,9 +340,9 @@ export default function ListMembers() {
                                     showToast={showToast}
                                   />
                                 </div>
-                                <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm items-center">Modifier</button>
-                              )}
                                 
+                              )}
+                             <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm items-center">Modifier</button>   
                             </div>
                           </div>
                         )}
@@ -382,8 +382,7 @@ export default function ListMembers() {
                   <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
                   <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
                   <td className="px-4 py-2 flex items-center gap-2">
-                    <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">{popupMember?.id === m.id ? "Fermer détails" : "Détails"}</button>
-                    <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
+                    <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">{popupMember?.id === m.id ? "Fermer détails" : "Détails"}</button>                    
                   </td>
                 </tr>
               ))}

@@ -213,6 +213,14 @@ export default function ListMembers() {
                                     session={session}
                                     showToast={showToast}
                                   />
+                                      {/* Bouton Modifier centré */}
+    <div className="flex justify-center mt-3">
+      <button
+        onClick={() => setEditMember(m)}
+        className="text-white bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded-lg font-semibold"
+      >
+        Modifier
+      </button>
                                 </div>
                               )}
                             </div>

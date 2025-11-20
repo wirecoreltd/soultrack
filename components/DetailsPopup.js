@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import BoutonEnvoyer from "./BoutonEnvoyer";
-import EditMemberPopup from "./EditMemberPopup";
 
 export default function DetailsPopup({
   member,
@@ -15,9 +14,6 @@ export default function DetailsPopup({
   session,
   showToast,
 }) {
-  const [editMember, setEditMember] = useState(null);
-
-  // States locaux pour le popup
   const [selectedTargetTypeLocal, setSelectedTargetTypeLocal] = useState({});
   const [selectedTargetsLocal, setSelectedTargetsLocal] = useState({});
 
@@ -25,12 +21,6 @@ export default function DetailsPopup({
 
   const isNouveau =
     member.statut === "visiteur" || member.statut === "veut rejoindre ICC";
-
-  // Récupère la cible correctement selon le type
-  const cibleTrouvee =
-    selectedTargetTypeLocal[member.id] === "cellule"
-      ? cellules.find(c => c.id === Number(selectedTargetsLocal[member.id]))
-      : conseillers.find(c => c.id === Number(selectedTargetsLocal[member.id]));
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
@@ -131,17 +121,23 @@ export default function DetailsPopup({
             </select>
           )}
 
-          {cibleTrouvee && (
+          {selectedTargetsLocal[member.id] && (
             <div className="pt-2">
               <BoutonEnvoyer
                 membre={member}
                 type={selectedTargetTypeLocal[member.id]}
-                cible={cibleTrouvee}
+                cible={
+                  selectedTargetTypeLocal[member.id] === "cellule"
+                    ? cellules.find(c => c.id === selectedTargetsLocal[member.id])
+                    : conseillers.find(c => c.id === selectedTargetsLocal[member.id])
+                }
                 onEnvoyer={(id) =>
                   handleAfterSend(
                     id,
                     selectedTargetTypeLocal[member.id],
-                    cibleTrouvee
+                    selectedTargetTypeLocal[member.id] === "cellule"
+                      ? cellules.find(c => c.id === selectedTargetsLocal[member.id])
+                      : conseillers.find(c => c.id === selectedTargetsLocal[member.id])
                   )
                 }
                 session={session}
@@ -150,28 +146,7 @@ export default function DetailsPopup({
             </div>
           )}
         </div>
-
-        {/* ====================== BOUTON FERMER ====================== */}
-        <div className="flex justify-center mt-3">
-          <button
-            onClick={onClose}
-            className="text-red-500 underline text-sm hover:text-red-700"
-          >
-            Fermer les détails
-          </button>
-        </div>
       </div>
-
-      {/* ====================== POPUP MODIFICATION ====================== */}
-      {editMember && (
-        <EditMemberPopup
-          member={editMember}
-          onClose={() => setEditMember(null)}
-          cellules={cellules}
-          statusOptions={statusOptions}
-          handleChangeStatus={handleChangeStatus}
-        />
-      )}
     </div>
   );
 }

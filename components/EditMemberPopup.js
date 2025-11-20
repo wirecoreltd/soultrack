@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
-import BoutonEnvoyer from "./BoutonEnvoyer"; // Assure-toi que ce composant existe
+import BoutonEnvoyer from "./BoutonEnvoyer";
 
 export default function EditMemberPopup({
   member,
@@ -36,60 +36,46 @@ export default function EditMemberPopup({
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ Nouvelle partie : initialisation du dropdown selon membre existant
-  const [selectedTargetType, setSelectedTargetType] = useState(
-    member.cellule_id ? "cellule" : member.conseiller_id ? "conseiller" : ""
-  );
-  const [selectedTarget, setSelectedTarget] = useState(
-    member.cellule_id || member.conseiller_id || ""
-  );
+  // ✅ Gestion des dropdown “Envoyer à”
+  const [selectedTargetType, setSelectedTargetType] = useState({ [member.id]: member.cellule_id ? "cellule" : member.conseiller_id ? "conseiller" : "" });
+  const [selectedTargets, setSelectedTargets] = useState({ [member.id]: member.cellule_id || member.conseiller_id || "" });
 
-  // ✅ Gestion des checkboxes besoins
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
-
     if (value === "Autre") {
       setShowAutre(checked);
       if (!checked) {
-        setFormData((prev) => ({
+        setFormData(prev => ({
           ...prev,
           autreBesoin: "",
-          besoin: prev.besoin.filter((b) => b !== "Autre"),
+          besoin: prev.besoin.filter(b => b !== "Autre")
         }));
       }
     }
-
-    setFormData((prev) => {
-      const updatedBesoin = checked
-        ? [...prev.besoin, value]
-        : prev.besoin.filter((b) => b !== value);
+    setFormData(prev => {
+      const updatedBesoin = checked ? [...prev.besoin, value] : prev.besoin.filter(b => b !== value);
       return { ...prev, besoin: updatedBesoin };
     });
   };
 
-  // ✅ Gestion du reste des champs
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // ✅ Soumission
   const handleSubmit = async () => {
     setLoading(true);
-
     const cleanData = {
       prenom: formData.prenom || member.prenom,
       nom: formData.nom || member.nom,
-      ville: formData.ville === "" ? null : formData.ville,
-      telephone: formData.telephone === "" ? null : formData.telephone,
-      infos_supplementaires:
-        formData.infos_supplementaires === "" ? null : formData.infos_supplementaires,
-      statut: formData.statut === "" ? null : formData.statut,
-      cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
-      besoin:
-        formData.autreBesoin && showAutre
-          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
-          : formData.besoin,
+      ville: formData.ville || null,
+      telephone: formData.telephone || null,
+      infos_supplementaires: formData.infos_supplementaires || null,
+      statut: formData.statut || null,
+      cellule_id: formData.cellule_id || null,
+      besoin: formData.autreBesoin && showAutre
+        ? [...formData.besoin.filter(b => b !== "Autre"), formData.autreBesoin]
+        : formData.besoin,
     };
 
     const { error, data } = await supabase
@@ -109,119 +95,45 @@ export default function EditMemberPopup({
         onClose();
       }, 1500);
     }
-
     setLoading(false);
   };
 
   const handleAfterSend = (id, type, cible) => {
-    // Optionnel : mise à jour locale si tu veux déplacer membre vers "anciens"
     showToast("✅ Contact envoyé et suivi enregistré");
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto shadow-xl relative">
-        {/* Bouton fermer */}
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-red-500 font-bold hover:text-red-700"
-        >
-          ✕
-        </button>
+        <button onClick={onClose} className="absolute top-2 right-2 text-red-500 font-bold hover:text-red-700">✕</button>
+        <h2 className="text-lg font-bold text-gray-800 text-center mb-4">Modifier {member.prenom} {member.nom}</h2>
 
-        <h2 className="text-lg font-bold text-gray-800 text-center mb-4">
-          Modifier {member.prenom} {member.nom}
-        </h2>
+        <div className="flex flex-col space-y-2 text-sm">
+          <input name="prenom" value={formData.prenom} onChange={handleChange} placeholder="Prénom" className="border rounded px-2 py-1" />
+          <input name="nom" value={formData.nom} onChange={handleChange} placeholder="Nom" className="border rounded px-2 py-1" />
+          <input name="ville" value={formData.ville} onChange={handleChange} placeholder="Ville" className="border rounded px-2 py-1" />
+          <input name="telephone" value={formData.telephone} onChange={handleChange} placeholder="Téléphone" className="border rounded px-2 py-1" />
 
-        {/* Formulaire */}
-        <div className="flex flex-col space-y-2 text-sm"> Prénom :
-          <input
-            name="prenom"
-            value={formData.prenom}
-            onChange={handleChange}
-            placeholder="Prénom"
-            className="border rounded px-2 py-1"
-          />
-          <input
-            name="nom"
-            value={formData.nom}
-            onChange={handleChange}
-            placeholder="Nom"
-            className="border rounded px-2 py-1"
-          />
-          <input
-            name="ville"
-            value={formData.ville}
-            onChange={handleChange}
-            placeholder="Ville"
-            className="border rounded px-2 py-1"
-          />
-          <input
-            name="telephone"
-            value={formData.telephone}
-            onChange={handleChange}
-            placeholder="Téléphone"
-            className="border rounded px-2 py-1"
-          />
-
-          {/* Besoins */}
           <div className="mt-2">
             <p className="font-semibold mb-2">Besoins :</p>
-            {besoinsOptions.map((item) => (
+            {besoinsOptions.map(item => (
               <label key={item} className="flex items-center gap-3 mb-2">
-                <input
-                  type="checkbox"
-                  name="besoin"
-                  value={item}
-                  checked={formData.besoin.includes(item)}
-                  onChange={handleBesoinChange}
-                  className="w-5 h-5 rounded border-gray-400 cursor-pointer"
-                />
+                <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} className="w-5 h-5 rounded border-gray-400 cursor-pointer" />
                 <span>{item}</span>
               </label>
             ))}
-
             <label className="flex items-center gap-3 mb-2">
-              <input
-                type="checkbox"
-                name="besoin"
-                value="Autre"
-                checked={showAutre}
-                onChange={handleBesoinChange}
-                className="w-5 h-5 rounded border-gray-400 cursor-pointer"
-              />
+              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} className="w-5 h-5 rounded border-gray-400 cursor-pointer" />
               Autre
             </label>
-
             {showAutre && (
-              <input
-                type="text"
-                name="autreBesoin"
-                value={formData.autreBesoin}
-                onChange={handleChange}
-                placeholder="Précisez..."
-                className="border rounded px-2 py-1 w-full"
-              />
+              <input type="text" name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} placeholder="Précisez..." className="border rounded px-2 py-1 w-full" />
             )}
           </div>
 
-          {/* Infos supplémentaires */}
-          <textarea
-            name="infos_supplementaires"
-            value={formData.infos_supplementaires}
-            onChange={handleChange}
-            placeholder="Infos supplémentaires"
-            className="border rounded px-2 py-1"
-            rows={3}
-          />
+          <textarea name="infos_supplementaires" value={formData.infos_supplementaires} onChange={handleChange} placeholder="Infos supplémentaires" className="border rounded px-2 py-1" rows={3} />
 
-          {/* Statut */}
-          <select
-            name="statut"
-            value={formData.statut}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          >
+          <select name="statut" value={formData.statut} onChange={handleChange} className="border rounded px-2 py-1">
             <option value="">-- Statut --</option>
             <option value="actif">actif</option>
             <option value="Integrer">Integrer</option>
@@ -231,14 +143,14 @@ export default function EditMemberPopup({
             <option value="a déjà mon église">a déjà mon église</option>
           </select>
 
-          {/* Envoi Cellule / Conseiller */}
+          {/* --- Envoi Cellule / Conseiller --- */}
           <div className="mt-2">
             <label className="font-semibold text-sm">Envoyer à :</label>
             <select
-              value={selectedTargetType}
-              onChange={(e) => {
-                setSelectedTargetType(e.target.value);
-                setSelectedTarget(""); // reset
+              value={selectedTargetType[member.id] || ""}
+              onChange={e => {
+                setSelectedTargetType(prev => ({ ...prev, [member.id]: e.target.value }));
+                setSelectedTargets(prev => ({ ...prev, [member.id]: "" }));
               }}
               className="mt-1 w-full border rounded px-2 py-1 text-sm"
             >
@@ -247,48 +159,34 @@ export default function EditMemberPopup({
               <option value="conseiller">Un Conseiller</option>
             </select>
 
-            {selectedTargetType && (
+            {(selectedTargetType[member.id] === "cellule" || selectedTargetType[member.id] === "conseiller") && (
               <select
-                value={selectedTarget}
-                onChange={(e) => setSelectedTarget(e.target.value)}
+                value={selectedTargets[member.id] || ""}
+                onChange={e => setSelectedTargets(prev => ({ ...prev, [member.id]: e.target.value }))}
                 className="mt-1 w-full border rounded px-2 py-1 text-sm"
               >
-                <option value="">
-                  -- Sélectionner {selectedTargetType} --
-                </option>
-                {selectedTargetType === "cellule"
-                  ? cellules.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.cellule} ({c.responsable})
-                      </option>
-                    ))
-                  : conseillers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.prenom} {c.nom}
-                      </option>
-                    ))}
+                <option value="">-- Choisir {selectedTargetType[member.id]} --</option>
+                {selectedTargetType[member.id] === "cellule"
+                  ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>)
+                  : conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)
+                }
               </select>
             )}
 
-            {selectedTarget && (
+            {selectedTargets[member.id] && (
               <div className="pt-2">
                 <BoutonEnvoyer
                   membre={member}
-                  type={selectedTargetType}
-                  cible={
-                    selectedTargetType === "cellule"
-                      ? cellules.find((c) => c.id === selectedTarget)
-                      : conseillers.find((c) => c.id === selectedTarget)
+                  type={selectedTargetType[member.id]}
+                  cible={selectedTargetType[member.id] === "cellule"
+                    ? cellules.find(c => c.id === selectedTargets[member.id])
+                    : conseillers.find(c => c.id === selectedTargets[member.id])
                   }
-                  onEnvoyer={(id) =>
-                    handleAfterSend(
-                      id,
-                      selectedTargetType,
-                      selectedTargetType === "cellule"
-                        ? cellules.find((c) => c.id === selectedTarget)
-                        : conseillers.find((c) => c.id === selectedTarget)
-                    )
-                  }
+                  onEnvoyer={id => handleAfterSend(id, selectedTargetType[member.id],
+                    selectedTargetType[member.id] === "cellule"
+                      ? cellules.find(c => c.id === selectedTargets[member.id])
+                      : conseillers.find(c => c.id === selectedTargets[member.id])
+                  )}
                   session={session}
                   showToast={showToast}
                 />
@@ -297,18 +195,12 @@ export default function EditMemberPopup({
           </div>
         </div>
 
-        {/* Message succès */}
-        {message && (
-          <p className="text-green-600 text-center mt-3 font-semibold">{message}</p>
-        )}
+        {message && <p className="text-green-600 text-center mt-3 font-semibold">{message}</p>}
 
-        {/* Bouton enregistrer */}
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className={`mt-4 w-full text-white py-2 rounded transition font-bold ${
-            loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-          }`}
+          className={`mt-4 w-full text-white py-2 rounded transition font-bold ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}
         >
           {loading ? "Enregistrement..." : "Enregistrer"}
         </button>

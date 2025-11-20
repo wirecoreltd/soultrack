@@ -341,7 +341,7 @@ export default function ListMembers() {
                                   />
                                 </div>
                               )}
-                                <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
+                                <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm items-center">Modifier</button>
                             </div>
                           </div>
                         )}

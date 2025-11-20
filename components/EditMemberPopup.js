@@ -99,9 +99,9 @@ export default function EditMemberPopup({
         <button onClick={onClose} className="absolute top-2 right-2 text-red-500 font-bold hover:text-red-700">✕</button>
         <h2 className="text-lg font-bold text-gray-800 text-center mb-4">Modifier {member.prenom} {member.nom}</h2>
 
-        <div className="flex flex-col space-y-2 text-sm">
-          <input name="prenom" value={formData.prenom} onChange={handleChange} placeholder="Prénom" className="border rounded px-2 py-1" /> Prénom :
-          <input name="nom" value={formData.nom} onChange={handleChange} placeholder="Nom" className="border rounded px-2 py-1" /> Nom :
+        <div className="flex flex-col space-y-2 text-sm"> Prénom :
+          <input name="prenom" value={formData.prenom} onChange={handleChange} placeholder="Prénom" className="border rounded px-2 py-1" /> Nom :
+          <input name="nom" value={formData.nom} onChange={handleChange} placeholder="Nom" className="border rounded px-2 py-1" /> 
           <input name="ville" value={formData.ville} onChange={handleChange} placeholder="Ville" className="border rounded px-2 py-1" />
           <input name="telephone" value={formData.telephone} onChange={handleChange} placeholder="Téléphone" className="border rounded px-2 py-1" />
 

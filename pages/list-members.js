@@ -30,9 +30,27 @@ export default function ListMembers() {
   const [session, setSession] = useState(null);
   const [prenom, setPrenom] = useState("");
 
+  // Minimal local state / helpers used by DetailsPopup (non-intrusive defaults).
+  // If you already have implementations elsewhere, you can replace these.
+  const [selectedCellules, setSelectedCellules] = useState({});
+
+  const handleChangeStatus = async (memberId, newStatus) => {
+    try {
+      // attempt to update in DB and locally
+      await supabase.from("membres").update({ statut: newStatus }).eq("id", memberId);
+      setMembers(prev => prev.map(m => (m.id === memberId ? { ...m, statut: newStatus } : m)));
+    } catch (err) {
+      console.error("Erreur handleChangeStatus:", err);
+    }
+  };
+
+  const handleStatusUpdateFromEnvoyer = (memberId, newStatus) => {
+    // called after BoutonEnvoyer completes
+    setMembers(prev => prev.map(m => (m.id === memberId ? { ...m, statut: newStatus } : m)));
+  };
+
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
-
   const showToast = (msg) => {
     setToastMessage(msg);
     setShowingToast(true);
@@ -113,7 +131,6 @@ export default function ListMembers() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-      
       {/* Top bar */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
@@ -148,7 +165,7 @@ export default function ListMembers() {
       {/* VUE CARTE */}
       {view === "card" && (
         <div className="w-full max-w-5xl space-y-8">
-          {/* Cartes Nouveaux Membres */}
+          {/* Nouveaux membres */}
           {nouveauxFiltres.length > 0 && (
             <div>
               <p className="text-white text-lg mb-4 ml-1">💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}</p>
@@ -166,10 +183,18 @@ export default function ListMembers() {
 
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
-                            {/* Infos membre */}
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || ""}</p>
-                            <p>❓Besoin : {m.besoin || "—"}</p>
+                            <p>❓Besoin : {
+                              (() => {
+                                if (!m.besoin) return "—";
+                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                                try {
+                                  const arr = JSON.parse(m.besoin);
+                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                                } catch { return m.besoin; }
+                              })()
+                            }</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             <div className="mt-2">
@@ -232,7 +257,7 @@ export default function ListMembers() {
             </div>
           )}
 
-          {/* Cartes Anciens Membres */}
+          {/* Anciens membres */}
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
               <h3 className="text-white text-lg mb-3 font-semibold">
@@ -249,12 +274,21 @@ export default function ListMembers() {
                         <p className="text-sm text-gray-600">🕊 Statut : {m.statut}</p>
 
                         <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">{isOpen ? "Fermer détails" : "Détails"}</button>
+
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
-                            {/* Infos membre */}
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || ""}</p>
-                            <p>❓Besoin : {m.besoin || "—"}</p>
+                            <p>❓Besoin : {
+                              (() => {
+                                if (!m.besoin) return "—";
+                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                                try {
+                                  const arr = JSON.parse(m.besoin);
+                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                                } catch { return m.besoin; }
+                              })()
+                            }</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             <div className="mt-2">
@@ -281,23 +315,34 @@ export default function ListMembers() {
                                     : conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)
                                   }
                                 </select>
-                              )}
+                              )}                         
+
 
                               {selectedTargets[m.id] && (
-                                <BoutonEnvoyer
-                                  membre={m}
-                                  type={selectedTargetType[m.id]}
-                                  cible={selectedTargetType[m.id] === "cellule"
-                                    ? cellules.find(c => c.id === selectedTargets[m.id])
-                                    : conseillers.find(c => c.id === selectedTargets[m.id])
-                                  }
-                                  onEnvoyer={handleAfterSend}
-                                  session={session}
-                                  showToast={showToast}
-                                />
+                                <div className="pt-2">
+                                  <BoutonEnvoyer
+                                    membre={m}
+                                    type={selectedTargetType[m.id]}
+                                    cible={selectedTargetType[m.id] === "cellule"
+                                      ? cellules.find(c => c.id === selectedTargets[m.id])
+                                      : conseillers.find(c => c.id === selectedTargets[m.id])
+                                    }
+                                    onEnvoyer={(id) =>
+                                      handleAfterSend(
+                                        id,
+                                        selectedTargetType[m.id],
+                                        selectedTargetType[m.id] === "cellule"
+                                          ? cellules.find(c => c.id === selectedTargets[m.id])
+                                          : conseillers.find(c => c.id === selectedTargets[m.id])
+                                      )
+                                    }
+                                    session={session}
+                                    showToast={showToast}
+                                  />
+                                </div>
+                                
                               )}
-
-                              <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm mt-1">Modifier</button>
+                             <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm items-center">Modifier</button>   
                             </div>
                           </div>
                         )}
@@ -311,7 +356,7 @@ export default function ListMembers() {
         </div>
       )}
 
-      {/* VUE TABLE */}
+      {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left border-separate border-spacing-0">
@@ -330,54 +375,66 @@ export default function ListMembers() {
               )}
               {nouveauxFiltres.map(m => (
                 <tr key={m.id} className="border-b border-gray-300">
-                  <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
-                  <td className="px-4 py-2">{m.telephone || "—"}</td>
-                  <td className="px-4 py-2">{m.statut}</td>
-                  <td className="px-4 py-2 border-r-4 rounded-r-md space-x-2">
-                    <button onClick={() => setPopupMember(m)} className="text-orange-500 underline text-sm">Détails</button>
-                    <button onClick={() => setEditMember(m)} className="text-blue-500 underline text-sm">Modifier</button>
+                  <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white " style={{ borderLeftColor: getBorderColor(m) }}>
+                    {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                    <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
+                  </td>
+                  <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
+                  <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
+                  <td className="px-4 py-2 flex items-center gap-2">
+                    <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">{popupMember?.id === m.id ? "Fermer détails" : "Détails"}</button>                    
                   </td>
                 </tr>
               ))}
-
               {/* Anciens Membres */}
               {anciensFiltres.length > 0 && (
-                <tr><td colSpan={4} className="px-4 py-2 text-white font-semibold">Membres existants</td></tr>
+                <>
+                  <tr><td colSpan={4} className="px-4 py-2 font-semibold text-lg text-white"><span style={{ background: "linear-gradient(to right, #3B82F6, #D1D5DB)", WebkitBackgroundClip: "text", color: "transparent" }}>Membres existants</span></td></tr>
+                  {anciensFiltres.map(m => (
+                    <tr key={m.id} className="border-b border-gray-300">
+                      <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}</td>
+                      <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
+                      <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
+                      <td className="px-4 py-2 flex items-center gap-2">
+                        <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">{popupMember?.id === m.id ? "Fermer détails" : "Détails"}</button>
+                        <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
+                      </td>
+                    </tr>
+                  ))}
+                </>
               )}
-              {anciensFiltres.map(m => (
-                <tr key={m.id} className="border-b border-gray-300">
-                  <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom} {m.star && "⭐"}</td>
-                  <td className="px-4 py-2">{m.telephone || "—"}</td>
-                  <td className="px-4 py-2">{m.statut}</td>
-                  <td className="px-4 py-2 border-r-4 rounded-r-md space-x-2">
-                    <button onClick={() => setPopupMember(m)} className="text-orange-500 underline text-sm">Détails</button>
-                    <button onClick={() => setEditMember(m)} className="text-blue-500 underline text-sm">Modifier</button>
-                  </td>
-                </tr>
-              ))}
             </tbody>
           </table>
         </div>
       )}
 
       {/* Popups */}
-      {editMember && (
-        <EditMemberPopup
-          membre={editMember}
-          onClose={() => setEditMember(null)}
-          onSave={(updatedMember) => updateMemberLocally(updatedMember.id, updatedMember)}
-        />
-      )}
       {popupMember && (
         <DetailsPopup
-          membre={popupMember}
+          member={popupMember}
           onClose={() => setPopupMember(null)}
+          statusOptions={statusOptions}
+          cellules={cellules}
+          selectedCellules={selectedCellules}
+          setSelectedCellules={setSelectedCellules}
+          handleChangeStatus={handleChangeStatus}
+          handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
+          session={session}
+        />
+      )}
+
+      {editMember && (
+        <EditMemberPopup
+          member={editMember}
+          cellules={cellules}
+          onClose={() => setEditMember(null)}
+          onUpdateMember={(updated) => { setMembers(prev => prev.map(m => (m.id === updated.id ? updated : m))); setEditMember(null); }}
         />
       )}
 
       {/* Toast */}
       {showingToast && (
-        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg">
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg">
           {toastMessage}
         </div>
       )}

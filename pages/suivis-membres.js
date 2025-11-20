@@ -22,29 +22,25 @@ export default function SuivisMembres() {
   const fetchSuivis = async () => {
     setLoading(true);
     try {
-      // Récupère l'utilisateur connecté
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
+      // 1️⃣ Récupérer l'utilisateur connecté
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error("Utilisateur non connecté");
 
-      // Récupère le profil
+      // 2️⃣ Récupérer le profil
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("id, prenom, nom, role")
         .eq("id", user.id)
         .single();
-
       if (profileError || !profileData) throw profileError;
 
-      const userRole = profileData.role; // role unique ou tableau selon ta DB
+      const userRole = profileData.role;
       setPrenom(profileData.prenom || "cher membre");
       setRole(userRole);
 
       let suivisData = [];
 
+      // 3️⃣ Selon le rôle, filtrer les suivis
       if (userRole === "Administrateur") {
         // Tout voir
         const { data, error } = await supabase
@@ -54,27 +50,33 @@ export default function SuivisMembres() {
         if (error) throw error;
         suivisData = data;
       } else if (userRole === "ResponsableCellule" || userRole === "ResponsableIntegration") {
-        // Ses cellules
+        // Ses cellules + suivis directement attribués à lui
         const { data: cellulesData, error: cellulesError } = await supabase
           .from("cellules")
           .select("id")
           .eq("responsable_id", profileData.id);
-
         if (cellulesError) throw cellulesError;
 
-        if (!cellulesData || cellulesData.length === 0) {
+        const celluleIds = (cellulesData || []).map((c) => c.id);
+
+        if (celluleIds.length === 0) {
+          // S'il n'a pas de cellules
           setMessage("Vous n’êtes responsable d’aucune cellule pour le moment.");
           setSuivis([]);
           setLoading(false);
           return;
         }
 
-        const celluleIds = cellulesData.map((c) => c.id);
-
+        // Récupérer les suivis pour ses cellules OU envoyés directement à lui
         const { data, error } = await supabase
           .from("suivis_membres")
           .select("*")
-          .in("cellule_id", celluleIds)
+          .or(
+            [
+              celluleIds.length > 0 ? `cellule_id.in.(${celluleIds.join(",")})` : null,
+              `responsable_id.eq.${profileData.id}`
+            ].filter(Boolean).join(",")
+          )
           .order("created_at", { ascending: false });
 
         if (error) throw error;
@@ -86,7 +88,6 @@ export default function SuivisMembres() {
           .select("*")
           .eq("conseiller_id", profileData.id)
           .order("created_at", { ascending: false });
-
         if (error) throw error;
         suivisData = data;
       }
@@ -96,7 +97,7 @@ export default function SuivisMembres() {
         setMessage("Aucun membre à afficher.");
       }
     } catch (err) {
-      console.error("❌ Erreur:", err.message || err);
+      console.error("❌ Erreur fetchSuivis:", err.message || err);
       setMessage("Erreur lors de la récupération des suivis.");
       setSuivis([]);
     } finally {
@@ -106,7 +107,6 @@ export default function SuivisMembres() {
 
   fetchSuivis();
 }, []);
-
 
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));

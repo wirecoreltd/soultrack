@@ -2,7 +2,7 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function BoutonEnvoyer({ membre, type = "cellule", cible, onEnvoyer, session, showToast }) {
+export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
   const [loading, setLoading] = useState(false);
 
   const sendToWhatsapp = async () => {
@@ -31,22 +31,20 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, onEnvoy
       };
 
       if (type === "cellule") {
+        // Envoi à une cellule
         suiviData.cellule_id = cible.id;
         suiviData.cellule_nom = cible.cellule;
         suiviData.responsable = cible.responsable || null;
-      } else {
+      } else if (type === "conseiller") {
+        // Envoi à un conseiller
+        suiviData.conseiller_id = cible.id;
         suiviData.responsable = `${cible.prenom || ""} ${cible.nom || ""}`.trim();
       }
 
       const { error: insertError } = await supabase.from("suivis_membres").insert([suiviData]);
-      if (insertError) {
-        console.error("Erreur insertion suivi:", insertError);
-        alert("❌ Erreur lors de l'enregistrement du suivi.");
-        setLoading(false);
-        return;
-      }
+      if (insertError) throw insertError;
 
-      // Message WhatsApp
+      // Préparer message WhatsApp
       let message = `👋 Salut ${cible.responsable || (cible.prenom ? `${cible.prenom} ${cible.nom}` : "")},\n\n`;
       message += `🙏 Nouveau membre à suivre :\n`;
       message += `- 👤 Nom : ${membre.prenom} ${membre.nom}\n`;
@@ -59,9 +57,8 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, onEnvoy
       if (!phone) alert("❌ La cible n'a pas de numéro valide.");
       else window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
 
-      // Callback côté parent pour déplacer le membre
+      // Callback côté parent
       if (onEnvoyer) onEnvoyer(membre.id);
-
       if (showToast) showToast("✅ Message WhatsApp ouvert et suivi enregistré");
     } catch (err) {
       console.error("Erreur sendToWhatsapp:", err);

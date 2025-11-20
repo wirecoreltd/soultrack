@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
-import BoutonEnvoyer from "./BoutonEnvoyer";
+import BoutonEnvoyer from "./BoutonEnvoyer"; // Assure-toi que ce composant existe
 
 export default function EditMemberPopup({
   member,
@@ -14,7 +14,11 @@ export default function EditMemberPopup({
   showToast = () => {},
 }) {
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
-  const initialBesoin = typeof member.besoin === "string" ? JSON.parse(member.besoin || "[]") : member.besoin || [];
+
+  const initialBesoin =
+    typeof member.besoin === "string"
+      ? JSON.parse(member.besoin || "[]")
+      : member.besoin || [];
 
   const [formData, setFormData] = useState({
     prenom: member.prenom || "",
@@ -32,12 +36,18 @@ export default function EditMemberPopup({
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // pour Envoi WhatsApp
-  const [selectedTargetType, setSelectedTargetType] = useState("");
-  const [selectedTarget, setSelectedTarget] = useState("");
+  // ✅ Nouvelle partie : initialisation du dropdown selon membre existant
+  const [selectedTargetType, setSelectedTargetType] = useState(
+    member.cellule_id ? "cellule" : member.conseiller_id ? "conseiller" : ""
+  );
+  const [selectedTarget, setSelectedTarget] = useState(
+    member.cellule_id || member.conseiller_id || ""
+  );
 
+  // ✅ Gestion des checkboxes besoins
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
+
     if (value === "Autre") {
       setShowAutre(checked);
       if (!checked) {
@@ -57,71 +67,161 @@ export default function EditMemberPopup({
     });
   };
 
+  // ✅ Gestion du reste des champs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // ✅ Soumission
   const handleSubmit = async () => {
     setLoading(true);
+
     const cleanData = {
       prenom: formData.prenom || member.prenom,
       nom: formData.nom || member.nom,
       ville: formData.ville === "" ? null : formData.ville,
       telephone: formData.telephone === "" ? null : formData.telephone,
-      infos_supplementaires: formData.infos_supplementaires === "" ? null : formData.infos_supplementaires,
+      infos_supplementaires:
+        formData.infos_supplementaires === "" ? null : formData.infos_supplementaires,
       statut: formData.statut === "" ? null : formData.statut,
       cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
-      besoin: formData.autreBesoin && showAutre
-        ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
-        : formData.besoin,
+      besoin:
+        formData.autreBesoin && showAutre
+          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
+          : formData.besoin,
     };
 
-    const { error, data } = await supabase.from("membres").update(cleanData).eq("id", member.id).select().single();
+    const { error, data } = await supabase
+      .from("membres")
+      .update(cleanData)
+      .eq("id", member.id)
+      .select()
+      .single();
 
-    if (error) alert("❌ Erreur lors de la mise à jour : " + error.message);
-    else {
+    if (error) {
+      alert("❌ Erreur lors de la mise à jour : " + error.message);
+    } else {
       if (onUpdateMember) onUpdateMember(data);
       setMessage("✅ Changement enregistré !");
-      setTimeout(() => { setMessage(""); onClose(); }, 1500);
+      setTimeout(() => {
+        setMessage("");
+        onClose();
+      }, 1500);
     }
+
     setLoading(false);
+  };
+
+  const handleAfterSend = (id, type, cible) => {
+    // Optionnel : mise à jour locale si tu veux déplacer membre vers "anciens"
+    showToast("✅ Contact envoyé et suivi enregistré");
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto shadow-xl relative">
-        <button onClick={onClose} className="absolute top-2 right-2 text-red-500 font-bold hover:text-red-700">✕</button>
+        {/* Bouton fermer */}
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-red-500 font-bold hover:text-red-700"
+        >
+          ✕
+        </button>
 
         <h2 className="text-lg font-bold text-gray-800 text-center mb-4">
           Modifier {member.prenom} {member.nom}
         </h2>
 
+        {/* Formulaire */}
         <div className="flex flex-col space-y-2 text-sm">
-          <input name="prenom" value={formData.prenom} onChange={handleChange} placeholder="Prénom" className="border rounded px-2 py-1" />
-          <input name="nom" value={formData.nom} onChange={handleChange} placeholder="Nom" className="border rounded px-2 py-1" />
-          <input name="ville" value={formData.ville} onChange={handleChange} placeholder="Ville" className="border rounded px-2 py-1" />
-          <input name="telephone" value={formData.telephone} onChange={handleChange} placeholder="Téléphone" className="border rounded px-2 py-1" />
+          <input
+            name="prenom"
+            value={formData.prenom}
+            onChange={handleChange}
+            placeholder="Prénom"
+            className="border rounded px-2 py-1"
+          />
+          <input
+            name="nom"
+            value={formData.nom}
+            onChange={handleChange}
+            placeholder="Nom"
+            className="border rounded px-2 py-1"
+          />
+          <input
+            name="ville"
+            value={formData.ville}
+            onChange={handleChange}
+            placeholder="Ville"
+            className="border rounded px-2 py-1"
+          />
+          <input
+            name="telephone"
+            value={formData.telephone}
+            onChange={handleChange}
+            placeholder="Téléphone"
+            className="border rounded px-2 py-1"
+          />
 
           {/* Besoins */}
           <div className="mt-2">
             <p className="font-semibold mb-2">Besoins :</p>
             {besoinsOptions.map((item) => (
               <label key={item} className="flex items-center gap-3 mb-2">
-                <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} className="w-5 h-5 rounded border-gray-400 cursor-pointer" />
+                <input
+                  type="checkbox"
+                  name="besoin"
+                  value={item}
+                  checked={formData.besoin.includes(item)}
+                  onChange={handleBesoinChange}
+                  className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+                />
                 <span>{item}</span>
               </label>
             ))}
+
             <label className="flex items-center gap-3 mb-2">
-              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} className="w-5 h-5 rounded border-gray-400 cursor-pointer" />
+              <input
+                type="checkbox"
+                name="besoin"
+                value="Autre"
+                checked={showAutre}
+                onChange={handleBesoinChange}
+                className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+              />
               Autre
             </label>
-            {showAutre && <input type="text" name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} placeholder="Précisez..." className="border rounded px-2 py-1 w-full" />}
+
+            {showAutre && (
+              <input
+                type="text"
+                name="autreBesoin"
+                value={formData.autreBesoin}
+                onChange={handleChange}
+                placeholder="Précisez..."
+                className="border rounded px-2 py-1 w-full"
+              />
+            )}
           </div>
 
-          <textarea name="infos_supplementaires" value={formData.infos_supplementaires} onChange={handleChange} placeholder="Infos supplémentaires" className="border rounded px-2 py-1" rows={3} />
+          {/* Infos supplémentaires */}
+          <textarea
+            name="infos_supplementaires"
+            value={formData.infos_supplementaires}
+            onChange={handleChange}
+            placeholder="Infos supplémentaires"
+            className="border rounded px-2 py-1"
+            rows={3}
+          />
 
-          <select name="statut" value={formData.statut} onChange={handleChange} className="border rounded px-2 py-1">
+          {/* Statut */}
+          <select
+            name="statut"
+            value={formData.statut}
+            onChange={handleChange}
+            className="border rounded px-2 py-1"
+          >
             <option value="">-- Statut --</option>
             <option value="actif">actif</option>
             <option value="Integrer">Integrer</option>
@@ -131,21 +231,42 @@ export default function EditMemberPopup({
             <option value="a déjà mon église">a déjà mon église</option>
           </select>
 
-          {/* Envoi */}
+          {/* Envoi Cellule / Conseiller */}
           <div className="mt-2">
             <label className="font-semibold text-sm">Envoyer à :</label>
-            <select value={selectedTargetType} onChange={(e) => { setSelectedTargetType(e.target.value); setSelectedTarget(""); }} className="mt-1 w-full border rounded px-2 py-1 text-sm">
+            <select
+              value={selectedTargetType}
+              onChange={(e) => {
+                setSelectedTargetType(e.target.value);
+                setSelectedTarget(""); // reset
+              }}
+              className="mt-1 w-full border rounded px-2 py-1 text-sm"
+            >
               <option value="">-- Choisir une option --</option>
               <option value="cellule">Une Cellule</option>
               <option value="conseiller">Un Conseiller</option>
             </select>
 
             {selectedTargetType && (
-              <select value={selectedTarget} onChange={(e) => setSelectedTarget(e.target.value)} className="mt-1 w-full border rounded px-2 py-1 text-sm">
-                <option value="">-- Sélectionner {selectedTargetType} --</option>
+              <select
+                value={selectedTarget}
+                onChange={(e) => setSelectedTarget(e.target.value)}
+                className="mt-1 w-full border rounded px-2 py-1 text-sm"
+              >
+                <option value="">
+                  -- Sélectionner {selectedTargetType} --
+                </option>
                 {selectedTargetType === "cellule"
-                  ? cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>)
-                  : conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
+                  ? cellules.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.cellule} ({c.responsable})
+                      </option>
+                    ))
+                  : conseillers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.prenom} {c.nom}
+                      </option>
+                    ))}
               </select>
             )}
 
@@ -154,21 +275,41 @@ export default function EditMemberPopup({
                 <BoutonEnvoyer
                   membre={member}
                   type={selectedTargetType}
-                  cible={selectedTargetType === "cellule"
-                    ? cellules.find(c => c.id === selectedTarget)
-                    : conseillers.find(c => c.id === selectedTarget)}
+                  cible={
+                    selectedTargetType === "cellule"
+                      ? cellules.find((c) => c.id === selectedTarget)
+                      : conseillers.find((c) => c.id === selectedTarget)
+                  }
+                  onEnvoyer={(id) =>
+                    handleAfterSend(
+                      id,
+                      selectedTargetType,
+                      selectedTargetType === "cellule"
+                        ? cellules.find((c) => c.id === selectedTarget)
+                        : conseillers.find((c) => c.id === selectedTarget)
+                    )
+                  }
                   session={session}
                   showToast={showToast}
-                  onEnvoyer={() => {}}
                 />
               </div>
             )}
           </div>
         </div>
 
-        {message && <p className="text-green-600 text-center mt-3 font-semibold">{message}</p>}
+        {/* Message succès */}
+        {message && (
+          <p className="text-green-600 text-center mt-3 font-semibold">{message}</p>
+        )}
 
-        <button onClick={handleSubmit} disabled={loading} className={`mt-4 w-full text-white py-2 rounded transition font-bold ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}>
+        {/* Bouton enregistrer */}
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className={`mt-4 w-full text-white py-2 rounded transition font-bold ${
+            loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
           {loading ? "Enregistrement..." : "Enregistrer"}
         </button>
       </div>

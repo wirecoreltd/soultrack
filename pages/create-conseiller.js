@@ -15,8 +15,19 @@ export default function CreateConseiller() {
     email: "",
     password: "",
   });
+  const [responsableId, setResponsableId] = useState(""); // ID du responsable connecté
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // ➤ Récupérer l'utilisateur connecté (responsable)
+  useEffect(() => {
+    async function fetchUser() {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) console.error(error);
+      else if (data?.user) setResponsableId(data.user.id);
+    }
+    fetchUser();
+  }, []);
 
   // ➤ Récupérer les membres star = true
   useEffect(() => {
@@ -25,13 +36,14 @@ export default function CreateConseiller() {
         .from("membres")
         .select("id, prenom, nom, telephone")
         .eq("star", true);
+
       if (error) console.error(error);
       else setMembers(data);
     }
     fetchStarMembers();
   }, []);
 
-  // ➤ Remplissage automatique
+  // ➤ Remplissage automatique quand un membre est sélectionné
   useEffect(() => {
     if (!selectedMemberId) return setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
     const member = members.find((m) => m.id === selectedMemberId);
@@ -51,18 +63,14 @@ export default function CreateConseiller() {
     setMessage("⏳ Création en cours...");
 
     try {
-      // 🔹 Récupérer le token de session
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      if (!token) throw new Error("Utilisateur non connecté");
-
       const res = await fetch("/api/create-conseiller", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, token }),
+        body: JSON.stringify({ ...formData, responsable_id: responsableId }),
       });
 
       const data = await res.json().catch(() => null);
+
       if (res.ok) {
         setMessage("✅ Conseiller créé avec succès !");
         setSelectedMemberId("");
@@ -70,11 +78,14 @@ export default function CreateConseiller() {
       } else {
         setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
       }
-
     } catch (err) {
       setMessage("❌ " + err.message);
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleCancel = () => router.push("/");
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
@@ -92,20 +103,19 @@ export default function CreateConseiller() {
           <input name="prenom" placeholder="Prénom" value={formData.prenom} readOnly className="input" />
           <input name="nom" placeholder="Nom" value={formData.nom} readOnly className="input" />
           <input name="telephone" placeholder="Téléphone" value={formData.telephone} readOnly className="input" />
+
           <input name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="input" required />
           <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
 
           <div className="flex gap-4 mt-4">
-            <button type="button" onClick={() => router.push("/")} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-3 rounded-2xl">Annuler</button>
+            <button type="button" onClick={handleCancel} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-3 rounded-2xl">Annuler</button>
             <button type="submit" disabled={loading} className="flex-1 bg-blue-400 hover:bg-blue-500 text-white py-3 rounded-2xl">{loading ? "Création..." : "Créer"}</button>
           </div>
         </form>
 
         {message && <p className="mt-4 text-center text-sm text-gray-700">{message}</p>}
 
-        <style jsx>{`
-          .input { width:100%; border:1px solid #ccc; border-radius:12px; padding:12px; color:black; }
-        `}</style>
+        <style jsx>{`.input { width:100%; border:1px solid #ccc; border-radius:12px; padding:12px; color:black; }`}</style>
       </div>
     </div>
   );

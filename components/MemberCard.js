@@ -1,6 +1,3 @@
-// components/MemberCard.js
-// components/MemberCard.js
-
 "use client";
 
 import { useState } from "react";
@@ -13,7 +10,6 @@ export default function MemberCard({
   conseillers,
   selectedDestinations,
   setSelectedDestinations,
-  handleChangeStatus,
   handleStatusUpdateFromEnvoyer,
   session,
   onEdit,
@@ -88,7 +84,7 @@ export default function MemberCard({
             </p>
             <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
 
-            {/* --- Choix Cellule / Conseiller --- */}
+            {/* Choix Cellule / Conseiller */}
             <div className="flex items-center gap-4 mt-2">
               <label>
                 <input
@@ -118,63 +114,58 @@ export default function MemberCard({
               </label>
             </div>
 
-            {/* --- Dropdown selon choix --- */}
-            {sendTo === "cellule" && (
-              <select
-                value={selectedDest}
-                onChange={(e) =>
-                  setSelectedDestinations((prev) => ({
-                    ...prev,
-                    [member.id]: e.target.value,
-                  }))
-                }
-                className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
-              >
-                <option value="">-- Sélectionner cellule --</option>
-                {cellules.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.cellule} ({c.responsable})
-                  </option>
-                ))}
-              </select>
-            )}
+            {/* Dropdown selon choix */}
+            <select
+              value={selectedDest}
+              onChange={(e) =>
+                setSelectedDestinations((prev) => ({
+                  ...prev,
+                  [member.id]: e.target.value,
+                }))
+              }
+              className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
+            >
+              <option value="">
+                {sendTo === "cellule" ? "-- Sélectionner cellule --" : "-- Sélectionner un conseiller --"}
+              </option>
+              {sendTo === "cellule"
+                ? cellules.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.cellule} ({c.responsable})
+                    </option>
+                  ))
+                : conseillers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.prenom} {c.nom}
+                    </option>
+                  ))}
+            </select>
 
-            {sendTo === "conseiller" && (
-              <select
-                value={selectedDest}
-                onChange={(e) =>
-                  setSelectedDestinations((prev) => ({
-                    ...prev,
-                    [member.id]: e.target.value,
-                  }))
-                }
-                className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
-              >
-                <option value="">-- Sélectionner un conseiller --</option>
-                {conseillers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.prenom} {c.nom}
-                  </option>
-                ))}
-              </select>
-            )}
-
-            {/* --- Bouton Envoyer --- */}
+            {/* Bouton Envoyer */}
             {selectedDest && (
               <div className="mt-2 w-full">
                 <BoutonEnvoyer
                   membre={member}
-                  cellule={sendTo === "cellule" ? cellules.find((c) => c.id === selectedDest) : null}
-                  conseiller={sendTo === "conseiller" ? conseillers.find((c) => c.id === selectedDest) : null}
-                  onStatusUpdate={(updatedMember) =>
-                    handleStatusUpdateFromEnvoyer(member.id, member.statut, updatedMember)
+                  type={sendTo}
+                  cible={
+                    sendTo === "cellule"
+                      ? cellules.find((c) => c.id === selectedDest)
+                      : conseillers.find((c) => c.id === selectedDest)
                   }
                   session={session}
+                  onEnvoyer={(id, type, cible, newStatut) =>
+                    handleStatusUpdateFromEnvoyer(member.id, member.statut, {
+                      ...member,
+                      statut: newStatut,
+                      cellule_id: type === "cellule" ? cible.id : member.cellule_id,
+                      conseiller_id: type === "conseiller" ? cible.id : member.conseiller_id,
+                    })
+                  }
                 />
               </div>
             )}
 
-            {/* --- Ancien membre --- */}
+            {/* Modifier */}
             {!isNouveau && (
               <div className="text-center mt-3">
                 <button
@@ -191,5 +182,3 @@ export default function MemberCard({
     </div>
   );
 }
-
-

@@ -391,6 +391,7 @@ export default function ListMembers() {
                               )}
 
                               {/* Modifier contact */}
+                              <div className="flex justify-center mt-2">
                               <button
                                 onClick={() => setEditMember(m)}
                                 className="text-blue-600 underline text-sm mt-1"

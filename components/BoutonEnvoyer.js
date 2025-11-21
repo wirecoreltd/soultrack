@@ -5,7 +5,7 @@ import supabase from "../lib/supabaseClient";
 export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
   const [loading, setLoading] = useState(false);
 
-  const sendToWhatsapp = async () => {
+  const sendToWhatsapp = async (force = false) => {
     if (!session) {
       alert("❌ Vous devez être connecté pour envoyer un membre.");
       return;
@@ -17,7 +17,26 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
     setLoading(true);
     try {
-      // 1️⃣ Créer le suivi
+      // 1️⃣ Vérifier doublon par téléphone et cible
+      const { data: existing, error: selectError } = await supabase
+        .from("suivis_membres")
+        .select("*")
+        .eq("telephone", membre.telephone || "")
+        .eq(type === "cellule" ? "cellule_id" : "conseiller_id", cible.id);
+
+      if (selectError) throw selectError;
+
+      if (existing.length > 0 && !force) {
+        const continuer = confirm(
+          "⚠️ Ce contact existe déjà dans cette cible. Voulez-vous l'envoyer quand même ?"
+        );
+        if (!continuer) {
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 2️⃣ Créer le suivi
       const suiviData = {
         membre_id: membre.id,
         prenom: membre.prenom,
@@ -43,17 +62,17 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       const { error: insertError } = await supabase.from("suivis_membres").insert([suiviData]);
       if (insertError) throw insertError;
 
-      // 2️⃣ Mettre à jour le membre pour qu’il devienne actif
+      // 3️⃣ Mettre à jour le membre pour qu’il devienne actif
       const { error: updateMemberError } = await supabase
         .from("membres")
         .update({ statut: "actif" })
         .eq("id", membre.id);
       if (updateMemberError) throw updateMemberError;
 
-      // 3️⃣ Callback pour mettre à jour localement dans la page
+      // 4️⃣ Callback pour mettre à jour localement
       if (onEnvoyer) onEnvoyer(membre.id, type, cible, "actif");
 
-      // 4️⃣ Préparer et ouvrir le message WhatsApp
+      // 5️⃣ Préparer le message WhatsApp
       let message = `👋 Salut ${cible.responsable || (cible.prenom ? `${cible.prenom} ${cible.nom}` : "")},\n\n`;
       message += `🙏 Nouveau membre à suivre :\n`;
       message += `- 👤 Nom : ${membre.prenom} ${membre.nom}\n`;
@@ -67,6 +86,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       else window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
 
       if (showToast) showToast("✅ Contact envoyé et suivi enregistré");
+
     } catch (err) {
       console.error("Erreur sendToWhatsapp:", err);
       alert("❌ Une erreur est survenue lors de l'envoi.");
@@ -77,7 +97,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
   return (
     <button
-      onClick={sendToWhatsapp}
+      onClick={() => sendToWhatsapp()}
       disabled={loading}
       className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg transition-all ${
         loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"

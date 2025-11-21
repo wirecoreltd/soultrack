@@ -44,8 +44,8 @@ export default function DetailsPopup({
         <div className="mt-2">
                           <label className="text-gray-700 text-sm mr-2">🕊 Statut :</label>
                           <select
-                            value={statusChanges[m.id] ?? m.statut ?? ""}
-                            onChange={(e) => handleStatusChange(m.id, e.target.value)}
+                            value={statusChanges[member.id] ?? member.statut ?? ""}
+                            onChange={(e) => handleStatusChange(member.id, e.target.value)}
                             className="border rounded-md px-2 py-1 text-sm"
                           >
                             <option value="">-- Choisir un statut --</option>

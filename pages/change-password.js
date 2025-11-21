@@ -1,5 +1,3 @@
-// pages/change-password.js
-
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -33,17 +31,25 @@ export default function ChangePasswordPage() {
     }
 
     setLoading(true);
+
     try {
-      // Mise à jour du mot de passe et du flag must_change_password
-      const { error: updateError } = await supabase
+      // 1) Mise à jour du mot de passe via AUTH (correct)
+      const { error: passError } = await supabase.auth.updateUser({
+        password,
+      });
+
+      if (passError) throw passError;
+
+      // 2) Mise à jour du flag must_change_password
+      const { error: profileError } = await supabase
         .from("profiles")
-        .update({ password, must_change_password: false })
+        .update({ must_change_password: false })
         .eq("id", userId);
 
-      if (updateError) throw updateError;
+      if (profileError) throw profileError;
 
       alert("Mot de passe changé avec succès !");
-      router.push("/"); // Redirection vers le dashboard
+      router.push("/"); // Tableau de bord
     } catch (err) {
       console.error("Erreur changement mot de passe :", err);
       setError("Erreur lors du changement de mot de passe");

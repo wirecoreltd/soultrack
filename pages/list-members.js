@@ -415,6 +415,7 @@ export default function ListMembers() {
           onClose={() => setPopupMember(null)}
           statusOptions={statusOptions}
           cellules={cellules}
+          conseillers={conseillers}
           selectedCellules={selectedCellules}
           setSelectedCellules={setSelectedCellules}
           handleChangeStatus={handleChangeStatus}

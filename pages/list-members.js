@@ -159,7 +159,22 @@ export default function ListMembers() {
                       <div className="flex flex-col items-center">
                         <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
                         <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
-                        <p className="text-sm text-gray-600">🕊 Statut : {m.statut}</p>
+                        <div className="mt-2">
+                          <label className="text-gray-700 text-sm mr-2">🕊 Statut :</label>
+                          <select
+                            value={statusChanges[m.id] ?? m.statut ?? ""}
+                            onChange={(e) => handleStatusChange(m.id, e.target.value)}
+                            className="border rounded-md px-2 py-1 text-sm"
+                          >
+                            <option value="">-- Choisir un statut --</option>
+                            <option value="visiteur">Visiteur</option>
+                            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                            <option value="membre">Membre</option>
+                            <option value="integrer">Intégré</option>
+                            <option value="refus">Refus</option>
+                            {/* ajoute d'autres statuts si nécessaire */}
+                          </select>
+                        </div>
                         <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">{isOpen ? "Fermer détails" : "Détails"}</button>
 
                         {isOpen && (

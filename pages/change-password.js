@@ -33,14 +33,16 @@ export default function ChangePasswordPage() {
 
     setLoading(true);
     try {
-      // 🔹 Changer le mot de passe dans Supabase Auth
+      // 🔹 Changer mot de passe dans Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.updateUser({
         password: password,
+        // Met à jour le flag must_change_password à false dans user_metadata
+        data: { must_change_password: false },
       });
 
       if (authError) throw authError;
 
-      // 🔹 Mettre à jour le flag must_change_password dans profiles
+      // 🔹 Mettre à jour dans table profiles pour usage interne
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ must_change_password: false })

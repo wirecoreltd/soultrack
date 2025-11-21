@@ -17,24 +17,18 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
     setLoading(true);
     try {
-      // 🔹 Vérification doublon par téléphone et cible
+      // 🔹 Vérification uniquement par numéro de téléphone
       const { data: existing, error: selectError } = await supabase
         .from("suivis_membres")
         .select("*")
-        .eq("telephone", membre.telephone || "")
-        .eq(type === "cellule" ? "cellule_id" : "conseiller_id", cible.id);
+        .eq("telephone", membre.telephone || "");
 
       if (selectError) throw selectError;
 
       if (existing.length > 0 && !force) {
-        const continuer = confirm(
-          `⚠️ Ce contact (${membre.prenom} ${membre.nom}) existe déjà pour cette cible.\n\n` +
-          `Voulez-vous l'envoyer quand même ?`
-        );
-        if (!continuer) {
-          setLoading(false);
-          return;
-        }
+        alert(`⚠️ Le contact ${membre.prenom} ${membre.nom} est déjà dans la liste des suivis et ne peut pas être envoyé à nouveau.`);
+        setLoading(false);
+        return;
       }
 
       // 🔹 Créer le suivi
@@ -73,7 +67,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       // 🔹 Callback pour mise à jour locale
       if (onEnvoyer) onEnvoyer(membre.id, type, cible, "actif");
 
-      // 🔹 Préparer et envoyer le message WhatsApp
+      // 🔹 Préparer le message WhatsApp
       let message = `👋 Salut ${cible.responsable || (cible.prenom ? `${cible.prenom} ${cible.nom}` : "")}!\n\n`;
       message += `🙏 Nouveau membre à suivre :\n`;
       message += `- 👤 Nom : ${membre.prenom} ${membre.nom}\n`;

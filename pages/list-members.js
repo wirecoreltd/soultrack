@@ -416,6 +416,7 @@ export default function ListMembers() {
           statusOptions={statusOptions}
           cellules={cellules}
           conseillers={conseillers}
+          handleAfterSend={handleAfterSend}
           selectedCellules={selectedCellules}
           setSelectedCellules={setSelectedCellules}
           handleChangeStatus={handleChangeStatus}

@@ -1,6 +1,9 @@
 // ✅ pages/api/create-user.js
 
+// pages/api/create-user.js
+
 import { createClient } from "@supabase/supabase-js";
+import fetch from "node-fetch"; // Pour l'envoi WhatsApp si besoin
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -12,9 +15,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Méthode non autorisée" });
 
   try {
-    const { prenom, nom, email, password, role, telephone, cellule_nom, cellule_zone } = req.body;
+    const { prenom, nom, email, password, role, telephone } = req.body;
 
-    // ✅ Crée un utilisateur dans Auth
+    // 1️⃣ Crée un utilisateur dans Supabase Auth
     const { data: userData, error: createError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -24,34 +27,73 @@ export default async function handler(req, res) {
     if (createError) throw createError;
     const user = userData.user;
 
-    // ✅ Ajoute dans la table profiles
+    // 2️⃣ Ajoute le profil avec must_change_password = true
     const { error: profileError } = await supabase.from("profiles").insert({
       id: user.id,
       prenom,
       nom,
-      telephone,
-      role,
       email,
+      role,
+      telephone: telephone || "",
+      must_change_password: true, // flag première connexion
     });
 
     if (profileError) throw profileError;
 
-    // ✅ Si c’est un responsable, crée la cellule en même temps
-    if (role === "ResponsableCellule" && cellule_nom) {
-      const { error: celluleError } = await supabase.from("cellules").insert({
-        cellule: cellule_nom,
-        ville: cellule_zone || null,
-        responsable: `${prenom} ${nom}`,
-        responsable_id: user.id,
-        telephone: telephone || "",
-      });
+    // 3️⃣ Préparer message pour email et WhatsApp
+    const loginUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/login`;
+    const message = `
+Bonjour ${prenom},
 
-      if (celluleError) throw celluleError;
+Bienvenue sur SoulTrack ! 🎉
+Voici vos informations de connexion :
+
+- Email: ${email}
+- Mot de passe: ${password}
+- URL de connexion: ${loginUrl}
+
+Petit mot d'encouragement : "La famille est le premier lieu où l'amour et la foi se transmettent. Prenez soin de ceux qui vous entourent."
+
+Merci !
+`;
+
+    // 4️⃣ Envoyer Email via SendGrid ou Supabase Functions
+    if (process.env.SENDGRID_API_KEY) {
+      await fetch("https://api.sendgrid.com/v3/mail/send", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          personalizations: [{ to: [{ email }] }],
+          from: { email: process.env.EMAIL_FROM },
+          subject: "Bienvenue sur SoulTrack",
+          content: [{ type: "text/plain", value: message }],
+        }),
+      });
     }
 
-    return res.status(200).json({ message: "Utilisateur créé avec succès" });
+    // 5️⃣ Envoyer WhatsApp via Twilio ou 360dialog
+    if (process.env.WHATSAPP_API_URL && process.env.WHATSAPP_TOKEN) {
+      await fetch(process.env.WHATSAPP_API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: telephone,
+          type: "text",
+          text: { body: message },
+        }),
+      });
+    }
+
+    return res.status(200).json({ message: "Utilisateur créé et notifications envoyées !" });
   } catch (err) {
     console.error("Erreur création utilisateur:", err);
     return res.status(500).json({ error: err.message });
   }
 }
+

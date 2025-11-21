@@ -5,6 +5,7 @@ import React from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
+import DetailsPopup from "../components/DetailsPopup";
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
@@ -19,81 +20,74 @@ export default function SuivisMembres() {
   const [view, setView] = useState("card");
 
   useEffect(() => {
-  const fetchSuivis = async () => {
-    setLoading(true);
-    try {
-      // Récupérer l'utilisateur connecté
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error("Utilisateur non connecté");
+    const fetchSuivis = async () => {
+      setLoading(true);
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) throw new Error("Utilisateur non connecté");
 
-      // Récupérer le profil
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, role")
-        .eq("id", user.id)
-        .single();
-      if (profileError || !profileData) throw profileError;
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, prenom, nom, role")
+          .eq("id", user.id)
+          .single();
+        if (profileError || !profileData) throw profileError;
 
-      const userRole = profileData.role;
-      setPrenom(profileData.prenom || "cher membre");
-      setRole(userRole);
+        const userRole = profileData.role;
+        setPrenom(profileData.prenom || "cher membre");
+        setRole(userRole);
 
-      let suivisData = [];
+        let suivisData = [];
 
-      if (userRole === "Administrateur" || userRole === "ResponsableIntegration") {
-        // Voir tous les suivis
-        const { data, error } = await supabase
-          .from("suivis_membres")
-          .select("*")
-          .order("created_at", { ascending: false });
-        if (error) throw error;
-        suivisData = data;
-      } else if (userRole === "Conseiller") {
-        // Voir uniquement ses suivis
-        const { data, error } = await supabase
-          .from("suivis_membres")
-          .select("*")
-          .eq("conseiller_id", profileData.id)
-          .order("created_at", { ascending: false });
-        if (error) throw error;
-        suivisData = data;
-      } else if (userRole === "ResponsableCellule") {
-        // Suivis attribués à ses cellules
-        const { data: cellulesData, error: cellulesError } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("responsable_id", profileData.id);
-        if (cellulesError) throw cellulesError;
-
-        const celluleIds = cellulesData?.map(c => c.id) || [];
-        if (celluleIds.length > 0) {
+        if (userRole === "Administrateur" || userRole === "ResponsableIntegration") {
           const { data, error } = await supabase
             .from("suivis_membres")
             .select("*")
-            .in("cellule_id", celluleIds)
             .order("created_at", { ascending: false });
           if (error) throw error;
           suivisData = data;
+        } else if (userRole === "Conseiller") {
+          const { data, error } = await supabase
+            .from("suivis_membres")
+            .select("*")
+            .eq("conseiller_id", profileData.id)
+            .order("created_at", { ascending: false });
+          if (error) throw error;
+          suivisData = data;
+        } else if (userRole === "ResponsableCellule") {
+          const { data: cellulesData, error: cellulesError } = await supabase
+            .from("cellules")
+            .select("id")
+            .eq("responsable_id", profileData.id);
+          if (cellulesError) throw cellulesError;
+
+          const celluleIds = cellulesData?.map(c => c.id) || [];
+          if (celluleIds.length > 0) {
+            const { data, error } = await supabase
+              .from("suivis_membres")
+              .select("*")
+              .in("cellule_id", celluleIds)
+              .order("created_at", { ascending: false });
+            if (error) throw error;
+            suivisData = data;
+          }
         }
+
+        setSuivis(suivisData || []);
+        if (!suivisData || suivisData.length === 0) {
+          setMessage("Aucun membre à afficher.");
+        }
+      } catch (err) {
+        console.error("❌ Erreur:", err.message || err);
+        setMessage("Erreur lors de la récupération des suivis.");
+        setSuivis([]);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setSuivis(suivisData || []);
-      if (!suivisData || suivisData.length === 0) {
-        setMessage("Aucun membre à afficher.");
-      }
-    } catch (err) {
-      console.error("❌ Erreur:", err.message || err);
-      setMessage("Erreur lors de la récupération des suivis.");
-      setSuivis([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchSuivis();
-}, []);
-
-
+    fetchSuivis();
+  }, []);
 
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -185,6 +179,8 @@ export default function SuivisMembres() {
       setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
     } finally {
       setUpdating((prev) => ({ ...prev, [id]: false }));
+      // Ferme automatiquement le détail après mise à jour
+      setDetailsOpen((prev) => ({ ...prev, [id]: false }));
     }
   };
 
@@ -193,15 +189,15 @@ export default function SuivisMembres() {
       <p>🏙 Ville : {m.ville || "—"}</p>      
       <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
       <p>❓Besoin : {
-                              (() => {
-                                if (!m.besoin) return "—";
-                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                                try {
-                                  const arr = JSON.parse(m.besoin);
-                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                                } catch { return m.besoin; }
-                              })()
-                            }</p>
+        (() => {
+          if (!m.besoin) return "—";
+          if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+          try {
+            const arr = JSON.parse(m.besoin);
+            return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+          } catch { return m.besoin; }
+        })()
+      }</p>
       <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
       <label className="text-black text-sm">📋 Statut Suivis :</label>
@@ -216,20 +212,16 @@ export default function SuivisMembres() {
         <option value="refus">❌ Refus</option>
       </select>
 
-       <div className="mt-2">
-                      <label className="text-gray-700 text-sm">💬 Commentaire :</label>
-                      <textarea
-                        value={
-                          commentChanges[m.id] ?? m.commentaire_suivis ?? ""
-                        }
-                        onChange={(e) =>
-                          handleCommentChange(m.id, e.target.value)
-                        }
-                        rows={2}
-                        className="w-full border rounded-md px-2 py-1 text-sm mt-1 resize-none"
-                        placeholder="Ajouter un commentaire..."
-                      ></textarea>
-                    </div>
+      <div className="mt-2">
+        <label className="text-gray-700 text-sm">💬 Commentaire :</label>
+        <textarea
+          value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
+          onChange={(e) => handleCommentChange(m.id, e.target.value)}
+          rows={2}
+          className="w-full border rounded-md px-2 py-1 text-sm mt-1 resize-none"
+          placeholder="Ajouter un commentaire..."
+        />
+      </div>
 
       <button
         onClick={() => updateSuivi(m.id)}
@@ -316,7 +308,6 @@ export default function SuivisMembres() {
                 <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">🏠 {item.cellule_nom} – {item.responsable}</p> 
-                  
 
                 <button
                   onClick={() => toggleDetails(item.id)}

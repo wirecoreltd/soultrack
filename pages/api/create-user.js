@@ -1,9 +1,4 @@
-// ✅ pages/api/create-user.js
-
-// pages/api/create-user.js
-
 import { createClient } from "@supabase/supabase-js";
-import fetch from "node-fetch"; // Pour l'envoi WhatsApp si besoin
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -17,7 +12,6 @@ export default async function handler(req, res) {
   try {
     const { prenom, nom, email, password, role, telephone } = req.body;
 
-    // 1️⃣ Crée un utilisateur dans Supabase Auth
     const { data: userData, error: createError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -27,7 +21,6 @@ export default async function handler(req, res) {
     if (createError) throw createError;
     const user = userData.user;
 
-    // 2️⃣ Ajoute le profil avec must_change_password = true
     const { error: profileError } = await supabase.from("profiles").insert({
       id: user.id,
       prenom,
@@ -35,12 +28,12 @@ export default async function handler(req, res) {
       email,
       role,
       telephone: telephone || "",
-      must_change_password: true, // flag première connexion
+      must_change_password: true,
     });
 
     if (profileError) throw profileError;
 
-    // 3️⃣ Préparer message pour email et WhatsApp
+    // Envoi d'email / WhatsApp
     const loginUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/login`;
     const message = `
 Bonjour ${prenom},
@@ -52,12 +45,10 @@ Voici vos informations de connexion :
 - Mot de passe: ${password}
 - URL de connexion: ${loginUrl}
 
-Petit mot d'encouragement : "La famille est le premier lieu où l'amour et la foi se transmettent. Prenez soin de ceux qui vous entourent."
-
-Merci !
+Petit mot d'encouragement : "La famille est le premier lieu où l'amour et la foi se transmettent."
 `;
 
-    // 4️⃣ Envoyer Email via SendGrid ou Supabase Functions
+    // Envoi email
     if (process.env.SENDGRID_API_KEY) {
       await fetch("https://api.sendgrid.com/v3/mail/send", {
         method: "POST",
@@ -74,7 +65,7 @@ Merci !
       });
     }
 
-    // 5️⃣ Envoyer WhatsApp via Twilio ou 360dialog
+    // Envoi WhatsApp (optionnel)
     if (process.env.WHATSAPP_API_URL && process.env.WHATSAPP_TOKEN) {
       await fetch(process.env.WHATSAPP_API_URL, {
         method: "POST",
@@ -96,4 +87,3 @@ Merci !
     return res.status(500).json({ error: err.message });
   }
 }
-

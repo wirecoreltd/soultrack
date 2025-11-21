@@ -206,10 +206,10 @@ export default function SuivisMembres() {
                       <label className="text-gray-700 text-sm">💬 Commentaire :</label>
                       <textarea
                         value={
-                          commentChanges[item.id] ?? item.commentaire_evangelises ?? ""
+                          commentChanges[m.id] ?? m.commentaire_suivis ?? ""
                         }
                         onChange={(e) =>
-                          handleCommentChange(item.id, e.target.value)
+                          handleCommentChange(m.id, e.target.value)
                         }
                         rows={2}
                         className="w-full border rounded-md px-2 py-1 text-sm mt-1 resize-none"

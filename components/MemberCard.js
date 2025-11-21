@@ -167,7 +167,7 @@ export default function MemberCard({
 
             {/* Modifier */}
             {!isNouveau && (
-              <div className="text-center mt-3">
+              <div className="flex justify-center mt-4">
                 <button
                   onClick={() => onEdit(member)}
                   className="text-blue-600 underline text-sm hover:text-blue-800"

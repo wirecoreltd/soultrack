@@ -1,5 +1,3 @@
-//pages/login.js
-
 "use client";
 
 import { useState } from "react";
@@ -19,6 +17,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
+      // Connexion Supabase
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -30,36 +29,53 @@ export default function LoginPage() {
         return;
       }
 
-      localStorage.setItem("userEmail", data.user.email);
+      const userId = data.user.id;
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("userId", userId);
 
+      // Récupération du profil complet
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, role, prenom, nom, telephone")
-        .eq("id", data.user.id)
+        .select("id, role, prenom, nom, telephone, must_change_password")
+        .eq("id", userId)
         .single();
 
       if (profileError) {
-        setError("❌ Impossible de récupérer le rôle");
+        setError("❌ Impossible de récupérer le profil");
         setLoading(false);
         return;
       }
 
-      const role = profile?.role || "Membre";
+      // Stockage local pour le dashboard
+      localStorage.setItem("userRole", JSON.stringify([profile.role]));
+      localStorage.setItem("profile", JSON.stringify(profile));
 
-      // ⬇️⬇️⬇️ **AJOUT IMPORTANT – SANS CASSER LE RESTE**
-      localStorage.setItem("userRole", JSON.stringify([role]));
-      localStorage.setItem("userId", profile.id);
-      localStorage.setItem("profile", JSON.stringify(profile)); // ⭐⭐ AJOUT ESSENTIEL
-      // ⬆️⬆️⬆️
+      // 🔹 Première connexion ? Redirection vers change-password
+      if (profile.must_change_password) {
+        router.push("/change-password");
+        return;
+      }
 
-      console.log("✅ Login réussi :", data.user.email, "| Role :", role);
-
-      if (role === "ResponsableIntegration") router.push("/membres-hub");
-      else if (role === "ResponsableEvangelisation") router.push("/evangelisation-hub");
-      else if (role === "ResponsableCellule") router.push("/cellules-hub");
-      else if (role === "Conseiller") router.push("/suivis-membres");
-      else if (role === "Administrateur") router.push("/");
-      else router.push("/");
+      // 🔹 Redirection selon rôle
+      switch (profile.role) {
+        case "Administrateur":
+          router.push("/");
+          break;
+        case "ResponsableIntegration":
+          router.push("/membres-hub");
+          break;
+        case "ResponsableEvangelisation":
+          router.push("/evangelisation-hub");
+          break;
+        case "ResponsableCellule":
+          router.push("/cellules-hub");
+          break;
+        case "Conseiller":
+          router.push("/suivis-membres");
+          break;
+        default:
+          router.push("/");
+      }
     } catch (err) {
       console.error("Erreur lors du login :", err);
       setError("❌ Erreur lors de la connexion");
@@ -75,7 +91,6 @@ export default function LoginPage() {
           <img src="/logo.png" alt="Logo SoulTrack" className="w-12 h-12 object-contain" />
           SoulTrack
         </h1>
-
         <p className="text-center text-gray-700 mb-6">
           Bienvenue sur SoulTrack ! Une plateforme pour garder le contact et suivre chaque membre.
         </p>

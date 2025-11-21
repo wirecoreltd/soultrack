@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
@@ -32,14 +33,14 @@ export default function ChangePasswordPage() {
 
     setLoading(true);
     try {
-      // 1️⃣ Mise à jour du mot de passe dans Supabase AUTH (le vrai compte)
-      const { error: authError } = await supabase.auth.updateUser({
+      // 🔹 Changer le mot de passe dans Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.updateUser({
         password: password,
       });
 
       if (authError) throw authError;
 
-      // 2️⃣ Mise à jour du flag dans la table profiles
+      // 🔹 Mettre à jour le flag must_change_password dans profiles
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ must_change_password: false })
@@ -47,11 +48,11 @@ export default function ChangePasswordPage() {
 
       if (profileError) throw profileError;
 
-      alert("Mot de passe changé avec succès !");
-      router.push("/");
+      alert("✅ Mot de passe changé avec succès !");
+      router.push("/"); // Redirection vers le dashboard
     } catch (err) {
       console.error("Erreur changement mot de passe :", err);
-      setError("Erreur lors du changement de mot de passe");
+      setError("❌ Erreur lors du changement de mot de passe");
     } finally {
       setLoading(false);
     }

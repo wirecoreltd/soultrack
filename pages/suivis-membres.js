@@ -219,9 +219,18 @@ export default function SuivisMembres() {
         >
           {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
         </button>
-      </div>
-    );
-  };
+          {/* ---------------- Modifier le contact ---------------- */}
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => setEditMember(m)}
+              className="text-blue-600 text-sm mt-4"
+            >
+              ✏️ Modifier le contact
+            </button>
+          </div>
+        </div>
+      );
+    };
 
   return (
     <div

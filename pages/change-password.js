@@ -31,16 +31,15 @@ export default function ChangePasswordPage() {
     }
 
     setLoading(true);
-
     try {
-      // 1) Mise à jour du mot de passe via AUTH (correct)
-      const { error: passError } = await supabase.auth.updateUser({
-        password,
+      // 1️⃣ Mise à jour du mot de passe dans Supabase AUTH (le vrai compte)
+      const { error: authError } = await supabase.auth.updateUser({
+        password: password,
       });
 
-      if (passError) throw passError;
+      if (authError) throw authError;
 
-      // 2) Mise à jour du flag must_change_password
+      // 2️⃣ Mise à jour du flag dans la table profiles
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ must_change_password: false })
@@ -49,7 +48,7 @@ export default function ChangePasswordPage() {
       if (profileError) throw profileError;
 
       alert("Mot de passe changé avec succès !");
-      router.push("/"); // Tableau de bord
+      router.push("/");
     } catch (err) {
       console.error("Erreur changement mot de passe :", err);
       setError("Erreur lors du changement de mot de passe");

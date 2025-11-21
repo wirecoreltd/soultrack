@@ -32,20 +32,19 @@ export default function SuivisMembres() {
           .single();
         if (profileError || !profileData) throw profileError;
 
-        const userRole = profileData.role;
         setPrenom(profileData.prenom || "cher membre");
-        setRole(userRole);
+        setRole(profileData.role);
 
         let suivisData = [];
 
-        if (userRole === "Administrateur" || userRole === "ResponsableIntegration") {
+        if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
           const { data, error } = await supabase
             .from("suivis_membres")
             .select("*")
             .order("created_at", { ascending: false });
           if (error) throw error;
           suivisData = data;
-        } else if (userRole === "Conseiller") {
+        } else if (profileData.role === "Conseiller") {
           const { data, error } = await supabase
             .from("suivis_membres")
             .select("*")
@@ -53,7 +52,7 @@ export default function SuivisMembres() {
             .order("created_at", { ascending: false });
           if (error) throw error;
           suivisData = data;
-        } else if (userRole === "ResponsableCellule") {
+        } else if (profileData.role === "ResponsableCellule") {
           const { data: cellulesData, error: cellulesError } = await supabase
             .from("cellules")
             .select("id")
@@ -105,7 +104,7 @@ export default function SuivisMembres() {
     return "#ccc";
   };
 
-  const updateSuivi = async (id, closeDetails = true) => {
+  const updateSuivi = async (id) => {
     setMessage(null);
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
@@ -174,7 +173,9 @@ export default function SuivisMembres() {
         setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
       }
 
-      if (closeDetails) toggleDetails(id);
+      // ✅ Fermer les détails après mise à jour
+      setDetailsOpen((prev) => ({ ...prev, [id]: false }));
+
     } catch (err) {
       console.error("Exception updateSuivi:", err);
       setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
@@ -184,9 +185,13 @@ export default function SuivisMembres() {
   };
 
   const Details = ({ m }) => {
-    const [localComment, setLocalComment] = useState(
-      commentChanges[m.id] ?? m.commentaire_suivis ?? ""
-    );
+    const initialComment = commentChanges[m.id] ?? m.commentaire_suivis ?? "";
+    const [localComment, setLocalComment] = useState(initialComment);
+
+    // Sync localComment avec commentChanges à chaque frappe
+    useEffect(() => {
+      handleCommentChange(m.id, localComment);
+    }, [localComment]);
 
     return (
       <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
@@ -231,10 +236,7 @@ export default function SuivisMembres() {
         </div>
 
         <button
-          onClick={() => {
-            handleCommentChange(m.id, localComment);
-            updateSuivi(m.id, true); // fermer après mise à jour
-          }}
+          onClick={() => updateSuivi(m.id)}
           disabled={updating[m.id]}
           className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
             updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
@@ -317,12 +319,8 @@ export default function SuivisMembres() {
                 </h2>
                 <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">
-                  📋 Statut Suivis : {item.statut_suivis || "—"}
-                </p>
-                <p className="text-sm text-gray-700 mb-1">
-                  🏠 {item.cellule_nom} – {item.responsable}
-                </p>
+                <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
+                <p className="text-sm text-gray-700 mb-1">🏠 {item.cellule_nom} – {item.responsable}</p> 
 
                 <button
                   onClick={() => toggleDetails(item.id)}

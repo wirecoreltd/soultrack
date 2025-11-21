@@ -91,74 +91,83 @@ export default function DetailsPopup({
         </div>
 
         {/* ENVOYER À */}
-        <div className="mt-4">
-          <label className="font-semibold text-sm">Envoyer à :</label>
-          <select
-            value={selectedTargetTypeLocal[member.id] || ""}
-            onChange={e =>
-              setSelectedTargetTypeLocal(prev => ({ ...prev, [member.id]: e.target.value }))
-            }
-            className="mt-1 w-full border rounded px-2 py-1 text-sm"
-          >
-            <option value="">-- Choisir une option --</option>
-            <option value="cellule">Une Cellule</option>
-            <option value="conseiller">Un Conseiller</option>
-          </select>
+<div className="mt-4">
+  <label className="font-semibold text-sm">Envoyer à :</label>
 
-          {(selectedTargetTypeLocal[member.id] === "cellule" ||
-            selectedTargetTypeLocal[member.id] === "conseiller") && (
-            <select
-              value={selectedTargetsLocal[member.id] || ""}
-              onChange={e =>
-                setSelectedTargetsLocal(prev => ({ ...prev, [member.id]: e.target.value }))
-              }
-              className="mt-1 w-full border rounded px-2 py-1 text-sm"
-            >
-              <option value="">
-                -- Choisir {selectedTargetTypeLocal[member.id]} --
-              </option>
-              {selectedTargetTypeLocal[member.id] === "cellule"
-                ? cellules.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.cellule} ({c.responsable})
-                    </option>
-                  ))
-                : conseillers.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.prenom} {c.nom}
-                    </option>
-                  ))}
-            </select>
-          )}
+  {/* Première liste : type (cellule ou conseiller) */}
+  <select
+    value={selectedTargetTypeLocal[member.id] || ""}
+    onChange={(e) =>
+      setSelectedTargetTypeLocal((prev) => ({
+        ...prev,
+        [member.id]: e.target.value,
+      }))
+    }
+    className="mt-1 w-full border rounded px-2 py-1 text-sm"
+  >
+    <option value="">-- Choisir une option --</option>
+    <option value="cellule">Une Cellule</option>
+    <option value="conseiller">Un Conseiller</option>
+  </select>
 
-          {selectedTargetsLocal[member.id] && (
-            <div className="pt-2">
-              <BoutonEnvoyer
-                membre={member}
-                type={selectedTargetTypeLocal[member.id]}
-                cible={
-                  selectedTargetTypeLocal[member.id] === "cellule"
-                    ? cellules.find(c => c.id === selectedTargetsLocal[member.id])
-                    : conseillers.find(c => c.id === selectedTargetsLocal[member.id])
-                }
-                onEnvoyer={(id) => {
-                  handleAfterSend(
-                    id,
-                    selectedTargetTypeLocal[member.id],
-                    selectedTargetTypeLocal[member.id] === "cellule"
-                      ? cellules.find(c => c.id === selectedTargetsLocal[member.id])
-                      : conseillers.find(c => c.id === selectedTargetsLocal[member.id])
-                  );
-                
-                  // 🔥 Fermer le popup automatiquement après l'envoi
-                  onClose();
-                }}
-                session={session}
-                showToast={showToast}
-              />
-            </div>
-          )}
-        </div>
+  {/* Deuxième liste (cellules OU conseillers selon choix) */}
+  {(selectedTargetTypeLocal[member.id] === "cellule" ||
+    selectedTargetTypeLocal[member.id] === "conseiller") && (
+    <select
+      value={selectedTargetsLocal[member.id] || ""}
+      onChange={(e) =>
+        setSelectedTargetsLocal((prev) => ({
+          ...prev,
+          [member.id]: e.target.value,
+        }))
+      }
+      className="mt-1 w-full border rounded px-2 py-1 text-sm"
+    >
+      <option value="">
+        -- Choisir {selectedTargetTypeLocal[member.id]} --
+      </option>
+
+      {selectedTargetTypeLocal[member.id] === "cellule"
+        ? cellules.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.cellule} ({c.responsable})
+            </option>
+          ))
+        : conseillers.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.prenom} {c.nom}
+            </option>
+          ))}
+    </select>
+  )}
+
+  {/* Bouton ENVOYER */}
+  {selectedTargetsLocal[member.id] && (
+    <div className="pt-2">
+      <BoutonEnvoyer
+        membre={member}
+        type={selectedTargetTypeLocal[member.id]}
+        cible={
+          selectedTargetTypeLocal[member.id] === "cellule"
+            ? cellules.find((c) => c.id === selectedTargetsLocal[member.id])
+            : conseillers.find((c) => c.id === selectedTargetsLocal[member.id])
+        }
+        onEnvoyer={(id) =>
+          handleAfterSend(
+            id,
+            selectedTargetTypeLocal[member.id],
+            selectedTargetTypeLocal[member.id] === "cellule"
+              ? cellules.find((c) => c.id === selectedTargetsLocal[member.id])
+              : conseillers.find((c) => c.id === selectedTargetsLocal[member.id])
+          )
+        }
+        session={session}
+        showToast={showToast}
+      />
+    </div>
+  )}
+</div>
+
       </div>
     </div>
   );

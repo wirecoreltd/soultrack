@@ -202,13 +202,21 @@ export default function SuivisMembres() {
         <option value="refus">❌ Refus</option>
       </select>
 
-      <label className="text-black text-sm mt-2">📝 Commentaire :</label>
-      <textarea
-        value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
-        onChange={(e) => handleCommentChange(m.id, e.target.value)}
-        rows={2}
-        className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1 resize-none"
-      />
+      <div className="mt-2">
+                      <label className="text-gray-700 text-sm">💬 Commentaire :</label>
+                      <textarea
+                        value={
+                          commentChanges[item.id] ?? item.commentaire_evangelises ?? ""
+                        }
+                        onChange={(e) =>
+                          handleCommentChange(item.id, e.target.value)
+                        }
+                        rows={2}
+                        className="w-full border rounded-md px-2 py-1 text-sm mt-1 resize-none"
+                        placeholder="Ajouter un commentaire..."
+                      ></textarea>
+                    </div>
+
 
       <button
         onClick={() => updateSuivi(m.id)}

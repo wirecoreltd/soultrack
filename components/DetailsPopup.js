@@ -41,22 +41,21 @@ export default function DetailsPopup({
         <p className="text-sm text-gray-600 mb-2 text-center">
           📱 {member.telephone || "—"}
         </p>
-        <div className="mt-2">
-                          <label className="text-gray-700 text-sm mr-2">🕊 Statut :</label>
-                          <select
-                            value={statusChanges[member.id] ?? member.statut ?? ""}
-                            onChange={(e) => handleStatusChange(member.id, e.target.value)}
-                            className="border rounded-md px-2 py-1 text-sm"
-                          >
-                            <option value="">-- Choisir un statut --</option>
-                            <option value="visiteur">Visiteur</option>
-                            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                            <option value="membre">Membre</option>
-                            <option value="integrer">Intégré</option>
-                            <option value="refus">Refus</option>
-                            {/* ajoute d'autres statuts si nécessaire */}
-                          </select>
-                        </div>
+                <div className="mt-2">
+          <label className="text-gray-700 text-sm mr-2">🕊 Statut :</label>
+          <select
+            value={member.statut || ""}
+            className="border rounded-md px-2 py-1 text-sm"
+            disabled
+          >
+            <option value="visiteur">Visiteur</option>
+            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+            <option value="actif">Actif</option>
+            <option value="integrer">Intégré</option>
+            <option value="a déjà son église">A déjà son Eglise</option>  
+            <option value="refus">Refus</option>
+          </select>
+        </div>
 
         {/* Infos membre */}
         <div className="text-gray-700 text-sm mt-3 w-full space-y-2">

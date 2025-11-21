@@ -17,7 +17,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // Connexion Supabase
+      // Connexion
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -30,33 +30,33 @@ export default function LoginPage() {
       }
 
       const userId = data.user.id;
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("userId", userId);
 
-      // Récupération du profil complet
+      // ► IMPORTANT : force un refresh du profil pour récupérer la bonne valeur must_change_password
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id, role, prenom, nom, telephone, must_change_password")
         .eq("id", userId)
-        .single();
+        .maybeSingle(); // plus robuste
 
-      if (profileError) {
+      if (profileError || !profile) {
         setError("❌ Impossible de récupérer le profil");
         setLoading(false);
         return;
       }
 
-      // Stockage local pour le dashboard
+      // Stockage local
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("userId", userId);
       localStorage.setItem("userRole", JSON.stringify([profile.role]));
       localStorage.setItem("profile", JSON.stringify(profile));
 
-      // 🔹 Première connexion ? Redirection vers change-password
-      if (profile.must_change_password) {
+      // ► Si must_change_password === true → on force la page /change-password
+      if (profile.must_change_password === true) {
         router.push("/change-password");
         return;
       }
 
-      // 🔹 Redirection selon rôle
+      // ► Sinon, redirection selon rôle
       switch (profile.role) {
         case "Administrateur":
           router.push("/");

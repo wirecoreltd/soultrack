@@ -5,7 +5,6 @@ import React from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
-import DetailsPopup from "../components/DetailsPopup";
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
@@ -106,7 +105,7 @@ export default function SuivisMembres() {
     return "#ccc";
   };
 
-  const updateSuivi = async (id) => {
+  const updateSuivi = async (id, closeDetails = true) => {
     setMessage(null);
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
@@ -174,66 +173,78 @@ export default function SuivisMembres() {
         setSuivis((prev) => prev.map((it) => (it.id === id ? updatedSuivi : it)));
         setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
       }
+
+      if (closeDetails) toggleDetails(id);
     } catch (err) {
       console.error("Exception updateSuivi:", err);
       setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
     } finally {
       setUpdating((prev) => ({ ...prev, [id]: false }));
-      // Ferme automatiquement le détail après mise à jour
-      setDetailsOpen((prev) => ({ ...prev, [id]: false }));
     }
   };
 
-  const Details = ({ m }) => (
-    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">      
-      <p>🏙 Ville : {m.ville || "—"}</p>      
-      <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-      <p>❓Besoin : {
-        (() => {
-          if (!m.besoin) return "—";
-          if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-          try {
-            const arr = JSON.parse(m.besoin);
-            return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-          } catch { return m.besoin; }
-        })()
-      }</p>
-      <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+  const Details = ({ m }) => {
+    const [localComment, setLocalComment] = useState(
+      commentChanges[m.id] ?? m.commentaire_suivis ?? ""
+    );
 
-      <label className="text-black text-sm">📋 Statut Suivis :</label>
-      <select
-        value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
-        onChange={(e) => handleStatusChange(m.id, e.target.value)}
-        className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
-      >
-        <option value="">-- Choisir un statut --</option>
-        <option value="en attente">🕓 En attente</option>
-        <option value="integrer">✅ Intégrer</option>
-        <option value="refus">❌ Refus</option>
-      </select>
+    return (
+      <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+        <p>🏙 Ville : {m.ville || "—"}</p>
+        <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+        <p>
+          ❓Besoin :{" "}
+          {(() => {
+            if (!m.besoin) return "—";
+            if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+            try {
+              const arr = JSON.parse(m.besoin);
+              return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+            } catch {
+              return m.besoin;
+            }
+          })()}
+        </p>
+        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-      <div className="mt-2">
-        <label className="text-gray-700 text-sm">💬 Commentaire :</label>
-        <textarea
-          value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
-          onChange={(e) => handleCommentChange(m.id, e.target.value)}
-          rows={2}
-          className="w-full border rounded-md px-2 py-1 text-sm mt-1 resize-none"
-          placeholder="Ajouter un commentaire..."
-        />
+        <label className="text-black text-sm">📋 Statut Suivis :</label>
+        <select
+          value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
+          onChange={(e) => handleStatusChange(m.id, e.target.value)}
+          className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+        >
+          <option value="">-- Choisir un statut --</option>
+          <option value="en attente">🕓 En attente</option>
+          <option value="integrer">✅ Intégrer</option>
+          <option value="refus">❌ Refus</option>
+        </select>
+
+        <div className="mt-2">
+          <label className="text-gray-700 text-sm">💬 Commentaire :</label>
+          <textarea
+            value={localComment}
+            onChange={(e) => setLocalComment(e.target.value)}
+            rows={2}
+            className="w-full border rounded-md px-2 py-1 text-sm mt-1 resize-none"
+            placeholder="Ajouter un commentaire..."
+          ></textarea>
+        </div>
+
+        <button
+          onClick={() => {
+            handleCommentChange(m.id, localComment);
+            updateSuivi(m.id, true); // fermer après mise à jour
+          }}
+          disabled={updating[m.id]}
+          className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+            updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+          }`}
+        >
+          {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
+        </button>
       </div>
-
-      <button
-        onClick={() => updateSuivi(m.id)}
-        disabled={updating[m.id]}
-        className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-          updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
-        }`}
-      >
-        {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
-      </button>
-    </div>
-  );
+    );
+  };
 
   return (
     <div
@@ -306,8 +317,12 @@ export default function SuivisMembres() {
                 </h2>
                 <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">🏠 {item.cellule_nom} – {item.responsable}</p> 
+                <p className="text-sm text-gray-700 mb-1">
+                  📋 Statut Suivis : {item.statut_suivis || "—"}
+                </p>
+                <p className="text-sm text-gray-700 mb-1">
+                  🏠 {item.cellule_nom} – {item.responsable}
+                </p>
 
                 <button
                   onClick={() => toggleDetails(item.id)}

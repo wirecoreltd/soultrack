@@ -30,25 +30,6 @@ export default function ListMembers() {
   const [session, setSession] = useState(null);
   const [prenom, setPrenom] = useState("");
 
-  // Minimal local state / helpers used by DetailsPopup (non-intrusive defaults).
-  // If you already have implementations elsewhere, you can replace these.
-  const [selectedCellules, setSelectedCellules] = useState({});
-
-  const handleChangeStatus = async (memberId, newStatus) => {
-    try {
-      // attempt to update in DB and locally
-      await supabase.from("membres").update({ statut: newStatus }).eq("id", memberId);
-      setMembers(prev => prev.map(m => (m.id === memberId ? { ...m, statut: newStatus } : m)));
-    } catch (err) {
-      console.error("Erreur handleChangeStatus:", err);
-    }
-  };
-
-  const handleStatusUpdateFromEnvoyer = (memberId, newStatus) => {
-    // called after BoutonEnvoyer completes
-    setMembers(prev => prev.map(m => (m.id === memberId ? { ...m, statut: newStatus } : m)));
-  };
-
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
   const showToast = (msg) => {
@@ -162,7 +143,7 @@ export default function ListMembers() {
         <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline">{view === "card" ? "Vue Table" : "Vue Carte"}</button>
       </div>
 
-      {/* VUE CARTE */}
+      {/* ==================== VUE CARTE ==================== */}
       {view === "card" && (
         <div className="w-full max-w-5xl space-y-8">
           {/* Nouveaux membres */}
@@ -185,16 +166,7 @@ export default function ListMembers() {
                           <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || ""}</p>
-                            <p>❓Besoin : {
-                              (() => {
-                                if (!m.besoin) return "—";
-                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                                try {
-                                  const arr = JSON.parse(m.besoin);
-                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                                } catch { return m.besoin; }
-                              })()
-                            }</p>
+                            <p>❓Besoin : {m.besoin ? (Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin) : "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             <div className="mt-2">
@@ -279,16 +251,7 @@ export default function ListMembers() {
                           <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || ""}</p>
-                            <p>❓Besoin : {
-                              (() => {
-                                if (!m.besoin) return "—";
-                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                                try {
-                                  const arr = JSON.parse(m.besoin);
-                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                                } catch { return m.besoin; }
-                              })()
-                            }</p>
+                            <p>❓Besoin : {m.besoin ? (Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin) : "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                             <div className="mt-2">
@@ -315,8 +278,7 @@ export default function ListMembers() {
                                     : conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)
                                   }
                                 </select>
-                              )}                         
-
+                              )}
 
                               {selectedTargets[m.id] && (
                                 <div className="pt-2">
@@ -340,9 +302,8 @@ export default function ListMembers() {
                                     showToast={showToast}
                                   />
                                 </div>
-                                
                               )}
-                             <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm items-center">Modifier</button>   
+                              <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm items-center">Modifier</button>
                             </div>
                           </div>
                         )}
@@ -417,10 +378,7 @@ export default function ListMembers() {
           cellules={cellules}
           conseillers={conseillers}
           handleAfterSend={handleAfterSend}
-          selectedCellules={selectedCellules}
-          setSelectedCellules={setSelectedCellules}
-          handleChangeStatus={handleChangeStatus}
-          handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
+          handleChangeStatus={() => {}}
           session={session}
         />
       )}

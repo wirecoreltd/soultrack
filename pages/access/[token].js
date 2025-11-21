@@ -1,12 +1,12 @@
-/* pages/access/[token].js */
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../../lib/supabaseClient";
 
-export default function AccessPage() {
+export default function AccessTokenPage() {
   const router = useRouter();
-  const { token } = router.query; // Récupère le token depuis l'URL
+  const { token } = router.query;
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -16,7 +16,7 @@ export default function AccessPage() {
     const verifyToken = async () => {
       setLoading(true);
 
-      // Vérifier si le token existe dans Supabase
+      // Vérifier si le token existe et n'est pas expiré
       const { data, error } = await supabase
         .from("access_tokens")
         .select("*")
@@ -29,7 +29,6 @@ export default function AccessPage() {
         return;
       }
 
-      // Vérifier l'expiration
       const now = new Date();
       if (data.expires_at && new Date(data.expires_at) < now) {
         setErrorMsg("Lien expiré.");
@@ -37,7 +36,7 @@ export default function AccessPage() {
         return;
       }
 
-      // Redirection selon le type de token
+      // Redirection vers add-member
       if (data.access_type === "ajouter_membre") {
         router.replace("/add-member");
       } else if (data.access_type === "ajouter_evangelise") {

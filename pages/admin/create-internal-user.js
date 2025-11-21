@@ -1,5 +1,3 @@
-// pages/admin/create-internal-user.js
-
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -12,10 +10,9 @@ export default function CreateInternalUser() {
     nom: "",
     email: "",
     password: "",
+    confirmPassword: "", // Nouveau champ
     telephone: "",
     role: "",
-    cellule_nom: "",
-    cellule_zone: "",
   });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,6 +22,13 @@ export default function CreateInternalUser() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Vérification mot de passe
+    if (formData.password !== formData.confirmPassword) {
+      setMessage("❌ Les mots de passe ne correspondent pas !");
+      return;
+    }
+
     setLoading(true);
     setMessage("⏳ Création en cours...");
 
@@ -44,10 +48,9 @@ export default function CreateInternalUser() {
           nom: "",
           email: "",
           password: "",
+          confirmPassword: "",
           telephone: "",
           role: "",
-          cellule_nom: "",
-          cellule_zone: "",
         });
       } else {
         setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
@@ -59,13 +62,12 @@ export default function CreateInternalUser() {
     }
   };
 
-  const handleCancel = () => router.push("/"); // Retour à l'accueil ou page admin
+  const handleCancel = () => router.push("/");
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
 
-        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
           className="absolute top-4 left-4 flex items-center text-gray-700 hover:text-gray-900 transition-colors"
@@ -73,12 +75,10 @@ export default function CreateInternalUser() {
           ← Retour
         </button>
 
-        {/* Logo centré */}
         <div className="flex justify-center mb-6">
           <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
         </div>
 
-        {/* Titre */}
         <h1 className="text-3xl font-bold text-center mb-6">Créer un utilisateur</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
@@ -116,6 +116,15 @@ export default function CreateInternalUser() {
             required
           />
           <input
+            name="confirmPassword"
+            placeholder="Confirmer le mot de passe"
+            type="password"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            className="input"
+            required
+          />
+          <input
             name="telephone"
             placeholder="Téléphone"
             value={formData.telephone}
@@ -137,26 +146,6 @@ export default function CreateInternalUser() {
             <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
           </select>
 
-          {formData.role === "ResponsableCellule" && (
-            <div className="space-y-3 border-t pt-3">
-              <input
-                name="cellule_nom"
-                placeholder="Nom de la cellule"
-                value={formData.cellule_nom}
-                onChange={handleChange}
-                className="input"
-              />
-              <input
-                name="cellule_zone"
-                placeholder="Zone / Localisation"
-                value={formData.cellule_zone}
-                onChange={handleChange}
-                className="input"
-              />
-            </div>
-          )}
-
-          {/* Boutons côte à côte: Annuler à gauche, Créer à droite */}
           <div className="flex gap-4 mt-4">
             <button
               type="button"

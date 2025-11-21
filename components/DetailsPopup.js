@@ -129,15 +129,18 @@ export default function DetailsPopup({
                     ? cellules.find(c => c.id === selectedTargetsLocal[member.id])
                     : conseillers.find(c => c.id === selectedTargetsLocal[member.id])
                 }
-                onEnvoyer={(id) =>
+                onEnvoyer={(id) => {
                   handleAfterSend(
                     id,
                     selectedTargetTypeLocal[member.id],
                     selectedTargetTypeLocal[member.id] === "cellule"
                       ? cellules.find(c => c.id === selectedTargetsLocal[member.id])
                       : conseillers.find(c => c.id === selectedTargetsLocal[member.id])
-                  )
-                }
+                  );
+                
+                  // 🔥 Fermer le popup automatiquement après l'envoi
+                  onClose();
+                }}
                 session={session}
                 showToast={showToast}
               />

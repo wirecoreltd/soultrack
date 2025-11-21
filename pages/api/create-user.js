@@ -12,6 +12,7 @@ export default async function handler(req, res) {
   try {
     const { prenom, nom, email, password, role, telephone } = req.body;
 
+    // 1️⃣ Créer utilisateur dans Supabase Auth
     const { data: userData, error: createError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -21,6 +22,7 @@ export default async function handler(req, res) {
     if (createError) throw createError;
     const user = userData.user;
 
+    // 2️⃣ Créer profil avec must_change_password = true
     const { error: profileError } = await supabase.from("profiles").insert({
       id: user.id,
       prenom,
@@ -33,7 +35,7 @@ export default async function handler(req, res) {
 
     if (profileError) throw profileError;
 
-    // Envoi d'email / WhatsApp
+    // 3️⃣ Préparer message
     const loginUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/login`;
     const message = `
 Bonjour ${prenom},
@@ -48,7 +50,7 @@ Voici vos informations de connexion :
 Petit mot d'encouragement : "La famille est le premier lieu où l'amour et la foi se transmettent."
 `;
 
-    // Envoi email
+    // 4️⃣ Envoi Email via SendGrid
     if (process.env.SENDGRID_API_KEY) {
       await fetch("https://api.sendgrid.com/v3/mail/send", {
         method: "POST",
@@ -65,7 +67,7 @@ Petit mot d'encouragement : "La famille est le premier lieu où l'amour et la fo
       });
     }
 
-    // Envoi WhatsApp (optionnel)
+    // 5️⃣ Envoi WhatsApp (optionnel)
     if (process.env.WHATSAPP_API_URL && process.env.WHATSAPP_TOKEN) {
       await fetch(process.env.WHATSAPP_API_URL, {
         method: "POST",

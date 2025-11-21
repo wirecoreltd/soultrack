@@ -5,6 +5,7 @@ import React from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
+import EditMemberPopup from "../components/EditMemberPopup"; // Assure-toi du chemin exact
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
@@ -17,6 +18,7 @@ export default function SuivisMembres() {
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
   const [view, setView] = useState("card");
+  const [editMember, setEditMember] = useState(null); // <-- état pour le popup
 
   useEffect(() => {
     const fetchSuivis = async () => {
@@ -146,7 +148,6 @@ export default function SuivisMembres() {
         setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
       }
 
-      // Fermer le détail après mise à jour
       setDetailsOpen((prev) => ({ ...prev, [id]: false }));
     } catch (err) {
       console.error("Exception updateSuivi:", err);
@@ -159,7 +160,6 @@ export default function SuivisMembres() {
   const Details = ({ m }) => {
     const commentRef = useRef(null);
 
-    // garder le focus si on a déjà commencé à écrire
     useEffect(() => {
       if (commentRef.current) {
         commentRef.current.focus();
@@ -219,24 +219,26 @@ export default function SuivisMembres() {
         >
           {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
         </button>
-          {/* ---------------- Modifier le contact ---------------- */}
-          <div className="mt-4 flex justify-center">
-            <button
-              onClick={() => setEditMember(m)}
-              className="text-blue-600 text-sm mt-4"
-            >
-              ✏️ Modifier le contact
-            </button>
-          </div>
+
+        {/* Bouton Modifier le contact */}
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={() => setEditMember(m)}
+            className="text-blue-600 text-sm mt-4"
+          >
+            ✏️ Modifier le contact
+          </button>
         </div>
-      );
-    };
+      </div>
+    );
+  };
 
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
+      {/* Header */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
           <button
@@ -392,6 +394,22 @@ export default function SuivisMembres() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Popup édition membre */}
+      {editMember && (
+        <EditMemberPopup
+          member={editMember}
+          cellules={[]} // à compléter si tu as des cellules
+          conseillers={[]} // à compléter si tu as des conseillers
+          onClose={() => setEditMember(null)}
+          onUpdateMember={(updatedMember) => {
+            setSuivis((prev) =>
+              prev.map((m) => (m.id === updatedMember.id ? updatedMember : m))
+            );
+            setEditMember(null);
+          }}
+        />
       )}
     </div>
   );

@@ -216,7 +216,7 @@ export default function SuivisMembres() {
         <option value="refus">❌ Refus</option>
       </select>
 
-      <label className="text-black text-sm mt-2">📝 Commentaire :</label>
+      <label>📝 Commentaire :</label>
       <textarea
         value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
         onChange={(e) => handleCommentChange(m.id, e.target.value)}

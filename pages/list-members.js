@@ -355,25 +355,7 @@ export default function ListMembers() {
                           {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                         </h2>
                         <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
-
-                        {/* Menu déroulant Statut */}
-                        <div className="mt-2 w-full">
-                          <label className="text-gray-700 text-sm mr-2">🕊 Statut :</label>
-                          <select
-                            value={statusChanges?.[m.id] ?? m.statut ?? ""}
-                            onChange={(e) => handleStatusChange(m.id, e.target.value)}
-                            className="border rounded-md px-2 py-1 text-sm w-full"
-                          >
-                            <option value="">-- Choisir un statut --</option>
-                            <option value="visiteur">Visiteur</option>
-                            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                            <option value="actif">Actif</option>
-                            <option value="integrer">Intégré</option>
-                            <option value="a déjà son église">A déjà son église</option>
-                            <option value="refus">Refus</option>
-                          </select>
-                        </div>
-
+                        <p className="text-sm text-gray-600">🕊 Statut : {m.statut}</p>
                         {/* Bouton Détails */}
                         <button
                           onClick={() => toggleDetails(m.id)}

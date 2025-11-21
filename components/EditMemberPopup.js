@@ -1,12 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import supabase from "../lib/supabaseClient";
-import BoutonEnvoyer from "./BoutonEnvoyer";
 import Image from "next/image";
-import LogoutLink from "./LogoutLink";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 
 export default function EditMemberPopup({
   member,
@@ -14,10 +10,9 @@ export default function EditMemberPopup({
   conseillers = [],
   onClose,
   onUpdateMember,
-  session = null,
-  showToast = () => {},
 }) {
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+
   const initialBesoin =
     typeof member.besoin === "string" ? JSON.parse(member.besoin || "[]") : member.besoin || [];
 
@@ -30,36 +25,21 @@ export default function EditMemberPopup({
     autreBesoin: "",
     infos_supplementaires: member.infos_supplementaires || "",
     statut: member.statut || "",
+    star: member.star === true, // ⭐ ajouté
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ⭐ AJOUT : état pour l’étoile Serviteur
-  const [isServiteur, setIsServiteur] = useState(member.star === true);
-
-  // ⭐ Fonction pour basculer l’étoile + mise à jour Supabase
-  const toggleServiteur = async () => {
-    const newValue = !isServiteur;
-    setIsServiteur(newValue);
-
-    const { error } = await supabase
-      .from("membres")
-      .update({ star: newValue })
-      .eq("id", member.id);
-
-    if (error) {
-      alert("❌ Erreur lors de la mise à jour Serviteur : " + error.message);
-      setIsServiteur(!newValue);
-    } else {
-      setMessage("⭐ Statut 'Serviteur' mis à jour !");
-      setTimeout(() => setMessage(""), 1500);
-    }
+  // ⭐ Toggle étoile (MAIS ne sauvegarde pas encore)
+  const toggleServiteur = () => {
+    setFormData((prev) => ({ ...prev, star: !prev.star }));
   };
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
+
     if (value === "Autre") {
       setShowAutre(checked);
       if (!checked) {
@@ -70,11 +50,12 @@ export default function EditMemberPopup({
         }));
       }
     }
+
     setFormData((prev) => {
-      const updatedBesoin = checked
+      const updated = checked
         ? [...prev.besoin, value]
         : prev.besoin.filter((b) => b !== value);
-      return { ...prev, besoin: updatedBesoin };
+      return { ...prev, besoin: updated };
     });
   };
 
@@ -85,13 +66,15 @@ export default function EditMemberPopup({
 
   const handleSubmit = async () => {
     setLoading(true);
+
     const cleanData = {
-      prenom: formData.prenom || member.prenom,
-      nom: formData.nom || member.nom,
-      ville: formData.ville || null,
-      telephone: formData.telephone || null,
+      prenom: formData.prenom,
+      nom: formData.nom,
+      telephone: formData.telephone,
+      ville: formData.ville,
       infos_supplementaires: formData.infos_supplementaires || null,
       statut: formData.statut || null,
+      star: formData.star, // ⭐ sauvegarde finale
       besoin:
         formData.autreBesoin && showAutre
           ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
@@ -106,15 +89,16 @@ export default function EditMemberPopup({
       .single();
 
     if (error) {
-      alert("❌ Erreur lors de la mise à jour : " + error.message);
+      alert("❌ Erreur : " + error.message);
     } else {
       if (onUpdateMember) onUpdateMember(data);
       setMessage("✅ Changement enregistré !");
       setTimeout(() => {
         setMessage("");
         onClose();
-      }, 1500);
+      }, 1200);
     }
+
     setLoading(false);
   };
 
@@ -132,46 +116,53 @@ export default function EditMemberPopup({
           Modifier {member.prenom} {member.nom}
         </h2>
 
-        {/* ⭐ AJOUT : Bouton Serviteur */}
-        <div className="flex justify-center mb-4">
+        {/* ⭐ Section serviteur */}
+        <div className="flex items-center gap-3 mb-4 justify-center">
           <button onClick={toggleServiteur} className="text-3xl">
-            {isServiteur ? "⭐" : "☆"}
+            {formData.star ? "⭐" : "☆"}
           </button>
+          <span className="font-semibold text-gray-700">Marquer comme serviteur</span>
         </div>
 
-        <div className="flex flex-col space-y-2 text-sm">
+        <div className="flex flex-col space-y-3 text-sm">
+
+          {/* LABEL + INPUT */}
+          <label className="font-semibold">Prénom</label>
           <input
             name="prenom"
             value={formData.prenom}
             onChange={handleChange}
-            placeholder="Prénom"
             className="border rounded px-2 py-1"
           />
+
+          <label className="font-semibold">Nom</label>
           <input
             name="nom"
             value={formData.nom}
             onChange={handleChange}
-            placeholder="Nom"
             className="border rounded px-2 py-1"
           />
+
+          <label className="font-semibold">Ville</label>
           <input
             name="ville"
             value={formData.ville}
             onChange={handleChange}
-            placeholder="Ville"
             className="border rounded px-2 py-1"
           />
+
+          <label className="font-semibold">Téléphone</label>
           <input
             name="telephone"
             value={formData.telephone}
             onChange={handleChange}
-            placeholder="Téléphone"
             className="border rounded px-2 py-1"
           />
 
-          {/* Besoins */}
+          {/* BESOIN */}
           <div className="mt-2">
             <p className="font-semibold mb-2">Besoins :</p>
+
             {besoinsOptions.map((item) => (
               <label key={item} className="flex items-center gap-3 mb-2">
                 <input
@@ -179,21 +170,24 @@ export default function EditMemberPopup({
                   value={item}
                   checked={formData.besoin.includes(item)}
                   onChange={handleBesoinChange}
-                  className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+                  className="w-5 h-5 cursor-pointer"
                 />
-                <span>{item}</span>
+                {item}
               </label>
             ))}
+
+            {/* Autre */}
             <label className="flex items-center gap-3 mb-2">
               <input
                 type="checkbox"
                 value="Autre"
                 checked={showAutre}
                 onChange={handleBesoinChange}
-                className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+                className="w-5 h-5 cursor-pointer"
               />
               Autre
             </label>
+
             {showAutre && (
               <input
                 type="text"
@@ -206,37 +200,40 @@ export default function EditMemberPopup({
             )}
           </div>
 
+          <label className="font-semibold">Infos supplémentaires</label>
           <textarea
             name="infos_supplementaires"
             value={formData.infos_supplementaires}
             onChange={handleChange}
-            placeholder="Infos supplémentaires"
             className="border rounded px-2 py-1"
             rows={3}
           />
 
+          <label className="font-semibold">Statut</label>
           <select
             name="statut"
             value={formData.statut}
             onChange={handleChange}
             className="border rounded px-2 py-1"
           >
-            <option value="">-- Statut --</option>
+            <option value="">-- Sélectionner --</option>
             <option value="actif">actif</option>
-            <option value="integrer">Integrer</option>
+            <option value="Integrer">Integrer</option>
             <option value="ancien">ancien</option>
             <option value="veut rejoindre ICC">veut rejoindre ICC</option>
             <option value="visiteur">visiteur</option>
-            <option value="a déjà son église">A déjà son église</option>
+            <option value="a déjà mon église">a déjà mon église</option>
           </select>
 
-          {message && <p className="text-green-600 text-center mt-3 font-semibold">{message}</p>}
+          {message && (
+            <p className="text-green-600 text-center font-semibold">{message}</p>
+          )}
 
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className={`mt-4 w-full text-white py-2 rounded transition font-bold ${
-              loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+            className={`mt-3 w-full text-white py-2 rounded font-bold ${
+              loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
             {loading ? "Enregistrement..." : "Enregistrer"}

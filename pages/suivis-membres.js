@@ -19,74 +19,81 @@ export default function SuivisMembres() {
   const [view, setView] = useState("card");
 
   useEffect(() => {
-    const fetchSuivis = async () => {
-      setLoading(true);
-      try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) throw new Error("Utilisateur non connecté");
+  const fetchSuivis = async () => {
+    setLoading(true);
+    try {
+      // Récupérer l'utilisateur connecté
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error("Utilisateur non connecté");
 
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom, role")
-          .eq("id", user.id)
-          .single();
-        if (profileError || !profileData) throw profileError;
+      // Récupérer le profil
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, role")
+        .eq("id", user.id)
+        .single();
+      if (profileError || !profileData) throw profileError;
 
-        const userRole = profileData.role;
-        setPrenom(profileData.prenom || "cher membre");
-        setRole(userRole);
+      const userRole = profileData.role;
+      setPrenom(profileData.prenom || "cher membre");
+      setRole(userRole);
 
-        let suivisData = [];
+      let suivisData = [];
 
-        if (userRole === "Administrateur" || userRole === "ResponsableIntegration") {
+      if (userRole === "Administrateur" || userRole === "ResponsableIntegration") {
+        // Voir tous les suivis
+        const { data, error } = await supabase
+          .from("suivis_membres")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        suivisData = data;
+      } else if (userRole === "Conseiller") {
+        // Voir uniquement ses suivis
+        const { data, error } = await supabase
+          .from("suivis_membres")
+          .select("*")
+          .eq("conseiller_id", profileData.id)
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        suivisData = data;
+      } else if (userRole === "ResponsableCellule") {
+        // Suivis attribués à ses cellules
+        const { data: cellulesData, error: cellulesError } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", profileData.id);
+        if (cellulesError) throw cellulesError;
+
+        const celluleIds = cellulesData?.map(c => c.id) || [];
+        if (celluleIds.length > 0) {
           const { data, error } = await supabase
             .from("suivis_membres")
             .select("*")
+            .in("cellule_id", celluleIds)
             .order("created_at", { ascending: false });
           if (error) throw error;
           suivisData = data;
-        } else if (userRole === "Conseiller") {
-          const { data, error } = await supabase
-            .from("suivis_membres")
-            .select("*")
-            .eq("conseiller_id", profileData.id)
-            .order("created_at", { ascending: false });
-          if (error) throw error;
-          suivisData = data;
-        } else if (userRole === "ResponsableCellule") {
-          const { data: cellulesData, error: cellulesError } = await supabase
-            .from("cellules")
-            .select("id")
-            .eq("responsable_id", profileData.id);
-          if (cellulesError) throw cellulesError;
-
-          const celluleIds = cellulesData?.map(c => c.id) || [];
-          if (celluleIds.length > 0) {
-            const { data, error } = await supabase
-              .from("suivis_membres")
-              .select("*")
-              .in("cellule_id", celluleIds)
-              .order("created_at", { ascending: false });
-            if (error) throw error;
-            suivisData = data;
-          }
         }
-
-        setSuivis(suivisData || []);
-        if (!suivisData || suivisData.length === 0) {
-          setMessage("Aucun membre à afficher.");
-        }
-      } catch (err) {
-        console.error("❌ Erreur:", err.message || err);
-        setMessage("Erreur lors de la récupération des suivis.");
-        setSuivis([]);
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchSuivis();
-  }, []);
+      setSuivis(suivisData || []);
+      if (!suivisData || suivisData.length === 0) {
+        setMessage("Aucun membre à afficher.");
+      }
+    } catch (err) {
+      console.error("❌ Erreur:", err.message || err);
+      setMessage("Erreur lors de la récupération des suivis.");
+      setSuivis([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchSuivis();
+}, []);
+
+
 
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -169,7 +176,6 @@ export default function SuivisMembres() {
             updatedSuivi.statut_suivis === "integrer" ? "intégré" : "refusé"
           } et retiré de la liste.`,
         });
-        setDetailsOpen((prev) => ({ ...prev, [id]: false })); // fermer le détail après envoi
       } else {
         setSuivis((prev) => prev.map((it) => (it.id === id ? updatedSuivi : it)));
         setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
@@ -182,12 +188,20 @@ export default function SuivisMembres() {
     }
   };
 
-  // Composant séparé pour les détails
-  const SuiviDetails = ({ m }) => (
-    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
-      <p>🏙 Ville : {m.ville || "—"}</p>
+  const Details = ({ m }) => (
+    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">      
+      <p>🏙 Ville : {m.ville || "—"}</p>      
       <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-      <p>❓Besoin : {m.besoin || "—"}</p>
+      <p>❓Besoin : {
+                              (() => {
+                                if (!m.besoin) return "—";
+                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                                try {
+                                  const arr = JSON.parse(m.besoin);
+                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                                } catch { return m.besoin; }
+                              })()
+                            }</p>
       <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
       <label className="text-black text-sm">📋 Statut Suivis :</label>
@@ -202,7 +216,7 @@ export default function SuivisMembres() {
         <option value="refus">❌ Refus</option>
       </select>
 
-      <div className="mt-2">
+       <div className="mt-2">
                       <label className="text-gray-700 text-sm">💬 Commentaire :</label>
                       <textarea
                         value={
@@ -216,7 +230,6 @@ export default function SuivisMembres() {
                         placeholder="Ajouter un commentaire..."
                       ></textarea>
                     </div>
-
 
       <button
         onClick={() => updateSuivi(m.id)}
@@ -235,7 +248,6 @@ export default function SuivisMembres() {
       className="min-h-screen flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* Top bar */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
           <button
@@ -285,7 +297,6 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {/* Vue Carte */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
           {suivis.map((item) => (
@@ -304,7 +315,8 @@ export default function SuivisMembres() {
                 <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">🏠 {item.cellule_nom} – {item.responsable}</p>
+                <p className="text-sm text-gray-700 mb-1">🏠 {item.cellule_nom} – {item.responsable}</p> 
+                  
 
                 <button
                   onClick={() => toggleDetails(item.id)}
@@ -313,14 +325,13 @@ export default function SuivisMembres() {
                   {detailsOpen[item.id] ? "Fermer détails" : "Détails"}
                 </button>
 
-                {detailsOpen[item.id] && <SuiviDetails m={item} />}
+                {detailsOpen[item.id] && <Details m={item} />}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Vue Table */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200 relative">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
@@ -386,7 +397,7 @@ export default function SuivisMembres() {
                               <p className="text-sm text-gray-700 mb-1">
                                 📋 Statut Suivis : {m.statut_suivis || "—"}
                               </p>
-                              <SuiviDetails m={m} />
+                              <Details m={m} />
                             </div>
                           </div>
                         </td>

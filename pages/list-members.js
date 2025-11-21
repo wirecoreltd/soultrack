@@ -443,9 +443,9 @@ export default function ListMembers() {
                               {/* Modifier contact */}
                               <button
                                 onClick={() => setEditMember(m)}
-                                className="text-blue-600 underline text-sm mt-1"
+                                className="text-blue-600 text-sm mt-6 block mx-auto"
                               >
-                                ✏️ Modiffffier le contact
+                                ✏️ Modifier le contact
                               </button>
                             </div>
                           </div>

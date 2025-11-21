@@ -36,16 +36,44 @@ export default function EditMemberPopup({
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ⭐ AJOUT : état pour l’étoile Serviteur
+  const [isServiteur, setIsServiteur] = useState(member.star === true);
+
+  // ⭐ Fonction pour basculer l’étoile + mise à jour Supabase
+  const toggleServiteur = async () => {
+    const newValue = !isServiteur;
+    setIsServiteur(newValue);
+
+    const { error } = await supabase
+      .from("membres")
+      .update({ star: newValue })
+      .eq("id", member.id);
+
+    if (error) {
+      alert("❌ Erreur lors de la mise à jour Serviteur : " + error.message);
+      setIsServiteur(!newValue);
+    } else {
+      setMessage("⭐ Statut 'Serviteur' mis à jour !");
+      setTimeout(() => setMessage(""), 1500);
+    }
+  };
+
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
     if (value === "Autre") {
       setShowAutre(checked);
       if (!checked) {
-        setFormData((prev) => ({ ...prev, autreBesoin: "", besoin: prev.besoin.filter((b) => b !== "Autre") }));
+        setFormData((prev) => ({
+          ...prev,
+          autreBesoin: "",
+          besoin: prev.besoin.filter((b) => b !== "Autre"),
+        }));
       }
     }
     setFormData((prev) => {
-      const updatedBesoin = checked ? [...prev.besoin, value] : prev.besoin.filter((b) => b !== value);
+      const updatedBesoin = checked
+        ? [...prev.besoin, value]
+        : prev.besoin.filter((b) => b !== value);
       return { ...prev, besoin: updatedBesoin };
     });
   };
@@ -70,7 +98,12 @@ export default function EditMemberPopup({
           : formData.besoin,
     };
 
-    const { error, data } = await supabase.from("membres").update(cleanData).eq("id", member.id).select().single();
+    const { error, data } = await supabase
+      .from("membres")
+      .update(cleanData)
+      .eq("id", member.id)
+      .select()
+      .single();
 
     if (error) {
       alert("❌ Erreur lors de la mise à jour : " + error.message);
@@ -94,9 +127,17 @@ export default function EditMemberPopup({
         >
           ✕
         </button>
+
         <h2 className="text-lg font-bold text-gray-800 text-center mb-4">
           Modifier {member.prenom} {member.nom}
         </h2>
+
+        {/* ⭐ AJOUT : Bouton Serviteur */}
+        <div className="flex justify-center mb-4">
+          <button onClick={toggleServiteur} className="text-3xl">
+            {isServiteur ? "⭐" : "☆"}
+          </button>
+        </div>
 
         <div className="flex flex-col space-y-2 text-sm">
           <input
@@ -182,11 +223,11 @@ export default function EditMemberPopup({
           >
             <option value="">-- Statut --</option>
             <option value="actif">actif</option>
-            <option value="Integrer">Integrer</option>
+            <option value="integrer">Integrer</option>
             <option value="ancien">ancien</option>
             <option value="veut rejoindre ICC">veut rejoindre ICC</option>
             <option value="visiteur">visiteur</option>
-            <option value="a déjà mon église">a déjà mon église</option>
+            <option value="a déjà son église">A déjà son église</option>
           </select>
 
           {message && <p className="text-green-600 text-center mt-3 font-semibold">{message}</p>}

@@ -1,15 +1,33 @@
-// components/SendLinkPopup.js
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import supabase from "../lib/supabaseClient"; // Assure-toi que supabase est importé
 
-export default function SendLinkPopup({ label, type, buttonColor, token }) {
+export default function SendLinkPopup({ label, type, buttonColor }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [token, setToken] = useState("");
 
-  // Détermine le lien selon le type
+  // Récupère le dernier token actif pour ce type
+  useEffect(() => {
+    const fetchToken = async () => {
+      const { data, error } = await supabase
+        .from("access_tokens")
+        .select("token")
+        .eq("access_type", type)
+        .order("expires_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!error && data) setToken(data.token);
+    };
+
+    fetchToken();
+  }, [type]);
+
   const getLink = () => {
     const base = window.location.origin;
+    if (!token) return base; // fallback
     if (type === "ajouter_membre") return `${base}/add-member?token=${token}`;
     if (type === "ajouter_evangelise") return `${base}/add-evangelise?token=${token}`;
     return base;
@@ -19,10 +37,8 @@ export default function SendLinkPopup({ label, type, buttonColor, token }) {
     const link = getLink();
 
     if (!phoneNumber) {
-      // Si aucun numéro saisi, ouvrir WhatsApp pour choisir un contact
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`, "_blank");
     } else {
-      // Si numéro saisi manuellement, envoyer directement au numéro
       window.open(
         `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(link)}`,
         "_blank"

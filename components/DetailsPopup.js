@@ -6,168 +6,128 @@ import BoutonEnvoyer from "./BoutonEnvoyer";
 export default function DetailsPopup({
   member,
   onClose,
-  statusOptions = [],
-  cellules = [],
-  conseillers = [],
-  handleChangeStatus,
+  statusOptions,
+  cellules,
+  conseillers,
   handleAfterSend,
   session,
-  showToast,
 }) {
-  const [selectedTargetTypeLocal, setSelectedTargetTypeLocal] = useState({});
-  const [selectedTargetsLocal, setSelectedTargetsLocal] = useState({});
-  const [loading, setLoading] = useState(false);
-
-  if (!member) return null;
-
-  const isNouveau = member.statut === "visiteur" || member.statut === "veut rejoindre ICC";
+  const [selectedTargetType, setSelectedTargetType] = useState("");
+  const [selectedTarget, setSelectedTarget] = useState("");
+  const [statusChange, setStatusChange] = useState(member.statut);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
-      <div className="bg-white text-black p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto relative shadow-xl">
-        {/* Bouton de fermeture */}
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl p-6 w-full max-w-md relative">
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 text-red-500 font-bold hover:text-red-700"
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
         >
-          ✕
+          ✖
         </button>
 
-        {/* Titre */}
-        <h2 className="text-lg font-bold text-gray-800 text-center">
+        <h2 className="text-lg font-bold mb-4">
           {member.prenom} {member.nom}
         </h2>
 
-        <p className="text-sm text-gray-600 mb-2 text-center">
-          📱 {member.telephone || "—"}
-        </p>
-                <div className="mt-2">
-          <label className="text-gray-700 text-sm mr-2">🕊 Statut :</label>
-          <select
-            value={member.statut || ""}
-            className="border rounded-md px-2 py-1 text-sm"
-            disabled
-          >
-            <option value="visiteur">Visiteur</option>
-            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-            <option value="actif">Actif</option>
-            <option value="integrer">Intégré</option>
-            <option value="a déjà son église">A déjà son Eglise</option>  
-            <option value="refus">Refus</option>
-          </select>
-        </div>
-
-        {/* Infos membre */}
-        <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
+        <div className="space-y-2 text-sm text-gray-700">
+          <p>📱 Téléphone : {member.telephone || "—"}</p>
           <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
           <p>🏙 Ville : {member.ville || "—"}</p>
-          {isNouveau && (
-            <p>
-              ❓Besoin :{" "}
-              {(() => {
-                if (!member.besoin) return "—";
-                if (Array.isArray(member.besoin)) return member.besoin.join(", ");
-                try {
-                  const arr = JSON.parse(member.besoin);
-                  return Array.isArray(arr) ? arr.join(", ") : member.besoin;
-                } catch {
-                  return member.besoin;
-                }
-              })()}
-            </p>
-          )}
+          <p>
+            ❓ Besoin :{" "}
+            {(() => {
+              if (!member.besoin) return "—";
+              if (Array.isArray(member.besoin)) return member.besoin.join(", ");
+              try {
+                const arr = JSON.parse(member.besoin);
+                return Array.isArray(arr) ? arr.join(", ") : member.besoin;
+              } catch {
+                return member.besoin;
+              }
+            })()}
+          </p>
           <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
-          {!isNouveau && (
-            <p className="mt-2">
-              🏠 Cellule :{" "}
-              <span className="text-gray-700 font-normal ml-1">
-                {(() => {
-                  const cellule = cellules.find(c => c.id === member.cellule_id);
-                  return cellule ? `${cellule.cellule} (${cellule.responsable || "—"})` : "—";
-                })()}
-              </span>
-            </p>
-          )}
+
+          {/* Statut */}
+          <div className="mt-2">
+            <label className="font-semibold text-sm">Statut :</label>
+            <select
+              value={statusChange}
+              onChange={(e) => setStatusChange(e.target.value)}
+              className="mt-1 w-full border rounded px-2 py-1 text-sm"
+            >
+              {statusOptions.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Envoyer à */}
+          <div className="mt-4">
+            <label className="font-semibold text-sm">Envoyer à :</label>
+            <select
+              value={selectedTargetType}
+              onChange={(e) => {
+                setSelectedTargetType(e.target.value);
+                setSelectedTarget(""); // reset cible
+              }}
+              className="mt-1 w-full border rounded px-2 py-1 text-sm"
+            >
+              <option value="">-- Choisir une option --</option>
+              <option value="cellule">Une Cellule</option>
+              <option value="conseiller">Un Conseiller</option>
+            </select>
+
+            {selectedTargetType && (
+              <select
+                value={selectedTarget}
+                onChange={(e) => setSelectedTarget(e.target.value)}
+                className="mt-1 w-full border rounded px-2 py-1 text-sm"
+              >
+                <option value="">-- Choisir {selectedTargetType} --</option>
+                {selectedTargetType === "cellule"
+                  ? cellules.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.cellule} ({c.responsable})
+                      </option>
+                    ))
+                  : conseillers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.prenom} {c.nom}
+                      </option>
+                    ))}
+              </select>
+            )}
+
+            {selectedTarget && (
+              <div className="mt-2">
+                <BoutonEnvoyer
+                  membre={member}
+                  type={selectedTargetType}
+                  cible={
+                    selectedTargetType === "cellule"
+                      ? cellules.find((c) => c.id === selectedTarget)
+                      : conseillers.find((c) => c.id === selectedTarget)
+                  }
+                  onEnvoyer={() =>
+                    handleAfterSend(
+                      member.id,
+                      selectedTargetType,
+                      selectedTargetType === "cellule"
+                        ? cellules.find((c) => c.id === selectedTarget)
+                        : conseillers.find((c) => c.id === selectedTarget)
+                    )
+                  }
+                  session={session}
+                  showToast={(msg) => alert(msg)}
+                />
+              </div>
+            )}
+          </div>
         </div>
-
-        {/* ENVOYER À */}
-<div className="mt-4">
-  <label className="font-semibold text-sm">Envoyer à :</label>
-
-  {/* Première liste : type (cellule ou conseiller) */}
-  <select
-    value={selectedTargetTypeLocal[member.id] || ""}
-    onChange={(e) =>
-      setSelectedTargetTypeLocal((prev) => ({
-        ...prev,
-        [member.id]: e.target.value,
-      }))
-    }
-    className="mt-1 w-full border rounded px-2 py-1 text-sm"
-  >
-    <option value="">-- Choisir une option --</option>
-    <option value="cellule">Une Cellule</option>
-    <option value="conseiller">Un Conseiller</option>
-  </select>
-
-  {/* Deuxième liste (cellules OU conseillers selon choix) */}
-  {(selectedTargetTypeLocal[member.id] === "cellule" ||
-    selectedTargetTypeLocal[member.id] === "conseiller") && (
-    <select
-      value={selectedTargetsLocal[member.id] || ""}
-      onChange={(e) =>
-        setSelectedTargetsLocal((prev) => ({
-          ...prev,
-          [member.id]: e.target.value,
-        }))
-      }
-      className="mt-1 w-full border rounded px-2 py-1 text-sm"
-    >
-      <option value="">
-        -- Choisir {selectedTargetTypeLocal[member.id]} --
-      </option>
-
-      {selectedTargetTypeLocal[member.id] === "cellule"
-        ? cellules.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.cellule} ({c.responsable})
-            </option>
-          ))
-        : conseillers.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.prenom} {c.nom}
-            </option>
-          ))}
-    </select>
-  )}
-
-  {/* Bouton ENVOYER */}
-  {selectedTargetsLocal[member.id] && (
-    <div className="pt-2">
-      <BoutonEnvoyer
-        membre={member}
-        type={selectedTargetTypeLocal[member.id]}
-        cible={
-          selectedTargetTypeLocal[member.id] === "cellule"
-            ? cellules.find((c) => c.id === selectedTargetsLocal[member.id])
-            : conseillers.find((c) => c.id === selectedTargetsLocal[member.id])
-        }
-        onEnvoyer={(id) =>
-          handleAfterSend(
-            id,
-            selectedTargetTypeLocal[member.id],
-            selectedTargetTypeLocal[member.id] === "cellule"
-              ? cellules.find((c) => c.id === selectedTargetsLocal[member.id])
-              : conseillers.find((c) => c.id === selectedTargetsLocal[member.id])
-          )
-        }
-        session={session}
-        showToast={showToast}
-      />
-    </div>
-  )}
-</div>
-
       </div>
     </div>
   );

@@ -390,14 +390,11 @@ export default function SuivisMembres() {
                                 ✖
                               </button>
                               <h2 className="font-bold text-black text-base text-center mb-1">
-                                {m.prenom} {m.cellule_nom ? `(${m.cellule_nom})` : ""}
+                                {m.prenom} {m.nom} {m.cellule_nom ? `(${m.cellule_nom})` : ""}
                               </h2>
                               <p className="text-sm text-gray-700 mb-1">
                                 📞 {m.telephone || "—"}
-                              </p>
-                              <p className="text-sm text-gray-700 mb-1">
-                                📋 Statut Suivis : {m.statut_suivis || "—"}
-                              </p>
+                              </p>                              
                               <p className="text-sm text-gray-700 mb-1">
                                 👤 Attribué à : {m.conseiller_id ? m.responsable : m.cellule_nom || "—"}
                               </p>

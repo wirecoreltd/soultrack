@@ -13,6 +13,7 @@ export default function CreateInternalUser() {
     confirmPassword: "",
     role: "",
     telephone: "",
+    sendMethod: "whatsapp", // ✅ par défaut WhatsApp
   });
 
   const [loading, setLoading] = useState(false);
@@ -54,8 +55,8 @@ export default function CreateInternalUser() {
 
       if (!res.ok) throw new Error(data?.error || "Erreur création utilisateur");
 
-      // --- Création du message WhatsApp ---
-      let message = `
+      // --- Générer message WhatsApp ---
+      const message = `
 Bonjour ${formData.prenom},
 
 Votre compte SoulTrack a été créé avec succès 🙌
@@ -69,7 +70,7 @@ Voici vos accès :
 Connectez-vous ici :
 ➡️ ${window.location.origin}/login
 
-🙏 Nous sommes heureux de vous compter parmi nous. Que Dieu vous bénisse !
+🙏 Nous sommes heureux de vous compter parmi nous. Stay Bless !
       `.trim();
 
       const cleanPhone = formData.telephone.replace(/\D/g, "");
@@ -87,11 +88,12 @@ Connectez-vous ici :
         confirmPassword: "",
         role: "",
         telephone: "",
+        sendMethod: "whatsapp",
       });
 
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de la création de l'utilisateur");
+      alert(err.message);
     } finally {
       setLoading(false);
     }

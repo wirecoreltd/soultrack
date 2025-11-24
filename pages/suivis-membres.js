@@ -231,6 +231,7 @@ export default function SuivisMembres() {
           </button>
         </div>
       </div>
+    </div>
     );
   };
 

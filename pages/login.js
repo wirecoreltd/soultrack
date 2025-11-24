@@ -1,5 +1,3 @@
-//pages/login.js
-
 "use client";
 
 import { useState } from "react";
@@ -13,10 +11,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(null);
+    setMessage("");
     setLoading(true);
 
     try {
@@ -35,7 +35,7 @@ export default function LoginPage() {
       localStorage.setItem("userEmail", email);
       localStorage.setItem("userId", user.id);
 
-      // Récupération du profil
+      // Récupération du profil pour redirection
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id, role, prenom, nom, telephone")
@@ -86,30 +86,35 @@ export default function LoginPage() {
           <Image src="/logo.png" alt="Logo" width={80} height={80} />
         </div>
         <h1 className="text-3xl font-bold text-center mb-6">Connexion</h1>
+        <p className="text-center text-gray-700 mb-6">
+          Bienvenue sur SoulTrack ! Une plateforme pour garder le contact et suivre chaque membre.
+        </p>
 
         <form onSubmit={handleLogin} className="flex flex-col w-full gap-4">
           <input
+            type="email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
             className="input"
+            required
           />
           <input
             type="password"
             placeholder="Mot de passe"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
             className="input"
+            required
           />
 
           {error && <p className="mt-2 text-center text-red-500">{error}</p>}
+          {message && <p className="mt-2 text-center text-gray-700">{message}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white py-3 rounded-2xl mt-4"
+            className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md mt-4"
           >
             {loading ? "Connexion..." : "Se connecter"}
           </button>

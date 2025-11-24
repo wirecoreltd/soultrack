@@ -395,6 +395,7 @@ export default function ListMembers() {
                               })()}
                             </p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                            <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p> 
 
                             {/* Envoi */}
                             <div className="mt-2">

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -18,8 +19,8 @@ export default function SuivisMembres() {
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
   const [view, setView] = useState("card");
-  const [editMember, setEditMember] = useState(null); // état pour le popup
-  const [showRefus, setShowRefus] = useState(false); // afficher uniquement refus
+  const [editMember, setEditMember] = useState(null);
+  const [showRefus, setShowRefus] = useState(false); // mode refus
 
   useEffect(() => {
     const fetchSuivis = async () => {
@@ -42,14 +43,14 @@ export default function SuivisMembres() {
 
         if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
           const { data, error } = await supabase
-            .from("suivis_membres")
+            .from(showRefus ? "refus_membres" : "suivis_membres")
             .select("*")
             .order("created_at", { ascending: false });
           if (error) throw error;
           suivisData = data;
         } else if (profileData.role === "Conseiller") {
           const { data, error } = await supabase
-            .from("suivis_membres")
+            .from(showRefus ? "refus_membres" : "suivis_membres")
             .select("*")
             .eq("conseiller_id", profileData.id)
             .order("created_at", { ascending: false });
@@ -65,7 +66,7 @@ export default function SuivisMembres() {
           const celluleIds = cellulesData?.map(c => c.id) || [];
           if (celluleIds.length > 0) {
             const { data, error } = await supabase
-              .from("suivis_membres")
+              .from(showRefus ? "refus_membres" : "suivis_membres")
               .select("*")
               .in("cellule_id", celluleIds)
               .order("created_at", { ascending: false });
@@ -86,7 +87,7 @@ export default function SuivisMembres() {
     };
 
     fetchSuivis();
-  }, []);
+  }, [showRefus]);
 
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -186,8 +187,8 @@ export default function SuivisMembres() {
           })()}
         </p>
         <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-        <p>📌 Attribué à : {m.conseiller_id ? m.nom : m.cellule_nom || "—"}</p>
-
+        <p>📋 Statut Suivis : {m.statut_suivis || "—"}</p>
+        <p>🧑‍💼 Attribué à : {m.conseiller_id ? m.responsable : m.cellule_nom || "—"}</p>
         <div className="mt-5">
           <label className="text-black text-sm mb-1 block">📋 Statut Suivis :</label>
           <select
@@ -236,17 +237,11 @@ export default function SuivisMembres() {
     );
   };
 
-  // filtre refus si showRefus est true
-  const displayedSuivis = showRefus
-    ? suivis.filter((s) => s.statut_suivis === "refus")
-    : suivis;
-
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* Header */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
           <button
@@ -273,7 +268,6 @@ export default function SuivisMembres() {
         </p>
       </div>
 
-      {/* Boutons Vue/Table + Voir refus */}
       <div className="mb-4 flex justify-between w-full max-w-6xl">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
@@ -281,10 +275,9 @@ export default function SuivisMembres() {
         >
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
-
         <button
           onClick={() => setShowRefus(!showRefus)}
-          className="text-orange-400 text-sm underline hover:text-orange-300"
+          className="text-orange-500 text-sm underline hover:text-orange-300"
         >
           {showRefus ? "Voir tous les suivis" : "Voir les refus"}
         </button>
@@ -306,8 +299,8 @@ export default function SuivisMembres() {
 
       {/* Vue Carte */}
       {view === "card" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-center">
-          {displayedSuivis.map((item) => (
+        <div className="grid justify-center grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
+          {suivis.map((item) => (
             <div
               key={item.id}
               className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
@@ -323,15 +316,13 @@ export default function SuivisMembres() {
                 <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">📌 Attribué à : {item.conseiller_id ? item.nom : item.cellule_nom || "—"}</p>
-
+                <p className="text-sm text-gray-700 mb-1">🧑‍💼 Attribué à : {item.conseiller_id ? item.responsable : item.cellule_nom || "—"}</p>
                 <button
                   onClick={() => toggleDetails(item.id)}
                   className="text-orange-500 underline text-sm mt-1"
                 >
                   {detailsOpen[item.id] ? "Fermer détails" : "Détails"}
                 </button>
-
                 {detailsOpen[item.id] && <Details m={item} />}
               </div>
             </div>
@@ -348,30 +339,27 @@ export default function SuivisMembres() {
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
                 <th className="px-4 py-2">Statut Suivis</th>
-                <th className="px-4 py-2">Attribué à</th>
-                <th className="px-4 py-2 rounded-tr-lg">Détails</th>
+                <th className="px-4 py-2 rounded-tr-lg">Attribué à</th>
+                <th className="px-4 py-2">Détails</th>
               </tr>
             </thead>
             <tbody>
-              {displayedSuivis.length === 0 ? (
+              {suivis.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-2 text-white text-center">
                     Aucun membre en suivi
                   </td>
                 </tr>
               ) : (
-                displayedSuivis.map((m) => (
+                suivis.map((m) => (
                   <React.Fragment key={m.id}>
                     <tr className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                      <td
-                        className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
-                        style={{ borderLeftColor: getBorderColor(m) }}
-                      >
+                      <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>
                         {m.prenom} {m.nom}
                       </td>
                       <td className="px-4 py-2">{m.telephone || "—"}</td>
                       <td className="px-4 py-2">{m.statut_suivis || "—"}</td>
-                      <td className="px-4 py-2">{m.conseiller_id ? m.nom : m.cellule_nom || "—"}</td>
+                      <td className="px-4 py-2">{m.conseiller_id ? m.responsable : m.cellule_nom || "—"}</td>
                       <td className="px-4 py-2">
                         <button
                           onClick={() => toggleDetails(m.id)}
@@ -392,11 +380,6 @@ export default function SuivisMembres() {
                               >
                                 ✖
                               </button>
-                              <h2 className="font-bold text-black text-base text-center mb-1">
-                                {m.prenom} {m.cellule_nom ? `(${m.cellule_nom})` : ""}
-                              </h2>
-                              <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
-                              <p className="text-sm text-gray-700 mb-1">📝 Infos : {m.infos_supplementaires || "—"}</p>
                               <Details m={m} />
                             </div>
                           </div>
@@ -408,6 +391,7 @@ export default function SuivisMembres() {
               )}
             </tbody>
           </table>
+
         </div>
       )}
 

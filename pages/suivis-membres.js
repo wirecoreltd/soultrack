@@ -5,7 +5,7 @@ import React from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
-import EditMemberPopup from "../components/EditMemberPopup";
+import EditMemberPopup from "../components/EditMemberPopup"; // Assure-toi du chemin exact
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
@@ -18,76 +18,77 @@ export default function SuivisMembres() {
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
   const [view, setView] = useState("card");
-  const [editMember, setEditMember] = useState(null);
-  const [showRefus, setShowRefus] = useState(false); // <--- Afficher refus ou non
+  const [editMember, setEditMember] = useState(null); 
+  const [showRefus, setShowRefus] = useState(false); // nouvelle variable pour filtrer les refus
+
+  const fetchSuivis = async () => {
+    setLoading(true);
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error("Utilisateur non connecté");
+
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, role")
+        .eq("id", user.id)
+        .single();
+      if (profileError || !profileData) throw profileError;
+
+      setPrenom(profileData.prenom || "cher membre");
+      setRole(profileData.role);
+
+      const tableName = showRefus ? "refus_membres" : "suivis_membres";
+
+      let suivisData = [];
+
+      if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
+        const { data, error } = await supabase
+          .from(tableName)
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        suivisData = data;
+      } else if (profileData.role === "Conseiller") {
+        const { data, error } = await supabase
+          .from(tableName)
+          .select("*")
+          .eq("conseiller_id", profileData.id)
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        suivisData = data;
+      } else if (profileData.role === "ResponsableCellule") {
+        const { data: cellulesData, error: cellulesError } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", profileData.id);
+        if (cellulesError) throw cellulesError;
+
+        const celluleIds = cellulesData?.map(c => c.id) || [];
+        if (celluleIds.length > 0) {
+          const { data, error } = await supabase
+            .from(tableName)
+            .select("*")
+            .in("cellule_id", celluleIds)
+            .order("created_at", { ascending: false });
+          if (error) throw error;
+          suivisData = data;
+        }
+      }
+
+      setSuivis(suivisData || []);
+      if (!suivisData || suivisData.length === 0) setMessage("Aucun membre à afficher.");
+    } catch (err) {
+      console.error("❌ Erreur:", err.message || err);
+      setMessage("Erreur lors de la récupération des suivis.");
+      setSuivis([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchSuivis = async () => {
-      setLoading(true);
-      try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) throw new Error("Utilisateur non connecté");
-
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom, role")
-          .eq("id", user.id)
-          .single();
-        if (profileError || !profileData) throw profileError;
-
-        setPrenom(profileData.prenom || "cher membre");
-        setRole(profileData.role);
-
-        let suivisData = [];
-        const tableName = showRefus ? "refus_membres" : "suivis_membres";
-
-        if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
-          const { data, error } = await supabase
-            .from(tableName)
-            .select("*")
-            .order("created_at", { ascending: false });
-          if (error) throw error;
-          suivisData = data;
-        } else if (profileData.role === "Conseiller") {
-          const { data, error } = await supabase
-            .from(tableName)
-            .select("*")
-            .eq("conseiller_id", profileData.id)
-            .order("created_at", { ascending: false });
-          if (error) throw error;
-          suivisData = data;
-        } else if (profileData.role === "ResponsableCellule") {
-          const { data: cellulesData, error: cellulesError } = await supabase
-            .from("cellules")
-            .select("id")
-            .eq("responsable_id", profileData.id);
-          if (cellulesError) throw cellulesError;
-
-          const celluleIds = cellulesData?.map(c => c.id) || [];
-          if (celluleIds.length > 0) {
-            const { data, error } = await supabase
-              .from(tableName)
-              .select("*")
-              .in("cellule_id", celluleIds)
-              .order("created_at", { ascending: false });
-            if (error) throw error;
-            suivisData = data;
-          }
-        }
-
-        setSuivis(suivisData || []);
-        if (!suivisData || suivisData.length === 0) setMessage("Aucun membre à afficher.");
-      } catch (err) {
-        console.error("❌ Erreur:", err.message || err);
-        setMessage("Erreur lors de la récupération des suivis.");
-        setSuivis([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchSuivis();
-  }, [showRefus]);
+  }, [showRefus]); // refetch à chaque changement de showRefus
 
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -137,14 +138,9 @@ export default function SuivisMembres() {
         .single();
       if (updateError) throw updateError;
 
-      // Retirer du frontend si statut refus et qu'on n'est pas sur la vue refus
-      if (!showRefus && updatedSuivi.statut_suivis === 'refus') {
-        setSuivis((prev) => prev.filter((it) => it.id !== id));
-      } else {
-        setSuivis((prev) => prev.map((it) => (it.id === id ? updatedSuivi : it)));
-      }
+      // Après update, refaire fetch pour garantir que les refus disparaissent
+      await fetchSuivis();
 
-      setMessage({ type: "success", text: "Mise à jour enregistrée avec succès." });
       setDetailsOpen((prev) => ({ ...prev, [id]: false }));
     } catch (err) {
       console.error("Exception updateSuivi:", err);
@@ -182,8 +178,8 @@ export default function SuivisMembres() {
           })()}
         </p>
         <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-        <p>📋 Attribué à : {m.conseiller_id ? m.prenom + " " + m.nom : m.cellule_nom || "—"}</p>
-
+        <p>📌 Attribué à : {m.conseiller_id ? m.responsable || m.cellule_nom : m.cellule_nom || "—"}</p>
+          
         <div className="mt-5">
           <label className="text-black text-sm mb-1 block">📋 Statut Suivis :</label>
           <select
@@ -237,7 +233,12 @@ export default function SuivisMembres() {
       {/* Header */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
-          <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-gray-200 transition-colors">← Retour</button>
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center text-white hover:text-gray-200 transition-colors"
+          >
+            ← Retour
+          </button>
           <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
         </div>
         <div className="flex justify-end mt-2">
@@ -254,12 +255,18 @@ export default function SuivisMembres() {
         <p className="text-white text-lg max-w-xl mx-auto italic">Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️</p>
       </div>
 
-      {/* Boutons Carte/Table et Voir les refus */}
+      {/* Boutons Vue Carte/Table et Voir Refus sur la même ligne */}
       <div className="mb-4 flex justify-between w-full max-w-6xl">
-        <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline hover:text-gray-200">
+        <button
+          onClick={() => setView(view === "card" ? "table" : "card")}
+          className="text-white text-sm underline hover:text-gray-200"
+        >
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
-        <button onClick={() => setShowRefus(prev => !prev)} className="text-orange-400 text-sm underline">
+        <button
+          onClick={() => setShowRefus(!showRefus)}
+          className="text-orange-400 text-sm underline hover:text-orange-200"
+        >
           {showRefus ? "Voir tous les suivis" : "Voir les refus"}
         </button>
       </div>
@@ -272,18 +279,23 @@ export default function SuivisMembres() {
 
       {/* Vue Carte */}
       {view === "card" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-center">
           {suivis.map((item) => (
-            <div key={item.id} className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden">
+            <div
+              key={item.id}
+              className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
+            >
               <div className="w-full h-[6px] rounded-t-2xl" style={{ backgroundColor: getBorderColor(item) }} />
               <div className="p-4 flex flex-col items-center">
                 <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>
                 <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">📋 Attribué à : {item.conseiller_id ? item.prenom + " " + item.nom : item.cellule_nom || "—"}</p>
 
-                <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">
+                <button
+                  onClick={() => toggleDetails(item.id)}
+                  className="text-orange-500 underline text-sm mt-1"
+                >
                   {detailsOpen[item.id] ? "Fermer détails" : "Détails"}
                 </button>
 
@@ -297,30 +309,63 @@ export default function SuivisMembres() {
       {/* Vue Table */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200 relative">
-          <table className="w-full text-sm text-left text-white border-separate border-spacing-0 mx-auto">
+          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
               <tr>
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
                 <th className="px-4 py-2">Statut Suivis</th>
-                <th className="px-4 py-2 rounded-tr-lg">Attribué à</th>
+                <th className="px-4 py-2 rounded-tr-lg">Détails</th>
               </tr>
             </thead>
             <tbody>
               {suivis.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
+                  <td colSpan={4} className="px-4 py-2 text-white text-center">
+                    Aucun membre en suivi
+                  </td>
                 </tr>
               ) : (
                 suivis.map((m) => (
-                  <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                    <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>
-                      {m.prenom} {m.nom}
-                    </td>
-                    <td className="px-4 py-2">{m.telephone || "—"}</td>
-                    <td className="px-4 py-2">{m.statut_suivis || "—"}</td>
-                    <td className="px-4 py-2">{m.conseiller_id ? m.prenom + " " + m.nom : m.cellule_nom || "—"}</td>
-                  </tr>
+                  <React.Fragment key={m.id}>
+                    <tr className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
+                      <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>
+                        {m.prenom} {m.nom}
+                      </td>
+                      <td className="px-4 py-2">{m.telephone || "—"}</td>
+                      <td className="px-4 py-2">{m.statut_suivis || "—"}</td>
+                      <td className="px-4 py-2">
+                        <button
+                          onClick={() => toggleDetails(m.id)}
+                          className="text-orange-500 underline text-sm"
+                        >
+                          {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
+                        </button>
+                      </td>
+                    </tr>
+                    {detailsOpen[m.id] && (
+                      <tr>
+                        <td colSpan={4}>
+                          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                            <div className="bg-white rounded-2xl p-6 w-full max-w-md relative">
+                              <button
+                                onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: false }))}
+                                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 font-bold"
+                              >
+                                ✖
+                              </button>
+                              <h2 className="font-bold text-black text-base text-center mb-1">
+                                {m.prenom} {m.cellule_nom ? `(${m.cellule_nom})` : ""}
+                              </h2>
+                              <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
+                              <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {m.statut_suivis || "—"}</p>
+                              <Details m={m} />
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))
               )}
             </tbody>
@@ -331,11 +376,11 @@ export default function SuivisMembres() {
       {editMember && (
         <EditMemberPopup
           member={editMember}
-          cellules={[]}
-          conseillers={[]}
+          cellules={[]} 
+          conseillers={[]} 
           onClose={() => setEditMember(null)}
           onUpdateMember={(updatedMember) => {
-            setSuivis((prev) => prev.map((m) => (m.id === updatedMember.id ? updatedMember : m)));
+            fetchSuivis(); // Refetch après update
             setEditMember(null);
           }}
         />

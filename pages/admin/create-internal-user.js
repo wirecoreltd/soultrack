@@ -1,83 +1,152 @@
 "use client";
+
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function CreateInternalUser() {
-  const router = useRouter();
-  const [formData, setFormData] = useState({
-    prenom: "",
-    nom: "",
-    email: "",
-    password: "",
-    telephone: "",
-    role: "",
-  });
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [prenom, setPrenom] = useState("");
+  const [nom, setNom] = useState("");
+  const [email, setEmail] = useState("");
+  const [telephone, setTelephone] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("Membre");
 
-  const handleChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const [cellule_nom, setCelluleNom] = useState("");
+  const [cellule_zone, setCelluleZone] = useState("");
+
+  const [sendMethod, setSendMethod] = useState(""); // <--- obligatoire (whatsapp ou email)
+  const [whatsappLink, setWhatsappLink] = useState("");
+
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ❗ Vérifier que l’utilisateur a choisi ENTRE WhatsApp OU Email
+    if (!sendMethod) {
+      alert("Veuillez choisir une méthode d’envoi : WhatsApp ou Email");
+      return;
+    }
+
     setLoading(true);
-    setMessage("⏳ Création en cours...");
+    setWhatsappLink("");
 
     try {
       const res = await fetch("/api/create-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          prenom,
+          nom,
+          email,
+          password,
+          telephone,
+          role,
+          cellule_nom,
+          cellule_zone,
+          sendMethod, // <--- on envoie le choix
+        }),
       });
 
-      const data = await res.json().catch(() => null);
+      const data = await res.json();
 
-      if (res.ok) {
-        setMessage("✅ Utilisateur créé et notifications envoyées !");
-        setFormData({ prenom: "", nom: "", email: "", password: "", telephone: "", role: "" });
+      if (data.error) {
+        alert("Erreur : " + data.error);
       } else {
-        setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
+        // Si WhatsApp → on affiche le lien
+        if (sendMethod === "whatsapp") {
+          setWhatsappLink(data.whatsappLink);
+        }
+
+        // Si email → confirmation
+        if (sendMethod === "email") {
+          alert("Email envoyé avec succès !");
+        }
       }
     } catch (err) {
-      setMessage("❌ " + err.message);
-    } finally {
-      setLoading(false);
+      console.error(err);
+      alert("Erreur inattendue");
     }
+
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-md flex flex-col gap-4 w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center">Créer un utilisateur</h2>
-        <input name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input" required />
-        <input name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input" required />
-        <input name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="input" required />
-        <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
-        <input name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={handleChange} className="input" />
+    <div className="p-6 max-w-xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Créer un Utilisateur</h1>
 
-        <select name="role" value={formData.role} onChange={handleChange} className="input" required>
-          <option value="">-- Sélectionner un rôle --</option>
-          <option value="Administrateur">Administrateur</option>
-          <option value="ResponsableIntegration">Responsable Intégration</option>
-          <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
-          <option value="Conseiller">Conseiller</option>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+        <input className="input" placeholder="Prénom" value={prenom} onChange={(e) => setPrenom(e.target.value)} required />
+        <input className="input" placeholder="Nom" value={nom} onChange={(e) => setNom(e.target.value)} required />
+        <input className="input" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <input className="input" placeholder="Téléphone" value={telephone} onChange={(e) => setTelephone(e.target.value)} />
+        <input className="input" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} required />
+
+        <select className="input" value={role} onChange={(e) => setRole(e.target.value)}>
+          <option value="Membre">Membre</option>
+          <option value="ResponsableCellule">Responsable Cellule</option>
         </select>
 
-        <button type="submit" disabled={loading} className="bg-blue-500 text-white py-3 rounded-xl">
-          {loading ? "Création..." : "Créer"}
+        {role === "ResponsableCellule" && (
+          <>
+            <input className="input" placeholder="Nom de la Cellule" value={cellule_nom} onChange={(e) => setCelluleNom(e.target.value)} required />
+            <input className="input" placeholder="Zone / Ville" value={cellule_zone} onChange={(e) => setCelluleZone(e.target.value)} required />
+          </>
+        )}
+
+        {/* --- CHOIX OBLIGATOIRE WHATSAPP OU EMAIL --- */}
+        <div className="mt-4">
+          <p className="font-semibold mb-2">Envoyer les accès via :</p>
+
+          <label className="flex items-center gap-2 mb-1">
+            <input
+              type="radio"
+              name="sendMethod"
+              value="whatsapp"
+              onChange={(e) => setSendMethod(e.target.value)}
+            />
+            WhatsApp
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="radio"
+              name="sendMethod"
+              value="email"
+              onChange={(e) => setSendMethod(e.target.value)}
+            />
+            Email
+          </label>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-green-600 text-white py-3 rounded-xl shadow-md"
+        >
+          {loading ? "Création..." : "Créer l'utilisateur"}
         </button>
-
-        {message && <p className="text-center mt-2">{message}</p>}
-
-        <style jsx>{`
-          .input {
-            width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            padding: 12px;
-          }
-        `}</style>
       </form>
+
+      {/* --- Si WhatsApp : afficher le bouton --- */}
+      {whatsappLink && (
+        <a
+          href={whatsappLink}
+          target="_blank"
+          className="mt-6 block bg-green-500 text-white py-3 px-4 rounded-xl text-center shadow-md"
+        >
+          📲 Envoyer via WhatsApp
+        </a>
+      )}
+
+      <style jsx>{`
+        .input {
+          width: 100%;
+          padding: 10px;
+          border: 1px solid #ccc;
+          border-radius: 10px;
+        }
+      `}</style>
     </div>
   );
 }

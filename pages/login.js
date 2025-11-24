@@ -1,3 +1,4 @@
+// pages/login.js
 "use client";
 
 import { useState } from "react";
@@ -32,13 +33,10 @@ export default function LoginPage() {
       localStorage.setItem("userEmail", email);
       localStorage.setItem("userId", user.id);
 
-      // Vérifie le flag must_change_password dans user_metadata
-      const mustChangePassword = user.user_metadata?.must_change_password ?? false;
-
-      // Récupère le profil complet depuis table profiles
+      // Récupère le profil complet depuis la table profiles
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, role, prenom, nom, telephone")
+        .select("id, role, prenom, nom, telephone, must_change_password")
         .eq("id", user.id)
         .single();
 
@@ -48,11 +46,12 @@ export default function LoginPage() {
         return;
       }
 
+      // Stockage local minimum
       localStorage.setItem("userRole", JSON.stringify([profile.role]));
       localStorage.setItem("profile", JSON.stringify(profile));
 
-      // Si première connexion, redirige vers /change-password
-      if (mustChangePassword) {
+      // Redirection vers change-password si première connexion
+      if (profile.must_change_password) {
         router.push("/change-password");
         return;
       }

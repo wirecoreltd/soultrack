@@ -35,15 +35,11 @@ export default function ChangePasswordPage() {
 
     setLoading(true);
     try {
-      // 🔹 1️⃣ Changer mot de passe côté Auth + metadata
-      const { data: authData, error: authError } = await supabase.auth.updateUser({
-        password: password,
-        data: { must_change_password: false }, // Met à jour le flag côté Auth
-      });
-
+      // 🔹 Changer le mot de passe dans Supabase Auth
+      const { error: authError } = await supabase.auth.updateUser({ password });
       if (authError) throw authError;
 
-      // 🔹 2️⃣ Mettre à jour dans table profiles pour usage interne
+      // 🔹 Mettre à jour le flag dans table profiles uniquement
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ must_change_password: false })
@@ -115,3 +111,4 @@ export default function ChangePasswordPage() {
     </div>
   );
 }
+

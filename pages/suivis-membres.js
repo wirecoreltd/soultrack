@@ -185,8 +185,9 @@ export default function SuivisMembres() {
           })()}
         </p>
         <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-
-        <label className="text-black text-sm">📋 Statut Suivis :</label>
+          
+        <div className="mt-3">
+        <label className="text-black text-sm mb-1 block">📋 Statut Suivis :</label>
         <select
           value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
           onChange={(e) => handleStatusChange(m.id, e.target.value)}

@@ -83,6 +83,7 @@ export default function MemberCard({
               })()}
             </p>
             <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
+            <p>📝 Commentaire Suivis : {member.commentaire_suivis || "—"}</p>  
 
             {/* Choix Cellule / Conseiller */}
             <div className="flex items-center gap-4 mt-2">

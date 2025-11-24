@@ -308,6 +308,9 @@ export default function SuivisMembres() {
                 </h2>
                 <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
+                <p className="text-sm text-gray-700 mb-1">
+                  🕊 Assigné à : {item.conseiller_id ? item.responsable || "—" : item.cellule_nom || "—"}
+                </p>  
                 <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
 
                 <button

@@ -1,4 +1,5 @@
-//pages/change-password.js
+// pages/change-password.js
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -34,17 +35,20 @@ export default function ChangePasswordPage() {
 
     setLoading(true);
     try {
-      // 🔹 Mettre à jour le mot de passe côté Supabase Auth
+      // 🔹 1️⃣ Changer mot de passe côté Auth + metadata
       const { data: authData, error: authError } = await supabase.auth.updateUser({
-        password,
+        password: password,
+        data: { must_change_password: false }, // Met à jour le flag côté Auth
       });
+
       if (authError) throw authError;
 
-      // 🔹 Mettre à jour le flag dans la table profiles
+      // 🔹 2️⃣ Mettre à jour dans table profiles pour usage interne
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ must_change_password: false })
         .eq("id", userId);
+
       if (profileError) throw profileError;
 
       alert("✅ Mot de passe changé avec succès !");
@@ -111,4 +115,3 @@ export default function ChangePasswordPage() {
     </div>
   );
 }
-

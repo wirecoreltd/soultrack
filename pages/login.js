@@ -1,9 +1,9 @@
+// pages/login.js
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,12 +11,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(null);
-    setMessage("");
     setLoading(true);
 
     try {
@@ -31,11 +29,12 @@ export default function LoginPage() {
         return;
       }
 
+      // Connexion réussie, stocker userId et info de base
       const user = authData.user;
       localStorage.setItem("userEmail", email);
       localStorage.setItem("userId", user.id);
 
-      // Récupération du profil pour redirection
+      // Récupérer le profil pour redirection selon rôle
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id, role, prenom, nom, telephone")
@@ -80,12 +79,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
-      <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
-        <div className="flex justify-center mb-6">
-          <Image src="/logo.png" alt="Logo" width={80} height={80} />
-        </div>
-        <h1 className="text-3xl font-bold text-center mb-6">Connexion</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
+      <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
+        <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <img src="/logo.png" alt="Logo SoulTrack" className="w-12 h-12 object-contain" />
+          SoulTrack
+        </h1>
         <p className="text-center text-gray-700 mb-6">
           Bienvenue sur SoulTrack ! Une plateforme pour garder le contact et suivre chaque membre.
         </p>
@@ -96,25 +95,24 @@ export default function LoginPage() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="input"
             required
+            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm"
           />
           <input
             type="password"
             placeholder="Mot de passe"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="input"
             required
+            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm"
           />
 
-          {error && <p className="mt-2 text-center text-red-500">{error}</p>}
-          {message && <p className="mt-2 text-center text-gray-700">{message}</p>}
+          {error && <p className="text-red-500 text-center">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md mt-4"
+            className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md"
           >
             {loading ? "Connexion..." : "Se connecter"}
           </button>
@@ -122,20 +120,10 @@ export default function LoginPage() {
 
         <button
           onClick={() => router.push("/reset-password")}
-          className="mt-4 text-blue-600 underline hover:text-blue-800 w-full text-center"
+          className="mt-4 text-blue-600 underline hover:text-blue-800"
         >
           Mot de passe oublié ?
         </button>
-
-        <style jsx>{`
-          .input {
-            width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            padding: 12px;
-            color: black;
-          }
-        `}</style>
       </div>
     </div>
   );

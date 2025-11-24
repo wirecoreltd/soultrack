@@ -1,4 +1,6 @@
 // pages/login.js
+
+// pages/login.js
 "use client";
 
 import { useState } from "react";
@@ -18,7 +20,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // Connexion Supabase
+      // 🔹 Connexion Supabase
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -30,12 +32,16 @@ export default function LoginPage() {
         return;
       }
 
-      const userId = authData.user.id;
+      const user = authData.user;
+      const userId = user.id;
 
-      // Récupération du profil complet depuis table profiles
+      // 🔹 Vérifie le flag must_change_password dans user_metadata
+      const mustChangePassword = user.user_metadata?.must_change_password ?? false;
+
+      // 🔹 Récupère le profil complet depuis table profiles
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, role, prenom, nom, telephone, must_change_password")
+        .select("id, role, prenom, nom, telephone")
         .eq("id", userId)
         .single();
 
@@ -45,17 +51,18 @@ export default function LoginPage() {
         return;
       }
 
+      // 🔹 Stockage local
       localStorage.setItem("userId", userId);
       localStorage.setItem("userRole", JSON.stringify([profile.role]));
       localStorage.setItem("profile", JSON.stringify(profile));
 
-      // Si première connexion, redirige vers /change-password
-      if (profile.must_change_password) {
+      // 🔹 Première connexion ? Redirection vers /change-password
+      if (mustChangePassword) {
         router.push("/change-password");
         return;
       }
 
-      // Redirection selon rôle
+      // 🔹 Redirection selon rôle
       switch (profile.role) {
         case "Administrateur":
           router.push("/");
@@ -76,7 +83,7 @@ export default function LoginPage() {
           router.push("/");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Erreur lors du login :", err);
       setError("❌ Erreur lors de la connexion");
     } finally {
       setLoading(false);
@@ -126,3 +133,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

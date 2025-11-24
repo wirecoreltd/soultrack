@@ -1,5 +1,4 @@
 // pages/admin/create-internal-user.js
-
 "use client";
 
 import { useState } from "react";
@@ -9,8 +8,6 @@ export default function CreateInternalUser() {
     prenom: "",
     nom: "",
     email: "",
-    password: "",
-    confirmPassword: "",
     role: "",
     telephone: "",
     sendMethod: "whatsapp", // ✅ par défaut WhatsApp
@@ -32,11 +29,6 @@ export default function CreateInternalUser() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      alert("Les mots de passe ne correspondent pas !");
-      return;
-    }
-
     if (!formData.role) {
       alert("Veuillez choisir un rôle !");
       return;
@@ -45,6 +37,7 @@ export default function CreateInternalUser() {
     setLoading(true);
 
     try {
+      // 1️⃣ Création utilisateur via API (sans mot de passe)
       const res = await fetch("/api/create-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,20 +48,28 @@ export default function CreateInternalUser() {
 
       if (!res.ok) throw new Error(data?.error || "Erreur création utilisateur");
 
-      // --- Générer message WhatsApp ---
+      // 2️⃣ Génération du lien de réinitialisation Supabase
+      const resetRes = await fetch("/api/send-reset-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email }),
+      });
+
+      const resetData = await resetRes.json();
+      if (!resetRes.ok) throw new Error(resetData?.error || "Erreur génération lien");
+
+      const resetLink = resetData.reset_link;
+
+      // 3️⃣ Préparer message WhatsApp
       const message = `
 Bonjour ${formData.prenom},
 
 Votre compte SoulTrack a été créé avec succès 🙌
 
-Voici vos accès :
-
-📧 Email : ${formData.email}
-🔑 Mot de passe : ${formData.password}
 👤 Rôle : ${roleDescription[formData.role]}
 
-Connectez-vous ici :
-➡️ ${window.location.origin}/login
+Pour définir votre mot de passe, cliquez ici :
+➡️ ${resetLink}
 
 🙏 Nous sommes heureux de vous compter parmi nous. Stay Bless !
       `.trim();
@@ -76,16 +77,16 @@ Connectez-vous ici :
       const cleanPhone = formData.telephone.replace(/\D/g, "");
       const encodedMessage = encodeURIComponent(message);
 
-      // --- Redirection automatique vers WhatsApp ---
-      window.open(`https://wa.me/${cleanPhone}?text=${encodedMessage}`, "_blank");
+      // 4️⃣ Redirection automatique vers WhatsApp
+      if (formData.sendMethod === "whatsapp" && cleanPhone) {
+        window.open(`https://wa.me/${cleanPhone}?text=${encodedMessage}`, "_blank");
+      }
 
-      // --- Vider le formulaire ---
+      // 5️⃣ Vider le formulaire
       setFormData({
         prenom: "",
         nom: "",
         email: "",
-        password: "",
-        confirmPassword: "",
         role: "",
         telephone: "",
         sendMethod: "whatsapp",
@@ -136,25 +137,6 @@ Connectez-vous ici :
           className="input"
           required
         />
-        <input
-          name="password"
-          placeholder="Mot de passe"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-          className="input"
-          required
-        />
-        <input
-          name="confirmPassword"
-          placeholder="Confirmer le mot de passe"
-          type="password"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          className="input"
-          required
-        />
-
         <select
           name="role"
           value={formData.role}

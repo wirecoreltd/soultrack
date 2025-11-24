@@ -17,7 +17,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // 🔹 Connexion Supabase
+      // Connexion Supabase
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -33,10 +33,13 @@ export default function LoginPage() {
       localStorage.setItem("userEmail", email);
       localStorage.setItem("userId", user.id);
 
-      // 🔹 Récupère le profil depuis table "profiles"
+      // 🔹 Récupérer flag must_change_password depuis Auth
+      const mustChangePassword = user.user_metadata?.must_change_password ?? false;
+
+      // 🔹 Récupérer le profil complet depuis table profiles
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, role, prenom, nom, telephone, must_change_password")
+        .select("id, role, prenom, nom, telephone")
         .eq("id", user.id)
         .single();
 
@@ -49,8 +52,8 @@ export default function LoginPage() {
       localStorage.setItem("userRole", JSON.stringify([profile.role]));
       localStorage.setItem("profile", JSON.stringify(profile));
 
-      // 🔹 Vérifie le flag must_change_password
-      if (profile.must_change_password) {
+      // 🔹 Si première connexion, rediriger vers change-password
+      if (mustChangePassword) {
         router.push("/change-password");
         return;
       }

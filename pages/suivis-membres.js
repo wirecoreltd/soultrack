@@ -168,7 +168,7 @@ export default function SuivisMembres() {
     }, [commentChanges[m.id]]);
 
     return (
-      <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
+      <div className="text-black text-sm mt-2 space-y-2 w-full">
         <p>🏙 Ville : {m.ville || "—"}</p>
         <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
         <p>
@@ -186,7 +186,7 @@ export default function SuivisMembres() {
         </p>
         <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
           
-        <div className="mt-3">
+        <div className="mt-5">
         <label className="text-black text-sm mb-1 block">📋 Statut Suivis :</label>
         <select
           value={statusChanges[m.id] ?? m.statut_suivis ?? ""}

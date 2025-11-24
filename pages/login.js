@@ -18,6 +18,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
+      // 🔹 Connexion Supabase Auth
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -33,7 +34,7 @@ export default function LoginPage() {
       localStorage.setItem("userEmail", email);
       localStorage.setItem("userId", user.id);
 
-      // Récupère le profil complet depuis la table profiles
+      // 🔹 Récupération du profil depuis table profiles
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id, role, prenom, nom, telephone, must_change_password")
@@ -46,17 +47,16 @@ export default function LoginPage() {
         return;
       }
 
-      // Stockage local minimum
       localStorage.setItem("userRole", JSON.stringify([profile.role]));
       localStorage.setItem("profile", JSON.stringify(profile));
 
-      // Redirection vers change-password si première connexion
+      // 🔹 Si première connexion, redirige vers change-password
       if (profile.must_change_password) {
         router.push("/change-password");
         return;
       }
 
-      // Redirection selon rôle
+      // 🔹 Redirection selon rôle
       switch (profile.role) {
         case "Administrateur":
           router.push("/");

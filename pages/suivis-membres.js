@@ -5,7 +5,7 @@ import React from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
-import EditMemberPopup from "../components/EditMemberPopup"; // Assure-toi du chemin exact
+import EditMemberPopup from "../components/EditMemberPopup";
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
@@ -18,7 +18,7 @@ export default function SuivisMembres() {
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
   const [view, setView] = useState("card");
-  const [editMember, setEditMember] = useState(null); // <-- état pour le popup
+  const [editMember, setEditMember] = useState(null);
 
   useEffect(() => {
     const fetchSuivis = async () => {
@@ -72,6 +72,11 @@ export default function SuivisMembres() {
             suivisData = data;
           }
         }
+
+        // Filtrer les contacts refus ou integrer
+        suivisData = suivisData.filter(
+          (m) => !["refus", "integrer"].includes(m.statut_suivis)
+        );
 
         setSuivis(suivisData || []);
         if (!suivisData || suivisData.length === 0) setMessage("Aucun membre à afficher.");
@@ -135,6 +140,7 @@ export default function SuivisMembres() {
         .single();
       if (updateError) throw updateError;
 
+      // Filtrer refus / integrer après mise à jour
       if (["integrer", "refus"].includes(updatedSuivi.statut_suivis)) {
         setSuivis((prev) => prev.filter((it) => it.id !== id));
         setMessage({
@@ -185,53 +191,52 @@ export default function SuivisMembres() {
           })()}
         </p>
         <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-          
+
         <div className="mt-5">
-        <label className="text-black text-sm mb-1 block">📋 Statut Suivis :</label>
-        <select
-          value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
-          onChange={(e) => handleStatusChange(m.id, e.target.value)}
-          className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
-        >
-          <option value="">-- Choisir un statut --</option>
-          <option value="en attente">🕓 En attente</option>
-          <option value="integrer">✅ Intégrer</option>
-          <option value="refus">❌ Refus</option>
-        </select>
-
-        <div className="mt-2">
-          <label className="text-gray-700 text-sm">💬 Commentaire :</label>
-          <textarea
-            ref={commentRef}
-            value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
-            onChange={(e) => handleCommentChange(m.id, e.target.value)}
-            rows={2}
-            className="w-full border rounded-md px-2 py-1 text-sm mt-1 resize-none"
-            placeholder="Ajouter un commentaire..."
-          />
-        </div>
-
-        <button
-          onClick={() => updateSuivi(m.id)}
-          disabled={updating[m.id]}
-          className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-            updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
-          }`}
-        >
-          {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
-        </button>
-
-        {/* Bouton Modifier le contact */}
-        <div className="mt-4 flex justify-center">
-          <button
-            onClick={() => setEditMember(m)}
-            className="text-blue-600 text-sm mt-4"
+          <label className="text-black text-sm mb-1 block">📋 Statut Suivis :</label>
+          <select
+            value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
+            onChange={(e) => handleStatusChange(m.id, e.target.value)}
+            className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
           >
-            ✏️ Modifier le contact
+            <option value="">-- Choisir un statut --</option>
+            <option value="en attente">🕓 En attente</option>
+            <option value="integrer">✅ Intégrer</option>
+            <option value="refus">❌ Refus</option>
+          </select>
+
+          <div className="mt-2">
+            <label className="text-gray-700 text-sm">💬 Commentaire :</label>
+            <textarea
+              ref={commentRef}
+              value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
+              onChange={(e) => handleCommentChange(m.id, e.target.value)}
+              rows={2}
+              className="w-full border rounded-md px-2 py-1 text-sm mt-1 resize-none"
+              placeholder="Ajouter un commentaire..."
+            />
+          </div>
+
+          <button
+            onClick={() => updateSuivi(m.id)}
+            disabled={updating[m.id]}
+            className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+              updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+            }`}
+          >
+            {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
           </button>
+
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => setEditMember(m)}
+              className="text-blue-600 text-sm mt-4"
+            >
+              ✏️ Modifier le contact
+            </button>
+          </div>
         </div>
       </div>
-    </div>
     );
   };
 
@@ -309,9 +314,11 @@ export default function SuivisMembres() {
                 <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">
-                  🕊 Assigné à : {item.conseiller_id ? item.responsable || "—" : item.cellule_nom || "—"}
-                </p>  
-                <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
+                  📋 Statut Suivis : {item.statut_suivis || "—"}
+                </p>
+                <p className="text-sm text-gray-700 mb-1">
+                  👤 Attribué à : {item.conseiller_id ? item.responsable : item.cellule_nom || "—"}
+                </p>
 
                 <button
                   onClick={() => toggleDetails(item.id)}
@@ -336,13 +343,14 @@ export default function SuivisMembres() {
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
                 <th className="px-4 py-2">Statut Suivis</th>
+                <th className="px-4 py-2">Attribué à</th>
                 <th className="px-4 py-2 rounded-tr-lg">Détails</th>
               </tr>
             </thead>
             <tbody>
               {suivis.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-2 text-white text-center">
+                  <td colSpan={5} className="px-4 py-2 text-white text-center">
                     Aucun membre en suivi
                   </td>
                 </tr>
@@ -359,6 +367,9 @@ export default function SuivisMembres() {
                       <td className="px-4 py-2">{m.telephone || "—"}</td>
                       <td className="px-4 py-2">{m.statut_suivis || "—"}</td>
                       <td className="px-4 py-2">
+                        {m.conseiller_id ? m.responsable : m.cellule_nom || "—"}
+                      </td>
+                      <td className="px-4 py-2">
                         <button
                           onClick={() => toggleDetails(m.id)}
                           className="text-orange-500 underline text-sm"
@@ -369,7 +380,7 @@ export default function SuivisMembres() {
                     </tr>
                     {detailsOpen[m.id] && (
                       <tr>
-                        <td colSpan={4}>
+                        <td colSpan={5}>
                           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                             <div className="bg-white rounded-2xl p-6 w-full max-w-md relative">
                               <button
@@ -387,6 +398,9 @@ export default function SuivisMembres() {
                               <p className="text-sm text-gray-700 mb-1">
                                 📋 Statut Suivis : {m.statut_suivis || "—"}
                               </p>
+                              <p className="text-sm text-gray-700 mb-1">
+                                👤 Attribué à : {m.conseiller_id ? m.responsable : m.cellule_nom || "—"}
+                              </p>
                               <Details m={m} />
                             </div>
                           </div>
@@ -401,19 +415,13 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {/* Popup édition membre */}
       {editMember && (
         <EditMemberPopup
           member={editMember}
-          cellules={[]} // à compléter si tu as des cellules
-          conseillers={[]} // à compléter si tu as des conseillers
           onClose={() => setEditMember(null)}
-          onUpdateMember={(updatedMember) => {
-            setSuivis((prev) =>
-              prev.map((m) => (m.id === updatedMember.id ? updatedMember : m))
-            );
-            setEditMember(null);
-          }}
+          onUpdated={(updated) =>
+            setSuivis((prev) => prev.map((it) => (it.id === updated.id ? updated : it)))
+          }
         />
       )}
     </div>

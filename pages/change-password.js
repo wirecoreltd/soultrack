@@ -15,12 +15,11 @@ export default function ChangePasswordPage() {
   const [userId, setUserId] = useState(null);
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem("userId");
-    if (!storedUserId) {
-      alert("Utilisateur non identifié. Veuillez vous reconnecter.");
+    const id = localStorage.getItem("userId");
+    if (!id) {
       router.push("/login");
     } else {
-      setUserId(storedUserId);
+      setUserId(id);
     }
   }, []);
 
@@ -34,26 +33,25 @@ export default function ChangePasswordPage() {
     }
 
     setLoading(true);
+
     try {
-      // 🔹 Changer le mot de passe Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.updateUser({
+      // Changer le mot de passe dans Supabase Auth
+      const { error: authError } = await supabase.auth.updateUser({
         password: password,
       });
-
       if (authError) throw authError;
 
-      // 🔹 Mettre à jour le flag dans profiles
+      // Mettre le flag à false dans profiles
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ must_change_password: false })
         .eq("id", userId);
-
       if (profileError) throw profileError;
 
       alert("✅ Mot de passe changé avec succès !");
-      router.push("/"); // redirection vers dashboard
+      router.push("/"); // Redirection vers dashboard
     } catch (err) {
-      console.error("Erreur changement mot de passe :", err);
+      console.error(err);
       setError("❌ Erreur lors du changement de mot de passe");
     } finally {
       setLoading(false);
@@ -92,26 +90,11 @@ export default function ChangePasswordPage() {
         <button
           type="submit"
           disabled={loading}
-          className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
+          className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md"
         >
           {loading ? "Chargement..." : "Changer"}
         </button>
-
-        <p className="text-center text-gray-500 text-sm mt-4">
-          Après avoir changé votre mot de passe, vous serez redirigé vers votre tableau de bord.
-        </p>
       </form>
-
-      <style jsx>{`
-        .input {
-          width: 100%;
-          border: 1px solid #ccc;
-          border-radius: 12px;
-          padding: 12px;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-      `}</style>
     </div>
   );
 }
-

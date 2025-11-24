@@ -5,7 +5,7 @@ import React from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
-import EditMemberPopup from "../components/EditMemberPopup";
+import EditMemberPopup from "../components/EditMemberPopup"; // Assure-toi du chemin exact
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
@@ -18,7 +18,8 @@ export default function SuivisMembres() {
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
   const [view, setView] = useState("card");
-  const [editMember, setEditMember] = useState(null);
+  const [editMember, setEditMember] = useState(null); // <-- état pour le popup
+  const [showRefus, setShowRefus] = useState(false); // <-- état pour afficher refus
 
   useEffect(() => {
     const fetchSuivis = async () => {
@@ -72,11 +73,6 @@ export default function SuivisMembres() {
             suivisData = data;
           }
         }
-
-        // Filtrer les contacts refus ou integrer
-        suivisData = suivisData.filter(
-          (m) => !["refus", "integrer"].includes(m.statut_suivis)
-        );
 
         setSuivis(suivisData || []);
         if (!suivisData || suivisData.length === 0) setMessage("Aucun membre à afficher.");
@@ -140,7 +136,6 @@ export default function SuivisMembres() {
         .single();
       if (updateError) throw updateError;
 
-      // Filtrer refus / integrer après mise à jour
       if (["integrer", "refus"].includes(updatedSuivi.statut_suivis)) {
         setSuivis((prev) => prev.filter((it) => it.id !== id));
         setMessage({
@@ -192,6 +187,9 @@ export default function SuivisMembres() {
         </p>
         <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
+        {/* Attribué à : conseiller ou cellule */}
+        <p>👤 Attribué à : {m.conseiller_id ? m.responsable : m.cellule_nom || "—"}</p>
+
         <div className="mt-5">
           <label className="text-black text-sm mb-1 block">📋 Statut Suivis :</label>
           <select
@@ -227,6 +225,7 @@ export default function SuivisMembres() {
             {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
           </button>
 
+          {/* Bouton Modifier le contact */}
           <div className="mt-4 flex justify-center">
             <button
               onClick={() => setEditMember(m)}
@@ -239,6 +238,11 @@ export default function SuivisMembres() {
       </div>
     );
   };
+
+  // Filtrage pour refus
+  const listeAffichee = showRefus
+    ? suivis.filter((s) => s.statut_suivis === "refus")
+    : suivis;
 
   return (
     <div
@@ -272,6 +276,16 @@ export default function SuivisMembres() {
         </p>
       </div>
 
+      {/* Bouton Voir les refus */}
+      <div className="mb-2 w-full max-w-6xl flex justify-start">
+        <button
+          onClick={() => setShowRefus((prev) => !prev)}
+          className="text-white underline text-sm hover:text-gray-200"
+        >
+          {showRefus ? "Voir tous les suivis" : "Voir les refus"}
+        </button>
+      </div>
+
       <div className="mb-4 flex justify-end w-full max-w-6xl">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
@@ -298,7 +312,7 @@ export default function SuivisMembres() {
       {/* Vue Carte */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
-          {suivis.map((item) => (
+          {listeAffichee.map((item) => (
             <div
               key={item.id}
               className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
@@ -313,12 +327,8 @@ export default function SuivisMembres() {
                 </h2>
                 <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">
-                  📋 Statut Suivis : {item.statut_suivis || "—"}
-                </p>
-                <p className="text-sm text-gray-700 mb-1">
-                  👤 Attribué à : {item.conseiller_id ? item.responsable : item.cellule_nom || "—"}
-                </p>
+                <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
+                <p className="text-sm text-gray-700 mb-1">👤 Attribué à : {item.conseiller_id ? item.responsable : item.cellule_nom || "—"}</p>
 
                 <button
                   onClick={() => toggleDetails(item.id)}
@@ -343,19 +353,18 @@ export default function SuivisMembres() {
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
                 <th className="px-4 py-2">Statut Suivis</th>
-                <th className="px-4 py-2">Attribué à</th>
                 <th className="px-4 py-2 rounded-tr-lg">Détails</th>
               </tr>
             </thead>
             <tbody>
-              {suivis.length === 0 ? (
+              {listeAffichee.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-2 text-white text-center">
+                  <td colSpan={4} className="px-4 py-2 text-white text-center">
                     Aucun membre en suivi
                   </td>
                 </tr>
               ) : (
-                suivis.map((m) => (
+                listeAffichee.map((m) => (
                   <React.Fragment key={m.id}>
                     <tr className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
                       <td
@@ -367,9 +376,6 @@ export default function SuivisMembres() {
                       <td className="px-4 py-2">{m.telephone || "—"}</td>
                       <td className="px-4 py-2">{m.statut_suivis || "—"}</td>
                       <td className="px-4 py-2">
-                        {m.conseiller_id ? m.responsable : m.cellule_nom || "—"}
-                      </td>
-                      <td className="px-4 py-2">
                         <button
                           onClick={() => toggleDetails(m.id)}
                           className="text-orange-500 underline text-sm"
@@ -380,7 +386,7 @@ export default function SuivisMembres() {
                     </tr>
                     {detailsOpen[m.id] && (
                       <tr>
-                        <td colSpan={5}>
+                        <td colSpan={4}>
                           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                             <div className="bg-white rounded-2xl p-6 w-full max-w-md relative">
                               <button
@@ -390,11 +396,14 @@ export default function SuivisMembres() {
                                 ✖
                               </button>
                               <h2 className="font-bold text-black text-base text-center mb-1">
-                                {m.prenom} {m.nom} {m.cellule_nom ? `(${m.cellule_nom})` : ""}
+                                {m.prenom} {m.cellule_nom ? `(${m.cellule_nom})` : ""}
                               </h2>
                               <p className="text-sm text-gray-700 mb-1">
                                 📞 {m.telephone || "—"}
-                              </p>                              
+                              </p>
+                              <p className="text-sm text-gray-700 mb-1">
+                                📋 Statut Suivis : {m.statut_suivis || "—"}
+                              </p>
                               <p className="text-sm text-gray-700 mb-1">
                                 👤 Attribué à : {m.conseiller_id ? m.responsable : m.cellule_nom || "—"}
                               </p>
@@ -412,14 +421,9 @@ export default function SuivisMembres() {
         </div>
       )}
 
+      {/* Popup Modifier le contact */}
       {editMember && (
-        <EditMemberPopup
-          member={editMember}
-          onClose={() => setEditMember(null)}
-          onUpdated={(updated) =>
-            setSuivis((prev) => prev.map((it) => (it.id === updated.id ? updated : it)))
-          }
-        />
+        <EditMemberPopup member={editMember} onClose={() => setEditMember(null)} />
       )}
     </div>
   );

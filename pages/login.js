@@ -33,7 +33,7 @@ export default function LoginPage() {
       localStorage.setItem("userEmail", email);
       localStorage.setItem("userId", user.id);
 
-      // 🔹 Vérification du flag must_change_password dans la table profiles
+      // 🔹 Vérifie le flag must_change_password côté table profiles
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id, role, prenom, nom, telephone, must_change_password")
@@ -49,7 +49,7 @@ export default function LoginPage() {
       localStorage.setItem("userRole", JSON.stringify([profile.role]));
       localStorage.setItem("profile", JSON.stringify(profile));
 
-      // 🔹 Si première connexion, rediriger vers change-password
+      // 🔹 Première connexion ? Redirige vers /change-password
       if (profile.must_change_password) {
         router.push("/change-password");
         return;

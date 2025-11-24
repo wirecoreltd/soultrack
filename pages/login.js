@@ -33,13 +33,10 @@ export default function LoginPage() {
       localStorage.setItem("userEmail", email);
       localStorage.setItem("userId", user.id);
 
-      // 🔹 Récupérer flag must_change_password depuis Auth
-      const mustChangePassword = user.user_metadata?.must_change_password ?? false;
-
-      // 🔹 Récupérer le profil complet depuis table profiles
+      // 🔹 Vérification du flag must_change_password dans la table profiles
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, role, prenom, nom, telephone")
+        .select("id, role, prenom, nom, telephone, must_change_password")
         .eq("id", user.id)
         .single();
 
@@ -53,7 +50,7 @@ export default function LoginPage() {
       localStorage.setItem("profile", JSON.stringify(profile));
 
       // 🔹 Si première connexion, rediriger vers change-password
-      if (mustChangePassword) {
+      if (profile.must_change_password) {
         router.push("/change-password");
         return;
       }
@@ -125,10 +122,6 @@ export default function LoginPage() {
             {loading ? "Connexion..." : "Se connecter"}
           </button>
         </form>
-
-        <p className="text-center italic font-semibold mt-4 text-green-600">
-          "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
-        </p>
       </div>
     </div>
   );

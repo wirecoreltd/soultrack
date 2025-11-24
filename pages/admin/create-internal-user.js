@@ -1,49 +1,43 @@
-//pages/admin/create-internal-user.js
+// pages/admin/create-internal-user.js
+
 "use client";
 
 import { useState } from "react";
 
 export default function CreateInternalUser() {
-  const [prenom, setPrenom] = useState("");
-  const [nom, setNom] = useState("");
-  const [telephone, setTelephone] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState("");
-  const [sendMethod, setSendMethod] = useState("");
+  const [formData, setFormData] = useState({
+    prenom: "",
+    nom: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "",
+    telephone: "",
+  });
 
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
 
-  const roleLabels = {
-    Administrateur: "Administrateur",
-    ResponsableCellule: "Responsable Cellule",
-    ResponsableEvangelisation: "Responsable Évangélisation",
-    ResponsableIntegration: "Responsable Intégration",
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const resetForm = () => {
-    setPrenom("");
-    setNom("");
-    setTelephone("");
-    setEmail("");
-    setPassword("");
-    setConfirmPassword("");
-    setRole("");
-    setSendMethod("");
+  const roleDescription = {
+    Administrateur: "Administrateur",
+    ResponsableIntegration: "Responsable Intégration",
+    ResponsableEvangelisation: "Responsable Evangélisation",
+    ResponsableCellule: "Responsable Cellule",
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
 
-    if (!sendMethod) {
-      setMessage("Veuillez choisir une méthode d'envoi.");
+    if (formData.password !== formData.confirmPassword) {
+      alert("Les mots de passe ne correspondent pas !");
       return;
     }
-    if (password !== confirmPassword) {
-      setMessage("Les mots de passe ne correspondent pas.");
+
+    if (!formData.role) {
+      alert("Veuillez choisir un rôle !");
       return;
     }
 
@@ -53,112 +47,142 @@ export default function CreateInternalUser() {
       const res = await fetch("/api/create-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prenom,
-          nom,
-          telephone,
-          email,
-          password,
-          role,
-          sendMethod,
-        }),
+        body: JSON.stringify(formData),
       });
 
       const data = await res.json();
 
-      if (!res.ok) {
-        setMessage(data?.error || "Erreur serveur.");
-        setLoading(false);
-        return;
-      }
+      if (!res.ok) throw new Error(data?.error || "Erreur création utilisateur");
 
-      // MESSAGE POUR WHATSAPP
-      const roleDesc = roleLabels[role] ?? role;
-      const waMessage = encodeURIComponent(
-        `Bonjour ${prenom},\n\nVoici vos accès SoulTrack :\n\n` +
-        `Rôle : ${roleDesc}\n` +
-        `Email : ${email}\nMot de passe : ${password}\n\n` +
-        `Connectez-vous ici : ${typeof window !== "undefined" ? window.location.origin + "/login" : ""}\n\n` +
-        `Bienvenue dans l’équipe !`
-      );
+      // --- Création du message WhatsApp ---
+      let message = `
+Bonjour ${formData.prenom},
 
-      // OUVERTURE DIRECTE WHATSAPP
-      if (sendMethod === "whatsapp") {
-        const phone = telephone.replace(/\D/g, "");
-        const link = `https://wa.me/${phone}?text=${waMessage}`;
-        window.location.assign(link);
-      }
+Votre compte SoulTrack a été créé avec succès 🙌
 
-      // ENVOI PAR EMAIL
-      if (sendMethod === "email") {
-        if (data.email_status === "sent") {
-          setMessage("Email envoyé !");
-        } else {
-          setMessage(
-            "Email non envoyé automatiquement. Vérifiez votre configuration SendGrid."
-          );
-        }
-      }
+Voici vos accès :
 
-      // RESET FORMULAIRE APRÈS ENVOI
-      resetForm();
+📧 Email : ${formData.email}
+🔑 Mot de passe : ${formData.password}
+👤 Rôle : ${roleDescription[formData.role]}
+
+Connectez-vous ici :
+➡️ ${window.location.origin}/login
+
+🙏 Nous sommes heureux de vous compter parmi nous. Que Dieu vous bénisse !
+      `.trim();
+
+      const cleanPhone = formData.telephone.replace(/\D/g, "");
+      const encodedMessage = encodeURIComponent(message);
+
+      // --- Redirection automatique vers WhatsApp ---
+      window.open(`https://wa.me/${cleanPhone}?text=${encodedMessage}`, "_blank");
+
+      // --- Vider le formulaire ---
+      setFormData({
+        prenom: "",
+        nom: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        role: "",
+        telephone: "",
+      });
+
     } catch (err) {
       console.error(err);
-      setMessage("Erreur inconnue.");
+      alert("Erreur lors de la création de l'utilisateur");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-xl mx-auto">
-      <h2 className="text-xl font-bold mb-4">Créer un utilisateur interne</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
+      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md flex flex-col gap-4">
+        <h2 className="text-2xl font-bold text-center mb-4">Créer un utilisateur</h2>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <input className="input" placeholder="Prénom" value={prenom} onChange={(e) => setPrenom(e.target.value)} required />
-        <input className="input" placeholder="Nom" value={nom} onChange={(e) => setNom(e.target.value)} required />
+        <input
+          name="prenom"
+          placeholder="Prénom"
+          value={formData.prenom}
+          onChange={handleChange}
+          className="input"
+          required
+        />
+        <input
+          name="nom"
+          placeholder="Nom"
+          value={formData.nom}
+          onChange={handleChange}
+          className="input"
+          required
+        />
+        <input
+          name="telephone"
+          placeholder="Téléphone"
+          value={formData.telephone}
+          onChange={handleChange}
+          className="input"
+        />
+        <input
+          name="email"
+          placeholder="Email"
+          type="email"
+          value={formData.email}
+          onChange={handleChange}
+          className="input"
+          required
+        />
+        <input
+          name="password"
+          placeholder="Mot de passe"
+          type="password"
+          value={formData.password}
+          onChange={handleChange}
+          className="input"
+          required
+        />
+        <input
+          name="confirmPassword"
+          placeholder="Confirmer le mot de passe"
+          type="password"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          className="input"
+          required
+        />
 
-        <input className="input" placeholder="Téléphone (format international)" value={telephone} onChange={(e) => setTelephone(e.target.value)} />
-
-        <input className="input" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-
-        <input className="input" type="password" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} required />
-
-        <input className="input" type="password" placeholder="Confirmer le mot de passe" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
-
-        <select className="input" value={role} onChange={(e) => setRole(e.target.value)} required>
-          <option value="">Sélectionner un rôle</option>
+        <select
+          name="role"
+          value={formData.role}
+          onChange={handleChange}
+          className="input"
+          required
+        >
+          <option value="">-- Choisir un rôle --</option>
           <option value="Administrateur">Administrateur</option>
-          <option value="ResponsableCellule">Responsable Cellule</option>
-          <option value="ResponsableEvangelisation">Responsable Évangélisation</option>
           <option value="ResponsableIntegration">Responsable Intégration</option>
+          <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
+          <option value="ResponsableCellule">Responsable Cellule</option>
         </select>
 
-        <div className="mt-2">
-          <p className="font-semibold mb-2">Envoyer les accès via :</p>
-          <label className="flex items-center gap-2 mb-1">
-            <input type="radio" name="sendMethod" value="whatsapp" onChange={(e) => setSendMethod(e.target.value)} checked={sendMethod === "whatsapp"} />
-            WhatsApp
-          </label>
-          <label className="flex items-center gap-2">
-            <input type="radio" name="sendMethod" value="email" onChange={(e) => setSendMethod(e.target.value)} checked={sendMethod === "email"} />
-            Email
-          </label>
-        </div>
-
-        <button type="submit" disabled={loading} className="bg-green-600 text-white py-2 rounded">
-          {loading ? "Création..." : "Créer & Envoyer"}
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md"
+        >
+          {loading ? "Création..." : "Créer et envoyer WhatsApp"}
         </button>
       </form>
-
-      {message && <p className="mt-3 text-sm text-gray-700">{message}</p>}
 
       <style jsx>{`
         .input {
           width: 100%;
-          padding: 10px;
-          border: 1px solid #ddd;
-          border-radius: 8px;
+          border: 1px solid #ccc;
+          border-radius: 12px;
+          padding: 12px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
       `}</style>
     </div>

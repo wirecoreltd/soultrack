@@ -1,3 +1,4 @@
+// pages/login.js
 "use client";
 
 import { useState } from "react";
@@ -17,27 +18,25 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // 🔹 Connexion utilisateur
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
+      // Connexion Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (authError || !data.user) {
+      if (authError || !authData.user) {
         setError("❌ Email ou mot de passe incorrect");
         setLoading(false);
         return;
       }
 
-      const user = data.user;
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("userId", user.id);
+      const userId = authData.user.id;
 
-      // 🔹 Vérification du profil dans la table profiles
+      // Récupération du profil complet depuis table profiles
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id, role, prenom, nom, telephone, must_change_password")
-        .eq("id", user.id)
+        .eq("id", userId)
         .single();
 
       if (profileError) {
@@ -46,16 +45,17 @@ export default function LoginPage() {
         return;
       }
 
+      localStorage.setItem("userId", userId);
       localStorage.setItem("userRole", JSON.stringify([profile.role]));
       localStorage.setItem("profile", JSON.stringify(profile));
 
-      // 🔹 Si première connexion, rediriger vers change-password
+      // Si première connexion, redirige vers /change-password
       if (profile.must_change_password) {
         router.push("/change-password");
         return;
       }
 
-      // 🔹 Redirection selon rôle
+      // Redirection selon rôle
       switch (profile.role) {
         case "Administrateur":
           router.push("/");
@@ -76,7 +76,7 @@ export default function LoginPage() {
           router.push("/");
       }
     } catch (err) {
-      console.error("Erreur lors du login :", err);
+      console.error(err);
       setError("❌ Erreur lors de la connexion");
     } finally {
       setLoading(false);
@@ -100,7 +100,7 @@ export default function LoginPage() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
+            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm"
             required
           />
           <input
@@ -108,7 +108,7 @@ export default function LoginPage() {
             placeholder="Mot de passe"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
+            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm"
             required
           />
 
@@ -117,15 +117,11 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
+            className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md"
           >
             {loading ? "Connexion..." : "Se connecter"}
           </button>
         </form>
-
-        <p className="text-center italic font-semibold mt-4 text-green-600">
-          "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
-        </p>
       </div>
     </div>
   );

@@ -65,6 +65,7 @@ export default function DetailsPopup({
             })()}
           </p>
           <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
+          <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>   
         </div>
 
         {/* Statut */}

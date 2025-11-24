@@ -98,10 +98,9 @@ export default function SuivisMembres() {
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
   const getBorderColor = (m) => {
-    if (m.statut_suivis === "actif") return "#4285F4";
+    if (m.statut_suivis === "integrer") return "#4285F4";
     if (m.statut_suivis === "en attente") return "#FFA500";
-    if (m.statut_suivis === "suivi terminé") return "#34A853";
-    if (m.statut_suivis === "inactif") return "#999999";
+    if (m.statut_suivis === "refus") return "#f21705";    
     return "#ccc";
   };
 
@@ -273,7 +272,7 @@ export default function SuivisMembres() {
       </div>
 
       {/* Contrôles principaux */}
-      <div className="w-full max-w-6xl mb-4 flex justify-between items-center">
+      <div className="w-full max-w-6xl mb-4 flex justify-between items-end">
         <button
           onClick={() => setShowRefus(!showRefus)}
           className="text-orange-500 underline text-sm"
@@ -283,7 +282,7 @@ export default function SuivisMembres() {
 
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
-          className="text-white text-sm underline"
+          className="text-white text-sm underline items-center"
         >
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>

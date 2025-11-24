@@ -1,3 +1,5 @@
+// pages/login.js
+
 "use client";
 
 import { useState } from "react";
@@ -17,7 +19,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // Connexion Supabase
+      // 🔹 Connexion utilisateur
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -30,10 +32,12 @@ export default function LoginPage() {
       }
 
       const user = data.user;
+
+      // 🔹 Stockage local
       localStorage.setItem("userEmail", email);
       localStorage.setItem("userId", user.id);
 
-      // 🔹 Vérifie le flag must_change_password côté table profiles
+      // 🔹 Récupération du profil complet
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id, role, prenom, nom, telephone, must_change_password")
@@ -49,7 +53,7 @@ export default function LoginPage() {
       localStorage.setItem("userRole", JSON.stringify([profile.role]));
       localStorage.setItem("profile", JSON.stringify(profile));
 
-      // 🔹 Première connexion ? Redirige vers /change-password
+      // 🔹 Première connexion ? Redirection vers change-password
       if (profile.must_change_password) {
         router.push("/change-password");
         return;
@@ -122,6 +126,10 @@ export default function LoginPage() {
             {loading ? "Connexion..." : "Se connecter"}
           </button>
         </form>
+
+        <p className="text-center italic font-semibold mt-4 text-green-600">
+          "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
+        </p>
       </div>
     </div>
   );

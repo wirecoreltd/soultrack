@@ -18,8 +18,8 @@ export default function SuivisMembres() {
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
   const [view, setView] = useState("card");
-  const [editMember, setEditMember] = useState(null); // <-- état pour le popup
-  const [showRefus, setShowRefus] = useState(false); // <-- nouvel état pour voir les refus
+  const [editMember, setEditMember] = useState(null);
+  const [showRefus, setShowRefus] = useState(false);
 
   useEffect(() => {
     const fetchSuivis = async () => {
@@ -98,9 +98,10 @@ export default function SuivisMembres() {
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
   const getBorderColor = (m) => {
-    if (m.statut_suivis === "integrer") return "#4285F4";
+    if (m.statut_suivis === "actif") return "#4285F4";
     if (m.statut_suivis === "en attente") return "#FFA500";
-    if (m.statut_suivis === "refus") return "#f21705";    
+    if (m.statut_suivis === "suivi terminé") return "#34A853";
+    if (m.statut_suivis === "inactif") return "#999999";
     return "#ccc";
   };
 
@@ -186,7 +187,6 @@ export default function SuivisMembres() {
         </p>
         <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
         <p>📌 Attribué à : {m.conseiller_id ? m.responsable || "—" : m.cellule_nom || "—"}</p>
-          
         <div className="mt-5">
           <label className="text-black text-sm mb-1 block">📋 Statut Suivis :</label>
           <select
@@ -235,14 +235,15 @@ export default function SuivisMembres() {
     );
   };
 
-  // Filtrage selon showRefus
-  const filteredSuivis = showRefus ? suivis.filter(m => m.statut_suivis === "refus") : suivis;
+  // Filtrage final incluant refus
+  const filteredSuivis = suivis.filter((m) =>
+    showRefus ? m.statut_suivis?.toLowerCase() === "refus" : true
+  );
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
+    <div className="min-h-screen flex flex-col items-center p-6"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+
       {/* Header */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
@@ -270,51 +271,44 @@ export default function SuivisMembres() {
         </p>
       </div>
 
-      <div className="mb-4 flex justify-end w-full max-w-6xl">
-        <button
-          onClick={() => setView(view === "card" ? "table" : "card")}
-          className="text-white text-sm underline hover:text-gray-200"
-        >
-          {view === "card" ? "Vue Table" : "Vue Carte"}
-        </button>
-      </div>
-
-      {/* Bouton Voir les refus */}
-      <div className={`w-full max-w-6xl mb-4 flex ${view === "card" ? "justify-center" : "justify-end"}`}>
-        <button
-          onClick={() => setShowRefus(!showRefus)}
-          className="text-orange-500 underline text-sm"
-        >
-          {showRefus ? "Voir tous les suivis" : "Voir les refus"}
-        </button>
+      {/* Boutons sur la même ligne */}
+      <div className="w-full max-w-6xl flex justify-between items-center mb-4">
+        <div className="flex-1 flex justify-center">
+          <button
+            onClick={() => setView(view === "card" ? "table" : "card")}
+            className="text-white underline text-sm"
+          >
+            {view === "card" ? "Vue Table" : "Vue Carte"}
+          </button>
+        </div>
+        <div className="flex-1 flex justify-end">
+          <button
+            onClick={() => setShowRefus(!showRefus)}
+            className="text-orange-500 underline text-sm"
+          >
+            {showRefus ? "Voir tous les suivis" : "Voir les refus"}
+          </button>
+        </div>
       </div>
 
       {message && (
-        <div
-          className={`mb-4 px-4 py-2 rounded-md text-sm ${
-            message.type === "error"
-              ? "bg-red-200 text-red-800"
-              : message.type === "success"
-              ? "bg-green-200 text-green-800"
-              : "bg-yellow-100 text-yellow-800"
-          }`}
-        >
+        <div className={`mb-4 px-4 py-2 rounded-md text-sm ${
+          message.type === "error" ? "bg-red-200 text-red-800" :
+          message.type === "success" ? "bg-green-200 text-green-800" :
+          "bg-yellow-100 text-yellow-800"
+        }`}>
           {message.text}
         </div>
       )}
 
       {/* Vue Carte */}
       {view === "card" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl mx-auto">
           {filteredSuivis.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
-            >
-              <div
-                className="w-full h-[6px] rounded-t-2xl"
-                style={{ backgroundColor: getBorderColor(item) }}
-              />
+            <div key={item.id}
+              className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden">
+              <div className="w-full h-[6px] rounded-t-2xl"
+                style={{ backgroundColor: getBorderColor(item) }} />
               <div className="p-4 flex flex-col items-center">
                 <h2 className="font-bold text-black text-base text-center mb-1">
                   {item.prenom} {item.nom}
@@ -340,7 +334,7 @@ export default function SuivisMembres() {
 
       {/* Vue Table */}
       {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto transition duration-200 relative">
+        <div className="w-full max-w-6xl overflow-x-auto mx-auto">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
               <tr>
@@ -361,10 +355,8 @@ export default function SuivisMembres() {
                 filteredSuivis.map((m) => (
                   <React.Fragment key={m.id}>
                     <tr className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                      <td
-                        className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
-                        style={{ borderLeftColor: getBorderColor(m) }}
-                      >
+                      <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
+                          style={{ borderLeftColor: getBorderColor(m) }}>
                         {m.prenom} {m.nom}
                       </td>
                       <td className="px-4 py-2">{m.telephone || "—"}</td>
@@ -392,12 +384,7 @@ export default function SuivisMembres() {
                               <h2 className="font-bold text-black text-base text-center mb-1">
                                 {m.prenom} {m.cellule_nom ? `(${m.cellule_nom})` : ""}
                               </h2>
-                              <p className="text-sm text-gray-700 mb-1">
-                                📞 {m.telephone || "—"}
-                              </p>
-                              <p className="text-sm text-gray-700 mb-1">
-                                📋 Statut Suivis : {m.statut_suivis || "—"}
-                              </p>
+                              <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
                               <Details m={m} />
                             </div>
                           </div>
@@ -412,9 +399,8 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {/* Popup Modifier le membre */}
       {editMember && (
-        <EditMemberPopup membre={editMember} onClose={() => setEditMember(null)} />
+        <EditMemberPopup member={editMember} onClose={() => setEditMember(null)} />
       )}
     </div>
   );

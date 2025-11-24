@@ -1,6 +1,4 @@
 // pages/login.js
-
-// pages/login.js
 "use client";
 
 import { useState } from "react";
@@ -16,11 +14,10 @@ export default function LoginPage() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    setLoading(true);
 
     try {
-      // 🔹 Connexion Supabase
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -32,17 +29,16 @@ export default function LoginPage() {
         return;
       }
 
+      // Connexion réussie, stocker userId et info de base
       const user = authData.user;
-      const userId = user.id;
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("userId", user.id);
 
-      // 🔹 Vérifie le flag must_change_password dans user_metadata
-      const mustChangePassword = user.user_metadata?.must_change_password ?? false;
-
-      // 🔹 Récupère le profil complet depuis table profiles
+      // Récupérer le profil pour redirection selon rôle
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id, role, prenom, nom, telephone")
-        .eq("id", userId)
+        .eq("id", user.id)
         .single();
 
       if (profileError) {
@@ -51,18 +47,10 @@ export default function LoginPage() {
         return;
       }
 
-      // 🔹 Stockage local
-      localStorage.setItem("userId", userId);
       localStorage.setItem("userRole", JSON.stringify([profile.role]));
       localStorage.setItem("profile", JSON.stringify(profile));
 
-      // 🔹 Première connexion ? Redirection vers /change-password
-      if (mustChangePassword) {
-        router.push("/change-password");
-        return;
-      }
-
-      // 🔹 Redirection selon rôle
+      // Redirection selon rôle
       switch (profile.role) {
         case "Administrateur":
           router.push("/");
@@ -83,7 +71,7 @@ export default function LoginPage() {
           router.push("/");
       }
     } catch (err) {
-      console.error("Erreur lors du login :", err);
+      console.error(err);
       setError("❌ Erreur lors de la connexion");
     } finally {
       setLoading(false);
@@ -107,16 +95,16 @@ export default function LoginPage() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm"
             required
+            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm"
           />
           <input
             type="password"
             placeholder="Mot de passe"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm"
             required
+            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm"
           />
 
           {error && <p className="text-red-500 text-center">{error}</p>}
@@ -129,8 +117,14 @@ export default function LoginPage() {
             {loading ? "Connexion..." : "Se connecter"}
           </button>
         </form>
+
+        <button
+          onClick={() => router.push("/reset-password")}
+          className="mt-4 text-blue-600 underline hover:text-blue-800"
+        >
+          Mot de passe oublié ?
+        </button>
       </div>
     </div>
   );
 }
-

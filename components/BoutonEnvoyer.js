@@ -2,10 +2,10 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
+export default function BoutonEnvoyerTest({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Mapping texte → integer pour statut_suivis
+  // Mapping texte → integer pour statut_suivis
   const statutIds = {
     "envoye": 1,
     "en attente": 2,
@@ -25,9 +25,9 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
     setLoading(true);
     try {
-      // 🔹 Vérification par numéro de téléphone
+      // Vérification par numéro de téléphone
       const { data: existing, error: selectError } = await supabase
-        .from("suivis_membres")
+        .from("suivis_membres_test")
         .select("*")
         .eq("telephone", membre.telephone || "");
 
@@ -39,7 +39,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         return;
       }
 
-      // 🔹 Préparer l'objet de suivi
+      // Préparer l'objet de suivi
       const suiviData = {
         membre_id: membre.id,
         prenom: membre.prenom,
@@ -49,7 +49,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         ville: membre.ville,
         besoin: membre.besoin,
         infos_supplementaires: membre.infos_supplementaires,
-        statut_suivis: statutIds["envoye"], // integer maintenant
+        statut_suivis: statutIds["envoye"], // integer ici
         created_at: new Date().toISOString(),
       };
 
@@ -62,23 +62,23 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         suiviData.responsable = `${cible.prenom || ""} ${cible.nom || ""}`.trim();
       }
 
-      // 🔹 Insérer le suivi
+      // Insérer le suivi dans la table test
       const { error: insertError } = await supabase
-        .from("suivis_membres")
+        .from("suivis_membres_test")
         .insert([suiviData]);
       if (insertError) throw insertError;
 
-      // 🔹 Mettre à jour le membre pour qu’il devienne actif
+      // Mettre à jour le membre pour qu’il devienne actif
       const { error: updateMemberError } = await supabase
         .from("membres")
         .update({ statut: "actif" })
         .eq("id", membre.id);
       if (updateMemberError) throw updateMemberError;
 
-      // 🔹 Callback pour mise à jour locale
+      // Callback pour mise à jour locale
       if (onEnvoyer) onEnvoyer(membre.id, type, cible, "actif");
 
-      // 🔹 Préparer message WhatsApp
+      // Préparer message WhatsApp
       let message = `👋 Salut ${cible.responsable || (cible.prenom ? `${cible.prenom} ${cible.nom}` : "")}!\n\n`;
       message += `🙏 Nouveau membre à suivre :\n`;
       message += `- 👤 Nom : ${membre.prenom} ${membre.nom}\n`;

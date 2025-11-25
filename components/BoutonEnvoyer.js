@@ -70,7 +70,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       const { error: insertError } = await supabase.from("suivis_membres").insert([suiviData]);
       if (insertError) throw insertError;
 
-      // 🔹 Mise à jour du membre
+      // 🔹 Mise à jour du statut du membre
       const { error: updateMemberError } = await supabase
         .from("membres")
         .update({ statut: "actif" })
@@ -81,23 +81,24 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       if (onEnvoyer) onEnvoyer(membre.id, type, cible, "actif");
 
       // 🔹 Préparer le message WhatsApp
-      const phoneRaw = cible.telephone || "";
-      const phone = phoneRaw.replace(/\D/g, "");
-      if (!phone) alert("❌ La cible n'a pas de numéro valide.");
-      else {
-        let message = `👋 Salut ${suiviData.responsable}!\n\n`;
-        message += `🙏 Nouveau membre à suivre :\n`;
-        message += `- 👤 Nom : ${membre.prenom} ${membre.nom}\n`;
-        message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
-        message += `- 🏙 Ville : ${membre.ville || "—"}\n`;
-        message += `- 🙏 Besoin : ${membre.besoin || "—"}\n`;
-        message += `- 📌 Statut : ${statutLabelMapping[suiviData.statut_suivis]}\n\n🙏 Merci !`;
+      const phone = (cible.telephone || "").replace(/\D/g, "");
+      if (!phone) {
+        alert("❌ La cible n'a pas de numéro valide.");
+      } else {
+        const message = `👋 Salut ${suiviData.responsable}!\n\n` +
+          `🙏 Nouveau membre à suivre :\n` +
+          `- 👤 Nom : ${membre.prenom} ${membre.nom}\n` +
+          `- 📱 Téléphone : ${membre.telephone || "—"}\n` +
+          `- 🏙 Ville : ${membre.ville || "—"}\n` +
+          `- 🙏 Besoin : ${membre.besoin || "—"}\n` +
+          `- 📌 Statut : ${statutLabelMapping[suiviData.statut_suivis]}\n\n🙏 Merci !`;
 
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
       }
 
-      if (showToast)
+      if (showToast) {
         showToast(`✅ ${membre.prenom} ${membre.nom} a été envoyé à ${type === "cellule" ? cible.cellule : `${cible.prenom} ${cible.nom}`} !`);
+      }
 
     } catch (err) {
       console.error("Erreur sendToWhatsapp:", err);

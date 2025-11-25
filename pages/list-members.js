@@ -52,6 +52,7 @@ export default function ListMembers() {
         if (data) setPrenom(data.prenom);
       }
     };
+
     fetchSessionAndProfile();
     fetchMembers();
     fetchCellules();
@@ -68,25 +69,21 @@ export default function ListMembers() {
         conseiller:conseiller_id(prenom,nom)
       `)
       .order("created_at", { ascending: false });
-    if (error) console.error("Erreur fetchMembers:", error);
-    else setMembers(data);
+    if (error) console.error(error);
+    else setMembers(data || []);
   };
 
   const fetchCellules = async () => {
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("id, cellule, responsable, telephone");
-    if (error) console.error("Erreur fetchCellules:", error);
-    else setCellules(data || []);
+    const { data } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
+    setCellules(data || []);
   };
 
   const fetchConseillers = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("profiles")
       .select("id, prenom, nom, telephone")
       .eq("role", "Conseiller");
-    if (error) console.error("Erreur fetchConseillers:", error);
-    else setConseillers(data || []);
+    setConseillers(data || []);
   };
 
   const updateMemberLocally = (id, extra = {}) => {
@@ -96,11 +93,11 @@ export default function ListMembers() {
   const handleAfterSend = (memberId, type, cible, newStatut) => {
     const update = { statut: newStatut || "actif" };
     if (type === "cellule") {
-      update.cellule_id = cible.id;
-      update.cellules = { cellule: cible.cellule, responsable: cible.responsable };
+      update.cellule_id = cible?.id;
+      update.cellules = { cellule: cible?.cellule, responsable: cible?.responsable };
     } else if (type === "conseiller") {
-      update.conseiller_id = cible.id;
-      update.conseiller = { prenom: cible.prenom, nom: cible.nom };
+      update.conseiller_id = cible?.id;
+      update.conseiller = { prenom: cible?.prenom, nom: cible?.nom };
     }
     setMembers((prev) => prev.map((m) => (m.id === memberId ? { ...m, ...update } : m)));
     showToast("✅ Contact envoyé et suivi enregistré");
@@ -147,7 +144,9 @@ export default function ListMembers() {
       {/* Top bar */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
-          <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-gray-200">← Retour</button>
+          <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-gray-200">
+            ← Retour
+          </button>
           <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20" />
         </div>
         <div className="flex justify-end mt-2">
@@ -171,9 +170,15 @@ export default function ListMembers() {
         <div className="flex items-center space-x-2">
           <select value={filter} onChange={(e) => setFilter(e.target.value)} className="px-3 py-2 rounded-lg border text-sm">
             <option value="">Tous les statuts</option>
-            {statusOptions.map((s) => (<option key={s}>{s}</option>))}
+            {statusOptions.map((s) => <option key={s}>{s}</option>)}
           </select>
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." className="px-3 py-2 rounded-lg border text-sm w-48" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Rechercher..."
+            className="px-3 py-2 rounded-lg border text-sm w-48"
+          />
           <span className="text-white text-sm">({totalCount})</span>
         </div>
         <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline">
@@ -187,20 +192,29 @@ export default function ListMembers() {
           {/* Nouveaux membres */}
           {nouveauxFiltres.length > 0 && (
             <div>
-              <p className="text-white text-lg mb-4 ml-1">💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}</p>
+              <p className="text-white text-lg mb-4 ml-1">
+                💖 Bien aimé venu le {formatDate(nouveauxFiltres[0]?.created_at)}
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {nouveauxFiltres.map((m) => {
                   const isOpen = detailsOpen[m.id];
                   return (
                     <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4 relative" style={{ borderLeftColor: getBorderColor(m) }}>
-                      <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] px-6 py-1 rotate-45">Nouveau</span>
+                      <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] px-6 py-1 rotate-45">
+                        Nouveau
+                      </span>
                       <div className="flex flex-col items-center">
                         <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
                         <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
 
+                        {/* Statut */}
                         <div className="mt-2 w-full">
                           <label className="text-gray-700 text-sm mr-2">🕊 Statut :</label>
-                          <select value={statusChanges[m.id] ?? m.statut ?? ""} onChange={(e) => handleStatusChange(m.id, e.target.value)} className="border rounded-md px-2 py-1 text-sm w-full">
+                          <select
+                            value={statusChanges[m.id] ?? m.statut ?? ""}
+                            onChange={(e) => handleStatusChange(m.id, e.target.value)}
+                            className="border rounded-md px-2 py-1 text-sm w-full"
+                          >
                             <option value="">-- Choisir un statut --</option>
                             <option value="visiteur">Visiteur</option>
                             <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
@@ -211,7 +225,9 @@ export default function ListMembers() {
                           </select>
                         </div>
 
-                        <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">{isOpen ? "Fermer détails" : "Détails"}</button>
+                        <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">
+                          {isOpen ? "Fermer détails" : "Détails"}
+                        </button>
 
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
@@ -220,12 +236,14 @@ export default function ListMembers() {
                             <p>❓Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                            {/* ENVOYER À */}
+                            {/* Envoi à */}
                             <div className="mt-2">
                               <label className="font-semibold text-sm">Envoyer à :</label>
                               <select
                                 value={selectedTargetType[m.id] || ""}
-                                onChange={(e) => setSelectedTargetType((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                                onChange={(e) =>
+                                  setSelectedTargetType((prev) => ({ ...prev, [m.id]: e.target.value }))
+                                }
                                 className="mt-1 w-full border rounded px-2 py-1 text-sm"
                               >
                                 <option value="">-- Choisir une option --</option>
@@ -236,14 +254,21 @@ export default function ListMembers() {
                               {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
                                 <select
                                   value={selectedTargets[m.id] || ""}
-                                  onChange={(e) => setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                                  onChange={(e) =>
+                                    setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))
+                                  }
                                   className="mt-1 w-full border rounded px-2 py-1 text-sm"
                                 >
                                   <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
                                   {selectedTargetType[m.id] === "cellule"
-                                    ? (cellules.length > 0 ? cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>) : <option disabled>Aucune cellule disponible</option>)
-                                    : (conseillers.length > 0 ? conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>) : <option disabled>Aucun conseiller disponible</option>)
-                                  }
+                                    ? (cellules.length > 0
+                                        ? cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>)
+                                        : <option disabled>Aucune cellule</option>)
+                                    : selectedTargetType[m.id] === "conseiller"
+                                      ? (conseillers.length > 0
+                                          ? conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)
+                                          : <option disabled>Aucun conseiller</option>)
+                                      : null}
                                 </select>
                               )}
 
@@ -254,16 +279,16 @@ export default function ListMembers() {
                                     type={selectedTargetType[m.id]}
                                     cible={
                                       selectedTargetType[m.id] === "cellule"
-                                        ? cellules.find((c) => c.id.toString() === selectedTargets[m.id])
-                                        : conseillers.find((c) => c.id.toString() === selectedTargets[m.id])
+                                        ? cellules.find((c) => c.id === selectedTargets[m.id]) || null
+                                        : conseillers.find((c) => c.id === selectedTargets[m.id]) || null
                                     }
                                     onEnvoyer={(id) =>
                                       handleAfterSend(
                                         id,
                                         selectedTargetType[m.id],
                                         selectedTargetType[m.id] === "cellule"
-                                          ? cellules.find((c) => c.id.toString() === selectedTargets[m.id])
-                                          : conseillers.find((c) => c.id.toString() === selectedTargets[m.id])
+                                          ? cellules.find((c) => c.id === selectedTargets[m.id]) || null
+                                          : conseillers.find((c) => c.id === selectedTargets[m.id]) || null
                                       )
                                     }
                                     session={session}

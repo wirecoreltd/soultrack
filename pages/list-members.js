@@ -233,9 +233,7 @@ export default function ListMembers() {
 
                         {/* Menu déroulant pour le statut */}
                         <div className="mt-2 w-full">
-                          <label className="text-gray-700 text-sm mr-2">🕊 Statut :</label>
-                          <p>👥 Cellule : {m.cellules?.cellule || "—"}</p>
-                          <p>🧑‍💼 Conseiller : {m.conseiller ? `${m.conseiller.prenom} ${m.conseiller.nom}` : "—"}</p>
+                          <label className="text-gray-700 text-sm mr-2">🕊 Statut :</label>                          
                           <select
                             value={statusChanges[m.id] ?? m.statut ?? ""}
                             onChange={(e) => handleStatusChange(m.id, e.target.value)}
@@ -382,6 +380,8 @@ export default function ListMembers() {
                         </h2>
                         <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
                         <p className="text-sm text-gray-600">🕊 Statut : {m.statut}</p>
+                        <p className="text-sm text-gray-600">👥 Cellule : {m.cellules?.cellule || "—"}</p>
+                        <p className="text-sm text-gray-600">🧑‍💼 Conseiller : {m.conseiller ? `${m.conseiller.prenom} ${m.conseiller.nom}` : "—"}</p>
                         {/* Bouton Détails */}
                         <button
                           onClick={() => toggleDetails(m.id)}

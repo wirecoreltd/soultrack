@@ -5,12 +5,19 @@ import supabase from "../lib/supabaseClient";
 export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
   const [loading, setLoading] = useState(false);
 
-  // Mapping vers la table statuts_suivis
+  // 🔹 Mapping texte ↔ integer
   const statutMapping = {
     envoye: 1,
     "en attente": 2,
     integrer: 3,
     refus: 4
+  };
+
+  const statutLabelMapping = {
+    1: "envoye",
+    2: "en attente",
+    3: "integrer",
+    4: "refus"
   };
 
   const sendToWhatsapp = async (force = false) => {
@@ -21,7 +28,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
     setLoading(true);
 
     try {
-      // Vérification si le membre existe déjà
+      // 🔹 Vérification si le membre existe déjà
       const { data: existing, error: selectError } = await supabase
         .from("suivis_membres")
         .select("*")
@@ -35,7 +42,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         return;
       }
 
-      // Préparer les données du suivi
+      // 🔹 Préparer les données du suivi
       const suiviData = {
         membre_id: membre.id,
         prenom: membre.prenom || "",
@@ -45,11 +52,11 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         ville: membre.ville || "",
         besoin: membre.besoin || "",
         infos_supplementaires: membre.infos_supplementaires || "",
-        statut_suivis: statutMapping.envoye, // envoi integer compatible trigger
+        statut_suivis: statutMapping.envoye, // ✅ integer pour trigger
         created_at: new Date().toISOString(),
       };
 
-      // Attribution selon le type
+      // 🔹 Attribution selon le type
       if (type === "cellule") {
         suiviData.cellule_id = cible.id;
         suiviData.cellule_nom = cible.cellule || "";
@@ -59,21 +66,21 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         suiviData.responsable = `${cible.prenom || ""} ${cible.nom || ""}`.trim();
       }
 
-      // Insertion dans la table suivis_membres
+      // 🔹 Insertion dans la table suivis_membres
       const { error: insertError } = await supabase.from("suivis_membres").insert([suiviData]);
       if (insertError) throw insertError;
 
-      // Mise à jour du statut du membre
+      // 🔹 Mise à jour du membre
       const { error: updateMemberError } = await supabase
         .from("membres")
         .update({ statut: "actif" })
         .eq("id", membre.id);
       if (updateMemberError) throw updateMemberError;
 
-      // Callback local
+      // 🔹 Callback local
       if (onEnvoyer) onEnvoyer(membre.id, type, cible, "actif");
 
-      // Préparer le message WhatsApp
+      // 🔹 Préparer le message WhatsApp
       const phoneRaw = cible.telephone || "";
       const phone = phoneRaw.replace(/\D/g, "");
       if (!phone) alert("❌ La cible n'a pas de numéro valide.");
@@ -84,7 +91,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
         message += `- 🏙 Ville : ${membre.ville || "—"}\n`;
         message += `- 🙏 Besoin : ${membre.besoin || "—"}\n`;
-        message += `- 📌 Statut : envoye\n\n🙏 Merci !`;
+        message += `- 📌 Statut : ${statutLabelMapping[suiviData.statut_suivis]}\n\n🙏 Merci !`;
 
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
       }

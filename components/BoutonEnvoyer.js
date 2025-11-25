@@ -17,7 +17,6 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
     setLoading(true);
     try {
-      // 1️⃣ Créer le suivi
       const suiviData = {
         membre_id: membre.id,
         prenom: membre.prenom,
@@ -32,10 +31,12 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       };
 
       if (type === "cellule") {
+        // Envoi à une cellule
         suiviData.cellule_id = cible.id;
         suiviData.cellule_nom = cible.cellule;
         suiviData.responsable = cible.responsable || null;
       } else if (type === "conseiller") {
+        // Envoi à un conseiller
         suiviData.conseiller_id = cible.id;
         suiviData.responsable = `${cible.prenom || ""} ${cible.nom || ""}`.trim();
       }
@@ -43,17 +44,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       const { error: insertError } = await supabase.from("suivis_membres").insert([suiviData]);
       if (insertError) throw insertError;
 
-      // 2️⃣ Mettre à jour le membre pour qu’il devienne actif
-      const { error: updateMemberError } = await supabase
-        .from("membres")
-        .update({ statut: "actif" })
-        .eq("id", membre.id);
-      if (updateMemberError) throw updateMemberError;
-
-      // 3️⃣ Callback pour mettre à jour localement dans la page
-      if (onEnvoyer) onEnvoyer(membre.id, type, cible, "actif");
-
-      // 4️⃣ Préparer et ouvrir le message WhatsApp
+      // Préparer message WhatsApp
       let message = `👋 Salut ${cible.responsable || (cible.prenom ? `${cible.prenom} ${cible.nom}` : "")},\n\n`;
       message += `🙏 Nouveau membre à suivre :\n`;
       message += `- 👤 Nom : ${membre.prenom} ${membre.nom}\n`;
@@ -66,7 +57,9 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       if (!phone) alert("❌ La cible n'a pas de numéro valide.");
       else window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
 
-      if (showToast) showToast("✅ Contact envoyé et suivi enregistré");
+      // Callback côté parent
+      if (onEnvoyer) onEnvoyer(membre.id);
+      if (showToast) showToast("✅ Message WhatsApp ouvert et suivi enregistré");
     } catch (err) {
       console.error("Erreur sendToWhatsapp:", err);
       alert("❌ Une erreur est survenue lors de l'envoi.");

@@ -5,14 +5,6 @@ import supabase from "../lib/supabaseClient";
 export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
   const [loading, setLoading] = useState(false);
 
-  // Mapping des statuts en integer
-  const statutIds = {
-    "envoye": 1,
-    "en attente": 2,
-    "integrer": 3,
-    "refus": 4
-  };
-
   const sendToWhatsapp = async (force = false) => {
     if (!session) {
       alert("❌ Vous devez être connecté pour envoyer un membre.");
@@ -39,7 +31,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         return;
       }
 
-      // Préparer l'objet de suivi
+      // Préparer l'objet de suivi (Option 1 : texte pour statut_suivis)
       const suiviData = {
         membre_id: membre.id,
         prenom: membre.prenom,
@@ -49,7 +41,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         ville: membre.ville,
         besoin: membre.besoin,
         infos_supplementaires: membre.infos_supplementaires,
-        statut_suivis: statutIds["envoye"], // <-- integer ici
+        statut_suivis: "envoye", // ✅ texte
         created_at: new Date().toISOString(),
       };
 

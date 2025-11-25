@@ -301,7 +301,7 @@ export default function SuivisMembres() {
               <div className="p-4 flex flex-col items-center">
                 <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>
                 <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">📋 Statut : {statutLabels[item.statut] || "—"}</p>
+                <p className="text-sm text-gray-700 mb-1">🚩 Statut : {statutLabels[item.statut] || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📌 Attribué à : {item.cellule_nom ? `Cellule de ${item.cellule_nom}` : item.responsable || "—"}</p>
                 <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">

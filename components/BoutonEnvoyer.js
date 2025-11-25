@@ -22,7 +22,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
     setLoading(true);
 
     try {
-      // 🔹 Vérification si déjà envoyé
+      // 🔹 Vérifier si déjà envoyé
       const { data: existing, error: selectError } = await supabase
         .from("suivis_membres")
         .select("*")
@@ -31,12 +31,12 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       if (selectError) throw selectError;
 
       if (existing.length > 0 && !force) {
-        alert(`⚠️ Le contact ${membre.prenom || ""} ${membre.nom || ""} est déjà dans la liste des suivis.`);
+        alert(`⚠️ Le contact ${membre.prenom || ""} ${membre.nom || ""} est déjà suivi.`);
         setLoading(false);
         return;
       }
 
-      // 🔹 Préparer le suivi avec protections
+      // 🔹 Préparer le suivi
       const suiviData = {
         membre_id: membre.id, // UUID valide
         prenom: cleanString(membre.prenom),
@@ -46,7 +46,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         ville: cleanString(membre.ville),
         besoin: membre.besoin ? JSON.stringify(membre.besoin) : null,
         infos_supplementaires: cleanString(membre.infos_supplementaires),
-        statut_suivis: 1, // integer : 1 = envoye
+        statut_suivis: 1, // integer obligatoire
         created_at: new Date().toISOString(),
         cellule_id: type === "cellule" ? cible.id : null,
         cellule_nom: type === "cellule" ? cleanString(cible.cellule) : null,
@@ -59,8 +59,11 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
             : null,
       };
 
-      // 🔹 Insérer le suivi
-      const { error: insertError } = await supabase.from("suivis_membres").insert([suiviData]);
+      // 🔹 Insérer dans Supabase
+      const { error: insertError } = await supabase
+        .from("suivis_membres")
+        .insert([{ ...suiviData, statut_suivis: Number(suiviData.statut_suivis) }]); // force integer
+
       if (insertError) throw insertError;
 
       // 🔹 Mettre à jour le membre
@@ -68,6 +71,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         .from("membres")
         .update({ statut: "actif" })
         .eq("id", membre.id);
+
       if (updateMemberError) throw updateMemberError;
 
       // 🔹 Callback pour mise à jour locale

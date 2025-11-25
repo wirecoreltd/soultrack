@@ -6,6 +6,7 @@ import supabase from "../lib/supabaseClient";
 export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
   const [loading, setLoading] = useState(false);
 
+  // Nettoyage simple des strings
   const cleanString = (val) =>
     typeof val === "string" && val.trim().length > 0 ? val.trim() : null;
 
@@ -22,7 +23,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
     setLoading(true);
 
     try {
-      // 🔹 Vérifier si déjà envoyé
+      // 🔹 Vérification si déjà dans suivis
       const { data: existing, error: selectError } = await supabase
         .from("suivis_membres")
         .select("*")
@@ -36,9 +37,9 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         return;
       }
 
-      // 🔹 Préparer le suivi
+      // 🔹 Préparer les données du suivi
       const suiviData = {
-        membre_id: membre.id, // UUID valide
+        membre_id: membre.id,
         prenom: cleanString(membre.prenom),
         nom: cleanString(membre.nom),
         telephone: cleanString(membre.telephone),
@@ -46,7 +47,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         ville: cleanString(membre.ville),
         besoin: membre.besoin ? JSON.stringify(membre.besoin) : null,
         infos_supplementaires: cleanString(membre.infos_supplementaires),
-        statut_suivis: 1, // integer obligatoire
+        statut_suivis: 1, // integer 1 = envoye
         created_at: new Date().toISOString(),
         cellule_id: type === "cellule" ? cible.id : null,
         cellule_nom: type === "cellule" ? cleanString(cible.cellule) : null,
@@ -59,14 +60,14 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
             : null,
       };
 
-      // 🔹 Insérer dans Supabase
+      // 🔹 Insérer le suivi dans Supabase
       const { error: insertError } = await supabase
         .from("suivis_membres")
-        .insert([{ ...suiviData, statut_suivis: Number(suiviData.statut_suivis) }]); // force integer
+        .insert([{ ...suiviData, statut_suivis: Number(suiviData.statut_suivis) }]); // assure integer
 
       if (insertError) throw insertError;
 
-      // 🔹 Mettre à jour le membre
+      // 🔹 Mettre à jour le statut du membre
       const { error: updateMemberError } = await supabase
         .from("membres")
         .update({ statut: "actif" })

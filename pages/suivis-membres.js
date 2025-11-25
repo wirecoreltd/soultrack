@@ -21,12 +21,19 @@ export default function SuivisMembres() {
   const [editMember, setEditMember] = useState(null);
   const [showRefus, setShowRefus] = useState(false);
 
-  // Mapping statut text
-  const statutOptions = ["en attente", "integrer", "refus"];
+  // Mapping statut → ID integer
+  const statutIds = {
+    "envoye": 1,
+    "en attente": 2,
+    "integrer": 3,
+    "refus": 4
+  };
+
   const statutLabels = {
-    "en attente": "En attente",
-    "integrer": "Intégrer",
-    "refus": "Refus"
+    1: "Envoyé",
+    2: "En attente",
+    3: "Intégrer",
+    4: "Refus"
   };
 
   useEffect(() => {
@@ -83,9 +90,9 @@ export default function SuivisMembres() {
           }
         }
 
-        // Filtrer "en attente" uniquement si on n'est pas sur la vue refus
+        // Filtrer instantanément "en attente" si on n'est pas sur la vue refus
         if (!showRefus) {
-          suivisData = suivisData.filter(s => s.statut_suivis === "en attente");
+          suivisData = suivisData.filter(s => s.statut_suivis === statutIds["en attente"]);
         }
 
         setSuivis(suivisData || []);
@@ -106,15 +113,15 @@ export default function SuivisMembres() {
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const handleStatusChange = (id, value) =>
-    setStatusChanges((prev) => ({ ...prev, [id]: value }));
+    setStatusChanges((prev) => ({ ...prev, [id]: parseInt(value) }));
 
   const handleCommentChange = (id, value) =>
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
   const getBorderColor = (m) => {
-    if (m.statut_suivis === "en attente") return "#FFA500";
-    if (m.statut_suivis === "integrer") return "#34A853";
-    if (m.statut_suivis === "refus") return "#FF4B5C";
+    if (m.statut_suivis === statutIds["en attente"]) return "#FFA500";
+    if (m.statut_suivis === statutIds["integrer"]) return "#34A853";
+    if (m.statut_suivis === statutIds["refus"]) return "#FF4B5C";
     return "#ccc";
   };
 
@@ -131,7 +138,7 @@ export default function SuivisMembres() {
 
     try {
       const payload = { updated_at: new Date() };
-      if (newStatus) payload.statut_suivis = newStatus; // text directement
+      if (newStatus) payload.statut_suivis = newStatus; // integer
       if (newComment) payload.commentaire_suivis = newComment;
 
       const { data: updatedSuivi, error: updateError } = await supabase
@@ -142,7 +149,6 @@ export default function SuivisMembres() {
         .single();
       if (updateError) throw updateError;
 
-      // Mettre à jour localement
       setSuivis((prev) => prev.map(s => s.id === id ? updatedSuivi : s));
       setDetailsOpen((prev) => ({ ...prev, [id]: false }));
 
@@ -168,19 +174,7 @@ export default function SuivisMembres() {
       <div className="text-black text-sm mt-2 space-y-2 w-full">
         <p>🏙 Ville : {m.ville || "—"}</p>
         <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-        <p>
-          ❓Besoin :{" "}
-          {(() => {
-            if (!m.besoin) return "—";
-            if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-            try {
-              const arr = JSON.parse(m.besoin);
-              return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-            } catch {
-              return m.besoin;
-            }
-          })()}
-        </p>
+        <p>❓Besoin : {Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin || "—"}</p>
         <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
         <p>📌 Attribué à : {m.cellule_nom || m.responsable || "—"}</p>
 
@@ -192,9 +186,9 @@ export default function SuivisMembres() {
             className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
           >
             <option value="">-- Choisir un statut --</option>
-            {statutOptions.map((s) => (
-              <option key={s} value={s}>{statutLabels[s]}</option>
-            ))}
+            <option value={statutIds["en attente"]}>🕓 En attente</option>
+            <option value={statutIds["integrer"]}>✅ Intégrer</option>
+            <option value={statutIds["refus"]}>❌ Refus</option>
           </select>
 
           <div className="mt-2">
@@ -273,20 +267,6 @@ export default function SuivisMembres() {
           {showRefus ? "Voir tout les suivis" : "Voir les refus"}
         </button>
       </div>
-
-      {/* Messages */}
-      {message && (
-        <div className={`mb-4 px-4 py-2 rounded-md text-sm ${
-            message.type === "error"
-              ? "bg-red-200 text-red-800"
-              : message.type === "success"
-              ? "bg-green-200 text-green-800"
-              : "bg-yellow-100 text-yellow-800"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       {/* Vue Carte */}
       {view === "card" && (
@@ -372,8 +352,8 @@ export default function SuivisMembres() {
       {editMember && (
         <EditMemberPopup
           member={editMember}
-          cellules={[]} 
-          conseillers={[]} 
+          cellules={[]} // à compléter si tu as des cellules
+          conseillers={[]} // à compléter si tu as des conseillers
           onClose={() => setEditMember(null)}
           onUpdate={() => setEditMember(null)}
         />

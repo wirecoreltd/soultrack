@@ -61,8 +61,16 @@ export default function ListMembers() {
   }, []);
 
   const fetchMembers = async () => {
-    const { data } = await supabase.from("membres").select("*").order("created_at", { ascending: false });
-    if (data) setMembers(data);
+  const { data, error } = await supabase
+      .from("membres")
+      .select(`
+        *,
+        statuts_suivis!inner(libelle)
+      `)
+      .order("created_at", { ascending: false });
+  
+    if (error) console.error(error);
+    else setMembers(data);
   };
 
   const fetchCellules = async () => {
@@ -395,6 +403,7 @@ export default function ListMembers() {
                               })()}
                             </p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                            <p>📌 Statut Suivis : {m.statuts_suivis?.libelle || m.statut_suivis || "—"}</p>  
                             <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p> 
 
                             {/* Envoi */}

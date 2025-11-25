@@ -5,64 +5,98 @@ import supabase from "../lib/supabaseClient";
 export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
   const [loading, setLoading] = useState(false);
 
-  const sendToWhatsapp = async () => {
+  const sendToWhatsapp = async (force = false) => {
     if (!session) {
       alert("❌ Vous devez être connecté pour envoyer un membre.");
       return;
     }
-    if (!cible) {
-      alert("❌ Sélectionnez une cible !");
+
+    if (!cible || !cible.id) {
+      alert("❌ Sélectionnez une cellule ou un conseiller !");
+      return;
+    }
+
+    if (!membre || !membre.id) {
+      alert("❌ Le membre sélectionné n'est pas valide !");
       return;
     }
 
     setLoading(true);
+
     try {
+      // Vérification si le membre existe déjà dans suivis_membres
+      const { data: existing, error: selectError } = await supabase
+        .from("suivis_membres")
+        .select("*")
+        .eq("membre_id", membre.id);
+
+      if (selectError) throw selectError;
+
+      if (existing.length > 0 && !force) {
+        alert(`⚠️ Le contact ${membre.prenom} ${membre.nom} est déjà dans la liste des suivis.`);
+        setLoading(false);
+        return;
+      }
+
+      // Préparation des données de suivi
       const suiviData = {
         membre_id: membre.id,
-        prenom: membre.prenom,
-        nom: membre.nom,
-        telephone: membre.telephone,
+        prenom: membre.prenom || "",
+        nom: membre.nom || "",
+        telephone: membre.telephone || "",
         is_whatsapp: true,
-        ville: membre.ville,
-        besoin: membre.besoin,
-        infos_supplementaires: membre.infos_supplementaires,
+        ville: membre.ville || "",
+        besoin: membre.besoin || "",
+        infos_supplementaires: membre.infos_supplementaires || "",
         statut_suivis: "envoye",
         created_at: new Date().toISOString(),
       };
 
+      // Attribution selon le type
       if (type === "cellule") {
-        // Envoi à une cellule
         suiviData.cellule_id = cible.id;
-        suiviData.cellule_nom = cible.cellule;
-        suiviData.responsable = cible.responsable || null;
+        suiviData.cellule_nom = cible.cellule || "";
+        suiviData.responsable = cible.responsable || "";
       } else if (type === "conseiller") {
-        // Envoi à un conseiller
         suiviData.conseiller_id = cible.id;
         suiviData.responsable = `${cible.prenom || ""} ${cible.nom || ""}`.trim();
       }
 
+      // Insertion dans la table suivis_membres
       const { error: insertError } = await supabase.from("suivis_membres").insert([suiviData]);
       if (insertError) throw insertError;
 
-      // Préparer message WhatsApp
-      let message = `👋 Salut ${cible.responsable || (cible.prenom ? `${cible.prenom} ${cible.nom}` : "")},\n\n`;
-      message += `🙏 Nouveau membre à suivre :\n`;
-      message += `- 👤 Nom : ${membre.prenom} ${membre.nom}\n`;
-      message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
-      message += `- 🏙 Ville : ${membre.ville || "—"}\n`;
-      message += `- 🙏 Besoin : ${membre.besoin || "—"}\n\n🙏 Merci !`;
+      // Mise à jour du statut du membre
+      const { error: updateMemberError } = await supabase
+        .from("membres")
+        .update({ statut: "actif" })
+        .eq("id", membre.id);
+      if (updateMemberError) throw updateMemberError;
 
+      // Callback pour mise à jour locale
+      if (onEnvoyer) onEnvoyer(membre.id, type, cible, "actif");
+
+      // Préparation du message WhatsApp
       const phoneRaw = cible.telephone || "";
       const phone = phoneRaw.replace(/\D/g, "");
       if (!phone) alert("❌ La cible n'a pas de numéro valide.");
-      else window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+      else {
+        let message = `👋 Salut ${suiviData.responsable}!\n\n`;
+        message += `🙏 Nouveau membre à suivre :\n`;
+        message += `- 👤 Nom : ${membre.prenom} ${membre.nom}\n`;
+        message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
+        message += `- 🏙 Ville : ${membre.ville || "—"}\n`;
+        message += `- 🙏 Besoin : ${membre.besoin || "—"}\n\n🙏 Merci !`;
 
-      // Callback côté parent
-      if (onEnvoyer) onEnvoyer(membre.id);
-      if (showToast) showToast("✅ Message WhatsApp ouvert et suivi enregistré");
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+      }
+
+      if (showToast)
+        showToast(`✅ ${membre.prenom} ${membre.nom} a été envoyé à ${type === "cellule" ? cible.cellule : `${cible.prenom} ${cible.nom}`} !`);
+
     } catch (err) {
       console.error("Erreur sendToWhatsapp:", err);
-      alert("❌ Une erreur est survenue lors de l'envoi.");
+      alert("❌ Une erreur est survenue lors de l'envoi : " + JSON.stringify(err));
     } finally {
       setLoading(false);
     }
@@ -70,13 +104,13 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
   return (
     <button
-      onClick={sendToWhatsapp}
+      onClick={() => sendToWhatsapp()}
       disabled={loading}
       className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg transition-all ${
         loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
       }`}
     >
-      {loading ? "Envoi..." : "Envoyer par WhatsApp"}
+      {loading ? "Envoi..." : "📤 Envoyer par WhatsApp"}
     </button>
   );
 }

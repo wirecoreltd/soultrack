@@ -32,27 +32,28 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         return;
       }
 
-      // 🔹 Préparer le suivi
+      // 🔹 Préparer le suivi avec protections
       const suiviData = {
         membre_id: membre.id,
-        prenom: membre.prenom,
-        nom: membre.nom,
-        telephone: membre.telephone,
+        prenom: membre.prenom || null,
+        nom: membre.nom || null,
+        telephone: membre.telephone || null,
         is_whatsapp: true,
-        ville: membre.ville,
-        besoin: membre.besoin,
-        infos_supplementaires: membre.infos_supplementaires,
-        statut_suivis: type === "cellule" ? 1 : 1, // 1 = "envoye" dans statuts_suivis
+        ville: membre.ville || null,
+        besoin: membre.besoin || null,
+        infos_supplementaires: membre.infos_supplementaires || null,
+        statut_suivis: 1, // 1 = "envoye"
         created_at: new Date().toISOString(),
       };
 
       if (type === "cellule") {
-        suiviData.cellule_id = cible.id;
-        suiviData.cellule_nom = cible.cellule;
-        suiviData.responsable = cible.responsable || null;
+        suiviData.cellule_id = cible.id || null;
+        suiviData.cellule_nom = cible.cellule || null;
+        suiviData.responsable = typeof cible.responsable === "string" ? cible.responsable : null;
       } else if (type === "conseiller") {
-        suiviData.conseiller_id = cible.id;
-        suiviData.responsable = `${cible.prenom || ""} ${cible.nom || ""}`.trim();
+        suiviData.conseiller_id = cible.id || null;
+        const fullName = `${cible.prenom || ""} ${cible.nom || ""}`.trim();
+        suiviData.responsable = fullName.length > 0 ? fullName : null;
       }
 
       // 🔹 Insérer le suivi
@@ -75,16 +76,16 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       if (!phone) {
         alert("❌ La cible n'a pas de numéro valide.");
       } else {
-        let message = `👋 Salut ${cible.responsable || (cible.prenom ? `${cible.prenom} ${cible.nom}` : "")}!\n\n`;
+        let message = `👋 Salut ${suiviData.responsable || ""}!\n\n`;
         message += `🙏 Nouveau membre à suivre :\n`;
-        message += `- 👤 Nom : ${membre.prenom} ${membre.nom}\n`;
+        message += `- 👤 Nom : ${membre.prenom || "—"} ${membre.nom || "—"}\n`;
         message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
         message += `- 🏙 Ville : ${membre.ville || "—"}\n`;
         message += `- 🙏 Besoin : ${membre.besoin || "—"}\n\n🙏 Merci !`;
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
       }
 
-      if (showToast) showToast(`✅ ${membre.prenom} ${membre.nom} a été envoyé à ${type === "cellule" ? cible.cellule : `${cible.prenom} ${cible.nom}`} !`);
+      if (showToast) showToast(`✅ ${membre.prenom || "Le membre"} a été envoyé à ${type === "cellule" ? cible.cellule : `${cible.prenom || ""} ${cible.nom || ""}`.trim()} !`);
 
     } catch (err) {
       console.error("Erreur sendToWhatsapp:", err);

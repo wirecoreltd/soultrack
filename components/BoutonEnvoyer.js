@@ -41,7 +41,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         ville: membre.ville,
         besoin: membre.besoin,
         infos_supplementaires: membre.infos_supplementaires,
-        statut_suivis: "envoye", // TEXTE !
+        statut_suivis: "1", // TEXTE !
         created_at: new Date().toISOString(),
       };
 

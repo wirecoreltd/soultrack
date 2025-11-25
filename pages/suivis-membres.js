@@ -5,7 +5,7 @@ import React from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
-import EditMemberPopup from "../components/EditMemberPopup"; // Assure-toi du chemin exact
+import EditMemberPopup from "../components/EditMemberPopup"; // chemin exact à vérifier
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
@@ -20,6 +20,18 @@ export default function SuivisMembres() {
   const [view, setView] = useState("card");
   const [editMember, setEditMember] = useState(null);
   const [showRefus, setShowRefus] = useState(false);
+
+  // Mapping statut
+  const statutIds = {
+    "en attente": 1,
+    "integrer": 2,
+    "refus": 3
+  };
+  const statutLabels = {
+    1: "En attente",
+    2: "Intégrer",
+    3: "Refus"
+  };
 
   useEffect(() => {
     const fetchSuivis = async () => {
@@ -75,9 +87,9 @@ export default function SuivisMembres() {
           }
         }
 
-        // Filtrer instantanément les "integrer" si on n'est pas sur la vue refus
+        // Filtrer instantanément les "en attente" si on n'est pas sur la vue refus
         if (!showRefus) {
-          suivisData = suivisData.filter(s => s.statut_suivis !== "integrer");
+          suivisData = suivisData.filter(s => s.statut_suivis === statutIds["en attente"]);
         }
 
         setSuivis(suivisData || []);
@@ -104,10 +116,9 @@ export default function SuivisMembres() {
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
   const getBorderColor = (m) => {
-    if (m.statut_suivis === "actif") return "#4285F4";
-    if (m.statut_suivis === "en attente") return "#FFA500";
-    if (m.statut_suivis === "suivi terminé") return "#34A853";
-    if (m.statut_suivis === "inactif") return "#999999";
+    if (m.statut_suivis === statutIds["en attente"]) return "#FFA500";
+    if (m.statut_suivis === statutIds["integrer"]) return "#34A853";
+    if (m.statut_suivis === statutIds["refus"]) return "#FF4B5C";
     return "#ccc";
   };
 
@@ -124,7 +135,7 @@ export default function SuivisMembres() {
 
     try {
       const payload = { updated_at: new Date() };
-      if (newStatus) payload.statut_suivis = newStatus;
+      if (newStatus) payload.statut_suivis = parseInt(newStatus); // ✅ ID integer
       if (newComment) payload.commentaire_suivis = newComment;
 
       const { data: updatedSuivi, error: updateError } = await supabase
@@ -135,16 +146,10 @@ export default function SuivisMembres() {
         .single();
       if (updateError) throw updateError;
 
-      // Supprimer immédiatement l'élément de la liste si nécessaire
-      setSuivis((prev) => {
-        if (showRefus) {
-          return prev.filter((it) => it.id !== id || it.statut_suivis === "refus");
-        } else {
-          return prev.filter((it) => !["integrer", "refus"].includes(it.statut_suivis) || it.id !== id);
-        }
-      });
-
+      // Rafraîchir l'élément dans la liste
+      setSuivis((prev) => prev.map(s => s.id === id ? updatedSuivi : s));
       setDetailsOpen((prev) => ({ ...prev, [id]: false }));
+
     } catch (err) {
       console.error("Exception updateSuivi:", err);
       setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
@@ -191,9 +196,9 @@ export default function SuivisMembres() {
             className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
           >
             <option value="">-- Choisir un statut --</option>
-            <option value="en attente">🕓 En attente</option>
-            <option value="integrer">✅ Intégrer</option>
-            <option value="refus">❌ Refus</option>
+            <option value={statutIds["en attente"]}>🕓 En attente</option>
+            <option value={statutIds["integrer"]}>✅ Intégrer</option>
+            <option value={statutIds["refus"]}>❌ Refus</option>
           </select>
 
           <div className="mt-2">
@@ -295,8 +300,7 @@ export default function SuivisMembres() {
               <div className="p-4 flex flex-col items-center">
                 <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>
                 <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">🕊 Statut : {item.statut || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {item.statut_suivis || "—"}</p>
+                <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📌 Attribué à : {item.cellule_nom || item.responsable || "—"}</p>
                 <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">
                   {detailsOpen[item.id] ? "Fermer détails" : "Détails"}
@@ -336,7 +340,7 @@ export default function SuivisMembres() {
                         {m.prenom} {m.nom}
                       </td>
                       <td className="px-4 py-2">{m.telephone || "—"}</td>
-                      <td className="px-4 py-2">{m.statut_suivis || "—"}</td>
+                      <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
                       <td className="px-4 py-2">{m.cellule_nom || m.responsable || "—"}</td>
                       <td className="px-4 py-2">
                         <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">
@@ -352,7 +356,7 @@ export default function SuivisMembres() {
                               <button onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: false }))} className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 font-bold">✖</button>
                               <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.cellule_nom ? `(${m.cellule_nom})` : ""}</h2>
                               <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
-                              <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {m.statut_suivis || "—"}</p>
+                              <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {statutLabels[m.statut_suivis] || "—"}</p>
                               <Details m={m} />
                             </div>
                           </div>

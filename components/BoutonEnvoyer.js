@@ -5,7 +5,7 @@ import supabase from "../lib/supabaseClient";
 export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Mapping texte → ID integer pour statut_suivis
+  // Mapping pour convertir le statut texte en integer
   const statutIds = {
     "envoye": 1,
     "en attente": 2,
@@ -46,9 +46,9 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         nom: membre.nom,
         telephone: membre.telephone,
         is_whatsapp: true,
-        ville: membre.ville,
-        besoin: membre.besoin,
-        infos_supplementaires: membre.infos_supplementaires,
+        ville: membre.ville || null,
+        besoin: membre.besoin ? JSON.stringify(membre.besoin) : null,
+        infos_supplementaires: membre.infos_supplementaires || null,
         statut_suivis: statutIds["envoye"], // ✅ integer
         created_at: new Date().toISOString(),
       };
@@ -84,7 +84,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       message += `- 👤 Nom : ${membre.prenom} ${membre.nom}\n`;
       message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
       message += `- 🏙 Ville : ${membre.ville || "—"}\n`;
-      message += `- 🙏 Besoin : ${membre.besoin || "—"}\n\n🙏 Merci !`;
+      message += `- 🙏 Besoin : ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}\n\n🙏 Merci !`;
 
       const phoneRaw = cible.telephone || "";
       const phone = phoneRaw.replace(/\D/g, "");
@@ -96,7 +96,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
     } catch (err) {
       console.error("Erreur sendToWhatsapp:", err);
-      alert("❌ Une erreur est survenue lors de l'envoi.");
+      alert(`❌ Une erreur est survenue lors de l'envoi.\nDétails: ${err.message || JSON.stringify(err)}`);
     } finally {
       setLoading(false);
     }

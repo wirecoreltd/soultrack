@@ -6,6 +6,9 @@ import supabase from "../lib/supabaseClient";
 export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
   const [loading, setLoading] = useState(false);
 
+  const cleanString = (val) =>
+    typeof val === "string" && val.trim().length > 0 ? val.trim() : null;
+
   const sendToWhatsapp = async (force = false) => {
     if (!session) {
       alert("❌ Vous devez être connecté pour envoyer un membre.");
@@ -27,7 +30,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       if (selectError) throw selectError;
 
       if (existing.length > 0 && !force) {
-        alert(`⚠️ Le contact ${membre.prenom} ${membre.nom} est déjà dans la liste des suivis.`);
+        alert(`⚠️ Le contact ${membre.prenom || ""} ${membre.nom || ""} est déjà dans la liste des suivis.`);
         setLoading(false);
         return;
       }
@@ -35,26 +38,25 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       // 🔹 Préparer le suivi avec protections
       const suiviData = {
         membre_id: membre.id,
-        prenom: membre.prenom || null,
-        nom: membre.nom || null,
-        telephone: membre.telephone || null,
+        prenom: cleanString(membre.prenom),
+        nom: cleanString(membre.nom),
+        telephone: cleanString(membre.telephone),
         is_whatsapp: true,
-        ville: membre.ville || null,
-        besoin: membre.besoin || null,
-        infos_supplementaires: membre.infos_supplementaires || null,
-        statut_suivis: 1, // 1 = "envoye"
+        ville: cleanString(membre.ville),
+        besoin: membre.besoin ? JSON.stringify(membre.besoin) : null,
+        infos_supplementaires: cleanString(membre.infos_supplementaires),
+        statut_suivis: 1, // 1 = "envoye" dans statuts_suivis
         created_at: new Date().toISOString(),
+        cellule_id: type === "cellule" ? cible.id : null,
+        cellule_nom: type === "cellule" ? cleanString(cible.cellule) : null,
+        conseiller_id: type === "conseiller" ? cible.id : null,
+        responsable:
+          type === "cellule"
+            ? cleanString(cible.responsable)
+            : type === "conseiller"
+            ? cleanString(`${cible.prenom || ""} ${cible.nom || ""}`)
+            : null,
       };
-
-      if (type === "cellule") {
-        suiviData.cellule_id = cible.id || null;
-        suiviData.cellule_nom = cible.cellule || null;
-        suiviData.responsable = typeof cible.responsable === "string" ? cible.responsable : null;
-      } else if (type === "conseiller") {
-        suiviData.conseiller_id = cible.id || null;
-        const fullName = `${cible.prenom || ""} ${cible.nom || ""}`.trim();
-        suiviData.responsable = fullName.length > 0 ? fullName : null;
-      }
 
       // 🔹 Insérer le suivi
       const { error: insertError } = await supabase.from("suivis_membres").insert([suiviData]);
@@ -81,11 +83,16 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         message += `- 👤 Nom : ${membre.prenom || "—"} ${membre.nom || "—"}\n`;
         message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
         message += `- 🏙 Ville : ${membre.ville || "—"}\n`;
-        message += `- 🙏 Besoin : ${membre.besoin || "—"}\n\n🙏 Merci !`;
+        message += `- 🙏 Besoin : ${membre.besoin ? JSON.stringify(membre.besoin) : "—"}\n\n🙏 Merci !`;
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
       }
 
-      if (showToast) showToast(`✅ ${membre.prenom || "Le membre"} a été envoyé à ${type === "cellule" ? cible.cellule : `${cible.prenom || ""} ${cible.nom || ""}`.trim()} !`);
+      if (showToast)
+        showToast(
+          `✅ ${membre.prenom || "Le membre"} a été envoyé à ${
+            type === "cellule" ? cible.cellule : `${cible.prenom || ""} ${cible.nom || ""}`.trim()
+          } !`
+        );
 
     } catch (err) {
       console.error("Erreur sendToWhatsapp:", err);

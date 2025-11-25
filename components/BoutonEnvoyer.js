@@ -6,25 +6,14 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
   const [loading, setLoading] = useState(false);
 
   const sendToWhatsapp = async (force = false) => {
-    if (!session) {
-      alert("❌ Vous devez être connecté pour envoyer un membre.");
-      return;
-    }
-
-    if (!cible || !cible.id) {
-      alert("❌ Sélectionnez une cellule ou un conseiller !");
-      return;
-    }
-
-    if (!membre || !membre.id) {
-      alert("❌ Le membre sélectionné n'est pas valide !");
-      return;
-    }
+    if (!session) return alert("❌ Vous devez être connecté pour envoyer un membre.");
+    if (!cible || !cible.id) return alert("❌ Sélectionnez une cellule ou un conseiller !");
+    if (!membre || !membre.id) return alert("❌ Le membre sélectionné n'est pas valide !");
 
     setLoading(true);
 
     try {
-      // Vérification si le membre existe déjà dans suivis_membres
+      // Vérification si le membre existe déjà
       const { data: existing, error: selectError } = await supabase
         .from("suivis_membres")
         .select("*")
@@ -38,7 +27,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         return;
       }
 
-      // Préparation des données de suivi
+      // Préparer les données du suivi
       const suiviData = {
         membre_id: membre.id,
         prenom: membre.prenom || "",
@@ -48,7 +37,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         ville: membre.ville || "",
         besoin: membre.besoin || "",
         infos_supplementaires: membre.infos_supplementaires || "",
-        statut_suivis: "envoye",
+        statut_suivis: "envoye", // ✅ maintenant safe car la colonne est text
         created_at: new Date().toISOString(),
       };
 
@@ -66,17 +55,17 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       const { error: insertError } = await supabase.from("suivis_membres").insert([suiviData]);
       if (insertError) throw insertError;
 
-      // Mise à jour du statut du membre
+      // Mise à jour du membre
       const { error: updateMemberError } = await supabase
         .from("membres")
         .update({ statut: "actif" })
         .eq("id", membre.id);
       if (updateMemberError) throw updateMemberError;
 
-      // Callback pour mise à jour locale
+      // Callback local
       if (onEnvoyer) onEnvoyer(membre.id, type, cible, "actif");
 
-      // Préparation du message WhatsApp
+      // Message WhatsApp
       const phoneRaw = cible.telephone || "";
       const phone = phoneRaw.replace(/\D/g, "");
       if (!phone) alert("❌ La cible n'a pas de numéro valide.");

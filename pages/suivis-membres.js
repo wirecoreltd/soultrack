@@ -5,7 +5,7 @@ import React from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
-import EditMemberPopup from "../components/EditMemberPopup"; // Assure-toi du chemin exact
+import EditMemberPopup from "../components/EditMemberPopup";
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
@@ -33,12 +33,16 @@ export default function SuivisMembres() {
           .select("id, prenom, nom, role")
           .eq("id", user.id)
           .single();
-        if (profileError || !profileData) throw profileError;
 
+        if (profileError || !profileData) throw profileError;
         setPrenom(profileData.prenom || "cher membre");
         setRole(profileData.role);
 
-        const tableName = showRefus ? "refus_membres" : "suivis_membres";
+        // 🔥🔥🔥 CHOIX DE LA TABLE AUTOMATIQUE
+        const tableName = showRefus
+          ? "refus_membres"
+          : "suivis_membres_non_refus";
+
         let suivisData = [];
 
         if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
@@ -46,37 +50,48 @@ export default function SuivisMembres() {
             .from(tableName)
             .select("*")
             .order("created_at", { ascending: false });
+
           if (error) throw error;
           suivisData = data;
+
         } else if (profileData.role === "Conseiller") {
           const { data, error } = await supabase
             .from(tableName)
             .select("*")
             .eq("conseiller_id", profileData.id)
             .order("created_at", { ascending: false });
+
           if (error) throw error;
           suivisData = data;
+
         } else if (profileData.role === "ResponsableCellule") {
+
           const { data: cellulesData, error: cellulesError } = await supabase
             .from("cellules")
             .select("id")
             .eq("responsable_id", profileData.id);
+
           if (cellulesError) throw cellulesError;
 
           const celluleIds = cellulesData?.map(c => c.id) || [];
+
           if (celluleIds.length > 0) {
             const { data, error } = await supabase
               .from(tableName)
               .select("*")
               .in("cellule_id", celluleIds)
               .order("created_at", { ascending: false });
+
             if (error) throw error;
             suivisData = data;
           }
         }
 
         setSuivis(suivisData || []);
-        if (!suivisData || suivisData.length === 0) setMessage("Aucun membre à afficher.");
+
+        if (!suivisData || suivisData.length === 0)
+          setMessage("Aucun membre à afficher.");
+
       } catch (err) {
         console.error("❌ Erreur:", err.message || err);
         setMessage("Erreur lors de la récupération des suivis.");
@@ -118,33 +133,23 @@ export default function SuivisMembres() {
     setUpdating((prev) => ({ ...prev, [id]: true }));
 
     try {
-      const { data: suiviData, error: fetchError } = await supabase
-        .from("suivis_membres")
-        .select("*")
-        .eq("id", id)
-        .single();
-      if (fetchError || !suiviData) throw new Error("Impossible de récupérer le suivi.");
-
       const payload = { updated_at: new Date() };
       if (newStatus) payload.statut_suivis = newStatus;
       if (newComment) payload.commentaire_suivis = newComment;
 
-      const { data: updatedSuivi, error: updateError } = await supabase
+      const { error: updateError } = await supabase
         .from("suivis_membres")
         .update(payload)
-        .eq("id", id)
-        .select()
-        .single();
+        .eq("id", id);
+
       if (updateError) throw updateError;
 
-      // Rafraîchir uniquement la vue active
-      if (showRefus) {
-        setSuivis((prev) => prev.filter((it) => it.id !== id || it.statut_suivis === "refus"));
-      } else {
-        setSuivis((prev) => prev.filter((it) => !["integrer", "refus"].includes(it.statut_suivis) || it.id !== id));
-      }
-
+      // 🔥 NE RECHARGE PAS — LA VUE SQL FAIT LE TRI
       setDetailsOpen((prev) => ({ ...prev, [id]: false }));
+
+      // Recharger automatiquement la liste (la vue SQL filtre déjà)
+      setShowRefus((prev) => prev); 
+
     } catch (err) {
       console.error("Exception updateSuivi:", err);
       setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
@@ -168,7 +173,7 @@ export default function SuivisMembres() {
         <p>🏙 Ville : {m.ville || "—"}</p>
         <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
         <p>
-          ❓Besoin :{" "}
+          ❓Besoin :
           {(() => {
             if (!m.besoin) return "—";
             if (Array.isArray(m.besoin)) return m.besoin.join(", ");
@@ -182,52 +187,52 @@ export default function SuivisMembres() {
         </p>
         <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
         <p>📌 Attribué à : {m.cellule_nom || m.responsable || "—"}</p>
-          
+
         <div className="mt-5">
-        <label className="text-black text-sm mb-1 block">📋 Statut Suivis :</label>
-        <select
-          value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
-          onChange={(e) => handleStatusChange(m.id, e.target.value)}
-          className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
-        >
-          <option value="">-- Choisir un statut --</option>
-          <option value="en attente">🕓 En attente</option>
-          <option value="integrer">✅ Intégrer</option>
-          <option value="refus">❌ Refus</option>
-        </select>
-
-        <div className="mt-2">
-          <label className="text-gray-700 text-sm">💬 Commentaire :</label>
-          <textarea
-            ref={commentRef}
-            value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
-            onChange={(e) => handleCommentChange(m.id, e.target.value)}
-            rows={2}
-            className="w-full border rounded-md px-2 py-1 text-sm mt-1 resize-none"
-            placeholder="Ajouter un commentaire..."
-          />
-        </div>
-
-        <button
-          onClick={() => updateSuivi(m.id)}
-          disabled={updating[m.id]}
-          className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-            updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
-          }`}
-        >
-          {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
-        </button>
-
-        <div className="mt-4 flex justify-center">
-          <button
-            onClick={() => setEditMember(m)}
-            className="text-blue-600 text-sm mt-4"
+          <label className="text-black text-sm mb-1 block">📋 Statut Suivis :</label>
+          <select
+            value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
+            onChange={(e) => handleStatusChange(m.id, e.target.value)}
+            className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
           >
-            ✏️ Modifier le contact
+            <option value="">-- Choisir un statut --</option>
+            <option value="en attente">🕓 En attente</option>
+            <option value="integrer">✅ Intégrer</option>
+            <option value="refus">❌ Refus</option>
+          </select>
+
+          <div className="mt-2">
+            <label className="text-gray-700 text-sm">💬 Commentaire :</label>
+            <textarea
+              ref={commentRef}
+              value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
+              onChange={(e) => handleCommentChange(m.id, e.target.value)}
+              rows={2}
+              className="w-full border rounded-md px-2 py-1 text-sm mt-1 resize-none"
+              placeholder="Ajouter un commentaire..."
+            />
+          </div>
+
+          <button
+            onClick={() => updateSuivi(m.id)}
+            disabled={updating[m.id]}
+            className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+              updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+            }`}
+          >
+            {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
           </button>
+
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => setEditMember(m)}
+              className="text-blue-600 text-sm mt-4"
+            >
+              ✏️ Modifier le contact
+            </button>
+          </div>
         </div>
       </div>
-    </div>
     );
   };
 
@@ -258,7 +263,7 @@ export default function SuivisMembres() {
         </p>
       </div>
 
-      {/* Barre boutons */}
+      {/* Boutons */}
       <div className="mb-4 flex justify-between w-full max-w-6xl">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
@@ -266,6 +271,7 @@ export default function SuivisMembres() {
         >
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
+
         <button
           onClick={() => setShowRefus(!showRefus)}
           className="text-orange-400 text-sm underline hover:text-orange-500"
@@ -274,20 +280,7 @@ export default function SuivisMembres() {
         </button>
       </div>
 
-      {message && (
-        <div className={`mb-4 px-4 py-2 rounded-md text-sm ${
-            message.type === "error"
-              ? "bg-red-200 text-red-800"
-              : message.type === "success"
-              ? "bg-green-200 text-green-800"
-              : "bg-yellow-100 text-yellow-800"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
-
-      {/* Vue Carte */}
+      {/* Carte */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
           {suivis.map((item) => (
@@ -309,7 +302,7 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {/* Vue Table */}
+      {/* Table */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
@@ -345,6 +338,7 @@ export default function SuivisMembres() {
                         </button>
                       </td>
                     </tr>
+
                     {detailsOpen[m.id] && (
                       <tr>
                         <td colSpan={5}>
@@ -372,8 +366,8 @@ export default function SuivisMembres() {
       {editMember && (
         <EditMemberPopup
           member={editMember}
-          cellules={[]} // à compléter si tu as des cellules
-          conseillers={[]} // à compléter si tu as des conseillers
+          cellules={[]}
+          conseillers={[]}
           onClose={() => setEditMember(null)}
           onUpdate={() => setEditMember(null)}
         />

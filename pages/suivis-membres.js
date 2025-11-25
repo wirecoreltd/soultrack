@@ -50,7 +50,7 @@ export default function SuivisMembres() {
         setPrenom(profileData.prenom || "cher membre");
         setRole(profileData.role);
 
-        const tableName = "suivis_membres_test"; // <-- table test
+        const tableName = "suivis_membres_test"; // table test
         let suivisData = [];
 
         if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
@@ -87,10 +87,27 @@ export default function SuivisMembres() {
           }
         }
 
-        // Filtrer les "en attente" si on n'est pas sur la vue refus
-        if (!showRefus) {
-          suivisData = suivisData.filter(s => s.statut_suivis === statutIds["en attente"]);
+        // 🔥🔥🔥 FILTRE MODIFIÉ SELON TES RÈGLES 🔥🔥🔥
+
+        // 1) Retirer complètement les "intégrer"
+        suivisData = suivisData.filter(
+          (s) => s.statut_suivis !== statutIds["integrer"]
+        );
+
+        // 2) Si "Voir les refus" → n'afficher que les refus
+        if (showRefus) {
+          suivisData = suivisData.filter(
+            (s) => s.statut_suivis === statutIds["refus"]
+          );
         }
+        // 3) Sinon → n'afficher que les "en attente"
+        else {
+          suivisData = suivisData.filter(
+            (s) => s.statut_suivis === statutIds["en attente"]
+          );
+        }
+
+        // 🔥🔥🔥 FIN DU NOUVEAU FILTRE 🔥🔥🔥
 
         setSuivis(suivisData || []);
         if (!suivisData || suivisData.length === 0) setMessage("Aucun membre à afficher.");
@@ -139,7 +156,7 @@ export default function SuivisMembres() {
       if (newComment) payload.commentaire_suivis = newComment;
 
       const { data: updatedSuivi, error: updateError } = await supabase
-        .from("suivis_membres_test") // <-- table test
+        .from("suivis_membembres_test")
         .update(payload)
         .eq("id", id)
         .select()
@@ -236,6 +253,7 @@ export default function SuivisMembres() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+
       {/* Header */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
@@ -260,7 +278,7 @@ export default function SuivisMembres() {
         </p>
       </div>
 
-      {/* Barre boutons */}
+      {/* Buttons bar */}
       <div className="mb-4 flex justify-between w-full max-w-6xl">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}

@@ -14,70 +14,67 @@ export default function ListConseillers() {
   const fetchConseillers = async () => {
     setLoading(true);
 
-    // 1️⃣ Charger tous les conseillers
-    const { data: profiles, error } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom, email, telephone, responsable_id")
-      .eq("role", "Conseiller");
-
-    if (error) {
-      console.error("Erreur profils :", error);
-      setLoading(false);
-      return;
-    }
-
-    // Si aucun conseiller → stop logique
-    if (!profiles || profiles.length === 0) {
-      setConseillers([]);
-      setLoading(false);
-      return;
-    }
-
-    // 2️⃣ Récupérer les responsables
-    const responsablesIds = profiles
-      .map((p) => p.responsable_id)
-      .filter((id) => id !== null);
-
-    let responsableMap = {};
-
-    if (responsablesIds.length > 0) {
-      const { data: responsables, error: respErr } = await supabase
+    try {
+      // 1️⃣ Récupérer tous les conseillers
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, prenom, nom")
-        .in("id", responsablesIds);
+        .select("id, prenom, nom, email, telephone, responsable_id")
+        .eq("role", "Conseiller");
 
-      if (!respErr && responsables) {
-        responsables.forEach((r) => {
+      if (profilesError) throw profilesError;
+      if (!profiles || profiles.length === 0) {
+        setConseillers([]);
+        setLoading(false);
+        return;
+      }
+
+      const conseillersIds = profiles.map((p) => p.id);
+
+      // 2️⃣ Récupérer tous les membres assignés à ces conseillers
+      const { data: membres, error: membresError } = await supabase
+        .from("membres")
+        .select("id, conseiller_id")
+        .in("conseiller_id", conseillersIds);
+
+      if (membresError) throw membresError;
+
+      // 3️⃣ Compter les contacts par conseiller
+      const countMap = {};
+      membres?.forEach((m) => {
+        countMap[m.conseiller_id] = (countMap[m.conseiller_id] || 0) + 1;
+      });
+
+      // 4️⃣ Récupérer les responsables
+      const responsablesIds = profiles
+        .map((p) => p.responsable_id)
+        .filter(Boolean);
+
+      let responsableMap = {};
+      if (responsablesIds.length > 0) {
+        const { data: responsables } = await supabase
+          .from("profiles")
+          .select("id, prenom, nom")
+          .in("id", responsablesIds);
+
+        responsables?.forEach((r) => {
           responsableMap[r.id] = `${r.prenom} ${r.nom}`;
         });
       }
+
+      // 5️⃣ Fusionner les données
+      const list = profiles.map((p) => ({
+        ...p,
+        responsable_nom: p.responsable_id ? (responsableMap[p.responsable_id] || "Aucun") : "Aucun",
+        totalContacts: countMap[p.id] || 0,
+      }));
+
+      setConseillers(list);
+    } catch (err) {
+      console.error("Erreur fetchConseillers :", err);
+      setConseillers([]);
+    } finally {
+      setLoading(false);
     }
-
-    // 3️⃣ Compter les contacts assignés à chaque conseiller
-    const conseillersIds = profiles.map((p) => p.id);
-
-    const { data: membres } = await supabase
-      .from("membres")
-      .select("id, conseiller_id")
-      .in("conseiller_id", conseillersIds);
-
-    const countMap = {};
-    membres?.forEach((m) => {
-      countMap[m.conseiller_id] = (countMap[m.conseiller_id] || 0) + 1;
-    });
-
-    // 4️⃣ Fusion finale
-    const list = profiles.map((p) => ({
-      ...p,
-      responsable_nom:
-        p.responsable_id && responsableMap[p.responsable_id]
-          ? responsableMap[p.responsable_id]
-          : "Aucun",
-      totalContacts: countMap[p.id] || 0,
-    }));
-
-    setConseillers(list);
-    setLoading(false);
   };
 
   useEffect(() => {

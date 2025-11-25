@@ -5,7 +5,7 @@ import supabase from "../lib/supabaseClient";
 export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
   const [loading, setLoading] = useState(false);
 
-  // Mapping des statuts en integer
+  // 🔹 Mapping texte → integer pour statut_suivis
   const statutIds = {
     "envoye": 1,
     "en attente": 2,
@@ -49,7 +49,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         ville: membre.ville,
         besoin: membre.besoin,
         infos_supplementaires: membre.infos_supplementaires,
-        statut_suivis: statutIds["envoye"], // ✅ integer maintenant
+        statut_suivis: statutIds["envoye"], // integer maintenant
         created_at: new Date().toISOString(),
       };
 

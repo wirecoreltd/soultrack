@@ -66,6 +66,8 @@ export default function ListMembers() {
       .select(`
         *,
         statuts_suivis!inner(libelle)
+        cellules:cellule_id(cellule,responsable),
+        conseiller:conseiller_id(prenom,nom)
       `)
       .order("created_at", { ascending: false });
   
@@ -91,16 +93,18 @@ export default function ListMembers() {
   };
 
   const handleAfterSend = (memberId, type, cible, newStatut) => {
-    const update = { statut: newStatut || "actif" };
-    if (type === "cellule") {
-      update.cellule_id = cible.id;
-      update.cellule_nom = cible.cellule;
-    } else if (type === "conseiller") {
-      update.conseiller_id = cible.id;
-    }
-    setMembers((prev) => prev.map((m) => (m.id === memberId ? { ...m, ...update } : m)));
-    showToast("✅ Contact envoyé et suivi enregistré");
-  };
+  const update = { statut: newStatut || "actif" };
+  if (type === "cellule") {
+    update.cellule_id = cible.id;
+    update.cellules = { cellule: cible.cellule, responsable: cible.responsable };
+  } else if (type === "conseiller") {
+    update.conseiller_id = cible.id;
+    update.conseiller = { prenom: cible.prenom, nom: cible.nom };
+  }
+  setMembers((prev) => prev.map((m) => (m.id === memberId ? { ...m, ...update } : m)));
+  showToast("✅ Contact envoyé et suivi enregistré");
+};
+
 
   const handleStatusChange = (memberId, value) => {
     setStatusChanges((prev) => ({ ...prev, [memberId]: value }));
@@ -230,6 +234,8 @@ export default function ListMembers() {
                         {/* Menu déroulant pour le statut */}
                         <div className="mt-2 w-full">
                           <label className="text-gray-700 text-sm mr-2">🕊 Statut :</label>
+                          <p>👥 Cellule : {m.cellules?.cellule || "—"}</p>
+                          <p>🧑‍💼 Conseiller : {m.conseiller ? `${m.conseiller.prenom} ${m.conseiller.nom}` : "—"}</p>
                           <select
                             value={statusChanges[m.id] ?? m.statut ?? ""}
                             onChange={(e) => handleStatusChange(m.id, e.target.value)}

@@ -50,8 +50,7 @@ export default function SuivisMembres() {
         setPrenom(profileData.prenom || "cher membre");
         setRole(profileData.role);
 
-        // ⚡ TABLE TEST
-        const tableName = showRefus ? "refus_membres_test" : "suivis_membres_test";
+        const tableName = "suivis_membres_test"; // <-- table test
         let suivisData = [];
 
         if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
@@ -87,9 +86,6 @@ export default function SuivisMembres() {
             suivisData = data;
           }
         }
-
-        // Plus besoin de parseInt, statut_suivis est déjà integer
-        // suivisData = suivisData.map(s => ({ ...s, statut_suivis: parseInt(s.statut_suivis, 10) }));
 
         // Filtrer les "en attente" si on n'est pas sur la vue refus
         if (!showRefus) {
@@ -238,9 +234,6 @@ export default function SuivisMembres() {
     );
   };
 
-  const toggleDetails = (id) =>
-    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
-
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
       {/* Header */}
@@ -261,7 +254,7 @@ export default function SuivisMembres() {
       </div>
 
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">📋 Suivis des Membres</h1>
+        <h1 className="text-3xl font-bold text-white mb-2">📋 Suivis des Membres (Test)</h1>
         <p className="text-white text-lg max-w-xl mx-auto italic">
           Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
         </p>
@@ -292,7 +285,7 @@ export default function SuivisMembres() {
               : "bg-yellow-100 text-yellow-800"
           }`}
         >
-          {message.text || message}
+          {message.text}
         </div>
       )}
 

@@ -20,6 +20,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
     }
 
     setLoading(true);
+
     try {
       // 🔹 Vérification si déjà envoyé
       const { data: existing, error: selectError } = await supabase
@@ -37,7 +38,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
       // 🔹 Préparer le suivi avec protections
       const suiviData = {
-        membre_id: membre.id,
+        membre_id: membre.id, // UUID valide
         prenom: cleanString(membre.prenom),
         nom: cleanString(membre.nom),
         telephone: cleanString(membre.telephone),
@@ -45,7 +46,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         ville: cleanString(membre.ville),
         besoin: membre.besoin ? JSON.stringify(membre.besoin) : null,
         infos_supplementaires: cleanString(membre.infos_supplementaires),
-        statut_suivis: 1, // 1 = "envoye" dans statuts_suivis
+        statut_suivis: 1, // integer : 1 = envoye
         created_at: new Date().toISOString(),
         cellule_id: type === "cellule" ? cible.id : null,
         cellule_nom: type === "cellule" ? cleanString(cible.cellule) : null,
@@ -96,7 +97,8 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
     } catch (err) {
       console.error("Erreur sendToWhatsapp:", err);
-      alert("❌ Une erreur est survenue lors de l'envoi.");
+      if (err?.message) alert(`❌ Erreur Supabase : ${err.message}`);
+      else alert("❌ Une erreur inconnue est survenue lors de l'envoi.");
     } finally {
       setLoading(false);
     }

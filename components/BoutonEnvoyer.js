@@ -1,14 +1,9 @@
 "use client";
-
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
   const [loading, setLoading] = useState(false);
-
-  // Nettoyage simple des strings
-  const cleanString = (val) =>
-    typeof val === "string" && val.trim().length > 0 ? val.trim() : null;
 
   const sendToWhatsapp = async (force = false) => {
     if (!session) {
@@ -21,89 +16,79 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
     }
 
     setLoading(true);
-
     try {
-      // 🔹 Vérification si déjà dans suivis
+      // 🔹 Vérification par numéro de téléphone
       const { data: existing, error: selectError } = await supabase
         .from("suivis_membres")
         .select("*")
-        .eq("membre_id", membre.id);
+        .eq("telephone", membre.telephone || "");
 
       if (selectError) throw selectError;
 
       if (existing.length > 0 && !force) {
-        alert(`⚠️ Le contact ${membre.prenom || ""} ${membre.nom || ""} est déjà suivi.`);
+        alert(`⚠️ Le contact ${membre.prenom} ${membre.nom} est déjà dans la liste des suivis.`);
         setLoading(false);
         return;
       }
 
-      // 🔹 Préparer les données du suivi
+      // 🔹 Préparer l'objet de suivi
       const suiviData = {
         membre_id: membre.id,
-        prenom: cleanString(membre.prenom),
-        nom: cleanString(membre.nom),
-        telephone: cleanString(membre.telephone),
+        prenom: membre.prenom,
+        nom: membre.nom,
+        telephone: membre.telephone,
         is_whatsapp: true,
-        ville: cleanString(membre.ville),
-        besoin: membre.besoin ? JSON.stringify(membre.besoin) : null,
-        infos_supplementaires: cleanString(membre.infos_supplementaires),
-        statut_suivis: 1, // integer 1 = envoye
+        ville: membre.ville,
+        besoin: membre.besoin,
+        infos_supplementaires: membre.infos_supplementaires,
+        statut_suivis: "envoye", // TEXTE !
         created_at: new Date().toISOString(),
-        cellule_id: type === "cellule" ? cible.id : null,
-        cellule_nom: type === "cellule" ? cleanString(cible.cellule) : null,
-        conseiller_id: type === "conseiller" ? cible.id : null,
-        responsable:
-          type === "cellule"
-            ? cleanString(cible.responsable)
-            : type === "conseiller"
-            ? cleanString(`${cible.prenom || ""} ${cible.nom || ""}`)
-            : null,
       };
 
-      // 🔹 Insérer le suivi dans Supabase
+      if (type === "cellule") {
+        suiviData.cellule_id = cible.id;
+        suiviData.cellule_nom = cible.cellule;
+        suiviData.responsable = cible.responsable || null;
+      } else if (type === "conseiller") {
+        suiviData.conseiller_id = cible.id;
+        suiviData.responsable = `${cible.prenom || ""} ${cible.nom || ""}`.trim();
+      }
+
+      // 🔹 Insérer le suivi
       const { error: insertError } = await supabase
         .from("suivis_membres")
-        .insert([{ ...suiviData, statut_suivis: Number(suiviData.statut_suivis) }]); // assure integer
-
+        .insert([suiviData]);
       if (insertError) throw insertError;
 
-      // 🔹 Mettre à jour le statut du membre
+      // 🔹 Mettre à jour le membre pour qu’il devienne actif
       const { error: updateMemberError } = await supabase
         .from("membres")
         .update({ statut: "actif" })
         .eq("id", membre.id);
-
       if (updateMemberError) throw updateMemberError;
 
       // 🔹 Callback pour mise à jour locale
       if (onEnvoyer) onEnvoyer(membre.id, type, cible, "actif");
 
-      // 🔹 Préparer le message WhatsApp
+      // 🔹 Préparer message WhatsApp
+      let message = `👋 Salut ${cible.responsable || (cible.prenom ? `${cible.prenom} ${cible.nom}` : "")}!\n\n`;
+      message += `🙏 Nouveau membre à suivre :\n`;
+      message += `- 👤 Nom : ${membre.prenom} ${membre.nom}\n`;
+      message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
+      message += `- 🏙 Ville : ${membre.ville || "—"}\n`;
+      message += `- 🙏 Besoin : ${membre.besoin || "—"}\n\n🙏 Merci !`;
+
       const phoneRaw = cible.telephone || "";
       const phone = phoneRaw.replace(/\D/g, "");
-      if (!phone) {
-        alert("❌ La cible n'a pas de numéro valide.");
-      } else {
-        let message = `👋 Salut ${suiviData.responsable || ""}!\n\n`;
-        message += `🙏 Nouveau membre à suivre :\n`;
-        message += `- 👤 Nom : ${membre.prenom || "—"} ${membre.nom || "—"}\n`;
-        message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
-        message += `- 🏙 Ville : ${membre.ville || "—"}\n`;
-        message += `- 🙏 Besoin : ${membre.besoin ? JSON.stringify(membre.besoin) : "—"}\n\n🙏 Merci !`;
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
-      }
+      if (!phone) alert("❌ La cible n'a pas de numéro valide.");
+      else window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
 
       if (showToast)
-        showToast(
-          `✅ ${membre.prenom || "Le membre"} a été envoyé à ${
-            type === "cellule" ? cible.cellule : `${cible.prenom || ""} ${cible.nom || ""}`.trim()
-          } !`
-        );
+        showToast(`✅ ${membre.prenom} ${membre.nom} a été envoyé à ${type === "cellule" ? cible.cellule : `${cible.prenom} ${cible.nom}`} !`);
 
     } catch (err) {
       console.error("Erreur sendToWhatsapp:", err);
-      if (err?.message) alert(`❌ Erreur Supabase : ${err.message}`);
-      else alert("❌ Une erreur inconnue est survenue lors de l'envoi.");
+      alert("❌ Une erreur est survenue lors de l'envoi.");
     } finally {
       setLoading(false);
     }

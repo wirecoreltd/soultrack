@@ -50,7 +50,7 @@ export default function SuivisMembres() {
         setPrenom(profileData.prenom || "cher membre");
         setRole(profileData.role);
 
-        const tableName = "suivis_membres_test"; // <-- table test
+        const tableName = "suivis_membres_test"; // table test
         let suivisData = [];
 
         if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
@@ -87,11 +87,6 @@ export default function SuivisMembres() {
           }
         }
 
-        // Filtrer les "en attente" si on n'est pas sur la vue refus
-        if (!showRefus) {
-          suivisData = suivisData.filter(s => s.statut_suivis === statutIds["en attente"]);
-        }
-
         setSuivis(suivisData || []);
         if (!suivisData || suivisData.length === 0) setMessage("Aucun membre à afficher.");
       } catch (err) {
@@ -104,7 +99,7 @@ export default function SuivisMembres() {
     };
 
     fetchSuivis();
-  }, [showRefus]);
+  }, []);
 
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -139,14 +134,16 @@ export default function SuivisMembres() {
       if (newComment) payload.commentaire_suivis = newComment;
 
       const { data: updatedSuivi, error: updateError } = await supabase
-        .from("suivis_membres_test") // <-- table test
+        .from("suivis_membres_test")
         .update(payload)
         .eq("id", id)
         .select()
         .single();
       if (updateError) throw updateError;
 
-      setSuivis((prev) => prev.map(s => s.id === id ? updatedSuivi : s));
+      setSuivis((prev) =>
+        prev.map((s) => (s.id === id ? updatedSuivi : s))
+      );
       setDetailsOpen((prev) => ({ ...prev, [id]: false }));
     } catch (err) {
       console.error("Exception updateSuivi:", err);
@@ -155,6 +152,13 @@ export default function SuivisMembres() {
       setUpdating((prev) => ({ ...prev, [id]: false }));
     }
   };
+
+  // Filtrage dynamique
+  const filteredSuivis = suivis.filter((s) => {
+    if (s.statut_suivis === statutIds["integrer"]) return false; // jamais affichés
+    if (showRefus) return s.statut_suivis === statutIds["refus"];
+    return s.statut_suivis === statutIds["en attente"];
+  });
 
   const Details = ({ m }) => {
     const commentRef = useRef(null);
@@ -183,17 +187,7 @@ export default function SuivisMembres() {
             }
           })()}
         </p>
-        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-        <p>
-          📌 Attribué à :{" "}
-          {m.cellule_nom ? (
-            <span className="text-blue-600 font-semibold">🏠 Cellule de {m.cellule_nom}</span>
-          ) : m.responsable ? (
-            <span className="text-green-600 font-semibold">👤 Conseiller : {m.responsable}</span>
-          ) : (
-            <span className="text-gray-500">—</span>
-          )}
-        </p>
+        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>        
 
         <div className="mt-5">
           <label className="text-black text-sm mb-1 block">📋 Statut Suivis :</label>
@@ -301,22 +295,15 @@ export default function SuivisMembres() {
       {/* Vue Carte */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-          {suivis.map((item) => (
+          {filteredSuivis.map((item) => (
             <div key={item.id} className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden">
               <div className="w-full h-[6px] rounded-t-2xl" style={{ backgroundColor: getBorderColor(item) }} />
               <div className="p-4 flex flex-col items-center">
                 <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>
                 <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
+                <p className="text-sm text-gray-700 mb-1">📋 Statut : {statutLabels[item.statut] || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">
-                  {item.cellule_nom ? (
-                    <span className="text-blue-600 font-semibold">🏠 Cellule de {item.cellule_nom}</span>
-                  ) : item.responsable ? (
-                    <span className="text-green-600 font-semibold">👤 Conseiller : {item.responsable}</span>
-                  ) : (
-                    <span className="text-gray-500">—</span>
-                  )}
-                </p>
+                <p className="text-sm text-gray-700 mb-1">📌 Attribué à : {item.cellule_nom ? `Cellule de ${item.cellule_nom}` : item.responsable || "—"}</p>
                 <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">
                   {detailsOpen[item.id] ? "Fermer détails" : "Détails"}
                 </button>
@@ -341,14 +328,14 @@ export default function SuivisMembres() {
               </tr>
             </thead>
             <tbody>
-              {suivis.length === 0 ? (
+              {filteredSuivis.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-2 text-white text-center">
                     Aucun membre en suivi
                   </td>
                 </tr>
               ) : (
-                suivis.map((m) => (
+                filteredSuivis.map((m) => (
                   <React.Fragment key={m.id}>
                     <tr className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
                       <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>
@@ -356,15 +343,7 @@ export default function SuivisMembres() {
                       </td>
                       <td className="px-4 py-2">{m.telephone || "—"}</td>
                       <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
-                      <td className="px-4 py-2">
-                        {m.cellule_nom ? (
-                          <span className="text-blue-600 font-semibold">🏠 Cellule de {m.cellule_nom}</span>
-                        ) : m.responsable ? (
-                          <span className="text-green-600 font-semibold">👤 Conseiller : {m.responsable}</span>
-                        ) : (
-                          <span className="text-gray-500">—</span>
-                        )}
-                      </td>
+                      <td className="px-4 py-2">{m.cellule_nom ? `Cellule de ${m.cellule_nom}` : m.responsable || "—"}</td>
                       <td className="px-4 py-2">
                         <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">
                           {detailsOpen[m.id] ? "Fermer détails" : "Détails"}

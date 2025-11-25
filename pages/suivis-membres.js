@@ -50,7 +50,7 @@ export default function SuivisMembres() {
         setPrenom(profileData.prenom || "cher membre");
         setRole(profileData.role);
 
-        const tableName = "suivis_membres_test"; // table test
+        const tableName = "suivis_membres"; // table test
         let suivisData = [];
 
         if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
@@ -134,7 +134,7 @@ export default function SuivisMembres() {
       if (newComment) payload.commentaire_suivis = newComment;
 
       const { data: updatedSuivi, error: updateError } = await supabase
-        .from("suivis_membres_test")
+        .from("suivis_membres")
         .update(payload)
         .eq("id", id)
         .select()

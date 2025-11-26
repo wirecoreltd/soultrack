@@ -33,10 +33,55 @@ export default function ListMembers() {
   const [showingToast, setShowingToast] = useState(false);
   const [suivisParConseiller, setSuivisParConseiller] = useState([]);
 
-  // Pour corriger ton problème statusChanges
-  const [statusChanges, setStatusChanges] = useState({});
+            // Pour corriger ton problème statusChanges
+            const [statusChanges, setStatusChanges] = useState({});
+          
+            // Déclaration des hooks en haut du composant
+          const [suivisParConseiller, setSuivisParConseiller] = useState([]);
 
-  const [suivisParConseiller, setSuivisParConseiller] = useState([]);
+          // Fonction pour récupérer le nombre de contacts assignés à chaque conseiller
+          const fetchSuivisParConseiller = async () => {
+            try {
+              // Récupérer tous les conseillers
+              const { data: conseillersData, error: conseillersError } = await supabase
+                .from("profiles")
+                .select("id, prenom, nom")
+                .eq("role", "Conseiller");
+          
+              if (conseillersError) throw conseillersError;
+          
+              const conseillersIds = conseillersData.map((c) => c.id);
+          
+              // Récupérer tous les membres avec un conseiller assigné
+              const { data: membresData, error: membresError } = await supabase
+                .from("membres")
+                .select("id, conseiller_id")
+                .in("conseiller_id", conseillersIds);
+          
+              if (membresError) throw membresError;
+          
+              // Compter les contacts par conseiller
+              const countMap = {};
+              membresData.forEach((m) => {
+                countMap[m.conseiller_id] = (countMap[m.conseiller_id] || 0) + 1;
+              });
+          
+              // Fusionner les infos
+              const suivis = conseillersData.map((c) => ({
+                ...c,
+                totalContacts: countMap[c.id] || 0,
+              }));
+          
+              setSuivisParConseiller(suivis);
+            } catch (err) {
+              console.error("Erreur fetchSuivisParConseiller:", err.message);
+            }
+          };
+          
+          // useEffect pour appeler la fonction au chargement
+          useEffect(() => {
+            fetchSuivisParConseiller();
+        }, []);
 
     const showToast = (msg) => {
     setToastMessage(msg);

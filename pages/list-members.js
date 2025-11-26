@@ -61,50 +61,21 @@ export default function ListMembers() {
   }, []);
 
   const fetchMembers = async () => {
-  try {
-    // Récupérer tous les membres
-    const { data: membres, error: errMembres } = await supabase
-      .from("membres")
-      .select("*")
-      .order("created_at", { ascending: false });
+  const { data, error } = await supabase
+    .from("membres") // ou ta view principale
+    .select(`
+      *,
+      cellule_nom,
+      responsable_nom,
+      conseiller_nom,
+      conseiller_prenom,
+      statuts_suivis!inner(libelle)
+    `)
+    .order("created_at", { ascending: false });
 
-    if (errMembres) throw errMembres;
-
-    // Récupérer tous les suivis
-    const { data: suivis, error: errSuivis } = await supabase
-      .from("suivis")
-      .select("*")
-      .order("suivi_created_at", { ascending: false });
-
-    if (errSuivis) throw errSuivis;
-
-    // Pour chaque membre, trouver le dernier suivi
-    const normalized = membres.map((m) => {
-      const lastSuivi = suivis.find((s) => s.membre_id === m.id) || {};
-      return {
-        ...m,
-        cellule_nom: m.cellule_nom || lastSuivi.cellule_nom || "—",
-        responsable_nom: m.responsable_nom || lastSuivi.responsable_nom || "—",
-        conseiller_prenom: lastSuivi.conseiller_prenom || null,
-        conseiller_nom: lastSuivi.conseiller_nom || null,
-        statut_suivis: lastSuivi.statut_suivis || null,
-        commentaire_suivis: lastSuivi.commentaire_suivis || null,
-        is_whatsapp: m.is_whatsapp ?? lastSuivi.is_whatsapp ?? false,
-        besoin: m.besoin || lastSuivi.besoin || "[]",
-        infos_supplementaires: m.infos_supplementaires || lastSuivi.infos_supplementaires || "—",
-        ville: m.ville || lastSuivi.ville || "—",
-      };
-    });
-
-    console.log("Membres normalisés:", normalized);
-    setMembers(normalized);
-  } catch (err) {
-    console.error("Erreur fetchMembers:", err);
-  }
-};
-
-
-  
+  if (error) console.error(error);
+  else setMembers(dta);
+};  
 
   const fetchCellules = async () => {
     const { data } = await supabase.from("cellules").select("id, cellule, responsable, telephone");

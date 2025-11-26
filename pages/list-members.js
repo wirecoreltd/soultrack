@@ -61,53 +61,48 @@ export default function ListMembers() {
   }, []);
 
   const fetchMembers = async () => {
-  // Récupérer les membres et leur dernier suivi
-  const { data, error } = await supabase
-    .from("membres")
-    .select(`
-      id,
-      prenom,
-      nom,
-      telephone,
-      statut,
-      cellule_nom,
-      responsable_nom,
-      conseiller_id,
-      conseiller_prenom,
-      conseiller_nom,
-      is_whatsapp,
-      besoin,
-      infos_supplementaires,
-      statut_suivis,
-      commentaire_suivis,
-      ville,
-      created_at
-    `)
-    .order("created_at", { ascending: false });
+  try {
+    // Récupérer tous les membres
+    const { data: membres, error: errMembres } = await supabase
+      .from("membres")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Erreur fetchMembers:", error);
-    return;
+    if (errMembres) throw errMembres;
+
+    // Récupérer tous les suivis
+    const { data: suivis, error: errSuivis } = await supabase
+      .from("suivis")
+      .select("*")
+      .order("suivi_created_at", { ascending: false });
+
+    if (errSuivis) throw errSuivis;
+
+    // Pour chaque membre, trouver le dernier suivi
+    const normalized = membres.map((m) => {
+      const lastSuivi = suivis.find((s) => s.membre_id === m.id) || {};
+      return {
+        ...m,
+        cellule_nom: m.cellule_nom || lastSuivi.cellule_nom || "—",
+        responsable_nom: m.responsable_nom || lastSuivi.responsable_nom || "—",
+        conseiller_prenom: lastSuivi.conseiller_prenom || null,
+        conseiller_nom: lastSuivi.conseiller_nom || null,
+        statut_suivis: lastSuivi.statut_suivis || null,
+        commentaire_suivis: lastSuivi.commentaire_suivis || null,
+        is_whatsapp: m.is_whatsapp ?? lastSuivi.is_whatsapp ?? false,
+        besoin: m.besoin || lastSuivi.besoin || "[]",
+        infos_supplementaires: m.infos_supplementaires || lastSuivi.infos_supplementaires || "—",
+        ville: m.ville || lastSuivi.ville || "—",
+      };
+    });
+
+    console.log("Membres normalisés:", normalized);
+    setMembers(normalized);
+  } catch (err) {
+    console.error("Erreur fetchMembers:", err);
   }
-
-  // Normalisation : on s'assure que chaque champ existe
-  const normalized = data.map((m) => ({
-    ...m,
-    cellule_nom: m.cellule_nom || "—",
-    responsable_nom: m.responsable_nom || "—",
-    conseiller_prenom: m.conseiller_prenom || null,
-    conseiller_nom: m.conseiller_nom || null,
-    statut_suivis: m.statut_suivis || null,
-    commentaire_suivis: m.commentaire_suivis || null,
-    is_whatsapp: m.is_whatsapp ?? false,
-    besoin: m.besoin ?? "[]",
-    infos_supplementaires: m.infos_supplementaires || "—",
-    ville: m.ville || "—",
-  }));
-
-  console.log("Membres récupérés:", normalized); // pour vérifier
-  setMembers(normalized);
 };
+
 
   
 

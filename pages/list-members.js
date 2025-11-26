@@ -35,6 +35,10 @@ export default function ListMembers() {
   // Pour corriger ton problème statusChanges
   const [statusChanges, setStatusChanges] = useState({});
 
+  const { data } = await supabase
+  .from("membres_avec_cellule")
+  .select("*");
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setShowingToast(true);
@@ -376,6 +380,10 @@ export default function ListMembers() {
                         </h2>
                         <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
                         <p className="text-sm text-gray-600">🕊 Statut : {m.statut}</p>
+                        <p className="text-sm text-gray-600"> 📝 Attribué à :  {m.cellule_nom ? `${m.cellule_nom} – ${m.cellule_responsable}` 
+                                : "—"}
+                          </p>
+
                         {/* Bouton Détails */}
                         <button
                           onClick={() => toggleDetails(m.id)}

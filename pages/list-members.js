@@ -243,26 +243,26 @@ export default function ListMembers() {
                         </div>
                       </div>
                           <select
-                            value={statusChanges[m.id] ?? m.statut ?? ""}
-                            onChange={(e) => handleStatusChange(m.id, e.target.value)}
-                            className="border rounded-md px-2 py-1 text-sm w-full"
-                          >
-                            <option value="">-- Choisir un statut --</option>
-                            <option value="visiteur">Visiteur</option>
-                            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                            <option value="actif">Actif</option>
-                            <option value="integrer">Intégré</option>
-                            <option value="a déjà son église">A déjà son église</option>
-                            <option value="refus">Refus</option>
-                          </select>
-                        </div>
+  value={statusChanges[m.id] ?? m.statut ?? ""}
+  onChange={(e) => handleStatusChange(m.id, e.target.value)}
+  className="border rounded-md px-2 py-1 text-sm w-full"
+>
+  <option value="">-- Choisir un statut --</option>
+  <option value="visiteur">Visiteur</option>
+  <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+  <option value="actif">Actif</option>
+  <option value="integrer">Intégré</option>
+  <option value="a déjà son église">A déjà son église</option>
+  <option value="refus">Refus</option>
+</select>
 
-                        <button
-                          onClick={() => toggleDetails(m.id)}
-                          className="text-orange-500 underline text-sm mt-2"
-                        >
-                          {isOpen ? "Fermer détails" : "Détails"}
-                        </button>
+<button
+  onClick={() => toggleDetails(m.id)}
+  className="text-orange-500 underline text-sm mt-2"
+>
+  {isOpen ? "Fermer détails" : "Détails"}
+</button>
+
 
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-3 w-full space-y-2">

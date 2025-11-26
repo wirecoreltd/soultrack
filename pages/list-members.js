@@ -228,8 +228,12 @@ export default function ListMembers() {
                         {/* Menu déroulant pour le statut */}
                         <div className="mt-2 w-full">
                           <label className="text-gray-700 text-sm space-y-2 text-center">🕊 Statut :</label>
-                          <p className="text-gray-700 text-sm space-y-2 text-center">🏠 Cellule : {m.cellule_nom || ""}-{m.responsable_nom || ""}</p>
-                          <p className=="text-gray-700 text-sm space-y-2 text-center">👤 Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}</p>
+                          <p className="text-sm text-gray-600">
+                          <span className="space-y-2">🏠</span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                          <span className="space-y-2">👤</span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}
+                          </p>
                           <select
                             value={statusChanges[m.id] ?? m.statut ?? ""}
                             onChange={(e) => handleStatusChange(m.id, e.target.value)}

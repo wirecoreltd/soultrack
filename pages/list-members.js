@@ -379,16 +379,16 @@ export default function ListMembers() {
                           {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                         </h2>
                         <p className="text-sm text-gray-600">
-                          <span className="space-y-2">📱</span>{m.telephone || "—"}
+                          <span className="space-y-4">📱</span>{m.telephone || "—"}
                         </p>
                         <p className="text-sm text-gray-600">
-                          <span className="space-y-2">🕊</span>Statut : {m.statut}
+                          <span className="space-y-4">🕊</span>Statut : {m.statut}
                         </p>
                         <p className="text-sm text-gray-600">
-                          <span className="space-y-2">🏠</span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}
+                          <span className="space-y-4">🏠</span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}
                         </p>
                         <p className="text-sm text-gray-600">
-                          <span className="space-y-2">👤</span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}
+                          <span className="space-y-4">👤</span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}
                         </p>
                         {/* Bouton Détails */}
                         <button

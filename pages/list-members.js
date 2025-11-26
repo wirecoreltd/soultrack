@@ -223,25 +223,25 @@ export default function ListMembers() {
                         <h2 className="text-lg font-bold text-center">
                           {m.prenom} {m.nom}
                         </h2>
-                        <div className="text-lg text-center">
-                        <div className="flex flex-col space-y-1 text-sm text-gray-600 w-full">
-                          <div className="flex items-center text-center space-x-2">
+                        <div className="flex flex-col space-y-1 text-sm text-gray-600 w-full items-center">
+                          <div className="flex justify-center items-center space-x-2">
                             <span>📱</span>
                             <span>{m.telephone || "—"}</span>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex justify-center items-center space-x-2">
                             <span>🕊</span>
                             <span>Statut : {m.statut || "—"}</span>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex justify-center items-center space-x-2">
                             <span>🏠</span>
                             <span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}</span>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex justify-center items-center space-x-2">
                             <span>👤</span>
                             <span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}</span>
                           </div>
                         </div>
+                      </div>
                           <select
                             value={statusChanges[m.id] ?? m.statut ?? ""}
                             onChange={(e) => handleStatusChange(m.id, e.target.value)}
@@ -382,22 +382,31 @@ export default function ListMembers() {
                       className="bg-white p-3 rounded-xl shadow-md border-l-4"
                       style={{ borderLeftColor: getBorderColor(m) }}
                     >
-                      <div className="flex flex-col items-center">
-                        <h2 className="text-lg font-bold text-center">
+                      <div className="flex flex-col items-center text-center">
+                        <h2 className="text-lg font-bold">
                           {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                         </h2>
-                        <p className="text-sm text-gray-600">
-                          <span className="space-x-3">📱</span>{m.telephone || "—"}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          <span className="space-x-3">🕊</span>Statut : {m.statut}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          <span className="space-x-3">🏠</span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          <span className="space-x-3">👤</span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}
-                        </p>
+                      
+                        <div className="flex flex-col space-y-1 text-sm text-gray-600 w-full items-center">
+                          <div className="flex justify-center items-center space-x-3">
+                            <span>📱</span>
+                            <span>{m.telephone || "—"}</span>
+                          </div>
+                          <div className="flex justify-center items-center space-x-3">
+                            <span>🕊</span>
+                              <span>Statut : {m.statut || "—"}</span>
+                            </div>
+                            <div className="flex justify-center items-center space-x-3">
+                              <span>🏠</span>
+                              <span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}</span>
+                            </div>
+                            <div className="flex justify-center items-center space-x-3">
+                              <span>👤</span>
+                              <span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}</span>
+                            </div>
+                          </div>
+                        </div>
+
                         {/* Bouton Détails */}
                         <button
                           onClick={() => toggleDetails(m.id)}

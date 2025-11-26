@@ -219,20 +219,20 @@ export default function ListMembers() {
                       <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] px-6 py-1 rotate-45">
                         Nouveau
                       </span>
-                      <div className="flex flex-col items-center">
+                      <div classNamed>
                         <h2 className="text-lg font-bold text-center">
                           {m.prenom} {m.nom}
                         </h2>
                         <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
 
                         {/* Menu déroulant pour le statut */}
-                        <div className="mt-2 w-full">
-                          <label className="text-gray-700 text-sm space-y-2 text-center">🕊 Statut :</label>
-                          <p className="text-sm text-gray-600">
-                          <span className="space-y-2">🏠</span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}
+                        <div className=="text-lg font-bold text-center">
+                          <label className="text-sm text-gray-600 space-y-2 text-center">🕊 Statut :</label>
+                          <p className="text-lg font-bold text-center">
+                          <span className"text-sm text-gray-600 space-y-2 text-center">🏠</span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}
                           </p>
-                          <p className="text-sm text-gray-600">
-                          <span className="space-y-2">👤</span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}
+                          <p className="text-lg font-bold text-center">
+                          <span className="text-sm text-gray-600 space-y-2 text-center">👤</span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}
                           </p>
                           <select
                             value={statusChanges[m.id] ?? m.statut ?? ""}

@@ -348,6 +348,7 @@ export default function ListMembers() {
                     </div>
                   );
                 })}
+                </div>
               </div>
             </div>
           )}

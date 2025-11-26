@@ -374,7 +374,7 @@ export default function ListMembers() {
                         </h2>
                         <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
                         <p className="text-sm text-gray-600">🕊 Statut : {m.statut}</p>
-                        <p className="text-sm text-gray-600">🏠 Cellule : {m.cellule_nom || "—"}-{m.responsable_nom || "—"})</p>
+                        <p className="text-sm text-gray-600">🏠 Cellule : {m.cellule_nom || "—"} {m.responsable_nom || "—"}</p>
                         <p className="text-sm text-gray-600">👤 Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}</p>
                         {/* Bouton Détails */}
                         <button

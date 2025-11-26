@@ -448,11 +448,7 @@ export default function ListMembers() {
                         <p className="text-sm text-gray-600">
                           📝 Attribué à : {m.cellule_nom || "—"} – {m.responsable_nom || "—"}
                         </p>
-                        <p className="text-white text-sm mt-1">
-                          👤 Conseiller : {m.conseiller_nom || "Non assigné"} 
-                          ({getContactsAssignedToConseiller(m.conseiller_id)} contacts)
-                        </p>
-                                           
+                        <p className="text-sm text-gray-600">👤 Conseiller : {m.conseiller_nom || "Non assigné"}</p>                                           
                                                                       
                         {/* Bouton Détails */}
                         <button

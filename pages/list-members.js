@@ -129,7 +129,6 @@ export default function ListMembers() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-      
       {/* Top bar */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
@@ -172,17 +171,38 @@ export default function ListMembers() {
       {/* ==================== VUE CARTE ==================== */}
       {view === "card" && (
         <div className="w-full max-w-5xl space-y-8">
-          {nouveauxFiltres.map((m) => {
+          {[...nouveauxFiltres, ...anciensFiltres].map((m) => {
             const isOpen = detailsOpen[m.id];
             return (
               <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4 relative" style={{ borderLeftColor: getBorderColor(m) }}>
-                <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
-                <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">{isOpen ? "Fermer détails" : "Détails"}</button>
+                <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}</h2>
+                
+                <div className="flex flex-col space-y-1 text-sm text-gray-600 w-full items-center">
+                  <div className="flex justify-center items-center space-x-3">
+                    <span>📱</span><span>{m.telephone || "—"}</span>
+                  </div>
+                  <div className="flex justify-center items-center space-x-3">
+                    <span>🕊</span><span>Statut : {m.statut || "—"}</span>
+                  </div>
+                  <div className="flex justify-center items-center space-x-3">
+                    <span>🏠</span><span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}</span>
+                  </div>
+                  <div className="flex justify-center items-center space-x-3">
+                    <span>👤</span><span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}</span>
+                  </div>
+                </div>
 
+                {/* Bouton Détails */}
+                <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">
+                  {isOpen ? "Fermer détails" : "Détails"}
+                </button>
+
+                {/* Détails */}
                 {isOpen && (
                   <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
                     <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🏙 Ville : {m.ville || "—"}</p>
+                    <p>❓ Besoin : {m.besoin || "—"}</p>
                     <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                     {/* ==================== ENVOI ==================== */}
@@ -211,14 +231,10 @@ export default function ListMembers() {
                           <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
                           {selectedTargetType[m.id] === "cellule"
                             ? cellules.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {c.cellule} ({c.responsable})
-                                </option>
+                                <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>
                               ))
                             : conseillers.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {c.prenom} {c.nom}
-                                </option>
+                                <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
                               ))}
                         </select>
                       )}
@@ -263,20 +279,9 @@ export default function ListMembers() {
         </div>
       )}
 
-      {/* ==================== TOAST ==================== */}
-      {showingToast && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg">
-          {toastMessage}
-        </div>
-      )}
-
-    </div>
-  );
-}
-
       {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+        <div className="w-full max-w-6xl overflow-x-auto">
           <table className="w-full text-sm text-left border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase">
               <tr>
@@ -287,85 +292,32 @@ export default function ListMembers() {
               </tr>
             </thead>
             <tbody>
-              {/* Nouveaux Membres */}
-              {nouveauxFiltres.length > 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-2 text-white font-semibold">
-                    💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-                  </td>
-                </tr>
-              )}
-              {nouveauxFiltres.map((m) => (
-                <tr key={m.id} className="border-b border-gray-300">
-                  <td
-                    className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white"
-                    style={{ borderLeftColor: getBorderColor(m) }}
-                  >
-                    {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                    <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
-                  </td>
-                  <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
-                  <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
-                  <td className="px-4 py-2 flex items-center gap-2">
-                    <button
-                      onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
-                      className="text-orange-500 underline text-sm"
-                    >
-                      {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {/* Anciens Membres */}
-              {anciensFiltres.length > 0 && (
-                <>
-                  <tr>
-                    <td colSpan={4} className="px-4 py-2 font-semibold text-lg text-white">
-                      <span
-                        style={{
-                          background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                          WebkitBackgroundClip: "text",
-                          color: "transparent",
-                        }}
-                      >
-                        Membres existants
-                      </span>
+              {[...nouveauxFiltres, ...anciensFiltres].map((m) => {
+                const isOpen = detailsOpen[m.id];
+                return (
+                  <tr key={m.id} className="border-b border-gray-300">
+                    <td className="px-4 py-2 border-l-4 rounded-l-md text-white" style={{ borderLeftColor: getBorderColor(m) }}>
+                      {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                    </td>
+                    <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
+                    <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
+                    <td className="px-4 py-2 flex items-center gap-2">
+                      <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">
+                        {isOpen ? "Fermer détails" : "Détails"}
+                      </button>
+                      <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">
+                        Modifier
+                      </button>
                     </td>
                   </tr>
-                  {anciensFiltres.map((m) => (
-                    <tr key={m.id} className="border-b border-gray-300">
-                      <td
-                        className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white"
-                        style={{ borderLeftColor: getBorderColor(m) }}
-                      >
-                        {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                      </td>
-                      <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
-                      <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
-                      <td className="px-4 py-2 flex items-center gap-2">
-                        <button
-                          onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
-                          className="text-orange-500 underline text-sm"
-                        >
-                          {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                        </button>
-                        <button
-                          onClick={() => setEditMember(m)}
-                          className="text-blue-600 underline text-sm"
-                        >
-                          Modifier
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </>
-              )}
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* Popups */}
+      {/* ==================== POPUPS ==================== */}
       {popupMember && (
         <DetailsPopup
           member={popupMember}
@@ -391,12 +343,13 @@ export default function ListMembers() {
         />
       )}
 
-      {/* Toast */}
+      {/* ==================== TOAST ==================== */}
       {showingToast && (
         <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg">
           {toastMessage}
         </div>
       )}
+
     </div>
   );
 }

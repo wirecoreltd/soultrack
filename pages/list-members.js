@@ -31,9 +31,12 @@ export default function ListMembers() {
   const [prenom, setPrenom] = useState("");
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
+  const [suivisParConseiller, setSuivisParConseiller] = useState([]);
 
   // Pour corriger ton problème statusChanges
   const [statusChanges, setStatusChanges] = useState({});
+
+  const [suivisParConseiller, setSuivisParConseiller] = useState([]);
 
     const showToast = (msg) => {
     setToastMessage(msg);
@@ -395,6 +398,10 @@ export default function ListMembers() {
                         <p className="text-sm text-gray-600">
                           📝 Attribué à : {m.cellule_nom || "—"} – {m.responsable_nom || "—"}
                         </p>
+                        <p className="text-white text-sm mt-1">
+                          👤 Conseiller : {m.conseiller_nom || "Non assigné"} 
+                          ({getContactsAssignedToConseiller(m.conseiller_id)} contacts)
+                        </p>                                            
                                                                       
                         {/* Bouton Détails */}
                         <button

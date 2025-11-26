@@ -35,28 +35,12 @@ export default function ListMembers() {
   // Pour corriger ton problème statusChanges
   const [statusChanges, setStatusChanges] = useState({});
 
-    const showToast = (msg) => {
+  const showToast = (msg) => {
     setToastMessage(msg);
     setShowingToast(true);
     setTimeout(() => setShowingToast(false), 3500);
   };
-  useEffect(() => {
-  const fetchMembers = async () => {
-    const { data, error } = await supabase
-      .from("membres_avec_cellule")
-      .select("*");
 
-    if (error) {
-      console.error("Erreur chargement membres :", error);
-      return;
-    }
-
-    setMembers(data);
-  };
-
-  fetchMembers();
-}, []);
-  
   useEffect(() => {
     const fetchSessionAndProfile = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -77,16 +61,8 @@ export default function ListMembers() {
   }, []);
 
   const fetchMembers = async () => {
-  const { data, error } = await supabase
-      .from("membres")
-      .select(`
-        *,
-        statuts_suivis!inner(libelle)
-      `)
-      .order("created_at", { ascending: false });
-  
-    if (error) console.error(error);
-    else setMembers(data);
+    const { data } = await supabase.from("membres").select("*").order("created_at", { ascending: false });
+    if (data) setMembers(data);
   };
 
   const fetchCellules = async () => {
@@ -392,10 +368,6 @@ export default function ListMembers() {
                         </h2>
                         <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
                         <p className="text-sm text-gray-600">🕊 Statut : {m.statut}</p>
-                        <p className="text-sm text-gray-600">
-                          📝 Attribué à : {m.cellule_nom || "—"} – {m.responsable_nom || "—"}
-                        </p>
-                                                                      
                         {/* Bouton Détails */}
                         <button
                           onClick={() => toggleDetails(m.id)}
@@ -423,7 +395,6 @@ export default function ListMembers() {
                               })()}
                             </p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                            <p>📌 Statut Suivis : {m.statuts_suivis?.libelle || m.statut_suivis || "—"}</p>  
                             <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p> 
 
                             {/* Envoi */}

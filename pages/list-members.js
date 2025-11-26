@@ -43,6 +43,14 @@ export default function ListMembers() {
     setTimeout(() => setShowingToast(false), 3500);
   };
 
+  const statusOptions = [
+  "actif",
+  "ancien",
+  "visiteur",
+  "veut rejoindre ICC",
+  "a déjà son église"
+];     
+
   // --- Fetch membres ---
   const fetchMembers = async () => {
     const { data, error } = await supabase

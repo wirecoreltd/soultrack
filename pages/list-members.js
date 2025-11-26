@@ -223,15 +223,16 @@ export default function ListMembers() {
                         <h2 className="text-lg font-bold text-center">
                           {m.prenom} {m.nom}
                         </h2>
+                        <div className="text-lg text-center">
                         <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
 
                         {/* Menu déroulant pour le statut */}
-                        <div className="text-lg font-bold text-center">
+                        <div className="text-lg text-center">
                           <label className="text-sm text-gray-600 space-y-2 text-center">🕊 Statut :</label>
-                          <p className="text-lg font-bold text-center">
+                          <p className="text-lg text-center">
                           <span className="text-sm text-gray-600 space-y-2 text-center">🏠</span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}
                           </p>
-                          <p className="text-lg font-bold text-center">
+                          <p className="text-lg text-center">
                           <span className="text-sm text-gray-600 space-y-2 text-center">👤</span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}
                           </p>
                           <select

@@ -1,134 +1,126 @@
-                  "use client";
-                  
-                  /**
-                   * Page: Liste des Membres
-                   * Description: Affiche les membres sous forme de carte ou tableau avec filtres et envoi WhatsApp.
-                   */
-                  
-                  import { useEffect, useState } from "react";
-                  import supabase from "../lib/supabaseClient";
-                  import Image from "next/image";
-                  import BoutonEnvoyer from "../components/BoutonEnvoyer";
-                  import LogoutLink from "../components/LogoutLink";
-                  import DetailsPopup from "../components/DetailsPopup";
-                  import EditMemberPopup from "../components/EditMemberPopup";
-                  import { format } from "date-fns";
-                  import { fr } from "date-fns/locale";
-                  
-                  export default function ListMembers() {
-                    const [members, setMembers] = useState([]);
-                    const [filter, setFilter] = useState("");
-                    const [search, setSearch] = useState("");
-                    const [detailsOpen, setDetailsOpen] = useState({});
-                    const [cellules, setCellules] = useState([]);
-                    const [conseillers, setConseillers] = useState([]);
-                    const [selectedTargets, setSelectedTargets] = useState({});
-                    const [selectedTargetType, setSelectedTargetType] = useState({});
-                    const [view, setView] = useState("card");
-                    const [popupMember, setPopupMember] = useState(null);
-                    const [editMember, setEditMember] = useState(null);
-                    const [session, setSession] = useState(null);
-                    const [prenom, setPrenom] = useState("");
-                    const [toastMessage, setToastMessage] = useState("");
-                    const [showingToast, setShowingToast] = useState(false);
-                  
-                    const getContactsAssignedToConseiller = (id) => {
-                    if (!id || !suivisParConseiller) return 0;
-                    const conseiller = suivisParConseiller.find((c) => c.id === id);
-                    return conseiller ? conseiller.totalContacts : 0;
-                  };
-                  
-                    const fetchMembers = async () => {
-                    const { data, error } = await supabase
-                      .from("suivis_membres")
-                      .select("*") // ou sélectionner explicitement les champs nécessaires
-                      .order("suivi_created_at", { ascending: false });
-                  
-                    if (error) console.error(error);
-                    else {
-                      // transformer pour avoir les propriétés directement lisibles
-                      const membresAvecConseiller = data.map((m) => ({
-                        ...m,
-                        conseiller_nom: m.conseiller_nom || null,
-                        conseiller_prenom: m.conseiller_prenom || null,
-                      }));
-                      setMembers(membresAvecConseiller);
-                    }
-};
- 
-            // Pour corriger ton problème statusChanges
-            const [statusChanges, setStatusChanges] = useState({});
-          
-            // Déclaration des hooks en haut du composant
-          const [suivisParConseiller, setSuivisParConseiller] = useState([]);
+       
+"use client";
 
-          // Fonction pour récupérer le nombre de contacts assignés à chaque conseiller
-          const fetchSuivisParConseiller = async () => {
-            try {
-              // Récupérer tous les conseillers
-              const { data: conseillersData, error: conseillersError } = await supabase
-                .from("profiles")
-                .select("id, prenom, nom")
-                .eq("role", "Conseiller");
-          
-              if (conseillersError) throw conseillersError;
-          
-              const conseillersIds = conseillersData.map((c) => c.id);
-          
-              // Récupérer tous les membres avec un conseiller assigné
-              const { data: membresData, error: membresError } = await supabase
-                .from("membres")
-                .select("id, conseiller_id")
-                .in("conseiller_id", conseillersIds);
-          
-              if (membresError) throw membresError;
-          
-              // Compter les contacts par conseiller
-              const countMap = {};
-              membresData.forEach((m) => {
-                countMap[m.conseiller_id] = (countMap[m.conseiller_id] || 0) + 1;
-              });
-          
-              // Fusionner les infos
-              const suivis = conseillersData.map((c) => ({
-                ...c,
-                totalContacts: countMap[c.id] || 0,
-              }));
-          
-              setSuivisParConseiller(suivis);
-            } catch (err) {
-              console.error("Erreur fetchSuivisParConseiller:", err.message);
-            }
-          };
-          
-          // useEffect pour appeler la fonction au chargement
-          useEffect(() => {
-            fetchSuivisParConseiller();
-        }, []);
+/**
+ * Page: Liste des Membres
+ * Description: Affiche les membres sous forme de carte ou tableau avec filtres et envoi WhatsApp.
+ */
 
-    const showToast = (msg) => {
+import { useEffect, useState } from "react";
+import supabase from "../lib/supabaseClient";
+import Image from "next/image";
+import BoutonEnvoyer from "../components/BoutonEnvoyer";
+import LogoutLink from "../components/LogoutLink";
+import DetailsPopup from "../components/DetailsPopup";
+import EditMemberPopup from "../components/EditMemberPopup";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+
+export default function ListMembers() {
+  // --- States principaux ---
+  const [members, setMembers] = useState([]);
+  const [cellules, setCellules] = useState([]);
+  const [conseillers, setConseillers] = useState([]);
+  const [suivisParConseiller, setSuivisParConseiller] = useState([]);
+  const [detailsOpen, setDetailsOpen] = useState({});
+  const [selectedTargets, setSelectedTargets] = useState({});
+  const [selectedTargetType, setSelectedTargetType] = useState({});
+  const [view, setView] = useState("card");
+  const [popupMember, setPopupMember] = useState(null);
+  const [editMember, setEditMember] = useState(null);
+  const [session, setSession] = useState(null);
+  const [prenom, setPrenom] = useState("");
+  const [toastMessage, setToastMessage] = useState("");
+  const [showingToast, setShowingToast] = useState(false);
+  const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusChanges, setStatusChanges] = useState({});
+
+  // --- Toast ---
+  const showToast = (msg) => {
     setToastMessage(msg);
     setShowingToast(true);
     setTimeout(() => setShowingToast(false), 3500);
   };
-  useEffect(() => {
+
+  // --- Fetch membres ---
   const fetchMembers = async () => {
     const { data, error } = await supabase
-      .from("membres_avec_cellule")
-      .select("*");
+      .from("suivis_membres")
+      .select("*")
+      .order("suivi_created_at", { ascending: false });
 
-    if (error) {
-      console.error("Erreur chargement membres :", error);
-      return;
+    if (error) console.error(error);
+    else {
+      setMembers(
+        data.map((m) => ({
+          ...m,
+          conseiller_nom: m.conseiller_nom || null,
+        }))
+      );
     }
-
-    setMembers(data);
   };
 
-  fetchMembers();
-}, []);
-  
+  // --- Fetch cellules ---
+  const fetchCellules = async () => {
+    const { data } = await supabase
+      .from("cellules")
+      .select("id, cellule, responsable, telephone");
+    if (data) setCellules(data);
+  };
+
+  // --- Fetch conseillers ---
+  const fetchConseillers = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom, telephone")
+      .eq("role", "Conseiller");
+    if (data) setConseillers(data);
+  };
+
+  // --- Fetch nombre de contacts assignés par conseiller ---
+  const fetchSuivisParConseiller = async () => {
+    try {
+      const { data: conseillersData, error: conseillersError } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom")
+        .eq("role", "Conseiller");
+
+      if (conseillersError) throw conseillersError;
+
+      const conseillersIds = conseillersData.map((c) => c.id);
+
+      const { data: membresData, error: membresError } = await supabase
+        .from("membres")
+        .select("id, conseiller_id")
+        .in("conseiller_id", conseillersIds);
+
+      if (membresError) throw membresError;
+
+      const countMap = {};
+      membresData.forEach((m) => {
+        countMap[m.conseiller_id] = (countMap[m.conseiller_id] || 0) + 1;
+      });
+
+      setSuivisParConseiller(
+        conseillersData.map((c) => ({
+          ...c,
+          totalContacts: countMap[c.id] || 0,
+        }))
+      );
+    } catch (err) {
+      console.error("Erreur fetchSuivisParConseiller:", err.message);
+    }
+  };
+
+  // --- useEffect initial ---
   useEffect(() => {
+    fetchMembers();
+    fetchCellules();
+    fetchConseillers();
+    fetchSuivisParConseiller();
+
+    // Fetch session utilisateur
     const fetchSessionAndProfile = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
@@ -142,91 +134,31 @@
       }
     };
     fetchSessionAndProfile();
-    fetchMembers();
-    fetchCellules();
-    fetchConseillers();
   }, []);
 
-  const fetchMembers = async () => {
-  const { data, error } = await supabase
-      .from("membres")
-      .select(`
-        *,
-        statuts_suivis!inner(libelle)
-      `)
-      .order("created_at", { ascending: false });
-  
-    if (error) console.error(error);
-    else setMembers(data);
+  // --- Utilitaires ---
+  const getContactsAssignedToConseiller = (id) => {
+    if (!id || !suivisParConseiller) return 0;
+    const conseiller = suivisParConseiller.find((c) => c.id === id);
+    return conseiller ? conseiller.totalContacts : 0;
   };
 
-  const fetchCellules = async () => {
-    const { data } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
-    if (data) setCellules(data);
-  };
+  const toggleDetails = (id) =>
+    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  const fetchConseillers = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom, telephone")
-      .eq("role", "Conseiller");
-    if (data) setConseillers(data);
-  };
-
-  const updateMemberLocally = (id, extra = {}) => {
-    setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, ...extra } : m)));
-  };
-
-  const handleAfterSend = (memberId, type, cible, newStatut) => {
-    const update = { statut: newStatut || "actif" };
-    if (type === "cellule") {
-      update.cellule_id = cible.id;
-      update.cellule_nom = cible.cellule;
-    } else if (type === "conseiller") {
-      update.conseiller_id = cible.id;
-    }
-    setMembers((prev) => prev.map((m) => (m.id === memberId ? { ...m, ...update } : m)));
-    showToast("✅ Contact envoyé et suivi enregistré");
-  };
-
-  const handleStatusChange = (memberId, value) => {
-    setStatusChanges((prev) => ({ ...prev, [memberId]: value }));
-    updateMemberLocally(memberId, { statut: value });
-  };
-
-  const getBorderColor = (m) => {
-    if (m.star) return "#FBC02D";
-    if (m.statut === "actif") return "#4285F4";
-    if (m.statut === "a déjà son église") return "#f21705";
-    if (m.statut === "ancien") return "#999999";
-    if (m.statut === "visiteur" || m.statut === "veut rejoindre ICC") return "#34A853";
-    return "#ccc";
-  };
-
-  const formatDate = (dateStr) => {
-    try {
-      return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr });
-    } catch {
-      return "";
-    }
-  };
-
+  // --- Filtrage & recherche ---
   const filterBySearch = (list) =>
-    list.filter((m) => `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase()));
+    list.filter((m) =>
+      `${m.membre_prenom} ${m.membre_nom}`
+        .toLowerCase()
+        .includes(search.toLowerCase())
+    );
 
-  const nouveaux = members.filter((m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");
-  const anciens = members.filter((m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC");
+  const filteredMembers = filter ? members.filter((m) => m.statut_suivis == filter) : members;
+  const displayedMembers = filterBySearch(filteredMembers);
 
-  const nouveauxFiltres = filterBySearch(filter ? nouveaux.filter((m) => m.statut === filter) : nouveaux);
-  const anciensFiltres = filterBySearch(filter ? anciens.filter((m) => m.statut === filter) : anciens);
-
-  const statusOptions = ["actif", "ancien", "visiteur", "veut rejoindre ICC", "a déjà son église"];
-  const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
-
-  const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
-
-  return (
-    <div
+  return (    
+<div
       className="min-h-screen flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >

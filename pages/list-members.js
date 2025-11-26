@@ -62,16 +62,21 @@ export default function ListMembers() {
 
   const fetchMembers = async () => {
   const { data, error } = await supabase
-      .from("membres")
-      .select(`
-        *,
-        statuts_suivis!inner(libelle)
-      `)
-      .order("created_at", { ascending: false });
-  
-    if (error) console.error(error);
-    else setMembers(data);
-  };
+    .from("membres") // ou ta view principale
+    .select(`
+      *,
+      cellule_nom,
+      responsable_nom,
+      conseiller_nom,
+      conseiller_prenom,
+      statuts_suivis!inner(libelle)
+    `)
+    .order("created_at", { ascending: false });
+
+  if (error) console.error(error);
+  else setMembers(data);
+};
+
 
   const fetchCellules = async () => {
     const { data } = await supabase.from("cellules").select("id, cellule, responsable, telephone");

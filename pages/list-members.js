@@ -352,7 +352,7 @@ export default function ListMembers() {
                           </div>
                         )}
                       </div>
-                    </div>   {/* ← CE BLOC ÉTAIT MANQUANT */}
+                    </div>
                   );
                 })}                
               </div>    

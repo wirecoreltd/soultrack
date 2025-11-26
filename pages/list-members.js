@@ -31,8 +31,6 @@ export default function ListMembers() {
   const [prenom, setPrenom] = useState("");
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
-
-  // Pour corriger ton problème statusChanges
   const [statusChanges, setStatusChanges] = useState({});
 
   const showToast = (msg) => {
@@ -61,12 +59,10 @@ export default function ListMembers() {
   }, []);
 
   const fetchMembers = async () => {
-  const { data, error } = await supabase
-  .from("v_membres_full") // utilise ta view pour avoir cellule/conseiller déjà joints
-  .select("*")
-  .order("created_at", { ascending: false });
-
-  
+    const { data, error } = await supabase
+      .from("v_membres_full")
+      .select("*")
+      .order("created_at", { ascending: false });
     if (error) console.error(error);
     else setMembers(data);
   };
@@ -219,142 +215,151 @@ export default function ListMembers() {
                       <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] px-6 py-1 rotate-45">
                         Nouveau
                       </span>
-                      <div classNamed>
+                      <div>
                         <h2 className="text-lg font-bold text-center">
                           {m.prenom} {m.nom}
                         </h2>
                         <div className="flex flex-col space-y-1 text-sm text-gray-600 w-full items-center">
-                          <div className="flex justify-center items-center space-x-2">
+                          <div className="flex justify-center items-center space-x-3">
                             <span>📱</span>
                             <span>{m.telephone || "—"}</span>
                           </div>
-                          <div className="flex justify-center items-center space-x-2">
+                          <div className="flex justify-center items-center space-x-3">
                             <span>🕊</span>
                             <span>Statut : {m.statut || "—"}</span>
                           </div>
-                          <div className="flex justify-center items-center space-x-2">
+                          <div className="flex justify-center items-center space-x-3">
                             <span>🏠</span>
                             <span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}</span>
                           </div>
-                          <div className="flex justify-center items-center space-x-2">
+                          <div className="flex justify-center items-center space-x-3">
                             <span>👤</span>
                             <span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}</span>
                           </div>
                         </div>
-                      </div>
-                          <select
-                            value={statusChanges[m.id] ?? m.statut ?? ""}
-                            onChange={(e) => handleStatusChange(m.id, e.target.value)}
-                            className="border rounded-md px-2 py-1 text-sm w-full"
-                          >
-                            <option value="">-- Choisir un statut --</option>
-                            <option value="visiteur">Visiteur</option>
-                            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                            <option value="actif">Actif</option>
-                            <option value="integrer">Intégré</option>
-                            <option value="a déjà son église">A déjà son église</option>
-                            <option value="refus">Refus</option>
-                          </select>
-                        </div>
 
-                        <button
-                          onClick={() => toggleDetails(m.id)}
-                          className="text-orange-500 underline text-sm mt-2"
+                        <select
+                          value={statusChanges[m.id] ?? m.statut ?? ""}
+                          onChange={(e) => handleStatusChange(m.id, e.target.value)}
+                          className="border rounded-md px-2 py-1 text-sm w-full mt-2"
                         >
-                          {isOpen ? "Fermer détails" : "Détails"}
-                        </button>
+                          <option value="">-- Choisir un statut --</option>
+                          <option value="visiteur">Visiteur</option>
+                          <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                          <option value="actif">Actif</option>
+                          <option value="integrer">Intégré</option>
+                          <option value="a déjà son église">A déjà son église</option>
+                          <option value="refus">Refus</option>
+                        </select>
+                      </div>
 
-                        {isOpen && (
-                          <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
-                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                            <p>🏙 Ville : {m.ville || "—"}</p>
-                            <p>
-                              ❓Besoin :{" "}
-                              {(() => {
-                                if (!m.besoin) return "—";
-                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                                try {
-                                  const arr = JSON.parse(m.besoin);
-                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                                } catch {
-                                  return m.besoin;
-                                }
-                              })()}
-                            </p>
-                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                      <button
+                        onClick={() => toggleDetails(m.id)}
+                        className="text-orange-500 underline text-sm mt-2"
+                      >
+                        {isOpen ? "Fermer détails" : "Détails"}
+                      </button>
 
-                            {/* ENVOYER À */}
-                            <div className="mt-2">
-                              <label className="font-semibold text-sm">Envoyer à :</label>
+                      {isOpen && (
+                        <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
+                          <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                          <p>🏙 Ville : {m.ville || "—"}</p>
+                          <p>
+                            ❓Besoin :{" "}
+                            {(() => {
+                              if (!m.besoin) return "—";
+                              if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                              try {
+                                const arr = JSON.parse(m.besoin);
+                                return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                              } catch {
+                                return m.besoin;
+                              }
+                            })()}
+                          </p>
+                          <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                          <p>📌 Statut Suivis : {m.statuts_suivis?.libelle || m.statut_suivis || "—"}</p>
+                          <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
+
+                          {/* Envoi */}
+                          <div className="mt-2">
+                            <label className="font-semibold text-sm">Envoyer à :</label>
+                            <select
+                              value={selectedTargetType[m.id] || ""}
+                              onChange={(e) =>
+                                setSelectedTargetType((prev) => ({
+                                  ...prev,
+                                  [m.id]: e.target.value,
+                                }))
+                              }
+                              className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                            >
+                              <option value="">-- Choisir une option --</option>
+                              <option value="cellule">Une Cellule</option>
+                              <option value="conseiller">Un Conseiller</option>
+                            </select>
+
+                            {(selectedTargetType[m.id] === "cellule" ||
+                              selectedTargetType[m.id] === "conseiller") && (
                               <select
-                                value={selectedTargetType[m.id] || ""}
+                                value={selectedTargets[m.id] || ""}
                                 onChange={(e) =>
-                                  setSelectedTargetType((prev) => ({
-                                    ...prev,
-                                    [m.id]: e.target.value,
-                                  }))
+                                  setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))
                                 }
                                 className="mt-1 w-full border rounded px-2 py-1 text-sm"
                               >
-                                <option value="">-- Choisir une option --</option>
-                                <option value="cellule">Une Cellule</option>
-                                <option value="conseiller">Un Conseiller</option>
+                                <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
+                                {selectedTargetType[m.id] === "cellule"
+                                  ? cellules.map((c) => (
+                                      <option key={c.id} value={c.id}>
+                                        {c.cellule} ({c.responsable})
+                                      </option>
+                                    ))
+                                  : conseillers.map((c) => (
+                                      <option key={c.id} value={c.id}>
+                                        {c.prenom} {c.nom}
+                                      </option>
+                                    ))}
                               </select>
+                            )}
 
-                              {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
-                                <select
-                                  value={selectedTargets[m.id] || ""}
-                                  onChange={(e) =>
-                                    setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))
+                            {selectedTargets[m.id] && (
+                              <div className="pt-2">
+                                <BoutonEnvoyer
+                                  membre={m}
+                                  type={selectedTargetType[m.id]}
+                                  cible={
+                                    selectedTargetType[m.id] === "cellule"
+                                      ? cellules.find((c) => c.id === selectedTargets[m.id])
+                                      : conseillers.find((c) => c.id === selectedTargets[m.id])
                                   }
-                                  className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                                >
-                                  <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
-                                  {selectedTargetType[m.id] === "cellule"
-                                    ? cellules.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                          {c.cellule} ({c.responsable})
-                                        </option>
-                                      ))
-                                    : conseillers.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                          {c.prenom} {c.nom}
-                                        </option>
-                                      ))}
-                                </select>
-                              )}
-
-                              {selectedTargets[m.id] && (
-                                <div className="pt-2">
-                                  <BoutonEnvoyer
-                                    membre={m}
-                                    type={selectedTargetType[m.id]}
-                                    cible={
+                                  onEnvoyer={(id) =>
+                                    handleAfterSend(
+                                      id,
+                                      selectedTargetType[m.id],
                                       selectedTargetType[m.id] === "cellule"
                                         ? cellules.find((c) => c.id === selectedTargets[m.id])
                                         : conseillers.find((c) => c.id === selectedTargets[m.id])
-                                    }
-                                    onEnvoyer={(id) =>
-                                      handleAfterSend(
-                                        id,
-                                        selectedTargetType[m.id],
-                                        selectedTargetType[m.id] === "cellule"
-                                          ? cellules.find((c) => c.id === selectedTargets[m.id])
-                                          : conseillers.find((c) => c.id === selectedTargets[m.id])
-                                      )
-                                    }
-                                    session={session}
-                                    showToast={showToast}
-                                  />
-                                </div>
-                              )}
-                            </div>
+                                    )
+                                  }
+                                  session={session}
+                                  showToast={showToast}
+                                />
+                              </div>
+                            )}
+
+                            <button
+                              onClick={() => setEditMember(m)}
+                              className="text-blue-600 text-sm mt-6 block mx-auto"
+                            >
+                              ✏️ Modifier le contact
+                            </button>
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   );
-                })}                
+                })}
               </div>
             </div>
           )}
@@ -386,7 +391,7 @@ export default function ListMembers() {
                         <h2 className="text-lg font-bold">
                           {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                         </h2>
-                      
+
                         <div className="flex flex-col space-y-1 text-sm text-gray-600 w-full items-center">
                           <div className="flex justify-center items-center space-x-3">
                             <span>📱</span>
@@ -394,126 +399,46 @@ export default function ListMembers() {
                           </div>
                           <div className="flex justify-center items-center space-x-3">
                             <span>🕊</span>
-                              <span>Statut : {m.statut || "—"}</span>
-                            </div>
-                            <div className="flex justify-center items-center space-x-3">
-                              <span>🏠</span>
-                              <span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}</span>
-                            </div>
-                            <div className="flex justify-center items-center space-x-3">
-                              <span>👤</span>
-                              <span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}</span>
-                            </div>
+                            <span>Statut : {m.statut || "—"}</span>
+                          </div>
+                          <div className="flex justify-center items-center space-x-3">
+                            <span>🏠</span>
+                            <span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}</span>
+                          </div>
+                          <div className="flex justify-center items-center space-x-3">
+                            <span>👤</span>
+                            <span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}</span>
                           </div>
                         </div>
 
-                        {/* Bouton Détails */}
                         <button
                           onClick={() => toggleDetails(m.id)}
                           className="text-orange-500 underline text-sm mt-2"
                         >
                           {isOpen ? "Fermer détails" : "Détails"}
                         </button>
-                        </div>
-                        {/* Détails ouverts */}
-                        {isOpen && (
-                          <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
-                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                            <p>🏙 Ville : {m.ville || "—"}</p>
-                            <p>
-                              ❓Besoin :{" "}
-                              {(() => {
-                                if (!m.besoin) return "—";
-                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                                try {
-                                  const arr = JSON.parse(m.besoin);
-                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                                } catch {
-                                  return m.besoin;
-                                }
-                              })()}
-                            </p>
-                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                            <p>📌 Statut Suivis : {m.statuts_suivis?.libelle || m.statut_suivis || "—"}</p>  
-                            <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p> 
-
-                            {/* Envoi */}
-                            <div className="mt-2">
-                              <label className="font-semibold text-sm">Envoyer à :</label>
-                              <select
-                                value={selectedTargetType[m.id] || ""}
-                                onChange={(e) =>
-                                  setSelectedTargetType((prev) => ({
-                                    ...prev,
-                                    [m.id]: e.target.value,
-                                  }))
-                                }
-                                className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                              >
-                                <option value="">-- Choisir une option --</option>
-                                <option value="cellule">Une Cellule</option>
-                                <option value="conseiller">Un Conseiller</option>
-                              </select>
-
-                              {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
-                                <select
-                                  value={selectedTargets[m.id] || ""}
-                                  onChange={(e) =>
-                                    setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))
-                                  }
-                                  className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                                >
-                                  <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
-                                  {selectedTargetType[m.id] === "cellule"
-                                    ? cellules.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                          {c.cellule} ({c.responsable})
-                                        </option>
-                                      ))
-                                    : conseillers.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                          {c.prenom} {c.nom}
-                                        </option>
-                                      ))}
-                                </select>
-                              )}
-
-                              {selectedTargets[m.id] && (
-                                <div className="pt-2">
-                                  <BoutonEnvoyer
-                                    membre={m}
-                                    type={selectedTargetType[m.id]}
-                                    cible={
-                                      selectedTargetType[m.id] === "cellule"
-                                        ? cellules.find((c) => c.id === selectedTargets[m.id])
-                                        : conseillers.find((c) => c.id === selectedTargets[m.id])
-                                    }
-                                    onEnvoyer={(id) =>
-                                      handleAfterSend(
-                                        id,
-                                        selectedTargetType[m.id],
-                                        selectedTargetType[m.id] === "cellule"
-                                          ? cellules.find((c) => c.id === selectedTargets[m.id])
-                                          : conseillers.find((c) => c.id === selectedTargets[m.id])
-                                      )
-                                    }
-                                    session={session}
-                                    showToast={showToast}
-                                  />
-                                </div>
-                              )}
-
-                              {/* Modifier contact */}
-                              <button
-                                onClick={() => setEditMember(m)}
-                                className="text-blue-600 text-sm mt-6 block mx-auto"
-                              >
-                                ✏️ Modifier le contact
-                              </button>
-                            </div>
-                          </div>
-                        )}
                       </div>
+
+                      {isOpen && (
+                        <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
+                          <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                          <p>🏙 Ville : {m.ville || "—"}</p>
+                          <p>
+                            ❓Besoin :{" "}
+                            {(() => {
+                              if (!m.besoin) return "—";
+                              if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                              try {
+                                const arr = JSON.parse(m.besoin);
+                                return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                              } catch {
+                                return m.besoin;
+                              }
+                            })()}
+                          </p>
+                          <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

@@ -31,7 +31,7 @@ export default function ListMembers() {
   const [prenom, setPrenom] = useState("");
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
-  const [suivisParConseiller, setSuivisParConseiller] = useState([]);
+ 
 
             // Pour corriger ton problème statusChanges
             const [statusChanges, setStatusChanges] = useState({});

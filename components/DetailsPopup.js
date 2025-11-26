@@ -4,21 +4,22 @@ import { useState, useEffect } from "react";
 import BoutonEnvoyer from "./BoutonEnvoyer";
 
 export default function DetailsPopup({
-  member,
+  membre,
   onClose,
-  statusOptions,
-  cellules,
-  conseillers,
+  statusOptions = ["actif", "ancien", "visiteur", "veut rejoindre ICC", "a déjà son église"],
+  cellules = [],
+  conseillers = [],
   handleAfterSend,
   session,
+  showToast,
 }) {
   const [selectedTargetType, setSelectedTargetType] = useState("");
   const [selectedTarget, setSelectedTarget] = useState(null);
-  const [status, setStatus] = useState(member.statut || "");
+  const [status, setStatus] = useState(membre.statut || "");
 
   useEffect(() => {
-    setStatus(member.statut || "");
-  }, [member]);
+    setStatus(membre.statut || "");
+  }, [membre]);
 
   const handleSend = () => {
     if (!selectedTargetType || !selectedTarget) return;
@@ -28,7 +29,8 @@ export default function DetailsPopup({
         ? cellules.find((c) => c.id === selectedTarget)
         : conseillers.find((c) => c.id === selectedTarget);
 
-    handleAfterSend(member.id, selectedTargetType, cible, status);
+    handleAfterSend(membre.id, selectedTargetType, cible, status);
+    showToast?.("✅ Contact envoyé et suivi enregistré");
     setSelectedTarget(null);
     setSelectedTargetType("");
   };
@@ -44,28 +46,30 @@ export default function DetailsPopup({
         </button>
 
         <h2 className="text-xl font-bold mb-4">
-          {member.prenom} {member.nom}
+          {membre.prenom} {membre.nom} {membre.star && "⭐"}
         </h2>
 
         <div className="space-y-2 text-sm text-gray-700">
-          <p>📱 Téléphone : {member.telephone || "—"}</p>
-          <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-          <p>🏙 Ville : {member.ville || "—"}</p>
+          <p>📱 Téléphone : {membre.telephone || "—"}</p>
+          <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
+          <p>🏙 Ville : {membre.ville || "—"}</p>
           <p>
             ❓ Besoin :{" "}
             {(() => {
-              if (!member.besoin) return "—";
-              if (Array.isArray(member.besoin)) return member.besoin.join(", ");
+              if (!membre.besoin) return "—";
+              if (Array.isArray(membre.besoin)) return membre.besoin.join(", ");
               try {
-                const arr = JSON.parse(member.besoin);
-                return Array.isArray(arr) ? arr.join(", ") : member.besoin;
+                const arr = JSON.parse(membre.besoin);
+                return Array.isArray(arr) ? arr.join(", ") : membre.besoin;
               } catch {
-                return member.besoin;
+                return membre.besoin;
               }
             })()}
           </p>
-          <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
-          <p>📝 Commentaire Suivis : {member.commentaire_suivis || "—"}</p>   
+          <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
+          <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
+          <p>🏠 Cellule : {membre.cellule_nom || "—"} - {membre.responsable_nom || "—"}</p>
+          <p>👤 Conseiller : {membre.conseiller_prenom || "—"} {membre.conseiller_nom || ""}</p>
         </div>
 
         {/* Statut */}
@@ -92,7 +96,7 @@ export default function DetailsPopup({
             value={selectedTargetType}
             onChange={(e) => {
               setSelectedTargetType(e.target.value);
-              setSelectedTarget(null); // reset target when type changes
+              setSelectedTarget(null);
             }}
             className="mt-1 w-full border rounded px-2 py-1 text-sm"
           >
@@ -125,7 +129,7 @@ export default function DetailsPopup({
           {selectedTarget && (
             <div className="mt-4">
               <BoutonEnvoyer
-                membre={member}
+                membre={membre}
                 type={selectedTargetType}
                 cible={
                   selectedTargetType === "cellule"
@@ -134,6 +138,7 @@ export default function DetailsPopup({
                 }
                 onEnvoyer={handleSend}
                 session={session}
+                showToast={showToast}
               />
             </div>
           )}

@@ -60,33 +60,38 @@ export default function ListMembers() {
     fetchConseillers();
   }, []);
 
+  
   const fetchMembers = async () => {
-  // Récupérer les membres avec leurs statuts et les infos des cellules / conseillers
+  // Récupérer tous les membres
   const { data, error } = await supabase
     .from("membres")
     .select(`
       *,
-      statuts_suivis!inner(libelle),
       cellule_nom,
       responsable_nom,
       conseiller_id,
       conseiller_prenom,
-      conseiller_nom
+      conseiller_nom,
+      statut_suivis,
+      commentaire_suivis,
+      ville,
+      is_whatsapp,
+      besoin,
+      infos_supplementaires
     `)
     .order("created_at", { ascending: false });
 
   if (error) {
     console.error("Erreur fetchMembers:", error);
   } else {
-    // Normalisation : pour chaque membre, si la cellule/conseiller existe dans un autre join, récupérer les infos
     const normalized = data.map((m) => ({
       ...m,
       cellule_nom: m.cellule_nom || null,
       responsable_nom: m.responsable_nom || null,
       conseiller_prenom: m.conseiller_prenom || null,
       conseiller_nom: m.conseiller_nom || null,
+      statut_suivis: m.statut_suivis || null,
     }));
-
     setMembers(normalized);
   }
 };

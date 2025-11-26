@@ -61,17 +61,36 @@ export default function ListMembers() {
   }, []);
 
   const fetchMembers = async () => {
+  // Récupérer les membres avec leurs statuts et les infos des cellules / conseillers
   const { data, error } = await supabase
-      .from("membres")
-      .select(`
-        *,
-        statuts_suivis!inner(libelle)
-      `)
-      .order("created_at", { ascending: false });
-  
-    if (error) console.error(error);
-    else setMembers(data);
-  };
+    .from("membres")
+    .select(`
+      *,
+      statuts_suivis!inner(libelle),
+      cellule_nom,
+      responsable_nom,
+      conseiller_id,
+      conseiller_prenom,
+      conseiller_nom
+    `)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Erreur fetchMembers:", error);
+  } else {
+    // Normalisation : pour chaque membre, si la cellule/conseiller existe dans un autre join, récupérer les infos
+    const normalized = data.map((m) => ({
+      ...m,
+      cellule_nom: m.cellule_nom || null,
+      responsable_nom: m.responsable_nom || null,
+      conseiller_prenom: m.conseiller_prenom || null,
+      conseiller_nom: m.conseiller_nom || null,
+    }));
+
+    setMembers(normalized);
+  }
+};
+
 
   const fetchCellules = async () => {
     const { data } = await supabase.from("cellules").select("id, cellule, responsable, telephone");

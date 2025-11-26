@@ -227,9 +227,9 @@ export default function ListMembers() {
 
                         {/* Menu déroulant pour le statut */}
                         <div className="mt-2 w-full">
-                          <label className="text-gray-700 text-sm mr-2 items-center">🕊 Statut :</label>
-                          <p className="text-sm text-gray-600 items-center">🏠 Cellule : {m.cellule_nom || ""}-{m.responsable_nom || ""}</p>
-                          <p className="text-sm text-gray-600 items-center">👤 Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}</p>
+                          <label className="text-gray-700 text-sm space-y-2 text-center">🕊 Statut :</label>
+                          <p className="text-gray-700 text-sm space-y-2 text-center">🏠 Cellule : {m.cellule_nom || ""}-{m.responsable_nom || ""}</p>
+                          <p className=="text-gray-700 text-sm space-y-2 text-center">👤 Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}</p>
                           <select
                             value={statusChanges[m.id] ?? m.statut ?? ""}
                             onChange={(e) => handleStatusChange(m.id, e.target.value)}
@@ -375,16 +375,16 @@ export default function ListMembers() {
                           {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                         </h2>
                         <p className="text-sm text-gray-600">
-                          <span className="mr-3">📱</span>{m.telephone || "—"}
+                          <span className="space-y-2">📱</span>{m.telephone || "—"}
                         </p>
                         <p className="text-sm text-gray-600">
-                          <span className="mr-3">🕊</span>Statut : {m.statut}
+                          <span className="space-y-2">🕊</span>Statut : {m.statut}
                         </p>
                         <p className="text-sm text-gray-600">
-                          <span className="mr-3">🏠</span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}
+                          <span className="space-y-2">🏠</span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}
                         </p>
                         <p className="text-sm text-gray-600">
-                          <span className="mr-3">👤</span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}
+                          <span className="space-y-2">👤</span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}
                         </p>
                         {/* Bouton Détails */}
                         <button

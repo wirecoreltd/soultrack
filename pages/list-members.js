@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * Page: Liste des Membres
- * Description: Affiche les membres sous forme de carte ou tableau avec filtres et envoi WhatsApp.
- */
-
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -267,10 +262,17 @@ export default function ListMembers() {
           })}
         </div>
       )}
+
+      {/* ==================== TOAST ==================== */}
+      {showingToast && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg">
+          {toastMessage}
+        </div>
+      )}
+
     </div>
   );
 }
-
 
       {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (

@@ -60,42 +60,56 @@ export default function ListMembers() {
     fetchConseillers();
   }, []);
 
-  
   const fetchMembers = async () => {
-  // Récupérer tous les membres
+  // Récupérer les membres et leur dernier suivi
   const { data, error } = await supabase
     .from("membres")
     .select(`
-      *,
+      id,
+      prenom,
+      nom,
+      telephone,
+      statut,
       cellule_nom,
       responsable_nom,
       conseiller_id,
       conseiller_prenom,
       conseiller_nom,
+      is_whatsapp,
+      besoin,
+      infos_supplementaires,
       statut_suivis,
       commentaire_suivis,
       ville,
-      is_whatsapp,
-      besoin,
-      infos_supplementaires
+      created_at
     `)
     .order("created_at", { ascending: false });
 
   if (error) {
     console.error("Erreur fetchMembers:", error);
-  } else {
-    const normalized = data.map((m) => ({
-      ...m,
-      cellule_nom: m.cellule_nom || null,
-      responsable_nom: m.responsable_nom || null,
-      conseiller_prenom: m.conseiller_prenom || null,
-      conseiller_nom: m.conseiller_nom || null,
-      statut_suivis: m.statut_suivis || null,
-    }));
-    setMembers(normalized);
+    return;
   }
+
+  // Normalisation : on s'assure que chaque champ existe
+  const normalized = data.map((m) => ({
+    ...m,
+    cellule_nom: m.cellule_nom || "—",
+    responsable_nom: m.responsable_nom || "—",
+    conseiller_prenom: m.conseiller_prenom || null,
+    conseiller_nom: m.conseiller_nom || null,
+    statut_suivis: m.statut_suivis || null,
+    commentaire_suivis: m.commentaire_suivis || null,
+    is_whatsapp: m.is_whatsapp ?? false,
+    besoin: m.besoin ?? "[]",
+    infos_supplementaires: m.infos_supplementaires || "—",
+    ville: m.ville || "—",
+  }));
+
+  console.log("Membres récupérés:", normalized); // pour vérifier
+  setMembers(normalized);
 };
 
+  
 
   const fetchCellules = async () => {
     const { data } = await supabase.from("cellules").select("id, cellule, responsable, telephone");

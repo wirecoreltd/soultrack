@@ -62,20 +62,16 @@ export default function ListMembers() {
 
   const fetchMembers = async () => {
   const { data, error } = await supabase
-    .from("membres") // ou ta view principale
-    .select(`
-      *,
-      cellule_nom,
-      responsable_nom,
-      conseiller_nom,
-      conseiller_prenom,
-      statuts_suivis!inner(libelle)
-    `)
-    .order("created_at", { ascending: false });
-
-  if (error) console.error(error);
-  else setMembers(dta);
-};  
+      .from("membres")
+      .select(`
+        *,
+        statuts_suivis!inner(libelle)
+      `)
+      .order("created_at", { ascending: false });
+  
+    if (error) console.error(error);
+    else setMembers(data);
+  };
 
   const fetchCellules = async () => {
     const { data } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
@@ -380,8 +376,6 @@ export default function ListMembers() {
                         </h2>
                         <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
                         <p className="text-sm text-gray-600">🕊 Statut : {m.statut}</p>
-                        <p>🏠 Cellule - Responsable : {m.cellule_nom ? `${m.cellule_nom} - ${m.responsable_nom || "—"}` : "—"}</p>
-                        <p>👤 Conseiller : {m.conseiller_prenom || m.conseiller_nom ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}` : "—"}</p>
                         {/* Bouton Détails */}
                         <button
                           onClick={() => toggleDetails(m.id)}

@@ -224,17 +224,24 @@ export default function ListMembers() {
                           {m.prenom} {m.nom}
                         </h2>
                         <div className="text-lg text-center">
-                        <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
-
-                        {/* Menu déroulant pour le statut */}
-                        <div className="text-lg text-center">
-                          <label className="text-sm text-gray-600 space-y-2 text-center">🕊 Statut :</label>
-                          <p className="text-lg text-center">
-                          <span className="text-sm text-gray-600 space-y-2 text-center">🏠</span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}
-                          </p>
-                          <p className="text-lg text-center">
-                          <span className="text-sm text-gray-600 space-y-2 text-center">👤</span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}
-                          </p>
+                        <div className="flex flex-col space-y-1 text-sm text-gray-600 w-full">
+                          <div className="flex items-center space-x-2">
+                            <span>📱</span>
+                            <span>{m.telephone || "—"}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span>🕊</span>
+                            <span>Statut : {m.statut || "—"}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span>🏠</span>
+                            <span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span>👤</span>
+                            <span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}</span>
+                          </div>
+                        </div>
                           <select
                             value={statusChanges[m.id] ?? m.statut ?? ""}
                             onChange={(e) => handleStatusChange(m.id, e.target.value)}
@@ -347,8 +354,7 @@ export default function ListMembers() {
                       </div>
                     </div>
                   );
-                })}
-                </div>
+                })}                
               </div>
             </div>
           )}
@@ -381,16 +387,16 @@ export default function ListMembers() {
                           {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                         </h2>
                         <p className="text-sm text-gray-600">
-                          <span className="space-y-4">📱</span>{m.telephone || "—"}
+                          <span className="space-x-2">📱</span>{m.telephone || "—"}
                         </p>
                         <p className="text-sm text-gray-600">
-                          <span className="space-y-4">🕊</span>Statut : {m.statut}
+                          <span className="space-x-2">🕊</span>Statut : {m.statut}
                         </p>
                         <p className="text-sm text-gray-600">
-                          <span className="space-y-4">🏠</span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}
+                          <span className="space-x-2">🏠</span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}
                         </p>
                         <p className="text-sm text-gray-600">
-                          <span className="space-y-4">👤</span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}
+                          <span className="space-x-2">👤</span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}
                         </p>
                         {/* Bouton Détails */}
                         <button

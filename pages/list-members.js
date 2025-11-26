@@ -1,41 +1,59 @@
-"use client";
-
-/**
- * Page: Liste des Membres
- * Description: Affiche les membres sous forme de carte ou tableau avec filtres et envoi WhatsApp.
- */
-
-import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
-import Image from "next/image";
-import BoutonEnvoyer from "../components/BoutonEnvoyer";
-import LogoutLink from "../components/LogoutLink";
-import DetailsPopup from "../components/DetailsPopup";
-import EditMemberPopup from "../components/EditMemberPopup";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-
-export default function ListMembers() {
-  const [members, setMembers] = useState([]);
-  const [filter, setFilter] = useState("");
-  const [search, setSearch] = useState("");
-  const [detailsOpen, setDetailsOpen] = useState({});
-  const [cellules, setCellules] = useState([]);
-  const [conseillers, setConseillers] = useState([]);
-  const [selectedTargets, setSelectedTargets] = useState({});
-  const [selectedTargetType, setSelectedTargetType] = useState({});
-  const [view, setView] = useState("card");
-  const [popupMember, setPopupMember] = useState(null);
-  const [editMember, setEditMember] = useState(null);
-  const [session, setSession] = useState(null);
-  const [prenom, setPrenom] = useState("");
-  const [toastMessage, setToastMessage] = useState("");
-  const [showingToast, setShowingToast] = useState(false);
-
-  const getContactsAssignedToConseiller = (id) => {
-  if (!id || !suivisParConseiller) return 0;
-  const conseiller = suivisParConseiller.find((c) => c.id === id);
-  return conseiller ? conseiller.totalContacts : 0;
+                  "use client";
+                  
+                  /**
+                   * Page: Liste des Membres
+                   * Description: Affiche les membres sous forme de carte ou tableau avec filtres et envoi WhatsApp.
+                   */
+                  
+                  import { useEffect, useState } from "react";
+                  import supabase from "../lib/supabaseClient";
+                  import Image from "next/image";
+                  import BoutonEnvoyer from "../components/BoutonEnvoyer";
+                  import LogoutLink from "../components/LogoutLink";
+                  import DetailsPopup from "../components/DetailsPopup";
+                  import EditMemberPopup from "../components/EditMemberPopup";
+                  import { format } from "date-fns";
+                  import { fr } from "date-fns/locale";
+                  
+                  export default function ListMembers() {
+                    const [members, setMembers] = useState([]);
+                    const [filter, setFilter] = useState("");
+                    const [search, setSearch] = useState("");
+                    const [detailsOpen, setDetailsOpen] = useState({});
+                    const [cellules, setCellules] = useState([]);
+                    const [conseillers, setConseillers] = useState([]);
+                    const [selectedTargets, setSelectedTargets] = useState({});
+                    const [selectedTargetType, setSelectedTargetType] = useState({});
+                    const [view, setView] = useState("card");
+                    const [popupMember, setPopupMember] = useState(null);
+                    const [editMember, setEditMember] = useState(null);
+                    const [session, setSession] = useState(null);
+                    const [prenom, setPrenom] = useState("");
+                    const [toastMessage, setToastMessage] = useState("");
+                    const [showingToast, setShowingToast] = useState(false);
+                  
+                    const getContactsAssignedToConseiller = (id) => {
+                    if (!id || !suivisParConseiller) return 0;
+                    const conseiller = suivisParConseiller.find((c) => c.id === id);
+                    return conseiller ? conseiller.totalContacts : 0;
+                  };
+                  
+                    const fetchMembers = async () => {
+                    const { data, error } = await supabase
+                      .from("suivis_membres")
+                      .select("*") // ou sélectionner explicitement les champs nécessaires
+                      .order("suivi_created_at", { ascending: false });
+                  
+                    if (error) console.error(error);
+                    else {
+                      // transformer pour avoir les propriétés directement lisibles
+                      const membresAvecConseiller = data.map((m) => ({
+                        ...m,
+                        conseiller_nom: m.conseiller_nom || null,
+                        conseiller_prenom: m.conseiller_prenom || null,
+                      }));
+                      setMembers(membresAvecConseiller);
+                    }
 };
  
             // Pour corriger ton problème statusChanges
@@ -448,7 +466,7 @@ export default function ListMembers() {
                         <p className="text-sm text-gray-600">
                           📝 Attribué à : {m.cellule_nom || "—"} – {m.responsable_nom || "—"}
                         </p>
-                        <p className="text-sm text-gray-600">👤 Conseiller : {m.conseiller_nom || "Non assigné"}</p>                                           
+                        <p className="text-white text-sm mt-1">👤 Conseiller : {m.conseiller_nom ? m.conseiller_nom : ""}</p>                                         
                                                                       
                         {/* Bouton Détails */}
                         <button

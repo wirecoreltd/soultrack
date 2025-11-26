@@ -254,8 +254,7 @@ export default function ListMembers() {
                             <option value="integrer">Intégré</option>
                             <option value="a déjà son église">A déjà son église</option>
                             <option value="refus">Refus</option>
-                          </select>
-                        </div>
+                          </select>                        
 
                         <button
                           onClick={() => toggleDetails(m.id)}
@@ -263,6 +262,9 @@ export default function ListMembers() {
                         >
                           {isOpen ? "Fermer détails" : "Détails"}
                         </button>
+                         </div>
+                          );
+                        })}
 
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-3 w-full space-y-2">

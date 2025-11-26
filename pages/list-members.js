@@ -61,12 +61,10 @@ export default function ListMembers() {
   }, []);
 
   const fetchMembers = async () => {
-  const { data, error } = await supabase
-  .from("v_membres_full") // utilise ta view pour avoir cellule/conseiller déjà joints
-  .select("*")
-  .order("created_at", { ascending: false });
-
-  
+    const { data, error } = await supabase
+      .from("v_membres_full")
+      .select("*")
+      .order("created_at", { ascending: false });
     if (error) console.error(error);
     else setMembers(data);
   };
@@ -219,7 +217,8 @@ export default function ListMembers() {
                       <span className="absolute top-3 right-[-25px] bg-blue-600 text-white text-[10px] px-6 py-1 rotate-45">
                         Nouveau
                       </span>
-                      <div classNamed>
+
+                      <div className="">
                         <h2 className="text-lg font-bold text-center">
                           {m.prenom} {m.nom}
                         </h2>
@@ -241,20 +240,20 @@ export default function ListMembers() {
                             <span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}</span>
                           </div>
                         </div>
-                      </div>
-                          <select
-                            value={statusChanges[m.id] ?? m.statut ?? ""}
-                            onChange={(e) => handleStatusChange(m.id, e.target.value)}
-                            className="border rounded-md px-2 py-1 text-sm w-full"
-                          >
-                            <option value="">-- Choisir un statut --</option>
-                            <option value="visiteur">Visiteur</option>
-                            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                            <option value="actif">Actif</option>
-                            <option value="integrer">Intégré</option>
-                            <option value="a déjà son église">A déjà son église</option>
-                            <option value="refus">Refus</option>
-                          </select>                        
+
+                        <select
+                          value={statusChanges[m.id] ?? m.statut ?? ""}
+                          onChange={(e) => handleStatusChange(m.id, e.target.value)}
+                          className="border rounded-md px-2 py-1 text-sm w-full mt-2"
+                        >
+                          <option value="">-- Choisir un statut --</option>
+                          <option value="visiteur">Visiteur</option>
+                          <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                          <option value="actif">Actif</option>
+                          <option value="integrer">Intégré</option>
+                          <option value="a déjà son église">A déjà son église</option>
+                          <option value="refus">Refus</option>
+                        </select>
 
                         <button
                           onClick={() => toggleDetails(m.id)}
@@ -262,9 +261,6 @@ export default function ListMembers() {
                         >
                           {isOpen ? "Fermer détails" : "Détails"}
                         </button>
-                         </div>
-                          );
-                        })}
 
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
@@ -284,8 +280,9 @@ export default function ListMembers() {
                               })()}
                             </p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                            <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
 
-                            {/* ENVOYER À */}
+                            {/* Envoyer à */}
                             <div className="mt-2">
                               <label className="font-semibold text-sm">Envoyer à :</label>
                               <select
@@ -303,7 +300,8 @@ export default function ListMembers() {
                                 <option value="conseiller">Un Conseiller</option>
                               </select>
 
-                              {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
+                              {(selectedTargetType[m.id] === "cellule" ||
+                                selectedTargetType[m.id] === "conseiller") && (
                                 <select
                                   value={selectedTargets[m.id] || ""}
                                   onChange={(e) =>
@@ -356,7 +354,7 @@ export default function ListMembers() {
                       </div>
                     </div>
                   );
-                })}                
+                })}
               </div>
             </div>
           )}

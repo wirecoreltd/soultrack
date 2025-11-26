@@ -347,14 +347,15 @@ export default function ListMembers() {
                                     showToast={showToast}
                                   />
                                 </div>
-                              )}
+                               )}
                             </div>
                           </div>
                         )}
                       </div>
-                    </div>
+                    </div>   {/* ← CE BLOC ÉTAIT MANQUANT */}
                   );
                 })}                
+              </div>    
               </div>
             </div>
           )}

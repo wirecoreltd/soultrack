@@ -1,5 +1,3 @@
-Oui
-
 "use client";
 
 /**

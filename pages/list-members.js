@@ -35,16 +35,28 @@ export default function ListMembers() {
   // Pour corriger ton problème statusChanges
   const [statusChanges, setStatusChanges] = useState({});
 
-  const { data } = await supabase
-  .from("membres_avec_cellule")
-  .select("*");
-
-  const showToast = (msg) => {
+    const showToast = (msg) => {
     setToastMessage(msg);
     setShowingToast(true);
     setTimeout(() => setShowingToast(false), 3500);
   };
+  useEffect(() => {
+  const fetchMembers = async () => {
+    const { data, error } = await supabase
+      .from("membres_avec_cellule")
+      .select("*");
 
+    if (error) {
+      console.error("Erreur chargement membres :", error);
+      return;
+    }
+
+    setMembers(data);
+  };
+
+  fetchMembers();
+}, []);
+  
   useEffect(() => {
     const fetchSessionAndProfile = async () => {
       const { data: { session } } = await supabase.auth.getSession();

@@ -228,6 +228,8 @@ export default function ListMembers() {
                         {/* Menu déroulant pour le statut */}
                         <div className="mt-2 w-full">
                           <label className="text-gray-700 text-sm mr-2">🕊 Statut :</label>
+                          <p className="text-sm text-gray-600">🏠 Cellule : {m.cellule_nom || ""}-{m.responsable_nom || ""}</p>
+                          <p className="text-sm text-gray-600">👤 Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}</p>
                           <select
                             value={statusChanges[m.id] ?? m.statut ?? ""}
                             onChange={(e) => handleStatusChange(m.id, e.target.value)}
@@ -372,10 +374,18 @@ export default function ListMembers() {
                         <h2 className="text-lg font-bold text-center">
                           {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                         </h2>
-                        <p className="text-sm text-gray-600">📱 {m.telephone || "—"}</p>
-                        <p className="text-sm text-gray-600">🕊 Statut : {m.statut}</p>
-                        <p className="text-sm text-gray-600">🏠 Cellule : {m.cellule_nom || "—"} {m.responsable_nom || "—"}</p>
-                        <p className="text-sm text-gray-600">👤 Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}</p>
+                        <p className="text-sm text-gray-600">
+                          <span className="mr-2">📱</span>{m.telephone || "—"}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <span className="mr-2">🕊</span>Statut : {m.statut}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <span className="mr-2">🏠</span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <span className="mr-2">👤</span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}
+                        </p>
                         {/* Bouton Détails */}
                         <button
                           onClick={() => toggleDetails(m.id)}

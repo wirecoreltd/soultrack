@@ -347,7 +347,7 @@ export default function ListMembers() {
                                     showToast={showToast}
                                   />
                                 </div>
-                               )}
+                              )}
                             </div>
                           </div>
                         )}
@@ -358,6 +358,7 @@ export default function ListMembers() {
               </div>
             </div>
           )}
+
 
 
           {/* Anciens membres */}

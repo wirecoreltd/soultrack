@@ -355,10 +355,10 @@ export default function ListMembers() {
                     </div>
                   );
                 })}                
-              </div>    
               </div>
             </div>
           )}
+
 
           {/* Anciens membres */}
           {anciensFiltres.length > 0 && (

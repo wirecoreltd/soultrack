@@ -231,11 +231,11 @@ export default function ListMembers() {
                           </div>
                           <div className="flex justify-center items-center space-x-2">
                             <span>🏠</span>
-                            <span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}</span>
+                            <span>Cellule : {m.suivi_cellule_nom || ""} - {m.suivi_responsable || ""}</span>
                           </div>
                           <div className="flex justify-center items-center space-x-2">
                             <span>👤</span>
-                            <span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}</span>
+                            <span>Conseiller : {m.suivi_responsable || ""}</span>
                           </div>
                         </div>
 
@@ -401,7 +401,7 @@ export default function ListMembers() {
                           </div>
                           <div className="flex justify-center items-center space-x-2">
                             <span>🏠</span>
-                            <span>Cellule : {m.cellule_nom_suivi || ""} - {m.responsable_nom || ""}</span>
+                            <span>Cellule : {m.suivi_cellule_nom || ""} - {m.suivi_responsable || ""}</span>
                           </div>
                           <div className="flex justify-center items-center space-x-2">
                             <span>👤</span>
@@ -435,7 +435,7 @@ export default function ListMembers() {
                             </p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
                             <p>📌 Statut Suivis : {m.dernier_statut_suivi || "—"}</p>
-                            <p>📝 Commentaire Suivis : {m.dernier_commentaire_suivi || "—"}</p>
+                            <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>
                             <select
                               value={statusChanges[m.id] ?? m.statut ?? ""}
                               onChange={(e) => handleStatusChange(m.id, e.target.value)}

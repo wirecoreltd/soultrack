@@ -23,8 +23,8 @@ const roleCards = {
   ResponsableCellule: [
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" },
   ],
-  conseiller: [
-    { path: "/conseiller-hub", label: "Coseiller", emoji: "👥", color: "#06B6D4" },
+  Conseiller: [
+    { path: "/conseiller-hub", label: "Conseiller", emoji: "👥", color: "#06B6D4" },
   ],
   Membre: [],
 };

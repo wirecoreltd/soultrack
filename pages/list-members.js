@@ -44,46 +44,62 @@ export default function ListMembers() {
   };
 
   useEffect(() => {
-    const fetchSessionAndProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      if (session?.user) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("prenom")
-          .eq("id", session.user.id)
-          .single();
-        if (data) setPrenom(data.prenom);
-      }
-    };
-    fetchSessionAndProfile();
-    fetchMembers();
-    fetchCellules();
-    fetchConseillers();
-    
-  }, []);
-  
-  const fetchMembres = async () => {
-  setLoading(true);
-  try {
-    let query = supabase.from("v_membres_full").select("*");
+  const fetchSessionAndProfile = async () => {
+    // Récupérer la session
+    const { data: { session } } = await supabase.auth.getSession();
+    setSession(session);
 
-    // Filtre si conseiller_id est présent
-    if (conseillerId) {
-      query = query.eq("conseiller_id", conseillerId);
+    let profile = null;
+    if (session?.user) {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, prenom, role")
+        .eq("id", session.user.id)
+        .single();
+      if (!error && data) {
+        profile = data;
+        setPrenom(data.prenom);
+      }
     }
 
-    const { data, error } = await query.order("created_at", { ascending: false });
+    // Récupérer membres, cellules, conseillers
+    await fetchCellules();
+    await fetchConseillers();
+
+    // Récupérer membres avec filtre
+    await fetchMembers(profile);
+  };
+
+  fetchSessionAndProfile();
+}, []);
+
+// -----------------------------
+// fetchMembers avec filtre conseiller
+// -----------------------------
+const fetchMembers = async (profile = null) => {
+  setLoading(true);
+  try {
+    let query = supabase.from("v_membres_full").select("*").order("created_at", { ascending: false });
+
+    // Si URL contient ?conseiller_id=xxx, filtrer par cet ID
+    if (conseillerId) {
+      query = query.eq("conseiller_id", conseillerId);
+    } 
+    // Sinon si le user est un Conseiller connecté, filtrer par son ID
+    else if (profile?.role === "Conseiller") {
+      query = query.eq("conseiller_id", profile.id);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
-    setMembres(data || []);
+    setMembers(data || []);
   } catch (err) {
-    console.error("Erreur fetchMembres:", err);
-    setMembres([]);
+    console.error("Erreur fetchMembers:", err);
+    setMembers([]);
   } finally {
     setLoading(false);
   }
 };
-
 
   const fetchMembers = async () => {
     const { data, error } = await supabase

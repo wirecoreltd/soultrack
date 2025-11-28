@@ -141,6 +141,12 @@ export default function ListConseillers() {
                   <p className="text-sm text-gray-700 mb-1">✉️ {c.email || "—"}</p>
                   <p className="text-sm text-gray-700 mt-2">👤 Responsable : <span className="font-semibold">{c.responsable_nom}</span></p>
                   <p className="text-sm text-gray-800 mt-2 font-semibold">🔔 Contacts assignés : {c.totalContacts}</p>
+                  <button
+                    onClick={() => router.push(`/list-members?conseiller_id=${c.id}`)}
+                    className="mt-2 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                  >
+                    Voir les contacts
+                  </button>
                 </div>
               </div>
             ))}

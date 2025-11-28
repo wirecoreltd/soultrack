@@ -76,17 +76,15 @@ export default function ListMembers() {
 // -----------------------------
 // fetchMembers avec filtre conseiller
 // -----------------------------
-const fetchMembers = async (profile = null) => {
+  const fetchMembers = async (profile = null) => {
   setLoading(true);
   try {
     let query = supabase.from("v_membres_full").select("*").order("created_at", { ascending: false });
 
-    // Si URL contient ?conseiller_id=xxx, filtrer par cet ID
+    // Filtrage par URL ou par conseiller connecté
     if (conseillerId) {
       query = query.eq("conseiller_id", conseillerId);
-    } 
-    // Sinon si le user est un Conseiller connecté, filtrer par son ID
-    else if (profile?.role === "Conseiller") {
+    } else if (profile?.role === "Conseiller") {
       query = query.eq("conseiller_id", profile.id);
     }
 
@@ -101,14 +99,6 @@ const fetchMembers = async (profile = null) => {
   }
 };
 
-  const fetchMembers = async () => {
-    const { data, error } = await supabase
-      .from("v_membres_full")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) console.error(error);
-    else setMembers(data);
-  };
 
   const fetchCellules = async () => {
     const { data } = await supabase.from("cellules").select("id, cellule, responsable, telephone");

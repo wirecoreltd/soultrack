@@ -2,18 +2,15 @@
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function ListConseillers() {
   const [conseillers, setConseillers] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const router = useRouter();
 
   const fetchConseillers = async () => {
     setLoading(true);
-
     try {
       // 1️⃣ Récupérer tous les conseillers
       const { data: profiles, error: profilesError } = await supabase
@@ -22,7 +19,6 @@ export default function ListConseillers() {
         .eq("role", "Conseiller");
 
       if (profilesError) throw profilesError;
-
       if (!profiles || profiles.length === 0) {
         setConseillers([]);
         setLoading(false);
@@ -31,24 +27,37 @@ export default function ListConseillers() {
 
       const conseillersIds = profiles.map((p) => p.id);
 
-      // 2️⃣ Récupérer les membres assignés
-      const { data: membres, error: membresError } = await supabase
+      // 2️⃣ Récupérer tous les membres assignés via membres.conseiller_id
+      const { data: membres } = await supabase
         .from("membres")
         .select("id, conseiller_id")
         .in("conseiller_id", conseillersIds);
 
-      if (membresError) throw membresError;
+      // 3️⃣ Récupérer tous les membres assignés via suivis_membres.conseiller_id
+      const { data: suivis } = await supabase
+        .from("suivis_membres")
+        .select("membre_id, conseiller_id")
+        .in("conseiller_id", conseillersIds);
 
-      // 3️⃣ Compter les contacts
+      // 4️⃣ Compter les contacts par conseiller (membres + suivis)
       const countMap = {};
+
+      // Membres
       membres?.forEach((m) => {
-        countMap[m.conseiller_id] = (countMap[m.conseiller_id] || 0) + 1;
+        if (m.conseiller_id) {
+          countMap[m.conseiller_id] = (countMap[m.conseiller_id] || 0) + 1;
+        }
       });
 
-      // 4️⃣ Récupérer les responsables
-      const responsablesIds = profiles
-        .map((p) => p.responsable_id)
-        .filter(Boolean);
+      // Suivis
+      suivis?.forEach((s) => {
+        if (s.conseiller_id) {
+          countMap[s.conseiller_id] = (countMap[s.conseiller_id] || 0) + 1;
+        }
+      });
+
+      // 5️⃣ Récupérer les responsables
+      const responsablesIds = profiles.map((p) => p.responsable_id).filter(Boolean);
 
       let responsableMap = {};
       if (responsablesIds.length > 0) {
@@ -62,19 +71,12 @@ export default function ListConseillers() {
         });
       }
 
-      // 5️⃣ Fusionner les données
+      // 6️⃣ Fusionner les données
       const list = profiles.map((p) => ({
         ...p,
-        responsable_nom: p.responsable_id
-          ? responsableMap[p.responsable_id] || "Aucun"
-          : "Aucun",
-
-        // IMPORTANT : les deux formats
+        responsable_nom: p.responsable_id ? (responsableMap[p.responsable_id] || "Aucun") : "Aucun",
         totalContacts: countMap[p.id] || 0,
-        total_contacts: countMap[p.id] || 0,
       }));
-
-      console.log("🎯 Conseillers envoyés au state :", list);
 
       setConseillers(list);
     } catch (err) {
@@ -100,7 +102,9 @@ export default function ListConseillers() {
           ← Retour
         </button>
 
-        <h1 className="text-3xl font-bold text-center">Liste des Conseillers</h1>
+        <h1 className="text-3xl font-bold text-center">
+          Liste des Conseillers
+        </h1>
 
         <button
           onClick={() => router.push("/create-conseiller")}
@@ -136,8 +140,7 @@ export default function ListConseillers() {
                 </p>
 
                 <p className="text-gray-800 mt-2 font-semibold">
-                  🔔 Contacts assignés :{" "}
-                  {c.totalContacts ?? c.total_contacts ?? 0}
+                  🔔 Contacts assignés : {c.totalContacts}
                 </p>
               </div>
             ))}

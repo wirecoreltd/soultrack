@@ -31,6 +31,8 @@ export default function ListMembers() {
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
+  const [selectedTargets, setSelectedTargets] = useState({});
+  const [selectedTargetType, setSelectedTargetType] = useState({});
 
   const [statusChanges, setStatusChanges] = useState({});
   

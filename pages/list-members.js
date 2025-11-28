@@ -249,37 +249,7 @@ export default function ListMembers() {
                             <option key={s} value={s}>{s}</option>
                           ))}
                         </select>
-
-                        <button
-                          onClick={() => toggleDetails(m.id)}
-                          className="text-orange-500 underline text-sm mt-2"
-                        >
-                          {isOpen ? "Fermer détails" : "Détails"}
-                        </button>
-
-                        {/* Détails ouverts */}
-                        {isOpen && (
-                          <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
-                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                            <p>🏙 Ville : {m.ville || "—"}</p>
-                            <p>
-                              ❓Besoin :{" "}
-                              {(() => {
-                                if (!m.besoin) return "—";
-                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                                try {
-                                  const arr = JSON.parse(m.besoin);
-                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                                } catch {
-                                  return m.besoin;
-                                }
-                              })()}
-                            </p>
-                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                            <p>📌 Statut Suivis : {m.statuts_suivis?.libelle || m.statut_suivis || "—"}</p>  
-                            <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p> 
-
-                            {/* ENVOYER À */}
+                          {/* ENVOYER À */}
                             <div className="mt-2">
                               <label className="font-semibold text-sm">Envoyer à :</label>
                               <select
@@ -342,6 +312,37 @@ export default function ListMembers() {
                                 </div>
                               )}
                             </div>
+
+                        <button
+                          onClick={() => toggleDetails(m.id)}
+                          className="text-orange-500 underline text-sm mt-2"
+                        >
+                          {isOpen ? "Fermer détails" : "Détails"}
+                        </button>
+
+                        {/* Détails ouverts */}
+                        {isOpen && (
+                          <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
+                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                            <p>🏙 Ville : {m.ville || "—"}</p>
+                            <p>
+                              ❓Besoin :{" "}
+                              {(() => {
+                                if (!m.besoin) return "—";
+                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                                try {
+                                  const arr = JSON.parse(m.besoin);
+                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                                } catch {
+                                  return m.besoin;
+                                }
+                              })()}
+                            </p>
+                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                            <p>📌 Statut Suivis : {m.statuts_suivis?.libelle || m.statut_suivis || "—"}</p>  
+                            <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p> 
+
+                            
                                 {/* Modifier contact */}
                             <button
                               onClick={() => setEditMember(m)}

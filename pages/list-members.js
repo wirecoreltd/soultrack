@@ -401,7 +401,7 @@ export default function ListMembers() {
                           </div>
                           <div className="flex justify-center items-center space-x-2">
                             <span>🏠</span>
-                            <span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}</span>
+                            <span>Cellule : {m.cellule_nom_suivi || ""} - {m.responsable_nom || ""}</span>
                           </div>
                           <div className="flex justify-center items-center space-x-2">
                             <span>👤</span>

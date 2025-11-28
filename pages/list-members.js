@@ -14,6 +14,7 @@ import DetailsPopup from "../components/DetailsPopup";
 import EditMemberPopup from "../components/EditMemberPopup";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useSearchParams } from "next/navigation";
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
@@ -31,6 +32,8 @@ export default function ListMembers() {
   const [prenom, setPrenom] = useState("");
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
+  const searchParams = useSearchParams();
+  const conseillerId = searchParams.get("conseiller_id");
 
   const [statusChanges, setStatusChanges] = useState({});
 
@@ -57,7 +60,30 @@ export default function ListMembers() {
     fetchMembers();
     fetchCellules();
     fetchConseillers();
+    
   }, []);
+  
+  const fetchMembres = async () => {
+  setLoading(true);
+  try {
+    let query = supabase.from("v_membres_full").select("*");
+
+    // Filtre si conseiller_id est présent
+    if (conseillerId) {
+      query = query.eq("conseiller_id", conseillerId);
+    }
+
+    const { data, error } = await query.order("created_at", { ascending: false });
+    if (error) throw error;
+    setMembres(data || []);
+  } catch (err) {
+    console.error("Erreur fetchMembres:", err);
+    setMembres([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const fetchMembers = async () => {
     const { data, error } = await supabase

@@ -436,6 +436,16 @@ export default function ListMembers() {
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
                             <p>📌 Statut Suivis : {m.statuts_suivis?.libelle || m.statut_suivis || "—"}</p>
                             <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
+                            <select
+                              value={statusChanges[m.id] ?? m.statut ?? ""}
+                              onChange={(e) => handleStatusChange(m.id, e.target.value)}
+                              className="border rounded-md px-2 py-1 text-sm w-full mt-2"
+                            >
+                              <option value="">-- Choisir un statut --</option>
+                              {statusOptions.map((s) => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select> 
 
                             {/* ENVOYER À */}
                             <div className="mt-2">

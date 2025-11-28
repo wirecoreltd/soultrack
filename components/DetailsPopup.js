@@ -13,6 +13,9 @@ export default function DetailsPopup({
   session,
   showToast,
 }) {
+
+  if (!membre || !membre.id) return null; 
+  
   const [selectedTargetType, setSelectedTargetType] = useState("");
   const [selectedTarget, setSelectedTarget] = useState(null);
   const [status, setStatus] = useState(membre.statut || "");

@@ -53,13 +53,18 @@ export default function BoutonEnvoyerTest({ membre, type = "cellule", cible, ses
         created_at: new Date().toISOString(),
       };
 
+      // Ajout des infos selon type
       if (type === "cellule") {
         suiviData.cellule_id = cible.id;
         suiviData.cellule_nom = cible.cellule;
         suiviData.responsable = cible.responsable || null;
+        // Vérifie le téléphone de la cellule
+        cible.telephone = cible.telephone || membre.telephone || "";
       } else if (type === "conseiller") {
         suiviData.conseiller_id = cible.id;
         suiviData.responsable = `${cible.prenom || ""} ${cible.nom || ""}`.trim();
+        // Vérifie le téléphone du conseiller
+        cible.telephone = cible.telephone || membre.telephone || "";
       }
 
       // Insérer le suivi dans la table test
@@ -88,11 +93,15 @@ export default function BoutonEnvoyerTest({ membre, type = "cellule", cible, ses
 
       const phoneRaw = cible.telephone || "";
       const phone = phoneRaw.replace(/\D/g, "");
-      if (!phone) alert("❌ La cible n'a pas de numéro valide.");
-      else window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
 
-      if (showToast)
-        showToast(`✅ ${membre.prenom} ${membre.nom} a été envoyé à ${type === "cellule" ? cible.cellule : `${cible.prenom} ${cible.nom}`} !`);
+      if (!phone) {
+        alert("❌ La cible n'a pas de numéro WhatsApp valide !");
+      } else {
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+
+        if (showToast)
+          showToast(`✅ ${membre.prenom} ${membre.nom} a été envoyé à ${type === "cellule" ? cible.cellule : `${cible.prenom} ${cible.nom}`} !`);
+      }
 
     } catch (err) {
       console.error("Erreur sendToWhatsapp:", err);

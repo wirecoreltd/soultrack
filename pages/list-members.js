@@ -231,11 +231,13 @@ export default function ListMembers() {
                           </div>
                           <div className="flex justify-center items-center space-x-2">
                             <span>🏠</span>
-                            <span>Cellule : {m.suivi_cellule_nom || ""} - {m.suivi_responsable || ""}</span>
+                            <span>Cellule : {m.cellule_nom || "—"} 
+                            {m.responsable_cellule ? ` - Responsable : ${m.responsable_cellule}` : ""}</span>
                           </div>
                           <div className="flex justify-center items-center space-x-2">
                             <span>👤</span>
-                            <span>Conseiller : {m.suivi_responsable || ""}</span>
+                            <span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}
+                            {m.suivis_conseiller ? ` (Suivi Conseiller : ${m.suivis_conseiller})` : ""}</span>
                           </div>
                         </div>
 
@@ -338,9 +340,9 @@ export default function ListMembers() {
                                 }
                               })()}
                             </p>
-                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                            <p>📌 Statut Suivis : {m.statuts_suivis?.libelle || m.statut_suivis || "—"}</p>  
-                            <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p> 
+                            <p>📝 Infos : {m.infos_supplementaires || ""}</p>
+                            <p>📌 Statut Suivis : {m.suivi_statut_libelle || m.statut_suivis || ""}</p>  
+                            <p>📝 Commentaire Suivis : m.suivi_commentaire_suivis || m.commentaire_suivis || ""</p> 
 
                             
                                 {/* Modifier contact */}

@@ -231,13 +231,12 @@ export default function ListMembers() {
                           </div>
                           <div className="flex justify-center items-center space-x-2">
                             <span>🏠</span>
-                            <span>Cellule : {m.cellule_nom || "—"} 
-                            {m.responsable_cellule ? ` - Responsable : ${m.responsable_cellule}` : ""}</span>
+                            <span>Cellule : {m.cellule_nom || "—"}
+                            {m.responsable_prenom ? ` - ${m.responsable_prenom} ${m.responsable_nom}` : ""}</span>
                           </div>
                           <div className="flex justify-center items-center space-x-2">
                             <span>👤</span>
-                            <span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}
-                            {m.suivis_conseiller ? ` (Suivi Conseiller : ${m.suivis_conseiller})` : ""}</span>
+                            <span>Conseiller : {m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</span>
                           </div>
                         </div>
 
@@ -341,8 +340,8 @@ export default function ListMembers() {
                               })()}
                             </p>
                             <p>📝 Infos : {m.infos_supplementaires || ""}</p>
-                            <p>📌 Statut Suivis : {m.suivi_statut_libelle || m.statut_suivis || ""}</p>  
-                            <p>📝 Commentaire Suivis : m.suivi_commentaire_suivis || m.commentaire_suivis || ""</p> 
+                            <p>📌 Statut Suivis : {m.suivi_statut_libelle || "—"}</p>  
+                            <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p> 
 
                             
                                 {/* Modifier contact */}
@@ -403,11 +402,12 @@ export default function ListMembers() {
                           </div>
                           <div className="flex justify-center items-center space-x-2">
                             <span>🏠</span>
-                            <span>Cellule : {m.suivi_cellule_nom || ""} - {m.suivi_responsable || ""}</span>
+                            <span>Cellule : {m.cellule_nom || "—"}
+                            {m.responsable_prenom ? ` - ${m.responsable_prenom} ${m.responsable_nom}` : ""}</span>
                           </div>
                           <div className="flex justify-center items-center space-x-2">
                             <span>👤</span>
-                            <span>Conseiller : {m.conseiller_prenom || ""} {m.conseiller_nom || ""}</span>
+                            <span>Conseiller : {m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</span>
                           </div>
                         </div>
 
@@ -436,7 +436,7 @@ export default function ListMembers() {
                               })()}
                             </p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                            <p>📌 Statut Suivis : {m.dernier_statut_suivi || "—"}</p>
+                            <p>📌 Statut Suivis : {m.suivi_statut_libelle || "—"}</p>
                             <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>
                             <select
                               value={statusChanges[m.id] ?? m.statut ?? ""}

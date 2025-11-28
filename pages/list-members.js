@@ -415,7 +415,7 @@ export default function ListMembers() {
         >
           {isOpen ? "Fermer détails" : "Détails"}
         </button>
-      </div>
+      
 
       {/* Détails ouverts */}
       {isOpen && (

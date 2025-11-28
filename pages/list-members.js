@@ -1,4 +1,4 @@
-"use client";
+  "use client";
 
 /**
  * Page: Liste des Membres
@@ -33,7 +33,6 @@ export default function ListMembers() {
 
   const [statusChanges, setStatusChanges] = useState({});
 
-  // Affiche un toast simple
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
   const showToast = (msg) => {
@@ -48,7 +47,7 @@ export default function ListMembers() {
     try {
       let query = supabase.from("v_membres_full").select("*").order("created_at", { ascending: false });
 
-      // Filtrage si on est sur URL avec conseiller_id
+      // Filtrage si conseiller_id dans URL
       if (conseillerIdFromUrl) {
         query = query.eq("conseiller_id", conseillerIdFromUrl);
       } else if (profile?.role === "Conseiller") {
@@ -107,7 +106,7 @@ export default function ListMembers() {
     fetchSessionAndProfile();
   }, []);
 
-
+  // -------------------- UTILS --------------------
   const updateMemberLocally = (id, extra = {}) => {
     setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, ...extra } : m)));
   };
@@ -145,6 +144,9 @@ export default function ListMembers() {
       return "";
     }
   };
+
+  // ... suite du code (render, détails, etc.)
+
 
   const filterBySearch = (list) =>
     list.filter((m) => `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase()));

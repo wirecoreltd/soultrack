@@ -19,6 +19,8 @@ export default function DetailsPopup({
 
   useEffect(() => {
     setStatus(membre.statut || "");
+    setSelectedTargetType("");
+    setSelectedTarget(null);
   }, [membre]);
 
   const handleSend = () => {
@@ -26,8 +28,10 @@ export default function DetailsPopup({
 
     const cible =
       selectedTargetType === "cellule"
-        ? cellules.find((c) => c.id === selectedTarget)
-        : conseillers.find((c) => c.id === selectedTarget);
+        ? cellules.find((c) => c.id === Number(selectedTarget))
+        : conseillers.find((c) => c.id === Number(selectedTarget));
+
+    if (!cible) return;
 
     handleAfterSend(membre.id, selectedTargetType, cible, status);
     showToast?.("✅ Contact envoyé et suivi enregistré");
@@ -38,6 +42,7 @@ export default function DetailsPopup({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
+        {/* Bouton fermer */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
@@ -45,10 +50,12 @@ export default function DetailsPopup({
           ✖
         </button>
 
-        <h2 className="text-xl font-bold mb-4">
+        {/* Titre */}
+        <h2 className="text-xl font-bold mb-4 text-center">
           {membre.prenom} {membre.nom} {membre.star && "⭐"}
         </h2>
 
+        {/* Infos du membre */}
         <div className="space-y-2 text-sm text-gray-700">
           <p>📱 Téléphone : {membre.telephone || "—"}</p>
           <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
@@ -127,14 +134,14 @@ export default function DetailsPopup({
           )}
 
           {selectedTarget && (
-            <div className="mt-4">
+            <div className="mt-4 text-center">
               <BoutonEnvoyer
                 membre={membre}
                 type={selectedTargetType}
                 cible={
                   selectedTargetType === "cellule"
-                    ? cellules.find((c) => c.id === selectedTarget)
-                    : conseillers.find((c) => c.id === selectedTarget)
+                    ? cellules.find((c) => c.id === Number(selectedTarget))
+                    : conseillers.find((c) => c.id === Number(selectedTarget))
                 }
                 onEnvoyer={handleSend}
                 session={session}
@@ -143,6 +150,14 @@ export default function DetailsPopup({
             </div>
           )}
         </div>
+
+        {/* Bouton modifier contact */}
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent("edit-member", { detail: membre }))}
+          className="text-blue-600 text-sm mt-6 block mx-auto"
+        >
+          ✏️ Modifier le contact
+        </button>
       </div>
     </div>
   );

@@ -1,19 +1,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import React from "react";
 import supabase from "../lib/supabaseClient";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import LogoutLink from "../components/LogoutLink";
 
 export default function ListConseillers() {
   const [conseillers, setConseillers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterResponsable, setFilterResponsable] = useState(""); // filtre par responsable
-
+  const [prenom, setPrenom] = useState("");
   const router = useRouter();
 
   const fetchConseillers = async () => {
     setLoading(true);
     try {
+      // Récupérer les infos du user pour bienvenue
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error("Utilisateur non connecté");
+
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("prenom, role")
+        .eq("id", user.id)
+        .single();
+      if (profileError || !profileData) throw profileError;
+      setPrenom(profileData.prenom || "cher membre");
+
       // 1️⃣ Récupérer tous les conseillers
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
@@ -29,47 +43,46 @@ export default function ListConseillers() {
 
       const conseillersIds = profiles.map((p) => p.id);
 
-      // 2️⃣ Récupérer tous les membres depuis v_membres_full
-      const { data: membres, error: membresError } = await supabase
+      // 2️⃣ Récupérer membres assignés
+      const { data: membres } = await supabase
         .from("v_membres_full")
         .select("id, conseiller_id")
         .in("conseiller_id", conseillersIds);
 
-      if (membresError) throw membresError;
+      // 3️⃣ Récupérer suivis assignés
+      const { data: suivis } = await supabase
+        .from("suivis_membres")
+        .select("id, conseiller_id")
+        .in("conseiller_id", conseillersIds);
 
-      // 3️⃣ Compter les contacts par conseiller
+      // 4️⃣ Compter contacts
       const countMap = {};
       membres?.forEach((m) => {
-        if (m.conseiller_id) {
-          countMap[m.conseiller_id] = (countMap[m.conseiller_id] || 0) + 1;
-        }
+        if (m.conseiller_id) countMap[m.conseiller_id] = (countMap[m.conseiller_id] || 0) + 1;
+      });
+      suivis?.forEach((s) => {
+        if (s.conseiller_id) countMap[s.conseiller_id] = (countMap[s.conseiller_id] || 0) + 1;
       });
 
-      // 4️⃣ Récupérer les responsables
-      const responsablesIds = profiles
-        .map((p) => p.responsable_id)
-        .filter(Boolean);
-
+      // 5️⃣ Récupérer responsables
+      const responsablesIds = profiles.map((p) => p.responsable_id).filter(Boolean);
       let responsableMap = {};
       if (responsablesIds.length > 0) {
         const { data: responsables } = await supabase
           .from("profiles")
           .select("id, prenom, nom")
           .in("id", responsablesIds);
-
         responsables?.forEach((r) => {
           responsableMap[r.id] = `${r.prenom} ${r.nom}`;
         });
       }
 
-      // 5️⃣ Fusionner les données et appliquer filtre si nécessaire
-      const list = profiles
-        .map((p) => ({
-          ...p,
-          responsable_nom: p.responsable_id ? (responsableMap[p.responsable_id] || "Aucun") : "Aucun",
-          totalContacts: countMap[p.id] || 0,
-        }))
-        .filter((p) => (filterResponsable ? p.responsable_nom === filterResponsable : true));
+      // 6️⃣ Fusionner
+      const list = profiles.map((p) => ({
+        ...p,
+        responsable_nom: p.responsable_id ? (responsableMap[p.responsable_id] || "Aucun") : "Aucun",
+        totalContacts: countMap[p.id] || 0,
+      }));
 
       setConseillers(list);
     } catch (err) {
@@ -82,95 +95,57 @@ export default function ListConseillers() {
 
   useEffect(() => {
     fetchConseillers();
-  }, [filterResponsable]);
-
-  // Obtenir la liste unique des responsables pour le filtre
-  const responsablesOptions = Array.from(
-    new Set(conseillers.map((c) => c.responsable_nom))
-  ).filter(Boolean);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
-      {/* TOP BAR */}
-      <div className="w-full max-w-4xl mx-auto mb-6 flex items-center justify-between">
-        <button
-          onClick={() => router.back()}
-          className="text-black font-semibold hover:text-gray-700"
-        >
-          ← Retour
-        </button>
-
-        <h1 className="text-3xl font-bold text-center">
-          Liste des Conseillers
-        </h1>
-
-        <button
-          onClick={() => router.push("/create-conseiller")}
-          className="px-4 py-2 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600"
-        >
-          + Ajouter
-        </button>
+    <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+      {/* Header */}
+      <div className="w-full max-w-5xl mb-6">
+        <div className="flex justify-between items-center">
+          <button onClick={() => router.back()} className="flex items-center text-white hover:text-gray-200 transition-colors">
+            ← Retour
+          </button>
+          <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
+        </div>
+        <div className="flex justify-end mt-2">
+          <p className="text-orange-200 text-sm">👋 Bienvenue {prenom}</p>
+        </div>
       </div>
 
-      {/* Filtre Responsable */}
-      <div className="w-full max-w-4xl mx-auto mb-4">
-        <label className="text-gray-700 font-semibold mr-2">Filtrer par Responsable :</label>
-        <select
-          value={filterResponsable}
-          onChange={(e) => setFilterResponsable(e.target.value)}
-          className="border rounded px-2 py-1"
-        >
-          <option value="">Tous</option>
-          {responsablesOptions.map((r) => (
-            <option key={r} value={r}>{r}</option>
-          ))}
-        </select>
+      {/* Logo */}
+      <div className="mb-4">
+        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={72} />
       </div>
 
-      {/* LISTE */}
-      <div className="w-full max-w-4xl mx-auto">
+      <div className="text-center mb-6">
+        <h1 className="text-3xl font-bold text-white mb-2">📋 Liste des Conseillers</h1>
+        <p className="text-white text-lg max-w-xl mx-auto italic">
+          Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
+        </p>
+      </div>
+
+      {/* Liste cartes */}
+      <div className="w-full max-w-6xl">
         {loading ? (
-          <p className="text-center text-gray-600">Chargement...</p>
+          <p className="text-center text-white">Chargement...</p>
         ) : conseillers.length === 0 ? (
-          <p className="text-center text-gray-600">Aucun conseiller trouvé.</p>
+          <p className="text-center text-white">Aucun conseiller trouvé.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
             {conseillers.map((c) => (
-              <div
-                key={c.id}
-                className="bg-white p-5 rounded-2xl shadow-md border border-gray-200"
-              >
-                <h2 className="text-xl font-bold mb-1">
-                  {c.prenom} {c.nom}
-                </h2>
-
-                <p className="text-gray-700">📞 {c.telephone || "—"}</p>
-                <p className="text-gray-700">✉️ {c.email || "—"}</p>
-
-                <p className="text-gray-700 mt-2">
-                  👤 Responsable :
-                  <span className="font-semibold"> {c.responsable_nom}</span>
-                </p>
-
-                <p className="text-gray-800 mt-2 font-semibold">
-                  🔔 Contacts assignés : {c.totalContacts}
-                </p>
-
-                <button
-                  onClick={() => router.push(`/contacts-conseiller/${c.id}`)}
-                  className="mt-3 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 font-semibold"
-                >
-                  Voir les contacts
-                </button>
+              <div key={c.id} className="bg-white rounded-2xl shadow-lg w-full overflow-hidden transition hover:shadow-2xl">
+                <div className="w-full h-[6px] bg-blue-500 rounded-t-2xl" />
+                <div className="p-4 flex flex-col items-center">
+                  <h2 className="font-bold text-black text-base text-center mb-1">{c.prenom} {c.nom}</h2>
+                  <p className="text-sm text-gray-700 mb-1">📞 {c.telephone || "—"}</p>
+                  <p className="text-sm text-gray-700 mb-1">✉️ {c.email || "—"}</p>
+                  <p className="text-sm text-gray-700 mt-2">👤 Responsable : <span className="font-semibold">{c.responsable_nom}</span></p>
+                  <p className="text-sm text-gray-800 mt-2 font-semibold">🔔 Contacts assignés : {c.totalContacts}</p>
+                </div>
               </div>
             ))}
           </div>
         )}
-      </div>
-
-      {/* TOTAL CONSEILLERS */}
-      <div className="w-full max-w-4xl mx-auto mt-6 text-right font-semibold">
-        Total Conseillers : {conseillers.length}
       </div>
     </div>
   );

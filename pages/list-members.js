@@ -1,4 +1,4 @@
-  "use client";
+    "use client";
 
 /**
  * Page: Liste des Membres
@@ -19,6 +19,7 @@ import { useSearchParams } from "next/navigation";
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
   const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState(""); // <-- ajouté pour éviter l'erreur
   const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
@@ -32,7 +33,8 @@ export default function ListMembers() {
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
 
   const [statusChanges, setStatusChanges] = useState({});
-
+  
+  // Toast
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
   const showToast = (msg) => {
@@ -47,7 +49,7 @@ export default function ListMembers() {
     try {
       let query = supabase.from("v_membres_full").select("*").order("created_at", { ascending: false });
 
-      // Filtrage si conseiller_id dans URL
+      // Filtrage si on est sur URL avec conseiller_id
       if (conseillerIdFromUrl) {
         query = query.eq("conseiller_id", conseillerIdFromUrl);
       } else if (profile?.role === "Conseiller") {
@@ -145,9 +147,6 @@ export default function ListMembers() {
     }
   };
 
-  // ... suite du code (render, détails, etc.)
-
-
   const filterBySearch = (list) =>
     list.filter((m) => `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase()));
 
@@ -162,7 +161,9 @@ export default function ListMembers() {
 
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
+  // -------------------- RETURN --------------------
   return (
+    
     <div
       className="min-h-screen flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}

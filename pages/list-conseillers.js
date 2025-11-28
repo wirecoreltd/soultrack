@@ -28,7 +28,55 @@ export default function ListConseillers() {
         return;
       }
 
-      const conseillersIds = profiles.map((p) => p.id);
+      const fetchConseillers = async () => {
+  setLoading(true);
+
+  try {
+    // 1️⃣ Appeler la fonction SQL optimisée
+    const { data, error } = await supabase.rpc("count_contacts_by_conseiller");
+
+    if (error) throw error;
+
+    if (!data) {
+      setConseillers([]);
+      setLoading(false);
+      return;
+    }
+
+    // 2️⃣ Récupérer les responsables
+    const responsablesIds = data
+      .map((p) => p.responsable_id)
+      .filter(Boolean);
+
+    let responsableMap = {};
+    if (responsablesIds.length > 0) {
+      const { data: responsables } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom")
+        .in("id", responsablesIds);
+
+      responsables?.forEach((r) => {
+        responsableMap[r.id] = `${r.prenom} ${r.nom}`;
+      });
+    }
+
+    // 3️⃣ Fusion propre
+    const list = data.map((p) => ({
+      ...p,
+      responsable_nom: p.responsable_id
+        ? responsableMap[p.responsable_id] || "Aucun"
+        : "Aucun",
+    }));
+
+    setConseillers(list);
+  } catch (err) {
+    console.error("Erreur fetchConseillers :", err);
+    setConseillers([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
       // 2️⃣ Récupérer tous les membres assignés à ces conseillers
       const { data: membres, error: membresError } = await supabase

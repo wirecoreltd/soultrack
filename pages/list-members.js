@@ -401,7 +401,7 @@ export default function ListMembers() {
                           </div>
                           <div className="flex justify-center items-center space-x-2">
                             <span>🏠</span>
-                            <span>Cellule : {m.cellule_nom || ""} - {m.responsable_nom || ""}</span>
+                            <span>Cellule : {m.cellule || ""} - {m.responsable || ""}</span>
                           </div>
                           <div className="flex justify-center items-center space-x-2">
                             <span>👤</span>
@@ -435,7 +435,7 @@ export default function ListMembers() {
                             </p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
                             <p>📌 Statut Suivis : {m.statuts_suivis?.libelle || m.statut_suivis || "—"}</p>
-                            <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
+                            <p>📝 Commentaire Suivis : {m.suivis_commentaire || "—"}</p>
                             <select
                               value={statusChanges[m.id] ?? m.statut ?? ""}
                               onChange={(e) => handleStatusChange(m.id, e.target.value)}

@@ -65,7 +65,7 @@ export default function LoginPage() {
           router.push("/cellules-hub");
           break;
         case "Conseiller":
-          router.push("/suivis-membres");
+          router.push("/conseiller-hub");
           break;
         default:
           router.push("/");

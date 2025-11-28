@@ -499,16 +499,17 @@ export default function ListMembers() {
                                 </div>
                               )}
                             </div>
-                          </div>
-                        )}
-                      </div>
-                          {/* Modifier contact */}
+                             {/* Modifier contact */}
                             <button
                             onClick={() => setEditMember(m)}
                             className="text-blue-600 text-sm mt-6 block mx-auto"
                           >
                             ✏️ Modifier le contact
-                          </button>
+                          </button>   
+                          </div>
+                        )}
+                      </div>
+                          
                     </div>
                   );
                 })}
@@ -557,6 +558,12 @@ export default function ListMembers() {
                     >
                       {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
                     </button>
+                      <button
+                          onClick={() => setEditMember(m)}
+                          className="text-blue-600 underline text-sm"
+                        >
+                          Modifier
+                        </button>
                   </td>
                 </tr>
               ))}

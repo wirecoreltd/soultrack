@@ -155,10 +155,11 @@ export default function SuivisMembres() {
 
   // Filtrage dynamique
   const filteredSuivis = suivis.filter((s) => {
-    if (s.statut_suivis === statutIds["integrer"]) return false; // jamais affichés
-    if (showRefus) return s.statut_suivis === statutIds["refus"];
-    return s.statut_suivis === statutIds["en attente"];
-  });
+  if (s.statut_suivis === statutIds["integrer"]) return false; // jamais affichés
+  if (showRefus) return s.statut_suivis === statutIds["refus"];
+  return s.statut_suivis === statutIds["envoye"] || s.statut_suivis === statutIds["en attente"];
+});
+
 
   const Details = ({ m }) => {
     const commentRef = useRef(null);

@@ -249,17 +249,7 @@ export default function SuivisMembres() {
               ✏️ Modifier le contact
             </button>
           </div>
-        </div>
-
-        <div className="mt-4">
-          <BoutonEnvoyer
-            membre={m}
-            type="cellule" // par défaut, l'utilisateur choisira dans le composant
-            cible={null}
-            onEnvoyer={handleAfterSend}
-            session={null}
-            showToast={() => {}}
-          />
+        </div>       
         </div>
       </div>
     );

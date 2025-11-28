@@ -6,7 +6,6 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditMemberPopup from "../components/EditMemberPopup";
-import BoutonEnvoyer from "../components/BoutonEnvoyer";
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
@@ -22,16 +21,13 @@ export default function SuivisMembres() {
   const [editMember, setEditMember] = useState(null);
   const [showRefus, setShowRefus] = useState(false);
 
-  // Mapping des statuts
+  // Mapping statut
   const statutIds = {
-    "envoye": 1,
     "en attente": 2,
     "integrer": 3,
     "refus": 4
   };
-
   const statutLabels = {
-    1: "Envoyé",
     2: "En attente",
     3: "Intégrer",
     4: "Refus"
@@ -54,7 +50,7 @@ export default function SuivisMembres() {
         setPrenom(profileData.prenom || "cher membre");
         setRole(profileData.role);
 
-        const tableName = "suivis_membres";
+        const tableName = "suivis_membres"; // table test
         let suivisData = [];
 
         if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
@@ -118,7 +114,6 @@ export default function SuivisMembres() {
     if (m.statut_suivis === statutIds["en attente"]) return "#FFA500";
     if (m.statut_suivis === statutIds["integrer"]) return "#34A853";
     if (m.statut_suivis === statutIds["refus"]) return "#FF4B5C";
-    if (m.statut_suivis === statutIds["envoye"]) return "#3B82F6";
     return "#ccc";
   };
 
@@ -158,24 +153,13 @@ export default function SuivisMembres() {
     }
   };
 
-  // Filtrage dynamique pour inclure "envoye"
+  // Filtrage dynamique
   const filteredSuivis = suivis.filter((s) => {
-    if (s.statut_suivis === statutIds["integrer"]) return false;
-    if (showRefus) return s.statut_suivis === statutIds["refus"];
-    return s.statut_suivis === statutIds["envoye"] || s.statut_suivis === statutIds["en attente"];
-  });
+  if (s.statut_suivis === statutIds["integrer"]) return false; // jamais affichés
+  if (showRefus) return s.statut_suivis === statutIds["refus"];
+  return s.statut_suivis === statutIds["envoye"] || s.statut_suivis === statutIds["en attente"];
+});
 
-  const handleAfterSend = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("suivis_membres")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (!error) setSuivis(data);
-    } catch (err) {
-      console.error("Erreur rafraîchissement suivis :", err);
-    }
-  };
 
   const Details = ({ m }) => {
     const commentRef = useRef(null);
@@ -249,13 +233,11 @@ export default function SuivisMembres() {
               ✏️ Modifier le contact
             </button>
           </div>
-        </div>       
         </div>
       </div>
     );
   };
 
-  // -------------------------- RETURN JSX --------------------------
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
       {/* Header */}
@@ -320,6 +302,7 @@ export default function SuivisMembres() {
               <div className="p-4 flex flex-col items-center">
                 <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>
                 <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
+                <p className="text-sm text-gray-700 mb-1">🚩 Statut : {statutLabels[item.statut] || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📌 Attribué à : {item.cellule_nom ? `Cellule de ${item.cellule_nom}` : item.responsable || "—"}</p>
                 <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">
@@ -342,7 +325,7 @@ export default function SuivisMembres() {
                 <th className="px-4 py-2">Téléphone</th>
                 <th className="px-4 py-2">Statut Suivis</th>
                 <th className="px-4 py-2">Attribué à</th>
-                <th className="px-4 py-2 rounded-tr-lg">Action</th>
+                <th className="px-4 py-2 rounded-tr-lg">Ation</th>
               </tr>
             </thead>
             <tbody>

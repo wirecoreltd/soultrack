@@ -613,7 +613,7 @@ export default function ListMembers() {
       {/* Popups */}
       {popupMember && (
         <DetailsPopup
-          member={popupMember}
+          membre={popupMember}
           onClose={() => setPopupMember(null)}
           statusOptions={statusOptions}
           cellules={cellules}

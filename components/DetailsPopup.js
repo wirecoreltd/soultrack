@@ -152,15 +152,7 @@ export default function DetailsPopup({
               />
             </div>
           )}
-        </div>
-
-        {/* Bouton modifier contact */}
-        <button
-          onClick={() => window.dispatchEvent(new CustomEvent("edit-member", { detail: membre }))}
-          className="text-blue-600 text-sm mt-6 block mx-auto"
-        >
-          ✏️ Modifier le contact
-        </button>
+        </div>        
       </div>
     </div>
   );

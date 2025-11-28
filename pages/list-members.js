@@ -19,86 +19,53 @@ import { useSearchParams } from "next/navigation";
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
   const [filter, setFilter] = useState("");
-  const [search, setSearch] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
-  const [selectedTargets, setSelectedTargets] = useState({});
-  const [selectedTargetType, setSelectedTargetType] = useState({});
   const [view, setView] = useState("card");
   const [popupMember, setPopupMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
   const [session, setSession] = useState(null);
   const [prenom, setPrenom] = useState("");
-  const [toastMessage, setToastMessage] = useState("");
-  const [showingToast, setShowingToast] = useState(false);
+  const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
-  const conseillerId = searchParams.get("conseiller_id");
+  const conseillerIdFromUrl = searchParams.get("conseiller_id");
 
   const [statusChanges, setStatusChanges] = useState({});
 
+  // Affiche un toast simple
+  const [toastMessage, setToastMessage] = useState("");
+  const [showingToast, setShowingToast] = useState(false);
   const showToast = (msg) => {
     setToastMessage(msg);
     setShowingToast(true);
     setTimeout(() => setShowingToast(false), 3500);
   };
 
-  useEffect(() => {
-  const fetchSessionAndProfile = async () => {
-    // Récupérer la session
-    const { data: { session } } = await supabase.auth.getSession();
-    setSession(session);
-
-    let profile = null;
-    if (session?.user) {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, prenom, role")
-        .eq("id", session.user.id)
-        .single();
-      if (!error && data) {
-        profile = data;
-        setPrenom(data.prenom);
-      }
-    }
-
-    // Récupérer membres, cellules, conseillers
-    await fetchCellules();
-    await fetchConseillers();
-
-    // Récupérer membres avec filtre
-    await fetchMembers(profile);
-  };
-
-  fetchSessionAndProfile();
-}, []);
-
-// -----------------------------
-// fetchMembers avec filtre conseiller
-// -----------------------------
+  // -------------------- FETCH --------------------
   const fetchMembers = async (profile = null) => {
-  setLoading(true);
-  try {
-    let query = supabase.from("v_membres_full").select("*").order("created_at", { ascending: false });
+    setLoading(true);
+    try {
+      let query = supabase.from("v_membres_full").select("*").order("created_at", { ascending: false });
 
-    // Filtrage par URL ou par conseiller connecté
-    if (conseillerId) {
-      query = query.eq("conseiller_id", conseillerId);
-    } else if (profile?.role === "Conseiller") {
-      query = query.eq("conseiller_id", profile.id);
+      // Filtrage si on est sur URL avec conseiller_id
+      if (conseillerIdFromUrl) {
+        query = query.eq("conseiller_id", conseillerIdFromUrl);
+      } else if (profile?.role === "Conseiller") {
+        // Si le conseiller connecté ouvre la page, ne voit que ses contacts
+        query = query.eq("conseiller_id", profile.id);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      setMembers(data || []);
+    } catch (err) {
+      console.error("Erreur fetchMembers:", err);
+      setMembers([]);
+    } finally {
+      setLoading(false);
     }
-
-    const { data, error } = await query;
-    if (error) throw error;
-    setMembers(data || []);
-  } catch (err) {
-    console.error("Erreur fetchMembers:", err);
-    setMembers([]);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const fetchCellules = async () => {
     const { data } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
@@ -112,6 +79,34 @@ export default function ListMembers() {
       .eq("role", "Conseiller");
     if (data) setConseillers(data);
   };
+
+  useEffect(() => {
+    const fetchSessionAndProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+
+      if (session?.user) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, prenom, role")
+          .eq("id", session.user.id)
+          .single();
+        if (profileError) console.error(profileError);
+        else {
+          setPrenom(profileData.prenom || "");
+          await fetchMembers(profileData);
+        }
+      } else {
+        await fetchMembers();
+      }
+
+      fetchCellules();
+      fetchConseillers();
+    };
+
+    fetchSessionAndProfile();
+  }, []);
+
 
   const updateMemberLocally = (id, extra = {}) => {
     setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, ...extra } : m)));

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function BoutonEnvoyerTest({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
+export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
   const [loading, setLoading] = useState(false);
 
   // Mapping texte → integer pour statut_suivis
@@ -27,7 +27,7 @@ export default function BoutonEnvoyerTest({ membre, type = "cellule", cible, ses
     try {
       // Vérification par numéro de téléphone
       const { data: existing, error: selectError } = await supabase
-        .from("suivis_membres_test")
+        .from("suivis_membres")
         .select("*")
         .eq("telephone", membre.telephone || "");
 
@@ -67,9 +67,9 @@ export default function BoutonEnvoyerTest({ membre, type = "cellule", cible, ses
         cible.telephone = cible.telephone || membre.telephone || "";
       }
 
-      // Insérer le suivi dans la table test
+      // Insérer le suivi dans la table
       const { error: insertError } = await supabase
-        .from("suivis_membres_test")
+        .from("suivis_membres")
         .insert([suiviData]);
       if (insertError) throw insertError;
 

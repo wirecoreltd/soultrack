@@ -415,68 +415,92 @@ export default function ListMembers() {
                             </select> 
 
                             {/* ENVOYER À */}
-                            <div className="mt-2">
-                              <label className="font-semibold text-sm">Envoyer à :</label>
-                              <select
-                                value={selectedTargetType[m.id] || ""}
-                                onChange={(e) =>
-                                  setSelectedTargetType((prev) => ({ ...prev, [m.id]: e.target.value }))
-                                }
-                                className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                              >
-                                <option value="">-- Choisir une option --</option>
-                                <option value="cellule">Une Cellule</option>
-                                <option value="conseiller">Un Conseiller</option>
-                              </select>
+<div className="mt-2">
+  <label className="font-semibold text-sm">Envoyer à :</label>
+  <select
+    value={selectedTargetType[m.id] || ""}
+    onChange={(e) =>
+      setSelectedTargetType((prev) => ({ ...prev, [m.id]: e.target.value }))
+    }
+    className="mt-1 w-full border rounded px-2 py-1 text-sm"
+  >
+    <option value="">-- Choisir une option --</option>
+    <option value="cellule">Une Cellule</option>
+    <option value="conseiller">Un Conseiller</option>
+  </select>
 
-                              {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
-                                <select
-                                  value={selectedTargets[m.id] || ""}
-                                  onChange={(e) =>
-                                    setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))
-                                  }
-                                  className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                                >
-                                  <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
-                                  {selectedTargetType[m.id] === "cellule"
-                                    ? cellules.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                          {c.cellule} ({c.responsable})
-                                        </option>
-                                      ))
-                                    : conseillers.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                          {c.prenom} {c.nom}
-                                        </option>
-                                      ))}
-                                </select>
-                              )}
+  {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
+    <select
+      value={selectedTargets[m.id] || ""}
+      onChange={(e) =>
+        setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))
+      }
+      className="mt-1 w-full border rounded px-2 py-1 text-sm"
+    >
+      <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
+      {selectedTargetType[m.id] === "cellule"
+        ? cellules.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.cellule} ({c.responsable})
+            </option>
+          ))
+        : conseillers.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.prenom} {c.nom}
+            </option>
+          ))}
+    </select>
+  )}
 
-                              {selectedTargets[m.id] && (
-                                <div className="pt-2">
-                                  <BoutonEnvoyer
-                                    membre={m}
-                                    type={selectedTargetType[m.id]}
-                                    cible={
-                                      selectedTargetType[m.id] === "cellule"
-                                        ? cellules.find((c) => c.id === selectedTargets[m.id])
-                                        : conseillers.find((c) => c.id === selectedTargets[m.id])
-                                    }
-                                    onEnvoyer={(id) =>
-                                      handleAfterSend(
-                                        id,
-                                        selectedTargetType[m.id],
-                                        selectedTargetType[m.id] === "cellule"
-                                          ? cellules.find((c) => c.id === selectedTargets[m.id])
-                                          : conseillers.find((c) => c.id === selectedTargets[m.id])
-                                      )
-                                    }
-                                    session={session}
-                                    showToast={showToast}
-                                  />
-                                </div>
-                              )}
-                            </div>
+  {selectedTargets[m.id] && (
+    <div className="pt-2">
+      <BoutonEnvoyer
+        membre={m}
+        type={selectedTargetType[m.id]}
+        cible={
+          selectedTargetType[m.id] === "cellule"
+            ? cellules.find((c) => c.id === selectedTargets[m.id])
+            : conseillers.find((c) => c.id === selectedTargets[m.id])
+        }
+        onEnvoyer={async (id) => {
+          const type = selectedTargetType[m.id];
+          const cibleItem =
+            type === "cellule"
+              ? cellules.find((c) => c.id === selectedTargets[m.id])
+              : conseillers.find((c) => c.id === selectedTargets[m.id]);
+
+          // Mise à jour locale
+          const update = {};
+          if (type === "cellule") {
+            update.cellule_id = cibleItem.id;
+            update.cellule_nom = cibleItem.cellule;
+          } else {
+            update.conseiller_id = cibleItem.id;
+          }
+          setMembers((prev) =>
+            prev.map((m) => (m.id === id ? { ...m, ...update } : m))
+          );
+
+          // Mise à jour Supabase automatique
+          try {
+            const { error } = await supabase
+              .from("membres")
+              .update(update)
+              .eq("id", id);
+            if (error) throw error;
+            showToast("✅ Contact envoyé et suivi enregistré");
+          } catch (err) {
+            console.error("Erreur update membre:", err);
+            showToast("⚠️ Erreur lors de la mise à jour du membre");
+          }
+        }}
+        session={session}
+        showToast={showToast}
+      />
+    </div>
+  )}
+</div>
+
                              {/* Modifier contact */}
                             <button
                             onClick={() => setEditMember(m)}

@@ -290,61 +290,58 @@ export default function SuivisMembres() {
       </div>
 
       {/* Statut & Commentaires */}
-      <label className="text-black text-sm mt-4 block">📋 Statut Suivis :</label>
-      <select
-        value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
-        onChange={(e) => handleStatusChange(m.id, e.target.value)}
-        className="w-full border rounded-md px-2 py-1"
-      >
-        <option value="">-- Choisir un statut --</option>
-        <option value={1}>🕓 En attente</option>
-        <option value={3}>✅ Intégrer</option>
-        <option value={4}>❌ Refus</option>
-      </select>
+      {/* Statut & Commentaires */}
+<label className="text-black text-sm mt-4 block">📋 Statut Suivis :</label>
+<select
+  value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
+  onChange={(e) => handleStatusChange(m.id, e.target.value)}
+  className="w-full border rounded-md px-2 py-1"
+>
+  <option value="">-- Choisir un statut --</option>
+  <option value={1}>🕓 En attente</option>
+  <option value={3}>✅ Intégrer</option>
+  <option value={4}>❌ Refus</option>
+</select>
 
-      <textarea
-        ref={commentRef}
-        value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
-        onChange={(e) => handleCommentChange(m.id, e.target.value)}
-        rows={2}
-        className="w-full border rounded-md px-2 py-1 mt-2 resize-none"
-        placeholder="Ajouter un commentaire..."
-      />
+<textarea
+  ref={commentRef}
+  value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
+  onChange={(e) => handleCommentChange(m.id, e.target.value)}
+  rows={2}
+  className="w-full border rounded-md px-2 py-1 mt-2 resize-none"
+  placeholder="Ajouter un commentaire..."
+/>
 
-      <button
-        onClick={() => updateSuivi(m.id)}
-        disabled={updating[m.id]}
-        className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-          updating[m.id] ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
-        }`}
-      >
-  
-            {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
-          </button>
+<button
+  onClick={() => updateSuivi(m.id)}
+  disabled={updating[m.id]}
+  className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+    updating[m.id] ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
+  }`}
+>
+  {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
+</button>
 
-          <div className="mt-4 flex justify-center">
-            <button
-              onClick={() => setEditMember(m)}
-              className="text-blue-600 text-sm mt-4"
-            >
-              ✏️ Modifier le contact
-            </button>
-          </div>
-        </div>
+<div className="mt-4 flex justify-center">
+  <button
+    onClick={() => setEditMember(m)}
+    className="text-blue-600 text-sm mt-4"
+  >
+    ✏️ Modifier le contact
+  </button>
+</div>
 
-        <div className="mt-4">
-          <BoutonEnvoyer
-            membre={m}
-            type="cellule" // par défaut, l'utilisateur choisira dans le composant
-            cible={null}
-            onEnvoyer={handleAfterSend}
-            session={null}
-            showToast={() => {}}
-          />
-        </div>
-      </div>
-    );
-  };
+<div className="mt-4">
+  <BoutonEnvoyer
+    membre={m}
+    type="cellule"
+    cible={null}
+    onEnvoyer={handleAfterSend}
+    session={null}
+    showToast={() => {}}
+  />
+</div>
+
 
   // -------------------------- RETURN JSX --------------------------
   return (

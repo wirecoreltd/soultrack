@@ -16,7 +16,7 @@ export default function ListConseillers() {
   const fetchConseillers = async () => {
     setLoading(true);
     try {
-      // Récupérer les infos du user pour bienvenue
+      // 1️⃣ Récupérer l'utilisateur pour bienvenue
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error("Utilisateur non connecté");
 
@@ -26,14 +26,14 @@ export default function ListConseillers() {
         .eq("id", user.id)
         .single();
       if (profileError || !profileData) throw profileError;
+
       setPrenom(profileData.prenom || "cher membre");
 
-      // 1️⃣ Récupérer tous les conseillers
+      // 2️⃣ Récupérer tous les conseillers
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, prenom, nom, email, telephone, responsable_id")
         .eq("role", "Conseiller");
-
       if (profilesError) throw profilesError;
       if (!profiles || profiles.length === 0) {
         setConseillers([]);
@@ -43,28 +43,32 @@ export default function ListConseillers() {
 
       const conseillersIds = profiles.map((p) => p.id);
 
-      // 2️⃣ Récupérer membres assignés
+      // 3️⃣ Récupérer membres assignés
       const { data: membres } = await supabase
         .from("v_membres_full")
         .select("id, conseiller_id")
         .in("conseiller_id", conseillersIds);
 
-      // 3️⃣ Récupérer suivis assignés
+      // 4️⃣ Récupérer suivis assignés
       const { data: suivis } = await supabase
         .from("suivis_membres")
-        .select("id, conseiller_id")
+        .select("id, conseiller_id, membre_id") // utiliser membre_id pour unicité si dispo
         .in("conseiller_id", conseillersIds);
 
-      // 4️⃣ Compter contacts
-      const countMap = {};
+      // 5️⃣ Compter contacts uniques
+      const contactSetMap = {};
       membres?.forEach((m) => {
-        if (m.conseiller_id) countMap[m.conseiller_id] = (countMap[m.conseiller_id] || 0) + 1;
+        if (!m.conseiller_id) return;
+        if (!contactSetMap[m.conseiller_id]) contactSetMap[m.conseiller_id] = new Set();
+        contactSetMap[m.conseiller_id].add(m.id);
       });
       suivis?.forEach((s) => {
-        if (s.conseiller_id) countMap[s.conseiller_id] = (countMap[s.conseiller_id] || 0) + 1;
+        if (!s.conseiller_id) return;
+        if (!contactSetMap[s.conseiller_id]) contactSetMap[s.conseiller_id] = new Set();
+        contactSetMap[s.conseiller_id].add(s.membre_id || s.id);
       });
 
-      // 5️⃣ Récupérer responsables
+      // 6️⃣ Récupérer responsables
       const responsablesIds = profiles.map((p) => p.responsable_id).filter(Boolean);
       let responsableMap = {};
       if (responsablesIds.length > 0) {
@@ -77,14 +81,15 @@ export default function ListConseillers() {
         });
       }
 
-      // 6️⃣ Fusionner
+      // 7️⃣ Fusionner infos
       const list = profiles.map((p) => ({
         ...p,
         responsable_nom: p.responsable_id ? (responsableMap[p.responsable_id] || "Aucun") : "Aucun",
-        totalContacts: countMap[p.id] || 0,
+        totalContacts: contactSetMap[p.id]?.size || 0,
       }));
 
       setConseillers(list);
+
     } catch (err) {
       console.error("Erreur fetchConseillers :", err);
       setConseillers([]);

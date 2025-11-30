@@ -123,6 +123,9 @@ export default function SuivisMembres() {
     return s.statut_suivis === statutIds["envoye"] || s.statut_suivis === statutIds["en attente"];
   });
 
+  // On supprime les doublons par ID
+  const uniqueSuivis = Array.from(new Map(filteredSuivis.map(item => [item.id, item])).values());
+
   const handleAfterSend = async () => {
     try {
       const { data, error } = await supabase.from("suivis_membres").select("*").order("created_at", { ascending: false });
@@ -245,7 +248,7 @@ export default function SuivisMembres() {
       {/* Vue Carte */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-          {filteredSuivis.map(item => (
+          {uniqueSuivis.map(item => (
             <div key={item.id} className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden">
               <div className="w-full h-[6px] rounded-t-2xl" style={{ backgroundColor: getBorderColor(item) }} />
               <div className="p-4 flex flex-col items-center">
@@ -274,12 +277,12 @@ export default function SuivisMembres() {
               </tr>
             </thead>
             <tbody>
-              {filteredSuivis.length === 0 ? (
+              {uniqueSuivis.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
                 </tr>
               ) : (
-                filteredSuivis.map(m => (
+                uniqueSuivis.map(m => (
                   <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
                     <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
                     <td className="px-4 py-2">{m.telephone || "—"}</td>

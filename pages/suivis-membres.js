@@ -14,7 +14,7 @@ export default function SuivisMembres() {
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
   const [role, setRole] = useState([]);
-  const [detailsOpen, setDetailsOpen] = useState({});
+  const [detailsOpen, setDetailsOpen] = useState(null); // id du membre ouvert
   const [statusChanges, setStatusChanges] = useState({});
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
@@ -22,19 +22,8 @@ export default function SuivisMembres() {
   const [editMember, setEditMember] = useState(null);
   const [showRefus, setShowRefus] = useState(false);
 
-  const statutIds = {
-    "envoye": 1,
-    "en attente": 2,
-    "integrer": 3,
-    "refus": 4
-  };
-
-  const statutLabels = {
-    1: "Envoyé",
-    2: "En attente",
-    3: "Intégrer",
-    4: "Refus"
-  };
+  const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
+  const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
 
   useEffect(() => {
     const fetchSuivis = async () => {
@@ -57,34 +46,20 @@ export default function SuivisMembres() {
         let suivisData = [];
 
         if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
-          const { data, error } = await supabase
-            .from(tableName)
-            .select("*")
-            .order("created_at", { ascending: false });
+          const { data, error } = await supabase.from(tableName).select("*").order("created_at", { ascending: false });
           if (error) throw error;
           suivisData = data;
         } else if (profileData.role === "Conseiller") {
-          const { data, error } = await supabase
-            .from(tableName)
-            .select("*")
-            .eq("conseiller_id", profileData.id)
-            .order("created_at", { ascending: false });
+          const { data, error } = await supabase.from(tableName).select("*").eq("conseiller_id", profileData.id).order("created_at", { ascending: false });
           if (error) throw error;
           suivisData = data;
         } else if (profileData.role === "ResponsableCellule") {
-          const { data: cellulesData, error: cellulesError } = await supabase
-            .from("cellules")
-            .select("id")
-            .eq("responsable_id", profileData.id);
+          const { data: cellulesData, error: cellulesError } = await supabase.from("cellules").select("id").eq("responsable_id", profileData.id);
           if (cellulesError) throw cellulesError;
 
           const celluleIds = cellulesData?.map(c => c.id) || [];
           if (celluleIds.length > 0) {
-            const { data, error } = await supabase
-              .from(tableName)
-              .select("*")
-              .in("cellule_id", celluleIds)
-              .order("created_at", { ascending: false });
+            const { data, error } = await supabase.from(tableName).select("*").in("cellule_id", celluleIds).order("created_at", { ascending: false });
             if (error) throw error;
             suivisData = data;
           }
@@ -100,18 +75,13 @@ export default function SuivisMembres() {
         setLoading(false);
       }
     };
-
     fetchSuivis();
   }, []);
 
-  const toggleDetails = (id) =>
-    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleDetails = (id) => setDetailsOpen(prev => (prev === id ? null : id));
 
-  const handleStatusChange = (id, value) =>
-    setStatusChanges((prev) => ({ ...prev, [id]: parseInt(value, 10) }));
-
-  const handleCommentChange = (id, value) =>
-    setCommentChanges((prev) => ({ ...prev, [id]: value }));
+  const handleStatusChange = (id, value) => setStatusChanges(prev => ({ ...prev, [id]: parseInt(value, 10) }));
+  const handleCommentChange = (id, value) => setCommentChanges(prev => ({ ...prev, [id]: value }));
 
   const getBorderColor = (m) => {
     if (m.statut_suivis === statutIds["en attente"]) return "#FFA500";
@@ -124,40 +94,30 @@ export default function SuivisMembres() {
   const updateSuivi = async (id) => {
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
-
     if (!newStatus && !newComment) {
       setMessage({ type: "info", text: "Aucun changement détecté." });
       return;
     }
-
-    setUpdating((prev) => ({ ...prev, [id]: true }));
-
+    setUpdating(prev => ({ ...prev, [id]: true }));
     try {
       const payload = { updated_at: new Date() };
       if (newStatus) payload.statut_suivis = newStatus;
       if (newComment) payload.commentaire_suivis = newComment;
 
-      const { data: updatedSuivi, error: updateError } = await supabase
-        .from("suivis_membres")
-        .update(payload)
-        .eq("id", id)
-        .select()
-        .single();
+      const { data: updatedSuivi, error: updateError } = await supabase.from("suivis_membres").update(payload).eq("id", id).select().single();
       if (updateError) throw updateError;
 
-      setSuivis((prev) =>
-        prev.map((s) => (s.id === id ? updatedSuivi : s))
-      );
-      setDetailsOpen((prev) => ({ ...prev, [id]: false }));
+      setSuivis(prev => prev.map(s => s.id === id ? updatedSuivi : s));
+      setDetailsOpen(null);
     } catch (err) {
       console.error("Exception updateSuivi:", err);
       setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
     } finally {
-      setUpdating((prev) => ({ ...prev, [id]: false }));
+      setUpdating(prev => ({ ...prev, [id]: false }));
     }
   };
 
-  const filteredSuivis = suivis.filter((s) => {
+  const filteredSuivis = suivis.filter(s => {
     if (s.statut_suivis === statutIds["integrer"]) return false;
     if (showRefus) return s.statut_suivis === statutIds["refus"];
     return s.statut_suivis === statutIds["envoye"] || s.statut_suivis === statutIds["en attente"];
@@ -165,17 +125,14 @@ export default function SuivisMembres() {
 
   const handleAfterSend = async () => {
     try {
-      const { data, error } = await supabase
-        .from("suivis_membres")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("suivis_membres").select("*").order("created_at", { ascending: false });
       if (!error) setSuivis(data);
     } catch (err) {
       console.error("Erreur rafraîchissement suivis :", err);
     }
   };
 
-  const Details = ({ m }) => {
+  const DetailsPopup = ({ m }) => {
     const [cellules, setCellules] = useState([]);
     const [conseillers, setConseillers] = useState([]);
     const [typeEnvoi, setTypeEnvoi] = useState("");
@@ -184,42 +141,28 @@ export default function SuivisMembres() {
 
     useEffect(() => {
       const loadData = async () => {
-        const { data: cellulesData } = await supabase
-          .from("cellules")
-          .select("id, cellule, responsable, telephone");
-
-        const { data: conseillersData } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom, telephone")
-          .eq("role", "Conseiller");
-
+        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
+        const { data: conseillersData } = await supabase.from("profiles").select("id, prenom, nom, telephone").eq("role", "Conseiller");
         setCellules(cellulesData || []);
         setConseillers(conseillersData || []);
       };
-
       loadData();
     }, []);
 
     const handleSelectCible = (id) => {
-      if (typeEnvoi === "cellule") {
-        const cel = cellules.find((c) => c.id === parseInt(id));
-        setCible(cel || null);
-      } else if (typeEnvoi === "conseiller") {
-        const cons = conseillers.find((c) => c.id === id);
-        setCible(cons || null);
-      }
+      if (typeEnvoi === "cellule") setCible(cellules.find(c => c.id === parseInt(id)) || null);
+      else if (typeEnvoi === "conseiller") setCible(conseillers.find(c => c.id === id) || null);
     };
 
     useEffect(() => {
       if (commentRef.current) {
         commentRef.current.focus();
-        commentRef.current.selectionStart =
-          commentRef.current.value.length;
+        commentRef.current.selectionStart = commentRef.current.value.length;
       }
     }, [commentChanges[m.id]]);
 
     return (
-      <div className="text-black text-sm mt-2 space-y-2 w-full">
+      <div className="text-black text-sm space-y-2 w-full">
         <p>🏙 Ville : {m.ville || "—"}</p>
         <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
         <p>❓Besoin : {Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin || "—"}</p>
@@ -227,113 +170,55 @@ export default function SuivisMembres() {
 
         <div className="mt-4 border-t pt-4">
           <label className="text-black font-semibold">📌 Envoyer à :</label>
-
-          <select
-            value={typeEnvoi}
-            onChange={(e) => {
-              setTypeEnvoi(e.target.value);
-              setCible(null);
-            }}
-            className="w-full border rounded-md px-2 py-1 mt-2"
-          >
+          <select value={typeEnvoi} onChange={(e) => { setTypeEnvoi(e.target.value); setCible(null); }} className="w-full border rounded-md px-2 py-1 mt-2">
             <option value="">-- Choisir --</option>
             <option value="cellule">📍 Cellule</option>
             <option value="conseiller">👤 Conseiller</option>
           </select>
 
           {typeEnvoi === "cellule" && (
-            <select
-              className="w-full border rounded-md px-2 py-1 mt-2"
-              onChange={(e) => handleSelectCible(e.target.value)}
-            >
+            <select className="w-full border rounded-md px-2 py-1 mt-2" onChange={(e) => handleSelectCible(e.target.value)}>
               <option value="">-- Sélectionner une cellule --</option>
-              {cellules.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.cellule} — {c.responsable}
-                </option>
-              ))}
+              {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule} — {c.responsable}</option>)}
             </select>
           )}
 
           {typeEnvoi === "conseiller" && (
-            <select
-              className="w-full border rounded-md px-2 py-1 mt-2"
-              onChange={(e) => handleSelectCible(e.target.value)}
-            >
+            <select className="w-full border rounded-md px-2 py-1 mt-2" onChange={(e) => handleSelectCible(e.target.value)}>
               <option value="">-- Sélectionner un conseiller --</option>
-              {conseillers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.prenom} {c.nom}
-                </option>
-              ))}
+              {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
             </select>
           )}
 
-          {cible && (
-            <div className="mt-4">
-              <BoutonEnvoyer
-                membre={m}
-                type={typeEnvoi}
-                cible={cible}
-                session={true}
-                onEnvoyer={handleAfterSend}
-                showToast={() => {}}
-              />
-            </div>
-          )}
+          {cible && <BoutonEnvoyer membre={m} type={typeEnvoi} cible={cible} session={true} onEnvoyer={handleAfterSend} showToast={() => {}} />}
         </div>
 
         <label className="text-black text-sm mt-4 block">📋 Statut Suivis :</label>
-        <select
-          value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
-          onChange={(e) => handleStatusChange(m.id, e.target.value)}
-          className="w-full border rounded-md px-2 py-1"
-        >
+        <select value={statusChanges[m.id] ?? m.statut_suivis ?? ""} onChange={(e) => handleStatusChange(m.id, e.target.value)} className="w-full border rounded-md px-2 py-1">
           <option value="">-- Choisir un statut --</option>
           <option value={1}>🕓 En attente</option>
           <option value={3}>✅ Intégrer</option>
           <option value={4}>❌ Refus</option>
         </select>
 
-        <textarea
-          ref={commentRef}
-          value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
-          onChange={(e) => handleCommentChange(m.id, e.target.value)}
-          rows={2}
-          className="w-full border rounded-md px-2 py-1 mt-2 resize-none"
-          placeholder="Ajouter un commentaire..."
-        />
+        <textarea ref={commentRef} value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""} onChange={(e) => handleCommentChange(m.id, e.target.value)} rows={2} className="w-full border rounded-md px-2 py-1 mt-2 resize-none" placeholder="Ajouter un commentaire..." />
 
-        <button
-          onClick={() => updateSuivi(m.id)}
-          disabled={updating[m.id]}
-          className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-            updating[m.id] ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
-          }`}
-        >
+        <button onClick={() => updateSuivi(m.id)} disabled={updating[m.id]} className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${updating[m.id] ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"}`}>
           {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
         </button>
 
         <div className="mt-4 flex justify-center">
-          <button
-            onClick={() => setEditMember(m)}
-            className="text-blue-600 text-sm mt-4"
-          >
-            ✏️ Modifier le contact
-          </button>
+          <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-4">✏️ Modifier le contact</button>
         </div>
       </div>
     );
   };
 
-  {/* -------------------------- RETURN JSX -------------------------- */}
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
-          <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-gray-200 transition-colors">
-            ← Retour
-          </button>
+          <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-gray-200 transition-colors">← Retour</button>
           <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
         </div>
         <div className="flex justify-end mt-2">
@@ -347,42 +232,20 @@ export default function SuivisMembres() {
 
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-white mb-2">📋 Suivis des Membres</h1>
-        <p className="text-white text-lg max-w-xl mx-auto italic">
-          Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
-        </p>
+        <p className="text-white text-lg max-w-xl mx-auto italic">Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️</p>
       </div>
 
       <div className="mb-4 flex justify-between w-full max-w-6xl">
-        <button
-          onClick={() => setView(view === "card" ? "table" : "card")}
-          className="text-white text-sm underline hover:text-gray-200"
-        >
-          {view === "card" ? "Vue Table" : "Vue Carte"}
-        </button>
-        <button
-          onClick={() => setShowRefus(!showRefus)}
-          className="text-orange-400 text-sm underline hover:text-orange-500"
-        >
-          {showRefus ? "Voir tout les suivis" : "Voir les refus"}
-        </button>
+        <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline hover:text-gray-200">{view === "card" ? "Vue Table" : "Vue Carte"}</button>
+        <button onClick={() => setShowRefus(!showRefus)} className="text-orange-400 text-sm underline hover:text-orange-500">{showRefus ? "Voir tout les suivis" : "Voir les refus"}</button>
       </div>
 
-      {message && (
-        <div className={`mb-4 px-4 py-2 rounded-md text-sm ${
-            message.type === "error"
-              ? "bg-red-200 text-red-800"
-              : message.type === "success"
-              ? "bg-green-200 text-green-800"
-              : "bg-yellow-100 text-yellow-800"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
+      {message && <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{message.text}</div>}
 
+      {/* Vue Carte */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-          {filteredSuivis.map((item) => (
+          {filteredSuivis.map(item => (
             <div key={item.id} className="bg-white rounded-2xl shadow-lg flex flex-col w-full transition-all duration-300 hover:shadow-2xl overflow-hidden">
               <div className="w-full h-[6px] rounded-t-2xl" style={{ backgroundColor: getBorderColor(item) }} />
               <div className="p-4 flex flex-col items-center">
@@ -390,16 +253,14 @@ export default function SuivisMembres() {
                 <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📌 Attribué à : {item.cellule_nom ? `Cellule de ${item.cellule_nom}` : item.responsable || "—"}</p>
-                <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">
-                  {detailsOpen[item.id] ? "Fermer détails" : "Détails"}
-                </button>
-                {detailsOpen[item.id] && <Details m={item} />}
+                <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === item.id ? "Fermer détails" : "Détails"}</button>
               </div>
             </div>
           ))}
         </div>
       )}
 
+      {/* Vue Table */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
@@ -415,42 +276,19 @@ export default function SuivisMembres() {
             <tbody>
               {filteredSuivis.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-2 text-white text-center">
-                    Aucun membre en suivi
-                  </td>
+                  <td colSpan={5} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
                 </tr>
               ) : (
-                filteredSuivis.map((m) => (
-                  <React.Fragment key={m.id}>
-                    <tr className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                      <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>
-                        {m.prenom} {m.nom}
-                      </td>
-                      <td className="px-4 py-2">{m.telephone || "—"}</td>
-                      <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
-                      <td className="px-4 py-2">{m.cellule_nom ? `Cellule de ${m.cellule_nom}` : m.responsable || "—"}</td>
-                      <td className="px-4 py-2">
-                        <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">
-                          {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
-                        </button>
-                      </td>
-                    </tr>
-                    {detailsOpen[m.id] && (
-                      <tr>
-                        <td colSpan={5}>
-                          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                            <div className="bg-white rounded-2xl p-6 w-full max-w-md relative">
-                              <button onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: false }))} className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 font-bold">✖</button>
-                              <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.cellule_nom ? `(${m.cellule_nom})` : ""}</h2>
-                              <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
-                              <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {statutLabels[m.statut_suivis] || "—"}</p>
-                              <Details m={m} />
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
+                filteredSuivis.map(m => (
+                  <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
+                    <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
+                    <td className="px-4 py-2">{m.telephone || "—"}</td>
+                    <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
+                    <td className="px-4 py-2">{m.cellule_nom ? `Cellule de ${m.cellule_nom}` : m.responsable || "—"}</td>
+                    <td className="px-4 py-2">
+                      <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">{detailsOpen === m.id ? "Fermer détails" : "Détails"}</button>
+                    </td>
+                  </tr>
                 ))
               )}
             </tbody>
@@ -458,15 +296,17 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {editMember && (
-        <EditMemberPopup
-          member={editMember}
-          cellules={[]}
-          conseillers={[]}
-          onClose={() => setEditMember(null)}
-          onUpdate={() => setEditMember(null)}
-        />
+      {/* Modal Details */}
+      {detailsOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md relative">
+            <button onClick={() => setDetailsOpen(null)} className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 font-bold">✖</button>
+            <DetailsPopup m={suivis.find(s => s.id === detailsOpen)} />
+          </div>
+        </div>
       )}
+
+      {editMember && <EditMemberPopup member={editMember} cellules={[]} conseillers={[]} onClose={() => setEditMember(null)} onUpdate={() => setEditMember(null)} />}
     </div>
   );
 }

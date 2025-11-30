@@ -176,68 +176,149 @@ export default function SuivisMembres() {
       console.error("Erreur rafraîchissement suivis :", err);
     }
   };
-
   const Details = ({ m }) => {
-    const commentRef = useRef(null);
+  const [cellules, setCellules] = useState([]);
+  const [conseillers, setConseillers] = useState([]);
+  const [typeEnvoi, setTypeEnvoi] = useState("");
+  const [cible, setCible] = useState(null);
+  const commentRef = useRef(null);
 
-    useEffect(() => {
-      if (commentRef.current) {
-        commentRef.current.focus();
-        commentRef.current.selectionStart = commentRef.current.value.length;
-      }
-    }, [commentChanges[m.id]]);
+  useEffect(() => {
+    const loadData = async () => {
+      const { data: cellulesData } = await supabase
+        .from("cellules")
+        .select("id, cellule, responsable, telephone");
 
-    return (
-      <div className="text-black text-sm mt-2 space-y-2 w-full">
-        <p>🏙 Ville : {m.ville || "—"}</p>
-        <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-        <p>
-          ❓Besoin :{" "}
-          {(() => {
-            if (!m.besoin) return "—";
-            if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-            try {
-              const arr = JSON.parse(m.besoin);
-              return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-            } catch {
-              return m.besoin;
-            }
-          })()}
-        </p>
-        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>        
+      const { data: conseillersData } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, telephone")
+        .eq("role", "Conseiller");
 
-        <div className="mt-5">
-          <label className="text-black text-sm mb-1 block">📋 Statut Suivis :</label>
+      setCellules(cellulesData || []);
+      setConseillers(conseillersData || []);
+    };
+
+    loadData();
+  }, []);
+
+  const handleSelectCible = (id) => {
+    if (typeEnvoi === "cellule") {
+      const cel = cellules.find((c) => c.id === parseInt(id));
+      setCible(cel || null);
+    } else if (typeEnvoi === "conseiller") {
+      const cons = conseillers.find((c) => c.id === id);
+      setCible(cons || null);
+    }
+  };
+
+  useEffect(() => {
+    if (commentRef.current) {
+      commentRef.current.focus();
+      commentRef.current.selectionStart =
+        commentRef.current.value.length;
+    }
+  }, [commentChanges[m.id]]);
+
+  return (
+    <div className="text-black text-sm mt-2 space-y-2 w-full">
+      {/* Informations */}
+      <p>🏙 Ville : {m.ville || "—"}</p>
+      <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+      <p>❓Besoin : {Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin || "—"}</p>
+      <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+
+      {/* ⬇️ NOUVELLE SECTION : SELECT ENVOI */}
+      <div className="mt-4 border-t pt-4">
+        <label className="text-black font-semibold">📌 Envoyer à :</label>
+
+        {/* Choix type */}
+        <select
+          value={typeEnvoi}
+          onChange={(e) => {
+            setTypeEnvoi(e.target.value);
+            setCible(null);
+          }}
+          className="w-full border rounded-md px-2 py-1 mt-2"
+        >
+          <option value="">-- Choisir --</option>
+          <option value="cellule">📍 Cellule</option>
+          <option value="conseiller">👤 Conseiller</option>
+        </select>
+
+        {/* Choix cible selon type */}
+        {typeEnvoi === "cellule" && (
           <select
-            value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
-            onChange={(e) => handleStatusChange(m.id, e.target.value)}
-            className="w-full border rounded-md px-2 py-1 text-black text-sm mt-1"
+            className="w-full border rounded-md px-2 py-1 mt-2"
+            onChange={(e) => handleSelectCible(e.target.value)}
           >
-            <option value="">-- Choisir un statut --</option>
-            <option value={statutIds["en attente"]}>🕓 En attente</option>
-            <option value={statutIds["integrer"]}>✅ Intégrer</option>
-            <option value={statutIds["refus"]}>❌ Refus</option>
+            <option value="">-- Sélectionner une cellule --</option>
+            {cellules.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.cellule} — {c.responsable}
+              </option>
+            ))}
           </select>
+        )}
 
-          <div className="mt-2">
-            <label className="text-gray-700 text-sm">💬 Commentaire :</label>
-            <textarea
-              ref={commentRef}
-              value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
-              onChange={(e) => handleCommentChange(m.id, e.target.value)}
-              rows={2}
-              className="w-full border rounded-md px-2 py-1 text-sm mt-1 resize-none"
-              placeholder="Ajouter un commentaire..."
+        {typeEnvoi === "conseiller" && (
+          <select
+            className="w-full border rounded-md px-2 py-1 mt-2"
+            onChange={(e) => handleSelectCible(e.target.value)}
+          >
+            <option value="">-- Sélectionner un conseiller --</option>
+            {conseillers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.prenom} {c.nom}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {/* BOUTON ENVOYER */}
+        {cible && (
+          <div className="mt-4">
+            <BoutonEnvoyer
+              membre={m}
+              type={typeEnvoi}
+              cible={cible}
+              session={true}
+              onEnvoyer={handleAfterSend}
+              showToast={() => {}}
             />
           </div>
+        )}
+      </div>
 
-          <button
-            onClick={() => updateSuivi(m.id)}
-            disabled={updating[m.id]}
-            className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-              updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
-            }`}
-          >
+      {/* Statut & Commentaires */}
+      <label className="text-black text-sm mt-4 block">📋 Statut Suivis :</label>
+      <select
+        value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
+        onChange={(e) => handleStatusChange(m.id, e.target.value)}
+        className="w-full border rounded-md px-2 py-1"
+      >
+        <option value="">-- Choisir un statut --</option>
+        <option value={1}>🕓 En attente</option>
+        <option value={3}>✅ Intégrer</option>
+        <option value={4}>❌ Refus</option>
+      </select>
+
+      <textarea
+        ref={commentRef}
+        value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
+        onChange={(e) => handleCommentChange(m.id, e.target.value)}
+        rows={2}
+        className="w-full border rounded-md px-2 py-1 mt-2 resize-none"
+        placeholder="Ajouter un commentaire..."
+      />
+
+      <button
+        onClick={() => updateSuivi(m.id)}
+        disabled={updating[m.id]}
+        className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+          updating[m.id] ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
+        }`}
+      >
+  
             {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
           </button>
 

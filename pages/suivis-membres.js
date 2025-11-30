@@ -22,7 +22,6 @@ export default function SuivisMembres() {
   const [editMember, setEditMember] = useState(null);
   const [showRefus, setShowRefus] = useState(false);
 
-  // Mapping des statuts
   const statutIds = {
     "envoye": 1,
     "en attente": 2,
@@ -158,7 +157,6 @@ export default function SuivisMembres() {
     }
   };
 
-  // Filtrage dynamique pour inclure "envoye"
   const filteredSuivis = suivis.filter((s) => {
     if (s.statut_suivis === statutIds["integrer"]) return false;
     if (showRefus) return s.statut_suivis === statutIds["refus"];
@@ -176,177 +174,161 @@ export default function SuivisMembres() {
       console.error("Erreur rafraîchissement suivis :", err);
     }
   };
+
   const Details = ({ m }) => {
-  const [cellules, setCellules] = useState([]);
-  const [conseillers, setConseillers] = useState([]);
-  const [typeEnvoi, setTypeEnvoi] = useState("");
-  const [cible, setCible] = useState(null);
-  const commentRef = useRef(null);
+    const [cellules, setCellules] = useState([]);
+    const [conseillers, setConseillers] = useState([]);
+    const [typeEnvoi, setTypeEnvoi] = useState("");
+    const [cible, setCible] = useState(null);
+    const commentRef = useRef(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      const { data: cellulesData } = await supabase
-        .from("cellules")
-        .select("id, cellule, responsable, telephone");
+    useEffect(() => {
+      const loadData = async () => {
+        const { data: cellulesData } = await supabase
+          .from("cellules")
+          .select("id, cellule, responsable, telephone");
 
-      const { data: conseillersData } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, telephone")
-        .eq("role", "Conseiller");
+        const { data: conseillersData } = await supabase
+          .from("profiles")
+          .select("id, prenom, nom, telephone")
+          .eq("role", "Conseiller");
 
-      setCellules(cellulesData || []);
-      setConseillers(conseillersData || []);
+        setCellules(cellulesData || []);
+        setConseillers(conseillersData || []);
+      };
+
+      loadData();
+    }, []);
+
+    const handleSelectCible = (id) => {
+      if (typeEnvoi === "cellule") {
+        const cel = cellules.find((c) => c.id === parseInt(id));
+        setCible(cel || null);
+      } else if (typeEnvoi === "conseiller") {
+        const cons = conseillers.find((c) => c.id === id);
+        setCible(cons || null);
+      }
     };
 
-    loadData();
-  }, []);
+    useEffect(() => {
+      if (commentRef.current) {
+        commentRef.current.focus();
+        commentRef.current.selectionStart =
+          commentRef.current.value.length;
+      }
+    }, [commentChanges[m.id]]);
 
-  const handleSelectCible = (id) => {
-    if (typeEnvoi === "cellule") {
-      const cel = cellules.find((c) => c.id === parseInt(id));
-      setCible(cel || null);
-    } else if (typeEnvoi === "conseiller") {
-      const cons = conseillers.find((c) => c.id === id);
-      setCible(cons || null);
-    }
-  };
+    return (
+      <div className="text-black text-sm mt-2 space-y-2 w-full">
+        <p>🏙 Ville : {m.ville || "—"}</p>
+        <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+        <p>❓Besoin : {Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin || "—"}</p>
+        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-  useEffect(() => {
-    if (commentRef.current) {
-      commentRef.current.focus();
-      commentRef.current.selectionStart =
-        commentRef.current.value.length;
-    }
-  }, [commentChanges[m.id]]);
+        <div className="mt-4 border-t pt-4">
+          <label className="text-black font-semibold">📌 Envoyer à :</label>
 
-  return (
-    <div className="text-black text-sm mt-2 space-y-2 w-full">
-      {/* Informations */}
-      <p>🏙 Ville : {m.ville || "—"}</p>
-      <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-      <p>❓Besoin : {Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin || "—"}</p>
-      <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+          <select
+            value={typeEnvoi}
+            onChange={(e) => {
+              setTypeEnvoi(e.target.value);
+              setCible(null);
+            }}
+            className="w-full border rounded-md px-2 py-1 mt-2"
+          >
+            <option value="">-- Choisir --</option>
+            <option value="cellule">📍 Cellule</option>
+            <option value="conseiller">👤 Conseiller</option>
+          </select>
 
-      {/* ⬇️ NOUVELLE SECTION : SELECT ENVOI */}
-      <div className="mt-4 border-t pt-4">
-        <label className="text-black font-semibold">📌 Envoyer à :</label>
+          {typeEnvoi === "cellule" && (
+            <select
+              className="w-full border rounded-md px-2 py-1 mt-2"
+              onChange={(e) => handleSelectCible(e.target.value)}
+            >
+              <option value="">-- Sélectionner une cellule --</option>
+              {cellules.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.cellule} — {c.responsable}
+                </option>
+              ))}
+            </select>
+          )}
 
-        {/* Choix type */}
+          {typeEnvoi === "conseiller" && (
+            <select
+              className="w-full border rounded-md px-2 py-1 mt-2"
+              onChange={(e) => handleSelectCible(e.target.value)}
+            >
+              <option value="">-- Sélectionner un conseiller --</option>
+              {conseillers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.prenom} {c.nom}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {cible && (
+            <div className="mt-4">
+              <BoutonEnvoyer
+                membre={m}
+                type={typeEnvoi}
+                cible={cible}
+                session={true}
+                onEnvoyer={handleAfterSend}
+                showToast={() => {}}
+              />
+            </div>
+          )}
+        </div>
+
+        <label className="text-black text-sm mt-4 block">📋 Statut Suivis :</label>
         <select
-          value={typeEnvoi}
-          onChange={(e) => {
-            setTypeEnvoi(e.target.value);
-            setCible(null);
-          }}
-          className="w-full border rounded-md px-2 py-1 mt-2"
+          value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
+          onChange={(e) => handleStatusChange(m.id, e.target.value)}
+          className="w-full border rounded-md px-2 py-1"
         >
-          <option value="">-- Choisir --</option>
-          <option value="cellule">📍 Cellule</option>
-          <option value="conseiller">👤 Conseiller</option>
+          <option value="">-- Choisir un statut --</option>
+          <option value={1}>🕓 En attente</option>
+          <option value={3}>✅ Intégrer</option>
+          <option value={4}>❌ Refus</option>
         </select>
 
-        {/* Choix cible selon type */}
-        {typeEnvoi === "cellule" && (
-          <select
-            className="w-full border rounded-md px-2 py-1 mt-2"
-            onChange={(e) => handleSelectCible(e.target.value)}
-          >
-            <option value="">-- Sélectionner une cellule --</option>
-            {cellules.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.cellule} — {c.responsable}
-              </option>
-            ))}
-          </select>
-        )}
+        <textarea
+          ref={commentRef}
+          value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
+          onChange={(e) => handleCommentChange(m.id, e.target.value)}
+          rows={2}
+          className="w-full border rounded-md px-2 py-1 mt-2 resize-none"
+          placeholder="Ajouter un commentaire..."
+        />
 
-        {typeEnvoi === "conseiller" && (
-          <select
-            className="w-full border rounded-md px-2 py-1 mt-2"
-            onChange={(e) => handleSelectCible(e.target.value)}
-          >
-            <option value="">-- Sélectionner un conseiller --</option>
-            {conseillers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.prenom} {c.nom}
-              </option>
-            ))}
-          </select>
-        )}
+        <button
+          onClick={() => updateSuivi(m.id)}
+          disabled={updating[m.id]}
+          className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
+            updating[m.id] ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
+          }`}
+        >
+          {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
+        </button>
 
-        {/* BOUTON ENVOYER */}
-        {cible && (
-          <div className="mt-4">
-            <BoutonEnvoyer
-              membre={m}
-              type={typeEnvoi}
-              cible={cible}
-              session={true}
-              onEnvoyer={handleAfterSend}
-              showToast={() => {}}
-            />
-          </div>
-        )}
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={() => setEditMember(m)}
+            className="text-blue-600 text-sm mt-4"
+          >
+            ✏️ Modifier le contact
+          </button>
+        </div>
       </div>
+    );
+  };
 
-      {/* Statut & Commentaires */}
-      {/* Statut & Commentaires */}
-<label className="text-black text-sm mt-4 block">📋 Statut Suivis :</label>
-<select
-  value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
-  onChange={(e) => handleStatusChange(m.id, e.target.value)}
-  className="w-full border rounded-md px-2 py-1"
->
-  <option value="">-- Choisir un statut --</option>
-  <option value={1}>🕓 En attente</option>
-  <option value={3}>✅ Intégrer</option>
-  <option value={4}>❌ Refus</option>
-</select>
-
-<textarea
-  ref={commentRef}
-  value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
-  onChange={(e) => handleCommentChange(m.id, e.target.value)}
-  rows={2}
-  className="w-full border rounded-md px-2 py-1 mt-2 resize-none"
-  placeholder="Ajouter un commentaire..."
-/>
-
-<button
-  onClick={() => updateSuivi(m.id)}
-  disabled={updating[m.id]}
-  className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${
-    updating[m.id] ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
-  }`}
->
-  {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
-</button>
-
-<div className="mt-4 flex justify-center">
-  <button
-    onClick={() => setEditMember(m)}
-    className="text-blue-600 text-sm mt-4"
-  >
-    ✏️ Modifier le contact
-  </button>
-</div>
-
-<div className="mt-4">
-  <BoutonEnvoyer
-    membre={m}
-    type="cellule"
-    cible={null}
-    onEnvoyer={handleAfterSend}
-    session={null}
-    showToast={() => {}}
-  />
-</div>
-
-
-  // -------------------------- RETURN JSX --------------------------
+  {/* -------------------------- RETURN JSX -------------------------- */}
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-      {/* Header */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
           <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-gray-200 transition-colors">
@@ -370,7 +352,6 @@ export default function SuivisMembres() {
         </p>
       </div>
 
-      {/* Barre boutons */}
       <div className="mb-4 flex justify-between w-full max-w-6xl">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
@@ -399,7 +380,6 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {/* Vue Carte */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
           {filteredSuivis.map((item) => (
@@ -420,7 +400,6 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {/* Vue Table */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
@@ -479,7 +458,6 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {/* Popup édition membre */}
       {editMember && (
         <EditMemberPopup
           member={editMember}

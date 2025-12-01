@@ -162,7 +162,7 @@ style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
         const isOpen = detailsOpen[member.id];
         return (
           <div key={member.id} className="bg-white text-gray-900 rounded-2xl shadow-xl p-4">
-            <h2 className="font-bold text-lg mb-1 text-center text-black-800">
+            <h2 className="font-bold text-lg mb-1 text-center">
               {member.prenom} {member.nom}
             </h2>
             <p className="text-sm text-center mb-2">📱 {member.telephone || "—"}</p>
@@ -176,7 +176,7 @@ style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
             </label>
             <button
               onClick={() => toggleDetails(member.id)}
-              className="text-orange-500 underline text-sm mt-1 block mx-auto text-center"
+              className="text-orange-500 underline text-sm mt-1 block mx-auto"
             >
               {isOpen ? "Fermer Détails" : "Détails"}
             </button>
@@ -185,10 +185,9 @@ style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
               <div className="text-gray-700 text-sm mt-2 space-y-2 w-full flex flex-col items-left">
                 <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                 <p>🏙 Ville: {member.ville || "—"}</p>
-                <p>❓Besoin : {formatBesoin(member.besoin)}</p>
+                <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
                 <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
 
-                {/* ✏️ Modifier le contact */}
                 <button
                   onClick={() => setEditMember(member)}
                   className="text-blue-600 text-sm mt-4 block mx-auto"
@@ -196,7 +195,6 @@ style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
                   ✏️ Modifier le contact
                 </button>
 
-                {/* Fermer détails en dessous */}
                 <button
                   onClick={() => toggleDetails(member.id)}
                   className="text-orange-500 underline text-sm mt-2 block mx-auto"
@@ -261,5 +259,6 @@ style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     />
   )}
 </div>
+
 );
 }

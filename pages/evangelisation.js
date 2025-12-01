@@ -1,4 +1,5 @@
 // ✅ pages/evangelisation.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -90,8 +91,9 @@ export default function Evangelisation() {
       <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
 
       {/* ENVOYER À CENTRALISE */}
-      <div className="flex flex-col items-start mb-4 w-full max-w-md">
-        <div className="flex items-center gap-2 mb-1">
+      <div className="flex flex-col items-center mb-6 w-full">
+        {/* PREMIER SELECT + LABEL */}
+        <div className="flex items-center gap-2 mb-2">
           <label className="font-semibold text-white">Envoyer à :</label>
           <select
             value={selectedTargetType}
@@ -107,11 +109,12 @@ export default function Evangelisation() {
           </select>
         </div>
 
+        {/* DEUXIEME SELECT selon le type */}
         {selectedTargetType && (
           <select
             value={selectedTarget}
             onChange={(e) => setSelectedTarget(e.target.value)}
-            className="mt-2 border rounded px-3 py-2 text-gray-800 shadow-md"
+            className="border rounded px-3 py-2 text-gray-800 shadow-md mb-2"
           >
             <option value="">-- Choisir {selectedTargetType} --</option>
             {selectedTargetType === "cellule"
@@ -128,10 +131,11 @@ export default function Evangelisation() {
           </select>
         )}
 
+        {/* BOUTON WHATSAPP centré */}
         {selectedTarget && Object.values(checkedContacts).some((v) => v) && (
           <button
             onClick={sendWhatsapp}
-            className="mt-3 bg-green-500 text-white font-bold px-4 py-2 rounded-xl shadow-md hover:bg-green-600 transition-all"
+            className="bg-green-500 text-white font-bold px-4 py-2 rounded-xl shadow-md hover:bg-green-600 transition-all"
           >
             ✅ Envoyer WhatsApp
           </button>

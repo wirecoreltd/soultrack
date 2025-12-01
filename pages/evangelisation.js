@@ -1,5 +1,4 @@
 // ✅ pages/evangelisation.js
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -14,12 +13,14 @@ export default function Evangelisation() {
   const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
-  const [selectedCellule, setSelectedCellule] = useState("");
-  const [selectedConseiller, setSelectedConseiller] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [checkedContacts, setCheckedContacts] = useState({});
-  const [view, setView] = useState("card");
   const [editMember, setEditMember] = useState(null);
+  const [view, setView] = useState("card");
+
+  // Menu centralisé envoyer à
+  const [targetType, setTargetType] = useState(""); // "cellule" ou "conseiller"
+  const [targetId, setTargetId] = useState("");
 
   useEffect(() => {
     fetchContacts();
@@ -55,21 +56,6 @@ export default function Evangelisation() {
   const handleCheck = (id) =>
     setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  const sendWhatsapp = () => {
-    const selectedIds = Object.keys(checkedContacts).filter((id) => checkedContacts[id]);
-    if (selectedIds.length === 0) {
-      alert("⚠️ Sélectionnez au moins un contact à envoyer");
-      return;
-    }
-    if (!selectedCellule && !selectedConseiller) {
-      alert("⚠️ Choisissez une cellule ou un conseiller");
-      return;
-    }
-    alert(`✅ WhatsApp envoyé aux ${selectedIds.length} contact(s)`);
-  };
-
-  const userName = "Utilisateur";
-
   const formatBesoin = (b) => {
     if (!b) return "—";
     if (Array.isArray(b)) return b.join(", ");
@@ -81,9 +67,24 @@ export default function Evangelisation() {
     }
   };
 
+  const sendWhatsapp = () => {
+    const selectedIds = Object.keys(checkedContacts).filter((id) => checkedContacts[id]);
+    if (selectedIds.length === 0) {
+      alert("⚠️ Sélectionnez au moins un contact à envoyer");
+      return;
+    }
+    if (!targetType || !targetId) {
+      alert("⚠️ Choisissez une cellule ou un conseiller");
+      return;
+    }
+    alert(`✅ WhatsApp envoyé aux ${selectedIds.length} contact(s)`);
+  };
+
   const handleUpdateMember = (updated) => {
     setContacts((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
   };
+
+  const userName = "Utilisateur";
 
   return (
     <div
@@ -107,40 +108,44 @@ export default function Evangelisation() {
       <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
       <h1 className="text-4xl text-white text-center mb-2">Évangélisation</h1>
 
-      {/* ENVOYER À CENTRALISE */}
-      <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center w-full max-w-md">
+      {/* MENU ENVOYER À CENTRALISE */}
+      <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center justify-center w-full max-w-md">
         <select
-          value={selectedCellule}
-          onChange={(e) => { setSelectedCellule(e.target.value); setSelectedConseiller(""); }}
-          className="mt-1 w-full border rounded px-2 py-1 text-sm shadow-sm"
+          value={targetType}
+          onChange={(e) => { setTargetType(e.target.value); setTargetId(""); }}
+          className="w-full border rounded px-3 py-2 text-sm shadow-sm"
         >
-          <option value="">-- Choisir une Cellule --</option>
-          {cellules.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.cellule} ({c.responsable})
-            </option>
-          ))}
+          <option value="">-- Envoyer à --</option>
+          <option value="cellule">Cellule</option>
+          <option value="conseiller">Conseiller</option>
         </select>
 
-        <select
-          value={selectedConseiller}
-          onChange={(e) => { setSelectedConseiller(e.target.value); setSelectedCellule(""); }}
-          className="mt-1 w-full border rounded px-2 py-1 text-sm shadow-sm"
-        >
-          <option value="">-- Choisir un Conseiller --</option>
-          {conseillers.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.prenom} {c.nom}
-            </option>
-          ))}
-        </select>
+        {targetType && (
+          <select
+            value={targetId}
+            onChange={(e) => setTargetId(e.target.value)}
+            className="w-full border rounded px-3 py-2 text-sm shadow-sm"
+          >
+            <option value="">-- Choisir {targetType} --</option>
+            {targetType === "cellule"
+              ? cellules.map((c) => (
+                  <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>
+                ))
+              : conseillers.map((c) => (
+                  <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
+                ))
+            }
+          </select>
+        )}
 
-        <button
-          onClick={sendWhatsapp}
-          className="bg-green-500 text-white font-bold px-4 py-2 rounded-xl shadow-md hover:bg-green-600 transition-all"
-        >
-          ✅ Envoyer WhatsApp
-        </button>
+        {Object.values(checkedContacts).some(Boolean) && targetId && (
+          <button
+            onClick={sendWhatsapp}
+            className="bg-green-500 text-white font-bold px-4 py-2 rounded-xl shadow-md hover:bg-green-600 transition-all"
+          >
+            ✅ Envoyer WhatsApp
+          </button>
+        )}
       </div>
 
       {/* BASCULE VUE */}
@@ -173,14 +178,6 @@ export default function Evangelisation() {
                   ✅ Envoyer ce Contact
                 </label>
 
-                {/* BOUTON EDIT */}
-                <button
-                  onClick={() => setEditMember(member)}
-                  className="text-blue-600 text-sm mt-2 block mx-auto"
-                >
-                  ✏️ Modifier le contact
-                </button>
-
                 <button
                   onClick={() => toggleDetails(member.id)}
                   className="text-orange-500 underline text-sm mt-2 block mx-auto"
@@ -194,6 +191,14 @@ export default function Evangelisation() {
                     <p>🏙 Ville: {member.ville || "—"}</p>
                     <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
                     <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
+
+                    {/* ✏️ Modifier le contact */}
+                    <button
+                      onClick={() => setEditMember(member)}
+                      className="text-blue-600 text-sm mt-2 block mx-auto"
+                    >
+                      ✏️ Modifier le contact
+                    </button>
                   </div>
                 )}
               </div>
@@ -251,7 +256,7 @@ export default function Evangelisation() {
           cellules={cellules}
           conseillers={conseillers}
           onClose={() => setEditMember(null)}
-          onUpdateMember={handleUpdateMember}
+          onUpdateMember={(m) => handleUpdateMember(m)}
         />
       )}
     </div>

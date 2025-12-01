@@ -1,106 +1,228 @@
-
+// ✅ pages/evangelisation.js
 "use client";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
+import Image from "next/image";
+import LogoutLink from "../components/LogoutLink";
 
-export default function BoutonEnvoyerContacts({ contacts, checkedContacts, cellule, onEnvoye, showToast }) {
-  const [loading, setLoading] = useState(false);
+export default function Evangelisation() {
+  const router = useRouter();
+  const [contacts, setContacts] = useState([]);
+  const [cellules, setCellules] = useState([]);
+  const [selectedCellule, setSelectedCellule] = useState("");
+  const [detailsOpen, setDetailsOpen] = useState({});
+  const [checkedContacts, setCheckedContacts] = useState({});
+  const [view, setView] = useState("card");
 
-  const envoyerContacts = async () => {
-    if (!cellule) {
-      alert("❌ Veuillez sélectionner une cellule !");
-      return;
-    }
+  useEffect(() => {
+    fetchContacts();
+    fetchCellules();
+  }, []);
 
-    const contactsACocher = contacts.filter(c => checkedContacts[c.id]);
-    if (contactsACocher.length === 0) {
-      alert("❌ Aucun contact sélectionné !");
-      return;
-    }
+  const fetchContacts = async () => {
+    const { data } = await supabase
+      .from("evangelises")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setContacts(data || []);
+  };
 
-    setLoading(true);
+  const fetchCellules = async () => {
+    const { data } = await supabase
+      .from("cellules")
+      .select("id, cellule, responsable, telephone");
+    setCellules(data || []);
+  };
 
+  const toggleDetails = (id) =>
+    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const handleCheck = (id) =>
+    setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const sendWhatsapp = () => alert("Fonction OK ✅");
+
+  const userName = "Utilisateur";
+
+  const formatBesoin = (b) => {
+    if (!b) return "—";
+    if (Array.isArray(b)) return b.join(", ");
     try {
-      const idsEnvoyes = contactsACocher.map(c => c.id);
-
-      // 1️⃣ Enregistrement dans la table suivis_des_evangelises
-      const insertData = contactsACocher.map(contact => ({
-        prenom: contact.prenom,
-        nom: contact.nom,
-        telephone: contact.telephone,
-        is_whatsapp: contact.is_whatsapp || false,
-        ville: contact.ville,
-        besoin: contact.besoin,
-        infos_supplementaires: contact.infos_supplementaires,
-        cellule_id: cellule.id,
-        responsable_cellule: cellule.responsable,
-        status_suivis_evangelises: "En cours",
-        date_suivi: new Date().toISOString(),
-      }));
-
-      const { error: insertError } = await supabase
-        .from("suivis_des_evangelises")
-        .insert(insertData);
-
-      if (insertError) {
-        console.error("Erreur insertion :", insertError.message);
-        alert("❌ Une erreur est survenue !");
-        setLoading(false);
-        return;
-      }
-
-      // 2️⃣ Supprimer les contacts envoyés de evangelises
-      const { error: deleteError } = await supabase
-        .from("evangelises")
-        .delete()
-        .in("id", idsEnvoyes);
-
-      if (deleteError) console.error("Erreur suppression :", deleteError.message);
-
-      // 3️⃣ Générer le message WhatsApp
-      const intro = contactsACocher.length === 1 
-        ? "une nouvelle âme"
-        : "des nouvelles âmes";
-
-      let message = `👋 Salut ${cellule.responsable},\n\n🙏 Nous avons ${intro} qui sont venu Christ à suivre :\n\n`;
-
-      contactsACocher.forEach(contact => {
-        message += `- 👤 Nom : ${contact.prenom} ${contact.nom}\n`;
-        message += `- 📱 Téléphone : ${contact.telephone || "—"}\n`;
-        message += `- 📲 WhatsApp : ${contact.is_whatsapp ? "Oui" : "Non"}\n`;
-        message += `- 🏙 Ville : ${contact.ville || "—"}\n`;
-        message += `- 🙏 Besoin : ${contact.besoin || "—"}\n`;
-        message += `- 📝 Infos supplémentaires : ${contact.infos_supplementaires || "—"}\n\n`;
-      });
-
-      message += "🙏 Merci pour ton cœur ❤ et ton amour ✨";
-
-      const phone = cellule.telephone.replace(/\D/g, "");
-      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
-
-      // 4️⃣ Mettre à jour la page côté client
-      if (onEnvoye) {
-        contactsACocher.forEach(c => onEnvoye(c.id));
-      }
-
-      if (showToast) showToast("✅ Tous les contacts sélectionnés ont été envoyés !");
-    } catch (err) {
-      console.error("Erreur envoi contacts :", err.message);
-      alert("❌ Une erreur est survenue !");
-    } finally {
-      setLoading(false);
+      const arr = JSON.parse(b);
+      return Array.isArray(arr) ? arr.join(", ") : b;
+    } catch {
+      return b;
     }
   };
 
   return (
-    <button
-      onClick={envoyerContacts}
-      disabled={loading}
-      className={`w-full px-4 py-2 rounded-lg font-bold text-white shadow-md transition-all ${
-        loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
-      }`}
+    <div
+      className="min-h-screen w-full flex flex-col items-center p-6"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {loading ? "Envoi..." : "Envoyer les contacts sélectionnés"}
-    </button>
+      {/* HEADER */}
+      <div className="w-full max-w-5xl mb-6">
+        <div className="flex justify-between items-center">
+          <button onClick={() => router.back()} className="text-white">
+            ← Retour
+          </button>
+          <LogoutLink />
+        </div>
+        <div className="flex justify-end mt-2">
+          <p className="text-orange-200 text-sm">👋 Bienvenue {userName}</p>
+        </div>
+      </div>
+
+      {/* LOGO ET TITRE */}
+      <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
+      <h1 className="text-4xl text-white text-center mb-2">Évangélisation</h1>
+
+      {/* SELECT CELLULE */}
+      <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center">
+        <select
+          value={selectedCellule}
+          onChange={(e) => setSelectedCellule(e.target.value)}
+          className="border rounded-xl px-4 py-2 text-gray-800 shadow-md"
+        >
+          <option value="">📍 Sélectionner cellule</option>
+          {cellules.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.cellule} — {c.responsable}
+            </option>
+          ))}
+        </select>
+
+        {selectedCellule && (
+          <button
+            onClick={sendWhatsapp}
+            className="bg-green-500 text-white font-bold px-4 py-2 rounded-xl shadow-md hover:bg-green-600 transition-all"
+          >
+            ✅ Envoyer WhatsApp
+          </button>
+        )}
+      </div>
+
+      {/* BASCULE VUE */}
+      <p
+        onClick={() => setView(view === "card" ? "table" : "card")}
+        className="cursor-pointer text-yellow-100 underline hover:text-white text-sm mb-4"
+      >
+        {view === "card" ? "Vue Table" : "Vue Carte"}
+      </p>
+
+      {/* VUE CARTE */}
+      {view === "card" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
+          {contacts.map((member) => {
+            const isOpen = detailsOpen[member.id];
+            return (
+              <div key={member.id} className="bg-white text-gray-900 rounded-2xl shadow-xl p-4">
+                <h2 className="font-bold text-lg mb-1 text-center text-blue-800">
+                  {member.prenom} {member.nom}
+                </h2>
+                <p className="text-sm text-center mb-2">📱 {member.telephone || "—"}</p>
+                <label className="flex items-center justify-center gap-2 text-sm mb-2">
+                  <input
+                    type="checkbox"
+                    checked={checkedContacts[member.id] || false}
+                    onChange={() => handleCheck(member.id)}
+                  />
+                  ✅ Envoyer ce Contact
+                </label>
+                <button
+                  onClick={() => toggleDetails(member.id)}
+                  className="text-orange-500 underline text-sm mt-1 block mx-auto text-center"
+                >
+                  {isOpen ? "Fermer Détails" : "Détails"}
+                </button>
+
+                {isOpen && (
+                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-center flex flex-col items-center">
+                    <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+                    <p>🏙 Ville: {member.ville || "—"}</p>
+                    <p>❓Besoin : {formatBesoin(member.besoin)}</p>
+                    <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* VUE TABLE */}
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto mt-4 transition duration-200">
+          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
+              <tr>
+                <th className="px-4 py-2 rounded-tl-lg">Prénom</th>
+                <th className="px-4 py-2">Nom</th>
+                <th className="px-4 py-2 text-center">Envoyer ce Contact</th>
+                <th className="px-4 py-2 rounded-tr-lg text-center">Détails</th>
+              </tr>
+            </thead>
+            <tbody>
+              {contacts.map((member) => (
+                <tr
+                  key={member.id}
+                  className="hover:bg-white/10 transition duration-150 border-b border-blue-300"
+                >
+                  <td className="px-4 py-2">{member.prenom}</td>
+                  <td className="px-4 py-2">{member.nom}</td>
+                  <td className="px-4 py-2 text-center">
+                    <input
+                      type="checkbox"
+                      checked={checkedContacts[member.id] || false}
+                      onChange={() => handleCheck(member.id)}
+                    />
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <button
+                      onClick={() => toggleDetails(member.id)}
+                      className="text-orange-500 underline text-sm"
+                    >
+                      {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* POPUP DÉTAILS */}
+          {contacts.map(
+            (member) =>
+              detailsOpen[member.id] && (
+                <div
+                  key={member.id}
+                  className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200"
+                >
+                  <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
+                    <button
+                      onClick={() => toggleDetails(member.id)}
+                      className="absolute top-3 right-3 text-red-500 font-bold text-xl"
+                    >
+                      ✖
+                    </button>
+                    <h2 className="text-xl font-bold mb-2 text-black text-center">
+                      {member.prenom} {member.nom}
+                    </h2>
+                    <p className="text-black text-sm mb-1">📱 {member.telephone || "—"}</p>
+                    <p className="text-black text-sm mb-1">
+                      💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}
+                    </p>
+                    <p className="text-black text-sm mb-1">🏙 Ville : {member.ville || "—"}</p>
+                    <p className="text-black text-sm mb-1">❓ Besoin : {formatBesoin(member.besoin)}</p>
+                    <p className="text-black text-sm mb-1">📝 Infos : {member.infos_supplementaires || "—"}</p>
+                  </div>
+                </div>
+              )
+          )}
+        </div>
+      )}
+    </div>
   );
 }

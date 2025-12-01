@@ -56,7 +56,7 @@ const handleCheck = (id) =>
 setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
 
 const formatBesoin = (b) => {
-if (!b) return "\u2014";
+if (!b) return "—";
 if (Array.isArray(b)) return b.join(", ");
 try {
 const arr = JSON.parse(b);
@@ -84,7 +84,7 @@ style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
 >
 {/* HEADER */} <div className="w-full max-w-5xl mb-6"> <div className="flex justify-between items-center">
 <button onClick={() => router.back()} className="text-white">
-\u2190 Retour </button> <LogoutLink /> </div> <div className="flex justify-end mt-2"> <p className="text-orange-200 text-sm">\u{1F44B} Bienvenue Utilisateur</p> </div> </div>
+← Retour </button> <LogoutLink /> </div> <div className="flex justify-end mt-2"> <p className="text-orange-200 text-sm">👋 Bienvenue Utilisateur</p> </div> </div>
 
   {/* LOGO ET TITRE */}
   <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
@@ -100,7 +100,7 @@ style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
       }}
       className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-full sm:w-60"
     >
-      <option value="">\u{1F4CD} Envoyer à…</option>
+      <option value="">📍 Envoyer à…</option>
       <option value="cellule">Une Cellule</option>
       <option value="conseiller">Un Conseiller</option>
     </select>
@@ -156,7 +156,7 @@ style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
   </p>
 
   {/* VUE CARTE */}
-  {view === "card' && (
+  {view === "card" && (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
       {contacts.map((member) => {
         const isOpen = detailsOpen[member.id];
@@ -165,14 +165,14 @@ style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
             <h2 className="font-bold text-lg mb-1 text-center text-black-800">
               {member.prenom} {member.nom}
             </h2>
-            <p className="text-sm text-center mb-2">\u{1F4F1} {member.telephone || "\u2014"}</p>
+            <p className="text-sm text-center mb-2">📱 {member.telephone || "—"}</p>
             <label className="flex items-center justify-center gap-2 text-sm mb-2">
               <input
                 type="checkbox"
                 checked={checkedContacts[member.id] || false}
                 onChange={() => handleCheck(member.id)}
               />
-              \u2705 Envoyer ce Contact
+              ✅ Envoyer ce Contact
             </label>
             <button
               onClick={() => toggleDetails(member.id)}
@@ -183,20 +183,20 @@ style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
 
             {isOpen && (
               <div className="text-gray-700 text-sm mt-2 space-y-2 w-full flex flex-col items-left">
-                <p>\u{1F4AC} WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-                <p>\u{1F3D9} Ville: {member.ville || "\u2014"}</p>
-                <p>\u2753 Besoin : {formatBesoin(member.besoin)}</p>
-                <p>\u{1F4DD} Infos: {member.infos_supplementaires || "\u2014"}</p>
+                <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+                <p>🏙 Ville: {member.ville || "—"}</p>
+                <p>❓Besoin : {formatBesoin(member.besoin)}</p>
+                <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
 
                 {/* ✏️ Modifier le contact */}
                 <button
                   onClick={() => setEditMember(member)}
                   className="text-blue-600 text-sm mt-4 block mx-auto"
                 >
-                  \u270F\uFE0F Modifier le contact
+                  ✏️ Modifier le contact
                 </button>
 
-                {/* Fermer détails */}
+                {/* Fermer détails en dessous */}
                 <button
                   onClick={() => toggleDetails(member.id)}
                   className="text-orange-500 underline text-sm mt-2 block mx-auto"
@@ -209,6 +209,56 @@ style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
         );
       })}
     </div>
+  )}
+
+  {/* VUE TABLE */}
+  {view === "table" && (
+    <div className="w-full max-w-6xl overflow-x-auto mt-4 transition duration-200">
+      <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+        <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
+          <tr>
+            <th className="px-4 py-2 rounded-tl-lg">Prénom</th>
+            <th className="px-4 py-2">Nom</th>
+            <th className="px-4 py-2 text-center">Envoyer ce Contact</th>
+            <th className="px-4 py-2 rounded-tr-lg text-center">Détails</th>
+          </tr>
+        </thead>
+        <tbody>
+          {contacts.map((member) => (
+            <tr
+              key={member.id}
+              className="hover:bg-white/10 transition duration-150 border-b border-blue-300"
+            >
+              <td className="px-4 py-2">{member.prenom}</td>
+              <td className="px-4 py-2">{member.nom}</td>
+              <td className="px-4 py-2 text-center">
+                <input
+                  type="checkbox"
+                  checked={checkedContacts[member.id] || false}
+                  onChange={() => handleCheck(member.id)}
+                />
+              </td>
+              <td className="px-4 py-2 text-center">
+                <button
+                  onClick={() => toggleDetails(member.id)}
+                  className="text-orange-500 underline text-sm"
+                >
+                  Détails
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+
+  {editMember && (
+    <EditMemberPopup
+      member={editMember}
+      onClose={() => setEditMember(null)}
+      onUpdate={handleUpdateMember}
+    />
   )}
 </div>
 );

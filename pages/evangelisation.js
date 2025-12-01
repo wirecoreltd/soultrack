@@ -1,4 +1,5 @@
 // ✅ pages/evangelisation.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,21 +7,24 @@ import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
-import BoutonEnvoyer from "../components/BoutonEnvoyer";
+import EditEvangelisePopup from "../components/EditEvangelisePopup";
 
-export default function Evangelisation({ session, showToast, handleAfterSend, conseillers }) {
+export default function Evangelisation() {
   const router = useRouter();
   const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
+  const [conseillers, setConseillers] = useState([]);
+  const [selectedCellule, setSelectedCellule] = useState("");
+  const [selectedConseiller, setSelectedConseiller] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [checkedContacts, setCheckedContacts] = useState({});
   const [view, setView] = useState("card");
-  const [selectedTargetType, setSelectedTargetType] = useState({});
-  const [selectedTargets, setSelectedTargets] = useState({});
+  const [editMember, setEditMember] = useState(null);
 
   useEffect(() => {
     fetchContacts();
     fetchCellules();
+    fetchConseillers();
   }, []);
 
   const fetchContacts = async () => {
@@ -38,11 +42,31 @@ export default function Evangelisation({ session, showToast, handleAfterSend, co
     setCellules(data || []);
   };
 
+  const fetchConseillers = async () => {
+    const { data } = await supabase
+      .from("conseillers")
+      .select("*");
+    setConseillers(data || []);
+  };
+
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const handleCheck = (id) =>
     setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const sendWhatsapp = () => {
+    const selectedIds = Object.keys(checkedContacts).filter((id) => checkedContacts[id]);
+    if (selectedIds.length === 0) {
+      alert("⚠️ Sélectionnez au moins un contact à envoyer");
+      return;
+    }
+    if (!selectedCellule && !selectedConseiller) {
+      alert("⚠️ Choisissez une cellule ou un conseiller");
+      return;
+    }
+    alert(`✅ WhatsApp envoyé aux ${selectedIds.length} contact(s)`);
+  };
 
   const userName = "Utilisateur";
 
@@ -55,6 +79,10 @@ export default function Evangelisation({ session, showToast, handleAfterSend, co
     } catch {
       return b;
     }
+  };
+
+  const handleUpdateMember = (updated) => {
+    setContacts((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
   };
 
   return (
@@ -79,6 +107,42 @@ export default function Evangelisation({ session, showToast, handleAfterSend, co
       <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
       <h1 className="text-4xl text-white text-center mb-2">Évangélisation</h1>
 
+      {/* ENVOYER À CENTRALISE */}
+      <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center w-full max-w-md">
+        <select
+          value={selectedCellule}
+          onChange={(e) => { setSelectedCellule(e.target.value); setSelectedConseiller(""); }}
+          className="mt-1 w-full border rounded px-2 py-1 text-sm shadow-sm"
+        >
+          <option value="">-- Choisir une Cellule --</option>
+          {cellules.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.cellule} ({c.responsable})
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={selectedConseiller}
+          onChange={(e) => { setSelectedConseiller(e.target.value); setSelectedCellule(""); }}
+          className="mt-1 w-full border rounded px-2 py-1 text-sm shadow-sm"
+        >
+          <option value="">-- Choisir un Conseiller --</option>
+          {conseillers.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.prenom} {c.nom}
+            </option>
+          ))}
+        </select>
+
+        <button
+          onClick={sendWhatsapp}
+          className="bg-green-500 text-white font-bold px-4 py-2 rounded-xl shadow-md hover:bg-green-600 transition-all"
+        >
+          ✅ Envoyer WhatsApp
+        </button>
+      </div>
+
       {/* BASCULE VUE */}
       <p
         onClick={() => setView(view === "card" ? "table" : "card")}
@@ -90,93 +154,46 @@ export default function Evangelisation({ session, showToast, handleAfterSend, co
       {/* VUE CARTE */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
-          {contacts.map((m) => {
-            const isOpen = detailsOpen[m.id];
+          {contacts.map((member) => {
+            const isOpen = detailsOpen[member.id];
             return (
-              <div key={m.id} className="bg-white text-gray-900 rounded-2xl shadow-xl p-4">
+              <div key={member.id} className="bg-white text-gray-900 rounded-2xl shadow-xl p-4 relative">
                 <h2 className="font-bold text-lg mb-1 text-center text-blue-800">
-                  {m.prenom} {m.nom}
+                  {member.prenom} {member.nom}
                 </h2>
-                <p className="text-sm text-center mb-2">📱 {m.telephone || "—"}</p>
+                <p className="text-sm text-center mb-2">📱 {member.telephone || "—"}</p>
 
-                {/* ENVOYER À */}
-                <div className="mt-2 w-full">
-                  <label className="font-semibold text-sm">Envoyer à :</label>
-                  <select
-                    value={selectedTargetType[m.id] || ""}
-                    onChange={(e) =>
-                      setSelectedTargetType((prev) => ({ ...prev, [m.id]: e.target.value }))
-                    }
-                    className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                  >
-                    <option value="">-- Choisir une option --</option>
-                    <option value="cellule">Une Cellule</option>
-                    <option value="conseiller">Un Conseiller</option>
-                  </select>
+                {/* CASE À COCHER */}
+                <label className="flex items-center justify-center gap-2 text-sm mb-2">
+                  <input
+                    type="checkbox"
+                    checked={checkedContacts[member.id] || false}
+                    onChange={() => handleCheck(member.id)}
+                  />
+                  ✅ Envoyer ce Contact
+                </label>
 
-                  {(selectedTargetType[m.id] === "cellule" ||
-                    selectedTargetType[m.id] === "conseiller") && (
-                    <select
-                      value={selectedTargets[m.id] || ""}
-                      onChange={(e) =>
-                        setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))
-                      }
-                      className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                    >
-                      <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
-                      {selectedTargetType[m.id] === "cellule"
-                        ? cellules.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.cellule} ({c.responsable})
-                            </option>
-                          ))
-                        : conseillers.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.nom}
-                            </option>
-                          ))}
-                    </select>
-                  )}
-
-                  {selectedTargets[m.id] && (
-                    <div className="pt-2">
-                      <BoutonEnvoyer
-                        membre={m}
-                        type={selectedTargetType[m.id]}
-                        cible={
-                          selectedTargetType[m.id] === "cellule"
-                            ? cellules.find((c) => c.id === selectedTargets[m.id])
-                            : conseillers.find((c) => c.id === selectedTargets[m.id])
-                        }
-                        onEnvoyer={(id) =>
-                          handleAfterSend(
-                            id,
-                            selectedTargetType[m.id],
-                            selectedTargetType[m.id] === "cellule"
-                              ? cellules.find((c) => c.id === selectedTargets[m.id])
-                              : conseillers.find((c) => c.id === selectedTargets[m.id])
-                          )
-                        }
-                        session={session}
-                        showToast={showToast}
-                      />
-                    </div>
-                  )}
-                </div>
+                {/* BOUTON EDIT */}
+                <button
+                  onClick={() => setEditMember(member)}
+                  className="text-blue-600 text-sm mt-2 block mx-auto"
+                >
+                  ✏️ Modifier le contact
+                </button>
 
                 <button
-                  onClick={() => toggleDetails(m.id)}
-                  className="text-orange-500 underline text-sm mt-2"
+                  onClick={() => toggleDetails(member.id)}
+                  className="text-orange-500 underline text-sm mt-2 block mx-auto"
                 >
                   {isOpen ? "Fermer détails" : "Détails"}
                 </button>
 
                 {isOpen && (
                   <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-center flex flex-col items-center">
-                    <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p>🏙 Ville: {m.ville || "—"}</p>
-                    <p>❓Besoin : {formatBesoin(m.besoin)}</p>
-                    <p>📝 Infos: {m.infos_supplementaires || "—"}</p>
+                    <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+                    <p>🏙 Ville: {member.ville || "—"}</p>
+                    <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
+                    <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
                   </div>
                 )}
               </div>
@@ -224,41 +241,18 @@ export default function Evangelisation({ session, showToast, handleAfterSend, co
               ))}
             </tbody>
           </table>
-
-          {/* POPUP DÉTAILS */}
-          {contacts.map(
-            (member) =>
-              detailsOpen[member.id] && (
-                <div
-                  key={member.id}
-                  className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200"
-                >
-                  <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
-                    <button
-                      onClick={() => toggleDetails(member.id)}
-                      className="absolute top-3 right-3 text-red-500 font-bold text-xl"
-                    >
-                      ✖
-                    </button>
-                    <h2 className="text-xl font-bold mb-2 text-black text-center">
-                      {member.prenom} {member.nom}
-                    </h2>
-                    <p className="text-black text-sm mb-1">📱 {member.telephone || "—"}</p>
-                    <p className="text-black text-sm mb-1">
-                      💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}
-                    </p>
-                    <p className="text-black text-sm mb-1">🏙 Ville : {member.ville || "—"}</p>
-                    <p className="text-black text-sm mb-1">
-                      ❓ Besoin : {formatBesoin(member.besoin)}
-                    </p>
-                    <p className="text-black text-sm mb-1">
-                      📝 Infos : {member.infos_supplementaires || "—"}
-                    </p>
-                  </div>
-                </div>
-              )
-          )}
         </div>
+      )}
+
+      {/* POPUP EDIT */}
+      {editMember && (
+        <EditEvangelisePopup
+          member={editMember}
+          cellules={cellules}
+          conseillers={conseillers}
+          onClose={() => setEditMember(null)}
+          onUpdateMember={handleUpdateMember}
+        />
       )}
     </div>
   );

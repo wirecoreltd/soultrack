@@ -183,15 +183,9 @@ export default function Evangelisation() {
                   />
                   ✅ Envoyer ce Contact
                 </label>
-                <button
-                  onClick={() => toggleDetails(member.id)}
-                  className="text-orange-500 underline text-sm mt-1 block mx-auto text-center"
-                >
-                  {isOpen ? "Fermer Détails" : "Détails"}
-                </button>
 
                 {isOpen && (
-                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full flex flex-col items-left">
+                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full flex flex-col items-center">
                     <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🏙 Ville: {member.ville || "—"}</p>
                     <p>❓Besoin : {formatBesoin(member.besoin)}</p>
@@ -200,15 +194,15 @@ export default function Evangelisation() {
                     {/* ✏️ Modifier le contact */}
                     <button
                       onClick={() => setEditMember(member)}
-                      className="text-blue-600 text-sm mt-4 block mx-auto"
+                      className="text-blue-600 text-sm mt-4"
                     >
                       ✏️ Modifier le contact
                     </button>
 
-                    {/* Fermer détails en dessous */}
+                    {/* Fermer détails sous Modifier */}
                     <button
                       onClick={() => toggleDetails(member.id)}
-                      className="text-orange-500 underline text-sm mt-2 block mx-auto"
+                      className="text-orange-500 underline text-sm mt-2"
                     >
                       Fermer détails
                     </button>

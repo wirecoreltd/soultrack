@@ -2,67 +2,64 @@
 
 import { useState } from "react";
 
-export default function BoutonEnvoyerContacts({
-contacts,
-checkedContacts,
-cellule,
-conseiller,
-onEnvoye,
-showToast,
-}) {
+export default function BoutonEnvoyerContacts({ contacts, checkedContacts, cellule, conseiller, onEnvoye, showToast }) {
 const [loading, setLoading] = useState(false);
 
-const handleSend = () => {
-const selected = contacts.filter((c) => checkedContacts[c.id]);
+const sendSelected = () => {
+const selected = contacts.filter(c => checkedContacts[c.id]);
+if (!selected.length) {
+alert("\u26A0\uFE0F Aucun contact sélectionné !");
+return;
+}
 
 ```
-if (selected.length === 0) {
-  showToast("⚠️ Veuillez sélectionner au moins un contact.");
-  return;
-}
-
 setLoading(true);
 
-let message = "";
-if (selected.length === 1) {
-  message += `👋 Salut ${cellule?.responsable || conseiller?.prenom || ""},\n\n`;
-  message += `🙏 Nouveau contact à suivre :\n\n`;
-} else {
-  message += `👋 Salut ${cellule?.responsable || conseiller?.prenom || ""},\n\n`;
-  message += `🙏 ${selected.length} nouveaux contacts à suivre :\n\n`;
-}
+selected.forEach((membre) => {
+  // Emoji via code Unicode uniquement
+  const handWave = "\u{1F44B}";
+  const praying = "\u{1F64F}";
+  const checkMark = "\u2705";
+  const phoneEmoji = "\u{1F4F1}";
+  const person = "\u{1F464}";
+  const city = "\u{1F3D9}";
 
-selected.forEach((c, index) => {
-  message += `• ${c.prenom} ${c.nom} — 📱 ${c.telephone || "—"}\n`;
+  let message = "";
+  if (selected.length === 1) {
+    message += `${handWave} Salut ${cellule?.responsable || conseiller?.prenom || ""},\n\n`;
+    message += `${praying} Nouveau contact à suivre :\n\n`;
+  } else {
+    message += `${handWave} Salut ${cellule?.responsable || conseiller?.prenom || ""},\n\n`;
+  }
+
+  message += `- ${person} Nom : ${membre.prenom} ${membre.nom}\n`;
+  message += `- ${phoneEmoji} Téléphone : ${membre.telephone || "—"}\n`;
+  message += `- ${city} Ville : ${membre.ville || "—"}\n`;
+  message += `- ${praying} Besoin : ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}\n\n`;
+
+  const phone = (cellule?.telephone || conseiller?.telephone || "").replace(/\D/g, "");
+  if (!phone) {
+    alert("\u26A0\uFE0F La cible n'a pas de numéro WhatsApp valide !");
+    return;
+  }
+
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+
+  if (onEnvoye) onEnvoye(membre.id);
+  if (showToast) showToast(`${checkMark} ${membre.prenom} ${membre.nom} a été envoyé !`);
 });
 
-const phone = (cellule?.telephone || conseiller?.telephone || "").replace(/\D/g, "");
-if (!phone) {
-  showToast("⚠️ La cible n'a pas de numéro WhatsApp valide !");
-  setLoading(false);
-  return;
-}
-
-// Ouverture de WhatsApp
-window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
-
-// Marquer contacts comme envoyés
-selected.forEach((c) => onEnvoye(c.id));
-
 setLoading(false);
-showToast("✅ Message envoyé !");
 ```
 
 };
 
 return (
 <button
-onClick={handleSend}
 disabled={loading}
-className={`w-full px-4 py-2 rounded-xl text-white font-bold shadow-md transition ${
-        loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
-      }`}
+onClick={sendSelected}
+className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg transition-all ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"}`}
 >
-{loading ? "⏳ Envoi..." : "📨 Envoyer"} </button>
+{loading ? "Envoi..." : "\u{1F4E4} Envoyer par WhatsApp"} </button>
 );
 }

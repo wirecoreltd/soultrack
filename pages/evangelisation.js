@@ -6,23 +6,21 @@ import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
+import BoutonEnvoyer from "../components/BoutonEnvoyer";
 
-export default function Evangelisation() {
+export default function Evangelisation({ session, showToast, handleAfterSend, conseillers }) {
   const router = useRouter();
   const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
-  const [conseillers, setConseillers] = useState([]);
   const [detailsOpen, setDetailsOpen] = useState({});
   const [checkedContacts, setCheckedContacts] = useState({});
   const [view, setView] = useState("card");
-
   const [selectedTargetType, setSelectedTargetType] = useState({});
   const [selectedTargets, setSelectedTargets] = useState({});
 
   useEffect(() => {
     fetchContacts();
     fetchCellules();
-    fetchConseillers();
   }, []);
 
   const fetchContacts = async () => {
@@ -40,20 +38,11 @@ export default function Evangelisation() {
     setCellules(data || []);
   };
 
-  const fetchConseillers = async () => {
-    const { data } = await supabase
-      .from("conseillers")
-      .select("id, prenom, nom");
-    setConseillers(data || []);
-  };
-
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const handleCheck = (id) =>
     setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
-
-  const sendWhatsapp = () => alert("Fonction OK ✅");
 
   const userName = "Utilisateur";
 
@@ -90,64 +79,6 @@ export default function Evangelisation() {
       <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
       <h1 className="text-4xl text-white text-center mb-2">Évangélisation</h1>
 
-      {/* ENVOYER À */}
-      <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center bg-white/20 p-4 rounded-xl shadow">
-        <div className="w-full">
-          <label className="font-semibold text-sm text-white">Envoyer à :</label>
-
-          {/* Type de cible */}
-          <select
-            value={selectedTargetType.global || ""}
-            onChange={(e) =>
-              setSelectedTargetType({ global: e.target.value })
-            }
-            className="mt-1 w-full border rounded px-2 py-2 text-sm"
-          >
-            <option value="">-- Choisir une option --</option>
-            <option value="cellule">Une Cellule</option>
-            <option value="conseiller">Un Conseiller</option>
-          </select>
-
-          {/* Liste des cellules ou conseillers */}
-          {(selectedTargetType.global === "cellule" ||
-            selectedTargetType.global === "conseiller") && (
-            <select
-              value={selectedTargets.global || ""}
-              onChange={(e) =>
-                setSelectedTargets({ global: e.target.value })
-              }
-              className="mt-2 w-full border rounded px-2 py-2 text-sm"
-            >
-              <option value="">
-                -- Choisir {selectedTargetType.global} --
-              </option>
-
-              {selectedTargetType.global === "cellule"
-                ? cellules.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.cellule} ({c.responsable})
-                    </option>
-                  ))
-                : conseillers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.prenom} {c.nom}
-                    </option>
-                  ))}
-            </select>
-          )}
-
-          {/* Bouton WhatsApp */}
-          {selectedTargets.global && (
-            <button
-              onClick={sendWhatsapp}
-              className="mt-3 bg-green-500 text-white font-bold px-4 py-2 rounded-xl shadow-md hover:bg-green-600 transition-all w-full"
-            >
-              ✅ Envoyer WhatsApp
-            </button>
-          )}
-        </div>
-      </div>
-
       {/* BASCULE VUE */}
       <p
         onClick={() => setView(view === "card" ? "table" : "card")}
@@ -159,39 +90,93 @@ export default function Evangelisation() {
       {/* VUE CARTE */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
-          {contacts.map((member) => {
-            const isOpen = detailsOpen[member.id];
+          {contacts.map((m) => {
+            const isOpen = detailsOpen[m.id];
             return (
-              <div key={member.id} className="bg-white text-gray-900 rounded-2xl shadow-xl p-4">
+              <div key={m.id} className="bg-white text-gray-900 rounded-2xl shadow-xl p-4">
                 <h2 className="font-bold text-lg mb-1 text-center text-blue-800">
-                  {member.prenom} {member.nom}
+                  {m.prenom} {m.nom}
                 </h2>
-                <p className="text-sm text-center mb-2">
-                  📱 {member.telephone || "—"}
-                </p>
+                <p className="text-sm text-center mb-2">📱 {m.telephone || "—"}</p>
 
-                <label className="flex items-center justify-center gap-2 text-sm mb-2">
-                  <input
-                    type="checkbox"
-                    checked={checkedContacts[member.id] || false}
-                    onChange={() => handleCheck(member.id)}
-                  />
-                  ✅ Envoyer ce Contact
-                </label>
+                {/* ENVOYER À */}
+                <div className="mt-2 w-full">
+                  <label className="font-semibold text-sm">Envoyer à :</label>
+                  <select
+                    value={selectedTargetType[m.id] || ""}
+                    onChange={(e) =>
+                      setSelectedTargetType((prev) => ({ ...prev, [m.id]: e.target.value }))
+                    }
+                    className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                  >
+                    <option value="">-- Choisir une option --</option>
+                    <option value="cellule">Une Cellule</option>
+                    <option value="conseiller">Un Conseiller</option>
+                  </select>
+
+                  {(selectedTargetType[m.id] === "cellule" ||
+                    selectedTargetType[m.id] === "conseiller") && (
+                    <select
+                      value={selectedTargets[m.id] || ""}
+                      onChange={(e) =>
+                        setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))
+                      }
+                      className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                    >
+                      <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
+                      {selectedTargetType[m.id] === "cellule"
+                        ? cellules.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.cellule} ({c.responsable})
+                            </option>
+                          ))
+                        : conseillers.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.nom}
+                            </option>
+                          ))}
+                    </select>
+                  )}
+
+                  {selectedTargets[m.id] && (
+                    <div className="pt-2">
+                      <BoutonEnvoyer
+                        membre={m}
+                        type={selectedTargetType[m.id]}
+                        cible={
+                          selectedTargetType[m.id] === "cellule"
+                            ? cellules.find((c) => c.id === selectedTargets[m.id])
+                            : conseillers.find((c) => c.id === selectedTargets[m.id])
+                        }
+                        onEnvoyer={(id) =>
+                          handleAfterSend(
+                            id,
+                            selectedTargetType[m.id],
+                            selectedTargetType[m.id] === "cellule"
+                              ? cellules.find((c) => c.id === selectedTargets[m.id])
+                              : conseillers.find((c) => c.id === selectedTargets[m.id])
+                          )
+                        }
+                        session={session}
+                        showToast={showToast}
+                      />
+                    </div>
+                  )}
+                </div>
 
                 <button
-                  onClick={() => toggleDetails(member.id)}
-                  className="text-orange-500 underline text-sm mt-1 block mx-auto"
+                  onClick={() => toggleDetails(m.id)}
+                  className="text-orange-500 underline text-sm mt-2"
                 >
-                  {isOpen ? "Fermer Détails" : "Détails"}
+                  {isOpen ? "Fermer détails" : "Détails"}
                 </button>
 
                 {isOpen && (
-                  <div className="text-gray-700 text-sm mt-2 space-y-2 text-center">
-                    <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p>🏙 Ville: {member.ville || "—"}</p>
-                    <p>❓Besoin : {formatBesoin(member.besoin)}</p>
-                    <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
+                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-center flex flex-col items-center">
+                    <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                    <p>🏙 Ville: {m.ville || "—"}</p>
+                    <p>❓Besoin : {formatBesoin(m.besoin)}</p>
+                    <p>📝 Infos: {m.infos_supplementaires || "—"}</p>
                   </div>
                 )}
               </div>
@@ -232,9 +217,7 @@ export default function Evangelisation() {
                       onClick={() => toggleDetails(member.id)}
                       className="text-orange-500 underline text-sm"
                     >
-                      {detailsOpen[member.id]
-                        ? "Fermer détails"
-                        : "Détails"}
+                      {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                     </button>
                   </td>
                 </tr>
@@ -248,7 +231,7 @@ export default function Evangelisation() {
               detailsOpen[member.id] && (
                 <div
                   key={member.id}
-                  className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+                  className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200"
                 >
                   <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
                     <button
@@ -260,15 +243,11 @@ export default function Evangelisation() {
                     <h2 className="text-xl font-bold mb-2 text-black text-center">
                       {member.prenom} {member.nom}
                     </h2>
-                    <p className="text-black text-sm mb-1">
-                      📱 {member.telephone || "—"}
-                    </p>
+                    <p className="text-black text-sm mb-1">📱 {member.telephone || "—"}</p>
                     <p className="text-black text-sm mb-1">
                       💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}
                     </p>
-                    <p className="text-black text-sm mb-1">
-                      🏙 Ville : {member.ville || "—"}
-                    </p>
+                    <p className="text-black text-sm mb-1">🏙 Ville : {member.ville || "—"}</p>
                     <p className="text-black text-sm mb-1">
                       ❓ Besoin : {formatBesoin(member.besoin)}
                     </p>

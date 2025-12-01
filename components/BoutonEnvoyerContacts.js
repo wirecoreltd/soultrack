@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
@@ -16,10 +17,6 @@ if (!cible) {
 alert("❌ Sélectionnez une cible !");
 return;
 }
-if (!membres || membres.length === 0) {
-alert("❌ Aucun contact sélectionné !");
-return;
-}
 
 setLoading(true);
 
@@ -30,7 +27,6 @@ try {
       .from("suivis_membres")
       .select("*")
       .eq("telephone", membre.telephone || "");
-
     if (selectError) throw selectError;
 
     if (existing.length > 0) {
@@ -71,13 +67,7 @@ try {
       .single();
     if (insertError) throw insertError;
 
-    // Mettre à jour le membre pour qu’il devienne actif
-    const { error: updateMemberError } = await supabase
-      .from("membres")
-      .update({ statut: "actif" })
-      .eq("id", membre.id);
-    if (updateMemberError) throw updateMemberError;
-
+    // Callback pour mise à jour locale
     if (onEnvoyer) onEnvoyer(insertedData);
 
     // Préparer message WhatsApp

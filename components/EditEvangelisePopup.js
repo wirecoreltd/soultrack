@@ -116,15 +116,7 @@ export default function EditMemberPopup({
           Modifier {member.prenom} {member.nom}
         </h2>
 
-        {/* ⭐ Section serviteur */}
-        <div className="flex items-center gap-3 mb-4 justify-center">
-          <button onClick={toggleServiteur} className="text-3xl">
-            {formData.star ? "⭐" : "☆"}
-          </button>
-          <span className="font-semibold text-gray-700">Marquer comme serviteur</span>
-        </div>
-
-        <div className="flex flex-col space-y-3 text-sm">
+      <div className="flex flex-col space-y-3 text-sm">
 
           {/* LABEL + INPUT */}
           <label className="font-semibold">Prénom</label>

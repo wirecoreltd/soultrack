@@ -92,60 +92,59 @@ export default function Evangelisation() {
       <h1 className="text-4xl text-white text-center mb-2">Évangélisation</h1>
 
       {/* SELECT DESTINATAIRE UNIQUE */}
-      <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center w-full max-w-5xl">
-        <select
-          value={selectedTargetType}
-          onChange={(e) => {
-            setSelectedTargetType(e.target.value);
-            setSelectedTarget(""); // reset sélection
-          }}
-          className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-full sm:w-60"
-        >
-          <option value="">📍 Envoyer à…</option>
-          <option value="cellule">Une Cellule</option>
-          <option value="conseiller">Un Conseiller</option>
-        </select>
-
-        {selectedTargetType && (
+        <div className="flex flex-col items-center gap-2 mb-4 w-full max-w-5xl">
           <select
-            value={selectedTarget}
-            onChange={(e) => setSelectedTarget(e.target.value)}
-            className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-full sm:w-72"
-          >
-            <option value="">-- Choisir {selectedTargetType} --</option>
-            {selectedTargetType === "cellule"
-              ? cellules.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.cellule} — {c.responsable}
-                  </option>
-                ))
-              : conseillers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.prenom} {c.nom}
-                  </option>
-                ))}
-          </select>
-        )}
-
-        {selectedTarget && (
-          <BoutonEnvoyerContacts
-            contacts={contacts}
-            checkedContacts={checkedContacts}
-            cellule={selectedTargetType === "cellule" ? selectedTargetObject : null}
-            conseiller={selectedTargetType === "conseiller" ? selectedTargetObject : null}
-            onEnvoye={(id) => {
-              // retirer le contact envoyé
-              setContacts((prev) => prev.filter((c) => c.id !== id));
-              setCheckedContacts((prev) => {
-                const copy = { ...prev };
-                delete copy[id];
-                return copy;
-              });
+            value={selectedTargetType}
+            onChange={(e) => {
+              setSelectedTargetType(e.target.value);
+              setSelectedTarget(""); // reset sélection
             }}
-            showToast={(msg) => alert(msg)}
-          />
-        )}
-      </div>
+            className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-72 text-center"
+          >
+            <option value="">📍 Envoyer à…</option>
+            <option value="cellule">Une Cellule</option>
+            <option value="conseiller">Un Conseiller</option>
+          </select>
+        
+          {selectedTargetType && (
+            <select
+              value={selectedTarget}
+              onChange={(e) => setSelectedTarget(e.target.value)}
+              className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-72 text-center"
+            >
+              <option value="">-- Choisir {selectedTargetType} --</option>
+              {selectedTargetType === "cellule"
+                ? cellules.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.cellule} — {c.responsable}
+                    </option>
+                  ))
+                : conseillers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.prenom} {c.nom}
+                    </option>
+                  ))}
+            </select>
+          )}
+        
+          {selectedTarget && (
+            <BoutonEnvoyerContacts
+              contacts={contacts}
+              checkedContacts={checkedContacts}
+              cellule={selectedTargetType === "cellule" ? selectedTargetObject : null}
+              conseiller={selectedTargetType === "conseiller" ? selectedTargetObject : null}
+              onEnvoye={(id) => {
+                setContacts((prev) => prev.filter((c) => c.id !== id));
+                setCheckedContacts((prev) => {
+                  const copy = { ...prev };
+                  delete copy[id];
+                  return copy;
+                });
+              }}
+              showToast={(msg) => alert(msg)}
+            />
+          )}
+        </div>
 
       {/* BASCULE VUE */}
       <p

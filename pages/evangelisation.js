@@ -71,7 +71,7 @@ export default function Evangelisation() {
       ? cellules.find((c) => c.id === selectedTarget)
       : conseillers.find((c) => c.id === selectedTarget);
 
-  const selectedContactsCount = Object.values(checkedContacts).filter(Boolean).length;
+  const selectedCount = Object.values(checkedContacts).filter(Boolean).length;
 
   return (
     <div
@@ -96,67 +96,69 @@ export default function Evangelisation() {
       <h1 className="text-4xl text-white text-center mb-6">Évangélisation</h1>
 
       {/* SELECT DESTINATAIRE UNIQUE */}
-      <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center w-full max-w-5xl">
-        <select
-          value={selectedTargetType}
-          onChange={(e) => {
-            setSelectedTargetType(e.target.value);
-            setSelectedTarget("");
-          }}
-          className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-full sm:w-60"
-        >
-          <option value="">📍 Envoyer à…</option>
-          <option value="cellule">Une Cellule</option>
-          <option value="conseiller">Un Conseiller</option>
-        </select>
-
-        {selectedTargetType && (
+      <div className="flex flex-col items-center gap-2 mb-4 w-full max-w-5xl">
+        <div className="flex flex-col sm:flex-row gap-2 justify-center w-full">
           <select
-            value={selectedTarget}
-            onChange={(e) => setSelectedTarget(e.target.value)}
-            className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-full sm:w-72"
+            value={selectedTargetType}
+            onChange={(e) => {
+              setSelectedTargetType(e.target.value);
+              setSelectedTarget(""); // reset
+            }}
+            className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-full sm:w-60"
           >
-            <option value="">-- Choisir {selectedTargetType} --</option>
-            {selectedTargetType === "cellule"
-              ? cellules.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.cellule} — {c.responsable}
-                  </option>
-                ))
-              : conseillers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.prenom} {c.nom}
-                  </option>
-                ))}
+            <option value="">📍 Envoyer à…</option>
+            <option value="cellule">Une Cellule</option>
+            <option value="conseiller">Un Conseiller</option>
           </select>
+
+          {selectedTargetType && (
+            <select
+              value={selectedTarget}
+              onChange={(e) => setSelectedTarget(e.target.value)}
+              className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-full sm:w-72"
+            >
+              <option value="">-- Choisir {selectedTargetType} --</option>
+              {selectedTargetType === "cellule"
+                ? cellules.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.cellule} — {c.responsable}
+                    </option>
+                  ))
+                : conseillers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.prenom} {c.nom}
+                    </option>
+                  ))}
+            </select>
+          )}
+        </div>
+
+        {/* BOUTON ENVOYER */}
+        {selectedTarget && selectedCount > 0 && (
+          <div className="mt-3">
+            <BoutonEnvoyerContacts
+              contacts={contacts}
+              checkedContacts={checkedContacts}
+              cellule={selectedTargetType === "cellule" ? selectedTargetObject : null}
+              conseiller={selectedTargetType === "conseiller" ? selectedTargetObject : null}
+              onEnvoye={(id) => {
+                setContacts((prev) => prev.filter((c) => c.id !== id));
+                setCheckedContacts((prev) => {
+                  const copy = { ...prev };
+                  delete copy[id];
+                  return copy;
+                });
+              }}
+              showToast={(msg) => alert(msg)}
+              boutonTexte={
+                selectedCount === 1
+                  ? "Envoyer le contact"
+                  : `Envoyer les ${selectedCount} contacts`
+              }
+            />
+          </div>
         )}
       </div>
-
-      {/* BOUTON ENVOYER */}
-      {selectedTarget && selectedContactsCount > 0 && (
-        <div className="flex justify-center mb-6">
-          <BoutonEnvoyerContacts
-            contacts={contacts}
-            checkedContacts={checkedContacts}
-            cellule={selectedTargetType === "cellule" ? selectedTargetObject : null}
-            conseiller={selectedTargetType === "conseiller" ? selectedTargetObject : null}
-            onEnvoye={(id) => {
-              setContacts((prev) => prev.filter((c) => c.id !== id));
-              setCheckedContacts((prev) => {
-                const copy = { ...prev };
-                delete copy[id];
-                return copy;
-              });
-            }}
-            showToast={(msg) => alert(msg)}
-            texte={
-              selectedContactsCount === 1
-                ? "Envoyer le contact"
-                : `Envoyer les ${selectedContactsCount} contacts`
-            }
-          />
-        </div>
-      )}
 
       {/* BASCULE VUE */}
       <p
@@ -171,51 +173,55 @@ export default function Evangelisation() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
           {contacts.map((member) => {
             const isOpen = detailsOpen[member.id];
-
             return (
-              <div key={member.id} className="bg-white text-gray-900 rounded-2xl shadow-xl p-4">
+              <div
+                key={member.id}
+                className="bg-white text-gray-900 rounded-2xl shadow-xl p-4 relative"
+              >
                 <h2 className="font-bold text-lg mb-1 text-center text-black-800">
                   {member.prenom} {member.nom}
                 </h2>
                 <p className="text-sm text-center mb-2">📱 {member.telephone || "—"}</p>
+
                 <label className="flex items-center justify-center gap-2 text-sm mb-2">
                   <input
                     type="checkbox"
                     checked={checkedContacts[member.id] || false}
+                    onClick={(e) => e.stopPropagation()}
                     onChange={() => handleCheck(member.id)}
                   />
                   ✅ Envoyer ce Contact
                 </label>
 
-                {/* BOUTON DÉTAILS */}
-                {!isOpen && (
-                  <button
-                    onClick={() => toggleDetails(member.id)}
-                    className="text-orange-500 underline text-sm mt-1 block mx-auto"
-                  >
-                    Détails
-                  </button>
-                )}
+                {/* Bouton détails */}
+                <button
+                  onClick={() => toggleDetails(member.id)}
+                  className="text-orange-500 underline text-sm block mx-auto mb-2"
+                >
+                  {isOpen ? "" : "Détails"}
+                </button>
 
                 {isOpen && (
                   <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-left flex flex-col items-left">
                     <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🏙 Ville: {member.ville || "—"}</p>
-                    <p>❓Besoin : {formatBesoin(member.besoin)}</p>
+                    <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
                     <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
 
+                    {/* Bouton modifier */}
                     <button
                       onClick={() => setEditMember(member)}
-                      className="text-blue-600 text-sm mt-2 block mx-auto"
+                      className="text-blue-600 text-sm mt-3 block mx-auto"
                     >
                       ✏️ Modifier le contact
                     </button>
 
+                    {/* Fermer détails */}
                     <button
                       onClick={() => toggleDetails(member.id)}
                       className="text-orange-500 underline text-sm mt-2 block mx-auto"
                     >
-                      Fermer Détails
+                      Fermer détails
                     </button>
                   </div>
                 )}
@@ -249,6 +255,7 @@ export default function Evangelisation() {
                     <input
                       type="checkbox"
                       checked={checkedContacts[member.id] || false}
+                      onClick={(e) => e.stopPropagation()}
                       onChange={() => handleCheck(member.id)}
                     />
                   </td>

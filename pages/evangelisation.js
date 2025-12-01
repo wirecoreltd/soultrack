@@ -1,5 +1,3 @@
-COLLE EXACTEMENT CECI :
-
 "use client";
 
 import { useEffect, useState } from "react";

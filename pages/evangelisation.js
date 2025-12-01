@@ -18,7 +18,7 @@ const [selectedTarget, setSelectedTarget] = useState("");
 const [checkedContacts, setCheckedContacts] = useState({});
 const [detailsOpen, setDetailsOpen] = useState({});
 const [editMember, setEditMember] = useState(null);
-const [session, setSession] = useState(null); // ajouter si authentification nécessaire
+const [session, setSession] = useState(null); // à remplacer si tu gères l'authentification
 
 useEffect(() => {
 fetchContacts();
@@ -68,7 +68,7 @@ return (
   <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
   <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
 
-  {/* SELECT ENVOYER À CENTRALISE */}
+  {/* SELECT ENVOYER À */}
   <div className="w-full max-w-md flex flex-col items-center mb-6">
     <label className="font-semibold text-white mb-1 text-left w-full">Envoyer à :</label>
     <select
@@ -104,6 +104,10 @@ return (
           : conseillers.find(c => c.id === selectedTarget)}
         session={session}
         showToast={(msg) => alert(msg)}
+        onEnvoyer={(updatedMembre) => {
+          // Mettre à jour le statut local si nécessaire
+          setContacts(prev => prev.map(m => m.id === updatedMembre.membre_id ? { ...m, is_whatsapp: true } : m));
+        }}
       />
     )}
   </div>
@@ -172,7 +176,5 @@ return (
     />
   )}
 </div>
-
-
 );
 }

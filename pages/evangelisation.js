@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
-import BoutonEnvoyer from "../components/BoutonEnvoyer";
 import EditEvangelisePopup from "../components/EditEvangelisePopup";
+import BoutonEnvoyerContacts from "../components/BoutonEnvoyerContacts";
 
 export default function Evangelisation() {
 const router = useRouter();
@@ -36,7 +36,7 @@ setCellules(data || []);
 };
 
 const fetchConseillers = async () => {
-const { data } = await supabase.from("conseillers").select("id, prenom, nom");
+const { data } = await supabase.from("conseillers").select("id, prenom, nom, telephone");
 setConseillers(data || []);
 };
 
@@ -54,8 +54,13 @@ const hasSelectedContacts = Object.values(checkedContacts).some(Boolean);
 
 return (
 <div className="min-h-screen w-full flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-{/* HEADER */} <div className="w-full max-w-5xl mb-6"> <div className="flex justify-between items-center">
-<button onClick={() => router.back()} className="text-white">← Retour</button> <LogoutLink /> </div> </div>
+{/* HEADER */}
+<div className="w-full max-w-5xl mb-6">
+<div className="flex justify-between items-center">
+<button onClick={() => router.back()} className="text-white">← Retour</button>
+<LogoutLink />
+</div>
+</div>
 
   {/* LOGO ET TITRE */}
   <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
@@ -89,13 +94,13 @@ return (
     )}
 
     {hasSelectedContacts && selectedTargetType && selectedTarget && (
-      <BoutonEnvoyer
+      <BoutonEnvoyerContacts
         membre={contacts.filter(c => checkedContacts[c.id])}
         type={selectedTargetType}
         cible={selectedTargetType === "cellule"
           ? cellules.find(c => c.id === selectedTarget)
           : conseillers.find(c => c.id === selectedTarget)}
-        session={null} // à remplacer si nécessaire
+        session={null}
         showToast={(msg) => alert(msg)}
       />
     )}
@@ -165,6 +170,7 @@ return (
     />
   )}
 </div>
+
 
 );
 }

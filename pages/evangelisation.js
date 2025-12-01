@@ -18,6 +18,7 @@ const [selectedTarget, setSelectedTarget] = useState("");
 const [checkedContacts, setCheckedContacts] = useState({});
 const [detailsOpen, setDetailsOpen] = useState({});
 const [editMember, setEditMember] = useState(null);
+const [session, setSession] = useState(null); // ajouter si authentification nécessaire
 
 useEffect(() => {
 fetchContacts();
@@ -50,7 +51,8 @@ try { const arr = JSON.parse(b); return Array.isArray(arr) ? arr.join(", ") : b;
 catch { return b; }
 };
 
-const hasSelectedContacts = Object.values(checkedContacts).some(Boolean);
+const selectedContacts = contacts.filter(c => checkedContacts[c.id]);
+const hasSelectedContacts = selectedContacts.length > 0;
 
 return (
 <div className="min-h-screen w-full flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
@@ -68,7 +70,7 @@ return (
 
   {/* SELECT ENVOYER À CENTRALISE */}
   <div className="w-full max-w-md flex flex-col items-center mb-6">
-    <label className="font-semibold text-white mb-1">Envoyer à :</label>
+    <label className="font-semibold text-white mb-1 text-left w-full">Envoyer à :</label>
     <select
       value={selectedTargetType}
       onChange={(e) => { setSelectedTargetType(e.target.value); setSelectedTarget(""); }}
@@ -95,12 +97,12 @@ return (
 
     {hasSelectedContacts && selectedTargetType && selectedTarget && (
       <BoutonEnvoyerContacts
-        membre={contacts.filter(c => checkedContacts[c.id])}
+        membres={selectedContacts}
         type={selectedTargetType}
         cible={selectedTargetType === "cellule"
           ? cellules.find(c => c.id === selectedTarget)
           : conseillers.find(c => c.id === selectedTarget)}
-        session={null}
+        session={session}
         showToast={(msg) => alert(msg)}
       />
     )}
@@ -170,7 +172,5 @@ return (
     />
   )}
 </div>
-
-
 );
 }

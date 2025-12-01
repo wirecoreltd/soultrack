@@ -19,10 +19,9 @@ return;
 setLoading(true);
 
 try {
-  // Formatage simple des numéros
   const membresFormatted = membres.map(m => ({
     ...m,
-    telephone: m.telephone.replace(/\D/g, "") // supprime tout sauf chiffres
+    telephone: m.telephone.replace(/\D/g, "")
   }));
 
   console.log("Envoi WhatsApp:", { membres: membresFormatted, cible });

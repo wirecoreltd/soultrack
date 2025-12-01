@@ -14,7 +14,7 @@ export default function SuivisMembres() {
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
   const [role, setRole] = useState([]);
-  const [detailsOpen, setDetailsOpen] = useState(null); // id du membre ouvert
+  const [detailsOpen, setDetailsOpen] = useState(null);
   const [statusChanges, setStatusChanges] = useState({});
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
@@ -108,7 +108,6 @@ export default function SuivisMembres() {
       if (updateError) throw updateError;
 
       setSuivis(prev => prev.map(s => s.id === id ? updatedSuivi : s));
-      setDetailsOpen(null);
     } catch (err) {
       console.error("Exception updateSuivi:", err);
       setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
@@ -123,7 +122,6 @@ export default function SuivisMembres() {
     return s.statut_suivis === statutIds["envoye"] || s.statut_suivis === statutIds["en attente"];
   });
 
-  // On supprime les doublons par ID
   const uniqueSuivis = Array.from(new Map(filteredSuivis.map(item => [item.id, item])).values());
 
   const handleAfterSend = async () => {
@@ -256,25 +254,17 @@ export default function SuivisMembres() {
                 <p className="text-sm text-gray-700 mb-1">📞 {item.telephone || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📌 Attribué à : {item.cellule_nom ? `Cellule de ${item.cellule_nom}` : item.responsable || "—"}</p>
-                <button 
-                  onClick={() => toggleDetails(item.id)} 
-                  className="text-orange-500 underline text-sm mt-1"
-                >
-                  {detailsOpen === item.id ? "Fermer détails" : "Détails"}
-                </button>
+                <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === item.id ? "Fermer détails" : "Détails"}</button>
               </div>
-      
-              {/* Détails “expandable” */}
-              <div 
-                className={`transition-all duration-500 overflow-hidden px-4 ${detailsOpen === item.id ? "max-h-[1000px] py-4" : "max-h-0 py-0"}`}
-              >
+
+              {/* Détails expandable */}
+              <div className={`transition-all duration-500 overflow-hidden px-4 ${detailsOpen === item.id ? "max-h-[1000px] py-4" : "max-h-0 py-0"}`}>
                 {detailsOpen === item.id && <DetailsPopup m={item} />}
               </div>
             </div>
           ))}
         </div>
       )}
-
 
       {/* Vue Table */}
       {view === "table" && (
@@ -309,16 +299,6 @@ export default function SuivisMembres() {
               )}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {/* Modal Details */}
-      {detailsOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md relative">
-            <button onClick={() => setDetailsOpen(null)} className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 font-bold">✖</button>
-            <DetailsPopup m={suivis.find(s => s.id === detailsOpen)} />
-          </div>
         </div>
       )}
 

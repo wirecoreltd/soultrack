@@ -3,31 +3,20 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function BoutonEnvoyerContacts({ membres, type = "cellule", cible, session, onEnvoyer, showToast }) {
+export default function BoutonEnvoyerContacts({ membres, type = "cellule", cible, onEnvoyer, showToast }) {
 const [loading, setLoading] = useState(false);
-
 const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
 
 const sendToWhatsapp = async () => {
-if (!session) {
-alert("❌ Vous devez être connecté pour envoyer un membre.");
-return;
-}
-if (!cible) {
-alert("❌ Sélectionnez une cible !");
-return;
-}
-
 setLoading(true);
-
 try {
-  for (const membre of membres) {
-    // Vérification par numéro de téléphone
-    const { data: existing, error: selectError } = await supabase
-      .from("suivis_membres")
-      .select("*")
-      .eq("telephone", membre.telephone || "");
-    if (selectError) throw selectError;
+for (const membre of membres) {
+// Vérification par numéro de téléphone
+const { data: existing, error: selectError } = await supabase
+.from("suivis_membres")
+.select("*")
+.eq("telephone", membre.telephone || "");
+if (selectError) throw selectError;
 
     if (existing.length > 0) {
       alert(`⚠️ Le contact ${membre.prenom} ${membre.nom} est déjà dans la liste des suivis.`);
@@ -67,11 +56,10 @@ try {
       .single();
     if (insertError) throw insertError;
 
-    // Callback pour mise à jour locale
     if (onEnvoyer) onEnvoyer(insertedData);
 
     // Préparer message WhatsApp
-    let message = `👋 Salut ${cible.responsable || (cible.prenom ? `${cible.prenom} ${cible.nom}` : "")}!\n\n`;
+    let message = `👋 Salut ${cible.responsable || `${cible.prenom || ""} ${cible.nom || ""}`}!\n\n`;
     message += `🙏 Nouveau membre à suivre :\n`;
     message += `- 👤 Nom : ${membre.prenom} ${membre.nom}\n`;
     message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
@@ -98,13 +86,12 @@ try {
 };
 
 return (
-  <button
-    onClick={sendToWhatsapp}
-    disabled={loading}
-    className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg transition-all ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"}`}
-  >
-    {loading ? "Envoi..." : "📤 Envoyer par WhatsApp"}
-  </button>
+<button
+onClick={sendToWhatsapp}
+disabled={loading}
+className={w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg transition-all ${ loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600" }}
+>
+{loading ? "Envoi..." : "📤 Envoyer par WhatsApp"}
+</button>
 );
-
 }

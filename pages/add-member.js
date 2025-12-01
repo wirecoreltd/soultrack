@@ -1,5 +1,3 @@
-//✅pages/add-member.js
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -9,6 +7,7 @@ import supabase from "../lib/supabaseClient";
 
 export default function AddMember() {
   const router = useRouter();
+  const { token } = router.query;
 
   const [formData, setFormData] = useState({
     nom: "",
@@ -23,28 +22,36 @@ export default function AddMember() {
     infos_supplementaires: "",
   });
 
-  const [success, setSuccess] = useState(false);
   const [showAutre, setShowAutre] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
+  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
 
-  const [roles, setRoles] = useState([]);
+  // ✅ Vérification du token
   useEffect(() => {
-    const storedRole = localStorage.getItem("userRole");
-    if (storedRole) {
-      let parsedRoles = [];
-      try {
-        parsedRoles = JSON.parse(storedRole);
-        if (!Array.isArray(parsedRoles)) parsedRoles = [parsedRoles];
-      } catch {
-        parsedRoles = [storedRole];
-      }
-      setRoles(parsedRoles.map(r => r.toLowerCase().trim()));
-    }
-  }, []);
+    if (!token) return;
 
-  const hasRole = role =>
-    roles.includes(role.toLowerCase()) ||
-    (role === "admin" && roles.includes("administrateur")) ||
-    (role === "administrateur" && roles.includes("admin"));
+    const verifyToken = async () => {
+      setLoading(true);
+
+      const { data, error } = await supabase
+        .from("access_tokens")
+        .select("*")
+        .eq("token", token)
+        .gte("expires_at", new Date().toISOString())
+        .single();
+
+      if (error || !data) {
+        setErrorMsg("Lien invalide ou expiré.");
+        setLoading(false);
+      } else {
+        setLoading(false); // token valide
+      }
+    };
+
+    verifyToken();
+  }, [token]);
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
@@ -71,17 +78,11 @@ export default function AddMember() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!hasRole("admin") && !hasRole("administrateur")) {
-      alert("⛔ Accès non autorisé !");
-      return;
-    }
-
     const dataToSend = {
       ...formData,
-      besoin:
-        formData.autreBesoin && showAutre
-          ? [...formData.besoin.filter(b => b !== "Autre"), formData.autreBesoin]
-          : formData.besoin,
+      besoin: formData.autreBesoin && showAutre
+        ? [...formData.besoin.filter(b => b !== "Autre"), formData.autreBesoin]
+        : formData.besoin,
     };
 
     try {
@@ -125,12 +126,12 @@ export default function AddMember() {
     setShowAutre(false);
   };
 
-  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+  if (loading) return <p className="text-center mt-10">Vérification du lien...</p>;
+  if (errorMsg) return <p className="text-center mt-10 text-red-600">{errorMsg}</p>;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg relative">
-
         <button
           onClick={() => router.back()}
           className="absolute top-4 left-4 flex items-center text-black font-semibold hover:text-gray-800 transition-colors"
@@ -148,24 +149,24 @@ export default function AddMember() {
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <input type="text" name="prenom" placeholder="Prénom" value={formData.prenom} onChange={(e)=>setFormData({...formData, prenom:e.target.value})} className="input" required />
-          <input type="text" name="nom" placeholder="Nom" value={formData.nom} onChange={(e)=>setFormData({...formData, nom:e.target.value})} className="input" required />
-          <input type="text" name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={(e)=>setFormData({...formData, telephone:e.target.value})} className="input" required />
-          <input type="text" name="ville" placeholder="Ville" value={formData.ville} onChange={(e)=>setFormData({...formData, ville:e.target.value})} className="input" />
+          <input type="text" placeholder="Prénom" value={formData.prenom} onChange={(e)=>setFormData({...formData, prenom:e.target.value})} className="input" required />
+          <input type="text" placeholder="Nom" value={formData.nom} onChange={(e)=>setFormData({...formData, nom:e.target.value})} className="input" required />
+          <input type="text" placeholder="Téléphone" value={formData.telephone} onChange={(e)=>setFormData({...formData, telephone:e.target.value})} className="input" required />
+          <input type="text" placeholder="Ville" value={formData.ville} onChange={(e)=>setFormData({...formData, ville:e.target.value})} className="input" />
 
           <label className="flex items-center gap-2 mt-1">
-            <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={(e)=>setFormData({...formData, is_whatsapp:e.target.checked})} />
+            <input type="checkbox" checked={formData.is_whatsapp} onChange={(e)=>setFormData({...formData, is_whatsapp:e.target.checked})} />
             WhatsApp
           </label>
 
-          <select name="statut" value={formData.statut} onChange={(e)=>setFormData({...formData, statut:e.target.value})} className="input">
+          <select value={formData.statut} onChange={(e)=>setFormData({...formData, statut:e.target.value})} className="input">
             <option value="">-- Statut --</option>
             <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
             <option value="a déjà son église">A déjà son église</option>
             <option value="visiteur">Visiteur</option>
           </select>
 
-          <select name="venu" value={formData.venu} onChange={(e)=>setFormData({...formData, venu:e.target.value})} className="input">
+          <select value={formData.venu} onChange={(e)=>setFormData({...formData, venu:e.target.value})} className="input">
             <option value="">-- Comment est-il venu ? --</option>
             <option value="invité">Invité</option>
             <option value="réseaux">Réseaux</option>
@@ -173,86 +174,34 @@ export default function AddMember() {
             <option value="autre">Autre</option>
           </select>
 
-          {/* ✅ BESOINS avec checkboxes stylées */}
+          {/* Besoins */}
           <div>
             <p className="font-semibold mb-2">Besoin :</p>
-
-            {besoinsOptions.map((item) => (
+            {besoinsOptions.map(item => (
               <label key={item} className="flex items-center gap-3 mb-2">
-                <input
-                  type="checkbox"
-                  name="besoin"
-                  value={item}
-                  checked={formData.besoin.includes(item)}
-                  onChange={handleBesoinChange}
-                  className="w-5 h-5 rounded border-gray-400 cursor-pointer"
-                />
+                <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} className="w-5 h-5 rounded border-gray-400 cursor-pointer" />
                 <span>{item}</span>
               </label>
             ))}
-
-            {/* ✅ Checkbox Autre */}
             <label className="flex items-center gap-3 mb-2">
-              <input
-                type="checkbox"
-                name="besoin"
-                value="Autre"
-                checked={showAutre}
-                onChange={handleBesoinChange}
-                className="w-5 h-5 rounded border-gray-400 cursor-pointer"
-              />
+              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} className="w-5 h-5 rounded border-gray-400 cursor-pointer" />
               Autre
             </label>
-
-            {/* ✅ Champ libre dynamique */}
-            {showAutre && (
-              <input
-                type="text"
-                name="autreBesoin"
-                value={formData.autreBesoin}
-                onChange={(e)=>setFormData({...formData, autreBesoin:e.target.value})}
-                placeholder="Précisez..."
-                className="input mt-1"
-              />
-            )}
+            {showAutre && <input type="text" placeholder="Précisez..." value={formData.autreBesoin} onChange={(e)=>setFormData({...formData, autreBesoin:e.target.value})} className="input mt-1" />}
           </div>
 
-          <textarea
-            name="infos_supplementaires"
-            value={formData.infos_supplementaires}
-            onChange={(e)=>setFormData({...formData, infos_supplementaires:e.target.value})}
-            rows={2}
-            placeholder="Informations supplémentaires..."
-            className="input"
-          />
+          <textarea placeholder="Informations supplémentaires..." rows={2} value={formData.infos_supplementaires} onChange={(e)=>setFormData({...formData, infos_supplementaires:e.target.value})} className="input" />
 
           <div className="flex gap-4 mt-2">
-            <button type="button" onClick={handleCancel} className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
-              Annuler
-            </button>
-            <button type="submit" className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
-              Ajouter
-            </button>
+            <button type="button" onClick={handleCancel} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">Annuler</button>
+            <button type="submit" className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all">Ajouter</button>
           </div>
         </form>
 
-        {/* ✅ Message animé */}
-        {success && (
-          <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
-            ✅ Membre ajouté avec succès !
-          </p>
-        )}
+        {success && <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">✅ Membre ajouté avec succès !</p>}
 
         <style jsx>{`
-          .input {
-            width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            padding: 12px;
-            text-align: left;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            color: black;
-          }
+          .input { width: 100%; border: 1px solid #ccc; border-radius: 12px; padding: 12px; text-align: left; box-shadow: 0 1px 3px rgba(0,0,0,0.1); color: black; }
         `}</style>
       </div>
     </div>

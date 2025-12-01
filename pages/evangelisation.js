@@ -153,7 +153,7 @@ return (
     })}
   </div>
 
-  {editMember && (
+  {editMember ? (
     <EditEvangelisePopup
       member={editMember}
       cellules={cellules}
@@ -164,7 +164,7 @@ return (
         setEditMember(null);
       }}
     />
-  )}
+  ) : null}
 </div>
 
 );

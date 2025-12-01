@@ -13,7 +13,7 @@ export default function Evangelisation() {
   const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
-  const [selectedTargetType, setSelectedTargetType] = useState(""); // "cellule" ou "conseiller"
+  const [selectedTargetType, setSelectedTargetType] = useState("");
   const [selectedTarget, setSelectedTarget] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [checkedContacts, setCheckedContacts] = useState({});
@@ -71,11 +71,7 @@ export default function Evangelisation() {
       ? cellules.find((c) => c.id === selectedTarget)
       : conseillers.find((c) => c.id === selectedTarget);
 
-  const handleUpdateMember = (updated) => {
-    setContacts((prev) =>
-      prev.map((c) => (c.id === updated.id ? updated : c))
-    );
-  };
+  const selectedContactsCount = Object.values(checkedContacts).filter(Boolean).length;
 
   return (
     <div
@@ -100,7 +96,7 @@ export default function Evangelisation() {
       <h1 className="text-4xl text-white text-center mb-6">Évangélisation</h1>
 
       {/* SELECT DESTINATAIRE UNIQUE */}
-      <div className="flex flex-col sm:flex-row gap-2 mb-6 items-center w-full max-w-5xl">
+      <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center w-full max-w-5xl">
         <select
           value={selectedTargetType}
           onChange={(e) => {
@@ -134,27 +130,33 @@ export default function Evangelisation() {
                 ))}
           </select>
         )}
-
-        {selectedTarget && (
-          <div className="mt-2">
-            <BoutonEnvoyerContacts
-              contacts={contacts}
-              checkedContacts={checkedContacts}
-              cellule={selectedTargetType === "cellule" ? selectedTargetObject : null}
-              conseiller={selectedTargetType === "conseiller" ? selectedTargetObject : null}
-              onEnvoye={(id) => {
-                setContacts((prev) => prev.filter((c) => c.id !== id));
-                setCheckedContacts((prev) => {
-                  const copy = { ...prev };
-                  delete copy[id];
-                  return copy;
-                });
-              }}
-              showToast={(msg) => alert(msg)}
-            />
-          </div>
-        )}
       </div>
+
+      {/* BOUTON ENVOYER */}
+      {selectedTarget && selectedContactsCount > 0 && (
+        <div className="flex justify-center mb-6">
+          <BoutonEnvoyerContacts
+            contacts={contacts}
+            checkedContacts={checkedContacts}
+            cellule={selectedTargetType === "cellule" ? selectedTargetObject : null}
+            conseiller={selectedTargetType === "conseiller" ? selectedTargetObject : null}
+            onEnvoye={(id) => {
+              setContacts((prev) => prev.filter((c) => c.id !== id));
+              setCheckedContacts((prev) => {
+                const copy = { ...prev };
+                delete copy[id];
+                return copy;
+              });
+            }}
+            showToast={(msg) => alert(msg)}
+            texte={
+              selectedContactsCount === 1
+                ? "Envoyer le contact"
+                : `Envoyer les ${selectedContactsCount} contacts`
+            }
+          />
+        </div>
+      )}
 
       {/* BASCULE VUE */}
       <p
@@ -169,6 +171,7 @@ export default function Evangelisation() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
           {contacts.map((member) => {
             const isOpen = detailsOpen[member.id];
+
             return (
               <div key={member.id} className="bg-white text-gray-900 rounded-2xl shadow-xl p-4">
                 <h2 className="font-bold text-lg mb-1 text-center text-black-800">
@@ -184,27 +187,35 @@ export default function Evangelisation() {
                   ✅ Envoyer ce Contact
                 </label>
 
+                {/* BOUTON DÉTAILS */}
+                {!isOpen && (
+                  <button
+                    onClick={() => toggleDetails(member.id)}
+                    className="text-orange-500 underline text-sm mt-1 block mx-auto"
+                  >
+                    Détails
+                  </button>
+                )}
+
                 {isOpen && (
-                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full flex flex-col items-center">
+                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-left flex flex-col items-left">
                     <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🏙 Ville: {member.ville || "—"}</p>
                     <p>❓Besoin : {formatBesoin(member.besoin)}</p>
                     <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
 
-                    {/* ✏️ Modifier le contact */}
                     <button
                       onClick={() => setEditMember(member)}
-                      className="text-blue-600 text-sm mt-4"
+                      className="text-blue-600 text-sm mt-2 block mx-auto"
                     >
                       ✏️ Modifier le contact
                     </button>
 
-                    {/* Fermer détails sous Modifier */}
                     <button
                       onClick={() => toggleDetails(member.id)}
-                      className="text-orange-500 underline text-sm mt-2"
+                      className="text-orange-500 underline text-sm mt-2 block mx-auto"
                     >
-                      Fermer détails
+                      Fermer Détails
                     </button>
                   </div>
                 )}
@@ -256,13 +267,18 @@ export default function Evangelisation() {
         </div>
       )}
 
+      {/* POPUP MODIFIER */}
       {editMember && (
         <EditMemberPopup
           member={editMember}
           cellules={cellules}
           conseillers={conseillers}
           onClose={() => setEditMember(null)}
-          onUpdateMember={handleUpdateMember}
+          onUpdateMember={(updated) => {
+            setContacts((prev) =>
+              prev.map((c) => (c.id === updated.id ? updated : c))
+            );
+          }}
         />
       )}
     </div>

@@ -5,13 +5,7 @@ import supabase from "../lib/supabaseClient";
 export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
   const [loading, setLoading] = useState(false);
 
-  // Mapping texte → integer pour statut_suivis
-  const statutIds = {
-    "envoye": 1,
-    "en attente": 2,
-    "integrer": 3,
-    "refus": 4
-  };
+  const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
 
   const sendToWhatsapp = async (force = false) => {
     if (!session) {
@@ -49,28 +43,27 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         ville: membre.ville,
         besoin: membre.besoin,
         infos_supplementaires: membre.infos_supplementaires,
-        statut_suivis: statutIds["envoye"], // integer ici
+        statut_suivis: statutIds["envoye"],
         created_at: new Date().toISOString(),
       };
 
-      // Ajout des infos selon type
       if (type === "cellule") {
         suiviData.cellule_id = cible.id;
         suiviData.cellule_nom = cible.cellule;
         suiviData.responsable = cible.responsable || null;
-        // Vérifie le téléphone de la cellule
         cible.telephone = cible.telephone || membre.telephone || "";
       } else if (type === "conseiller") {
         suiviData.conseiller_id = cible.id;
         suiviData.responsable = `${cible.prenom || ""} ${cible.nom || ""}`.trim();
-        // Vérifie le téléphone du conseiller
         cible.telephone = cible.telephone || membre.telephone || "";
       }
 
-      // Insérer le suivi dans la table
-      const { error: insertError } = await supabase
+      // Insérer le suivi et récupérer l'objet complet avec id
+      const { data: insertedData, error: insertError } = await supabase
         .from("suivis_membres")
-        .insert([suiviData]);
+        .insert([suiviData])
+        .select()
+        .single();
       if (insertError) throw insertError;
 
       // Mettre à jour le membre pour qu’il devienne actif
@@ -81,7 +74,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       if (updateMemberError) throw updateMemberError;
 
       // Callback pour mise à jour locale
-      if (onEnvoyer) onEnvoyer(membre.id, type, cible, "actif");
+      if (onEnvoyer) onEnvoyer(insertedData);
 
       // Préparer message WhatsApp
       let message = `👋 Salut ${cible.responsable || (cible.prenom ? `${cible.prenom} ${cible.nom}` : "")}!\n\n`;
@@ -91,14 +84,11 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       message += `- 🏙 Ville : ${membre.ville || "—"}\n`;
       message += `- 🙏 Besoin : ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}\n\n🙏 Merci !`;
 
-      const phoneRaw = cible.telephone || "";
-      const phone = phoneRaw.replace(/\D/g, "");
-
+      const phone = (cible.telephone || "").replace(/\D/g, "");
       if (!phone) {
         alert("❌ La cible n'a pas de numéro WhatsApp valide !");
       } else {
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
-
         if (showToast)
           showToast(`✅ ${membre.prenom} ${membre.nom} a été envoyé à ${type === "cellule" ? cible.cellule : `${cible.prenom} ${cible.nom}`} !`);
       }

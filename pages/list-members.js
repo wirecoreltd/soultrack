@@ -108,67 +108,63 @@ export default function ListMembers() {
   };
 
   // -------------------- HANDLE AFTER SEND --------------------
-  const handleAfterSend = async (memberId, type, cible, newStatut) => {
-    try {
-      const membre = members.find((m) => m.id === memberId);
-      if (!membre) return;
+  // -------------------- HANDLE AFTER SEND --------------------
+          const handleAfterSend = async (memberId, type, cible, newStatut = "ancien") => {
+            try {
+              const membre = members.find((m) => m.id === memberId);
+              if (!membre) return;
+          
+              // Préparer l'objet de mise à jour
+              const update = { statut: newStatut };
+              if (type === "cellule") {
+                update.cellule_id = cible.id;
+                update.cellule_nom = cible.cellule;
+              } else if (type === "conseiller") {
+                update.conseiller_id = cible.id;
+              }
+          
+              // 1️⃣ Mettre à jour le membre dans la table "membres"
+              const { error: updateError } = await supabase
+                .from("membres")
+                .update(update)
+                .eq("id", memberId);
+              if (updateError) throw updateError;
+          
+              // 2️⃣ Ajouter un suivi dans "suivis_membres"
+              const suiviData = {
+                membre_id: memberId,
+                cellule_id: type === "cellule" ? cible.id : null,
+                conseiller_id: type === "conseiller" ? cible.id : null,
+                statut: "envoye",
+                created_at: new Date().toISOString(),
+                prenom: membre.prenom,
+                nom: membre.nom,
+                statut_membre: membre.statut,
+                besoin: membre.besoin,
+                infos_supplementaires: membre.infos_supplementaires,
+                telephone: membre.telephone,
+                cellule_nom: membre.cellule_nom,
+                responsable: membre.responsable_prenom ? `${membre.responsable_prenom} ${membre.responsable_nom}` : null,
+                is_whatsapp: membre.is_whatsapp,
+                ville: membre.ville,
+                commentaire_suivis: "",
+              };
+              const { error: suiviError } = await supabase.from("suivis_membres").insert([suiviData]);
+              if (suiviError) throw suiviError;
+          
+              // 3️⃣ Mettre à jour le state local immédiatement
+              setMembers((prev) =>
+                prev.map((m) => (m.id === memberId ? { ...m, ...update } : m))
+              );
+          
+              // 4️⃣ Afficher le toast
+              showToast("✅ Contact envoyé et suivi enregistré");
+            } catch (err) {
+              console.error("Erreur handleAfterSend:", err);
+              showToast("❌ Une erreur est survenue lors de l'envoi");
+            }
+};
 
-      // Préparer l'objet de mise à jour pour la table principale
-      const update = { statut: newStatut || "actif" };
-      if (type === "cellule") {
-        update.cellule_id = cible.id;
-        update.cellule_nom = cible.cellule;
-      } else if (type === "conseiller") {
-        update.conseiller_id = cible.id;
-      }
-
-      // 1️⃣ Mettre à jour le membre dans la table "membres"
-      const { error: updateError } = await supabase
-        .from("membres")
-        .update(update)
-        .eq("id", memberId);
-      if (updateError) throw updateError;
-
-      // 2️⃣ Ajouter un suivi dans "suivis_membres"
-      const suiviData = {
-        membre_id: memberId,
-        cellule_id: type === "cellule" ? cible.id : null,
-        conseiller_id: type === "conseiller" ? cible.id : null,
-        statut: "envoye",
-        created_at: new Date().toISOString(),
-        prenom: membre.prenom,
-        nom: membre.nom,
-        statut_membre: membre.statut,
-        besoin: membre.besoin,
-        infos_supplementaires: membre.infos_supplementaires,
-        telephone: membre.telephone,
-        cellule_nom: membre.cellule_nom,
-        responsable: membre.responsable_prenom ? `${membre.responsable_prenom} ${membre.responsable_nom}` : null,
-        is_whatsapp: membre.is_whatsapp,
-        ville: membre.ville,
-        commentaire_suivis: "",
-      };
-
-      const { error: suiviError } = await supabase.from("suivis_membres").insert([suiviData]);
-      if (suiviError) throw suiviError;
-
-      // 3️⃣ Mettre à jour le state local pour affichage immédiat
-      setMembers((prev) =>
-        prev.map((m) => (m.id === memberId ? { ...m, ...update } : m))
-      );
-
-      // 4️⃣ Afficher le toast
-      showToast("✅ Contact envoyé et suivi enregistré");
-    } catch (err) {
-      console.error("Erreur handleAfterSend:", err);
-      showToast("❌ Une erreur est survenue lors de l'envoi");
-    }
-  };
-
-  const handleStatusChange = (memberId, value) => {
-    setStatusChanges((prev) => ({ ...prev, [memberId]: value }));
-    updateMemberLocally(memberId, { statut: value });
-  };
 
   const getBorderColor = (m) => {
     if (m.star) return "#FBC02D";

@@ -3,100 +3,68 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function BoutonEnvoyerContacts({ membres, type = "cellule", cible, session, onEnvoyer, showToast }) {
-  const [loading, setLoading] = useState(false);
+export default function BoutonEnvoyerContacts({ membres, type, cible, session, showToast }) {
+const [loading, setLoading] = useState(false);
 
-  const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
+const sendToWhatsapp = async () => {
+if (!session || !session.user) {
+showToast("❌ Vous devez être connecté pour envoyer un membre.");
+return;
+}
 
-  const sendToWhatsapp = async () => {
-    if (!session) {
-      alert("❌ Vous devez être connecté pour envoyer un membre.");
-      return;
-    }
-    if (!cible) {
-      alert("❌ Sélectionnez une cible !");
-      return;
-    }
+if (!cible) {
+  showToast("❌ Cible invalide.");
+  return;
+}
 
-    setLoading(true);
+const cibleId = type === "cellule" ? parseInt(cible.id, 10) : cible.id;
+if (!cibleId) {
+  showToast("❌ ID de la cible invalide.");
+  return;
+}
 
-    try {
-      for (const membre of membres) {
-        // Vérification par numéro de téléphone dans la table des suivis
-        const { data: existing, error: selectError } = await supabase
-          .from("suivis_des_evangelises")
-          .select("*")
-          .eq("telephone", membre.telephone || "");
-        if (selectError) throw selectError;
+// Récupération et nettoyage des numéros
+const numeros = membres
+  .map(m => m.telephone?.replace(/\D/g, '')) // ne garder que les chiffres
+  .filter(Boolean);
 
-        if (existing.length > 0) {
-          alert(`⚠️ Le contact ${membre.prenom} ${membre.nom} est déjà dans les suivis.`);
-          continue;
-        }
+if (numeros.length === 0) {
+  showToast("❌ Aucun numéro valide à envoyer.");
+  return;
+}
 
-        // Préparer l'objet de suivi
-        const suiviData = {
-          membre_id: membre.id,
-          prenom: membre.prenom,
-          nom: membre.nom,
-          telephone: membre.telephone,
-          is_whatsapp: true,
-          ville: membre.ville || null,
-          besoin: membre.besoin || null,
-          infos_supplementaires: membre.infos_supplementaires || null,
-          status_suivis_evangelises: "En cours",
-          date_suivi: new Date().toISOString(),
-          cellule_id: type === "cellule" ? cible.id : null,
-          cellule_nom: type === "cellule" ? cible.cellule : null,
-          responsable_cellule: type === "cellule" ? cible.responsable : `${cible.prenom || ""} ${cible.nom || ""}`.trim(),
-          evangeliste_nom: "TODO: nom évangéliste", // optionnel
-        };
+setLoading(true);
 
-        // Insérer dans la table des suivis
-        const { data: insertedData, error: insertError } = await supabase
-          .from("suivis_des_evangelises")
-          .insert([suiviData])
-          .select()
-          .single();
-        if (insertError) throw insertError;
+try {
+  const { data, error } = await supabase
+    .from("evangelises")
+    .insert(
+      numeros.map(n => ({
+        telephone: n,
+        cible_id: cibleId,
+        type_cible: type,
+        envoyé_par: session.user.id
+      }))
+    );
 
-        // Callback pour suppression du contact sur la page Evangelisation
-        if (onEnvoyer) onEnvoyer(insertedData);
+  if (error) throw error;
+  showToast("✅ Envoi réussi !");
+} catch (err) {
+  console.error("Erreur sendToWhatsapp:", err);
+  showToast("❌ Une erreur est survenue lors de l'envoi.");
+} finally {
+  setLoading(false);
+}
 
-        // Préparer message WhatsApp
-        let message = `👋 Salut ${cible.responsable || (cible.prenom ? `${cible.prenom} ${cible.nom}` : "")}!\n\n`;
-        message += `🙏 Nouveau membre à suivre :\n`;
-        message += `- 👤 Nom : ${membre.prenom} ${membre.nom}\n`;
-        message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
-        message += `- 🏙 Ville : ${membre.ville || "—"}\n`;
-        message += `- 🙏 Besoin : ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}\n\n🙏 Merci !`;
+};
 
-        const phone = (cible.telephone || "").replace(/\D/g, "");
-        if (phone) {
-          window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
-        } else {
-          alert("❌ La cible n'a pas de numéro WhatsApp valide !");
-        }
-      }
+return (
+<button
+onClick={sendToWhatsapp}
+disabled={loading}
+className={mt-2 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-md transition ${loading ? "opacity-50 cursor-not-allowed" : ""}}
+>
+{loading ? "Envoi en cours..." : 📤 Envoyer ${membres.length} contact(s)}
 
-      if (showToast) showToast("✅ Contact(s) envoyé(s) !");
-    } catch (err) {
-      console.error("Erreur sendToWhatsapp:", err);
-      alert("❌ Une erreur est survenue lors de l'envoi.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <button
-      onClick={sendToWhatsapp}
-      disabled={loading}
-      className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg transition-all ${
-        loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
-      }`}
-    >
-      {loading ? "Envoi..." : "📤 Envoyer par WhatsApp"}
-    </button>
-  );
+);
 }

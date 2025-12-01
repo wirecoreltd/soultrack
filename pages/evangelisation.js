@@ -57,7 +57,6 @@ return (
 {/* HEADER */} <div className="w-full max-w-5xl mb-6"> <div className="flex justify-between items-center">
 <button onClick={() => router.back()} className="text-white">← Retour</button> <LogoutLink /> </div> </div>
 
-```
   {/* LOGO ET TITRE */}
   <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
   <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
@@ -166,7 +165,6 @@ return (
     />
   )}
 </div>
-```
 
 );
 }

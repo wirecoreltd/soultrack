@@ -6,6 +6,7 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import BoutonEnvoyerContacts from "../components/BoutonEnvoyerContacts";
+import EditMemberPopup from "../components/EditMemberPopup";
 
 export default function Evangelisation() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function Evangelisation() {
   const [detailsOpen, setDetailsOpen] = useState({});
   const [checkedContacts, setCheckedContacts] = useState({});
   const [view, setView] = useState("card");
+  const [editMember, setEditMember] = useState(null);
 
   useEffect(() => {
     fetchContacts();
@@ -69,7 +71,7 @@ export default function Evangelisation() {
       ? cellules.find((c) => c.id === selectedTarget)
       : conseillers.find((c) => c.id === selectedTarget);
 
-  const anyCheckedContacts = Object.values(checkedContacts).some(Boolean);
+  const checkedCount = Object.values(checkedContacts).filter(Boolean).length;
 
   return (
     <div
@@ -94,59 +96,62 @@ export default function Evangelisation() {
       <h1 className="text-4xl text-white text-center mb-6">Évangélisation</h1>
 
       {/* SELECT DESTINATAIRE UNIQUE */}
-      <div className="flex flex-col items-center gap-2 mb-6 w-full max-w-5xl">
-        <select
-          value={selectedTargetType}
-          onChange={(e) => {
-            setSelectedTargetType(e.target.value);
-            setSelectedTarget(""); // reset sélection
-          }}
-          className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-72 text-center"
-        >
-          <option value="">📍 Envoyer à…</option>
-          <option value="cellule">Une Cellule</option>
-          <option value="conseiller">Un Conseiller</option>
-        </select>
-
-        {selectedTargetType && (
+      <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center w-full max-w-5xl justify-center">
+        <div className="flex flex-col items-center gap-2 w-full sm:w-auto">
           <select
-            value={selectedTarget}
-            onChange={(e) => setSelectedTarget(e.target.value)}
-            className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-72 text-center"
-          >
-            <option value="">-- Choisir {selectedTargetType} --</option>
-            {selectedTargetType === "cellule"
-              ? cellules.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.cellule} — {c.responsable}
-                  </option>
-                ))
-              : conseillers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.prenom} {c.nom}
-                  </option>
-                ))}
-          </select>
-        )}
-
-        {selectedTarget && anyCheckedContacts && (
-          <BoutonEnvoyerContacts
-            contacts={contacts}
-            checkedContacts={checkedContacts}
-            cellule={selectedTargetType === "cellule" ? selectedTargetObject : null}
-            conseiller={selectedTargetType === "conseiller" ? selectedTargetObject : null}
-            onEnvoye={(id) => {
-              setContacts((prev) => prev.filter((c) => c.id !== id));
-              setCheckedContacts((prev) => {
-                const copy = { ...prev };
-                delete copy[id];
-                return copy;
-              });
+            value={selectedTargetType}
+            onChange={(e) => {
+              setSelectedTargetType(e.target.value);
+              setSelectedTarget(""); // reset sélection
             }}
-            showToast={(msg) => alert(msg)}
-            smallButton={true} // On ajoutera cette prop pour adapter la largeur du bouton
-          />
-        )}
+            className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-full sm:w-60"
+          >
+            <option value="">📍 Envoyer à…</option>
+            <option value="cellule">Une Cellule</option>
+            <option value="conseiller">Un Conseiller</option>
+          </select>
+
+          {selectedTargetType && (
+            <select
+              value={selectedTarget}
+              onChange={(e) => setSelectedTarget(e.target.value)}
+              className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-full sm:w-72 mt-1"
+            >
+              <option value="">-- Choisir {selectedTargetType} --</option>
+              {selectedTargetType === "cellule"
+                ? cellules.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.cellule} — {c.responsable}
+                    </option>
+                  ))
+                : conseillers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.prenom} {c.nom}
+                    </option>
+                  ))}
+            </select>
+          )}
+
+          {selectedTarget && checkedCount > 0 && (
+            <div className="mt-2">
+              <BoutonEnvoyerContacts
+                contacts={contacts}
+                checkedContacts={checkedContacts}
+                cellule={selectedTargetType === "cellule" ? selectedTargetObject : null}
+                conseiller={selectedTargetType === "conseiller" ? selectedTargetObject : null}
+                onEnvoye={(id) => {
+                  setContacts((prev) => prev.filter((c) => c.id !== id));
+                  setCheckedContacts((prev) => {
+                    const copy = { ...prev };
+                    delete copy[id];
+                    return copy;
+                  });
+                }}
+                showToast={(msg) => alert(msg)}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* BASCULE VUE */}
@@ -181,6 +186,13 @@ export default function Evangelisation() {
                   className="text-orange-500 underline text-sm mt-1 block mx-auto text-center"
                 >
                   {isOpen ? "Fermer Détails" : "Détails"}
+                </button>
+
+                <button
+                  onClick={() => setEditMember(member)}
+                  className="text-blue-600 text-sm mt-2 block mx-auto"
+                >
+                  ✏️ Modifier le contact
                 </button>
 
                 {isOpen && (
@@ -237,6 +249,21 @@ export default function Evangelisation() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* POPUP MODIFIER */}
+      {editMember && (
+        <EditMemberPopup
+          member={editMember}
+          cellules={cellules}
+          conseillers={conseillers}
+          onClose={() => setEditMember(null)}
+          onUpdateMember={(updatedMember) => {
+            setContacts((prev) =>
+              prev.map((c) => (c.id === updatedMember.id ? updatedMember : c))
+            );
+          }}
+        />
       )}
     </div>
   );

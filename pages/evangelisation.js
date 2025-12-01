@@ -11,14 +11,18 @@ export default function Evangelisation() {
   const router = useRouter();
   const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
-  const [selectedCellule, setSelectedCellule] = useState("");
+  const [conseillers, setConseillers] = useState([]);
   const [detailsOpen, setDetailsOpen] = useState({});
   const [checkedContacts, setCheckedContacts] = useState({});
   const [view, setView] = useState("card");
 
+  const [selectedTargetType, setSelectedTargetType] = useState({});
+  const [selectedTargets, setSelectedTargets] = useState({});
+
   useEffect(() => {
     fetchContacts();
     fetchCellules();
+    fetchConseillers();
   }, []);
 
   const fetchContacts = async () => {
@@ -34,6 +38,13 @@ export default function Evangelisation() {
       .from("cellules")
       .select("id, cellule, responsable, telephone");
     setCellules(data || []);
+  };
+
+  const fetchConseillers = async () => {
+    const { data } = await supabase
+      .from("conseillers")
+      .select("id, prenom, nom");
+    setConseillers(data || []);
   };
 
   const toggleDetails = (id) =>
@@ -79,29 +90,62 @@ export default function Evangelisation() {
       <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
       <h1 className="text-4xl text-white text-center mb-2">Évangélisation</h1>
 
-      {/* SELECT CELLULE */}
-      <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center">
-        <select
-          value={selectedCellule}
-          onChange={(e) => setSelectedCellule(e.target.value)}
-          className="border rounded-xl px-4 py-2 text-gray-800 shadow-md"
-        >
-          <option value="">📍 Sélectionner cellule</option>
-          {cellules.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.cellule} — {c.responsable}
-            </option>
-          ))}
-        </select>
+      {/* ENVOYER À */}
+      <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center bg-white/20 p-4 rounded-xl shadow">
+        <div className="w-full">
+          <label className="font-semibold text-sm text-white">Envoyer à :</label>
 
-        {selectedCellule && (
-          <button
-            onClick={sendWhatsapp}
-            className="bg-green-500 text-white font-bold px-4 py-2 rounded-xl shadow-md hover:bg-green-600 transition-all"
+          {/* Type de cible */}
+          <select
+            value={selectedTargetType.global || ""}
+            onChange={(e) =>
+              setSelectedTargetType({ global: e.target.value })
+            }
+            className="mt-1 w-full border rounded px-2 py-2 text-sm"
           >
-            ✅ Envoyer WhatsApp
-          </button>
-        )}
+            <option value="">-- Choisir une option --</option>
+            <option value="cellule">Une Cellule</option>
+            <option value="conseiller">Un Conseiller</option>
+          </select>
+
+          {/* Liste des cellules ou conseillers */}
+          {(selectedTargetType.global === "cellule" ||
+            selectedTargetType.global === "conseiller") && (
+            <select
+              value={selectedTargets.global || ""}
+              onChange={(e) =>
+                setSelectedTargets({ global: e.target.value })
+              }
+              className="mt-2 w-full border rounded px-2 py-2 text-sm"
+            >
+              <option value="">
+                -- Choisir {selectedTargetType.global} --
+              </option>
+
+              {selectedTargetType.global === "cellule"
+                ? cellules.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.cellule} ({c.responsable})
+                    </option>
+                  ))
+                : conseillers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.prenom} {c.nom}
+                    </option>
+                  ))}
+            </select>
+          )}
+
+          {/* Bouton WhatsApp */}
+          {selectedTargets.global && (
+            <button
+              onClick={sendWhatsapp}
+              className="mt-3 bg-green-500 text-white font-bold px-4 py-2 rounded-xl shadow-md hover:bg-green-600 transition-all w-full"
+            >
+              ✅ Envoyer WhatsApp
+            </button>
+          )}
+        </div>
       </div>
 
       {/* BASCULE VUE */}
@@ -122,7 +166,10 @@ export default function Evangelisation() {
                 <h2 className="font-bold text-lg mb-1 text-center text-blue-800">
                   {member.prenom} {member.nom}
                 </h2>
-                <p className="text-sm text-center mb-2">📱 {member.telephone || "—"}</p>
+                <p className="text-sm text-center mb-2">
+                  📱 {member.telephone || "—"}
+                </p>
+
                 <label className="flex items-center justify-center gap-2 text-sm mb-2">
                   <input
                     type="checkbox"
@@ -131,15 +178,16 @@ export default function Evangelisation() {
                   />
                   ✅ Envoyer ce Contact
                 </label>
+
                 <button
                   onClick={() => toggleDetails(member.id)}
-                  className="text-orange-500 underline text-sm mt-1 block mx-auto text-center"
+                  className="text-orange-500 underline text-sm mt-1 block mx-auto"
                 >
                   {isOpen ? "Fermer Détails" : "Détails"}
                 </button>
 
                 {isOpen && (
-                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-center flex flex-col items-center">
+                  <div className="text-gray-700 text-sm mt-2 space-y-2 text-center">
                     <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🏙 Ville: {member.ville || "—"}</p>
                     <p>❓Besoin : {formatBesoin(member.besoin)}</p>
@@ -184,7 +232,9 @@ export default function Evangelisation() {
                       onClick={() => toggleDetails(member.id)}
                       className="text-orange-500 underline text-sm"
                     >
-                      {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+                      {detailsOpen[member.id]
+                        ? "Fermer détails"
+                        : "Détails"}
                     </button>
                   </td>
                 </tr>
@@ -198,7 +248,7 @@ export default function Evangelisation() {
               detailsOpen[member.id] && (
                 <div
                   key={member.id}
-                  className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200"
+                  className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
                 >
                   <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
                     <button
@@ -210,13 +260,21 @@ export default function Evangelisation() {
                     <h2 className="text-xl font-bold mb-2 text-black text-center">
                       {member.prenom} {member.nom}
                     </h2>
-                    <p className="text-black text-sm mb-1">📱 {member.telephone || "—"}</p>
+                    <p className="text-black text-sm mb-1">
+                      📱 {member.telephone || "—"}
+                    </p>
                     <p className="text-black text-sm mb-1">
                       💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}
                     </p>
-                    <p className="text-black text-sm mb-1">🏙 Ville : {member.ville || "—"}</p>
-                    <p className="text-black text-sm mb-1">❓ Besoin : {formatBesoin(member.besoin)}</p>
-                    <p className="text-black text-sm mb-1">📝 Infos : {member.infos_supplementaires || "—"}</p>
+                    <p className="text-black text-sm mb-1">
+                      🏙 Ville : {member.ville || "—"}
+                    </p>
+                    <p className="text-black text-sm mb-1">
+                      ❓ Besoin : {formatBesoin(member.besoin)}
+                    </p>
+                    <p className="text-black text-sm mb-1">
+                      📝 Infos : {member.infos_supplementaires || "—"}
+                    </p>
                   </div>
                 </div>
               )

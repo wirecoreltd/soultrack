@@ -1,6 +1,4 @@
-// ✅ pages/evangelisation.js
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
@@ -12,7 +10,9 @@ export default function Evangelisation() {
   const router = useRouter();
   const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
+  const [conseillers, setConseillers] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState("");
+  const [selectedConseiller, setSelectedConseiller] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [checkedContacts, setCheckedContacts] = useState({});
   const [view, setView] = useState("card");
@@ -20,6 +20,7 @@ export default function Evangelisation() {
   useEffect(() => {
     fetchContacts();
     fetchCellules();
+    fetchConseillers();
   }, []);
 
   const fetchContacts = async () => {
@@ -37,13 +38,18 @@ export default function Evangelisation() {
     setCellules(data || []);
   };
 
+  const fetchConseillers = async () => {
+    const { data } = await supabase
+      .from("conseillers")
+      .select("id, prenom, nom, telephone");
+    setConseillers(data || []);
+  };
+
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const handleCheck = (id) =>
     setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
-
-  const sendWhatsapp = () => alert("Fonction OK ✅");
 
   const userName = "Utilisateur";
 
@@ -80,11 +86,14 @@ export default function Evangelisation() {
       <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
       <h1 className="text-4xl text-white text-center mb-2">Évangélisation</h1>
 
-      {/* SELECT CELLULE */}
+      {/* SELECT CELLULE ET CONSEILLER */}
       <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center">
         <select
           value={selectedCellule}
-          onChange={(e) => setSelectedCellule(e.target.value)}
+          onChange={(e) => {
+            setSelectedCellule(e.target.value);
+            setSelectedConseiller(""); // désélectionner conseiller si cellule choisie
+          }}
           className="border rounded-xl px-4 py-2 text-gray-800 shadow-md"
         >
           <option value="">📍 Sélectionner cellule</option>
@@ -95,25 +104,42 @@ export default function Evangelisation() {
           ))}
         </select>
 
-        {selectedCellule && (
-  <BoutonEnvoyerContacts
-    contacts={contacts}
-    checkedContacts={checkedContacts}
-    cellule={cellules.find(c => c.id === selectedCellule)}
-    onEnvoye={(id) => {
-      // Retirer le contact envoyé
-      setContacts(prev => prev.filter(c => c.id !== id));
+        <select
+          value={selectedConseiller}
+          onChange={(e) => {
+            setSelectedConseiller(e.target.value);
+            setSelectedCellule(""); // désélectionner cellule si conseiller choisi
+          }}
+          className="border rounded-xl px-4 py-2 text-gray-800 shadow-md"
+        >
+          <option value="">👤 Sélectionner conseiller</option>
+          {conseillers.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.prenom} {c.nom}
+            </option>
+          ))}
+        </select>
 
-      // Supprimer également le checkbox correspondant
-      setCheckedContacts(prev => {
-        const copy = { ...prev };
-        delete copy[id];
-        return copy;
-      });
-    }}
-    showToast={(msg) => alert(msg)}
-  />
-)}
+        {(selectedCellule || selectedConseiller) && (
+          <BoutonEnvoyerContacts
+            contacts={contacts}
+            checkedContacts={checkedContacts}
+            cellule={cellules.find(c => c.id === selectedCellule)}
+            conseiller={conseillers.find(c => c.id === selectedConseiller)}
+            onEnvoye={(id) => {
+              // Retirer le contact envoyé
+              setContacts(prev => prev.filter(c => c.id !== id));
+
+              // Supprimer également le checkbox correspondant
+              setCheckedContacts(prev => {
+                const copy = { ...prev };
+                delete copy[id];
+                return copy;
+              });
+            }}
+            showToast={(msg) => alert(msg)}
+          />
+        )}
       </div>
 
       {/* BASCULE VUE */}
@@ -205,47 +231,47 @@ export default function Evangelisation() {
           </table>
 
           {/* POPUP DÉTAILS */}
-                    {contacts.map(
-                      (member) =>
-                        detailsOpen[member.id] && (
-                          <div
-                            key={member.id}
-                            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200"
-                          >
-                            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
-                              <button
-                                onClick={() => toggleDetails(member.id)}
-                                className="absolute top-3 right-3 text-red-500 font-bold text-xl"
-                              >
-                                ✖
-                              </button>
-          
-                              <h2 className="font-bold text-lg mb-1 text-center text-black-800">
-                                {member.prenom} {member.nom}
-                              </h2>
-          
-                              <p className="text-sm text-center mb-2">📱 {member.telephone || "—"}</p>
-                              <label className="flex items-center justify-center gap-2 text-sm mb-2">
-                                <input
-                                  type="checkbox"
-                                  checked={checkedContacts[member.id] || false}
-                                  onChange={() => handleCheck(member.id)}
-                                />
-                                ✅ Envoyer ce Contact
-                              </label>
-          
-                              <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-left flex flex-col items-center">
-                                <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-                                <p>🏙 Ville: {member.ville || "—"}</p>
-                                <p>❓Besoin : {formatBesoin(member.besoin)}</p>
-                                <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
-                              </div>
-                            </div>
-                          </div>
-                        )
-                    )}
+          {contacts.map(
+            (member) =>
+              detailsOpen[member.id] && (
+                <div
+                  key={member.id}
+                  className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200"
+                >
+                  <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
+                    <button
+                      onClick={() => toggleDetails(member.id)}
+                      className="absolute top-3 right-3 text-red-500 font-bold text-xl"
+                    >
+                      ✖
+                    </button>
+
+                    <h2 className="font-bold text-lg mb-1 text-center text-black-800">
+                      {member.prenom} {member.nom}
+                    </h2>
+
+                    <p className="text-sm text-center mb-2">📱 {member.telephone || "—"}</p>
+                    <label className="flex items-center justify-center gap-2 text-sm mb-2">
+                      <input
+                        type="checkbox"
+                        checked={checkedContacts[member.id] || false}
+                        onChange={() => handleCheck(member.id)}
+                      />
+                      ✅ Envoyer ce Contact
+                    </label>
+
+                    <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-left flex flex-col items-center">
+                      <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+                      <p>🏙 Ville: {member.ville || "—"}</p>
+                      <p>❓Besoin : {formatBesoin(member.besoin)}</p>
+                      <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
+                    </div>
                   </div>
-                )}
-              </div>
-            );
+                </div>
+              )
+          )}
+        </div>
+      )}
+    </div>
+  );
 }

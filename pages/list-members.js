@@ -174,6 +174,7 @@ export default function ListMembers() {
     if (m.star) return "#FBC02D";
     if (m.statut === "actif") return "#4285F4";
     if (m.statut === "a déjà son église") return "#f21705";
+    if (m.statut === "refus") return "#f56f22";        
     if (m.statut === "ancien") return "#999999";
     if (m.statut === "visiteur" || m.statut === "veut rejoindre ICC") return "#34A853";
     return "#ccc";

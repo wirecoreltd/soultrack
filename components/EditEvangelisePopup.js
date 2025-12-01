@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
 
-export default function EditMemberPopup({
+export default function EditEvangelisePopup({
   member,
   cellules = [],
   conseillers = [],
@@ -25,17 +24,11 @@ export default function EditMemberPopup({
     autreBesoin: "",
     infos_supplementaires: member.infos_supplementaires || "",
     statut: member.statut || "",
-    star: member.star === true, // ⭐ ajouté
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // ⭐ Toggle étoile (MAIS ne sauvegarde pas encore)
-  const toggleServiteur = () => {
-    setFormData((prev) => ({ ...prev, star: !prev.star }));
-  };
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
@@ -74,7 +67,6 @@ export default function EditMemberPopup({
       ville: formData.ville,
       infos_supplementaires: formData.infos_supplementaires || null,
       statut: formData.statut || null,
-      star: formData.star, // ⭐ sauvegarde finale
       besoin:
         formData.autreBesoin && showAutre
           ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
@@ -82,7 +74,7 @@ export default function EditMemberPopup({
     };
 
     const { error, data } = await supabase
-      .from("membres")
+      .from("evangelises")
       .update(cleanData)
       .eq("id", member.id)
       .select()
@@ -116,9 +108,7 @@ export default function EditMemberPopup({
           Modifier {member.prenom} {member.nom}
         </h2>
 
-      <div className="flex flex-col space-y-3 text-sm">
-
-          {/* LABEL + INPUT */}
+        <div className="flex flex-col space-y-3 text-sm">
           <label className="font-semibold">Prénom</label>
           <input
             name="prenom"

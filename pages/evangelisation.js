@@ -90,26 +90,28 @@ export default function Evangelisation() {
       <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
 
       {/* ENVOYER À CENTRALISE */}
-      <div className="flex flex-col items-center mb-4 w-full max-w-md">
-        <label className="font-semibold mb-1 text-white">Envoyer à :</label>
-        <select
-          value={selectedTargetType}
-          onChange={(e) => {
-            setSelectedTargetType(e.target.value);
-            setSelectedTarget("");
-          }}
-          className="mt-1 w-full border rounded px-3 py-2 text-gray-800 shadow-md text-center"
-        >
-          <option value="">-- Choisir une option --</option>
-          <option value="cellule">Une Cellule</option>
-          <option value="conseiller">Un Conseiller</option>
-        </select>
+      <div className="flex flex-col items-start mb-4 w-full max-w-md">
+        <div className="flex items-center gap-2 mb-1">
+          <label className="font-semibold text-white">Envoyer à :</label>
+          <select
+            value={selectedTargetType}
+            onChange={(e) => {
+              setSelectedTargetType(e.target.value);
+              setSelectedTarget("");
+            }}
+            className="border rounded px-3 py-2 text-gray-800 shadow-md"
+          >
+            <option value="">-- Choisir une option --</option>
+            <option value="cellule">Une Cellule</option>
+            <option value="conseiller">Un Conseiller</option>
+          </select>
+        </div>
 
         {selectedTargetType && (
           <select
             value={selectedTarget}
             onChange={(e) => setSelectedTarget(e.target.value)}
-            className="mt-2 w-full border rounded px-3 py-2 text-gray-800 shadow-md text-center"
+            className="mt-2 border rounded px-3 py-2 text-gray-800 shadow-md"
           >
             <option value="">-- Choisir {selectedTargetType} --</option>
             {selectedTargetType === "cellule"
@@ -166,12 +168,6 @@ export default function Evangelisation() {
                   />
                   ✅ Envoyer ce Contact
                 </label>
-                <button
-                  onClick={() => toggleDetails(member.id)}
-                  className="text-orange-500 underline text-sm mt-1 block mx-auto text-center"
-                >
-                  {isOpen ? "Fermer Détails" : "Détails"}
-                </button>
 
                 {isOpen && (
                   <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-center flex flex-col items-center">
@@ -186,6 +182,14 @@ export default function Evangelisation() {
                       className="text-blue-600 text-sm mt-4 block mx-auto"
                     >
                       ✏️ Modifier le contact
+                    </button>
+
+                    {/* Fermer détails sous Modifier */}
+                    <button
+                      onClick={() => toggleDetails(member.id)}
+                      className="text-orange-500 underline text-sm mt-2 block mx-auto"
+                    >
+                      Fermer Détails
                     </button>
                   </div>
                 )}

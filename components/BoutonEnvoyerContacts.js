@@ -86,12 +86,14 @@ if (selectError) throw selectError;
 };
 
 return (
-<button
-onClick={sendToWhatsapp}
-disabled={loading}
-className={w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg transition-all ${ loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600" }}
->
-{loading ? "Envoi..." : "📤 Envoyer par WhatsApp"}
-</button>
+  <button
+    onClick={sendToWhatsapp}
+    disabled={loading}
+    className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg transition-all ${
+      loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
+    }`}
+  >
+    {loading ? "Envoi..." : "📤 Envoyer par WhatsApp"}
+  </button>
 );
 }

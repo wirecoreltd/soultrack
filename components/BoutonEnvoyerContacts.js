@@ -1,276 +1,114 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
-import LogoutLink from "../components/LogoutLink";
-import BoutonEnvoyerContacts from "../components/BoutonEnvoyerContacts";
-import EditMemberPopup from "../components/EditMemberPopup";
 
-export default function Evangelisation() {
-  const router = useRouter();
-  const [contacts, setContacts] = useState([]);
-  const [cellules, setCellules] = useState([]);
-  const [conseillers, setConseillers] = useState([]);
-  const [selectedTargetType, setSelectedTargetType] = useState(""); // "cellule" ou "conseiller"
-  const [selectedTarget, setSelectedTarget] = useState("");
-  const [detailsOpen, setDetailsOpen] = useState({});
-  const [checkedContacts, setCheckedContacts] = useState({});
-  const [view, setView] = useState("card");
-  const [editMember, setEditMember] = useState(null);
+export default function BoutonEnvoyerContacts({
+contacts,
+checkedContacts,
+cellule,
+conseiller,
+onEnvoye,
+showToast,
+}) {
+const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchContacts();
-    fetchCellules();
-    fetchConseillers();
-  }, []);
+const sendToWhatsapp = async () => {
+const selected = contacts.filter((c) => checkedContacts[c.id]);
+if (selected.length === 0) {
+alert("❌ Sélectionnez au moins un contact !");
+return;
+}
 
-  const fetchContacts = async () => {
-    const { data } = await supabase
-      .from("evangelises")
-      .select("*")
-      .order("created_at", { ascending: false });
-    setContacts(data || []);
-  };
+```
+if (!cellule && !conseiller) {
+  alert("❌ Sélectionnez une cellule ou un conseiller !");
+  return;
+}
 
-  const fetchCellules = async () => {
-    const { data } = await supabase
-      .from("cellules")
-      .select("id, cellule, responsable, telephone");
-    setCellules(data || []);
-  };
+setLoading(true);
 
-  const fetchConseillers = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom, telephone")
-      .eq("role", "Conseiller");
-    setConseillers(data || []);
-  };
+try {
+  for (const membre of selected) {
+    const now = new Date().toISOString();
 
-  const toggleDetails = (id) =>
-    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+    // ✅ Insérer dans suivis_membres si c’est une cellule
+    if (cellule) {
+      const suiviData = {
+        prenom: membre.prenom,
+        nom: membre.nom,
+        telephone: membre.telephone,
+        is_whatsapp: membre.is_whatsapp || false,
+        ville: membre.ville,
+        besoin: membre.besoin,
+        infos_supplementaires: membre.infos_supplementaires,
+        cellule_id: cellule.id,
+        cellule_nom: cellule.cellule,
+        responsable: cellule.responsable,
+      };
 
-  const handleCheck = (id) =>
-    setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
+      const { error: insertError } = await supabase
+        .from("suivis_membres")
+        .insert([suiviData]);
 
-  const formatBesoin = (b) => {
-    if (!b) return "—";
-    if (Array.isArray(b)) return b.join(", ");
-    try {
-      const arr = JSON.parse(b);
-      return Array.isArray(arr) ? arr.join(", ") : b;
-    } catch {
-      return b;
+      if (insertError) {
+        console.error("Erreur insertion :", insertError.message);
+        showToast("❌ Erreur lors de l’enregistrement du suivi.");
+        continue;
+      }
     }
-  };
 
-  const selectedTargetObject =
-    selectedTargetType === "cellule"
-      ? cellules.find((c) => c.id === selectedTarget)
-      : conseillers.find((c) => c.id === selectedTarget);
+    // Message WhatsApp
+    let message = "";
+    if (selected.length === 1) {
+      message += `👋 Salut ${cellule?.responsable || conseiller?.prenom || ""},\n\n`;
+      message += `🙏 Nouveau contact à suivre :\n\n`;
+    } else {
+      message += `👋 Salut ${cellule?.responsable || conseiller?.prenom || ""},\n\n`;
+      message += `🙏 ${selected.length} nouveaux contacts à suivre :\n\n`;
+    }
 
-  const handleUpdateMember = (updated) => {
-    setContacts((prev) =>
-      prev.map((c) => (c.id === updated.id ? updated : c))
-    );
-  };
+    message += `- 👤 Nom : ${membre.prenom || ""} ${membre.nom || ""}\n`;
+    message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
+    message += `- 💬 WhatsApp : ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
+    message += `- 🏙 Ville : ${membre.ville || "—"}\n`;
+    message += `- ❓ Besoin : ${membre.besoin || "—"}\n`;
+    message += `- 📝 Remarques : ${membre.infos_supplementaires || "—"}\n\n`;
 
-  return (
-    <div
-      className="min-h-screen w-full flex flex-col items-center p-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
-      {/* HEADER */}
-      <div className="w-full max-w-5xl mb-6">
-        <div className="flex justify-between items-center">
-          <button onClick={() => router.back()} className="text-white">
-            ← Retour
-          </button>
-          <LogoutLink />
-        </div>
-        <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">👋 Bienvenue Utilisateur</p>
-        </div>
-      </div>
+    message += "🙏 Merci pour ton cœur ❤ et ton amour ✨";
 
-      {/* LOGO ET TITRE */}
-      <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
-      <h1 className="text-4xl text-white text-center mb-6">Évangélisation</h1>
+    const phone = (cellule?.telephone || conseiller?.telephone || "")
+      .replace(/\D/g, "");
 
-      {/* SELECT DESTINATAIRE UNIQUE */}
-      <div className="flex flex-col sm:flex-row gap-2 mb-6 items-center w-full max-w-5xl">
-        <select
-          value={selectedTargetType}
-          onChange={(e) => {
-            setSelectedTargetType(e.target.value);
-            setSelectedTarget("");
-          }}
-          className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-full sm:w-60"
-        >
-          <option value="">📍 Envoyer à…</option>
-          <option value="cellule">Une Cellule</option>
-          <option value="conseiller">Un Conseiller</option>
-        </select>
+    if (phone) {
+      window.open(
+        `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
+        "_blank"
+      );
+    }
 
-        {selectedTargetType && (
-          <select
-            value={selectedTarget}
-            onChange={(e) => setSelectedTarget(e.target.value)}
-            className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-full sm:w-72"
-          >
-            <option value="">-- Choisir {selectedTargetType} --</option>
-            {selectedTargetType === "cellule"
-              ? cellules.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.cellule} — {c.responsable}
-                  </option>
-                ))
-              : conseillers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.prenom} {c.nom}
-                  </option>
-                ))}
-          </select>
-        )}
+    if (onEnvoye) onEnvoye(membre.id);
+  }
 
-        {selectedTarget && (
-          <div className="mt-2">
-            <BoutonEnvoyerContacts
-              contacts={contacts}
-              checkedContacts={checkedContacts}
-              cellule={selectedTargetType === "cellule" ? selectedTargetObject : null}
-              conseiller={selectedTargetType === "conseiller" ? selectedTargetObject : null}
-              onEnvoye={(id) => {
-                setContacts((prev) => prev.filter((c) => c.id !== id));
-                setCheckedContacts((prev) => {
-                  const copy = { ...prev };
-                  delete copy[id];
-                  return copy;
-                });
-              }}
-              showToast={(msg) => alert(msg)}
-            />
-          </div>
-        )}
-      </div>
+  showToast("✅ Message(s) envoyé(s) avec succès !");
+} catch (error) {
+  console.error("Erreur lors de l'envoi WhatsApp :", error.message);
+  showToast("❌ Une erreur est survenue lors de l’envoi.");
+} finally {
+  setLoading(false);
+}
+```
 
-      {/* BASCULE VUE */}
-      <p
-        onClick={() => setView(view === "card" ? "table" : "card")}
-        className="cursor-pointer text-yellow-100 underline hover:text-white text-sm mb-4"
-      >
-        {view === "card" ? "Vue Table" : "Vue Carte"}
-      </p>
+};
 
-      {/* VUE CARTE */}
-      {view === "card" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
-          {contacts.map((member) => {
-            const isOpen = detailsOpen[member.id];
-            return (
-              <div key={member.id} className="bg-white text-gray-900 rounded-2xl shadow-xl p-4">
-                <h2 className="font-bold text-lg mb-1 text-center text-black-800">
-                  {member.prenom} {member.nom}
-                </h2>
-                <p className="text-sm text-center mb-2">📱 {member.telephone || "—"}</p>
-                <label className="flex items-center justify-center gap-2 text-sm mb-2">
-                  <input
-                    type="checkbox"
-                    checked={checkedContacts[member.id] || false}
-                    onChange={() => handleCheck(member.id)}
-                  />
-                  ✅ Envoyer ce Contact
-                </label>
-                <button
-                  onClick={() => toggleDetails(member.id)}
-                  className="text-orange-500 underline text-sm mt-1 block mx-auto text-center"
-                >
-                  {isOpen ? "Fermer Détails" : "Détails"}
-                </button>
-
-                {isOpen && (
-                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full flex flex-col items-left">
-                    <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p>🏙 Ville: {member.ville || "—"}</p>
-                    <p>❓Besoin : {formatBesoin(member.besoin)}</p>
-                    <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
-
-                    {/* ✏️ Modifier le contact */}
-                    <button
-                      onClick={() => setEditMember(member)}
-                      className="text-blue-600 text-sm mt-4 block mx-auto"
-                    >
-                      ✏️ Modifier le contact
-                    </button>
-
-                    {/* Fermer détails en dessous */}
-                    <button
-                      onClick={() => toggleDetails(member.id)}
-                      className="text-orange-500 underline text-sm mt-2 block mx-auto"
-                    >
-                      Fermer détails
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* VUE TABLE */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto mt-4 transition duration-200">
-          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
-              <tr>
-                <th className="px-4 py-2 rounded-tl-lg">Prénom</th>
-                <th className="px-4 py-2">Nom</th>
-                <th className="px-4 py-2 text-center">Envoyer ce Contact</th>
-                <th className="px-4 py-2 rounded-tr-lg text-center">Détails</th>
-              </tr>
-            </thead>
-            <tbody>
-              {contacts.map((member) => (
-                <tr
-                  key={member.id}
-                  className="hover:bg-white/10 transition duration-150 border-b border-blue-300"
-                >
-                  <td className="px-4 py-2">{member.prenom}</td>
-                  <td className="px-4 py-2">{member.nom}</td>
-                  <td className="px-4 py-2 text-center">
-                    <input
-                      type="checkbox"
-                      checked={checkedContacts[member.id] || false}
-                      onChange={() => handleCheck(member.id)}
-                    />
-                  </td>
-                  <td className="px-4 py-2 text-center">
-                    <button
-                      onClick={() => toggleDetails(member.id)}
-                      className="text-orange-500 underline text-sm"
-                    >
-                      {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {editMember && (
-        <EditMemberPopup
-          member={editMember}
-          cellules={cellules}
-          conseillers={conseillers}
-          onClose={() => setEditMember(null)}
-          onUpdateMember={handleUpdateMember}
-        />
-      )}
-    </div>
-  );
+return (
+<button
+onClick={sendToWhatsapp}
+disabled={loading}
+className={`w-full text-white font-bold px-4 py-2 rounded-xl shadow-md transition-all ${
+        loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
+      }`}
+>
+{loading ? "Envoi..." : "✅ Envoyer par WhatsApp"} </button>
+);
 }

@@ -1,4 +1,5 @@
 // ✅ pages/evangelisation.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -109,11 +110,11 @@ export default function Evangelisation() {
       <h1 className="text-4xl text-white text-center mb-2">Évangélisation</h1>
 
       {/* MENU ENVOYER À CENTRALISE */}
-      <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center justify-center w-full max-w-md">
+      <div className="flex flex-col items-center gap-2 mb-4 w-full max-w-md">
         <select
           value={targetType}
           onChange={(e) => { setTargetType(e.target.value); setTargetId(""); }}
-          className="w-full border rounded px-3 py-2 text-sm shadow-sm"
+          className="w-full border rounded px-3 py-2 text-sm shadow-sm text-center"
         >
           <option value="">-- Envoyer à --</option>
           <option value="cellule">Cellule</option>
@@ -124,7 +125,7 @@ export default function Evangelisation() {
           <select
             value={targetId}
             onChange={(e) => setTargetId(e.target.value)}
-            className="w-full border rounded px-3 py-2 text-sm shadow-sm"
+            className="w-full border rounded px-3 py-2 text-sm shadow-sm text-center"
           >
             <option value="">-- Choisir {targetType} --</option>
             {targetType === "cellule"
@@ -138,6 +139,7 @@ export default function Evangelisation() {
           </select>
         )}
 
+        {/* BOUTON WHATSAPP SOUS LES SELECT */}
         {Object.values(checkedContacts).some(Boolean) && targetId && (
           <button
             onClick={sendWhatsapp}

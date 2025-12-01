@@ -9,19 +9,19 @@ export default function BoutonEnvoyerContacts({
   conseiller,
   onEnvoye,
   showToast,
-  smallButton = false, // nouvelle prop
 }) {
   const [loading, setLoading] = useState(false);
 
+  const contactsACocher = contacts.filter((c) => checkedContacts[c.id]);
+  const count = contactsACocher.length;
+
   const envoyerContacts = async () => {
-    const target = cellule || conseiller;
-    if (!target) {
+    if (!cellule && !conseiller) {
       alert("❌ Veuillez sélectionner une cellule ou un conseiller !");
       return;
     }
 
-    const contactsACocher = contacts.filter(c => checkedContacts[c.id]);
-    if (contactsACocher.length === 0) {
+    if (count === 0) {
       alert("❌ Aucun contact sélectionné !");
       return;
     }
@@ -29,10 +29,12 @@ export default function BoutonEnvoyerContacts({
     setLoading(true);
 
     try {
-      const idsEnvoyes = contactsACocher.map(c => c.id);
+      const idsEnvoyes = contactsACocher.map((c) => c.id);
+
+      const target = cellule || conseiller;
 
       // 1️⃣ Enregistrement dans la table suivis_des_evangelises
-      const insertData = contactsACocher.map(contact => ({
+      const insertData = contactsACocher.map((contact) => ({
         prenom: contact.prenom,
         nom: contact.nom,
         telephone: contact.telephone,
@@ -41,9 +43,7 @@ export default function BoutonEnvoyerContacts({
         besoin: contact.besoin,
         infos_supplementaires: contact.infos_supplementaires,
         cellule_id: cellule ? cellule.id : null,
-        responsable_cellule: cellule ? cellule.responsable : null,
-        conseiller_id: conseiller ? conseiller.id : null,
-        responsable_conseiller: conseiller ? `${conseiller.prenom} ${conseiller.nom}` : null,
+        responsable_cellule: cible ? cible.responsable : null,
         status_suivis_evangelises: "En cours",
         date_suivi: new Date().toISOString(),
       }));
@@ -68,11 +68,11 @@ export default function BoutonEnvoyerContacts({
       if (deleteError) console.error("Erreur suppression :", deleteError.message);
 
       // 3️⃣ Générer le message WhatsApp
-      const intro = contactsACocher.length === 1 ? "une nouvelle âme" : "des nouvelles âmes";
+      const intro = count === 1 ? "une nouvelle âme" : "des nouvelles âmes";
 
-      let message = `👋 Salut ${cellule ? cellule.responsable : `${conseiller.prenom} ${conseiller.nom}`},\n\n🙏 Nous avons ${intro} à suivre :\n\n`;
+      let message = `👋 Salut ${target.responsable || target.prenom},\n\n🙏 Nous avons ${intro} qui sont venu Christ à suivre :\n\n`;
 
-      contactsACocher.forEach(contact => {
+      contactsACocher.forEach((contact) => {
         message += `- 👤 Nom : ${contact.prenom} ${contact.nom}\n`;
         message += `- 📱 Téléphone : ${contact.telephone || "—"}\n`;
         message += `- 📲 WhatsApp : ${contact.is_whatsapp ? "Oui" : "Non"}\n`;
@@ -83,12 +83,14 @@ export default function BoutonEnvoyerContacts({
 
       message += "🙏 Merci pour ton cœur ❤ et ton amour ✨";
 
-      const phone = (cellule ? cellule.telephone : conseiller.telephone).replace(/\D/g, "");
-      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+      if (target.telephone) {
+        const phone = target.telephone.replace(/\D/g, "");
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+      }
 
       // 4️⃣ Mettre à jour la page côté client
       if (onEnvoye) {
-        contactsACocher.forEach(c => onEnvoye(c.id));
+        contactsACocher.forEach((c) => onEnvoye(c.id));
       }
 
       if (showToast) showToast("✅ Tous les contacts sélectionnés ont été envoyés !");
@@ -100,17 +102,21 @@ export default function BoutonEnvoyerContacts({
     }
   };
 
+  if (count === 0) return null;
+
   return (
-    <div className="flex justify-center w-full">
-      <button
-        onClick={envoyerContacts}
-        disabled={loading}
-        className={`px-4 py-2 rounded-lg font-bold text-white shadow-md transition-all ${
-          loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
-        } ${smallButton ? "w-auto" : "w-full"}`}
-      >
-        {loading ? "Envoi..." : "Envoyer les contacts sélectionnés"}
-      </button>
-    </div>
+    <button
+      onClick={envoyerContacts}
+      disabled={loading}
+      className={`px-6 py-2 rounded-lg font-bold text-white shadow-md transition-all ${
+        loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
+      }`}
+    >
+      {loading
+        ? "Envoi..."
+        : count === 1
+        ? "Envoyer le contact"
+        : "Envoyer les contacts"}
+    </button>
   );
 }

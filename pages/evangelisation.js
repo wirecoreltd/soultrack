@@ -107,9 +107,12 @@ export default function Evangelisation() {
           <BoutonEnvoyerContacts
             membres={selectedContacts}
             type={selectedTargetType}
-            cible={selectedTargetType === "cellule"
-              ? cellules.find(c => c.id === parseInt(selectedTarget, 10))
-              : conseillers.find(c => c.id === selectedTarget)}
+            cible={
+              selectedTargetType === "cellule"
+                ? cellules.find(c => c.id == selectedTarget)
+                : conseillers.find(c => c.id == selectedTarget)
+            }
+
             session={session}
             showToast={(msg) => alert(msg)}
           />

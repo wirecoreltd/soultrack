@@ -69,6 +69,8 @@ export default function Evangelisation() {
       ? cellules.find((c) => c.id === selectedTarget)
       : conseillers.find((c) => c.id === selectedTarget);
 
+  const anyCheckedContacts = Object.values(checkedContacts).some(Boolean);
+
   return (
     <div
       className="min-h-screen w-full flex flex-col items-center p-6"
@@ -89,62 +91,63 @@ export default function Evangelisation() {
 
       {/* LOGO ET TITRE */}
       <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
-      <h1 className="text-4xl text-white text-center mb-2">Évangélisation</h1>
+      <h1 className="text-4xl text-white text-center mb-6">Évangélisation</h1>
 
       {/* SELECT DESTINATAIRE UNIQUE */}
-        <div className="flex flex-col items-center gap-2 mb-4 w-full max-w-5xl">
+      <div className="flex flex-col items-center gap-2 mb-6 w-full max-w-5xl">
+        <select
+          value={selectedTargetType}
+          onChange={(e) => {
+            setSelectedTargetType(e.target.value);
+            setSelectedTarget(""); // reset sélection
+          }}
+          className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-72 text-center"
+        >
+          <option value="">📍 Envoyer à…</option>
+          <option value="cellule">Une Cellule</option>
+          <option value="conseiller">Un Conseiller</option>
+        </select>
+
+        {selectedTargetType && (
           <select
-            value={selectedTargetType}
-            onChange={(e) => {
-              setSelectedTargetType(e.target.value);
-              setSelectedTarget(""); // reset sélection
-            }}
+            value={selectedTarget}
+            onChange={(e) => setSelectedTarget(e.target.value)}
             className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-72 text-center"
           >
-            <option value="">📍 Envoyer à…</option>
-            <option value="cellule">Une Cellule</option>
-            <option value="conseiller">Un Conseiller</option>
+            <option value="">-- Choisir {selectedTargetType} --</option>
+            {selectedTargetType === "cellule"
+              ? cellules.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.cellule} — {c.responsable}
+                  </option>
+                ))
+              : conseillers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.prenom} {c.nom}
+                  </option>
+                ))}
           </select>
-        
-          {selectedTargetType && (
-            <select
-              value={selectedTarget}
-              onChange={(e) => setSelectedTarget(e.target.value)}
-              className="border rounded-xl px-4 py-2 text-gray-800 shadow-md w-72 text-center"
-            >
-              <option value="">-- Choisir {selectedTargetType} --</option>
-              {selectedTargetType === "cellule"
-                ? cellules.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.cellule} — {c.responsable}
-                    </option>
-                  ))
-                : conseillers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.prenom} {c.nom}
-                    </option>
-                  ))}
-            </select>
-          )}
-        
-          {selectedTarget && (
-            <BoutonEnvoyerContacts
-              contacts={contacts}
-              checkedContacts={checkedContacts}
-              cellule={selectedTargetType === "cellule" ? selectedTargetObject : null}
-              conseiller={selectedTargetType === "conseiller" ? selectedTargetObject : null}
-              onEnvoye={(id) => {
-                setContacts((prev) => prev.filter((c) => c.id !== id));
-                setCheckedContacts((prev) => {
-                  const copy = { ...prev };
-                  delete copy[id];
-                  return copy;
-                });
-              }}
-              showToast={(msg) => alert(msg)}
-            />
-          )}
-        </div>
+        )}
+
+        {selectedTarget && anyCheckedContacts && (
+          <BoutonEnvoyerContacts
+            contacts={contacts}
+            checkedContacts={checkedContacts}
+            cellule={selectedTargetType === "cellule" ? selectedTargetObject : null}
+            conseiller={selectedTargetType === "conseiller" ? selectedTargetObject : null}
+            onEnvoye={(id) => {
+              setContacts((prev) => prev.filter((c) => c.id !== id));
+              setCheckedContacts((prev) => {
+                const copy = { ...prev };
+                delete copy[id];
+                return copy;
+              });
+            }}
+            showToast={(msg) => alert(msg)}
+            smallButton={true} // On ajoutera cette prop pour adapter la largeur du bouton
+          />
+        )}
+      </div>
 
       {/* BASCULE VUE */}
       <p

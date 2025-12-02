@@ -6,7 +6,6 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditEvangelisePopup from "../components/EditEvangelisePopup";
-import BoutonEnvoyerContacts from "../components/BoutonEnvoyerContacts";
 
 export default function Evangelisation() {
   const router = useRouter();
@@ -18,24 +17,12 @@ export default function Evangelisation() {
   const [checkedContacts, setCheckedContacts] = useState({});
   const [detailsOpen, setDetailsOpen] = useState({});
   const [editMember, setEditMember] = useState(null);
-  const [session, setSession] = useState(null);
+  const [loadingSend, setLoadingSend] = useState(false);
 
   useEffect(() => {
-    const supabaseAuth = supabase;
     fetchContacts();
     fetchCellules();
     fetchConseillers();
-
-    const getSession = async () => {
-      const { data: { session } } = await supabaseAuth.auth.getSession();
-      setSession(session);
-    };
-    getSession();
-
-    const { data: listener } = supabaseAuth.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-    return () => listener?.subscription?.unsubscribe();
   }, []);
 
   const fetchContacts = async () => {
@@ -65,6 +52,61 @@ export default function Evangelisation() {
   const selectedContacts = contacts.filter(c => checkedContacts[c.id]);
   const hasSelectedContacts = selectedContacts.length > 0;
 
+  const sendContacts = async () => {
+    if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+
+    setLoadingSend(true);
+    try {
+      const cible = selectedTargetType === "cellule"
+        ? cellules.find(c => c.id == selectedTarget)
+        : conseillers.find(c => c.id == selectedTarget);
+
+      // 1️⃣ Envoi WhatsApp via ton API
+      const resp = await fetch("/api/send-whatsapp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          membres: selectedContacts,
+          type: selectedTargetType,
+          cible
+        })
+      });
+
+      const result = await resp.json();
+      if (!resp.ok) throw new Error(result.error || "Erreur API");
+
+      // 2️⃣ Ajouter dans suivis_des_evangelises et supprimer de evangelises
+      const insertData = selectedContacts.map(c => ({
+        prenom: c.prenom,
+        nom: c.nom,
+        telephone: c.telephone,
+        ville: c.ville,
+        besoin: c.besoin,
+        infos_supplementaires: c.infos_supplementaires,
+        is_whatsapp: c.is_whatsapp || false,
+        cellule_id: selectedTargetType === "cellule" ? cible.id : null,
+        responsable_cellule: selectedTargetType === "cellule" ? cible.responsable : null,
+        date_suivi: new Date().toISOString()
+      }));
+
+      const { error: insertError } = await supabase.from("suivis_des_evangelises").insert(insertData);
+      if (insertError) throw insertError;
+
+      const idsToDelete = selectedContacts.map(c => c.id);
+      const { error: deleteError } = await supabase.from("evangelises").delete().in("id", idsToDelete);
+      if (deleteError) throw deleteError;
+
+      alert("✅ Contacts envoyés et transférés avec succès !");
+      setCheckedContacts({});
+      fetchContacts();
+    } catch (err) {
+      console.error("Erreur envoi contacts :", err);
+      alert("❌ Une erreur est survenue lors de l'envoi.");
+    } finally {
+      setLoadingSend(false);
+    }
+  };
+
   return (
     <div className="min-h-screen w-full flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
       {/* HEADER */}
@@ -78,7 +120,7 @@ export default function Evangelisation() {
 
       {/* SELECT ENVOYER À CENTRALISE */}
       <div className="w-full max-w-md flex flex-col items-center mb-6">
-        <label className="font-semibold text-white mb-1 text-left w-full">Envoyer à :</label>
+        <label className="font-semibold text-white mb-1 w-full text-left">Envoyer à :</label>
         <select
           value={selectedTargetType}
           onChange={(e) => { setSelectedTargetType(e.target.value); setSelectedTarget(""); }}
@@ -104,18 +146,13 @@ export default function Evangelisation() {
         )}
 
         {hasSelectedContacts && selectedTargetType && selectedTarget && (
-          <BoutonEnvoyerContacts
-            membres={selectedContacts}
-            type={selectedTargetType}
-            cible={
-              selectedTargetType === "cellule"
-                ? cellules.find(c => c.id == selectedTarget)
-                : conseillers.find(c => c.id == selectedTarget)
-            }
-
-            session={session}
-            showToast={(msg) => alert(msg)}
-          />
+          <button
+            onClick={sendContacts}
+            disabled={loadingSend}
+            className={`bg-green-500 text-white font-semibold px-4 py-2 rounded ${loadingSend ? "opacity-50 cursor-not-allowed" : "hover:bg-green-600"}`}
+          >
+            {loadingSend ? "Envoi en cours..." : "📤 Envoyer WhatsApp"}
+          </button>
         )}
       </div>
 

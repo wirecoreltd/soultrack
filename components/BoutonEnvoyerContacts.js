@@ -2,57 +2,43 @@
 
 import { useState } from "react";
 
-export default function BoutonEnvoyerContacts({ membres, type, cible, session, showToast }) {
+export default function BoutonEnvoyerContacts({ membres, type, cible, showToast }) {
   const [loading, setLoading] = useState(false);
 
-  const sendToWhatsapp = async () => {
+  const sendToWhatsapp = () => {
     if (!membres || membres.length === 0) {
       showToast("❌ Aucun contact sélectionné !");
       return;
     }
-    if (!cible) {
+    if (!cible || !cible.telephone) {
       showToast("❌ Veuillez sélectionner une cible !");
       return;
     }
 
     setLoading(true);
 
-    try {
-      // Formatage simple des numéros
-      const membresFormatted = membres.map(m => ({
-        ...m,
-        telephone: m.telephone.replace(/\D/g, "") // supprime tout sauf chiffres
-      }));
+    // Format numéro cible
+    const cibleNumero = cible.telephone.replace(/\D/g, "");
 
-      console.log("Envoi WhatsApp:", { membres: membresFormatted, cible });
+    // Format message
+    const message =
+      `📥 Nouveau(s) contact(s) reçu(s)\n\n` +
+      membres
+        .map(
+          (m) =>
+            `👤 ${m.prenom} ${m.nom}\n📱 ${m.telephone}\n🏙️ ${m.ville || "—"}\n📝 ${m.besoin || "—"}`
+        )
+        .join("\n\n");
 
-      const response = await fetch("/api/send-whatsapp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          membres: membresFormatted,
-          cible,
-          type
-        })
-      });
+    // Encodage URL
+    const encoded = encodeURIComponent(message);
 
-      const json = await response.json().catch(() => null);
-      console.log("Réponse API:", json);
+    // Ouverture WhatsApp
+    const url = `https://wa.me/${cibleNumero}?text=${encoded}`;
 
-      if (!response.ok) {
-        console.error("Erreur sendToWhatsapp:", json);
-        showToast("❌ Une erreur est survenue lors de l'envoi.");
-        setLoading(false);
-        return;
-      }
+    window.open(url, "_blank");
 
-      showToast("✅ Messages envoyés avec succès !");
-    } catch (err) {
-      console.error("Erreur sendToWhatsapp catch:", err);
-      showToast("❌ Une erreur est survenue lors de l'envoi.");
-    } finally {
-      setLoading(false);
-    }
+    setLoading(false);
   };
 
   return (
@@ -63,7 +49,7 @@ export default function BoutonEnvoyerContacts({ membres, type, cible, session, s
         loading ? "opacity-50 cursor-not-allowed" : "hover:bg-green-600"
       }`}
     >
-      {loading ? "Envoi en cours..." : "📤 Envoyer WhatsApp"} 
+      {loading ? "Envoi..." : "📤 Envoyer WhatsApp"}
     </button>
   );
 }

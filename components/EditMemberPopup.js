@@ -205,3 +205,93 @@ export default function EditMemberPopup({ member, cellules = [], conseillers = [
     </div>
   );
 }
+
+// Complete EditMemberPopup with labels and filled selects
+import { useEffect, useState } from "react";
+import supabase from "../lib/supabaseClient";
+
+export default function EditMemberPopup({ member, onClose, onSave }) {
+  const [form, setForm] = useState({ ...member });
+  const [cellules, setCellules] = useState([]);
+  const [conseillers, setConseillers] = useState([]);
+
+  useEffect(() => {
+  async function loadData() {
+    const { data: cellulesData } = await supabase
+      .from("cellules")
+      .select("id, cellule");
+
+    const { data: conseillersData } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom")
+      .eq("role", "Conseiller");
+
+    setCellules(cellulesData || []);
+    setConseillers(conseillersData || []);
+  }
+  loadData();
+  }, []);
+
+  function updateField(field, value) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleSave() {
+    await onSave(form);
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white p-6 rounded-xl w-full max-w-xl space-y-4 shadow-xl overflow-y-auto max-h-[90vh]">
+        <h2 className="text-xl font-bold mb-2">Modifier le membre</h2>
+
+        {/* Prénom */}
+        <label className="block font-semibold text-sm">Prénom</label>
+        <input className="input" value={form.prenom || ""} onChange={(e) => updateField("prenom", e.target.value)} />
+
+        {/* Nom */}
+        <label className="block font-semibold text-sm mt-3">Nom</label>
+        <input className="input" value={form.nom || ""} onChange={(e) => updateField("nom", e.target.value)} />
+
+        {/* Téléphone */}
+        <label className="block font-semibold text-sm mt-3">Téléphone</label>
+        <input className="input" value={form.telephone || ""} onChange={(e) => updateField("telephone", e.target.value)} />
+
+        {/* WhatsApp */}
+        <label className="block font-semibold text-sm mt-3">WhatsApp</label>
+        <select className="input" value={form.is_whatsapp ? "1" : "0"} onChange={(e) => updateField("is_whatsapp", e.target.value === "1")}> <option value="0">Non</option> <option value="1">Oui</option> </select>
+
+        {/* Cellule */}
+        <label className="block font-semibold text-sm mt-3">Cellule</label>
+        <select className="input" value={form.cellule_id || ""} onChange={(e) => updateField("cellule_id", e.target.value)}>
+  <option value="">Aucune</option>
+  {cellules.map((c) => (
+    <option key={c.id} value={c.id}>{c.cellule}</option>
+  ))}
+</select>
+
+        {/* Conseiller */}
+        <label className="block font-semibold text-sm mt-3">Conseiller</label>
+        <select className="input" value={form.conseiller_id || ""} onChange={(e) => updateField("conseiller_id", e.target.value)}>
+  <option value="">Aucun</option>
+  {conseillers.map((c) => (
+    <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
+  ))}
+</select>
+
+        {/* Ville */}
+        <label className="block font-semibold text-sm mt-3">Ville</label>
+        <input className="input" value={form.ville || ""} onChange={(e) => updateField("ville", e.target.value)} />
+
+        {/* Infos supplémentaires */}
+        <label className="block font-semibold text-sm mt-3">Infos supplémentaires</label>
+        <textarea className="input" value={form.info || ""} onChange={(e) => updateField("info", e.target.value)} />
+
+        <div className="flex justify-end gap-3 mt-6">
+          <button onClick={onClose} className="px-4 py-2 bg-gray-300 rounded-md">Annuler</button>
+          <button onClick={handleSave} className="px-4 py-2 bg-blue-600 text-white rounded-md">Sauvegarder</button>
+        </div>
+      </div>
+    </div>
+  );
+}

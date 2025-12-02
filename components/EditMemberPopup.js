@@ -1,3 +1,4 @@
+// components/EditMemberPopup.jsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,59 +7,74 @@ import supabase from "../lib/supabaseClient";
 export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
 
-  const initialBesoin =
-    typeof member.besoin === "string"
-      ? JSON.parse(member.besoin || "[]")
-      : member.besoin || [];
+  // safe parse for member.besoin (could be stringified JSON or array)
+  const parseBesoin = (b) => {
+    if (!b) return [];
+    if (Array.isArray(b)) return b;
+    try {
+      const parsed = JSON.parse(b);
+      return Array.isArray(parsed) ? parsed : [String(b)];
+    } catch {
+      return [String(b)];
+    }
+  };
+
+  const initialBesoin = parseBesoin(member?.besoin);
 
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
 
   const [formData, setFormData] = useState({
-    prenom: member.prenom || "",
-    nom: member.nom || "",
-    telephone: member.telephone || "",
-    ville: member.ville || "",
+    prenom: member?.prenom || "",
+    nom: member?.nom || "",
+    telephone: member?.telephone || "",
+    ville: member?.ville || "",
     besoin: initialBesoin,
     autreBesoin: "",
-    statut: member.statut || "",
-    cellule_id: member.cellule_id || "",
-    conseiller_id: member.conseiller_id || "",
-    infos_supplementaires: member.infos_supplementaires || "",
-    is_whatsapp: member.is_whatsapp || false,
-    star: member.star === true,
+    statut: member?.statut || "",
+    // use empty string for selects (we'll convert to null on submit)
+    cellule_id: member?.cellule_id ?? "",
+    conseiller_id: member?.conseiller_id ?? "",
+    infos_supplementaires: member?.infos_supplementaires || "",
+    is_whatsapp: !!member?.is_whatsapp,
+    star: member?.star === true,
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // ---------------------------
-  // LOAD CELLULES + CONSEILLERS
-  // ---------------------------
+  // load cellules & conseillers once
   useEffect(() => {
+    let mounted = true;
     async function loadData() {
-      const { data: cellulesData } = await supabase
-        .from("cellules")
-        .select("id, cellule");
+      try {
+        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule");
+        const { data: conseillersData } = await supabase
+          .from("profiles")
+          .select("id, prenom, nom")
+          .eq("role", "Conseiller");
 
-      const { data: conseillersData } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom")
-        .eq("role", "Conseiller");
-
-      setCellules(cellulesData || []);
-      setConseillers(conseillersData || []);
+        if (!mounted) return;
+        setCellules(cellulesData || []);
+        setConseillers(conseillersData || []);
+      } catch (err) {
+        console.error("Erreur loadData EditMemberPopup:", err);
+      }
     }
     loadData();
+    return () => { mounted = false; };
   }, []);
 
-  // ---------------------------
-  // HANDLERS
-  // ---------------------------
+  // generic handler
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCheckboxChange = (e) => {
+    const { name, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: checked }));
   };
 
   const handleBesoinChange = (e) => {
@@ -67,67 +83,86 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     if (value === "Autre") {
       setShowAutre(checked);
       if (!checked) {
-        setFormData((prev) => ({
+        setFormData(prev => ({
           ...prev,
           autreBesoin: "",
-          besoin: prev.besoin.filter((b) => b !== "Autre"),
+          besoin: prev.besoin.filter(b => b !== "Autre"),
         }));
+      } else {
+        // ensure "Autre" present
+        setFormData(prev => ({ ...prev, besoin: Array.from(new Set([...prev.besoin, "Autre"])) }));
       }
+      return;
     }
 
-    setFormData((prev) => {
-      const updated = checked
-        ? [...prev.besoin, value]
-        : prev.besoin.filter((b) => b !== value);
+    setFormData(prev => {
+      const updated = checked ? [...prev.besoin, value] : prev.besoin.filter(b => b !== value);
       return { ...prev, besoin: updated };
     });
   };
 
-  const toggleStar = () => {
-    setFormData((prev) => ({ ...prev, star: !prev.star }));
-  };
+  const toggleStar = () => setFormData(prev => ({ ...prev, star: !prev.star }));
 
-  // ---------------------------
-  // SAVE CHANGES
-  // ---------------------------
   const handleSubmit = async () => {
     setLoading(true);
 
-    const sendData = {
-      ...formData,
-      besoin:
-        formData.autreBesoin && showAutre
-          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
-          : formData.besoin,
-    };
+    try {
+      // build final besoin array (replace "Autre" with autreBesoin value if provided)
+      let finalBesoin = Array.isArray(formData.besoin) ? [...formData.besoin] : parseBesoin(formData.besoin);
+      if (showAutre && formData.autreBesoin?.trim()) {
+        // remove literal "Autre" and add the custom value
+        finalBesoin = finalBesoin.filter(b => b !== "Autre");
+        finalBesoin.push(formData.autreBesoin.trim());
+      } else {
+        finalBesoin = finalBesoin.filter(b => b !== "Autre");
+      }
 
-    const { data, error } = await supabase
-      .from("membres")
-      .update(sendData)
-      .eq("id", member.id)
-      .select()
-      .single();
+      // prepare payload: convert empty uuid strings -> null, ensure booleans, stringify besoin
+      const payload = {
+        prenom: formData.prenom || null,
+        nom: formData.nom || null,
+        telephone: formData.telephone || null,
+        ville: formData.ville || null,
+        statut: formData.statut || null,
+        cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
+        conseiller_id: formData.conseiller_id === "" ? null : formData.conseiller_id,
+        infos_supplementaires: formData.infos_supplementaires || null,
+        is_whatsapp: !!formData.is_whatsapp,
+        star: !!formData.star,
+        // store besoin as JSON string to be safe and consistent
+        besoin: JSON.stringify(finalBesoin),
+      };
 
-    if (error) {
-      alert(error.message);
+      const { data, error } = await supabase
+        .from("membres")
+        .update(payload)
+        .eq("id", member.id)
+        .select()
+        .single();
+
+      if (error) {
+        // Supabase error (including uuid syntax errors)
+        console.error("Supabase update error:", error);
+        alert("❌ Erreur lors de la sauvegarde : " + (error.message || error));
+        setLoading(false);
+        return;
+      }
+
+      setSuccess(true);
+      if (onUpdateMember) onUpdateMember(data);
+
+      setTimeout(() => {
+        setSuccess(false);
+        onClose();
+      }, 900);
+    } catch (err) {
+      console.error("Exception handleSubmit EditMemberPopup:", err);
+      alert("❌ Une erreur est survenue.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setSuccess(true);
-    if (onUpdateMember) onUpdateMember(data);
-
-    setTimeout(() => {
-      setSuccess(false);
-      onClose();
-    }, 1200);
-
-    setLoading(false);
   };
 
-  // ---------------------------
-  // UI
-  // ---------------------------
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
@@ -136,6 +171,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-red-500 font-bold text-xl hover:text-red-700"
+          aria-label="Fermer"
         >
           ✕
         </button>
@@ -144,20 +180,19 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
         {/* STAR */}
         <div className="flex justify-center mb-4">
-          <button onClick={toggleStar} className="text-4xl">
+          <button onClick={toggleStar} className="text-4xl" aria-label="Étoile">
             {formData.star ? "⭐" : "☆"}
           </button>
         </div>
 
         <div className="flex flex-col gap-4">
-
           <input type="text" placeholder="Prénom" name="prenom" value={formData.prenom} onChange={handleChange} className="input" />
           <input type="text" placeholder="Nom" name="nom" value={formData.nom} onChange={handleChange} className="input" />
           <input type="text" placeholder="Téléphone" name="telephone" value={formData.telephone} onChange={handleChange} className="input" />
 
           {/* WhatsApp */}
           <label className="flex items-center gap-2">
-            <input type="checkbox" checked={formData.is_whatsapp} onChange={(e)=>setFormData({...formData,is_whatsapp:e.target.checked})} />
+            <input type="checkbox" name="is_whatsapp" checked={!!formData.is_whatsapp} onChange={handleCheckboxChange} />
             WhatsApp
           </label>
 
@@ -175,7 +210,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </select>
 
           {/* CELLULE */}
-          <select name="cellule_id" value={formData.cellule_id} onChange={handleChange} className="input">
+          <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input">
             <option value="">-- Cellule --</option>
             {cellules.map((c) => (
               <option key={c.id} value={c.id}>{c.cellule}</option>
@@ -183,7 +218,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </select>
 
           {/* CONSEILLER */}
-          <select name="conseiller_id" value={formData.conseiller_id} onChange={handleChange} className="input">
+          <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
             <option value="">-- Conseiller --</option>
             {conseillers.map((c) => (
               <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
@@ -195,7 +230,12 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             <p className="font-semibold mb-2">Besoin :</p>
             {besoinsOptions.map((item) => (
               <label key={item} className="flex items-center gap-3 mb-2">
-                <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} />
+                <input
+                  type="checkbox"
+                  value={item}
+                  checked={Array.isArray(formData.besoin) && formData.besoin.includes(item)}
+                  onChange={handleBesoinChange}
+                />
                 {item}
               </label>
             ))}

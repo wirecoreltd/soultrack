@@ -2,12 +2,9 @@
 
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
 
 export default function EditMemberPopup({
   member,
-  cellules = [],
-  conseillers = [],
   onClose,
   onUpdateMember,
 }) {
@@ -25,16 +22,15 @@ export default function EditMemberPopup({
     autreBesoin: "",
     infos_supplementaires: member.infos_supplementaires || "",
     statut: member.statut || "",
-    star: member.star === true, // ⭐ ajouté
+    star: member.star === true,
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  // ⭐ Toggle étoile (MAIS ne sauvegarde pas encore)
   const toggleServiteur = () => {
-    setFormData((prev) => ({ ...prev, star: !prev.star }));
+    setFormData(prev => ({ ...prev, star: !prev.star }));
   };
 
   const handleBesoinChange = (e) => {
@@ -43,25 +39,25 @@ export default function EditMemberPopup({
     if (value === "Autre") {
       setShowAutre(checked);
       if (!checked) {
-        setFormData((prev) => ({
+        setFormData(prev => ({
           ...prev,
           autreBesoin: "",
-          besoin: prev.besoin.filter((b) => b !== "Autre"),
+          besoin: prev.besoin.filter(b => b !== "Autre"),
         }));
       }
     }
 
-    setFormData((prev) => {
+    setFormData(prev => {
       const updated = checked
         ? [...prev.besoin, value]
-        : prev.besoin.filter((b) => b !== value);
+        : prev.besoin.filter(b => b !== value);
       return { ...prev, besoin: updated };
     });
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async () => {
@@ -74,14 +70,14 @@ export default function EditMemberPopup({
       ville: formData.ville,
       infos_supplementaires: formData.infos_supplementaires || null,
       statut: formData.statut || null,
-      star: formData.star, // ⭐ sauvegarde finale
+      star: formData.star,
       besoin:
         formData.autreBesoin && showAutre
-          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
+          ? [...formData.besoin.filter(b => b !== "Autre"), formData.autreBesoin]
           : formData.besoin,
     };
 
-    const { error, data } = await supabase
+    const { data, error } = await supabase
       .from("membres")
       .update(cleanData)
       .eq("id", member.id)
@@ -89,81 +85,56 @@ export default function EditMemberPopup({
       .single();
 
     if (error) {
-      alert("❌ Erreur : " + error.message);
+      alert("Erreur : " + error.message);
     } else {
       if (onUpdateMember) onUpdateMember(data);
-      setMessage("✅ Changement enregistré !");
+      setMessage("Sauvegardé !");
       setTimeout(() => {
         setMessage("");
         onClose();
-      }, 1200);
+      }, 900);
     }
 
     setLoading(false);
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto shadow-xl relative">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white w-full max-w-md p-8 rounded-3xl shadow-lg max-h-[90vh] overflow-y-auto relative">
+
+        {/* Bouton fermer */}
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 text-red-500 font-bold hover:text-red-700"
+          className="absolute top-4 right-4 text-red-500 text-xl font-bold hover:text-red-700"
         >
           ✕
         </button>
 
-        <h2 className="text-lg font-bold text-gray-800 text-center mb-4">
+        <h1 className="text-2xl font-bold text-center mb-4">
           Modifier {member.prenom} {member.nom}
-        </h2>
+        </h1>
 
-        {/* ⭐ Section serviteur */}
-        <div className="flex items-center gap-3 mb-4 justify-center">
-          <button onClick={toggleServiteur} className="text-3xl">
+        {/* Star / Serviteur */}
+        <div className="flex justify-center items-center gap-3 mb-6">
+          <button onClick={toggleServiteur} className="text-4xl">
             {formData.star ? "⭐" : "☆"}
           </button>
-          <span className="font-semibold text-gray-700">Marquer comme serviteur</span>
+          <span className="font-semibold text-gray-700">Serviteur</span>
         </div>
 
-        <div className="flex flex-col space-y-3 text-sm">
+        {/* FORMULAIRE */}
+        <div className="flex flex-col gap-4">
 
-          {/* LABEL + INPUT */}
-          <label className="font-semibold">Prénom</label>
-          <input
-            name="prenom"
-            value={formData.prenom}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          />
+          <input className="input" name="prenom" value={formData.prenom} onChange={handleChange} placeholder="Prénom" />
+          <input className="input" name="nom" value={formData.nom} onChange={handleChange} placeholder="Nom" />
+          <input className="input" name="telephone" value={formData.telephone} onChange={handleChange} placeholder="Téléphone" />
+          <input className="input" name="ville" value={formData.ville} onChange={handleChange} placeholder="Ville" />
 
-          <label className="font-semibold">Nom</label>
-          <input
-            name="nom"
-            value={formData.nom}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          />
-
-          <label className="font-semibold">Ville</label>
-          <input
-            name="ville"
-            value={formData.ville}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          />
-
-          <label className="font-semibold">Téléphone</label>
-          <input
-            name="telephone"
-            value={formData.telephone}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          />
-
-          {/* BESOIN */}
-          <div className="mt-2">
+          {/* Besoins */}
+          <div>
             <p className="font-semibold mb-2">Besoins :</p>
 
-            {besoinsOptions.map((item) => (
+            {besoinsOptions.map(item => (
               <label key={item} className="flex items-center gap-3 mb-2">
                 <input
                   type="checkbox"
@@ -176,7 +147,6 @@ export default function EditMemberPopup({
               </label>
             ))}
 
-            {/* Autre */}
             <label className="flex items-center gap-3 mb-2">
               <input
                 type="checkbox"
@@ -195,50 +165,71 @@ export default function EditMemberPopup({
                 value={formData.autreBesoin}
                 onChange={handleChange}
                 placeholder="Précisez..."
-                className="border rounded px-2 py-1 w-full"
+                className="input mt-1"
               />
             )}
           </div>
 
-          <label className="font-semibold">Infos supplémentaires</label>
           <textarea
+            className="input"
             name="infos_supplementaires"
+            rows={2}
+            placeholder="Informations supplémentaires..."
             value={formData.infos_supplementaires}
             onChange={handleChange}
-            className="border rounded px-2 py-1"
-            rows={3}
           />
 
-          <label className="font-semibold">Statut</label>
           <select
+            className="input"
             name="statut"
             value={formData.statut}
             onChange={handleChange}
-            className="border rounded px-2 py-1"
           >
-            <option value="">-- Sélectionner --</option>
-            <option value="actif">actif</option>
-            <option value="Integrer">Integrer</option>
-            <option value="ancien">ancien</option>
-            <option value="veut rejoindre ICC">veut rejoindre ICC</option>
-            <option value="visiteur">visiteur</option>
-            <option value="a déjà mon église">a déjà mon église</option>
+            <option value="">-- Statut --</option>
+            <option value="actif">Actif</option>
+            <option value="Integrer">Intégré</option>
+            <option value="ancien">Ancien</option>
+            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+            <option value="visiteur">Visiteur</option>
+            <option value="a déjà mon église">A déjà mon église</option>
           </select>
 
           {message && (
             <p className="text-green-600 text-center font-semibold">{message}</p>
           )}
 
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className={`mt-3 w-full text-white py-2 rounded font-bold ${
-              loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {loading ? "Enregistrement..." : "Enregistrer"}
-          </button>
+          {/* BOUTONS */}
+          <div className="flex gap-4 mt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            >
+              Annuler
+            </button>
+
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 
+              text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            >
+              {loading ? "Enregistrement..." : "Enregistrer"}
+            </button>
+          </div>
+
         </div>
+
+        <style jsx>{`
+          .input {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            color: black;
+          }
+        `}</style>
       </div>
     </div>
   );

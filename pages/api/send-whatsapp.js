@@ -20,17 +20,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Aucune cible sélectionnée" });
     }
 
-    console.log("📨 Envoi WhatsApp vers :", cible);
-    console.log("👥 Membres envoyés :", membres);
-
-    // NUMÉRO DU DESTINATAIRE
     const cibleNumero = (cible.telephone || "").replace(/\D/g, "");
-
     if (!cibleNumero) {
-      return res.status(400).json({ error: "Cible sans numéro valide" });
+      return res.status(400).json({ error: "Numéro cible invalide" });
     }
 
-    // MESSAGE À ENVOYER
     const messageTexte =
       `📥 Nouveau(s) contact(s) reçu(s)\n\n` +
       membres
@@ -42,9 +36,6 @@ export default async function handler(req, res) {
         )
         .join("\n");
 
-    console.log("📄 Message formaté :", messageTexte);
-
-    // ENVOI À WHATSAPP CLOUD API
     const url = `https://graph.facebook.com/v18.0/${phoneId}/messages`;
 
     const whatsappResponse = await fetch(url, {
@@ -57,9 +48,7 @@ export default async function handler(req, res) {
         messaging_product: "whatsapp",
         to: cibleNumero,
         type: "text",
-        text: {
-          body: messageTexte
-        }
+        text: { body: messageTexte }
       })
     });
 
@@ -67,14 +56,12 @@ export default async function handler(req, res) {
 
     if (!whatsappResponse.ok) {
       console.error("❌ Erreur WhatsApp:", data);
-      return res.status(400).json({ error: "Erreur en envoyant WhatsApp", details: data });
+      return res.status(400).json({ error: "Erreur WhatsApp", details: data });
     }
 
-    console.log("✅ Message WhatsApp envoyé :", data);
-
-    return res.status(200).json({ success: true, message: "Messages envoyés via WhatsApp Cloud API" });
+    return res.status(200).json({ success: true });
   } catch (error) {
-    console.error("❌ Erreur API send-whatsapp:", error);
+    console.error("❌ Erreur API :", error);
     return res.status(500).json({ error: "Erreur serveur", details: error });
   }
 }

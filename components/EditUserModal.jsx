@@ -11,6 +11,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     telephone: "",
     role: "",
   });
+  const [roles, setRoles] = useState([]);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -24,6 +25,24 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
       role: user.role || "",
     });
   }, [user]);
+
+  // 🔵 Charger les rôles dynamiques
+  useEffect(() => {
+    const fetchRoles = async () => {
+      const { data } = await supabase.from("profiles").select("role, role_description");
+      if (data) {
+        const uniqueRoles = Array.from(
+          new Map(
+            data
+              .filter(r => r.role)
+              .map(r => [r.role, r.role_description || r.role])
+          ).entries()
+        ).map(([value, label]) => ({ value, label }));
+        setRoles(uniqueRoles);
+      }
+    };
+    fetchRoles();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -44,7 +63,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         role: form.role,
       })
       .eq("id", user.id)
-      .select(); // 🔑 pas single()
+      .select();
 
     setSaving(false);
 
@@ -54,7 +73,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     }
 
     if (data && data.length > 0 && onUpdated) {
-      onUpdated(data[0]); // met à jour directement dans la liste
+      onUpdated(data[0]);
     }
 
     setSuccess(true);
@@ -69,7 +88,6 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50 p-4">
       <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md">
-        {/* Logo et titre */}
         <div className="flex flex-col items-center mb-4">
           <img src="/logo.png" alt="Logo" className="w-20 h-20" />
           <h2 className="text-xl font-bold text-center mt-2">Modifier l’utilisateur</h2>
@@ -80,13 +98,12 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
           <input type="text" name="nom" value={form.nom} onChange={handleChange} placeholder="Nom" className="input" />
           <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" className="input" />
           <input type="text" name="telephone" value={form.telephone} onChange={handleChange} placeholder="Téléphone" className="input" />
+
           <select name="role" value={form.role} onChange={handleChange} className="input">
             <option value="">-- Sélectionnez un rôle --</option>
-            <option value="Administrateur">Admin</option>
-            <option value="ResponsableCellule">Responsable Cellule</option>
-            <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
-            <option value="Conseiller">Conseiller</option>
-            <option value="ResponsableIntegration">Responsable Intégration</option>
+            {roles.map(r => (
+              <option key={r.value} value={r.value}>{r.label}</option>
+            ))}
           </select>
 
           <div className="flex gap-4 mt-4">

@@ -23,7 +23,7 @@ export default function ListUsers() {
       let query = supabase
         .from("profiles")
         .select(
-          "id, prenom, nom, email, telephone, role, role_description, created_at"
+          "id, prenom, nom, telephone, role, role_description, created_at"
         );
 
       if (roleFilter) query = query.eq("role", roleFilter);
@@ -83,17 +83,14 @@ export default function ListUsers() {
         <h1 className="text-3xl font-bold text-center mt-2">
           Gestion des utilisateurs
         </h1>
-        <p className="text-center text-gray-700 italic mt-1">
-          Administration & gestion des accès
-        </p>
       </div>
 
-      {/* Filtres + bouton sur la même ligne */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 max-w-5xl mx-auto gap-3">
+      {/* Filtres + bouton */}
+      <div className="flex justify-start items-center mb-6 max-w-5xl mx-auto gap-4 flex-wrap">
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          className="border p-2 rounded-xl shadow-sm text-center w-full sm:w-auto"
+          className="border p-2 rounded-xl shadow-sm text-left w-auto"
         >
           <option value="">Tous les rôles</option>
           <option value="Administrateur">Admin</option>
@@ -105,33 +102,24 @@ export default function ListUsers() {
 
         <button
           onClick={() => router.push("/admin/create-internal-user")}
-          className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 w-full sm:w-auto"
+          className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600"
         >
           ➕ Créer utilisateur
         </button>
       </div>
 
-      {/* Liste style table mais responsive */}
-      <div className="max-w-5xl mx-auto flex flex-col gap-3">
-        {/* Header ligne table pour desktop */}
-        <div className="hidden sm:grid grid-cols-5 gap-4 px-4 py-2 font-semibold text-white bg-indigo-600 rounded-t-xl">
-          <span>Nom complet</span>
-          <span>Email</span>
-          <span>Téléphone</span>
-          <span>Rôle</span>
-          <span>Actions</span>
-        </div>
-
+      {/* Liste utilisateurs simple */}
+      <div className="max-w-5xl mx-auto bg-white/20 backdrop-blur-md rounded-xl divide-y divide-gray-300 shadow-md">
         {users.map((user) => (
           <div
             key={user.id}
-            className="bg-white/20 backdrop-blur-md rounded-xl shadow-md p-4 animate-fadeIn grid sm:grid-cols-5 items-center gap-2"
+            className="flex justify-between items-center px-4 py-3"
           >
-            <span className="font-semibold text-gray-700">{user.prenom} {user.nom}</span>
-            <span className="text-gray-700">{user.email}</span>
-            <span className="text-gray-700">{user.telephone || "-"}</span>
-            <span className="font-medium text-indigo-600">{user.role_description || user.role}</span>
-            <div className="flex gap-3 mt-2 sm:mt-0">
+            <div>
+              <span className="font-semibold text-gray-700">{user.prenom} {user.nom}</span>
+              <span className="text-indigo-600 font-medium ml-2">{user.role_description || user.role}</span>
+            </div>
+            <div className="flex gap-3">
               <button
                 onClick={() => setSelectedUser(user)}
                 className="text-blue-600 hover:text-blue-800 text-lg"
@@ -161,7 +149,7 @@ export default function ListUsers() {
       {/* Popup suppression */}
       {deleteUser && (
         <div className="fixed inset-0 flex items-center justify-center z-[999] bg-transparent">
-          <div className="bg-white/90 backdrop-blur-md p-8 rounded-3xl shadow-xl w-[90%] max-w-md text-center animate-fadeIn border">
+          <div className="bg-white/90 backdrop-blur-md p-8 rounded-3xl shadow-xl w-[90%] max-w-md text-center border">
             <h2 className="text-xl font-bold mb-4 text-gray-800">
               Voulez-vous vraiment supprimer :
             </h2>
@@ -185,17 +173,6 @@ export default function ListUsers() {
           </div>
         </div>
       )}
-
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.2s ease-out;
-        }
-      `}</style>
-
     </div>
   );
 }

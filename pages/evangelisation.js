@@ -54,28 +54,25 @@ export default function Evangelisation() {
 
   const sendContacts = async () => {
     if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
-
     setLoadingSend(true);
+
     try {
       const cible = selectedTargetType === "cellule"
         ? cellules.find(c => c.id == selectedTarget)
         : conseillers.find(c => c.id == selectedTarget);
 
-      // 1️⃣ Envoi WhatsApp via ton API
-      const resp = await fetch("/api/send-whatsapp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          membres: selectedContacts,
-          type: selectedTargetType,
-          cible
-        })
-      });
+      if (!cible || !cible.telephone) throw new Error("Numéro de la cible invalide");
 
-      const result = await resp.json();
-      if (!resp.ok) throw new Error(result.error || "Erreur API");
+      // 🔹 Créer le message pour WhatsApp
+      const messageTexte = selectedContacts
+        .map(c => `👤 ${c.prenom} ${c.nom}\n📱 ${c.telephone}\n🏙️ Ville: ${c.ville || "—"}\n📝 Besoin: ${c.besoin || "—"}`)
+        .join("\n\n");
 
-      // 2️⃣ Ajouter dans suivis_des_evangelises et supprimer de evangelises
+      // 🔹 Ouvrir WhatsApp Web / Mobile avec tous les contacts en texte
+      const waLink = `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(messageTexte)}`;
+      window.open(waLink, "_blank");
+
+      // 🔹 Ajouter dans suivis_des_evangelises
       const insertData = selectedContacts.map(c => ({
         prenom: c.prenom,
         nom: c.nom,
@@ -88,10 +85,10 @@ export default function Evangelisation() {
         responsable_cellule: selectedTargetType === "cellule" ? cible.responsable : null,
         date_suivi: new Date().toISOString()
       }));
-
       const { error: insertError } = await supabase.from("suivis_des_evangelises").insert(insertData);
       if (insertError) throw insertError;
 
+      // 🔹 Supprimer les contacts envoyés de evangelises
       const idsToDelete = selectedContacts.map(c => c.id);
       const { error: deleteError } = await supabase.from("evangelises").delete().in("id", idsToDelete);
       if (deleteError) throw deleteError;
@@ -118,7 +115,7 @@ export default function Evangelisation() {
       <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
       <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
 
-      {/* SELECT ENVOYER À CENTRALISE */}
+      {/* SELECT ENVOYER À */}
       <div className="w-full max-w-md flex flex-col items-center mb-6">
         <label className="font-semibold text-white mb-1 w-full text-left">Envoyer à :</label>
         <select
@@ -156,7 +153,7 @@ export default function Evangelisation() {
         )}
       </div>
 
-      {/* VUE CARTE */}
+      {/* LISTE CONTACTS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
         {contacts.map(member => {
           const isOpen = detailsOpen[member.id];

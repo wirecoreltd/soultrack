@@ -13,8 +13,9 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   });
   const [saving, setSaving] = useState(false);
 
+  // Charger les données du user
   useEffect(() => {
-    if (!user) return;
+    if (!user || !user.id) return;
     setForm({
       prenom: user.prenom || "",
       nom: user.nom || "",
@@ -26,11 +27,11 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSave = async () => {
-    if (!user?.id) return;
+    if (!user || !user.id) return;
 
     setSaving(true);
 
@@ -38,17 +39,18 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
       .from("profiles")
       .update(form)
       .eq("id", user.id)
-      .select(); // 🔑 retourne un array de résultats
+      .select(); // retourne un tableau
 
     setSaving(false);
 
     if (error) {
       alert("❌ Erreur lors de la mise à jour : " + error.message);
-    } else {
-      // Mise à jour de la liste dans le parent
-      if (onUpdated) onUpdated();
-      onClose();
+      console.error(error);
+      return;
     }
+
+    if (onUpdated && data && data[0]) onUpdated(data[0]);
+    onClose();
   };
 
   if (!user) return null;
@@ -59,11 +61,44 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         <h2 className="text-xl font-bold text-center mb-4">Modifier l’utilisateur</h2>
 
         <div className="flex flex-col gap-4">
-          <input type="text" name="prenom" value={form.prenom} onChange={handleChange} placeholder="Prénom" className="input" />
-          <input type="text" name="nom" value={form.nom} onChange={handleChange} placeholder="Nom" className="input" />
-          <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" className="input" />
-          <input type="text" name="telephone" value={form.telephone} onChange={handleChange} placeholder="Téléphone" className="input" />
-          <select name="role" value={form.role} onChange={handleChange} className="input">
+          <input
+            type="text"
+            name="prenom"
+            value={form.prenom}
+            onChange={handleChange}
+            placeholder="Prénom"
+            className="input"
+          />
+          <input
+            type="text"
+            name="nom"
+            value={form.nom}
+            onChange={handleChange}
+            placeholder="Nom"
+            className="input"
+          />
+          <input
+            type="email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            placeholder="Email"
+            className="input"
+          />
+          <input
+            type="text"
+            name="telephone"
+            value={form.telephone}
+            onChange={handleChange}
+            placeholder="Téléphone"
+            className="input"
+          />
+          <select
+            name="role"
+            value={form.role}
+            onChange={handleChange}
+            className="input"
+          >
             <option value="">-- Sélectionnez un rôle --</option>
             <option value="Administrateur">Admin</option>
             <option value="ResponsableCellule">Responsable Cellule</option>
@@ -73,8 +108,17 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
           </select>
 
           <div className="flex gap-4 mt-4">
-            <button onClick={onClose} className="flex-1 bg-gray-400 text-white font-bold py-3 rounded-2xl hover:bg-gray-500 transition">Annuler</button>
-            <button onClick={handleSave} disabled={saving} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition">
+            <button
+              onClick={onClose}
+              className="flex-1 bg-gray-400 text-white font-bold py-3 rounded-2xl hover:bg-gray-500 transition"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition"
+            >
               {saving ? "Enregistrement..." : "Enregistrer"}
             </button>
           </div>

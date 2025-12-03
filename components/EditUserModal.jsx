@@ -35,7 +35,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
 
     setSaving(true);
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .update({
         prenom: form.prenom,
@@ -44,16 +44,19 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         telephone: form.telephone,
         role: form.role,
       })
-      .eq("id", user.id);
+      .eq("id", user.id)
+      .select()
+      .single(); // ✅ Important pour récupérer un seul objet
 
     setSaving(false);
 
     if (error) {
       alert("❌ Erreur lors de la mise à jour : " + error.message);
+      console.error(error);
       return;
     }
 
-    if (onUpdated) onUpdated();
+    if (onUpdated) onUpdated(); // rafraîchit la liste
     setSuccess(true);
     setTimeout(() => {
       setSuccess(false);

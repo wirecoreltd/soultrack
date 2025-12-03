@@ -67,7 +67,15 @@ export default function ListUsers() {
     return <p className="text-center text-red-600 mt-10">{message}</p>;
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-blue-100 to-purple-200">
+    <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
+
+      {/* Retour */}
+      <button
+        onClick={() => router.back()}
+        className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700 transition"
+      >
+        ← Retour
+      </button>
 
       {/* Header / Logo */}
       <div className="flex flex-col items-center mb-6">
@@ -81,11 +89,11 @@ export default function ListUsers() {
       </div>
 
       {/* Filtres + bouton sur la même ligne */}
-      <div className="flex justify-between items-center mb-6 max-w-5xl mx-auto">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 max-w-5xl mx-auto gap-3">
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          className="border p-2 rounded-xl shadow-sm text-center"
+          className="border p-2 rounded-xl shadow-sm text-center w-full sm:w-auto"
         >
           <option value="">Tous les rôles</option>
           <option value="Administrateur">Admin</option>
@@ -97,27 +105,33 @@ export default function ListUsers() {
 
         <button
           onClick={() => router.push("/admin/create-internal-user")}
-          className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600"
+          className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 w-full sm:w-auto"
         >
           ➕ Créer utilisateur
         </button>
       </div>
 
-      {/* Liste des utilisateurs */}
-      <div className="max-w-5xl mx-auto flex flex-col gap-4">
+      {/* Liste style table mais responsive */}
+      <div className="max-w-5xl mx-auto flex flex-col gap-3">
+        {/* Header ligne table pour desktop */}
+        <div className="hidden sm:grid grid-cols-5 gap-4 px-4 py-2 font-semibold text-white bg-indigo-600 rounded-t-xl">
+          <span>Nom complet</span>
+          <span>Email</span>
+          <span>Téléphone</span>
+          <span>Rôle</span>
+          <span>Actions</span>
+        </div>
+
         {users.map((user) => (
           <div
             key={user.id}
-            className="bg-white/30 backdrop-blur-md rounded-2xl p-4 flex justify-between items-center shadow-md animate-fadeIn"
+            className="bg-white/20 backdrop-blur-md rounded-xl shadow-md p-4 animate-fadeIn grid sm:grid-cols-5 items-center gap-2"
           >
-            <div>
-              <p className="font-semibold text-lg">{user.prenom} {user.nom}</p>
-              <p className="text-gray-700">{user.email}</p>
-              <p className="text-gray-700">{user.telephone || "-"}</p>
-              <p className="font-medium text-indigo-600">{user.role_description || user.role}</p>
-            </div>
-
-            <div className="flex gap-3">
+            <span className="font-semibold text-gray-700">{user.prenom} {user.nom}</span>
+            <span className="text-gray-700">{user.email}</span>
+            <span className="text-gray-700">{user.telephone || "-"}</span>
+            <span className="font-medium text-indigo-600">{user.role_description || user.role}</span>
+            <div className="flex gap-3 mt-2 sm:mt-0">
               <button
                 onClick={() => setSelectedUser(user)}
                 className="text-blue-600 hover:text-blue-800 text-lg"

@@ -9,7 +9,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     nom: "",
     email: "",
     telephone: "",
-    role: "",
+    role_description: "",
   });
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -21,7 +21,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
       nom: user.nom || "",
       email: user.email || "",
       telephone: user.telephone || "",
-      role: user.role || "",
+      role_description: user.role_description || "",
     });
   }, [user]);
 
@@ -41,10 +41,10 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         nom: form.nom,
         email: form.email,
         telephone: form.telephone,
-        role: form.role,
+        role_description: form.role_description, // 🔑 on update role_description
       })
       .eq("id", user.id)
-      .select(); // 🔑 pas single(), renvoie un tableau
+      .select(); // renvoie un tableau
 
     setSaving(false);
 
@@ -69,7 +69,6 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50 p-4">
       <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md">
-        {/* Logo et titre */}
         <div className="flex flex-col items-center mb-4">
           <img src="/logo.png" alt="Logo" className="w-20 h-20" />
           <h2 className="text-xl font-bold text-center mt-2">Modifier l’utilisateur</h2>
@@ -80,7 +79,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
           <input type="text" name="nom" value={form.nom} onChange={handleChange} placeholder="Nom" className="input" />
           <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" className="input" />
           <input type="text" name="telephone" value={form.telephone} onChange={handleChange} placeholder="Téléphone" className="input" />
-          <select name="role" value={form.role} onChange={handleChange} className="input">
+          <select name="role_description" value={form.role_description} onChange={handleChange} className="input">
             <option value="">-- Sélectionnez un rôle --</option>
             <option value="Administrateur">Admin</option>
             <option value="ResponsableCellule">Responsable Cellule</option>

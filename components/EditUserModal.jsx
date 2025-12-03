@@ -13,6 +13,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   });
   const [saving, setSaving] = useState(false);
 
+  // Charger les données existantes
   useEffect(() => {
     if (!user) return;
     setForm({
@@ -24,65 +25,91 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     });
   }, [user]);
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSave = async () => {
     if (!user?.id) return;
 
     setSaving(true);
+
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
-        .update(form)
+        .update({
+          prenom: form.prenom || null,
+          nom: form.nom || null,
+          email: form.email || null,
+          telephone: form.telephone || null,
+          role: form.role || null,
+        })
         .eq("id", user.id);
 
-      if (error) {
-        alert("Erreur lors de la mise à jour : " + error.message);
-      } else {
-        onUpdated(); // rafraîchit la liste immédiatement
-        onClose();
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Erreur inconnue lors de la mise à jour.");
-    } finally {
       setSaving(false);
+
+      if (error) {
+        alert("❌ Erreur lors de la mise à jour : " + error.message);
+        return;
+      }
+
+      // 🔥 Mise à jour instantanée de la liste
+      if (onUpdated) onUpdated();
+      onClose();
+    } catch (err) {
+      setSaving(false);
+      console.error(err);
+      alert("❌ Une erreur est survenue lors de la mise à jour.");
     }
   };
 
   if (!user) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[999]">
+    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[999] p-4">
       <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md">
+
         <h2 className="text-xl font-bold text-center mb-4">Modifier l’utilisateur</h2>
+
         <div className="flex flex-col gap-4">
           <input
+            type="text"
+            name="prenom"
+            value={form.prenom}
+            onChange={handleChange}
             className="input"
             placeholder="Prénom"
-            value={form.prenom}
-            onChange={(e) => setForm({ ...form, prenom: e.target.value })}
           />
           <input
+            type="text"
+            name="nom"
+            value={form.nom}
+            onChange={handleChange}
             className="input"
             placeholder="Nom"
-            value={form.nom}
-            onChange={(e) => setForm({ ...form, nom: e.target.value })}
           />
           <input
+            type="email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
             className="input"
             placeholder="Email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
           <input
+            type="text"
+            name="telephone"
+            value={form.telephone}
+            onChange={handleChange}
             className="input"
             placeholder="Téléphone"
-            value={form.telephone}
-            onChange={(e) => setForm({ ...form, telephone: e.target.value })}
           />
           <select
-            className="input"
+            name="role"
             value={form.role}
-            onChange={(e) => setForm({ ...form, role: e.target.value })}
+            onChange={handleChange}
+            className="input"
           >
             <option value="">-- Sélectionnez un rôle --</option>
             <option value="Administrateur">Admin</option>
@@ -95,14 +122,14 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
           <div className="flex gap-4 mt-4">
             <button
               onClick={onClose}
-              className="flex-1 bg-gray-400 text-white py-3 rounded-2xl hover:bg-gray-500"
+              className="flex-1 bg-gray-400 text-white font-bold py-3 rounded-2xl hover:bg-gray-500 transition"
             >
               Annuler
             </button>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white py-3 rounded-2xl hover:from-blue-500 hover:to-indigo-600"
+              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition"
             >
               {saving ? "Enregistrement..." : "Enregistrer"}
             </button>
@@ -112,9 +139,10 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         <style jsx>{`
           .input {
             width: 100%;
-            padding: 12px;
-            border-radius: 12px;
             border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           }
         `}</style>
       </div>

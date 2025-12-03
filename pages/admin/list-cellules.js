@@ -35,33 +35,31 @@ export default function ListCellules() {
     fetchCellules();
   }, []);
 
-  if (loading) return <p className="text-center mt-10">Chargement...</p>;
+  if (loading) return <p className="text-center mt-10 text-lg">Chargement...</p>;
   if (message) return <p className="text-center text-red-600 mt-10">{message}</p>;
 
   return (
-    <div className="p-6 min-h-screen bg-gradient-to-b from-purple-100 to-purple-50">
-      <h2 className="text-3xl font-bold text-center text-purple-700 mb-6">🏠 Liste des cellules</h2>
-      <div className="overflow-x-auto bg-white rounded-3xl shadow-2xl p-6">
-        <table className="min-w-full text-sm">
-          <thead className="bg-purple-600 text-white">
-            <tr>
-              <th className="py-3 px-4 text-left">Nom de la cellule</th>
-              <th className="py-3 px-4 text-left">Zone / Ville</th>
-              <th className="py-3 px-4 text-left">Responsable</th>
-              <th className="py-3 px-4 text-left">Téléphone</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cellules.map((c) => (
-              <tr key={c.id} className="border-b hover:bg-purple-50 transition-all">
-                <td className="py-3 px-4 font-semibold text-gray-700">{c.cellule}</td>
-                <td className="py-3 px-4">{c.ville}</td>
-                <td className="py-3 px-4 font-medium text-purple-700">{c.responsable}</td>
-                <td className="py-3 px-4">{c.telephone}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
+      <div className="flex flex-col items-center mb-6">
+        <h2 className="text-3xl font-bold text-center text-purple-700 mb-6">🏠 Liste des cellules</h2>
+      </div>
+
+      <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xl">
+        <div className="grid grid-cols-[2fr_2fr_2fr_2fr] gap-4 px-4 py-2 bg-purple-600 text-white font-semibold">
+          <span>Nom de la cellule</span>
+          <span>Zone / Ville</span>
+          <span>Responsable</span>
+          <span>Téléphone</span>
+        </div>
+
+        {cellules.map((c) => (
+          <div key={c.id} className="grid grid-cols-[2fr_2fr_2fr_2fr] gap-4 px-4 py-3 border-b border-gray-200 hover:bg-purple-50 transition-all">
+            <span className="font-semibold text-gray-700">{c.cellule}</span>
+            <span className="text-gray-700">{c.ville}</span>
+            <span className="font-medium text-purple-700">{c.responsable}</span>
+            <span className="text-gray-700">{c.telephone}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

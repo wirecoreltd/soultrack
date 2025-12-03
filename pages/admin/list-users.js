@@ -2,20 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 import EditUserModal from "../../components/EditUserModal";
 
 export default function ListUsers() {
   const router = useRouter();
+
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
-
   const [roleFilter, setRoleFilter] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
 
+  // ⚡ Charger les utilisateurs
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -26,10 +26,8 @@ export default function ListUsers() {
       if (roleFilter) query = query.eq("role", roleFilter);
 
       const { data, error } = await query;
-
       if (error) throw error;
 
-      // 🔒 Supprime les undefined pour éviter crash
       setUsers((data || []).filter(u => u && u.id));
     } catch (err) {
       console.error("Erreur récupération utilisateurs:", err);
@@ -43,6 +41,7 @@ export default function ListUsers() {
     fetchUsers();
   }, [roleFilter]);
 
+  // ⚡ Supprimer utilisateur
   const handleDeleteConfirm = async () => {
     if (!deleteUser?.id) return;
 
@@ -65,6 +64,7 @@ export default function ListUsers() {
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
 
+      {/* Retour */}
       <button
         onClick={() => router.back()}
         className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700 transition"
@@ -72,16 +72,17 @@ export default function ListUsers() {
         ← Retour
       </button>
 
+      {/* Header */}
       <div className="flex flex-col items-center mb-6">
-        <Image src="/logo.png" alt="Logo" width={80} height={80} />
-        <h1 className="text-3xl font-bold mt-2">Gestion des utilisateurs</h1>
+        <h1 className="text-3xl font-bold text-center mt-2">Gestion des utilisateurs</h1>
       </div>
 
+      {/* Filtres + bouton */}
       <div className="flex justify-start items-center mb-6 max-w-5xl mx-auto gap-4 flex-wrap">
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          className="border p-2 rounded-xl shadow-sm w-auto"
+          className="border p-2 rounded-xl shadow-sm text-left w-auto"
         >
           <option value="">Tous les rôles</option>
           <option value="Administrateur">Admin</option>
@@ -93,19 +94,22 @@ export default function ListUsers() {
 
         <button
           onClick={() => router.push("/admin/create-internal-user")}
-          className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md"
+          className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600"
         >
           ➕ Créer utilisateur
         </button>
       </div>
 
+      {/* Table */}
       <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden">
+        {/* Header */}
         <div className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-2 bg-indigo-600 text-white font-semibold">
           <span>Nom complet</span>
           <span>Rôle</span>
           <span className="text-center">Actions</span>
         </div>
 
+        {/* Lignes */}
         {users.map(user => (
           <div
             key={user.id}
@@ -131,36 +135,24 @@ export default function ListUsers() {
         ))}
       </div>
 
+      {/* Modal Edit */}
       {selectedUser && (
         <EditUserModal
           user={selectedUser}
           onClose={() => setSelectedUser(null)}
-          onUpdated={fetchUsers} // 🔥 Mise à jour immédiate
+          onUpdated={fetchUsers} // rafraîchit la liste après update
         />
       )}
 
+      {/* Modal Suppression */}
       {deleteUser && (
         <div className="fixed inset-0 flex items-center justify-center z-[999] bg-black/50">
-          <div className="bg-white p-8 rounded-3xl shadow-xl w-[90%] max-w-md text-center border">
-            <h2 className="text-xl font-bold mb-4 text-gray-800">
-              Voulez-vous vraiment supprimer :
-            </h2>
-            <p className="text-lg font-semibold text-red-600 mb-6">
-              {deleteUser.prenom} {deleteUser.nom}
-            </p>
+          <div className="bg-white p-8 rounded-3xl shadow-xl w-[90%] max-w-md text-center">
+            <h2 className="text-xl font-bold mb-4">Voulez-vous vraiment supprimer :</h2>
+            <p className="text-lg font-semibold text-red-600 mb-6">{deleteUser.prenom} {deleteUser.nom}</p>
             <div className="flex gap-4 justify-center">
-              <button
-                onClick={() => setDeleteUser(null)}
-                className="bg-gray-300 px-5 py-2 rounded-xl font-semibold hover:bg-gray-400 transition"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                className="bg-red-500 text-white px-5 py-2 rounded-xl font-semibold hover:bg-red-600 transition"
-              >
-                Supprimer
-              </button>
+              <button onClick={() => setDeleteUser(null)} className="bg-gray-300 px-5 py-2 rounded-xl font-semibold hover:bg-gray-400 transition">Annuler</button>
+              <button onClick={handleDeleteConfirm} className="bg-red-500 text-white px-5 py-2 rounded-xl font-semibold hover:bg-red-600 transition">Supprimer</button>
             </div>
           </div>
         </div>

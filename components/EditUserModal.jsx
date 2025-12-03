@@ -13,7 +13,6 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   });
   const [saving, setSaving] = useState(false);
 
-  // ⚡ Charger les données dès le montage
   useEffect(() => {
     if (!user) return;
     setForm({
@@ -26,7 +25,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   }, [user]);
 
   const handleSave = async () => {
-    if (!user || !user.id) return;
+    if (!user?.id) return;
 
     setSaving(true);
 

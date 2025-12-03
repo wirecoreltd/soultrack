@@ -14,7 +14,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
 
   const [saving, setSaving] = useState(false);
 
-  // ⚡ Charger les données du user au montage
+  // Charger les données du user
   useEffect(() => {
     if (user) {
       setForm({
@@ -30,16 +30,28 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   const handleSave = async () => {
     setSaving(true);
 
-    const { error } = await supabase
+    // ⚡ Supprimer les champs vides inutiles
+    const dataToUpdate = {
+      prenom: form.prenom,
+      nom: form.nom,
+      email: form.email,
+      telephone: form.telephone,
+      role: form.role,
+    };
+
+    const { data, error } = await supabase
       .from("profiles")
-      .update(form)
-      .eq("id", user.id);
+      .update(dataToUpdate)
+      .eq("id", user.id)
+      .select(); // select() pour récupérer la nouvelle valeur
 
     setSaving(false);
 
     if (error) {
-      alert("Erreur lors de la mise à jour.");
-    } else {
+      alert("Erreur lors de la mise à jour : " + error.message);
+      console.log(error);
+    } else if (data) {
+      // ⚡ Mise à jour réussie
       onUpdated();
       onClose();
     }

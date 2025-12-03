@@ -44,7 +44,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         role_description: form.role_description,
       })
       .eq("id", user.id)
-      .select();
+      .select(); // renvoie un tableau
 
     setSaving(false);
 
@@ -54,7 +54,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     }
 
     if (data && data.length > 0 && onUpdated) {
-      onUpdated(data[0]); // mise à jour instantanée dans la liste
+      onUpdated(data[0]); // met à jour instantanément la liste
     }
 
     setSuccess(true);

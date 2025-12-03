@@ -19,7 +19,7 @@ export default function ListUsers() {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, prenom, nom, email, telephone, role_description, created_at")
+      .select("id, prenom, nom, role_description, created_at")
       .order("created_at", { ascending: true });
 
     if (error) {
@@ -29,10 +29,8 @@ export default function ListUsers() {
     }
 
     setUsers(data || []);
-    // Dédupliquer les rôles pour le filtre
     const uniqueRoles = [...new Set((data || []).map(u => u.role_description).filter(Boolean))];
     setRoles(uniqueRoles);
-
     setLoading(false);
   };
 
@@ -67,7 +65,6 @@ export default function ListUsers() {
         <h1 className="text-3xl font-bold text-center mt-2">Gestion des utilisateurs</h1>
       </div>
 
-      {/* Filtres + Créer */}
       <div className="flex justify-start items-center mb-6 max-w-5xl mx-auto gap-4">
         <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="border p-2 rounded-xl shadow-sm text-left w-auto">
           <option value="">Tous les rôles</option>
@@ -80,17 +77,15 @@ export default function ListUsers() {
       </div>
 
       <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden">
-        <div className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 py-2 bg-indigo-600 text-white font-semibold">
+        <div className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-2 bg-indigo-600 text-white font-semibold">
           <span>Nom complet</span>
-          <span>Email</span>
           <span>Rôle</span>
           <span className="text-center">Actions</span>
         </div>
 
         {filteredUsers.map(user => (
-          <div key={user.id} className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 py-3 border-b border-gray-200">
+          <div key={user.id} className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-3 border-b border-gray-200">
             <span className="font-semibold text-gray-700">{user.prenom} {user.nom}</span>
-            <span className="text-gray-700 text-left">{user.email}</span>
             <span className="text-indigo-600 font-medium text-left">{user.role_description}</span>
             <div className="flex justify-center gap-3">
               <button onClick={() => setSelectedUser(user)} className="text-blue-600 hover:text-blue-800 text-lg">✏️</button>

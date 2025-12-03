@@ -14,8 +14,10 @@ export default function EditUserModal({ userId, onClose, onUpdated }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // ⚡ Charger les données utilisateur depuis Supabase
   useEffect(() => {
+    // ⚡ Si userId n'existe pas, ne rien faire
+    if (!userId) return;
+
     const fetchUser = async () => {
       setLoading(true);
       const { data, error } = await supabase
@@ -45,7 +47,10 @@ export default function EditUserModal({ userId, onClose, onUpdated }) {
   }, [userId, onClose]);
 
   const handleSave = async () => {
+    if (!userId) return;
+
     setSaving(true);
+
     const { data, error } = await supabase
       .from("profiles")
       .update({
@@ -56,7 +61,7 @@ export default function EditUserModal({ userId, onClose, onUpdated }) {
         role: form.role,
       })
       .eq("id", userId)
-      .select(); // select() pour confirmer les changements
+      .select();
 
     setSaving(false);
 
@@ -68,7 +73,7 @@ export default function EditUserModal({ userId, onClose, onUpdated }) {
     }
   };
 
-  if (loading) {
+  if (!userId || loading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[999]">
         <div className="bg-white p-6 rounded-xl shadow-md text-center">
@@ -93,7 +98,6 @@ export default function EditUserModal({ userId, onClose, onUpdated }) {
             className="input"
             placeholder="Prénom"
           />
-
           <input
             type="text"
             value={form.nom}
@@ -101,7 +105,6 @@ export default function EditUserModal({ userId, onClose, onUpdated }) {
             className="input"
             placeholder="Nom"
           />
-
           <input
             type="email"
             value={form.email}
@@ -109,7 +112,6 @@ export default function EditUserModal({ userId, onClose, onUpdated }) {
             className="input"
             placeholder="Email"
           />
-
           <input
             type="text"
             value={form.telephone}
@@ -117,7 +119,6 @@ export default function EditUserModal({ userId, onClose, onUpdated }) {
             className="input"
             placeholder="Téléphone"
           />
-
           <select
             value={form.role}
             onChange={(e) => setForm({ ...form, role: e.target.value })}

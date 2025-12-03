@@ -13,7 +13,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   });
   const [saving, setSaving] = useState(false);
 
-  // Charger les données dès que le modal s’ouvre
+  // Charger les données dès que `user` change
   useEffect(() => {
     if (!user) return;
     setForm({
@@ -25,19 +25,13 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     });
   }, [user]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
   const handleSave = async () => {
-    if (!user || !user.id) return;
+    if (!user?.id) return;
 
     setSaving(true);
 
     try {
-      // Mettre à jour l’utilisateur
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("profiles")
         .update({
           prenom: form.prenom,
@@ -49,19 +43,14 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         .eq("id", user.id);
 
       if (error) {
-        console.error("Erreur mise à jour :", error);
-        alert("❌ Erreur lors de la mise à jour : " + error.message);
-        setSaving(false);
-        return;
+        alert("Erreur lors de la mise à jour : " + error.message);
+      } else {
+        onUpdated(); // 🔥 rafraîchit la liste immédiatement
+        onClose();
       }
-
-      // 🔥 Mise à jour instantanée dans la liste parent
-      if (onUpdated) onUpdated();
-
-      onClose();
     } catch (err) {
-      console.error("Exception lors de la mise à jour :", err);
-      alert("❌ Une erreur est survenue.");
+      console.error("Erreur EditUserModal:", err);
+      alert("Une erreur est survenue.");
     } finally {
       setSaving(false);
     }
@@ -72,47 +61,41 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[999]">
       <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md">
-        <h2 className="text-xl font-bold text-center mb-4">
-          Modifier l’utilisateur
-        </h2>
+        <h2 className="text-xl font-bold text-center mb-4">Modifier l’utilisateur</h2>
 
         <div className="flex flex-col gap-4">
           <input
             type="text"
-            name="prenom"
             placeholder="Prénom"
             value={form.prenom}
-            onChange={handleChange}
+            onChange={(e) => setForm({ ...form, prenom: e.target.value })}
             className="input"
           />
           <input
             type="text"
-            name="nom"
             placeholder="Nom"
             value={form.nom}
-            onChange={handleChange}
+            onChange={(e) => setForm({ ...form, nom: e.target.value })}
             className="input"
           />
           <input
             type="email"
-            name="email"
             placeholder="Email"
             value={form.email}
-            onChange={handleChange}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
             className="input"
           />
           <input
             type="text"
-            name="telephone"
             placeholder="Téléphone"
             value={form.telephone}
-            onChange={handleChange}
+            onChange={(e) => setForm({ ...form, telephone: e.target.value })}
             className="input"
           />
+
           <select
-            name="role"
             value={form.role}
-            onChange={handleChange}
+            onChange={(e) => setForm({ ...form, role: e.target.value })}
             className="input"
           >
             <option value="">-- Sélectionnez un rôle --</option>

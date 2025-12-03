@@ -12,9 +12,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     role: "",
   });
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
 
-  // Charger les données de l'utilisateur
   useEffect(() => {
     if (!user) return;
     setForm({
@@ -37,32 +35,22 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     setSaving(true);
 
     try {
+      // Supprimer le .single() pour éviter l’erreur
       const { data, error } = await supabase
         .from("profiles")
         .update(form)
         .eq("id", user.id)
-        .select()
-        .single(); // 🔥 important pour récupérer un seul objet
+        .select(); // renvoie toujours un tableau
 
-      if (error) {
-        alert("❌ Erreur lors de la mise à jour : " + error.message);
-        setSaving(false);
-        return;
-      }
+      if (error) throw error;
 
-      // Mise à jour instantanée dans la liste
-      if (onUpdated) onUpdated(data);
+      // data[0] contient l’utilisateur mis à jour
+      if (onUpdated) onUpdated(data[0]);
 
-      setSuccess(true);
-
-      setTimeout(() => {
-        setSuccess(false);
-        onClose();
-      }, 700);
+      onClose();
     } catch (err) {
-      console.error("Exception handleSave EditUserModal:", err);
-      alert("❌ Une erreur est survenue.");
-      setSaving(false);
+      console.error("❌ Erreur lors de la mise à jour :", err);
+      alert("❌ Erreur lors de la mise à jour : " + err.message);
     } finally {
       setSaving(false);
     }
@@ -73,9 +61,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[999]">
       <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md">
-        <h2 className="text-xl font-bold text-center mb-4">
-          Modifier l’utilisateur
-        </h2>
+        <h2 className="text-xl font-bold text-center mb-4">Modifier l’utilisateur</h2>
 
         <div className="flex flex-col gap-4">
           <input
@@ -83,32 +69,32 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
             name="prenom"
             value={form.prenom}
             onChange={handleChange}
-            className="input"
             placeholder="Prénom"
+            className="input"
           />
           <input
             type="text"
             name="nom"
             value={form.nom}
             onChange={handleChange}
-            className="input"
             placeholder="Nom"
+            className="input"
           />
           <input
             type="email"
             name="email"
             value={form.email}
             onChange={handleChange}
-            className="input"
             placeholder="Email"
+            className="input"
           />
           <input
             type="text"
             name="telephone"
             value={form.telephone}
             onChange={handleChange}
-            className="input"
             placeholder="Téléphone"
+            className="input"
           />
           <select
             name="role"
@@ -139,12 +125,6 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
               {saving ? "Enregistrement..." : "Enregistrer"}
             </button>
           </div>
-
-          {success && (
-            <p className="text-green-600 font-semibold text-center mt-3">
-              ✔️ Modifié avec succès !
-            </p>
-          )}
         </div>
 
         <style jsx>{`
@@ -153,7 +133,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
             border: 1px solid #ccc;
             border-radius: 12px;
             padding: 12px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           }
         `}</style>
       </div>

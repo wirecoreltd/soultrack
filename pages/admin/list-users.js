@@ -8,10 +8,10 @@ import EditUserModal from "../../components/EditUserModal";
 
 export default function ListUsers() {
   const router = useRouter();
-
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+
   const [roleFilter, setRoleFilter] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
@@ -26,11 +26,13 @@ export default function ListUsers() {
       if (roleFilter) query = query.eq("role", roleFilter);
 
       const { data, error } = await query;
+
       if (error) throw error;
 
-      setUsers(data || []);
+      // 🔒 Supprime les undefined pour éviter crash
+      setUsers((data || []).filter(u => u && u.id));
     } catch (err) {
-      console.error(err);
+      console.error("Erreur récupération utilisateurs:", err);
       setMessage("Erreur lors de la récupération des utilisateurs.");
     } finally {
       setLoading(false);
@@ -42,7 +44,7 @@ export default function ListUsers() {
   }, [roleFilter]);
 
   const handleDeleteConfirm = async () => {
-    if (!deleteUser || !deleteUser.id) return;
+    if (!deleteUser?.id) return;
 
     const { error } = await supabase
       .from("profiles")
@@ -50,26 +52,19 @@ export default function ListUsers() {
       .eq("id", deleteUser.id);
 
     if (!error) {
-      setUsers((prev) => prev.filter((u) => u.id !== deleteUser.id));
+      setUsers(prev => prev.filter(u => u.id !== deleteUser.id));
       setDeleteUser(null);
     } else {
       alert("Erreur lors de la suppression.");
     }
   };
 
-  const handleUpdatedUser = (updatedUser) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
-    );
-  };
-
   if (loading) return <p className="text-center mt-10 text-lg">Chargement...</p>;
-  if (message) return <p className="text-center mt-10 text-red-600">{message}</p>;
+  if (message) return <p className="text-center text-red-600 mt-10">{message}</p>;
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200 relative">
+    <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
 
-      {/* Retour */}
       <button
         onClick={() => router.back()}
         className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700 transition"
@@ -77,20 +72,16 @@ export default function ListUsers() {
         ← Retour
       </button>
 
-      {/* Header / Logo */}
       <div className="flex flex-col items-center mb-6">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
-        <h1 className="text-3xl font-bold text-center mt-2">
-          Gestion des utilisateurs
-        </h1>
+        <Image src="/logo.png" alt="Logo" width={80} height={80} />
+        <h1 className="text-3xl font-bold mt-2">Gestion des utilisateurs</h1>
       </div>
 
-      {/* Filtres + Création */}
       <div className="flex justify-start items-center mb-6 max-w-5xl mx-auto gap-4 flex-wrap">
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          className="border p-2 rounded-xl shadow-sm text-left w-auto"
+          className="border p-2 rounded-xl shadow-sm w-auto"
         >
           <option value="">Tous les rôles</option>
           <option value="Administrateur">Admin</option>
@@ -102,33 +93,26 @@ export default function ListUsers() {
 
         <button
           onClick={() => router.push("/admin/create-internal-user")}
-          className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600"
+          className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md"
         >
           ➕ Créer utilisateur
         </button>
       </div>
 
-      {/* Table */}
       <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden">
-        {/* Header */}
         <div className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-2 bg-indigo-600 text-white font-semibold">
           <span>Nom complet</span>
           <span>Rôle</span>
           <span className="text-center">Actions</span>
         </div>
 
-        {/* Lignes */}
-        {users.map((user) => (
+        {users.map(user => (
           <div
             key={user.id}
             className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-3 items-center border-b border-gray-200"
           >
-            <span className="font-semibold text-gray-700">
-              {user.prenom} {user.nom}
-            </span>
-            <span className="text-indigo-600 font-medium">
-              {user.role_description || user.role}
-            </span>
+            <span className="font-semibold text-gray-700">{user.prenom} {user.nom}</span>
+            <span className="text-indigo-600 font-medium">{user.role_description || user.role}</span>
             <div className="flex justify-center gap-3">
               <button
                 onClick={() => setSelectedUser(user)}
@@ -147,19 +131,17 @@ export default function ListUsers() {
         ))}
       </div>
 
-      {/* Popup Edit */}
       {selectedUser && (
         <EditUserModal
           user={selectedUser}
           onClose={() => setSelectedUser(null)}
-          onUpdated={handleUpdatedUser}
+          onUpdated={fetchUsers} // 🔥 Mise à jour immédiate
         />
       )}
 
-      {/* Popup suppression */}
       {deleteUser && (
-        <div className="fixed inset-0 flex items-center justify-center z-[999] bg-black/50 p-4">
-          <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md text-center">
+        <div className="fixed inset-0 flex items-center justify-center z-[999] bg-black/50">
+          <div className="bg-white p-8 rounded-3xl shadow-xl w-[90%] max-w-md text-center border">
             <h2 className="text-xl font-bold mb-4 text-gray-800">
               Voulez-vous vraiment supprimer :
             </h2>

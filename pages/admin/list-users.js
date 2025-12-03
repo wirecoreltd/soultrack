@@ -17,15 +17,12 @@ export default function ListUsers() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
 
-  // ✅ Récupération des utilisateurs
   const fetchUsers = async () => {
     setLoading(true);
     try {
       let query = supabase
         .from("profiles")
-        .select(
-          "id, prenom, nom, email, telephone, role, role_description, created_at"
-        );
+        .select("id, prenom, nom, email, telephone, role, role_description, created_at");
 
       if (roleFilter) query = query.eq("role", roleFilter);
 
@@ -34,7 +31,7 @@ export default function ListUsers() {
 
       setUsers(data || []);
     } catch (err) {
-      console.error("Erreur récupération utilisateurs:", err);
+      console.error("❌ Erreur récupération utilisateurs:", err);
       setMessage("Erreur lors de la récupération des utilisateurs.");
     } finally {
       setLoading(false);
@@ -45,9 +42,8 @@ export default function ListUsers() {
     fetchUsers();
   }, [roleFilter]);
 
-  // ✅ Supprimer utilisateur
   const handleDeleteConfirm = async () => {
-    if (!deleteUser?.id) return;
+    if (!deleteUser) return;
 
     const { error } = await supabase
       .from("profiles")
@@ -69,7 +65,7 @@ export default function ListUsers() {
     return <p className="text-center text-red-600 mt-10">{message}</p>;
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
+    <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200 relative">
 
       {/* Retour */}
       <button
@@ -150,14 +146,18 @@ export default function ListUsers() {
         <EditUserModal
           user={selectedUser}
           onClose={() => setSelectedUser(null)}
-          onUpdated={fetchUsers}
+          onUpdated={(updatedUser) => {
+            setUsers(prev =>
+              prev.map(u => (u.id === updatedUser.id ? updatedUser : u))
+            );
+          }}
         />
       )}
 
       {/* Popup suppression */}
       {deleteUser && (
-        <div className="fixed inset-0 flex items-center justify-center z-[999] bg-transparent">
-          <div className="bg-white/90 backdrop-blur-md p-8 rounded-3xl shadow-xl w-[90%] max-w-md text-center border">
+        <div className="fixed inset-0 flex items-center justify-center z-[999] bg-black/20">
+          <div className="bg-white p-8 rounded-3xl shadow-xl w-[90%] max-w-md text-center border">
             <h2 className="text-xl font-bold mb-4 text-gray-800">
               Voulez-vous vraiment supprimer :
             </h2>

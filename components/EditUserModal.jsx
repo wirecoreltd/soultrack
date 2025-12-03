@@ -12,9 +12,9 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   });
   const [saving, setSaving] = useState(false);
 
-  // Charger les données de l'utilisateur au montage
+  // ⚡ Charger les données de l'utilisateur dès le montage
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       setForm({
         prenom: user.prenom || "",
         nom: user.nom || "",
@@ -34,7 +34,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
 
     setSaving(true);
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("profiles")
       .update({
         prenom: form.prenom,
@@ -42,14 +42,14 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         telephone: form.telephone,
         role: form.role,
       })
-      .eq("id", user.id); // pas de .single() ici
+      .eq("id", user.id);
 
     setSaving(false);
 
     if (error) {
       alert("❌ Erreur lors de la mise à jour : " + error.message);
     } else {
-      if (onUpdated) onUpdated(); // rafraîchit la liste
+      if (onUpdated) onUpdated(); // Rafraîchit la liste
       onClose();
     }
   };

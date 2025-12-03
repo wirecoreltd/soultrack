@@ -108,10 +108,10 @@ export default function ListUsers() {
         </button>
       </div>
 
-      {/* Table */}
+      {/* Table compacte */}
       <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden">
         {/* Header */}
-        <div className="grid grid-cols-3 gap-4 px-4 py-2 bg-indigo-600 text-white font-semibold">
+        <div className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-2 bg-indigo-600 text-white font-semibold">
           <span>Nom complet</span>
           <span>Rôle</span>
           <span className="text-center">Actions</span>
@@ -121,7 +121,7 @@ export default function ListUsers() {
         {users.map((user) => (
           <div
             key={user.id}
-            className="grid grid-cols-3 gap-4 px-4 py-3 items-center border-b border-gray-200"
+            className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-3 items-center border-b border-gray-200"
           >
             <span className="font-semibold text-gray-700">{user.prenom} {user.nom}</span>
             <span className="text-indigo-600 font-medium">{user.role_description || user.role}</span>

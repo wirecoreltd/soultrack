@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 import EditUserModal from "../../components/EditUserModal";
 
@@ -15,22 +16,24 @@ export default function ListUsers() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
 
-  // ⚡ Charger les utilisateurs
+  // 🔹 Fonction pour récupérer les utilisateurs
   const fetchUsers = async () => {
     setLoading(true);
     try {
       let query = supabase
         .from("profiles")
-        .select("id, prenom, nom, email, telephone, role, role_description");
+        .select("id, prenom, nom, email, telephone, role, role_description, created_at");
 
       if (roleFilter) query = query.eq("role", roleFilter);
 
       const { data, error } = await query;
+
       if (error) throw error;
 
-      setUsers((data || []).filter(u => u && u.id));
+      setUsers(data || []);
+      setMessage("");
     } catch (err) {
-      console.error("Erreur récupération utilisateurs:", err);
+      console.error("❌ Erreur récupération utilisateurs:", err);
       setMessage("Erreur lors de la récupération des utilisateurs.");
     } finally {
       setLoading(false);
@@ -41,7 +44,7 @@ export default function ListUsers() {
     fetchUsers();
   }, [roleFilter]);
 
-  // ⚡ Supprimer utilisateur
+  // 🔹 Supprimer utilisateur
   const handleDeleteConfirm = async () => {
     if (!deleteUser?.id) return;
 
@@ -51,7 +54,7 @@ export default function ListUsers() {
       .eq("id", deleteUser.id);
 
     if (!error) {
-      setUsers(prev => prev.filter(u => u.id !== deleteUser.id));
+      setUsers((prev) => prev.filter((u) => u.id !== deleteUser.id));
       setDeleteUser(null);
     } else {
       alert("Erreur lors de la suppression.");
@@ -64,7 +67,7 @@ export default function ListUsers() {
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
 
-      {/* Retour */}
+      {/* 🔙 Retour */}
       <button
         onClick={() => router.back()}
         className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700 transition"
@@ -72,12 +75,15 @@ export default function ListUsers() {
         ← Retour
       </button>
 
-      {/* Header */}
+      {/* Header / Logo */}
       <div className="flex flex-col items-center mb-6">
-        <h1 className="text-3xl font-bold text-center mt-2">Gestion des utilisateurs</h1>
+        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
+        <h1 className="text-3xl font-bold text-center mt-2">
+          Gestion des utilisateurs
+        </h1>
       </div>
 
-      {/* Filtres + bouton */}
+      {/* Filtres + Créer */}
       <div className="flex justify-start items-center mb-6 max-w-5xl mx-auto gap-4 flex-wrap">
         <select
           value={roleFilter}
@@ -100,7 +106,7 @@ export default function ListUsers() {
         </button>
       </div>
 
-      {/* Table */}
+      {/* Table compacte */}
       <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden">
         {/* Header */}
         <div className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-2 bg-indigo-600 text-white font-semibold">
@@ -110,7 +116,7 @@ export default function ListUsers() {
         </div>
 
         {/* Lignes */}
-        {users.map(user => (
+        {users.map((user) => (
           <div
             key={user.id}
             className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-3 items-center border-b border-gray-200"
@@ -135,28 +141,43 @@ export default function ListUsers() {
         ))}
       </div>
 
-      {/* Modal Edit */}
+      {/* 🔹 Modal édition */}
       {selectedUser && (
         <EditUserModal
           user={selectedUser}
           onClose={() => setSelectedUser(null)}
-          onUpdated={fetchUsers} // rafraîchit la liste après update
+          onUpdated={fetchUsers} // 🔥 mise à jour immédiate
         />
       )}
 
-      {/* Modal Suppression */}
+      {/* 🔹 Popup suppression */}
       {deleteUser && (
-        <div className="fixed inset-0 flex items-center justify-center z-[999] bg-black/50">
-          <div className="bg-white p-8 rounded-3xl shadow-xl w-[90%] max-w-md text-center">
-            <h2 className="text-xl font-bold mb-4">Voulez-vous vraiment supprimer :</h2>
-            <p className="text-lg font-semibold text-red-600 mb-6">{deleteUser.prenom} {deleteUser.nom}</p>
+        <div className="fixed inset-0 flex items-center justify-center z-[999] bg-black/50 p-4">
+          <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md text-center">
+            <h2 className="text-xl font-bold mb-4 text-gray-800">
+              Voulez-vous vraiment supprimer :
+            </h2>
+            <p className="text-lg font-semibold text-red-600 mb-6">
+              {deleteUser.prenom} {deleteUser.nom}
+            </p>
             <div className="flex gap-4 justify-center">
-              <button onClick={() => setDeleteUser(null)} className="bg-gray-300 px-5 py-2 rounded-xl font-semibold hover:bg-gray-400 transition">Annuler</button>
-              <button onClick={handleDeleteConfirm} className="bg-red-500 text-white px-5 py-2 rounded-xl font-semibold hover:bg-red-600 transition">Supprimer</button>
+              <button
+                onClick={() => setDeleteUser(null)}
+                className="bg-gray-300 px-5 py-2 rounded-xl font-semibold hover:bg-gray-400 transition"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="bg-red-500 text-white px-5 py-2 rounded-xl font-semibold hover:bg-red-600 transition"
+              >
+                Supprimer
+              </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }

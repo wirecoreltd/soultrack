@@ -34,6 +34,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     if (!user?.id) return;
     setSaving(true);
 
+    // Mettre à jour role_description
     const { data, error } = await supabase
       .from("profiles")
       .update({
@@ -41,7 +42,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         nom: form.nom,
         email: form.email,
         telephone: form.telephone,
-        role_description: form.role_description, // 🔑 on update role_description
+        role_description: form.role_description,
       })
       .eq("id", user.id)
       .select(); // renvoie un tableau
@@ -54,7 +55,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     }
 
     if (data && data.length > 0 && onUpdated) {
-      onUpdated(data[0]); // met à jour directement dans la liste
+      onUpdated(data[0]); // met à jour la liste principale
     }
 
     setSuccess(true);
@@ -69,6 +70,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50 p-4">
       <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md">
+        {/* Logo et titre */}
         <div className="flex flex-col items-center mb-4">
           <img src="/logo.png" alt="Logo" className="w-20 h-20" />
           <h2 className="text-xl font-bold text-center mt-2">Modifier l’utilisateur</h2>

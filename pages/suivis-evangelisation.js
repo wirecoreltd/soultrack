@@ -60,6 +60,9 @@ export default function SuivisEvangelisation() {
         const celluleIds = cellulesData.map((c) => c.id);
         query = query.in("cellule_id", celluleIds);
       }
+      if (userRole.includes("Conseiller")) {
+        query = query.eq("responsable_cellule", responsableId); // ou "responsable_id" selon ta table
+      }
 
       const { data, error } = await query;
       if (error) throw error;

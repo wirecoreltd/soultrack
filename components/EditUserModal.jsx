@@ -1,18 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function EditUserModal({ user, onClose, onUpdated }) {
   const [form, setForm] = useState({
-    prenom: user.prenom,
-    nom: user.nom,
-    email: user.email,
-    telephone: user.telephone || "",
-    role: user.role,
+    prenom: "",
+    nom: "",
+    email: "",
+    telephone: "",
+    role: "",
   });
 
   const [saving, setSaving] = useState(false);
+
+  // ⚡ Charger les données du user au montage
+  useEffect(() => {
+    if (user) {
+      setForm({
+        prenom: user.prenom || "",
+        nom: user.nom || "",
+        email: user.email || "",
+        telephone: user.telephone || "",
+        role: user.role || "",
+      });
+    }
+  }, [user]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -33,7 +46,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm">
+    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[999]">
       <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md">
 
         <h2 className="text-xl font-bold text-center mb-4">
@@ -58,7 +71,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
           />
 
           <input
-            type="text"
+            type="email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             className="input"
@@ -78,15 +91,18 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
             onChange={(e) => setForm({ ...form, role: e.target.value })}
             className="input"
           >
-            <option value="admin">Admin</option>
-            <option value="responsable">Responsable</option>
-            <option value="user">Utilisateur</option>
+            <option value="">-- Sélectionnez un rôle --</option>
+            <option value="Administrateur">Admin</option>
+            <option value="ResponsableCellule">Responsable Cellule</option>
+            <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
+            <option value="Conseiller">Conseiller</option>
+            <option value="ResponsableIntegration">Responsable Intégration</option>
           </select>
 
           <div className="flex gap-4 mt-4">
             <button
               onClick={onClose}
-              className="flex-1 bg-gray-400 text-white font-bold py-3 rounded-2xl"
+              className="flex-1 bg-gray-400 text-white font-bold py-3 rounded-2xl hover:bg-gray-500 transition"
             >
               Annuler
             </button>
@@ -94,7 +110,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl"
+              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition"
             >
               {saving ? "Enregistrement..." : "Enregistrer"}
             </button>

@@ -17,23 +17,32 @@ export default function ListUsers() {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, prenom, nom, email, telephone, role, role_description");
+      .select("id, prenom, nom, email, telephone, role, role_description, created_at");
 
     if (error) {
-      console.error("Erreur fetchUsers:", error);
-    } else {
-      setUsers(data || []);
+      console.error(error);
+      setLoading(false);
+      return;
     }
+
+    setUsers(data || []);
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  useEffect(() => { fetchUsers(); }, []);
+
+  const handleUpdated = (updatedUser) => {
+    setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+  };
 
   const handleDelete = async () => {
     if (!deleteUser?.id) return;
-    const { error } = await supabase.from("profiles").delete().eq("id", deleteUser.id);
+
+    const { error } = await supabase
+      .from("profiles")
+      .delete()
+      .eq("id", deleteUser.id);
+
     if (!error) {
       setUsers(users.filter(u => u.id !== deleteUser.id));
       setDeleteUser(null);
@@ -44,7 +53,6 @@ export default function ListUsers() {
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
-
       <button onClick={() => router.back()} className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700">
         ← Retour
       </button>
@@ -52,15 +60,6 @@ export default function ListUsers() {
       <div className="flex flex-col items-center mb-6">
         <Image src="/logo.png" alt="Logo" width={80} height={80} />
         <h1 className="text-3xl font-bold text-center mt-2">Gestion des utilisateurs</h1>
-      </div>
-
-      <div className="flex justify-start items-center mb-6 max-w-5xl mx-auto gap-4">
-        <button
-          onClick={() => router.push("/admin/create-internal-user")}
-          className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600"
-        >
-          ➕ Créer utilisateur
-        </button>
       </div>
 
       <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden">
@@ -71,14 +70,14 @@ export default function ListUsers() {
           <span className="text-center">Actions</span>
         </div>
 
-        {users.map(u => (
-          <div key={u.id} className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 py-3 items-center border-b border-gray-200">
-            <span className="font-semibold text-gray-700">{u.prenom} {u.nom}</span>
-            <span className="text-gray-700">{u.email}</span>
-            <span className="text-indigo-600 font-medium">{u.role_description || u.role}</span>
+        {users.map(user => (
+          <div key={user.id} className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 py-3 items-center border-b border-gray-200">
+            <span className="font-semibold text-gray-700">{user.prenom} {user.nom}</span>
+            <span className="text-gray-700">{user.email}</span>
+            <span className="text-indigo-600 font-medium">{user.role_description || user.role}</span>
             <div className="flex justify-center gap-3">
-              <button onClick={() => setSelectedUser(u)} className="text-blue-600 hover:text-blue-800 text-lg">✏️</button>
-              <button onClick={() => setDeleteUser(u)} className="text-red-600 hover:text-red-800 text-lg">🗑️</button>
+              <button onClick={() => setSelectedUser(user)} className="text-blue-600 hover:text-blue-800 text-lg">✏️</button>
+              <button onClick={() => setDeleteUser(user)} className="text-red-600 hover:text-red-800 text-lg">🗑️</button>
             </div>
           </div>
         ))}
@@ -88,7 +87,7 @@ export default function ListUsers() {
         <EditUserModal
           user={selectedUser}
           onClose={() => setSelectedUser(null)}
-          onUpdated={fetchUsers}
+          onUpdated={handleUpdated}
         />
       )}
 

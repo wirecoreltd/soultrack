@@ -13,9 +13,9 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   });
   const [saving, setSaving] = useState(false);
 
-  // Charger les données du user
+  // Charger les données du user au montage
   useEffect(() => {
-    if (!user || !user.id) return;
+    if (!user) return;
     setForm({
       prenom: user.prenom || "",
       nom: user.nom || "",
@@ -35,22 +35,30 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
 
     setSaving(true);
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .update(form)
-      .eq("id", user.id)
-      .select(); // retourne un tableau
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .update(form)
+        .eq("id", user.id)
+        .select(); // 🔹 on ne met pas .single()
 
-    setSaving(false);
+      if (error) {
+        alert("❌ Erreur lors de la mise à jour : " + error.message);
+        setSaving(false);
+        return;
+      }
 
-    if (error) {
-      alert("❌ Erreur lors de la mise à jour : " + error.message);
-      console.error(error);
-      return;
+      if (data?.length > 0 && onUpdated) {
+        onUpdated(data[0]); // 🔹 met à jour instantanément
+      }
+
+      onClose();
+    } catch (err) {
+      console.error(err);
+      alert("❌ Une erreur est survenue.");
+    } finally {
+      setSaving(false);
     }
-
-    if (onUpdated && data && data[0]) onUpdated(data[0]);
-    onClose();
   };
 
   if (!user) return null;
@@ -66,32 +74,32 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
             name="prenom"
             value={form.prenom}
             onChange={handleChange}
-            placeholder="Prénom"
             className="input"
+            placeholder="Prénom"
           />
           <input
             type="text"
             name="nom"
             value={form.nom}
             onChange={handleChange}
-            placeholder="Nom"
             className="input"
+            placeholder="Nom"
           />
           <input
             type="email"
             name="email"
             value={form.email}
             onChange={handleChange}
-            placeholder="Email"
             className="input"
+            placeholder="Email"
           />
           <input
             type="text"
             name="telephone"
             value={form.telephone}
             onChange={handleChange}
-            placeholder="Téléphone"
             className="input"
+            placeholder="Téléphone"
           />
           <select
             name="role"
@@ -130,7 +138,6 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
             border: 1px solid #ccc;
             border-radius: 12px;
             padding: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           }
         `}</style>
       </div>

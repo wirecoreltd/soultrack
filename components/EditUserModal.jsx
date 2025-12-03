@@ -31,11 +31,9 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
 
   const handleSave = async () => {
     if (!user || !user.id) return;
-
     setSaving(true);
 
     try {
-      // Supprimer le .single() pour éviter l’erreur
       const { data, error } = await supabase
         .from("profiles")
         .update(form)
@@ -44,9 +42,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
 
       if (error) throw error;
 
-      // data[0] contient l’utilisateur mis à jour
       if (onUpdated) onUpdated(data[0]);
-
       onClose();
     } catch (err) {
       console.error("❌ Erreur lors de la mise à jour :", err);
@@ -64,44 +60,11 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         <h2 className="text-xl font-bold text-center mb-4">Modifier l’utilisateur</h2>
 
         <div className="flex flex-col gap-4">
-          <input
-            type="text"
-            name="prenom"
-            value={form.prenom}
-            onChange={handleChange}
-            placeholder="Prénom"
-            className="input"
-          />
-          <input
-            type="text"
-            name="nom"
-            value={form.nom}
-            onChange={handleChange}
-            placeholder="Nom"
-            className="input"
-          />
-          <input
-            type="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            placeholder="Email"
-            className="input"
-          />
-          <input
-            type="text"
-            name="telephone"
-            value={form.telephone}
-            onChange={handleChange}
-            placeholder="Téléphone"
-            className="input"
-          />
-          <select
-            name="role"
-            value={form.role}
-            onChange={handleChange}
-            className="input"
-          >
+          <input type="text" name="prenom" value={form.prenom} onChange={handleChange} placeholder="Prénom" className="input" />
+          <input type="text" name="nom" value={form.nom} onChange={handleChange} placeholder="Nom" className="input" />
+          <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" className="input" />
+          <input type="text" name="telephone" value={form.telephone} onChange={handleChange} placeholder="Téléphone" className="input" />
+          <select name="role" value={form.role} onChange={handleChange} className="input">
             <option value="">-- Sélectionnez un rôle --</option>
             <option value="Administrateur">Admin</option>
             <option value="ResponsableCellule">Responsable Cellule</option>
@@ -111,17 +74,10 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
           </select>
 
           <div className="flex gap-4 mt-4">
-            <button
-              onClick={onClose}
-              className="flex-1 bg-gray-400 text-white font-bold py-3 rounded-2xl hover:bg-gray-500 transition"
-            >
+            <button onClick={onClose} className="flex-1 bg-gray-400 text-white font-bold py-3 rounded-2xl hover:bg-gray-500 transition">
               Annuler
             </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition"
-            >
+            <button onClick={handleSave} disabled={saving} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition">
               {saving ? "Enregistrement..." : "Enregistrer"}
             </button>
           </div>

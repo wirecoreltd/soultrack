@@ -109,10 +109,9 @@ export default function ListUsers() {
             className="border p-2 rounded-xl shadow-sm text-center"
           >
             <option value="">Tous les rôles</option>
-            <option value="ResponsableCellule">Responsable Cellule</option>
-            <option value="Conseiller">Conseiller</option>
-            <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
-            <option value="ResponsableIntegration">Responsable Intégration</option>
+            <option value="admin">Admin</option>
+            <option value="responsable">Responsable</option>
+            <option value="user">Utilisateur</option>
           </select>
         </div>
 
@@ -216,17 +215,17 @@ export default function ListUsers() {
           </div>
         </div>
       )}
+
+      {/* 🔥 Animation popup - placed INSIDE the component's returned JSX */}
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
-
-/* 🔥 Animation popup */
-<style jsx global>{`
-  @keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-  }
-  .animate-fadeIn {
-    animation: fadeIn 0.2s ease-out;
-  }
-`}</style>

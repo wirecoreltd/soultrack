@@ -10,7 +10,6 @@ export default function ListUsers() {
   const router = useRouter();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [roleFilter, setRoleFilter] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
 
@@ -18,7 +17,7 @@ export default function ListUsers() {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, prenom, nom, email, telephone, role, role_description, created_at");
+      .select("id, prenom, nom, email, role, role_description");
 
     if (error) {
       console.error(error);
@@ -36,7 +35,6 @@ export default function ListUsers() {
 
   const handleDelete = async () => {
     if (!deleteUser?.id) return;
-
     const { error } = await supabase
       .from("profiles")
       .delete()
@@ -52,7 +50,6 @@ export default function ListUsers() {
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
-
       {/* Retour */}
       <button onClick={() => router.back()} className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700">
         ← Retour
@@ -62,29 +59,6 @@ export default function ListUsers() {
       <div className="flex flex-col items-center mb-6">
         <Image src="/logo.png" alt="Logo" width={80} height={80} />
         <h1 className="text-3xl font-bold text-center mt-2">Gestion des utilisateurs</h1>
-      </div>
-
-      {/* Filtres + Créer */}
-      <div className="flex justify-start items-center mb-6 max-w-5xl mx-auto gap-4">
-        <select
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="border p-2 rounded-xl shadow-sm text-left w-auto"
-        >
-          <option value="">Tous les rôles</option>
-          <option value="Administrateur">Admin</option>
-          <option value="ResponsableCellule">Responsable Cellule</option>
-          <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
-          <option value="Conseiller">Conseiller</option>
-          <option value="ResponsableIntegration">Responsable Intégration</option>
-        </select>
-
-        <button
-          onClick={() => router.push("/admin/create-internal-user")}
-          className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600"
-        >
-          ➕ Créer utilisateur
-        </button>
       </div>
 
       {/* Table */}
@@ -114,7 +88,7 @@ export default function ListUsers() {
         <EditUserModal
           user={selectedUser}
           onClose={() => setSelectedUser(null)}
-          onUpdated={fetchUsers}
+          onUpdated={fetchUsers} // rafraîchit la liste après mise à jour
         />
       )}
 

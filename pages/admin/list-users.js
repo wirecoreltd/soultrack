@@ -77,4 +77,43 @@ export default function ListUsers() {
         </button>
       </div>
 
-      <div className="max-w-
+      <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden">
+        <div className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 py-2 bg-indigo-600 text-white font-semibold">
+          <span>Nom complet</span>
+          <span>Email</span>
+          <span>Rôle</span>
+          <span className="text-center">Actions</span>
+        </div>
+
+        {users.map(user => (
+          <div key={user.id} className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 py-3 items-center border-b border-gray-200">
+            <span className="font-semibold text-gray-700">{user.prenom} {user.nom}</span>
+            <span className="text-gray-700">{user.email}</span>
+            <span className="text-indigo-600 font-medium">{user.role_description || user.role}</span>
+            <div className="flex justify-center gap-3">
+              <button onClick={() => setSelectedUser(user)} className="text-blue-600 hover:text-blue-800 text-lg">✏️</button>
+              <button onClick={() => setDeleteUser(user)} className="text-red-600 hover:text-red-800 text-lg">🗑️</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {selectedUser && (
+        <EditUserModal user={selectedUser} onClose={() => setSelectedUser(null)} onUpdated={handleUpdated} />
+      )}
+
+      {deleteUser && (
+        <div className="fixed inset-0 flex items-center justify-center z-[999] bg-black/50">
+          <div className="bg-white p-8 rounded-3xl shadow-xl w-[90%] max-w-md text-center">
+            <h2 className="text-xl font-bold mb-4">Voulez-vous vraiment supprimer :</h2>
+            <p className="text-lg font-semibold text-red-600 mb-6">{deleteUser.prenom} {deleteUser.nom}</p>
+            <div className="flex gap-4 justify-center">
+              <button onClick={() => setDeleteUser(null)} className="bg-gray-300 px-5 py-2 rounded-xl font-semibold hover:bg-gray-400">Annuler</button>
+              <button onClick={handleDelete} className="bg-red-500 text-white px-5 py-2 rounded-xl font-semibold hover:bg-red-600">Supprimer</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

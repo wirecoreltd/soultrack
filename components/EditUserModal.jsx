@@ -11,10 +11,12 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     telephone: "",
     role: "",
   });
+
   const [saving, setSaving] = useState(false);
 
+  // Charger les données du user quand le modal s'ouvre
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return; // sécurité
     setForm({
       prenom: user.prenom || "",
       nom: user.nom || "",
@@ -25,7 +27,10 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   }, [user]);
 
   const handleSave = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      alert("ID utilisateur manquant. Impossible de sauvegarder.");
+      return;
+    }
 
     setSaving(true);
 
@@ -39,15 +44,17 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         role: form.role,
       })
       .eq("id", user.id)
-      .select();
+      .select(); // récupère les nouvelles valeurs
 
     setSaving(false);
 
     if (error) {
+      console.error("Erreur update:", error);
       alert("Erreur lors de la mise à jour : " + error.message);
     } else {
-      onUpdated();
-      onClose();
+      console.log("Utilisateur mis à jour :", data);
+      onUpdated(); // rafraîchir la liste
+      onClose();   // fermer le modal
     }
   };
 
@@ -56,9 +63,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[999]">
       <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md">
-        <h2 className="text-xl font-bold text-center mb-4">
-          Modifier l’utilisateur
-        </h2>
+        <h2 className="text-xl font-bold text-center mb-4">Modifier l’utilisateur</h2>
 
         <div className="flex flex-col gap-4">
           <input

@@ -32,7 +32,6 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
 
   const handleSave = async () => {
     if (!user?.id) return;
-
     setSaving(true);
 
     const { data, error } = await supabase
@@ -45,7 +44,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         role: form.role,
       })
       .eq("id", user.id)
-      .select(); // 🔑 Important pour obtenir le résultat
+      .select(); // 🔑 pas single(), renvoie un tableau
 
     setSaving(false);
 
@@ -55,7 +54,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     }
 
     if (data && data.length > 0 && onUpdated) {
-      onUpdated(data[0]); // 🔥 Mise à jour instantanée dans la liste
+      onUpdated(data[0]); // met à jour directement dans la liste
     }
 
     setSuccess(true);
@@ -77,44 +76,11 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         </div>
 
         <div className="flex flex-col gap-4">
-          <input
-            type="text"
-            name="prenom"
-            value={form.prenom}
-            onChange={handleChange}
-            placeholder="Prénom"
-            className="input"
-          />
-          <input
-            type="text"
-            name="nom"
-            value={form.nom}
-            onChange={handleChange}
-            placeholder="Nom"
-            className="input"
-          />
-          <input
-            type="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            placeholder="Email"
-            className="input"
-          />
-          <input
-            type="text"
-            name="telephone"
-            value={form.telephone}
-            onChange={handleChange}
-            placeholder="Téléphone"
-            className="input"
-          />
-          <select
-            name="role"
-            value={form.role}
-            onChange={handleChange}
-            className="input"
-          >
+          <input type="text" name="prenom" value={form.prenom} onChange={handleChange} placeholder="Prénom" className="input" />
+          <input type="text" name="nom" value={form.nom} onChange={handleChange} placeholder="Nom" className="input" />
+          <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" className="input" />
+          <input type="text" name="telephone" value={form.telephone} onChange={handleChange} placeholder="Téléphone" className="input" />
+          <select name="role" value={form.role} onChange={handleChange} className="input">
             <option value="">-- Sélectionnez un rôle --</option>
             <option value="Administrateur">Admin</option>
             <option value="ResponsableCellule">Responsable Cellule</option>
@@ -124,26 +90,13 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
           </select>
 
           <div className="flex gap-4 mt-4">
-            <button
-              onClick={onClose}
-              className="flex-1 bg-gray-400 text-white font-bold py-3 rounded-2xl hover:bg-gray-500 transition"
-            >
-              Annuler
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition"
-            >
+            <button onClick={onClose} className="flex-1 bg-gray-400 text-white font-bold py-3 rounded-2xl hover:bg-gray-500 transition">Annuler</button>
+            <button onClick={handleSave} disabled={saving} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition">
               {saving ? "Enregistrement..." : "Enregistrer"}
             </button>
           </div>
 
-          {success && (
-            <p className="text-green-600 font-semibold text-center mt-2">
-              ✔️ Modifié avec succès !
-            </p>
-          )}
+          {success && <p className="text-green-600 font-semibold text-center mt-2">✔️ Modifié avec succès !</p>}
         </div>
 
         <style jsx>{`

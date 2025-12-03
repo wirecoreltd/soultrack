@@ -15,13 +15,14 @@ export default function ListUsers() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
 
-  // 🔵 Charger la liste des utilisateurs
+  // 🔵 Charger les utilisateurs
   const fetchUsers = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
       .select("id, prenom, nom, role, role_description, created_at")
       .order("created_at", { ascending: true });
+
     if (!error) setUsers(data || []);
     setLoading(false);
   };
@@ -31,6 +32,7 @@ export default function ListUsers() {
     const { data, error } = await supabase
       .from("profiles")
       .select("role, role_description");
+
     if (!error && data) {
       const uniqueRoles = Array.from(
         new Map(
@@ -39,6 +41,7 @@ export default function ListUsers() {
             .map(r => [r.role, r.role_description || r.role])
         ).entries()
       ).map(([value, label]) => ({ value, label }));
+
       setRoles(uniqueRoles);
     }
   };
@@ -51,10 +54,12 @@ export default function ListUsers() {
   // 🔴 Supprimer un utilisateur
   const handleDelete = async () => {
     if (!deleteUser?.id) return;
+
     const { error } = await supabase
       .from("profiles")
       .delete()
       .eq("id", deleteUser.id);
+
     if (!error) {
       setUsers(prev => prev.filter(u => u.id !== deleteUser.id));
       setDeleteUser(null);
@@ -64,7 +69,10 @@ export default function ListUsers() {
   // 🟢 Mise à jour instantanée après le modal
   const handleUpdated = (updatedUser) => {
     if (!updatedUser?.id) return;
-    setUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
+
+    setUsers(prev =>
+      prev.map(u => (u.id === updatedUser.id ? updatedUser : u))
+    );
   };
 
   if (loading) return <p className="text-center mt-10 text-lg">Chargement...</p>;
@@ -99,7 +107,7 @@ export default function ListUsers() {
           className="border p-2 rounded-xl shadow-sm text-left w-auto"
         >
           <option value="">Tous les rôles</option>
-          {roles.map(r => (
+          {roles.map((r) => (
             <option key={r.value} value={r.value}>
               {r.label}
             </option>
@@ -122,16 +130,33 @@ export default function ListUsers() {
           <span className="text-center">Actions</span>
         </div>
 
-        {filteredUsers.map(user => (
+        {filteredUsers.map((user) => (
           <div
             key={user.id}
             className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-3 items-center border-b border-gray-200"
           >
-            <span className="font-semibold text-gray-700">{user.prenom} {user.nom}</span>
-            <span className="text-indigo-600 font-medium text-left">{user.role_description || user.role}</span>
+            <span className="font-semibold text-gray-700">
+              {user.prenom} {user.nom}
+            </span>
+
+            <span className="text-indigo-600 font-medium text-left">
+              {user.role_description || user.role}
+            </span>
+
             <div className="flex justify-center gap-3">
-              <button onClick={() => setSelectedUser(user)} className="text-blue-600 hover:text-blue-800 text-lg">✏️</button>
-              <button onClick={() => setDeleteUser(user)} className="text-red-600 hover:text-red-800 text-lg">🗑️</button>
+              <button
+                onClick={() => setSelectedUser(user)}
+                className="text-blue-600 hover:text-blue-800 text-lg"
+              >
+                ✏️
+              </button>
+
+              <button
+                onClick={() => setDeleteUser(user)}
+                className="text-red-600 hover:text-red-800 text-lg"
+              >
+                🗑️
+              </button>
             </div>
           </div>
         ))}
@@ -150,11 +175,27 @@ export default function ListUsers() {
       {deleteUser && (
         <div className="fixed inset-0 flex items-center justify-center z-[999] bg-black/50">
           <div className="bg-white p-8 rounded-3xl shadow-xl w-[90%] max-w-md text-center">
-            <h2 className="text-xl font-bold mb-4">Voulez-vous vraiment supprimer :</h2>
-            <p className="text-lg font-semibold text-red-600 mb-6">{deleteUser.prenom} {deleteUser.nom}</p>
+            <h2 className="text-xl font-bold mb-4">
+              Voulez-vous vraiment supprimer :
+            </h2>
+            <p className="text-lg font-semibold text-red-600 mb-6">
+              {deleteUser.prenom} {deleteUser.nom}
+            </p>
+
             <div className="flex gap-4 justify-center">
-              <button onClick={() => setDeleteUser(null)} className="bg-gray-300 px-5 py-2 rounded-xl font-semibold hover:bg-gray-400">Annuler</button>
-              <button onClick={handleDelete} className="bg-red-500 text-white px-5 py-2 rounded-xl font-semibold hover:bg-red-600">Supprimer</button>
+              <button
+                onClick={() => setDeleteUser(null)}
+                className="bg-gray-300 px-5 py-2 rounded-xl font-semibold hover:bg-gray-400"
+              >
+                Annuler
+              </button>
+
+              <button
+                onClick={handleDelete}
+                className="bg-red-500 text-white px-5 py-2 rounded-xl font-semibold hover:bg-red-600"
+              >
+                Supprimer
+              </button>
             </div>
           </div>
         </div>

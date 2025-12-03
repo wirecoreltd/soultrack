@@ -32,38 +32,37 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
 
   const handleSave = async () => {
     if (!user?.id) return;
+
     setSaving(true);
 
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .update({
-          prenom: form.prenom,
-          nom: form.nom,
-          email: form.email,
-          telephone: form.telephone,
-          role: form.role,
-        })
-        .eq("id", user.id)
-        .select(); // ✅ Sans .single()
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({
+        prenom: form.prenom,
+        nom: form.nom,
+        email: form.email,
+        telephone: form.telephone,
+        role: form.role,
+      })
+      .eq("id", user.id)
+      .select(); // 🔑 Important pour obtenir le résultat
 
-      if (error) {
-        alert("❌ Erreur lors de la mise à jour : " + error.message);
-        console.error(error);
-      } else {
-        if (onUpdated) onUpdated(); // Mise à jour instantanée
-        setSuccess(true);
-        setTimeout(() => {
-          setSuccess(false);
-          onClose();
-        }, 700);
-      }
-    } catch (err) {
-      console.error("Exception handleSave:", err);
-      alert("❌ Une erreur est survenue.");
-    } finally {
-      setSaving(false);
+    setSaving(false);
+
+    if (error) {
+      alert("❌ Erreur lors de la mise à jour : " + error.message);
+      return;
     }
+
+    if (data && data.length > 0 && onUpdated) {
+      onUpdated(data[0]); // 🔥 Mise à jour instantanée dans la liste
+    }
+
+    setSuccess(true);
+    setTimeout(() => {
+      setSuccess(false);
+      onClose();
+    }, 700);
   };
 
   if (!user) return null;
@@ -71,6 +70,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50 p-4">
       <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md">
+        {/* Logo et titre */}
         <div className="flex flex-col items-center mb-4">
           <img src="/logo.png" alt="Logo" className="w-20 h-20" />
           <h2 className="text-xl font-bold text-center mt-2">Modifier l’utilisateur</h2>

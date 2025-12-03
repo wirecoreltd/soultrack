@@ -9,116 +9,151 @@ import EditUserModal from "../../components/EditUserModal";
 export default function ListUsers() {
   const router = useRouter();
   const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [roleFilter, setRoleFilter] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
 
+  // 🔵 Charger la liste des utilisateurs
   const fetchUsers = async () => {
     setLoading(true);
+
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, prenom, nom, email, telephone, role, role_description, created_at")
+      .select("id, prenom, nom, role, role_description, created_at")
       .order("created_at", { ascending: true });
 
-    if (error) {
-      console.error(error);
-      setLoading(false);
-      return;
-    }
-
-    setUsers(data || []);
+    if (!error) setUsers(data || []);
     setLoading(false);
+  };
+
+  // 🟠 Charger les rôles dynamiques
+  const fetchRoles = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("role, role_description");
+
+    if (!error && data) {
+      const uniqueRoles = Array.from(
+        new Map(
+          data
+            .filter(r => r.role)
+            .map(r => [r.role, r.role_description || r.role])
+        ).entries()
+      ).map(([value, label]) => ({ value, label }));
+
+      setRoles(uniqueRoles);
+    }
   };
 
   useEffect(() => {
     fetchUsers();
+    fetchRoles();
   }, []);
 
+  // 🔴 Supprimer un utilisateur
   const handleDelete = async () => {
     if (!deleteUser?.id) return;
-    const { error } = await supabase.from("profiles").delete().eq("id", deleteUser.id);
+
+    const { error } = await supabase
+      .from("profiles")
+      .delete()
+      .eq("id", deleteUser.id);
 
     if (!error) {
-      setUsers(users.filter(u => u.id !== deleteUser.id));
+      setUsers(prev => prev.filter(u => u.id !== deleteUser.id));
       setDeleteUser(null);
     }
   };
 
+  // 🟢 Mise à jour instantanée après le modal
   const handleUpdated = (updatedUser) => {
-    if (!updatedUser || !updatedUser.id) return;
-    setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+    if (!updatedUser?.id) return;
+
+    setUsers(prev =>
+      prev.map(u => (u.id === updatedUser.id ? updatedUser : u))
+    );
   };
 
   if (loading) return <p className="text-center mt-10 text-lg">Chargement...</p>;
 
+  // 🟡 Filtrer selon le rôle sélectionné
+  const filteredUsers = roleFilter
+    ? users.filter(u => u.role === roleFilter)
+    : users;
+
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-blue-300 via-orange-200 to-blue-200">
-      <button 
-        onClick={() => router.back()} 
+    <div className="min-h-screen p-6 bg-gradient-to-br from-blue-200 via-orange-100 to-blue-300">
+      <button
+        onClick={() => router.back()}
         className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700"
       >
         ← Retour
       </button>
 
+      {/* Logo + titre */}
       <div className="flex flex-col items-center mb-6">
         <Image src="/logo.png" alt="Logo" width={80} height={80} />
-        <h1 className="text-3xl font-bold text-center mt-2">Gestion des utilisateurs</h1>
+        <h1 className="text-3xl font-bold text-center mt-2">
+          Gestion des utilisateurs
+        </h1>
       </div>
 
+      {/* Filtres + bouton créer */}
       <div className="flex justify-start items-center mb-6 max-w-5xl mx-auto gap-4">
-        <select 
-          value={roleFilter} 
-          onChange={(e) => setRoleFilter(e.target.value)} 
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
           className="border p-2 rounded-xl shadow-sm text-left w-auto"
         >
           <option value="">Tous les rôles</option>
-          <option value="Administrateur">Admin</option>
-          <option value="ResponsableCellule">Responsable Cellule</option>
-          <option value="ResponsableEvangelisation">Responsable Évangélisation</option>
-          <option value="Conseiller">Conseiller</option>
-          <option value="ResponsableIntegration">Responsable Intégration</option>
+          {roles.map((r) => (
+            <option key={r.value} value={r.value}>
+              {r.label}
+            </option>
+          ))}
         </select>
 
-        <button 
-          onClick={() => router.push("/admin/create-internal-user")} 
-          className="bg-gradient-to-r from-blue-500 to-orange-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md hover:opacity-90"
+        <button
+          onClick={() => router.push("/admin/create-internal-user")}
+          className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600"
         >
           ➕ Créer utilisateur
         </button>
       </div>
 
+      {/* Tableau */}
       <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden">
-
-        {/* HEADER */}
         <div className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-2 bg-indigo-600 text-white font-semibold">
           <span>Nom complet</span>
-          <span>Rôle</span>
+          <span className="text-left">Rôle</span>
           <span className="text-center">Actions</span>
         </div>
 
-        {/* LIGNES */}
-        {users.map(user => (
-          <div 
-            key={user.id} 
+        {filteredUsers.map((user) => (
+          <div
+            key={user.id}
             className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-3 items-center border-b border-gray-200"
           >
-            <span className="font-semibold text-gray-700">{user.prenom} {user.nom}</span>
+            <span className="font-semibold text-gray-700">
+              {user.prenom} {user.nom}
+            </span>
 
-            {/* Rôle aligné left + role_description */}
             <span className="text-indigo-600 font-medium text-left">
               {user.role_description || user.role}
             </span>
 
             <div className="flex justify-center gap-3">
-              <button 
-                onClick={() => setSelectedUser(user)} 
+              <button
+                onClick={() => setSelectedUser(user)}
                 className="text-blue-600 hover:text-blue-800 text-lg"
               >
                 ✏️
               </button>
-              <button 
-                onClick={() => setDeleteUser(user)} 
+
+              <button
+                onClick={() => setDeleteUser(user)}
                 className="text-red-600 hover:text-red-800 text-lg"
               >
                 🗑️
@@ -128,30 +163,36 @@ export default function ListUsers() {
         ))}
       </div>
 
+      {/* Modal édition */}
       {selectedUser && (
-        <EditUserModal 
-          user={selectedUser} 
-          onClose={() => setSelectedUser(null)} 
-          onUpdated={handleUpdated} 
+        <EditUserModal
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
+          onUpdated={handleUpdated}
         />
       )}
 
+      {/* Popup suppression */}
       {deleteUser && (
         <div className="fixed inset-0 flex items-center justify-center z-[999] bg-black/50">
           <div className="bg-white p-8 rounded-3xl shadow-xl w-[90%] max-w-md text-center">
-            <h2 className="text-xl font-bold mb-4">Voulez-vous vraiment supprimer :</h2>
+            <h2 className="text-xl font-bold mb-4">
+              Voulez-vous vraiment supprimer :
+            </h2>
             <p className="text-lg font-semibold text-red-600 mb-6">
               {deleteUser.prenom} {deleteUser.nom}
             </p>
+
             <div className="flex gap-4 justify-center">
-              <button 
-                onClick={() => setDeleteUser(null)} 
+              <button
+                onClick={() => setDeleteUser(null)}
                 className="bg-gray-300 px-5 py-2 rounded-xl font-semibold hover:bg-gray-400"
               >
                 Annuler
               </button>
-              <button 
-                onClick={handleDelete} 
+
+              <button
+                onClick={handleDelete}
                 className="bg-red-500 text-white px-5 py-2 rounded-xl font-semibold hover:bg-red-600"
               >
                 Supprimer

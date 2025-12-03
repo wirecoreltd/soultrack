@@ -16,8 +16,11 @@ export default function ListUsers() {
   // Filtres
   const [roleFilter, setRoleFilter] = useState("");
 
-  // Popup
+  // Popup Edit
   const [selectedUser, setSelectedUser] = useState(null);
+
+  // Popup Delete
+  const [deleteUser, setDeleteUser] = useState(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -44,15 +47,16 @@ export default function ListUsers() {
     fetchUsers();
   }, [roleFilter]);
 
-  const handleDelete = async (id) => {
-    if (!confirm("Voulez-vous vraiment supprimer cet utilisateur ?")) return;
+  const handleDeleteConfirm = async () => {
+    if (!deleteUser) return;
 
-    const { error } = await supabase.from("profiles").delete().eq("id", id);
+    const { error } = await supabase.from("profiles").delete().eq("id", deleteUser.id);
 
-    if (error) {
-      alert("Erreur suppression utilisateur.");
+    if (!error) {
+      setUsers((prev) => prev.filter((u) => u.id !== deleteUser.id));
+      setDeleteUser(null);
     } else {
-      setUsers((prev) => prev.filter((u) => u.id !== id));
+      alert("Erreur lors de la suppression.");
     }
   };
 
@@ -105,9 +109,10 @@ export default function ListUsers() {
             className="border p-2 rounded-xl shadow-sm text-center"
           >
             <option value="">Tous les rôles</option>
-            <option value="admin">Admin</option>
-            <option value="responsable">Responsable</option>
-            <option value="user">Utilisateur</option>
+            <option value="ResponsableCellule">Responsable Cellule</option>
+            <option value="Conseiller">Conseiller</option>
+            <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
+            <option value="ResponsableIntegration">Responsable Intégration</option>
           </select>
         </div>
 
@@ -143,6 +148,7 @@ export default function ListUsers() {
                   </td>
 
                   <td className="py-3 px-4 flex gap-4">
+
                     {/* EDIT */}
                     <button
                       onClick={() => setSelectedUser(user)}
@@ -153,11 +159,12 @@ export default function ListUsers() {
 
                     {/* DELETE */}
                     <button
-                      onClick={() => handleDelete(user.id)}
+                      onClick={() => setDeleteUser(user)}
                       className="text-red-600 hover:text-red-800 text-lg"
                     >
                       🗑️
                     </button>
+
                   </td>
                 </tr>
               ))}
@@ -174,6 +181,52 @@ export default function ListUsers() {
           onUpdated={fetchUsers}
         />
       )}
+
+      {/* POPUP SUPPRESSION — 100% TRANSPARENT */}
+      {deleteUser && (
+        <div className="fixed inset-0 flex items-center justify-center z-[999] bg-transparent">
+
+          <div className="bg-white p-8 rounded-3xl shadow-xl w-[90%] max-w-md text-center animate-fadeIn border">
+
+            <h2 className="text-xl font-bold mb-4 text-gray-800">
+              Voulez-vous vraiment supprimer :
+            </h2>
+
+            <p className="text-lg font-semibold text-red-600 mb-6">
+              {deleteUser.prenom} {deleteUser.nom}
+            </p>
+
+            <div className="flex gap-4 justify-center">
+
+              <button
+                onClick={() => setDeleteUser(null)}
+                className="bg-gray-300 px-5 py-2 rounded-xl font-semibold hover:bg-gray-400 transition"
+              >
+                Annuler
+              </button>
+
+              <button
+                onClick={handleDeleteConfirm}
+                className="bg-red-500 text-white px-5 py-2 rounded-xl font-semibold hover:bg-red-600 transition"
+              >
+                Supprimer
+              </button>
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+/* 🔥 Animation popup */
+<style jsx global>{`
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .animate-fadeIn {
+    animation: fadeIn 0.2s ease-out;
+  }
+`}</style>

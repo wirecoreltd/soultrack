@@ -9,7 +9,6 @@ export default function ListUsers() {
   const router = useRouter();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [roleFilter, setRoleFilter] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
 
   const fetchUsers = async () => {
@@ -44,19 +43,6 @@ export default function ListUsers() {
       </button>
 
       <div className="flex justify-between items-center max-w-5xl mx-auto mb-6">
-        <select
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="border p-2 rounded-xl shadow-sm"
-        >
-          <option value="">Tous les rôles</option>
-          <option value="Administrateur">Admin</option>
-          <option value="ResponsableCellule">Responsable Cellule</option>
-          <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
-          <option value="Conseiller">Conseiller</option>
-          <option value="ResponsableIntegration">Responsable Intégration</option>
-        </select>
-
         <button
           onClick={() => router.push("/admin/create-internal-user")}
           className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md"
@@ -66,14 +52,12 @@ export default function ListUsers() {
       </div>
 
       <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden">
-        {/* Header */}
         <div className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-2 bg-indigo-600 text-white font-semibold">
           <span>Nom complet</span>
           <span>Rôle</span>
           <span className="text-center">Actions</span>
         </div>
 
-        {/* Lignes */}
         {users.map((user) => (
           <div
             key={user.id}

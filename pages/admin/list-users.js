@@ -17,14 +17,13 @@ export default function ListUsers() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
 
+  // Récupérer les utilisateurs
   const fetchUsers = async () => {
     setLoading(true);
     try {
       let query = supabase
         .from("profiles")
-        .select(
-          "id, prenom, nom, telephone, role, role_description, created_at"
-        );
+        .select("id, prenom, nom, email, telephone, role, role_description, created_at");
 
       if (roleFilter) query = query.eq("role", roleFilter);
 
@@ -44,6 +43,7 @@ export default function ListUsers() {
     fetchUsers();
   }, [roleFilter]);
 
+  // Supprimer utilisateur
   const handleDeleteConfirm = async () => {
     if (!deleteUser) return;
 
@@ -60,11 +60,8 @@ export default function ListUsers() {
     }
   };
 
-  if (loading)
-    return <p className="text-center mt-10 text-lg">Chargement...</p>;
-
-  if (message)
-    return <p className="text-center text-red-600 mt-10">{message}</p>;
+  if (loading) return <p className="text-center mt-10 text-lg">Chargement...</p>;
+  if (message) return <p className="text-center text-red-600 mt-10">{message}</p>;
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
@@ -80,9 +77,7 @@ export default function ListUsers() {
       {/* Header / Logo */}
       <div className="flex flex-col items-center mb-6">
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
-        <h1 className="text-3xl font-bold text-center mt-2">
-          Gestion des utilisateurs
-        </h1>
+        <h1 className="text-3xl font-bold text-center mt-2">Gestion des utilisateurs</h1>
       </div>
 
       {/* Filtres + bouton */}
@@ -109,7 +104,7 @@ export default function ListUsers() {
       </div>
 
       {/* Table compacte */}
-      <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden">
+      <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden backdrop-blur-sm bg-white/10">
         {/* Header */}
         <div className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-2 bg-indigo-600 text-white font-semibold">
           <span>Nom complet</span>

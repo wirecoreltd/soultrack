@@ -13,7 +13,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   });
   const [saving, setSaving] = useState(false);
 
-  // Charger les données du user au montage
+  // Charger les données dès que le modal s’ouvre
   useEffect(() => {
     if (!user) return;
     setForm({
@@ -36,25 +36,31 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     setSaving(true);
 
     try {
+      // Mettre à jour l’utilisateur
       const { data, error } = await supabase
         .from("profiles")
-        .update(form)
-        .eq("id", user.id)
-        .select(); // 🔹 on ne met pas .single()
+        .update({
+          prenom: form.prenom,
+          nom: form.nom,
+          email: form.email,
+          telephone: form.telephone,
+          role: form.role,
+        })
+        .eq("id", user.id);
 
       if (error) {
+        console.error("Erreur mise à jour :", error);
         alert("❌ Erreur lors de la mise à jour : " + error.message);
         setSaving(false);
         return;
       }
 
-      if (data?.length > 0 && onUpdated) {
-        onUpdated(data[0]); // 🔹 met à jour instantanément
-      }
+      // 🔥 Mise à jour instantanée dans la liste parent
+      if (onUpdated) onUpdated();
 
       onClose();
     } catch (err) {
-      console.error(err);
+      console.error("Exception lors de la mise à jour :", err);
       alert("❌ Une erreur est survenue.");
     } finally {
       setSaving(false);
@@ -64,42 +70,44 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   if (!user) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[999] p-4">
+    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[999]">
       <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md">
-        <h2 className="text-xl font-bold text-center mb-4">Modifier l’utilisateur</h2>
+        <h2 className="text-xl font-bold text-center mb-4">
+          Modifier l’utilisateur
+        </h2>
 
         <div className="flex flex-col gap-4">
           <input
             type="text"
             name="prenom"
+            placeholder="Prénom"
             value={form.prenom}
             onChange={handleChange}
             className="input"
-            placeholder="Prénom"
           />
           <input
             type="text"
             name="nom"
+            placeholder="Nom"
             value={form.nom}
             onChange={handleChange}
             className="input"
-            placeholder="Nom"
           />
           <input
             type="email"
             name="email"
+            placeholder="Email"
             value={form.email}
             onChange={handleChange}
             className="input"
-            placeholder="Email"
           />
           <input
             type="text"
             name="telephone"
+            placeholder="Téléphone"
             value={form.telephone}
             onChange={handleChange}
             className="input"
-            placeholder="Téléphone"
           />
           <select
             name="role"
@@ -138,6 +146,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
             border: 1px solid #ccc;
             border-radius: 12px;
             padding: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
           }
         `}</style>
       </div>

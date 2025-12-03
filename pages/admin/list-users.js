@@ -11,14 +11,16 @@ export default function ListUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [roleFilter, setRoleFilter] = useState("");
+  const [roles, setRoles] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
 
+  // Charger les utilisateurs
   const fetchUsers = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, prenom, nom, email, telephone, role, role_description, created_at")
+      .select("id, prenom, nom, role, role_description, created_at")
       .order("created_at", { ascending: true });
 
     if (error) {
@@ -31,10 +33,28 @@ export default function ListUsers() {
     setLoading(false);
   };
 
+  // Charger les rôles uniques pour le filtre
+  const fetchRoles = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("role_description")
+      .not("role_description", "is", null);
+
+    if (error) {
+      console.error("Erreur fetchRoles:", error);
+      return;
+    }
+
+    const uniqueRoles = Array.from(new Set(data.map(d => d.role_description)));
+    setRoles(uniqueRoles);
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchRoles();
   }, []);
 
+  // Supprimer un utilisateur
   const handleDelete = async () => {
     if (!deleteUser?.id) return;
     const { error } = await supabase.from("profiles").delete().eq("id", deleteUser.id);
@@ -45,51 +65,65 @@ export default function ListUsers() {
     }
   };
 
-  // ✅ Mettre à jour un utilisateur dans la liste
+  // Mettre à jour un utilisateur dans la liste après édition
   const handleUpdated = (updatedUser) => {
     if (!updatedUser || !updatedUser.id) return;
     setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
   };
 
+  // Filtrer les utilisateurs par rôle
+  const filteredUsers = roleFilter
+    ? users.filter(u => u.role_description === roleFilter)
+    : users;
+
   if (loading) return <p className="text-center mt-10 text-lg">Chargement...</p>;
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
-      <button onClick={() => router.back()} className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700">← Retour</button>
+      {/* Retour */}
+      <button onClick={() => router.back()} className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700">
+        ← Retour
+      </button>
 
+      {/* Header */}
       <div className="flex flex-col items-center mb-6">
         <Image src="/logo.png" alt="Logo" width={80} height={80} />
         <h1 className="text-3xl font-bold text-center mt-2">Gestion des utilisateurs</h1>
       </div>
 
+      {/* Filtres + Créer */}
       <div className="flex justify-start items-center mb-6 max-w-5xl mx-auto gap-4">
-        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="border p-2 rounded-xl shadow-sm text-left w-auto">
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          className="border p-2 rounded-xl shadow-sm text-left w-auto"
+        >
           <option value="">Tous les rôles</option>
-          <option value="Administrateur">Admin</option>
-          <option value="ResponsableCellule">Responsable Cellule</option>
-          <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
-          <option value="Conseiller">Conseiller</option>
-          <option value="ResponsableIntegration">Responsable Intégration</option>
+          {roles.map(role => (
+            <option key={role} value={role}>{role}</option>
+          ))}
         </select>
 
-        <button onClick={() => router.push("/admin/create-internal-user")} className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600">
+        <button
+          onClick={() => router.push("/admin/create-internal-user")}
+          className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600"
+        >
           ➕ Créer utilisateur
         </button>
       </div>
 
+      {/* Table */}
       <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden">
-        <div className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 py-2 bg-indigo-600 text-white font-semibold">
+        <div className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-2 bg-indigo-600 text-white font-semibold">
           <span>Nom complet</span>
-          <span>Email</span>
-          <span>Rôle</span>
+          <span className="text-left">Rôle</span>
           <span className="text-center">Actions</span>
         </div>
 
-        {users.map(user => (
-          <div key={user.id} className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 py-3 items-center border-b border-gray-200">
+        {filteredUsers.map(user => (
+          <div key={user.id} className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-3 items-center border-b border-gray-200">
             <span className="font-semibold text-gray-700">{user.prenom} {user.nom}</span>
-            <span className="text-gray-700">{user.email}</span>
-            <span className="text-indigo-600 font-medium">{user.role}</span>
+            <span className="text-left text-indigo-600 font-medium">{user.role_description || user.role}</span>
             <div className="flex justify-center gap-3">
               <button onClick={() => setSelectedUser(user)} className="text-blue-600 hover:text-blue-800 text-lg">✏️</button>
               <button onClick={() => setDeleteUser(user)} className="text-red-600 hover:text-red-800 text-lg">🗑️</button>
@@ -98,10 +132,16 @@ export default function ListUsers() {
         ))}
       </div>
 
+      {/* Modal édition */}
       {selectedUser && (
-        <EditUserModal user={selectedUser} onClose={() => setSelectedUser(null)} onUpdated={handleUpdated} />
+        <EditUserModal
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
+          onUpdated={handleUpdated}
+        />
       )}
 
+      {/* Popup suppression */}
       {deleteUser && (
         <div className="fixed inset-0 flex items-center justify-center z-[999] bg-black/50">
           <div className="bg-white p-8 rounded-3xl shadow-xl w-[90%] max-w-md text-center">

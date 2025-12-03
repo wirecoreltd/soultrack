@@ -26,36 +26,35 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSave = async () => {
-    if (!user || !user.id) return;
+    if (!user?.id) return;
+
     setSaving(true);
 
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .update(form)
-        .eq("id", user.id)
-        .select(); // renvoie toujours un tableau
+    const { data, error } = await supabase
+      .from("profiles")
+      .update(form)
+      .eq("id", user.id)
+      .select(); // 🔑 retourne un array de résultats
 
-      if (error) throw error;
+    setSaving(false);
 
-      if (onUpdated) onUpdated(data[0]);
+    if (error) {
+      alert("❌ Erreur lors de la mise à jour : " + error.message);
+    } else {
+      // Mise à jour de la liste dans le parent
+      if (onUpdated) onUpdated();
       onClose();
-    } catch (err) {
-      console.error("❌ Erreur lors de la mise à jour :", err);
-      alert("❌ Erreur lors de la mise à jour : " + err.message);
-    } finally {
-      setSaving(false);
     }
   };
 
   if (!user) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[999]">
+    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[999] p-4">
       <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md">
         <h2 className="text-xl font-bold text-center mb-4">Modifier l’utilisateur</h2>
 
@@ -74,9 +73,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
           </select>
 
           <div className="flex gap-4 mt-4">
-            <button onClick={onClose} className="flex-1 bg-gray-400 text-white font-bold py-3 rounded-2xl hover:bg-gray-500 transition">
-              Annuler
-            </button>
+            <button onClick={onClose} className="flex-1 bg-gray-400 text-white font-bold py-3 rounded-2xl hover:bg-gray-500 transition">Annuler</button>
             <button onClick={handleSave} disabled={saving} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition">
               {saving ? "Enregistrement..." : "Enregistrer"}
             </button>

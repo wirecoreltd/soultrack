@@ -86,7 +86,7 @@ export default function ListUsers() {
         </div>
 
         {users.map(user => (
-          <div key={user.id} className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 py-3 items-center border-b border-gray-200">
+          <div key={user.id} className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 py-3 border-b border-gray-200">
             <span className="font-semibold text-gray-700">{user.prenom} {user.nom}</span>
             <span className="text-gray-700">{user.email}</span>
             <span className="text-indigo-600 font-medium">{user.role}</span>

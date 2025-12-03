@@ -11,11 +11,10 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     telephone: "",
     role: "",
   });
-
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // ⚡ Charger les données dès le montage
+  // Charger les données de l'utilisateur au montage
   useEffect(() => {
     if (!user) return;
     setForm({
@@ -29,44 +28,42 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSave = async () => {
-    if (!user?.id) return;
+    if (!user || !user.id) return;
 
     setSaving(true);
 
     try {
-      // ⚡ Update avec récupération immédiate de la ligne mise à jour
+      // On retire .single() pour éviter l'erreur de JSON
       const { data, error } = await supabase
         .from("profiles")
         .update(form)
         .eq("id", user.id)
-        .select()
-        .single();
+        .select();
 
       if (error) {
-        alert("❌ Erreur : " + error.message);
-        console.error(error);
+        alert("❌ Erreur lors de la mise à jour : " + error.message);
         setSaving(false);
         return;
       }
 
+      const updatedUser = data[0]; // Supabase renvoie un tableau
+
       setSuccess(true);
 
-      // 🔥 Met à jour instantanément la liste
-      if (onUpdated) onUpdated();
+      // Mise à jour instantanée dans la liste
+      if (onUpdated) onUpdated(updatedUser);
 
       setTimeout(() => {
         setSuccess(false);
         onClose();
       }, 700);
-
     } catch (err) {
-      console.error("Exception EditUserModal:", err);
+      console.error("Exception handleSave EditUserModal:", err);
       alert("❌ Une erreur est survenue.");
-    } finally {
       setSaving(false);
     }
   };
@@ -74,16 +71,51 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   if (!user) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[999] p-4">
-      <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl overflow-y-auto max-h-[95vh]">
-        <h2 className="text-2xl font-bold text-center mb-4">Modifier l’utilisateur</h2>
+    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[999]">
+      <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md">
+        <h2 className="text-xl font-bold text-center mb-4">
+          Modifier l’utilisateur
+        </h2>
 
         <div className="flex flex-col gap-4">
-          <input type="text" name="prenom" value={form.prenom} onChange={handleChange} placeholder="Prénom" className="input" />
-          <input type="text" name="nom" value={form.nom} onChange={handleChange} placeholder="Nom" className="input" />
-          <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" className="input" />
-          <input type="text" name="telephone" value={form.telephone} onChange={handleChange} placeholder="Téléphone" className="input" />
-          <select name="role" value={form.role} onChange={handleChange} className="input">
+          <input
+            type="text"
+            name="prenom"
+            value={form.prenom}
+            onChange={handleChange}
+            className="input"
+            placeholder="Prénom"
+          />
+          <input
+            type="text"
+            name="nom"
+            value={form.nom}
+            onChange={handleChange}
+            className="input"
+            placeholder="Nom"
+          />
+          <input
+            type="email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            className="input"
+            placeholder="Email"
+          />
+          <input
+            type="text"
+            name="telephone"
+            value={form.telephone}
+            onChange={handleChange}
+            className="input"
+            placeholder="Téléphone"
+          />
+          <select
+            name="role"
+            value={form.role}
+            onChange={handleChange}
+            className="input"
+          >
             <option value="">-- Sélectionnez un rôle --</option>
             <option value="Administrateur">Admin</option>
             <option value="ResponsableCellule">Responsable Cellule</option>
@@ -93,13 +125,26 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
           </select>
 
           <div className="flex gap-4 mt-4">
-            <button onClick={onClose} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl transition">Annuler</button>
-            <button onClick={handleSave} disabled={saving} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl transition">
+            <button
+              onClick={onClose}
+              className="flex-1 bg-gray-400 text-white font-bold py-3 rounded-2xl hover:bg-gray-500 transition"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition"
+            >
               {saving ? "Enregistrement..." : "Enregistrer"}
             </button>
           </div>
 
-          {success && <p className="text-green-600 font-semibold text-center mt-3">✔️ Modifié avec succès !</p>}
+          {success && (
+            <p className="text-green-600 font-semibold text-center mt-3">
+              ✔️ Modifié avec succès !
+            </p>
+          )}
         </div>
 
         <style jsx>{`
@@ -108,7 +153,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
             border: 1px solid #ccc;
             border-radius: 12px;
             padding: 12px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
           }
         `}</style>
       </div>

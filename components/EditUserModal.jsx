@@ -44,7 +44,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         role: form.role,
       })
       .eq("id", user.id)
-      .select(); // 🔑 pas single(), renvoie un tableau
+      .select(); // 🔑 pas single()
 
     setSaving(false);
 

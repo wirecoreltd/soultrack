@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function EditUserModal({ userId, onClose, onUpdated }) {
+export default function EditUserModal({ user, onClose, onUpdated }) {
   const [form, setForm] = useState({
     prenom: "",
     nom: "",
@@ -11,43 +11,22 @@ export default function EditUserModal({ userId, onClose, onUpdated }) {
     telephone: "",
     role: "",
   });
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // ⚡ Charger les données dès le montage
   useEffect(() => {
-    // ⚡ Si userId n'existe pas, ne rien faire
-    if (!userId) return;
-
-    const fetchUser = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("prenom, nom, email, telephone, role")
-        .eq("id", userId)
-        .single();
-
-      if (error) {
-        alert("Erreur chargement utilisateur : " + error.message);
-        setLoading(false);
-        onClose();
-        return;
-      }
-
-      setForm({
-        prenom: data.prenom || "",
-        nom: data.nom || "",
-        email: data.email || "",
-        telephone: data.telephone || "",
-        role: data.role || "",
-      });
-      setLoading(false);
-    };
-
-    fetchUser();
-  }, [userId, onClose]);
+    if (!user) return;
+    setForm({
+      prenom: user.prenom || "",
+      nom: user.nom || "",
+      email: user.email || "",
+      telephone: user.telephone || "",
+      role: user.role || "",
+    });
+  }, [user]);
 
   const handleSave = async () => {
-    if (!userId) return;
+    if (!user || !user.id) return;
 
     setSaving(true);
 
@@ -60,7 +39,7 @@ export default function EditUserModal({ userId, onClose, onUpdated }) {
         telephone: form.telephone,
         role: form.role,
       })
-      .eq("id", userId)
+      .eq("id", user.id)
       .select();
 
     setSaving(false);
@@ -73,15 +52,7 @@ export default function EditUserModal({ userId, onClose, onUpdated }) {
     }
   };
 
-  if (!userId || loading) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[999]">
-        <div className="bg-white p-6 rounded-xl shadow-md text-center">
-          Chargement...
-        </div>
-      </div>
-    );
-  }
+  if (!user) return null;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[999]">

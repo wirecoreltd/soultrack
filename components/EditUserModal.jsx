@@ -14,7 +14,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Charger les données de l'utilisateur au montage
+  // Charger les données de l'utilisateur
   useEffect(() => {
     if (!user) return;
     setForm({
@@ -37,12 +37,12 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     setSaving(true);
 
     try {
-      // On retire .single() pour éviter l'erreur de JSON
       const { data, error } = await supabase
         .from("profiles")
         .update(form)
         .eq("id", user.id)
-        .select();
+        .select()
+        .single(); // 🔥 important pour récupérer un seul objet
 
       if (error) {
         alert("❌ Erreur lors de la mise à jour : " + error.message);
@@ -50,12 +50,10 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         return;
       }
 
-      const updatedUser = data[0]; // Supabase renvoie un tableau
+      // Mise à jour instantanée dans la liste
+      if (onUpdated) onUpdated(data);
 
       setSuccess(true);
-
-      // Mise à jour instantanée dans la liste
-      if (onUpdated) onUpdated(updatedUser);
 
       setTimeout(() => {
         setSuccess(false);
@@ -64,6 +62,8 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     } catch (err) {
       console.error("Exception handleSave EditUserModal:", err);
       alert("❌ Une erreur est survenue.");
+      setSaving(false);
+    } finally {
       setSaving(false);
     }
   };

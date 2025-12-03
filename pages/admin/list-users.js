@@ -14,7 +14,6 @@ export default function ListUsers() {
   const [message, setMessage] = useState("");
 
   const [roleFilter, setRoleFilter] = useState("");
-
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
 
@@ -68,101 +67,72 @@ export default function ListUsers() {
     return <p className="text-center text-red-600 mt-10">{message}</p>;
 
   return (
-    <div className="min-h-screen flex items-start justify-center bg-transparent p-6">
+    <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-blue-100 to-purple-200">
 
-      {/* Container principal */}
-      <div className="w-full max-w-5xl bg-transparent p-8 rounded-3xl relative">
-
-        {/* Retour */}
-        <button
-          onClick={() => router.back()}
-          className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700 transition"
-        >
-          ← Retour
-        </button>
-
-        {/* Logo */}
-        <div className="flex justify-center mb-6">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
-        </div>
-
-        {/* Titre */}
-        <h1 className="text-3xl font-bold text-center mb-1">
+      {/* Header / Logo */}
+      <div className="flex flex-col items-center mb-6">
+        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
+        <h1 className="text-3xl font-bold text-center mt-2">
           Gestion des utilisateurs
         </h1>
-        <p className="text-center text-gray-500 italic mb-6">
+        <p className="text-center text-gray-700 italic mt-1">
           Administration & gestion des accès
         </p>
+      </div>
 
-        {/* Bouton créer utilisateur */}
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={() => router.push("/admin/create-internal-user")}
-            className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600"
+      {/* Filtres + bouton sur la même ligne */}
+      <div className="flex justify-between items-center mb-6 max-w-5xl mx-auto">
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          className="border p-2 rounded-xl shadow-sm text-center"
+        >
+          <option value="">Tous les rôles</option>
+          <option value="Administrateur">Admin</option>
+          <option value="ResponsableCellule">Responsable Cellule</option>
+          <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
+          <option value="Conseiller">Conseiller</option>
+          <option value="ResponsableIntegration">Responsable Intégration</option>
+        </select>
+
+        <button
+          onClick={() => router.push("/admin/create-internal-user")}
+          className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600"
+        >
+          ➕ Créer utilisateur
+        </button>
+      </div>
+
+      {/* Liste des utilisateurs */}
+      <div className="max-w-5xl mx-auto flex flex-col gap-4">
+        {users.map((user) => (
+          <div
+            key={user.id}
+            className="bg-white/30 backdrop-blur-md rounded-2xl p-4 flex justify-between items-center shadow-md animate-fadeIn"
           >
-            ➕ Créer utilisateur
-          </button>
-        </div>
+            <div>
+              <p className="font-semibold text-lg">{user.prenom} {user.nom}</p>
+              <p className="text-gray-700">{user.email}</p>
+              <p className="text-gray-700">{user.telephone || "-"}</p>
+              <p className="font-medium text-indigo-600">{user.role_description || user.role}</p>
+            </div>
 
-        {/* Filtre rôles */}
-        <div className="w-full flex justify-center mb-6">
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="border p-2 rounded-xl shadow-sm text-center"
-          >
-            <option value="">Tous les rôles</option>
-            <option value="Administrateur">Admin</option>
-            <option value="ResponsableCellule">Responsable Cellule</option>
-            <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
-            <option value="Conseiller">Conseiller</option>
-            <option value="ResponsableIntegration">Responsable Intégration</option>
-          </select>
-        </div>
-
-        {/* Table glassmorphism semi-transparente */}
-        <div className="overflow-x-auto rounded-2xl bg-white/20 backdrop-blur-md shadow-md">
-          <table className="min-w-full text-sm">
-            <thead className="bg-indigo-500 text-white text-left">
-              <tr>
-                <th className="py-3 px-4">Nom complet</th>
-                <th className="py-3 px-4">Email</th>
-                <th className="py-3 px-4">Téléphone</th>
-                <th className="py-3 px-4">Rôle</th>
-                <th className="py-3 px-4">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td className="py-3 px-4 font-semibold text-gray-700">
-                    {user.prenom} {user.nom}
-                  </td>
-                  <td className="py-3 px-4">{user.email}</td>
-                  <td className="py-3 px-4">{user.telephone || "-"}</td>
-                  <td className="py-3 px-4 font-medium text-indigo-600">
-                    {user.role_description || user.role}
-                  </td>
-                  <td className="py-3 px-4 flex gap-4">
-                    <button
-                      onClick={() => setSelectedUser(user)}
-                      className="text-blue-600 hover:text-blue-800 text-lg"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={() => setDeleteUser(user)}
-                      className="text-red-600 hover:text-red-800 text-lg"
-                    >
-                      🗑️
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSelectedUser(user)}
+                className="text-blue-600 hover:text-blue-800 text-lg"
+              >
+                ✏️
+              </button>
+              <button
+                onClick={() => setDeleteUser(user)}
+                className="text-red-600 hover:text-red-800 text-lg"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Popup Edit */}
@@ -177,17 +147,13 @@ export default function ListUsers() {
       {/* Popup suppression */}
       {deleteUser && (
         <div className="fixed inset-0 flex items-center justify-center z-[999] bg-transparent">
-
           <div className="bg-white/90 backdrop-blur-md p-8 rounded-3xl shadow-xl w-[90%] max-w-md text-center animate-fadeIn border">
-
             <h2 className="text-xl font-bold mb-4 text-gray-800">
               Voulez-vous vraiment supprimer :
             </h2>
-
             <p className="text-lg font-semibold text-red-600 mb-6">
               {deleteUser.prenom} {deleteUser.nom}
             </p>
-
             <div className="flex gap-4 justify-center">
               <button
                 onClick={() => setDeleteUser(null)}
@@ -206,7 +172,6 @@ export default function ListUsers() {
         </div>
       )}
 
-      {/* Animation popup */}
       <style jsx global>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: scale(0.95); }

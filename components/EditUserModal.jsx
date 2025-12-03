@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function EditUserModal({ user, onClose, onUpdated }) {
+export default function EditUserModal({ userId, onClose, onUpdated }) {
   const [form, setForm] = useState({
     prenom: "",
     nom: "",
@@ -11,56 +11,76 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     telephone: "",
     role: "",
   });
-
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Charger les données du user
+  // ⚡ Charger les données utilisateur depuis Supabase
   useEffect(() => {
-    if (user) {
+    const fetchUser = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("prenom, nom, email, telephone, role")
+        .eq("id", userId)
+        .single();
+
+      if (error) {
+        alert("Erreur chargement utilisateur : " + error.message);
+        setLoading(false);
+        onClose();
+        return;
+      }
+
       setForm({
-        prenom: user.prenom || "",
-        nom: user.nom || "",
-        email: user.email || "",
-        telephone: user.telephone || "",
-        role: user.role || "",
+        prenom: data.prenom || "",
+        nom: data.nom || "",
+        email: data.email || "",
+        telephone: data.telephone || "",
+        role: data.role || "",
       });
-    }
-  }, [user]);
+      setLoading(false);
+    };
+
+    fetchUser();
+  }, [userId, onClose]);
 
   const handleSave = async () => {
     setSaving(true);
-
-    // ⚡ Supprimer les champs vides inutiles
-    const dataToUpdate = {
-      prenom: form.prenom,
-      nom: form.nom,
-      email: form.email,
-      telephone: form.telephone,
-      role: form.role,
-    };
-
     const { data, error } = await supabase
       .from("profiles")
-      .update(dataToUpdate)
-      .eq("id", user.id)
-      .select(); // select() pour récupérer la nouvelle valeur
+      .update({
+        prenom: form.prenom,
+        nom: form.nom,
+        email: form.email,
+        telephone: form.telephone,
+        role: form.role,
+      })
+      .eq("id", userId)
+      .select(); // select() pour confirmer les changements
 
     setSaving(false);
 
     if (error) {
       alert("Erreur lors de la mise à jour : " + error.message);
-      console.log(error);
-    } else if (data) {
-      // ⚡ Mise à jour réussie
+    } else {
       onUpdated();
       onClose();
     }
   };
 
+  if (loading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[999]">
+        <div className="bg-white p-6 rounded-xl shadow-md text-center">
+          Chargement...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[999]">
       <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md">
-
         <h2 className="text-xl font-bold text-center mb-4">
           Modifier l’utilisateur
         </h2>
@@ -118,7 +138,6 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
             >
               Annuler
             </button>
-
             <button
               onClick={handleSave}
               disabled={saving}

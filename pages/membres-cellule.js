@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
+import EditMemberCellulePopup from "../components/EditMemberCellulePopup"; // nouveau composant popup
 
 export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
@@ -12,6 +13,7 @@ export default function MembresCellule() {
   const [view, setView] = useState("card");
   const [prenom, setPrenom] = useState("");
   const [role, setRole] = useState([]);
+  const [selectedMember, setSelectedMember] = useState(null); // membre sélectionné pour édition
 
   useEffect(() => {
     fetchMembres();
@@ -24,7 +26,6 @@ export default function MembresCellule() {
       const userRole = JSON.parse(localStorage.getItem("userRole") || "[]");
       if (!userEmail) throw new Error("Utilisateur non connecté");
 
-      // Récupérer info profil
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("id, prenom, role")
@@ -35,11 +36,9 @@ export default function MembresCellule() {
       setPrenom(profileData.prenom || "cher membre");
       setRole(profileData.role);
 
-      // Pour un responsable de cellule
       let membresQuery = supabase.from("v_membres_full").select("*");
 
       if (userRole.includes("ResponsableCellule")) {
-        // Récupérer toutes ses cellules
         const { data: cellulesData } = await supabase
           .from("cellules")
           .select("id, cellule")
@@ -49,7 +48,6 @@ export default function MembresCellule() {
         const celluleNoms = cellulesData.map(c => c.cellule);
 
         if (celluleIds.length > 0 || celluleNoms.length > 0) {
-          // Créer la condition OR
           const orConditions = [
             ...celluleIds.map(id => `cellule_id.eq.${id}`),
             ...celluleNoms.map(nom => `suivi_cellule_nom.eq.${nom}`)
@@ -57,7 +55,6 @@ export default function MembresCellule() {
 
           membresQuery = membresQuery.or(orConditions);
         } else {
-          // Si pas de cellule assignée
           setMembres([]);
           setLoading(false);
           return;
@@ -77,6 +74,12 @@ export default function MembresCellule() {
   };
 
   const toggleDetails = (id) => setDetailsOpen(prev => (prev === id ? null : id));
+
+  const handleUpdateMember = (updatedMember) => {
+    setMembres(prev =>
+      prev.map(m => (m.id === updatedMember.id ? updatedMember : m))
+    );
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-700 to-cyan-400">
@@ -108,7 +111,16 @@ export default function MembresCellule() {
                   <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellule_nom || m.suivi_cellule_nom || "—"}</p>
-                  <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === m.id ? "Fermer détails" : "Détails"}</button>
+
+                  <div className="flex gap-2 mt-1">
+                    <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">{detailsOpen === m.id ? "Fermer détails" : "Détails"}</button>
+                    <button
+                      onClick={() => setSelectedMember(m)}
+                      className="text-blue-600 underline text-sm flex items-center gap-1"
+                    >
+                      ✏️ Modifier le contact
+                    </button>
+                  </div>
                 </div>
 
                 {detailsOpen === m.id && (
@@ -140,9 +152,15 @@ export default function MembresCellule() {
                   <td className="px-4 py-2">{m.prenom} {m.nom}</td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.cellule_nom || m.suivi_cellule_nom || "—"}</td>
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-2 flex gap-2">
                     <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">
                       {detailsOpen === m.id ? "Fermer" : "Détails"}
+                    </button>
+                    <button
+                      onClick={() => setSelectedMember(m)}
+                      className="text-blue-600 underline text-sm flex items-center gap-1"
+                    >
+                      ✏️ Modifier le contact
                     </button>
                   </td>
                 </tr>
@@ -150,6 +168,15 @@ export default function MembresCellule() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* POPUP MODIFICATION */}
+      {selectedMember && (
+        <EditMemberCellulePopup
+          member={selectedMember}
+          onClose={() => setSelectedMember(null)}
+          onUpdateMember={handleUpdateMember}
+        />
       )}
     </div>
   );

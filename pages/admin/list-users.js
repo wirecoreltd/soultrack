@@ -19,7 +19,7 @@ export default function ListUsers() {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, prenom, nom, role_description, created_at")
+      .select("id, prenom, nom, email, telephone, role_description, created_at")
       .order("created_at", { ascending: true });
 
     if (error) {

@@ -37,7 +37,7 @@ export default function DetailsModal({
         <h2 className="text-xl font-bold mb-4">{m.prenom} {m.nom}</h2>
         <p>📞 {m.telephone || "—"}</p>
         <p>🏙 Ville : {m.ville || "—"}</p>
-        <p>❓ Besoin : {m.besoin || "—"}</p>
+        <p>❓Besoin : {(!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })())}</p>
         <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
         {/* STATUT & COMMENTAIRE */}

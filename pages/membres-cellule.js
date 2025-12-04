@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
-import EditMemberCellulePopup from "../components/EditMemberCellulePopup"; // <-- AJOUT
+import EditMemberCellulePopup from "../components/EditMemberCellulePopup"; // <-- POPUP
 
 export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
@@ -14,7 +14,7 @@ export default function MembresCellule() {
   const [prenom, setPrenom] = useState("");
   const [selectedMembre, setSelectedMembre] = useState(null);
   const [view, setView] = useState("card");
-  const [editingMember, setEditingMember] = useState(null); // <-- AJOUT
+  const [editingMember, setEditingMember] = useState(null);
 
   useEffect(() => {
     const fetchMembres = async () => {
@@ -137,18 +137,19 @@ export default function MembresCellule() {
         </button>
       </div>
 
-      {/* Vue Carte */}
+      {/* --- VUE CARTE --- */}
       {view === "card" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
           {membres.map(m => (
             <div key={m.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl overflow-hidden">
               <div className="w-full h-[6px] rounded-t-2xl" style={{ backgroundColor: getBorderColor(m) }} />
               <div className="p-4 flex flex-col items-center">
+
                 <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
                 <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📌 Cellule : {getCellule(m)}</p>
 
-                {/* BOUTON DÉTAILS */}
+                {/* BTN DETAILS */}
                 <button
                   onClick={() => setSelectedMembre(selectedMembre === m.id ? null : m.id)}
                   className="text-orange-500 underline text-sm mt-1"
@@ -156,16 +157,16 @@ export default function MembresCellule() {
                   {selectedMembre === m.id ? "Fermer détails" : "Détails"}
                 </button>
 
-                {/* CARRÉ EXTENSIBLE */}
+                {/* DÉTAILS (carré BLANC) */}
                 {selectedMembre === m.id && (
-                  <div className="mt-3 w-full bg-gray-100 p-4 rounded-xl shadow-inner animate-fadeIn text-left">
+                  <div className="mt-3 w-full bg-white p-4 rounded-xl shadow-lg animate-fadeIn text-left">
 
                     <p className="text-sm mb-2"><strong>Ville :</strong> {m.ville || "—"}</p>
                     <p className="text-sm mb-2"><strong>WhatsApp :</strong> {m.is_whatsapp ? "Oui" : "Non"}</p>
                     <p className="text-sm mb-2"><strong>Besoin :</strong> {m.besoin || "—"}</p>
                     <p className="text-sm mb-2"><strong>Infos :</strong> {m.infos_supplementaires || "—"}</p>
 
-                    {/* BOUTON MODIFIER */}
+                    {/* BTN MODIFIER */}
                     <button
                       onClick={() => setEditingMember(m)}
                       className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg w-full text-center font-semibold"
@@ -179,7 +180,8 @@ export default function MembresCellule() {
           ))}
         </div>
       ) : (
-        // Vue Table
+
+        /* --- VUE TABLE --- */
         <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
@@ -196,17 +198,32 @@ export default function MembresCellule() {
                 <tr><td colSpan={5} className="px-4 py-2 text-white text-center">Aucun membre</td></tr>
               ) : membres.map(m => (
                 <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                  <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
+                  <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>
+                    {m.prenom} {m.nom}
+                  </td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.ville || "—"}</td>
                   <td className="px-4 py-2">{getCellule(m)}</td>
-                  <td className="px-4 py-2">
+
+                  {/* ACTIONS TABLE */}
+                  <td className="px-4 py-2 space-x-3 whitespace-nowrap">
+
+                    {/* DETAILS */}
                     <button
                       onClick={() => setSelectedMembre(selectedMembre === m.id ? null : m.id)}
-                      className="text-orange-500 underline text-sm"
+                      className="text-blue-400 underline text-sm"
                     >
-                      {selectedMembre === m.id ? "Fermer" : "Action"}
+                      {selectedMembre === m.id ? "Fermer" : "Détails"}
                     </button>
+
+                    {/* MODIFIER */}
+                    <button
+                      onClick={() => setEditingMember(m)}
+                      className="text-orange-400 underline text-sm"
+                    >
+                      Modifier
+                    </button>
+
                   </td>
                 </tr>
               ))}
@@ -223,6 +240,7 @@ export default function MembresCellule() {
           onUpdateMember={handleUpdateMember}
         />
       )}
+
     </div>
   );
 }

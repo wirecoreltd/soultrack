@@ -57,7 +57,12 @@ export default function ListUsers() {
   if (loading) return <p className="text-center mt-10 text-lg">Chargement...</p>;
 
   return (
-    <div className="min-h-screen p-6 bg-linear-gradient(135deg, #2E3192 0%, #92EFFD 100%>
+            <div
+          className="min-h-screen p-6"
+          style={{
+            background: "linear-gradient(135deg, #A7C7FF 0%, #A7C7FF 60%, #FFB87A 60%, #FFB87A 100%)"
+          }}
+        >
     
       <button onClick={() => router.back()} className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700">← Retour</button>
 

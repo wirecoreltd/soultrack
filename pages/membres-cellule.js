@@ -1,20 +1,19 @@
 // pages/membres-cellule.js
-
 "use client";
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
-import EditMemberPopup from "../components/EditMemberPopup";
-import MemberDetailsPopup from "../components/MemberDetailsPopup";
+import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
 
 export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [detailsOpen, setDetailsOpen] = useState(null);
   const [view, setView] = useState("card");
   const [prenom, setPrenom] = useState("");
   const [role, setRole] = useState([]);
-  const [editingMember, setEditingMember] = useState(null);
-  const [detailsMember, setDetailsMember] = useState(null);
+  const [editMember, setEditMember] = useState(null);
+  const [viewDetailsMember, setViewDetailsMember] = useState(null); // popup lecture seule table
 
   useEffect(() => {
     fetchMembres();
@@ -64,9 +63,7 @@ export default function MembresCellule() {
       const { data, error } = await membresQuery;
       if (error) throw error;
 
-      // filtrer uniquement ceux qui ont une cellule assignée
-      const filtered = data.filter(m => m.cellule_id || m.suivi_cellule_nom);
-      setMembres(filtered);
+      setMembres(data || []);
     } catch (err) {
       console.error("❌ Erreur :", err);
       setMembres([]);
@@ -75,9 +72,11 @@ export default function MembresCellule() {
     }
   };
 
-  const handleUpdateMember = (updated) => {
+  const toggleDetails = (id) => setDetailsOpen(prev => (prev === id ? null : id));
+
+  const handleUpdateMember = (updatedMember) => {
     setMembres(prev =>
-      prev.map(m => (m.id === updated.id ? updated : m))
+      prev.map(m => (m.id === updatedMember.id ? updatedMember : m))
     );
   };
 
@@ -106,27 +105,26 @@ export default function MembresCellule() {
             <p className="text-white">Aucun membre à afficher.</p>
           ) : (
             membres.map(m => (
-              <div key={m.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl overflow-hidden">
+              <div key={m.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 overflow-hidden">
                 <div className="p-4 flex flex-col items-center">
                   <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellule_nom || m.suivi_cellule_nom || "—"}</p>
-                  <button
-                    className="text-orange-500 underline text-sm mt-1"
-                    onClick={() => setDetailsMember(m)}
-                  >
-                    Détails
-                  </button>
+                  <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === m.id ? "Fermer détails" : "Détails"}</button>
                 </div>
 
-                <div className="p-4 text-sm flex flex-col gap-2">
-                  <button
-                    className="text-blue-600 underline text-sm mt-1"
-                    onClick={() => setEditingMember(m)}
-                  >
-                    ✏️ Modifier le contact
-                  </button>
-                </div>
+                {detailsOpen === m.id && (
+                  <div className="p-4 text-sm flex flex-col gap-1">
+                    <p>Ville : {m.ville || "—"}</p>
+                    <p>Infos supplémentaires : {m.infos_supplementaires || "—"}</p>
+                    <button
+                      className="mt-2 bg-orange-500 text-white rounded-xl py-2 px-4 text-sm hover:bg-orange-600"
+                      onClick={() => setEditMember(m)}
+                    >
+                      ✏️ Modifier le contact
+                    </button>
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -139,22 +137,28 @@ export default function MembresCellule() {
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
                 <th className="px-4 py-2">Cellule</th>
-                <th className="px-4 py-2">Action</th>
+                <th className="px-4 py-2 rounded-tr-lg">Action</th>
               </tr>
             </thead>
             <tbody>
               {membres.length === 0 ? (
                 <tr><td colSpan={4} className="px-4 py-2 text-white text-center">Aucun membre</td></tr>
               ) : membres.map(m => (
-                <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
+                <tr key={m.id} className="hover:bg-white/10 transition duration-150">
                   <td className="px-4 py-2">{m.prenom} {m.nom}</td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.cellule_nom || m.suivi_cellule_nom || "—"}</td>
                   <td className="px-4 py-2 flex gap-2">
-                    <button onClick={() => setDetailsMember(m)} className="text-orange-500 underline text-sm">
+                    <button
+                      onClick={() => setViewDetailsMember(m)}
+                      className="text-orange-500 underline text-sm"
+                    >
                       Détails
                     </button>
-                    <button onClick={() => setEditingMember(m)} className="text-blue-600 underline text-sm">
+                    <button
+                      onClick={() => setEditMember(m)}
+                      className="text-green-500 underline text-sm"
+                    >
                       ✏️ Modifier
                     </button>
                   </td>
@@ -165,19 +169,33 @@ export default function MembresCellule() {
         </div>
       )}
 
-      {editingMember && (
-        <EditMemberPopup
-          member={editingMember}
-          onClose={() => setEditingMember(null)}
+      {/* POPUP MODIFIER */}
+      {editMember && (
+        <EditMemberCellulePopup
+          member={editMember}
+          onClose={() => setEditMember(null)}
           onUpdateMember={handleUpdateMember}
         />
       )}
 
-      {detailsMember && (
-        <MemberDetailsPopup
-          member={detailsMember}
-          onClose={() => setDetailsMember(null)}
-        />
+      {/* POPUP DETAILS TABLE */}
+      {viewDetailsMember && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
+            <button
+              onClick={() => setViewDetailsMember(null)}
+              className="absolute top-3 right-3 text-red-500 font-bold text-xl hover:text-red-700"
+              aria-label="Fermer"
+            >
+              ✕
+            </button>
+            <h2 className="text-2xl font-bold text-center mb-4">{viewDetailsMember.prenom} {viewDetailsMember.nom}</h2>
+            <p>📞 Téléphone : {viewDetailsMember.telephone || "—"}</p>
+            <p>📌 Cellule : {viewDetailsMember.cellule_nom || viewDetailsMember.suivi_cellule_nom || "—"}</p>
+            <p>Ville : {viewDetailsMember.ville || "—"}</p>
+            <p>Infos supplémentaires : {viewDetailsMember.infos_supplementaires || "—"}</p>
+          </div>
+        </div>
       )}
     </div>
   );

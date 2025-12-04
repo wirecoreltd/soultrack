@@ -9,10 +9,21 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     nom: "",
     email: "",
     telephone: "",
+    role: "",
     role_description: "",
   });
+
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // Liste des rôles techniques + description
+  const roles = [
+    { value: "Administrateur", label: "Administrateur" },
+    { value: "ResponsableCellule", label: "Responsable Cellule" },
+    { value: "ResponsableEvangelisation", label: "Responsable Évangélisation" },
+    { value: "Conseiller", label: "Conseiller" },
+    { value: "ResponsableIntegration", label: "Responsable Intégration" },
+  ];
 
   useEffect(() => {
     if (!user) return;
@@ -21,13 +32,25 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
       nom: user.nom || "",
       email: user.email || "",
       telephone: user.telephone || "",
+      role: user.role || "",
       role_description: user.role_description || "",
     });
   }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+
+    // Quand on change le rôle, on change aussi automatiquement la description
+    if (name === "role") {
+      const roleFound = roles.find(r => r.value === value);
+      setForm(prev => ({
+        ...prev,
+        role: value,
+        role_description: roleFound ? roleFound.label : ""
+      }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSave = async () => {
@@ -41,10 +64,11 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         nom: form.nom,
         email: form.email,
         telephone: form.telephone,
+        role: form.role,
         role_description: form.role_description,
       })
       .eq("id", user.id)
-      .select(); // renvoie un tableau
+      .select();
 
     setSaving(false);
 
@@ -54,7 +78,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     }
 
     if (data && data.length > 0 && onUpdated) {
-      onUpdated(data[0]); // met à jour instantanément la liste
+      onUpdated(data[0]);
     }
 
     setSuccess(true);
@@ -79,13 +103,12 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
           <input type="text" name="nom" value={form.nom} onChange={handleChange} placeholder="Nom" className="input" />
           <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" className="input" />
           <input type="text" name="telephone" value={form.telephone} onChange={handleChange} placeholder="Téléphone" className="input" />
-          <select name="role_description" value={form.role_description} onChange={handleChange} className="input">
+
+          <select name="role" value={form.role} onChange={handleChange} className="input">
             <option value="">-- Sélectionnez un rôle --</option>
-            <option value="Administrateur">Admin</option>
-            <option value="ResponsableCellule">Responsable Cellule</option>
-            <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
-            <option value="Conseiller">Conseiller</option>
-            <option value="ResponsableIntegration">Responsable Intégration</option>
+            {roles.map(r => (
+              <option key={r.value} value={r.value}>{r.label}</option>
+            ))}
           </select>
 
           <div className="flex gap-4 mt-4">

@@ -51,28 +51,20 @@ export default function MembresCellule() {
           return;
         }
 
-        // Construire les conditions OR pour Supabase
+        // Construire les conditions OR pour les membres liés à ces cellules
         const orConditions = [
           ...celluleIds.map(id => `cellule_id.eq.${id}`),
           ...celluleNoms.map(nom => `suivi_cellule_nom.eq.${nom}`)
         ].join(",");
 
-        // Récupérer les membres filtrés
+        // Récupérer uniquement les membres ayant une cellule
         const { data, error } = await supabase
           .from("v_membres_full")
           .select("*")
-          .or(orConditions);
+          .or(orConditions)
+          .not("cellule_id", "is", null)
+          .not("suivi_cellule_nom", "is", null);
 
-        if (error) throw error;
-
-        // Ajouter un champ "cellule_affichee" pour simplifier l'affichage
-        membresData = (data || []).map(m => ({
-          ...m,
-          cellule_affichee: m.cellule_nom || m.suivi_cellule_nom || "—"
-        }));
-      } else {
-        // Autres rôles : récupérer tous les membres
-        const { data, error } = await supabase.from("v_membres_full").select("*");
         if (error) throw error;
 
         membresData = (data || []).map(m => ({

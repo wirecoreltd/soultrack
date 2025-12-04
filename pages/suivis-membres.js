@@ -309,7 +309,7 @@ export default function SuivisMembres() {
                     <td className="px-4 py-2">{m.telephone || "—"}</td>
                     <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
                     <td className="px-4 py-2">{m.cellule_nom ? `Cellule de ${m.cellule_nom}` : m.responsable || "—"}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 flex items-center gap-2">
                       <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>
                       <button
                           onClick={() => setEditMember(m)}

@@ -15,6 +15,7 @@ export default function SuivisMembres() {
   const [prenom, setPrenom] = useState("");
   const [role, setRole] = useState([]);
   const [detailsOpen, setDetailsOpen] = useState(null);
+  const [detailsModalMember, setDetailsModalMember] = useState(null);
   const [statusChanges, setStatusChanges] = useState({});
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
@@ -266,44 +267,57 @@ export default function SuivisMembres() {
           ))}
         </div>
       )}
-
-      {/* Vue Table */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
-          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-            <thead className="bg-gray-200 text-black-800 text-sm uppercase rounded-t-md">
-              <tr>
-                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-                <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Statut Suivis</th>
-                <th className="px-4 py-2">Attribué à</th>
-                <th className="px-4 py-2 rounded-tr-lg">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {uniqueSuivis.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
-                </tr>
-              ) : (
-                uniqueSuivis.map(m => (
-                  <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                    <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
-                    <td className="px-4 py-2">{m.telephone || "—"}</td>
-                    <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
-                    <td className="px-4 py-2">{m.cellule_nom ? `Cellule de ${m.cellule_nom}` : m.responsable || "—"}</td>
-                    <td className="px-4 py-2">
-                      <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">{detailsOpen === m.id ? "Fermer détails" : "Détails"}</button>
-                    </td>
-                  </tr>
-                ))
+        {/* Vue Table */}
+              {view === "table" && (
+                <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
+                  <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+                    <thead className="bg-gray-200 text-black-800 text-sm uppercase rounded-t-md">
+                      <tr>
+                        <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+                        <th className="px-4 py-2">Téléphone</th>
+                        <th className="px-4 py-2">Statut Suivis</th>
+                        <th className="px-4 py-2">Attribué à</th>
+                        <th className="px-4 py-2 rounded-tr-lg">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {suivis.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
+                        </tr>
+                      ) : (
+                        suivis.map(m => (
+                          <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
+                            <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
+                            <td className="px-4 py-2">{m.telephone || "—"}</td>
+                            <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
+                            <td className="px-4 py-2">{m.cellule_nom ? `Cellule de ${m.cellule_nom}` : m.responsable || "—"}</td>
+                            <td className="px-4 py-2">
+                              <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {editMember && <EditMemberPopup member={editMember} cellules={[]} conseillers={[]} onClose={() => setEditMember(null)} onUpdate={() => setEditMember(null)} />}
-    </div>
-  );
-}
+        
+              {detailsModalMember && (
+                <DetailsModal
+                  m={detailsModalMember}
+                  onClose={() => setDetailsModalMember(null)}
+                  handleStatusChange={handleStatusChange}
+                  handleCommentChange={handleCommentChange}
+                  statusChanges={statusChanges}
+                  commentChanges={commentChanges}
+                  updating={updating}
+                  updateSuivi={updateSuivi}
+                />
+              )}
+        
+              {editMember && <EditMemberPopup member={editMember} cellules={[]} conseillers={[]} onClose={() => setEditMember(null)} onUpdate={() => setEditMember(null)} />}
+            </div>
+          );
+        }
+      

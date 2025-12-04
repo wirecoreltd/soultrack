@@ -161,27 +161,64 @@ export default function SuivisMembres() {
       {message && <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{message.text}</div>}
 
       {/* Vue Carte */}
-      {view === "card" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-          {uniqueSuivis.map(item => (
-            <div key={item.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl overflow-hidden">
-              <div className="w-full h-[6px] rounded-t-2xl" style={{ backgroundColor: getBorderColor(item) }} />
-              <div className="p-4 flex flex-col items-center">
-                <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>
-                <p className="text-sm text-black-700 mb-1">📞 {item.telephone || "—"}</p>
-                <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>
-                <p className="text-sm text-black-700 mb-1">📌 Attribué à : {item.cellule_nom ? `Cellule de ${item.cellule_nom}` : item.responsable || "—"}</p>
-                <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === item.id ? "Fermer détails" : "Détails"}</button>
+        {view === "card" && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
+            {uniqueSuivis.map(item => (
+              <div
+                key={item.id}
+                className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
+              >
+                {/* Couleur du statut */}
+                <div
+                  className="w-full h-[6px] rounded-t-2xl"
+                  style={{ backgroundColor: getBorderColor(item) }}
+                />
+        
+                {/* Infos principales */}
+                <div className="p-4 flex flex-col items-center">
+                  <h2 className="font-bold text-black text-base text-center mb-1">
+                    {item.prenom} {item.nom}
+                  </h2>
+        
+                  <p className="text-sm text-black-700 mb-1">
+                    📞 {item.telephone || "—"}
+                  </p>
+        
+                  <p className="text-sm text-black-700 mb-1">
+                    📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}
+                  </p>
+        
+                  <p className="text-sm text-black-700 mb-1">
+                    📌 Attribué à :{" "}
+                    {item.cellule_nom
+                      ? `Cellule de ${item.cellule_nom}`
+                      : item.responsable || "—"}
+                  </p>
+        
+                  {/* Bouton ouvrir/fermer détails */}
+                  <button
+                    onClick={() => toggleDetails(item.id)}
+                    className="text-orange-500 underline text-sm mt-1"
+                  >
+                    {detailsOpen === item.id ? "Fermer détails" : "Détails"}
+                  </button>
+                </div>
+        
+                {/* Carré extensible (accordéon) */}
+                <div
+                  className={`transition-all duration-500 overflow-hidden px-4 ${
+                    detailsOpen === item.id
+                      ? "max-h-[1000px] py-4"
+                      : "max-h-0 py-0"
+                  }`}
+                >
+                  {detailsOpen === item.id && <DetailsPopup m={item} />}
+                </div>
               </div>
+            ))}
+          </div>
+)}
 
-              {/* Détails expandable */}
-              <div className={`transition-all duration-500 overflow-hidden px-4 ${detailsOpen === item.id ? "max-h-[1000px] py-4" : "max-h-0 py-0"}`}>
-                {detailsOpen === item.id && <DetailsPopup m={item} />}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Vue Table */}
       {view === "table" && (

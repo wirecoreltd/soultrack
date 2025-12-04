@@ -138,7 +138,10 @@ export default function SuivisEvangelisation() {
     return (
       <div className="text-black text-sm space-y-2 w-full">
         <p>🏙 Ville : {m.ville || "—"}</p>
-        <p>❓Besoin : {Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin || "—"}</p>
+         <p>❓Besoin : {(!m.besoin ? "—" : Array.isArray(m.besoin) 
+              ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); 
+                return Array.isArray(arr) ? arr.join(", ") : m.besoin; } 
+              catch { return m.besoin; } })())}</p>
         <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
         <div className="mt-4 border-t pt-4">

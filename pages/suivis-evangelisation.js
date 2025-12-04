@@ -1,3 +1,5 @@
+// pages/suivis-evangelisation.js
+
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -13,7 +15,11 @@ export default function SuivisEvangelisation() {
   const [statusChanges, setStatusChanges] = useState({});
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
+  const [view, setView] = useState("card");
+  const [prenom, setPrenom] = useState("");
+  const [role, setRole] = useState([]);
   const [message, setMessage] = useState("");
+  const [editMember, setEditMember] = useState(null);
 
   useEffect(() => {
     fetchSuivis();
@@ -32,6 +38,9 @@ export default function SuivisEvangelisation() {
         .eq("email", userEmail)
         .single();
       if (profileError) throw profileError;
+
+      setPrenom(profileData.prenom || "cher membre");
+      setRole(profileData.role);
 
       let query = supabase
         .from("suivis_des_evangelises")
@@ -65,6 +74,7 @@ export default function SuivisEvangelisation() {
   };
 
   const toggleDetails = (id) => setDetailsOpen(prev => (prev === id ? null : id));
+
   const handleStatusChange = (id, value) => setStatusChanges(prev => ({ ...prev, [id]: value }));
   const handleCommentChange = (id, value) => setCommentChanges(prev => ({ ...prev, [id]: value }));
 
@@ -199,34 +209,56 @@ export default function SuivisEvangelisation() {
         <p className="text-white text-lg max-w-xl mx-auto italic">Chaque personne a une valeur infinie. Ensemble, nous avançons 🌱</p>
       </div>
 
+      <div className="mb-4 flex justify-between w-full max-w-6xl">
+        <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline hover:text-gray-200">{view === "card" ? "Vue Table" : "Vue Carte"}</button>
+      </div>
+
       {message && <div className="mb-4 px-4 py-2 rounded-md bg-yellow-100 text-yellow-800 text-sm">{message}</div>}
 
       {loading ? (
         <p className="text-white">Chargement...</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full max-w-6xl justify-items-center">
+      ) : view === "card" ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
           {suivis.map(m => (
-            <div
-              key={m.id}
-              className="bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-l-4 p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32 w-full overflow-hidden"
-              style={{ borderLeftColor: getBorderColor(m) }}
-            >
-              <div className="text-4xl mb-2">📋</div>
-              <div className="text-lg font-bold text-gray-800 text-center">{m.prenom} {m.nom}</div>
-              <p className="text-sm text-gray-700 mt-1">📞 {m.telephone || "—"}</p>
-              <p className="text-sm text-gray-700">📌 Cellule : {m.cellules?.cellule || "—"}</p>
-              <button
-                onClick={() => toggleDetails(m.id)}
-                className="text-orange-500 underline text-sm mt-1"
-              >
-                {detailsOpen === m.id ? "Fermer détails" : "Détails"}
-              </button>
+            <div key={m.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl overflow-hidden">
+              <div className="w-full h-[6px] rounded-t-2xl" style={{ backgroundColor: getBorderColor(m) }} />
+              <div className="p-4 flex flex-col items-center">
+                <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
+                <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
+                <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellules?.cellule || "—"}</p>
+                <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === m.id ? "Fermer détails" : "Détails"}</button>
+              </div>
 
-              <div className={`transition-all duration-500 overflow-hidden w-full ${detailsOpen === m.id ? "max-h-[1000px] py-4" : "max-h-0 py-0"}`}>
+              <div className={`transition-all duration-500 overflow-hidden px-4 ${detailsOpen === m.id ? "max-h-[1000px] py-4" : "max-h-0 py-0"}`}>
                 {detailsOpen === m.id && <DetailsPopup m={m} />}
               </div>
             </div>
           ))}
+        </div>
+      ) : (
+        <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
+          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
+              <tr>
+                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+                <th className="px-4 py-2">Téléphone</th>
+                <th className="px-4 py-2">Cellule</th>
+                <th className="px-4 py-2 rounded-tr-lg">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {suivis.length === 0 ? (
+                <tr><td colSpan={4} className="px-4 py-2 text-white text-center">Aucun évangélisé</td></tr>
+              ) : suivis.map(m => (
+                <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
+                  <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
+                  <td className="px-4 py-2">{m.telephone || "—"}</td>
+                  <td className="px-4 py-2">{m.cellules?.cellule || "—"}</td>
+                  <td className="px-4 py-2"><button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">{detailsOpen === m.id ? "Fermer" : "Détails"}</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

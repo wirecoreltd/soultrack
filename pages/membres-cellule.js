@@ -32,7 +32,12 @@ export default function MembresCellule() {
         .single();
       if (profileError) throw profileError;
 
-      let membresQuery = supabase.from("v_membres_full").select("*");
+      let membresQuery = supabase
+        .from("v_membres_full")
+        .select(`
+          *,
+          cellule_affichee:coalesce(cellule_nom, suivi_cellule_nom)
+        `);
 
       if (userRole.includes("ResponsableCellule")) {
         // Récupérer les cellules qu'il gère
@@ -51,14 +56,12 @@ export default function MembresCellule() {
           return;
         }
 
-        // Construire les conditions "OR" pour Supabase
-        const orConditions = [];
+        const orConditions = [
+          ...celluleIds.map(id => `cellule_id.eq.${id}`),
+          ...celluleNoms.map(nom => `suivi_cellule_nom.eq.${nom}`)
+        ].join(",");
 
-        celluleIds.forEach(id => orConditions.push(`cellule_id.eq.${id}`));
-        celluleNoms.forEach(nom => orConditions.push(`suivi_cellule_nom.eq.${nom}`));
-
-        // Supabase nécessite une string séparée par des virgules
-        membresQuery = membresQuery.or(orConditions.join(","));
+        membresQuery = membresQuery.or(orConditions);
       }
 
       const { data, error } = await membresQuery;
@@ -104,7 +107,7 @@ export default function MembresCellule() {
                 <div className="p-4 flex flex-col items-center">
                   <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellule_nom || m.suivi_cellule_nom || "—"}</p>
+                  <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellule_affichee || "—"}</p>
                   <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-1">
                     {detailsOpen === m.id ? "Fermer détails" : "Détails"}
                   </button>
@@ -144,7 +147,7 @@ export default function MembresCellule() {
                 <tr key={m.id} className="hover:bg-white/10 transition duration-150">
                   <td className="px-4 py-2">{m.prenom} {m.nom}</td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
-                  <td className="px-4 py-2">{m.cellule_nom || m.suivi_cellule_nom || "—"}</td>
+                  <td className="px-4 py-2">{m.cellule_affichee || "—"}</td>
                   <td className="px-4 py-2 flex gap-2">
                     <button
                       onClick={() => setEditMember(m)}

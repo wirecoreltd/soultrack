@@ -162,7 +162,10 @@ export default function MembresCellule() {
                   <div className="mt-3 w-full bg-white p-4 rounded-xl text-left">
                     <p className="text-sm mb-2"><strong>Ville :</strong> {m.ville || "—"}</p>
                     <p className="text-sm mb-2"><strong>WhatsApp :</strong> {m.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p className="text-sm mb-2"><strong>Besoin :</strong> {m.besoin || "—"}</p>
+                    <p className="text-sm mb-2"><strong>Besoin : {(!m.besoin ? "—" : Array.isArray(m.besoin) 
+                    ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); 
+                      return Array.isArray(arr) ? arr.join(", ") : m.besoin; } 
+                          catch { return m.besoin; } })())}</p>
                     <p className="text-sm mb-2"><strong>Infos :</strong> {m.infos_supplementaires || "—"}</p>
 
                     {/* BOUTON MODIFIER */}

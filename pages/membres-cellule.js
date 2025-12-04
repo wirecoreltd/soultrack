@@ -1,3 +1,5 @@
+// pages/membres-cellule.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,11 +10,8 @@ export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
   const [loading, setLoading] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState(null);
-  const [view, setView] = useState("card");
-  const [prenom, setPrenom] = useState("");
-  const [role, setRole] = useState([]);
   const [editMember, setEditMember] = useState(null);
-  const [viewDetailsMember, setViewDetailsMember] = useState(null);
+  const [view, setView] = useState("card");
 
   useEffect(() => {
     fetchMembres();
@@ -25,6 +24,7 @@ export default function MembresCellule() {
       const userRole = JSON.parse(localStorage.getItem("userRole") || "[]");
       if (!userEmail) throw new Error("Utilisateur non connecté");
 
+      // Récupérer info profil
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("id, prenom, role")
@@ -32,31 +32,30 @@ export default function MembresCellule() {
         .single();
       if (profileError) throw profileError;
 
-      setPrenom(profileData.prenom || "cher membre");
-      setRole(profileData.role);
-
+      // Pour un responsable de cellule : récupérer ses cellules
       let membresQuery = supabase.from("v_membres_full").select("*");
-
       if (userRole.includes("ResponsableCellule")) {
-        const { data: cellulesData } = await supabase
+        const { data: cellulesData, error: cellulesError } = await supabase
           .from("cellules")
           .select("id, cellule")
           .eq("responsable_id", profileData.id);
+        if (cellulesError) throw cellulesError;
 
         const celluleIds = cellulesData.map(c => c.id);
         const celluleNoms = cellulesData.map(c => c.cellule);
 
-        if (celluleIds.length > 0) {
-          const orConditions = [
-            ...celluleIds.map(id => `cellule_id.eq.${id}`),
-            ...celluleNoms.map(nom => `suivi_cellule_nom.eq.${nom}`)
-          ].join(",");
-          membresQuery = membresQuery.or(orConditions);
-        } else {
+        if (celluleIds.length === 0 && celluleNoms.length === 0) {
           setMembres([]);
           setLoading(false);
           return;
         }
+
+        // Filtrer les membres appartenant à ces cellules
+        const orConditions = [
+          ...celluleIds.map(id => `cellule_id.eq.${id}`),
+          ...celluleNoms.map(nom => `suivi_cellule_nom.eq.${nom}`)
+        ].join(",");
+        membresQuery = membresQuery.or(orConditions);
       }
 
       const { data, error } = await membresQuery;
@@ -109,12 +108,12 @@ export default function MembresCellule() {
                 </div>
 
                 {detailsOpen === m.id && (
-                  <div className="p-4 text-sm flex flex-col gap-2">
+                  <div className="p-4 text-sm">
                     <p>Ville : {m.ville || "—"}</p>
                     <p>Infos supplémentaires : {m.infos_supplementaires || "—"}</p>
                     <button
                       onClick={() => setEditMember(m)}
-                      className="text-blue-600 text-sm underline self-center mt-2"
+                      className="mt-2 text-blue-600 underline"
                     >
                       ✏️ Modifier le contact
                     </button>
@@ -139,22 +138,22 @@ export default function MembresCellule() {
               {membres.length === 0 ? (
                 <tr><td colSpan={4} className="px-4 py-2 text-white text-center">Aucun membre</td></tr>
               ) : membres.map(m => (
-                <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
+                <tr key={m.id} className="hover:bg-white/10 transition duration-150">
                   <td className="px-4 py-2">{m.prenom} {m.nom}</td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.cellule_nom || m.suivi_cellule_nom || "—"}</td>
                   <td className="px-4 py-2 flex gap-2">
                     <button
-                      onClick={() => setViewDetailsMember(m)}
-                      className="text-orange-500 underline text-sm"
-                    >
-                      Détails
-                    </button>
-                    <button
                       onClick={() => setEditMember(m)}
                       className="text-blue-600 underline text-sm"
                     >
                       ✏️ Modifier
+                    </button>
+                    <button
+                      onClick={() => toggleDetails(m.id)}
+                      className="text-orange-500 underline text-sm"
+                    >
+                      Détails
                     </button>
                   </td>
                 </tr>
@@ -169,30 +168,10 @@ export default function MembresCellule() {
           member={editMember}
           onClose={() => setEditMember(null)}
           onUpdateMember={(updated) => {
-            setMembres(prev => prev.map(m => m.id === updated.id ? updated : m));
+            setMembres(prev => prev.map(m => (m.id === updated.id ? updated : m)));
+            setEditMember(null);
           }}
         />
-      )}
-
-      {viewDetailsMember && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
-            <button
-              onClick={() => setViewDetailsMember(null)}
-              className="absolute top-3 right-3 text-red-500 font-bold text-xl hover:text-red-700"
-              aria-label="Fermer"
-            >
-              ✕
-            </button>
-            <h2 className="text-2xl font-bold text-center mb-4">
-              {viewDetailsMember.prenom} {viewDetailsMember.nom}
-            </h2>
-            <p>📞 {viewDetailsMember.telephone || "—"}</p>
-            <p>Ville : {viewDetailsMember.ville || "—"}</p>
-            <p>Cellule : {viewDetailsMember.cellule_nom || viewDetailsMember.suivi_cellule_nom || "—"}</p>
-            <p>Infos supplémentaires : {viewDetailsMember.infos_supplementaires || "—"}</p>
-          </div>
-        </div>
       )}
     </div>
   );

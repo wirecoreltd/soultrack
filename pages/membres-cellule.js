@@ -32,9 +32,10 @@ export default function MembresCellule() {
         .single();
       if (profileError) throw profileError;
 
-      // Pour un responsable de cellule : récupérer ses cellules
       let membresQuery = supabase.from("v_membres_full").select("*");
+
       if (userRole.includes("ResponsableCellule")) {
+        // Récupérer les cellules qu'il gère
         const { data: cellulesData, error: cellulesError } = await supabase
           .from("cellules")
           .select("id, cellule")
@@ -50,12 +51,14 @@ export default function MembresCellule() {
           return;
         }
 
-        // Filtrer les membres appartenant à ces cellules
-        const orConditions = [
-          ...celluleIds.map(id => `cellule_id.eq.${id}`),
-          ...celluleNoms.map(nom => `suivi_cellule_nom.eq.${nom}`)
-        ].join(",");
-        membresQuery = membresQuery.or(orConditions);
+        // Construire les conditions "OR" pour Supabase
+        const orConditions = [];
+
+        celluleIds.forEach(id => orConditions.push(`cellule_id.eq.${id}`));
+        celluleNoms.forEach(nom => orConditions.push(`suivi_cellule_nom.eq.${nom}`));
+
+        // Supabase nécessite une string séparée par des virgules
+        membresQuery = membresQuery.or(orConditions.join(","));
       }
 
       const { data, error } = await membresQuery;

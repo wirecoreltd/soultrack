@@ -3,7 +3,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import BoutonEnvoyer from "./BoutonEnvoyer";
 
-export default function DetailsModal({ m, onClose, handleStatusChange, handleCommentChange, statusChanges, commentChanges, updating, updateSuivi }) {
+export default function DetailsModal({ 
+  m, 
+  onClose, 
+  handleStatusChange, 
+  handleCommentChange, 
+  statusChanges, 
+  commentChanges, 
+  updating, 
+  updateSuivi,
+  onEnvoyer // <- passer handleAfterSend ici depuis le parent
+}) {
   const commentRef = useRef(null);
   const [typeEnvoi, setTypeEnvoi] = useState("");
   const [cible, setCible] = useState(null);
@@ -14,11 +24,16 @@ export default function DetailsModal({ m, onClose, handleStatusChange, handleCom
     // Load cellules & conseillers pour le select "Envoyer à"
     const loadData = async () => {
       try {
-        const cellulesRes = await fetch("/api/cellules"); // ou supabase
+        const cellulesRes = await fetch("/api/cellules");
+        const cellulesData = await cellulesRes.json();
         const conseillersRes = await fetch("/api/conseillers");
-        setCellules(cellulesRes?.data || []);
-        setConseillers(conseillersRes?.data || []);
-      } catch {}
+        const conseillersData = await conseillersRes.json();
+
+        setCellules(cellulesData || []);
+        setConseillers(conseillersData || []);
+      } catch (err) {
+        console.error("Erreur chargement cellules/conseillers:", err);
+      }
     };
     loadData();
   }, []);
@@ -31,7 +46,7 @@ export default function DetailsModal({ m, onClose, handleStatusChange, handleCom
   }, [commentChanges[m.id]]);
 
   const handleSelectCible = (id) => {
-    if (typeEnvoi === "cellule") setCible(cellules.find(c => c.id === parseInt(id)) || null);
+    if (typeEnvoi === "cellule") setCible(cellules.find(c => c.id === id) || null);
     else if (typeEnvoi === "conseiller") setCible(conseillers.find(c => c.id === id) || null);
   };
 
@@ -43,12 +58,16 @@ export default function DetailsModal({ m, onClose, handleStatusChange, handleCom
         <h2 className="text-xl font-bold mb-4">{m.prenom} {m.nom}</h2>
         <p>📞 {m.telephone || "—"}</p>
         <p>🏙 Ville : {m.ville || "—"}</p>
-        <p>❓ Besoin : {m.besoin || "—"}</p>
+        <p>❓ Besoin : {m.besoin ? (Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin) : "—"}</p>
         <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
         <div className="mt-4">
           <label className="font-semibold">📌 Envoyer à :</label>
-          <select value={typeEnvoi} onChange={(e) => { setTypeEnvoi(e.target.value); setCible(null); }} className="w-full border rounded-md px-2 py-1 mt-2">
+          <select 
+            value={typeEnvoi} 
+            onChange={(e) => { setTypeEnvoi(e.target.value); setCible(null); }} 
+            className="w-full border rounded-md px-2 py-1 mt-2"
+          >
             <option value="">-- Choisir --</option>
             <option value="cellule">📍 Cellule</option>
             <option value="conseiller">👤 Conseiller</option>
@@ -68,21 +87,36 @@ export default function DetailsModal({ m, onClose, handleStatusChange, handleCom
             </select>
           )}
 
-          {cible && <BoutonEnvoyer membre={m} type={typeEnvoi} cible={cible} session={true} onEnvoyer={() => {}} showToast={() => {}} />}
+          {cible && <BoutonEnvoyer membre={m} type={typeEnvoi} cible={cible} session={true} onEnvoyer={onEnvoyer} showToast={() => {}} />}
         </div>
 
         <div className="mt-4">
           <label className="font-semibold">📋 Statut Suivis :</label>
-          <select value={statusChanges[m.id] ?? m.statut_suivis ?? ""} onChange={(e) => handleStatusChange(m.id, e.target.value)} className="w-full border rounded-md px-2 py-1 mt-2">
+          <select 
+            value={statusChanges[m.id] ?? m.statut_suivis ?? ""} 
+            onChange={(e) => handleStatusChange(m.id, e.target.value)} 
+            className="w-full border rounded-md px-2 py-1 mt-2"
+          >
             <option value="">-- Choisir un statut --</option>
             <option value={1}>🕓 En attente</option>
             <option value={3}>✅ Intégrer</option>
             <option value={4}>❌ Refus</option>
           </select>
 
-          <textarea ref={commentRef} value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""} onChange={(e) => handleCommentChange(m.id, e.target.value)} rows={3} className="w-full border rounded-md px-2 py-1 mt-2 resize-none" placeholder="Ajouter un commentaire..." />
+          <textarea 
+            ref={commentRef} 
+            value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""} 
+            onChange={(e) => handleCommentChange(m.id, e.target.value)} 
+            rows={3} 
+            className="w-full border rounded-md px-2 py-1 mt-2 resize-none" 
+            placeholder="Ajouter un commentaire..." 
+          />
 
-          <button onClick={() => updateSuivi(m.id)} disabled={updating[m.id]} className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${updating[m.id] ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"}`}>
+          <button 
+            onClick={() => updateSuivi(m.id)} 
+            disabled={updating[m.id]} 
+            className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${updating[m.id] ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"}`}
+          >
             {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
           </button>
         </div>

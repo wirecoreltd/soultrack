@@ -46,8 +46,7 @@ export default function MembresCellule() {
             .or("cellule_nom.not.is.null,suivi_cellule_nom.not.is.null");
           if (error) throw error;
           membresData = data;
-        }
-        else if (userRole.includes("ResponsableCellule")) {
+        } else if (userRole.includes("ResponsableCellule")) {
           const { data: cellulesData, error: cellulesError } = await supabase
             .from("cellules")
             .select("id")
@@ -140,8 +139,11 @@ export default function MembresCellule() {
       {view === "card" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
           {membres.map(m => (
-            <div key={m.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl overflow-hidden">
-              <div className="w-full h-[6px] rounded-t-2xl" style={{ backgroundColor: getBorderColor(m) }} />
+            <div key={m.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl overflow-hidden relative">
+              
+              {/* Border gauche dynamique */}
+              <div className="absolute top-0 left-0 h-full w-1 rounded-l-2xl" style={{ backgroundColor: getBorderColor(m) }} />
+
               <div className="p-4 flex flex-col items-center">
                 <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
                 <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>

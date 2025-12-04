@@ -171,7 +171,12 @@ export default function SuivisMembres() {
                 <p className="text-sm text-black-700 mb-1">📞 {item.telephone || "—"}</p>
                 <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>
                 <p className="text-sm text-black-700 mb-1">📌 Attribué à : {item.cellule_nom ? `Cellule de ${item.cellule_nom}` : item.responsable || "—"}</p>
-                <button onClick={() => setDetailsModalMember(item)} className="text-orange-500 underline text-sm mt-1">Détails</button>
+                <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === item.id ? "Fermer détails" : "Détails"}</button>
+              </div>
+
+              {/* Détails expandable */}
+              <div className={`transition-all duration-500 overflow-hidden px-4 ${detailsOpen === item.id ? "max-h-[1000px] py-4" : "max-h-0 py-0"}`}>
+                {detailsOpen === item.id && <DetailsPopup m={item} />}
               </div>
             </div>
           ))}

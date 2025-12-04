@@ -79,7 +79,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
           <input type="text" name="nom" value={form.nom} onChange={handleChange} placeholder="Nom" className="input" />
           <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" className="input" />
           <input type="text" name="telephone" value={form.telephone} onChange={handleChange} placeholder="Téléphone" className="input" />
-          <select name="role" value={form.role} onChange={handleChange} className="input">
+          <select name="role_description" value={form.role_description} onChange={handleChange} className="input">
             <option value="">-- Sélectionnez un rôle --</option>
             <option value="Administrateur">Admin</option>
             <option value="ResponsableCellule">Responsable Cellule</option>

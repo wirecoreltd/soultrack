@@ -116,7 +116,8 @@ export default function MembresCellule() {
                 </div>
 
                 {detailsOpen === m.id && (
-                  <div className="p-4 border-t border-gray-200 text-sm flex flex-col gap-2">
+                  <div className="p-4 text-sm flex flex-col gap-2">
+                    {/* Ligne grise supprimée */}
                     <p>Ville : {m.ville || "—"}</p>
                     <p>Infos supplémentaires : {m.infos_supplementaires || "—"}</p>
                     <button
@@ -139,17 +140,23 @@ export default function MembresCellule() {
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
                 <th className="px-4 py-2">Cellule</th>
-                <th className="px-4 py-2 rounded-tr-lg">Action</th>
+                <th className="px-4 py-2">Détails</th> {/* nouvelle colonne */}
+                <th className="px-4 py-2 rounded-tr-lg">Modifier</th>
               </tr>
             </thead>
             <tbody>
               {membres.length === 0 ? (
-                <tr><td colSpan={4} className="px-4 py-2 text-white text-center">Aucun membre</td></tr>
+                <tr><td colSpan={5} className="px-4 py-2 text-white text-center">Aucun membre</td></tr>
               ) : membres.map(m => (
                 <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
                   <td className="px-4 py-2">{m.prenom} {m.nom}</td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.cellule_nom || m.suivi_cellule_nom || "—"}</td>
+                  <td className="px-4 py-2">
+                    <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">
+                      {detailsOpen === m.id ? "Fermer" : "Voir"}
+                    </button>
+                  </td>
                   <td className="px-4 py-2">
                     <button onClick={() => setEditingMember(m)} className="text-blue-600 underline text-sm">
                       ✏️ Modifier le contact

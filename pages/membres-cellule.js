@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
+import EditMemberCellulePopup from "../components/EditMemberCellulePopup"; // <-- AJOUT
 
 export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
@@ -13,6 +14,7 @@ export default function MembresCellule() {
   const [prenom, setPrenom] = useState("");
   const [selectedMembre, setSelectedMembre] = useState(null);
   const [view, setView] = useState("card");
+  const [editingMember, setEditingMember] = useState(null); // <-- AJOUT
 
   useEffect(() => {
     const fetchMembres = async () => {
@@ -96,6 +98,12 @@ export default function MembresCellule() {
     return "#ccc";
   };
 
+  const handleUpdateMember = (updated) => {
+    setMembres(prev =>
+      prev.map(m => (m.id === updated.id ? updated : m))
+    );
+  };
+
   if (loading) return <p className="text-center mt-10 text-white">Chargement...</p>;
   if (message) return <p className="text-center mt-10 text-white">{message}</p>;
 
@@ -139,12 +147,33 @@ export default function MembresCellule() {
                 <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
                 <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📌 Cellule : {getCellule(m)}</p>
+
+                {/* BOUTON DÉTAILS */}
                 <button
                   onClick={() => setSelectedMembre(selectedMembre === m.id ? null : m.id)}
                   className="text-orange-500 underline text-sm mt-1"
                 >
-                  {selectedMembre === m.id ? "Fermer détails" : "Action"}
+                  {selectedMembre === m.id ? "Fermer détails" : "Détails"}
                 </button>
+
+                {/* CARRÉ EXTENSIBLE */}
+                {selectedMembre === m.id && (
+                  <div className="mt-3 w-full bg-gray-100 p-4 rounded-xl shadow-inner animate-fadeIn text-left">
+
+                    <p className="text-sm mb-2"><strong>Ville :</strong> {m.ville || "—"}</p>
+                    <p className="text-sm mb-2"><strong>WhatsApp :</strong> {m.is_whatsapp ? "Oui" : "Non"}</p>
+                    <p className="text-sm mb-2"><strong>Besoin :</strong> {m.besoin || "—"}</p>
+                    <p className="text-sm mb-2"><strong>Infos :</strong> {m.infos_supplementaires || "—"}</p>
+
+                    {/* BOUTON MODIFIER */}
+                    <button
+                      onClick={() => setEditingMember(m)}
+                      className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg w-full text-center font-semibold"
+                    >
+                      Modifier
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -171,12 +200,28 @@ export default function MembresCellule() {
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.ville || "—"}</td>
                   <td className="px-4 py-2">{getCellule(m)}</td>
-                  <td className="px-4 py-2"><button onClick={() => setSelectedMembre(selectedMembre === m.id ? null : m.id)} className="text-orange-500 underline text-sm">{selectedMembre === m.id ? "Fermer" : "Action"}</button></td>
+                  <td className="px-4 py-2">
+                    <button
+                      onClick={() => setSelectedMembre(selectedMembre === m.id ? null : m.id)}
+                      className="text-orange-500 underline text-sm"
+                    >
+                      {selectedMembre === m.id ? "Fermer" : "Action"}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* POPUP MODIFIER */}
+      {editingMember && (
+        <EditMemberCellulePopup
+          member={editingMember}
+          onClose={() => setEditingMember(null)}
+          onUpdateMember={handleUpdateMember}
+        />
       )}
     </div>
   );

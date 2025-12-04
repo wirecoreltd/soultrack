@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import React from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -22,6 +22,11 @@ export default function SuivisMembres() {
   const [view, setView] = useState("card");
   const [editMember, setEditMember] = useState(null);
   const [showRefus, setShowRefus] = useState(false);
+
+  // --- ADDED: for the card accordion
+  const [detailsOpen, setDetailsOpen] = useState(null);
+  const toggleDetails = (id) => setDetailsOpen((prev) => (prev === id ? null : id));
+  // --------------------------------------------------------------------
 
   const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
   const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
@@ -83,6 +88,7 @@ export default function SuivisMembres() {
   const handleCommentChange = (id, value) => setCommentChanges(prev => ({ ...prev, [id]: value }));
 
   const getBorderColor = (m) => {
+    if (!m) return "#ccc";
     if (m.statut_suivis === statutIds["en attente"]) return "#FFA500";
     if (m.statut_suivis === statutIds["integrer"]) return "#34A853";
     if (m.statut_suivis === statutIds["refus"]) return "#FF4B5C";
@@ -107,6 +113,7 @@ export default function SuivisMembres() {
       if (updateError) throw updateError;
 
       setSuivis(prev => prev.map(s => s.id === id ? updatedSuivi : s));
+      setMessage({ type: "success", text: "Mise à jour effectuée." });
     } catch (err) {
       console.error("Exception updateSuivi:", err);
       setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
@@ -131,6 +138,100 @@ export default function SuivisMembres() {
       console.error("Erreur rafraîchissement suivis :", err);
     }
   };
+
+  /* -------------------------------------------------------------------
+     DetailsPopup (inline accordion content for cards)
+     Définition à l'intérieur du composant pour avoir accès aux handlers,
+     states et setEditMember sans passer de props supplémentaires.
+  -------------------------------------------------------------------- */
+  const DetailsPopup = ({ m }) => {
+    const [cellules, setCellules] = useState([]);
+    const [conseillers, setConseillers] = useState([]);
+    const [typeEnvoi, setTypeEnvoi] = useState("");
+    const [cible, setCible] = useState(null);
+    const commentRef = useRef(null);
+
+    useEffect(() => {
+      const loadData = async () => {
+        try {
+          const { data: cellulesData } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
+          const { data: conseillersData } = await supabase.from("profiles").select("id, prenom, nom, telephone").eq("role", "Conseiller");
+          setCellules(cellulesData || []);
+          setConseillers(conseillersData || []);
+        } catch (err) {
+          console.error("Erreur chargement cellules/conseillers :", err);
+        }
+      };
+      loadData();
+    }, []);
+
+    useEffect(() => {
+      if (commentRef.current) {
+        commentRef.current.focus();
+        commentRef.current.selectionStart = commentRef.current.value.length;
+      }
+    }, [commentChanges[m.id]]);
+
+    const handleSelectCible = (id) => {
+      // IDs peuvent être UUID (string) — on garde la valeur telle quelle
+      if (typeEnvoi === "cellule") setCible(cellules.find(c => c.id === id) || null);
+      else if (typeEnvoi === "conseiller") setCible(conseillers.find(c => c.id === id) || null);
+    };
+
+    return (
+      <div className="text-black text-sm space-y-2 w-full">
+        <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+        <p>🏙 Ville : {m.ville || "—"}</p>
+        <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+        <p>❓Besoin : {m.besoin ? (Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin) : "—"}</p>
+        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+
+        <div className="mt-4 border-t pt-4">
+          <label className="text-black font-semibold">📌 Envoyer à :</label>
+          <select value={typeEnvoi} onChange={(e) => { setTypeEnvoi(e.target.value); setCible(null); }} className="w-full border rounded-md px-2 py-1 mt-2">
+            <option value="">-- Choisir --</option>
+            <option value="cellule">📍 Cellule</option>
+            <option value="conseiller">👤 Conseiller</option>
+          </select>
+
+          {typeEnvoi === "cellule" && (
+            <select className="w-full border rounded-md px-2 py-1 mt-2" onChange={(e) => handleSelectCible(e.target.value)}>
+              <option value="">-- Sélectionner une cellule --</option>
+              {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule} — {c.responsable}</option>)}
+            </select>
+          )}
+
+          {typeEnvoi === "conseiller" && (
+            <select className="w-full border rounded-md px-2 py-1 mt-2" onChange={(e) => handleSelectCible(e.target.value)}>
+              <option value="">-- Sélectionner un conseiller --</option>
+              {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
+            </select>
+          )}
+
+          {cible && <BoutonEnvoyer membre={m} type={typeEnvoi} cible={cible} session={true} onEnvoyer={handleAfterSend} showToast={() => {}} />}
+        </div>
+
+        <label className="text-black text-sm mt-4 block">📋 Statut Suivis :</label>
+        <select value={statusChanges[m.id] ?? m.statut_suivis ?? ""} onChange={(e) => handleStatusChange(m.id, e.target.value)} className="w-full border rounded-md px-2 py-1">
+          <option value="">-- Choisir un statut --</option>
+          <option value={1}>🕓 En attente</option>
+          <option value={3}>✅ Intégrer</option>
+          <option value={4}>❌ Refus</option>
+        </select>
+
+        <textarea ref={commentRef} value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""} onChange={(e) => handleCommentChange(m.id, e.target.value)} rows={2} className="w-full border rounded-md px-2 py-1 mt-2 resize-none" placeholder="Ajouter un commentaire..." />
+
+        <button onClick={() => updateSuivi(m.id)} disabled={updating[m.id]} className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${updating[m.id] ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"}`}>
+          {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
+        </button>
+
+        <div className="mt-4 flex justify-center">
+          <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-4">✏️ Modifier le contact</button>
+        </div>
+      </div>
+    );
+  };
+  /* ------------------------------------------------------------------ */
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
@@ -161,64 +262,27 @@ export default function SuivisMembres() {
       {message && <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{message.text}</div>}
 
       {/* Vue Carte */}
-        {view === "card" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-            {uniqueSuivis.map(item => (
-              <div
-                key={item.id}
-                className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl overflow-hidden"
-              >
-                {/* Couleur du statut */}
-                <div
-                  className="w-full h-[6px] rounded-t-2xl"
-                  style={{ backgroundColor: getBorderColor(item) }}
-                />
-        
-                {/* Infos principales */}
-                <div className="p-4 flex flex-col items-center">
-                  <h2 className="font-bold text-black text-base text-center mb-1">
-                    {item.prenom} {item.nom}
-                  </h2>
-        
-                  <p className="text-sm text-black-700 mb-1">
-                    📞 {item.telephone || "—"}
-                  </p>
-        
-                  <p className="text-sm text-black-700 mb-1">
-                    📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}
-                  </p>
-        
-                  <p className="text-sm text-black-700 mb-1">
-                    📌 Attribué à :{" "}
-                    {item.cellule_nom
-                      ? `Cellule de ${item.cellule_nom}`
-                      : item.responsable || "—"}
-                  </p>
-        
-                  {/* Bouton ouvrir/fermer détails */}
-                  <button
-                    onClick={() => toggleDetails(item.id)}
-                    className="text-orange-500 underline text-sm mt-1"
-                  >
-                    {detailsOpen === item.id ? "Fermer détails" : "Détails"}
-                  </button>
-                </div>
-        
-                {/* Carré extensible (accordéon) */}
-                <div
-                  className={`transition-all duration-500 overflow-hidden px-4 ${
-                    detailsOpen === item.id
-                      ? "max-h-[1000px] py-4"
-                      : "max-h-0 py-0"
-                  }`}
-                >
-                  {detailsOpen === item.id && <DetailsPopup m={item} />}
-                </div>
+      {view === "card" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
+          {uniqueSuivis.map(item => (
+            <div key={item.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl overflow-hidden">
+              <div className="w-full h-[6px] rounded-t-2xl" style={{ backgroundColor: getBorderColor(item) }} />
+              <div className="p-4 flex flex-col items-center">
+                <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>
+                <p className="text-sm text-black-700 mb-1">📞 {item.telephone || "—"}</p>
+                <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>
+                <p className="text-sm text-black-700 mb-1">📌 Attribué à : {item.cellule_nom ? `Cellule de ${item.cellule_nom}` : item.responsable || "—"}</p>
+                <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === item.id ? "Fermer détails" : "Détails"}</button>
               </div>
-            ))}
-          </div>
-)}
 
+              {/* Détails expandable */}
+              <div className={`transition-all duration-500 overflow-hidden px-4 ${detailsOpen === item.id ? "max-h-[1000px] py-4" : "max-h-0 py-0"}`}>
+                {detailsOpen === item.id && <DetailsPopup m={item} />}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Vue Table */}
       {view === "table" && (
@@ -234,12 +298,12 @@ export default function SuivisMembres() {
               </tr>
             </thead>
             <tbody>
-              {suivis.length === 0 ? (
+              {uniqueSuivis.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
                 </tr>
               ) : (
-                suivis.map(m => (
+                uniqueSuivis.map(m => (
                   <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
                     <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
                     <td className="px-4 py-2">{m.telephone || "—"}</td>

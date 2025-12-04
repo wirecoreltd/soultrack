@@ -1,4 +1,5 @@
 // pages/membres-cellule.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -39,7 +40,6 @@ export default function MembresCellule() {
 
         let membresData = [];
 
-        // ADMIN → tous les membres ayant une cellule
         if (userRole.includes("Administrateur")) {
           const { data, error } = await supabase
             .from("v_membres_full")
@@ -47,9 +47,7 @@ export default function MembresCellule() {
             .or("cellule_nom.not.is.null,suivi_cellule_nom.not.is.null");
           if (error) throw error;
           membresData = data;
-        }
-        // ResponsableCellule → membres de ses cellules
-        else if (userRole.includes("ResponsableCellule")) {
+        } else if (userRole.includes("ResponsableCellule")) {
           const { data: cellulesData, error: cellulesError } = await supabase
             .from("cellules")
             .select("id")
@@ -92,17 +90,13 @@ export default function MembresCellule() {
   }, []);
 
   const getCellule = (m) => m.cellule_nom || m.suivi_cellule_nom || "—";
-
   const getBorderColor = (m) => {
     if (m.statut === "actif") return "#34A853";
     if (m.statut === "inactif") return "#FFA500";
     return "#ccc";
   };
-
   const handleUpdateMember = (updated) => {
-    setMembres(prev =>
-      prev.map(m => (m.id === updated.id ? updated : m))
-    );
+    setMembres(prev => prev.map(m => (m.id === updated.id ? updated : m)));
   };
 
   if (loading) return <p className="text-center mt-10 text-white">Chargement...</p>;
@@ -151,30 +145,19 @@ export default function MembresCellule() {
 
                 {/* BOUTON DÉTAILS */}
                 <button
-                  onClick={() => setSelectedMembre(selectedMembre === m.id ? null : m.id)}
+                  onClick={() => setDetailsMember(m)}
                   className="text-orange-500 underline text-sm mt-1"
                 >
-                  {selectedMembre === m.id ? "Fermer détails" : "Détails"}
+                  Détails
                 </button>
 
-                {/* CARRÉ EXTENSIBLE */}
-                {selectedMembre === m.id && (
-                  <div className="mt-3 w-full bg-white p-4 rounded-xl shadow-inner animate-fadeIn text-left">
-
-                    <p className="text-sm mb-2"><strong>Ville :</strong> {m.ville || "—"}</p>
-                    <p className="text-sm mb-2"><strong>WhatsApp :</strong> {m.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p className="text-sm mb-2"><strong>Besoin :</strong> {m.besoin || "—"}</p>
-                    <p className="text-sm mb-2"><strong>Infos :</strong> {m.infos_supplementaires || "—"}</p>
-
-                    {/* BOUTON MODIFIER */}
-                    <button
-                      onClick={() => setEditingMember(m)}
-                      className="mt-3 text-blue-600 underline font-semibold w-full text-left"
-                    >
-                      ✏️ Modifier le contact
-                    </button>
-                  </div>
-                )}
+                {/* BOUTON MODIFIER */}
+                <button
+                  onClick={() => setEditingMember(m)}
+                  className="mt-3 text-blue-600 underline font-semibold w-full text-left"
+                >
+                  ✏️ Modifier le contact
+                </button>
               </div>
             </div>
           ))}

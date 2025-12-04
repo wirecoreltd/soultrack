@@ -1,4 +1,3 @@
-// pages/membres-cellule.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -13,7 +12,7 @@ export default function MembresCellule() {
   const [prenom, setPrenom] = useState("");
   const [role, setRole] = useState([]);
   const [editMember, setEditMember] = useState(null);
-  const [viewDetailsMember, setViewDetailsMember] = useState(null); // popup lecture seule table
+  const [viewDetailsMember, setViewDetailsMember] = useState(null);
 
   useEffect(() => {
     fetchMembres();
@@ -47,7 +46,7 @@ export default function MembresCellule() {
         const celluleIds = cellulesData.map(c => c.id);
         const celluleNoms = cellulesData.map(c => c.cellule);
 
-        if (celluleIds.length > 0 || celluleNoms.length > 0) {
+        if (celluleIds.length > 0) {
           const orConditions = [
             ...celluleIds.map(id => `cellule_id.eq.${id}`),
             ...celluleNoms.map(nom => `suivi_cellule_nom.eq.${nom}`)
@@ -74,12 +73,6 @@ export default function MembresCellule() {
 
   const toggleDetails = (id) => setDetailsOpen(prev => (prev === id ? null : id));
 
-  const handleUpdateMember = (updatedMember) => {
-    setMembres(prev =>
-      prev.map(m => (m.id === updatedMember.id ? updatedMember : m))
-    );
-  };
-
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-700 to-cyan-400">
       <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
@@ -105,21 +98,23 @@ export default function MembresCellule() {
             <p className="text-white">Aucun membre à afficher.</p>
           ) : (
             membres.map(m => (
-              <div key={m.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 overflow-hidden">
+              <div key={m.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl overflow-hidden">
                 <div className="p-4 flex flex-col items-center">
                   <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellule_nom || m.suivi_cellule_nom || "—"}</p>
-                  <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === m.id ? "Fermer détails" : "Détails"}</button>
+                  <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-1">
+                    {detailsOpen === m.id ? "Fermer détails" : "Détails"}
+                  </button>
                 </div>
 
                 {detailsOpen === m.id && (
-                  <div className="p-4 text-sm flex flex-col gap-1">
+                  <div className="p-4 text-sm flex flex-col gap-2">
                     <p>Ville : {m.ville || "—"}</p>
                     <p>Infos supplémentaires : {m.infos_supplementaires || "—"}</p>
                     <button
-                      className="mt-2 bg-orange-500 text-white rounded-xl py-2 px-4 text-sm hover:bg-orange-600"
                       onClick={() => setEditMember(m)}
+                      className="text-blue-600 text-sm underline self-center mt-2"
                     >
                       ✏️ Modifier le contact
                     </button>
@@ -144,7 +139,7 @@ export default function MembresCellule() {
               {membres.length === 0 ? (
                 <tr><td colSpan={4} className="px-4 py-2 text-white text-center">Aucun membre</td></tr>
               ) : membres.map(m => (
-                <tr key={m.id} className="hover:bg-white/10 transition duration-150">
+                <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
                   <td className="px-4 py-2">{m.prenom} {m.nom}</td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.cellule_nom || m.suivi_cellule_nom || "—"}</td>
@@ -157,7 +152,7 @@ export default function MembresCellule() {
                     </button>
                     <button
                       onClick={() => setEditMember(m)}
-                      className="text-green-500 underline text-sm"
+                      className="text-blue-600 underline text-sm"
                     >
                       ✏️ Modifier
                     </button>
@@ -169,16 +164,16 @@ export default function MembresCellule() {
         </div>
       )}
 
-      {/* POPUP MODIFIER */}
       {editMember && (
         <EditMemberCellulePopup
           member={editMember}
           onClose={() => setEditMember(null)}
-          onUpdateMember={handleUpdateMember}
+          onUpdateMember={(updated) => {
+            setMembres(prev => prev.map(m => m.id === updated.id ? updated : m));
+          }}
         />
       )}
 
-      {/* POPUP DETAILS TABLE */}
       {viewDetailsMember && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
@@ -189,10 +184,12 @@ export default function MembresCellule() {
             >
               ✕
             </button>
-            <h2 className="text-2xl font-bold text-center mb-4">{viewDetailsMember.prenom} {viewDetailsMember.nom}</h2>
-            <p>📞 Téléphone : {viewDetailsMember.telephone || "—"}</p>
-            <p>📌 Cellule : {viewDetailsMember.cellule_nom || viewDetailsMember.suivi_cellule_nom || "—"}</p>
+            <h2 className="text-2xl font-bold text-center mb-4">
+              {viewDetailsMember.prenom} {viewDetailsMember.nom}
+            </h2>
+            <p>📞 {viewDetailsMember.telephone || "—"}</p>
             <p>Ville : {viewDetailsMember.ville || "—"}</p>
+            <p>Cellule : {viewDetailsMember.cellule_nom || viewDetailsMember.suivi_cellule_nom || "—"}</p>
             <p>Infos supplémentaires : {viewDetailsMember.infos_supplementaires || "—"}</p>
           </div>
         </div>

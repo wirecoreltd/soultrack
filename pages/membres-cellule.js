@@ -32,15 +32,10 @@ export default function MembresCellule() {
         .single();
       if (profileError) throw profileError;
 
-      let membresQuery = supabase
-        .from("v_membres_full")
-        .select(`
-          *,
-          cellule_affichee:coalesce(cellule_nom, suivi_cellule_nom)
-        `);
+      let membresData = [];
 
       if (userRole.includes("ResponsableCellule")) {
-        // Récupérer les cellules qu'il gère
+        // Récupérer les cellules du responsable
         const { data: cellulesData, error: cellulesError } = await supabase
           .from("cellules")
           .select("id, cellule")
@@ -56,18 +51,37 @@ export default function MembresCellule() {
           return;
         }
 
+        // Construire les conditions OR pour Supabase
         const orConditions = [
           ...celluleIds.map(id => `cellule_id.eq.${id}`),
           ...celluleNoms.map(nom => `suivi_cellule_nom.eq.${nom}`)
         ].join(",");
 
-        membresQuery = membresQuery.or(orConditions);
+        // Récupérer les membres filtrés
+        const { data, error } = await supabase
+          .from("v_membres_full")
+          .select("*")
+          .or(orConditions);
+
+        if (error) throw error;
+
+        // Ajouter un champ "cellule_affichee" pour simplifier l'affichage
+        membresData = (data || []).map(m => ({
+          ...m,
+          cellule_affichee: m.cellule_nom || m.suivi_cellule_nom || "—"
+        }));
+      } else {
+        // Autres rôles : récupérer tous les membres
+        const { data, error } = await supabase.from("v_membres_full").select("*");
+        if (error) throw error;
+
+        membresData = (data || []).map(m => ({
+          ...m,
+          cellule_affichee: m.cellule_nom || m.suivi_cellule_nom || "—"
+        }));
       }
 
-      const { data, error } = await membresQuery;
-      if (error) throw error;
-
-      setMembres(data || []);
+      setMembres(membresData);
     } catch (err) {
       console.error("❌ Erreur :", err);
       setMembres([]);
@@ -107,7 +121,7 @@ export default function MembresCellule() {
                 <div className="p-4 flex flex-col items-center">
                   <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
                   <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellule_affichee || "—"}</p>
+                  <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellule_affichee}</p>
                   <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-1">
                     {detailsOpen === m.id ? "Fermer détails" : "Détails"}
                   </button>
@@ -147,7 +161,7 @@ export default function MembresCellule() {
                 <tr key={m.id} className="hover:bg-white/10 transition duration-150">
                   <td className="px-4 py-2">{m.prenom} {m.nom}</td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
-                  <td className="px-4 py-2">{m.cellule_affichee || "—"}</td>
+                  <td className="px-4 py-2">{m.cellule_affichee}</td>
                   <td className="px-4 py-2 flex gap-2">
                     <button
                       onClick={() => setEditMember(m)}

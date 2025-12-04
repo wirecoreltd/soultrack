@@ -1,182 +1,214 @@
-// pages/membres-cellule.js
-
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
-import EditMemberPopup from "../components/EditMemberPopup";
 
-export default function MembresCellule() {
-  const [membres, setMembres] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [detailsOpen, setDetailsOpen] = useState(null);
-  const [view, setView] = useState("card");
-  const [prenom, setPrenom] = useState("");
-  const [role, setRole] = useState([]);
-  const [editingMember, setEditingMember] = useState(null);
+export default function EditMemberCellulePopup({ member, onClose, onUpdateMember }) {
+  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
 
-  useEffect(() => {
-    fetchMembres();
-  }, []);
+  const parseBesoin = (b) => {
+    if (!b) return [];
+    if (Array.isArray(b)) return b;
+    try {
+      const parsed = JSON.parse(b);
+      return Array.isArray(parsed) ? parsed : [String(b)];
+    } catch {
+      return [String(b)];
+    }
+  };
 
-  const fetchMembres = async () => {
+  const initialBesoin = parseBesoin(member?.besoin);
+
+  const [formData, setFormData] = useState({
+    prenom: member?.prenom || "",
+    nom: member?.nom || "",
+    telephone: member?.telephone || "",
+    ville: member?.ville || "",
+    besoin: initialBesoin,
+    autreBesoin: "",
+    infos_supplementaires: member?.infos_supplementaires || "",
+    is_whatsapp: !!member?.is_whatsapp,
+  });
+
+  const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCheckboxChange = (e) => {
+    const { name, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: checked }));
+  };
+
+  const handleBesoinChange = (e) => {
+    const { value, checked } = e.target;
+
+    if (value === "Autre") {
+      setShowAutre(checked);
+      if (!checked) {
+        setFormData(prev => ({
+          ...prev,
+          autreBesoin: "",
+          besoin: prev.besoin.filter(b => b !== "Autre"),
+        }));
+      } else {
+        setFormData(prev => ({ ...prev, besoin: Array.from(new Set([...prev.besoin, "Autre"])) }));
+      }
+      return;
+    }
+
+    setFormData(prev => {
+      const updated = checked ? [...prev.besoin, value] : prev.besoin.filter(b => b !== value);
+      return { ...prev, besoin: updated };
+    });
+  };
+
+  const handleSubmit = async () => {
     setLoading(true);
     try {
-      const userEmail = localStorage.getItem("userEmail");
-      const userRole = JSON.parse(localStorage.getItem("userRole") || "[]");
-      if (!userEmail) throw new Error("Utilisateur non connecté");
-
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, prenom, role")
-        .eq("email", userEmail)
-        .single();
-      if (profileError) throw profileError;
-
-      setPrenom(profileData.prenom || "cher membre");
-      setRole(profileData.role);
-
-      let membresQuery = supabase.from("v_membres_full").select("*");
-
-      if (userRole.includes("ResponsableCellule")) {
-        const { data: cellulesData } = await supabase
-          .from("cellules")
-          .select("id, cellule")
-          .eq("responsable_id", profileData.id);
-
-        const celluleIds = cellulesData.map(c => c.id);
-        const celluleNoms = cellulesData.map(c => c.cellule);
-
-        if (celluleIds.length > 0 || celluleNoms.length > 0) {
-          const orConditions = [
-            ...celluleIds.map(id => `cellule_id.eq.${id}`),
-            ...celluleNoms.map(nom => `suivi_cellule_nom.eq.${nom}`)
-          ].join(",");
-          membresQuery = membresQuery.or(orConditions);
-        } else {
-          setMembres([]);
-          setLoading(false);
-          return;
-        }
+      let finalBesoin = Array.isArray(formData.besoin) ? [...formData.besoin] : parseBesoin(formData.besoin);
+      if (showAutre && formData.autreBesoin?.trim()) {
+        finalBesoin = finalBesoin.filter(b => b !== "Autre");
+        finalBesoin.push(formData.autreBesoin.trim());
+      } else {
+        finalBesoin = finalBesoin.filter(b => b !== "Autre");
       }
 
-      const { data, error } = await membresQuery;
-      if (error) throw error;
+      const payload = {
+        prenom: formData.prenom || null,
+        nom: formData.nom || null,
+        telephone: formData.telephone || null,
+        ville: formData.ville || null,
+        infos_supplementaires: formData.infos_supplementaires || null,
+        is_whatsapp: !!formData.is_whatsapp,
+        besoin: JSON.stringify(finalBesoin),
+      };
 
-      // Filtrer uniquement ceux qui ont une cellule assignée
-      const filtered = data.filter(m => m.cellule_id || m.suivi_cellule_nom);
-      setMembres(filtered);
+      const { data, error } = await supabase
+        .from("membres")
+        .update(payload)
+        .eq("id", member.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Supabase update error:", error);
+        alert("❌ Erreur lors de la sauvegarde : " + (error.message || error));
+        setLoading(false);
+        return;
+      }
+
+      setSuccess(true);
+      if (onUpdateMember) onUpdateMember(data);
+
+      setTimeout(() => {
+        setSuccess(false);
+        onClose();
+      }, 900);
     } catch (err) {
-      console.error("❌ Erreur :", err);
-      setMembres([]);
+      console.error("Exception handleSubmit:", err);
+      alert("❌ Une erreur est survenue.");
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleDetails = (id) => setDetailsOpen(prev => (prev === id ? null : id));
-
-  const handleUpdateMember = (updated) => {
-    setMembres(prev =>
-      prev.map(m => (m.id === updated.id ? updated : m))
-    );
-  };
-
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-700 to-cyan-400">
-      <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
-        <button onClick={() => window.history.back()} className="text-white hover:text-gray-200 transition">← Retour</button>
-      </div>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
 
-      <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">📋 Membres de ma cellule</h1>
-        <p className="text-white text-lg max-w-xl mx-auto italic">Liste des membres associés à votre(s) cellule(s)</p>
-      </div>
-
-      <div className="mb-4 flex justify-between w-full max-w-6xl">
-        <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline hover:text-gray-200">
-          {view === "card" ? "Vue Table" : "Vue Carte"}
+        {/* CLOSE */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-red-500 font-bold text-xl hover:text-red-700"
+          aria-label="Fermer"
+        >
+          ✕
         </button>
-      </div>
 
-      {loading ? (
-        <p className="text-white">Chargement...</p>
-      ) : view === "card" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-          {membres.length === 0 ? (
-            <p className="text-white">Aucun membre à afficher.</p>
-          ) : (
-            membres.map(m => (
-              <div key={m.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl overflow-hidden">
-                <div className="p-4 flex flex-col items-center">
-                  <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
-                  <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellule_nom || m.suivi_cellule_nom || "—"}</p>
-                  <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === m.id ? "Fermer détails" : "Détails"}</button>
-                </div>
+        <h2 className="text-2xl font-bold text-center mb-4">
+          Modifier la fiche de {member.prenom} {member.nom}
+        </h2>
 
-                {detailsOpen === m.id && (
-                  <div className="p-4 text-sm flex flex-col gap-2">
-                    {/* Ligne grise supprimée */}
-                    <p>Ville : {m.ville || "—"}</p>
-                    <p>Infos supplémentaires : {m.infos_supplementaires || "—"}</p>
-                    <button
-                      className="text-blue-600 underline text-sm mt-1"
-                      onClick={() => setEditingMember(m)}
-                    >
-                      ✏️ Modifier le contact
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))
+        <div className="flex flex-col gap-4">
+          <input type="text" placeholder="Prénom" name="prenom" value={formData.prenom} onChange={handleChange} className="input" />
+          <input type="text" placeholder="Nom" name="nom" value={formData.nom} onChange={handleChange} className="input" />
+          <input type="text" placeholder="Téléphone" name="telephone" value={formData.telephone} onChange={handleChange} className="input" />
+
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="is_whatsapp" checked={!!formData.is_whatsapp} onChange={handleCheckboxChange} />
+            WhatsApp
+          </label>
+
+          <input type="text" placeholder="Ville" name="ville" value={formData.ville} onChange={handleChange} className="input" />
+
+          <div>
+            <p className="font-semibold mb-2">Besoin :</p>
+            {besoinsOptions.map((item) => (
+              <label key={item} className="flex items-center gap-3 mb-2">
+                <input
+                  type="checkbox"
+                  value={item}
+                  checked={Array.isArray(formData.besoin) && formData.besoin.includes(item)}
+                  onChange={handleBesoinChange}
+                />
+                {item}
+              </label>
+            ))}
+
+            <label className="flex items-center gap-3 mb-2">
+              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} />
+              Autre
+            </label>
+
+            {showAutre && (
+              <input
+                type="text"
+                name="autreBesoin"
+                value={formData.autreBesoin}
+                onChange={handleChange}
+                placeholder="Précisez..."
+                className="input"
+              />
+            )}
+          </div>
+
+          <textarea
+            name="infos_supplementaires"
+            placeholder="Informations supplémentaires..."
+            rows={2}
+            value={formData.infos_supplementaires}
+            onChange={handleChange}
+            className="input"
+          />
+
+          {/* BUTTONS */}
+          <div className="flex gap-4 mt-2">
+            <button onClick={onClose} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md">Annuler</button>
+            <button onClick={handleSubmit} disabled={loading} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md">
+              {loading ? "Enregistrement..." : "Sauvegarder"}
+            </button>
+          </div>
+
+          {success && (
+            <p className="text-green-600 font-semibold text-center mt-3">✔️ Modifié avec succès !</p>
           )}
         </div>
-      ) : (
-        <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
-          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
-              <tr>
-                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-                <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Cellule</th>
-                <th className="px-4 py-2">Détails</th> {/* nouvelle colonne */}
-                <th className="px-4 py-2 rounded-tr-lg">Modifier</th>
-              </tr>
-            </thead>
-            <tbody>
-              {membres.length === 0 ? (
-                <tr><td colSpan={5} className="px-4 py-2 text-white text-center">Aucun membre</td></tr>
-              ) : membres.map(m => (
-                <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                  <td className="px-4 py-2">{m.prenom} {m.nom}</td>
-                  <td className="px-4 py-2">{m.telephone || "—"}</td>
-                  <td className="px-4 py-2">{m.cellule_nom || m.suivi_cellule_nom || "—"}</td>
-                  <td className="px-4 py-2">
-                    <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">
-                      {detailsOpen === m.id ? "Fermer" : "Voir"}
-                    </button>
-                  </td>
-                  <td className="px-4 py-2">
-                    <button onClick={() => setEditingMember(m)} className="text-blue-600 underline text-sm">
-                      ✏️ Modifier le contact
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
 
-      {/* Popup Modifier */}
-      {editingMember && (
-        <EditMemberPopup
-          member={editingMember}
-          onClose={() => setEditingMember(null)}
-          onUpdateMember={handleUpdateMember}
-        />
-      )}
+        <style jsx>{`
+          .input {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+          }
+        `}</style>
+      </div>
     </div>
   );
 }

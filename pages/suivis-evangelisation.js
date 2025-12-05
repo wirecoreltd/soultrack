@@ -269,46 +269,57 @@ export default function SuivisEvangelisation() {
               </tr>
             </thead>
            <tbody>
-              {suivis.length === 0 ? (
-                <tr><td colSpan={4} className="px-4 py-2 text-white text-center">Aucun évangélisé</td></tr>
-              ) : suivis.map(m => (
-                <React.Fragment key={m.id}>
-                  <tr className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                    <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>
-                      {m.prenom} {m.nom}
-                    </td>
-                    <td className="px-4 py-2">{m.telephone || "—"}</td>
-                    <td className="px-4 py-2">{m.cellules?.cellule || "—"}</td>
-                    <td className="px-4 py-2">
-                      <button
-                        onClick={() => toggleDetails(m.id)}
-                        className="text-orange-500 underline text-sm"
-                      >
-                        {detailsOpen === m.id ? "Fermer" : "Détails"}
-                      </button>
-                    </td>
-                  </tr>
-            
-                  {/* Popup en dessous de la ligne */}
-                  {detailsOpen === m.id && (
-                    <tr>
-                      <td colSpan={4} className="p-4 bg-white rounded-xl shadow-md">
-                        <SuiviDetailsEvanPopup
-                          membre={m}
-                          onClose={() => setDetailsOpen(null)}
-                          statusChanges={statusChanges}
-                          commentChanges={commentChanges}
-                          handleStatusChange={handleStatusChange}
-                          handleCommentChange={handleCommentChange}
-                          updateSuivi={updateSuivi}
-                          updating={updating}
-                        />
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
-              ))}
+  {suivis.length === 0 ? (
+    <tr>
+      <td colSpan={4} className="px-4 py-2 text-white text-center">
+        Aucun évangélisé
+      </td>
+    </tr>
+  ) : (
+    suivis.map(m => (
+      <React.Fragment key={m.id}>
+        {/* Ligne principale du tableau */}
+        <tr className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
+          <td
+            className="px-4 py-2 border-l-4 rounded-l-md"
+            style={{ borderLeftColor: getBorderColor(m) }}
+          >
+            {m.prenom} {m.nom}
+          </td>
+          <td className="px-4 py-2">{m.telephone || "—"}</td>
+          <td className="px-4 py-2">{m.cellules?.cellule || "—"}</td>
+          <td className="px-4 py-2">
+            <button
+              onClick={() => toggleDetails(m.id)}
+              className="text-orange-500 underline text-sm"
+            >
+              {detailsOpen === m.id ? "Fermer" : "Détails"}
+            </button>
+          </td>
+        </tr>
+
+        {/* Ligne pour le popup */}
+        {detailsOpen === m.id && (
+          <tr>
+            <td colSpan={4} className="p-4 bg-white rounded-xl shadow-md">
+              <SuiviDetailsEvanPopup
+                membre={m}
+                onClose={() => setDetailsOpen(null)}
+                statusChanges={statusChanges}
+                commentChanges={commentChanges}
+                handleStatusChange={handleStatusChange}
+                handleCommentChange={handleCommentChange}
+                updateSuivi={updateSuivi}
+                updating={updating}
+              />
+            </td>
+          </tr>
+        )}
+      </React.Fragment>
+    ))
+  )}
 </tbody>
+
 
           </table>
         </div>

@@ -184,32 +184,7 @@ export default function SuivisMembres() {
         <p>🏙 Ville : {m.ville || "—"}</p>
         <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
         <p>❓Besoin : {(!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })())}</p>
-        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-
-        <div className="mt-4 border-t pt-4">
-          <label className="text-black font-semibold">📌 Envoyer à :</label>
-          <select value={typeEnvoi} onChange={(e) => { setTypeEnvoi(e.target.value); setCible(null); }} className="w-full border rounded-md px-2 py-1 mt-2">
-            <option value="">-- Choisir --</option>
-            <option value="cellule">📍 Cellule</option>
-            <option value="conseiller">👤 Conseiller</option>
-          </select>
-
-          {typeEnvoi === "cellule" && (
-            <select className="w-full border rounded-md px-2 py-1 mt-2" onChange={(e) => handleSelectCible(e.target.value)}>
-              <option value="">-- Sélectionner une cellule --</option>
-              {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule} — {c.responsable}</option>)}
-            </select>
-          )}
-
-          {typeEnvoi === "conseiller" && (
-            <select className="w-full border rounded-md px-2 py-1 mt-2" onChange={(e) => handleSelectCible(e.target.value)}>
-              <option value="">-- Sélectionner un conseiller --</option>
-              {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
-            </select>
-          )}
-
-          {cible && <BoutonEnvoyer membre={m} type={typeEnvoi} cible={cible} session={true} onEnvoyer={handleAfterSend} showToast={() => {}} />}
-        </div>
+        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>      
 
         <label className="text-black text-sm mt-4 block">📋 Statut Suivis :</label>
         <select value={statusChanges[m.id] ?? m.statut_suivis ?? ""} onChange={(e) => handleStatusChange(m.id, e.target.value)} className="w-full border rounded-md px-2 py-1">

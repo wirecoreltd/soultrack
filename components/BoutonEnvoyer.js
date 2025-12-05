@@ -58,7 +58,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         cible.telephone = cible.telephone || membre.telephone || "";
       }
 
-      // Insérer le suivi et récupérer l'objet complet avec id
+      // Insérer le suivi
       const { data: insertedData, error: insertError } = await supabase
         .from("suivis_membres")
         .insert([suiviData])
@@ -66,24 +66,24 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         .single();
       if (insertError) throw insertError;
 
-      // Mettre à jour le membre pour qu’il devienne actif
+      // ✅ Mettre à jour le membre pour qu’il devienne ANCIEN
       const { error: updateMemberError } = await supabase
         .from("membres")
-        .update({ statut: "actif" })
+        .update({ statut: "ancien" }) // <- le statut change automatiquement
         .eq("id", membre.id);
       if (updateMemberError) throw updateMemberError;
 
       // Callback pour mise à jour locale
       if (onEnvoyer) onEnvoyer(insertedData);
 
-      // Préparer message WhatsApp
+      // Préparer le message WhatsApp
       let message = `👋 Bonjour ${cible.responsable || (cible.prenom ? `${cible.prenom}` : "")} ! 😊\n\n`;
-        message += `Je te partage avec joie un nouveau membre à accompagner :\n\n`;
-        message += `- 👤 *Nom* : ${membre.prenom} ${membre.nom}\n`;
-        message += `- 📱 *Téléphone* : ${membre.telephone || "—"}\n`;
-        message += `- 🏙 *Ville* : ${membre.ville || "—"}\n`;
-        message += `- 🙏 *Besoin* : ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}\n\n`;
-        message += `Que le Saint-Esprit te guide dans cet accompagnement. Merci beaucoup pour ton cœur et ton engagement ❤️🙏`;
+      message += `Je te partage avec joie un nouveau membre à accompagner :\n\n`;
+      message += `- 👤 *Nom* : ${membre.prenom} ${membre.nom}\n`;
+      message += `- 📱 *Téléphone* : ${membre.telephone || "—"}\n`;
+      message += `- 🏙 *Ville* : ${membre.ville || "—"}\n`;
+      message += `- 🙏 *Besoin* : ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}\n\n`;
+      message += `Que le Saint-Esprit te guide dans cet accompagnement. Merci beaucoup pour ton cœur et ton engagement ❤️🙏`;
 
       const phone = (cible.telephone || "").replace(/\D/g, "");
       if (!phone) {

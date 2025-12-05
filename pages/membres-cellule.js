@@ -140,65 +140,68 @@ export default function MembresCellule() {
       {view === "card" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">        
           {membres.map(m => (
-            <div
-              key={m.id}
-              className="w-full rounded-xl border border-gray-200 bg-white shadow-md p-4 text-left transition-all duration-300 hover:shadow-lg relative"
-            >
-              {/* Border gauche dynamique */}
               <div
-                className="absolute top-0 left-0 h-full w-1 rounded-l-xl"
-                style={{ backgroundColor: getBorderColor(m) }}
-              />
-          
-              <div className="flex flex-col">
-                <h2 className="font-bold text-black text-base mb-1">
-                  {m.prenom} {m.nom}
-                </h2>
-          
-                <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">
-                  📌 Cellule : {getCellule(m)}
-                </p>
-          
-                {/* BOUTON DÉTAILS */}
-                <button
-                  onClick={() => setSelectedMembre(selectedMembre === m.id ? null : m.id)}
-                  className="text-orange-500 underline text-sm mt-1"
-                >
-                  {selectedMembre === m.id ? "Fermer détails" : "Détails"}
-                </button>
-          
-                {/* CARRÉ EXTENSIBLE */}
-                {selectedMembre === m.id && (
-                  <div className="mt-3 w-full bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <p className="text-sm mb-2"><strong>Ville :</strong> {m.ville || "—"}</p>
-                    <p className="text-sm mb-2"><strong>WhatsApp :</strong> {m.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p className="text-sm mb-2">
-                      <strong>Besoin :</strong> {(() => {
-                        if (!m.besoin) return "—";
-                        if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                        try {
-                          const arr = JSON.parse(m.besoin);
-                          return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                        } catch {
-                          return m.besoin;
-                        }
-                      })()}
-                    </p>
-          
-                    <p className="text-sm mb-2"><strong>Infos :</strong> {m.infos_supplementaires || "—"}</p>
-          
-                    <button
-                      onClick={() => setEditingMember(m)}
-                      className="text-orange-500 underline text-sm mt-1 flex justify-center items-center"
-                    >
-                      ✏️ Modifier le contact
-                    </button>
-                  </div>
-                )}
+                key={m.id}
+                className="w-full rounded-3xl border border-gray-200 bg-white shadow-md p-4 text-left transition-all duration-300 hover:shadow-lg relative overflow-hidden"
+              >
+                {/* Border gauche dynamique */}
+                <div
+                  className="absolute top-0 left-0 h-full w-1 rounded-l-3xl"
+                  style={{ backgroundColor: getBorderColor(m) }}
+                />
+            
+                <div className="flex flex-col">
+                  <h2 className="font-bold text-black text-base mb-1">
+                    {m.prenom} {m.nom}
+                  </h2>
+            
+                  <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
+                  <p className="text-sm text-gray-700 mb-1">📌 Cellule : {getCellule(m)}</p>
+            
+                  {/* BOUTON DÉTAILS */}
+                  <button
+                    onClick={() => setSelectedMembre(selectedMembre === m.id ? null : m.id)}
+                    className="text-orange-500 underline text-sm mt-1"
+                  >
+                    {selectedMembre === m.id ? "Fermer détails" : "Détails"}
+                  </button>
+            
+                  {/* CARRÉ EXTENSIBLE */}
+                  {selectedMembre === m.id && (
+                    <div className="mt-3 w-full bg-gray-50 p-4 rounded-2xl">
+                      <p className="text-sm mb-2"><strong>Ville :</strong> {m.ville || "—"}</p>
+                      <p className="text-sm mb-2"><strong>WhatsApp :</strong> {m.is_whatsapp ? "Oui" : "Non"}</p>
+                      <p className="text-sm mb-2">
+                        <strong>Besoin :</strong>{" "}
+                        {(() => {
+                          if (!m.besoin) return "—";
+                          if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                          try {
+                            const arr = JSON.parse(m.besoin);
+                            return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                          } catch {
+                            return m.besoin;
+                          }
+                        })()}
+                      </p>
+            
+                      <p className="text-sm mb-4"><strong>Infos :</strong> {m.infos_supplementaires || "—"}</p>
+            
+                      {/* BOUTON MODIFIER centré */}
+                      <div className="flex justify-center">
+                        <button
+                          onClick={() => setEditingMember(m)}
+                          className="mt-1 text-blue-600 font-semibold bg-white/0 px-3 py-2 rounded-md"
+                        >
+                          ✏️ Modifier le contact
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
 ))}
+
 
         </div>
       ) : (

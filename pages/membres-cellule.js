@@ -137,14 +137,13 @@ export default function MembresCellule() {
 
       {/* Vue Carte */}
       {view === "card" ? (
-        //<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">//
-        <div className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">        
           {membres.map(m => (
             <div key={m.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl overflow-hidden relative">
               
               {/* Border gauche dynamique */}
-              <div className="absolute top-0 left-0 h-full w-1 rounded-l-2xl" style={{ backgroundColor: getBorderColor(m) }} />
-
+              //<div className="absolute top-0 left-0 h-full w-1 rounded-l-2xl" style={{ backgroundColor: getBorderColor(m) }} />
+              <div className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4" style={{ backgroundColor: getBorderColor(m) }} />  
               <div className="p-4 flex flex-col items-center">
                 <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
                 <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>

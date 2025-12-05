@@ -226,7 +226,7 @@ export default function Evangelisation() {
                 </label>
         
                 {isOpen && (
-                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-left flex flex-col items-center">
+                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-left flex flex-col items-left">
                     <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🏙 Ville: {member.ville || "—"}</p>
                     <p>❓ Besoin : {formatBesoin(member.besoin)}</p>

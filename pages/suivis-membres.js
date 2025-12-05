@@ -189,7 +189,7 @@ export default function SuivisMembres() {
         <label className="text-black text-sm mt-4 block">📋 Statut Suivis :</label>
         <select value={statusChanges[m.id] ?? m.statut_suivis ?? ""} onChange={(e) => handleStatusChange(m.id, e.target.value)} className="w-full border rounded-md px-2 py-1">
           <option value="">-- Choisir un statut --</option>
-          <option value={1}>🕓 En attente</option>
+          <option value={1}>🕓 En Cours</option>
           <option value={3}>✅ Intégrer</option>
           <option value={4}>❌ Refus</option>
         </select>

@@ -136,6 +136,7 @@ export default function SuivisEvangelisation() {
       {loading ? (
         <p className="text-white">Chargement...</p>
       ) : view === "card" ? (
+        // VUE CARTE (inchangée, carré grandissant)
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
           {suivis.map(m => (
             <div
@@ -154,11 +155,29 @@ export default function SuivisEvangelisation() {
                 >
                   {detailsSuivi === m.id ? "Fermer détails" : "Détails"}
                 </button>
+
+                {/* carré grandissant pour carte */}
+                <div className={`transition-all duration-500 overflow-hidden ${detailsSuivi === m.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
+                  {detailsSuivi === m.id && (
+                    <SuiviDetailsEvanPopup
+                      membre={m}
+                      onClose={() => setDetailsSuivi(null)}
+                      statusChanges={statusChanges}
+                      commentChanges={commentChanges}
+                      handleStatusChange={handleStatusChange}
+                      handleCommentChange={handleCommentChange}
+                      updateSuivi={updateSuivi}
+                      updating={updating}
+                    />
+                  )}
+                </div>
+
               </div>
             </div>
           ))}
         </div>
       ) : (
+        // VUE TABLE
         <div className="w-full max-w-6xl relative overflow-x-auto flex justify-center">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
@@ -178,23 +197,21 @@ export default function SuivisEvangelisation() {
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.cellules?.cellule || "—"}</td>
                   <td className="px-4 py-2">
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => setDetailsSuivi(detailsSuivi === m.id ? null : m.id)}
-                        className="text-orange-500 underline text-sm"
-                      >
-                        Détails
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => setDetailsSuivi(detailsSuivi === m.id ? null : m.id)}
+                      className="text-orange-500 underline text-sm"
+                    >
+                      Détails
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
 
-          {/* Popup flottant */}
+          {/* Popup flottant sans fond noir */}
           {detailsSuivi && (
-            <div className="fixed inset-0 bg-black/30 flex justify-center items-start z-50 p-4">
+            <div className="fixed z-50 top-16 left-1/2 transform -translate-x-1/2 p-4">
               {suivis.filter(m => m.id === detailsSuivi).map(m => (
                 <div key={m.id} className="bg-white rounded-xl shadow-xl p-4 max-w-lg w-full">
                   <SuiviDetailsEvanPopup

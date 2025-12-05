@@ -220,25 +220,52 @@ export default function SuivisEvangelisation() {
 
       {loading ? (
         <p className="text-white">Chargement...</p>
+        
       ) : view === "card" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-          {suivis.map(m => (
-            <div key={m.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl overflow-hidden">
-              <div className="w-full h-[6px] rounded-t-2xl" style={{ backgroundColor: getBorderColor(m) }} />
-              <div className="p-4 flex flex-col items-center">
-                <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
-                <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellules?.cellule || "—"}</p>
-                <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === m.id ? "Fermer détails" : "Détails"}</button>
+        {view === "card" ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
+            {suivis.map(m => (
+              <div
+                key={m.id}
+                className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
+                style={{ borderLeftColor: getBorderColor(m) }}
+              >
+                <div className="flex flex-col items-center">
+                  <h2 className="font-bold text-black text-base text-center mb-1">
+                    {m.prenom} {m.nom}
+                  </h2>
+        
+                  <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
+                  <p className="text-sm text-gray-700 mb-1">
+                    📌 Cellule : {m.cellules?.cellule || "—"}
+                  </p>
+        
+                  <button
+                    onClick={() => toggleDetails(m.id)}
+                    className="text-orange-500 underline text-sm mt-1"
+                  >
+                    {detailsOpen === m.id ? "Fermer détails" : "Détails"}
+                  </button>
+                </div>
+        
+                {/* Détails expandable */}
+                <div
+                  className={`transition-all duration-500 overflow-hidden ${
+                    detailsOpen === m.id ? "max-h-[1000px] mt-3" : "max-h-0"
+                  }`}
+                >
+                  {detailsOpen === m.id && <DetailsPopup m={m} />}
+                </div>
               </div>
+            ))}
+          </div>
+        ) : (
+          // Vue table inchangée
+          <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
+            ...
+          </div>
+)}
 
-              <div className={`transition-all duration-500 overflow-hidden px-4 ${detailsOpen === m.id ? "max-h-[1000px] py-4" : "max-h-0 py-0"}`}>
-                {detailsOpen === m.id && <DetailsPopup m={m} />}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
         <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">

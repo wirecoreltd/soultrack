@@ -203,68 +203,64 @@ export default function Evangelisation() {
       </div>
 
       {/* LISTE CONTACTS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
-        {contacts.map((member) => {
-          const isOpen = detailsOpen[member.id];
-          return (
-            <div
-              key={member.id}
-              className="bg-white text-gray-900 rounded-2xl shadow-xl p-4 relative transition-all duration-300 hover:shadow-2xl"
-            >
-              {/* Border gauche dynamique */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
+          {contacts.map((member) => {
+            const isOpen = detailsOpen[member.id];
+            return (
               <div
-                className="absolute top-0 left-0 h-full w-1 rounded-l-2xl"
-                style={{ backgroundColor: getBorderColor(member) }}
-              />
-
-              <h2 className="font-bold text-lg mb-1 text-center text-blue-800">
-                {member.prenom} {member.nom}
-              </h2>
-              <p className="text-sm text-center mb-2">📱 {member.telephone || "—"}</p>
-              <label className="flex items-center justify-center gap-2 text-sm mb-2">
-                <input
-                  type="checkbox"
-                  checked={checkedContacts[member.id] || false}
-                  onChange={() => handleCheck(member.id)}
-                />
-                ✅ Envoyer ce Contact
-              </label>
-
-              {isOpen && (
-                <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-center flex flex-col items-center">
-                  <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-                  <p>🏙 Ville: {member.ville || "—"}</p>
-                  <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-                  <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
-
-                  <button
-                    onClick={() => setEditMember(member)}
-                    className="text-blue-600 text-sm mt-4 block mx-auto"
-                  >
-                    ✏️ Modifier le contact
-                  </button>
-
+                key={member.id}
+                className="bg-white text-gray-900 rounded-2xl shadow-xl p-4 transition-all duration-300 hover:shadow-2xl border-l-4"
+                style={{ borderLeftColor: getBorderColor(member) }}
+              >
+                <h2 className="font-bold text-lg mb-1 text-center text-blue-800">
+                  {member.prenom} {member.nom}
+                </h2>
+                <p className="text-sm text-center mb-2">📱 {member.telephone || "—"}</p>
+                <label className="flex items-center justify-center gap-2 text-sm mb-2">
+                  <input
+                    type="checkbox"
+                    checked={checkedContacts[member.id] || false}
+                    onChange={() => handleCheck(member.id)}
+                  />
+                  ✅ Envoyer ce Contact
+                </label>
+        
+                {isOpen && (
+                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-center flex flex-col items-center">
+                    <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+                    <p>🏙 Ville: {member.ville || "—"}</p>
+                    <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
+                    <p>📝 Infos: {member.infos_supplementaires || "—"}</p>
+        
+                    <button
+                      onClick={() => setEditMember(member)}
+                      className="text-blue-600 text-sm mt-4 block mx-auto"
+                    >
+                      ✏️ Modifier le contact
+                    </button>
+        
+                    <button
+                      onClick={() => toggleDetails(member.id)}
+                      className="text-orange-500 underline text-sm mt-2 block mx-auto"
+                    >
+                      Fermer Détails
+                    </button>
+                  </div>
+                )}
+        
+                {!isOpen && (
                   <button
                     onClick={() => toggleDetails(member.id)}
-                    className="text-orange-500 underline text-sm mt-2"
+                    className="text-orange-500 underline text-sm mt-1 block mx-auto"
                   >
-                    Fermer Détails
+                    Détails
                   </button>
-                </div>
-              )}
+                )}
+              </div>
+            );
+          })}
+</div>
 
-              {!isOpen && (
-                <button
-                  onClick={() => toggleDetails(member.id)}
-                  className="text-orange-500 underline text-sm mt-1 block mx-auto text-center"
-                >
-                  Détails
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
 
       {editMember && (
         <EditEvangelisePopup

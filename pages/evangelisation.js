@@ -226,7 +226,7 @@ export default function Evangelisation() {
                 </label>
         
                 {isOpen && (
-                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-center flex flex-col items-center">
+                  <div className="text-gray-700 text-sm mt-2 space-y-2 w-full text-left flex flex-col items-center">
                     <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🏙 Ville: {member.ville || "—"}</p>
                     <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
@@ -234,14 +234,14 @@ export default function Evangelisation() {
         
                     <button
                       onClick={() => setEditMember(member)}
-                      className="text-blue-600 text-sm mt-4 block mx-auto"
+                      className="text-blue-600 text-sm mt-4 text-center  block mx-auto"
                     >
                       ✏️ Modifier le contact
                     </button>
         
                     <button
                       onClick={() => toggleDetails(member.id)}
-                      className="text-orange-500 underline text-sm mt-2 block mx-auto"
+                      className="text-orange-500 text-center text-sm mt-2 block mx-auto"
                     >
                       Fermer Détails
                     </button>

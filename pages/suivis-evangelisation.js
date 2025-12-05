@@ -201,40 +201,41 @@ export default function SuivisEvangelisation() {
               </tr>
             ) : (
               suivis.map((m) => (
-                <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                  <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>
-                    {m.prenom} {m.nom}
-                  </td>
-                  <td className="px-4 py-2">{m.telephone || "—"}</td>
-                  <td className="px-4 py-2">{m.cellules?.cellule || "—"}</td>
-                  <td className="px-4 py-2">
-                    <button
-                      onClick={() => toggleDetails(m.id)}
-                      className="text-orange-500 underline text-sm"
-                    >
-                      {detailsOpen === m.id ? "Fermer" : "Détails"}
-                    </button>
+                <React.Fragment key={m.id}>
+                  <tr className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
+                    <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>
+                      {m.prenom} {m.nom}
+                    </td>
+                    <td className="px-4 py-2">{m.telephone || "—"}</td>
+                    <td className="px-4 py-2">{m.cellules?.cellule || "—"}</td>
+                    <td className="px-4 py-2">
+                      <button
+                        onClick={() => toggleDetails(m.id)}
+                        className="text-orange-500 underline text-sm"
+                      >
+                        {detailsOpen === m.id ? "Fermer" : "Détails"}
+                      </button>
+                    </td>
+                  </tr>
           
-                    {/* Popup Table */}
-                    {detailsOpen === m.id && (
-                      <tr>
-                        <td colSpan={4} className="px-4 py-2 bg-white text-black rounded-md">
-                          <SuiviDetailsEvanPopup
-                            key={m.id} // clé unique pour rerender
-                            membre={m}
-                            onClose={() => setDetailsOpen(null)}
-                            statusChanges={statusChanges}
-                            commentChanges={commentChanges}
-                            handleStatusChange={handleStatusChange}
-                            handleCommentChange={handleCommentChange}
-                            updateSuivi={updateSuivi}
-                            updating={updating}
-                          />
-                        </td>
-                      </tr>
-                    )}
-                  </td>
-                </tr>
+                  {/* Popup ligne */}
+                  {detailsOpen === m.id && (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-2 bg-white text-black rounded-md">
+                        <SuiviDetailsEvanPopup
+                          membre={m}
+                          onClose={() => setDetailsOpen(null)}
+                          statusChanges={statusChanges}
+                          commentChanges={commentChanges}
+                          handleStatusChange={handleStatusChange}
+                          handleCommentChange={handleCommentChange}
+                          updateSuivi={updateSuivi}
+                          updating={updating}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))
             )}
-          </tbody>
+</tbody>

@@ -167,14 +167,20 @@ export default function ListMembers() {
 
 
   const getBorderColor = (m) => {
-    if (m.star) return "#FBC02D";
-    if (m.statut === "actif") return "#4285F4";
-    if (m.statut === "a déjà son église") return "#f21705";
-    if (m.statut === "refus") return "#f56f22";        
-    if (m.statut === "ancien") return "#999999";
-    if (m.statut === "visiteur" || m.statut === "veut rejoindre ICC") return "#34A853";
-    return "#ccc";
-  };
+  const status = m.statut || "";
+  const suiviStatus = m.suivi_statut_libelle || "";
+
+  if (status === "refus" || suiviStatus === "refus") return "#f56f22";
+  if (status === "actif" || suiviStatus === "actif") return "#4285F4";
+  if (status === "a déjà son église" || suiviStatus === "a déjà son église") return "#f21705";        
+  if (status === "ancien" || suiviStatus === "ancien") return "#999999";
+  if (status === "visiteur" || suiviStatus === "visiteur") return "#34A853";
+  if (status === "veut rejoindre ICC" || suiviStatus === "veut rejoindre ICC") return "#34A853";
+  if (status === "refus" || suiviStatus === "refus") return "#f56f22";
+  
+  return "#ccc";
+};
+
 
   const formatDate = (dateStr) => {
     try {

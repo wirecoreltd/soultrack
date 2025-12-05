@@ -11,7 +11,10 @@ import SuiviDetailsEvanPopup from "../components/SuiviDetailsEvanPopup";
 export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [detailsOpen, setDetailsOpen] = useState(null); // ID du suivi pour table
+  const [detailsOpen, setDetailsOpen] = useState(null); // pour table
+  const [statusChanges, setStatusChanges] = useState({});
+  const [commentChanges, setCommentChanges] = useState({});
+  const [updating, setUpdating] = useState({});
   const [view, setView] = useState("card");
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
@@ -43,7 +46,6 @@ export default function SuivisEvangelisation() {
         .select(`*, cellules:cellule_id (id, cellule, responsable)`)
         .order("date_suivi", { ascending: false });
 
-      // Filtre selon rôle
       if (userRole.includes("ResponsableCellule")) {
         const { data: cellulesData } = await supabase
           .from("cellules")
@@ -70,6 +72,37 @@ export default function SuivisEvangelisation() {
   };
 
   const toggleDetails = (id) => setDetailsOpen(prev => (prev === id ? null : id));
+
+  const handleStatusChange = (id, value) => setStatusChanges(prev => ({ ...prev, [id]: value }));
+  const handleCommentChange = (id, value) => setCommentChanges(prev => ({ ...prev, [id]: value }));
+
+  const updateSuivi = async (id) => {
+    const newStatus = statusChanges[id];
+    const newComment = commentChanges[id];
+    if (!newStatus && !newComment) return;
+
+    setUpdating(prev => ({ ...prev, [id]: true }));
+
+    try {
+      const payload = {};
+      if (newStatus) payload.status_suivis_evangelises = newStatus;
+      if (newComment) payload.commentaire_evangelises = newComment;
+
+      const { data: updated, error } = await supabase
+        .from("suivis_des_evangelises")
+        .update(payload)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+
+      setSuivis(prev => prev.map(s => s.id === id ? updated : s));
+    } catch (err) {
+      console.error("Erreur update :", err);
+    } finally {
+      setUpdating(prev => ({ ...prev, [id]: false }));
+    }
+  };
 
   const getBorderColor = (m) => {
     if (m.status_suivis_evangelises === "En cours") return "#FFA500";
@@ -121,19 +154,34 @@ export default function SuivisEvangelisation() {
                 <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellules?.cellule || "—"}</p>
 
-                {/* Bouton détails carte */}
                 <button onClick={() => toggleDetails(m.id)}
                         className="text-orange-500 underline text-sm mt-1">
                   {detailsOpen === m.id ? "Fermer détails" : "Détails"}
                 </button>
 
-                {/* Détails inline carte */}
+                {/* Détails complet carte */}
                 {detailsOpen === m.id && (
-                  <div className="mt-2 w-full bg-gray-50 p-2 rounded-md text-left text-black text-sm space-y-1">
+                  <div className="mt-3 w-full bg-gray-50 p-4 rounded-lg text-left space-y-2 text-black text-sm">
                     <p>🏙 Ville : {m.ville || "—"}</p>
-                    <p>❓ Besoin : {(!m.besoin ? "—" : Array.isArray(m.besoin) 
-                      ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })())}</p>
+                    <p>❓ Besoin : {!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; }})()}</p>
                     <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+
+                    <label className="text-black text-sm mt-2 block">📋 Statut Suivi :</label>
+                    <select value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""} onChange={(e) => handleStatusChange(m.id, e.target.value)} className="w-full border rounded-md px-2 py-1">
+                      <option value="">-- Choisir un statut --</option>
+                      <option value="En cours">🕊 En cours</option>
+                      <option value="Integrer">🔥 Intégrer</option>
+                      <option value="Venu à l’église">⛪ Venu à l’église</option>
+                      <option value="Veut venir à la famille d’impact">👨‍👩‍👧‍👦 Veut venir à la famille d’impact</option>
+                      <option value="Veut être visité">🏡 Veut être visité</option>
+                      <option value="Ne souhaite pas continuer">🚫 Ne souhaite pas continuer</option>
+                    </select>
+
+                    <textarea value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""} onChange={(e) => handleCommentChange(m.id, e.target.value)} rows={2} className="w-full border rounded-md px-2 py-1 mt-2 resize-none" placeholder="Ajouter un commentaire..." />
+
+                    <button onClick={() => updateSuivi(m.id)} disabled={updating[m.id]} className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${updating[m.id] ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"}`}>
+                      {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
+                    </button>
                   </div>
                 )}
               </div>
@@ -141,7 +189,6 @@ export default function SuivisEvangelisation() {
           ))}
         </div>
       ) : (
-        // VUE TABLE
         <div className="w-full max-w-6xl overflow-x-auto flex justify-center relative">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
@@ -161,17 +208,14 @@ export default function SuivisEvangelisation() {
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.cellules?.cellule || "—"}</td>
                   <td className="px-4 py-2">
-                    <button onClick={() => toggleDetails(m.id)}
-                            className="text-orange-500 underline text-sm">
-                      Détails
-                    </button>
+                    <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">Détails</button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
 
-          {/* POPUP DETAILS TABLE */}
+          {/* POPUP TABLE */}
           {detailsOpen && (
             <SuiviDetailsEvanPopup
               member={suivis.find(s => s.id === detailsOpen)}

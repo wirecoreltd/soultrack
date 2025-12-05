@@ -8,7 +8,6 @@ import LogoutLink from "../components/LogoutLink";
 import SuiviDetailsEvanPopup from "../components/SuiviDetailsEvanPopup";
 import EditEvangelisePopup from "../components/EditEvangelisePopup";
 
-
 export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +18,7 @@ export default function SuivisEvangelisation() {
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
   const [detailsSuivi, setDetailsSuivi] = useState(null);
-  const [editingContact, setEditingContact] = useState(null); // <-- pour EditEvanContactPopup
+  const [editingContact, setEditingContact] = useState(null);
 
   useEffect(() => {
     fetchSuivis();
@@ -168,29 +167,19 @@ export default function SuivisEvangelisation() {
                         : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })())}</p>
                       <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                      <label className="text-black text-sm mt-2 block">📋 Statut Suivi :</label>
-                      <select value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""} onChange={(e) => handleStatusChange(m.id, e.target.value)} className="w-full border rounded-md px-2 py-1">
-                        <option value="">-- Choisir un statut --</option>
-                        <option value="En cours">🕊 En cours</option>
-                        <option value="Integrer">🔥 Intégrer</option>
-                        <option value="Venu à l’église">⛪ Venu à l’église</option>
-                        <option value="Veut venir à la famille d’impact">👨‍👩‍👧‍👦 Veut venir à la famille d’impact</option>
-                        <option value="Veut être visité">🏡 Veut être visité</option>
-                        <option value="Ne souhaite pas continuer">🚫 Ne souhaite pas continuer</option>
-                      </select>
-
                       <textarea value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""} onChange={(e) => handleCommentChange(m.id, e.target.value)} rows={2} className="w-full border rounded-md px-2 py-1 mt-2 resize-none" placeholder="Ajouter un commentaire..." />
 
                       <button onClick={() => updateSuivi(m.id)} disabled={updating[m.id]} className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${updating[m.id] ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"}`}>
                         {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
                       </button>
-                        {/* Bouton Modifier Contact */}
-                <button
-                  onClick={() => setEditingContact(m)}
-                  className="text-blue-600 text-center text-sm mb-2"
-                >
-                  ✏️ Modifier le contact
-                </button>
+
+                      {/* Bouton Modifier Contact */}
+                      <button
+                        onClick={() => setEditingContact(m)}
+                        className="text-blue-600 text-center text-sm mt-2"
+                      >
+                        ✏️ Modifier le contact
+                      </button>
                     </div>
                   )}
                 </div>
@@ -229,13 +218,13 @@ export default function SuivisEvangelisation() {
       )}
 
       {/* Popup Modifier Contact */}
-      {/* Popup Modifier Contact */}
-        {editingContact && (
-          <EditEvangelisePopup
-            member={editingContact}
-            onClose={() => setEditingContact(null)}
-            onUpdateMember={() => {
-              fetchSuivis(); // rafraîchit la liste après modification
+      {editingContact && (
+        <EditEvangelisePopup
+          member={editingContact}
+          onClose={() => setEditingContact(null)}
+          onUpdateMember={() => {
+            fetchSuivis(); // rafraîchit la liste après modification
+          }}
         />
       )}
     </div>

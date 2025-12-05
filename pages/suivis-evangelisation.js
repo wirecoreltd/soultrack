@@ -8,7 +8,6 @@ import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import BoutonEnvoyer from "../components/BoutonEnvoyer";
 import SuiviDetailsEvanPopup from "../components/SuiviDetailsEvanPopup";
-import React from "react";
 
 export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
@@ -21,7 +20,6 @@ export default function SuivisEvangelisation() {
   const [prenom, setPrenom] = useState("");
   const [role, setRole] = useState([]);
   const [message, setMessage] = useState("");
-  const [editMember, setEditMember] = useState(null);
 
   useEffect(() => {
     fetchSuivis();
@@ -75,7 +73,6 @@ export default function SuivisEvangelisation() {
   };
 
   const toggleDetails = (id) => setDetailsOpen(prev => (prev === id ? null : id));
-
   const handleStatusChange = (id, value) => setStatusChanges(prev => ({ ...prev, [id]: value }));
   const handleCommentChange = (id, value) => setCommentChanges(prev => ({ ...prev, [id]: value }));
 
@@ -147,31 +144,43 @@ export default function SuivisEvangelisation() {
               style={{ borderLeftColor: getBorderColor(m) }}
             >
               <div className="flex flex-col items-center">
-                <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
+                <h2 className="font-bold text-black text-base text-center mb-1">
+                  {m.prenom} {m.nom}
+                </h2>
+
                 <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellules?.cellule || "—"}</p>
-                <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-1">
+                <p className="text-sm text-gray-700 mb-1">
+                  📌 Cellule : {m.cellules?.cellule || "—"}
+                </p>
+
+                <button
+                  onClick={() => toggleDetails(m.id)}
+                  className="text-orange-500 underline text-sm mt-1"
+                >
                   {detailsOpen === m.id ? "Fermer détails" : "Détails"}
                 </button>
               </div>
 
-              <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === m.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
-                {detailsOpen === m.id && <SuiviDetailsEvanPopup
-                  membre={m}
-                  onClose={() => setDetailsOpen(null)}
-                  statusChanges={statusChanges}
-                  commentChanges={commentChanges}
-                  handleStatusChange={handleStatusChange}
-                  handleCommentChange={handleCommentChange}
-                  updateSuivi={updateSuivi}
-                  updating={updating}
-                />}
-              </div>
+              {/* Détails expandable dans la carte */}
+              {detailsOpen === m.id && (
+                <div className="mt-3 transition-all duration-500 overflow-hidden">
+                  <SuiviDetailsEvanPopup
+                    membre={m}
+                    onClose={() => setDetailsOpen(null)}
+                    statusChanges={statusChanges}
+                    commentChanges={commentChanges}
+                    handleStatusChange={handleStatusChange}
+                    handleCommentChange={handleCommentChange}
+                    updateSuivi={updateSuivi}
+                    updating={updating}
+                  />
+                </div>
+              )}
             </div>
           ))}
         </div>
       ) : (
-        <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
+        <div className="w-full max-w-6xl relative overflow-x-auto flex justify-center">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
             <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
               <tr>
@@ -188,38 +197,42 @@ export default function SuivisEvangelisation() {
                 </tr>
               ) : (
                 suivis.map(m => (
-                  <React.Fragment key={m.id}>
-                    <tr className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                      <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
-                      <td className="px-4 py-2">{m.telephone || "—"}</td>
-                      <td className="px-4 py-2">{m.cellules?.cellule || "—"}</td>
-                      <td className="px-4 py-2">
-                        <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">
-                          {detailsOpen === m.id ? "Fermer" : "Détails"}
-                        </button>
-                      </td>
-                    </tr>
-                    {detailsOpen === m.id && (
-                      <tr>
-                        <td colSpan={4} className="p-4 bg-white rounded-xl shadow-md">
-                          <SuiviDetailsEvanPopup
-                            membre={m}
-                            onClose={() => setDetailsOpen(null)}
-                            statusChanges={statusChanges}
-                            commentChanges={commentChanges}
-                            handleStatusChange={handleStatusChange}
-                            handleCommentChange={handleCommentChange}
-                            updateSuivi={updateSuivi}
-                            updating={updating}
-                          />
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
+                  <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
+                    <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>
+                      {m.prenom} {m.nom}
+                    </td>
+                    <td className="px-4 py-2">{m.telephone || "—"}</td>
+                    <td className="px-4 py-2">{m.cellules?.cellule || "—"}</td>
+                    <td className="px-4 py-2">
+                      <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">
+                        {detailsOpen === m.id ? "Fermer" : "Détails"}
+                      </button>
+                    </td>
+                  </tr>
                 ))
               )}
             </tbody>
           </table>
+
+          {/* Popup flottant */}
+          {detailsOpen && (
+            <div className="absolute top-0 left-0 w-full h-full flex justify-center items-start z-50 p-4 pointer-events-none">
+              {suivis.filter(m => m.id === detailsOpen).map(m => (
+                <div key={m.id} className="pointer-events-auto bg-white rounded-xl shadow-xl p-4 max-w-lg w-full">
+                  <SuiviDetailsEvanPopup
+                    membre={m}
+                    onClose={() => setDetailsOpen(null)}
+                    statusChanges={statusChanges}
+                    commentChanges={commentChanges}
+                    handleStatusChange={handleStatusChange}
+                    handleCommentChange={handleCommentChange}
+                    updateSuivi={updateSuivi}
+                    updating={updating}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

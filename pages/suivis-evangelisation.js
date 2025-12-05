@@ -1,5 +1,4 @@
 // pages/suivis-evangelisation.js
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,6 +6,7 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import SuiviDetailsEvanPopup from "../components/SuiviDetailsEvanPopup";
+import EditEvanContactPopup from "../components/EditEvanContactPopup";
 
 export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
@@ -18,6 +18,7 @@ export default function SuivisEvangelisation() {
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
   const [detailsSuivi, setDetailsSuivi] = useState(null);
+  const [editingContact, setEditingContact] = useState(null); // <-- pour EditEvanContactPopup
 
   useEffect(() => {
     fetchSuivis();
@@ -149,9 +150,17 @@ export default function SuivisEvangelisation() {
                 <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellules?.cellule || "—"}</p>
 
+                {/* Bouton Modifier Contact */}
+                <button
+                  onClick={() => setEditingContact(m)}
+                  className="text-blue-600 underline text-sm mb-2"
+                >
+                  ✏️ Modifier
+                </button>
+
                 <button
                   onClick={() => setDetailsSuivi(detailsSuivi === m.id ? null : m.id)}
-                  className="text-orange-500 underline text-sm mt-1"
+                  className="text-orange-500 underline text-sm"
                 >
                   {detailsSuivi === m.id ? "Fermer détails" : "Détails"}
                 </button>
@@ -161,10 +170,9 @@ export default function SuivisEvangelisation() {
                   {detailsSuivi === m.id && (
                     <div className="text-black text-sm space-y-2 w-full">
                       <p>🏙 Ville : {m.ville || "—"}</p>
-                      <p>❓Besoin : {(!m.besoin ? "—" : Array.isArray(m.besoin) 
-                        ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); 
-                          return Array.isArray(arr) ? arr.join(", ") : m.besoin; } 
-                        catch { return m.besoin; } })())}</p>
+                      <p>❓Besoin : {(!m.besoin ? "—" : Array.isArray(m.besoin)
+                        ? m.besoin.join(", ")
+                        : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })())}</p>
                       <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                       <label className="text-black text-sm mt-2 block">📋 Statut Suivi :</label>
@@ -217,27 +225,17 @@ export default function SuivisEvangelisation() {
               ))}
             </tbody>
           </table>
-
-          {/* Popup flottant sans fond noir */}
-          {detailsSuivi && (
-            <div className="fixed z-50 top-16 left-1/2 transform -translate-x-1/2 p-4">
-              {suivis.filter(m => m.id === detailsSuivi).map(m => (
-                <div key={m.id} className="bg-white rounded-xl shadow-xl p-4 max-w-lg w-full">
-                  <SuiviDetailsEvanPopup
-                    membre={m}
-                    onClose={() => setDetailsSuivi(null)}
-                    statusChanges={statusChanges}
-                    commentChanges={commentChanges}
-                    handleStatusChange={handleStatusChange}
-                    handleCommentChange={handleCommentChange}
-                    updateSuivi={updateSuivi}
-                    updating={updating}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
         </div>
+      )}
+
+      {/* Popup Modifier Contact */}
+      {editingContact && (
+        <EditEvanContactPopup
+          open={!!editingContact}
+          contact={editingContact}
+          onClose={() => setEditingContact(null)}
+          onUpdated={fetchSuivis} // refresh liste après modification
+        />
       )}
     </div>
   );

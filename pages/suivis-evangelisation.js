@@ -186,7 +186,7 @@ export default function SuivisEvangelisation() {
                         {/* Bouton Modifier Contact */}
                 <button
                   onClick={() => setEditingContact(m)}
-                  className="text-blue-600 underline text-sm mb-2"
+                  className="text-blue-600 text-center text-sm mb-2"
                 >
                   ✏️ Modifier le contact
                 </button>

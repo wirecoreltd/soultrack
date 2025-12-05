@@ -204,7 +204,7 @@ export default function ListMembers() {
       {/* Top bar */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
-          <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-gray-200">← Retour</button>
+          <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black-200">← Retour</button>
           <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20" />
         </div>
         <div className="flex justify-end mt-2">
@@ -251,7 +251,7 @@ export default function ListMembers() {
                       {m.star && <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>}
                       <div className="flex flex-col items-center">
                         <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
-                        <div className="flex flex-col space-y-1 text-sm text-gray-600 w-full items-center">
+                        <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
                           <div className="flex justify-center items-center space-x-2"><span>📱</span><span>{m.telephone || "—"}</span></div>
                           <div className="flex justify-center items-center space-x-2"><span>🏙</span><span>{m.ville || "—"}</span></div>      
                           <div className="flex justify-center items-center space-x-2"><span>🕊</span><span>Statut : {m.statut || "—"}</span></div>
@@ -306,7 +306,7 @@ export default function ListMembers() {
                         <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">{isOpen ? "Fermer détails" : "Détails"}</button>
 
                         {isOpen && (
-                          <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
+                          <div className="text-black-700 text-sm mt-3 w-full space-y-2">
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>                            
                             <p>❓Besoin : {(!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })())}</p>
                             <p>📝 Infos : {m.infos_supplementaires || ""}</p>
@@ -353,7 +353,7 @@ export default function ListMembers() {
                         <h2 className="text-lg font-bold text-center">
                           {m.prenom} {m.nom}
                         </h2>
-                        <div className="flex flex-col space-y-1 text-sm text-gray-600 w-full items-center">
+                        <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
                           <div className="flex justify-center items-center space-x-2">
                             <span>📱</span>
                             <span>{m.telephone || "—"}</span>
@@ -381,7 +381,7 @@ export default function ListMembers() {
                         </button>
 
                         {isOpen && (
-                          <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
+                          <div className="text-black-700 text-sm mt-3 w-full space-y-2">
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                             <p>🏙 Ville : {m.ville || "—"}</p>
                             <p>
@@ -522,7 +522,7 @@ export default function ListMembers() {
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left border-separate border-spacing-0">
-            <thead className="bg-gray-200 text-gray-800 text-sm uppercase">
+            <thead className="bg-gray-200 text-black-800 text-sm uppercase">
               <tr>
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>

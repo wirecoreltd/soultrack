@@ -190,8 +190,21 @@ export default function ListMembers() {
   const nouveaux = members.filter((m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");
   const anciens = members.filter((m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC");
 
-  const nouveauxFiltres = filterBySearch(filter ? nouveaux.filter((m) => m.statut === filter) : nouveaux);
-  const anciensFiltres = filterBySearch(filter ? anciens.filter((m) => m.statut === filter) : anciens);
+  const nouveauxFiltres = filterBySearch(
+  filter
+    ? nouveaux.filter((m) =>
+        m.statut === filter || m.suivi_statut_libelle === filter
+      )
+    : nouveaux
+);
+
+  const anciensFiltres = filterBySearch(
+  filter
+    ? anciens.filter((m) =>
+        m.statut === filter || m.suivi_statut_libelle === filter
+      )
+    : anciens
+);
 
   const statusOptions = ["actif", "ancien", "visiteur", "veut rejoindre ICC", "refus", "integrer", "a déjà son église"];
   const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;

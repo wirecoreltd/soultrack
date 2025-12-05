@@ -214,10 +214,9 @@ export default function Evangelisation() {
                   </button>
                 )}
               </div>
-            );
-          })}
-</div>
-
+            ); // <-- fermeture du return map
+          })} 
+          </div>
 
       {editMember && (
         <EditEvangelisePopup

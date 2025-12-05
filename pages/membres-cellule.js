@@ -156,7 +156,7 @@ export default function MembresCellule() {
                   {/* Bouton détails */}
                   <button
                     onClick={() => setSelectedMembre(selectedMembre === m.id ? null : m.id)}
-                    className="text-orange-500 underline text-sm mt-1"
+                    className="text-orange-500 text-sm mt-1"
                   >
                     {selectedMembre === m.id ? "Fermer détails" : "Détails"}
                   </button>
@@ -185,7 +185,7 @@ export default function MembresCellule() {
                       <div className="flex justify-center pt-2">
                         <button
                           onClick={() => setEditingMember(m)}
-                          className="text-orange-600 "
+                          className="text-orange-500 text-sm mt-1"
                         >
                           ✏️ Modifier le contact
                         </button>

@@ -1,107 +1,162 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function EditEvanContactPopup({ open, onClose, contact, onUpdated }) {
-  const [prenom, setPrenom] = useState(contact?.prenom || "");
-  const [nom, setNom] = useState(contact?.nom || "");
-  const [telephone, setTelephone] = useState(contact?.telephone || "");
-  const [ville, setVille] = useState(contact?.ville || "");
-  const [infos, setInfos] = useState(contact?.infos_supplementaires || "");
-  const [loading, setLoading] = useState(false);
+export default function EditEvangContactPopup({ contact, onClose, onSave }) {
+  const [prenom, setPrenom] = useState(contact.prenom || "");
+  const [nom, setNom] = useState(contact.nom || "");
+  const [telephone, setTelephone] = useState(contact.telephone || "");
+  const [ville, setVille] = useState(contact.ville || "");
+  const [infosSupp, setInfosSupp] = useState(contact.infos_supplementaires || "");
 
-  if (!open || !contact) return null;
+  // besoin = tableau (tags)
+  const [besoin, setBesoin] = useState(
+    Array.isArray(contact.besoin) ? contact.besoin : []
+  );
+  const [newBesoinItem, setNewBesoinItem] = useState("");
 
-  async function handleSave() {
-    setLoading(true);
+  const handleAddBesoin = () => {
+    if (!newBesoinItem.trim()) return;
+    setBesoin((prev) => [...prev, newBesoinItem.trim()]);
+    setNewBesoinItem("");
+  };
 
+  const handleRemoveBesoin = (item) => {
+    setBesoin((prev) => prev.filter((b) => b !== item));
+  };
+
+  const handleSave = async () => {
     const { error } = await supabase
-      .from("suivis_evangelisation")
+      .from("evangelisation_contacts")
       .update({
         prenom,
         nom,
         telephone,
         ville,
-        infos_supplementaires: infos,
+        besoin,
+        infos_supplementaires: infosSupp,
       })
       .eq("id", contact.id);
 
-    setLoading(false);
-
     if (error) {
-      alert("Erreur lors de la mise à jour");
+      console.error(error);
+      alert("Erreur lors de la sauvegarde.");
       return;
     }
 
-    onUpdated();    // reload data
-    onClose();      // close popup
-  }
+    onSave();
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white w-96 p-6 rounded-2xl shadow-xl relative">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center px-4 z-50">
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-xl p-6">
 
-        <h2 className="text-xl font-bold text-gray-900 mb-4">✏️ Modifier le contact</h2>
+        <h2 className="text-xl font-bold mb-4">✏️ Modifier le contact</h2>
 
         {/* Prénom */}
-        <label className="text-sm font-semibold">Prénom</label>
-        <input
-          className="w-full border rounded-md px-2 py-1 mb-3"
-          value={prenom}
-          onChange={(e) => setPrenom(e.target.value)}
-        />
+        <div className="mb-3">
+          <label className="font-semibold">Prénom</label>
+          <input
+            value={prenom}
+            onChange={(e) => setPrenom(e.target.value)}
+            className="w-full border rounded p-2 mt-1"
+          />
+        </div>
 
         {/* Nom */}
-        <label className="text-sm font-semibold">Nom</label>
-        <input
-          className="w-full border rounded-md px-2 py-1 mb-3"
-          value={nom}
-          onChange={(e) => setNom(e.target.value)}
-        />
+        <div className="mb-3">
+          <label className="font-semibold">Nom</label>
+          <input
+            value={nom}
+            onChange={(e) => setNom(e.target.value)}
+            className="w-full border rounded p-2 mt-1"
+          />
+        </div>
 
         {/* Téléphone */}
-        <label className="text-sm font-semibold">Téléphone</label>
-        <input
-          className="w-full border rounded-md px-2 py-1 mb-3"
-          value={telephone}
-          onChange={(e) => setTelephone(e.target.value)}
-        />
+        <div className="mb-3">
+          <label className="font-semibold">Téléphone</label>
+          <input
+            value={telephone}
+            onChange={(e) => setTelephone(e.target.value)}
+            className="w-full border rounded p-2 mt-1"
+          />
+        </div>
 
         {/* Ville */}
-        <label className="text-sm font-semibold">Ville</label>
-        <input
-          className="w-full border rounded-md px-2 py-1 mb-3"
-          value={ville}
-          onChange={(e) => setVille(e.target.value)}
-        />
+        <div className="mb-3">
+          <label className="font-semibold">Ville</label>
+          <input
+            value={ville}
+            onChange={(e) => setVille(e.target.value)}
+            className="w-full border rounded p-2 mt-1"
+          />
+        </div>
+
+        {/* Besoin (array sous forme de tags) */}
+        <div className="mb-3">
+          <label className="font-semibold">Besoin</label>
+
+          <div className="flex mt-1 gap-2">
+            <input
+              placeholder="Ajouter un besoin..."
+              value={newBesoinItem}
+              onChange={(e) => setNewBesoinItem(e.target.value)}
+              className="flex-1 border rounded p-2"
+            />
+            <button
+              onClick={handleAddBesoin}
+              className="bg-blue-600 text-white px-4 rounded"
+            >
+              Ajouter
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2 mt-2">
+            {besoin.map((item) => (
+              <span
+                key={item}
+                className="px-3 py-1 bg-gray-200 rounded-full flex items-center gap-2"
+              >
+                {item}
+                <button
+                  className="text-red-600 font-bold"
+                  onClick={() => handleRemoveBesoin(item)}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
 
         {/* Infos supplémentaires */}
-        <label className="text-sm font-semibold">Infos supplémentaires</label>
-        <textarea
-          className="w-full border rounded-md px-2 py-2 mb-3 resize-none"
-          rows="3"
-          value={infos}
-          onChange={(e) => setInfos(e.target.value)}
-        />
+        <div className="mb-3">
+          <label className="font-semibold">Infos supplémentaires</label>
+          <textarea
+            value={infosSupp}
+            onChange={(e) => setInfosSupp(e.target.value)}
+            className="w-full border rounded p-2 mt-1 min-h-[80px]"
+          />
+        </div>
 
         {/* Boutons */}
-        <div className="flex justify-end gap-2 mt-4">
+        <div className="flex justify-end gap-3 mt-4">
           <button
-            className="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400"
             onClick={onClose}
+            className="px-4 py-2 bg-gray-300 rounded"
           >
             Annuler
           </button>
-
           <button
-            className={`px-4 py-2 rounded-md text-white ${loading ? "bg-gray-500" : "bg-blue-600 hover:bg-blue-700"}`}
             onClick={handleSave}
-            disabled={loading}
+            className="px-4 py-2 bg-green-600 text-white rounded"
           >
-            {loading ? "Enregistrement..." : "Enregistrer"}
+            Enregistrer
           </button>
         </div>
+
       </div>
     </div>
   );

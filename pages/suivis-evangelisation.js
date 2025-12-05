@@ -221,8 +221,7 @@ export default function SuivisEvangelisation() {
       {loading ? (
         <p className="text-white">Chargement...</p>
         
-      ) : view === "card" ? (
-        {view === "card" ? (
+      ) : view === "card" ? (        
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
             {suivis.map(m => (
               <div
@@ -259,12 +258,7 @@ export default function SuivisEvangelisation() {
               </div>
             ))}
           </div>
-        ) : (
-          // Vue table inchangée
-          <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
-            ...
-          </div>
-)}
+        ) : (         
 
         <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">

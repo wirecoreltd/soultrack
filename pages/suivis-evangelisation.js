@@ -6,7 +6,8 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import SuiviDetailsEvanPopup from "../components/SuiviDetailsEvanPopup";
-import EditEvanContactPopup from "../components/EditEvanContactPopup";
+import EditEvangelisePopup from "../components/EditEvangelisePopup";
+
 
 export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
@@ -228,12 +229,13 @@ export default function SuivisEvangelisation() {
       )}
 
       {/* Popup Modifier Contact */}
-      {editingContact && (
-        <EditEvanContactPopup
-          open={!!editingContact}
-          contact={editingContact}
-          onClose={() => setEditingContact(null)}
-          onUpdated={fetchSuivis} // refresh liste après modification
+      {/* Popup Modifier Contact */}
+        {editingContact && (
+          <EditEvangelisePopup
+            member={editingContact}
+            onClose={() => setEditingContact(null)}
+            onUpdateMember={() => {
+              fetchSuivis(); // rafraîchit la liste après modification
         />
       )}
     </div>

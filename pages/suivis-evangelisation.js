@@ -7,7 +7,7 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import BoutonEnvoyer from "../components/BoutonEnvoyer";
-import SuiviDetailsEvanPopup from "../components/SuiviDetailsEvanPopup"; // Assurez-vous que ce chemin est correct
+import SuiviDetailsEvanPopup from "../components/SuiviDetailsEvanPopup";
 import React from "react";
 
 export default function SuivisEvangelisation() {
@@ -21,6 +21,7 @@ export default function SuivisEvangelisation() {
   const [prenom, setPrenom] = useState("");
   const [role, setRole] = useState([]);
   const [message, setMessage] = useState("");
+  const [editMember, setEditMember] = useState(null);
 
   useEffect(() => {
     fetchSuivis();
@@ -130,9 +131,7 @@ export default function SuivisEvangelisation() {
       </div>
 
       <div className="mb-4 flex justify-between w-full max-w-6xl">
-        <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline hover:text-gray-200">
-          {view === "card" ? "Vue Table" : "Vue Carte"}
-        </button>
+        <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline hover:text-gray-200">{view === "card" ? "Vue Table" : "Vue Carte"}</button>
       </div>
 
       {message && <div className="mb-4 px-4 py-2 rounded-md bg-yellow-100 text-yellow-800 text-sm">{message}</div>}
@@ -148,20 +147,25 @@ export default function SuivisEvangelisation() {
               style={{ borderLeftColor: getBorderColor(m) }}
             >
               <div className="flex flex-col items-center">
-                <h2 className="font-bold text-black text-base text-center mb-1">
-                  {m.prenom} {m.nom}
-                </h2>
+                <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
                 <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
                 <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellules?.cellule || "—"}</p>
-                <button
-                  onClick={() => toggleDetails(m.id)}
-                  className="text-orange-500 underline text-sm mt-1"
-                >
+                <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-1">
                   {detailsOpen === m.id ? "Fermer détails" : "Détails"}
                 </button>
               </div>
+
               <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === m.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
-                {detailsOpen === m.id && <DetailsPopup m={m} />}
+                {detailsOpen === m.id && <SuiviDetailsEvanPopup
+                  membre={m}
+                  onClose={() => setDetailsOpen(null)}
+                  statusChanges={statusChanges}
+                  commentChanges={commentChanges}
+                  handleStatusChange={handleStatusChange}
+                  handleCommentChange={handleCommentChange}
+                  updateSuivi={updateSuivi}
+                  updating={updating}
+                />}
               </div>
             </div>
           ))}
@@ -186,9 +190,7 @@ export default function SuivisEvangelisation() {
                 suivis.map(m => (
                   <React.Fragment key={m.id}>
                     <tr className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                      <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>
-                        {m.prenom} {m.nom}
-                      </td>
+                      <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
                       <td className="px-4 py-2">{m.telephone || "—"}</td>
                       <td className="px-4 py-2">{m.cellules?.cellule || "—"}</td>
                       <td className="px-4 py-2">
@@ -197,7 +199,6 @@ export default function SuivisEvangelisation() {
                         </button>
                       </td>
                     </tr>
-
                     {detailsOpen === m.id && (
                       <tr>
                         <td colSpan={4} className="p-4 bg-white rounded-xl shadow-md">

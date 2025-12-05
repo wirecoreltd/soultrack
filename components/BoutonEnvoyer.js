@@ -66,17 +66,20 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         .single();
       if (insertError) throw insertError;
 
-      // ✅ Mettre à jour le membre pour qu’il devienne ANCIEN
+      // Mettre à jour le membre pour qu’il devienne ANCIEN
       const { error: updateMemberError } = await supabase
         .from("membres")
-        .update({ statut: "ancien" }) // <- le statut change automatiquement
+        .update({ statut: "ancien" }) // <- statut mis à jour
         .eq("id", membre.id);
       if (updateMemberError) throw updateMemberError;
 
-      // Callback pour mise à jour locale
-      if (onEnvoyer) onEnvoyer(insertedData);
+      // Créer une version locale avec statut = ancien pour le state
+      const updatedMember = { ...membre, statut: "ancien" };
 
-      // Préparer le message WhatsApp
+      // Callback pour mise à jour instantanée dans ListMembers
+      if (onEnvoyer) onEnvoyer(updatedMember);
+
+      // Préparer message WhatsApp
       let message = `👋 Bonjour ${cible.responsable || (cible.prenom ? `${cible.prenom}` : "")} ! 😊\n\n`;
       message += `Je te partage avec joie un nouveau membre à accompagner :\n\n`;
       message += `- 👤 *Nom* : ${membre.prenom} ${membre.nom}\n`;

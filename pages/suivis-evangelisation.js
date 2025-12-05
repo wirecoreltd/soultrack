@@ -276,7 +276,13 @@ export default function SuivisEvangelisation() {
                   <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.cellules?.cellule || "—"}</td>
-                  <td className="px-4 py-2"><button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">{detailsOpen === m.id ? "Fermer" : "Détails"}</button></td>
+                  <td className="px-4 py-2">
+  
+                    <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm">
+                      {detailsOpen === m.id ? "Fermer" : "Détails"}
+                    </button>
+                  </td>
+
                 </tr>
               ))}
             </tbody>

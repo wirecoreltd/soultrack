@@ -148,15 +148,7 @@ export default function SuivisEvangelisation() {
               <div className="flex flex-col items-center">
                 <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
                 <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellules?.cellule || "—"}</p>
-
-                {/* Bouton Modifier Contact */}
-                <button
-                  onClick={() => setEditingContact(m)}
-                  className="text-blue-600 underline text-sm mb-2"
-                >
-                  ✏️ Modifier
-                </button>
+                <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellules?.cellule || "—"}</p>                
 
                 <button
                   onClick={() => setDetailsSuivi(detailsSuivi === m.id ? null : m.id)}
@@ -191,6 +183,13 @@ export default function SuivisEvangelisation() {
                       <button onClick={() => updateSuivi(m.id)} disabled={updating[m.id]} className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${updating[m.id] ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"}`}>
                         {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
                       </button>
+                        {/* Bouton Modifier Contact */}
+                <button
+                  onClick={() => setEditingContact(m)}
+                  className="text-blue-600 underline text-sm mb-2"
+                >
+                  ✏️ Modifier le contact
+                </button>
                     </div>
                   )}
                 </div>

@@ -77,12 +77,13 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       if (onEnvoyer) onEnvoyer(insertedData);
 
       // Préparer message WhatsApp
-      let message = `👋 Salut ${cible.responsable || (cible.prenom ? `${cible.prenom} ${cible.nom}` : "")}!\n\n`;
-      message += `🙏 Nouveau membre à suivre :\n`;
-      message += `- 👤 Nom : ${membre.prenom} ${membre.nom}\n`;
-      message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
-      message += `- 🏙 Ville : ${membre.ville || "—"}\n`;
-      message += `- 🙏 Besoin : ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}\n\n🙏 Merci !`;
+      let message = `👋 Bonjour ${cible.responsable || (cible.prenom ? `${cible.prenom}` : "")} ! 😊\n\n`;
+        message += `Je te partage avec joie un nouveau membre à accompagner :\n\n`;
+        message += `- 👤 *Nom* : ${membre.prenom} ${membre.nom}\n`;
+        message += `- 📱 *Téléphone* : ${membre.telephone || "—"}\n`;
+        message += `- 🏙 *Ville* : ${membre.ville || "—"}\n`;
+        message += `- 🙏 *Besoin* : ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}\n\n`;
+        message += `Que le Saint-Esprit te guide dans cet accompagnement. Merci beaucoup pour ton cœur et ton engagement ❤️🙏`;
 
       const phone = (cible.telephone || "").replace(/\D/g, "");
       if (!phone) {

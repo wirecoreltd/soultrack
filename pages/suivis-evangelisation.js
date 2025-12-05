@@ -8,6 +8,8 @@ import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
 import MemberDetailsPopup from "../components/MemberDetailsPopup";
+import SuiviDetailsEvanPopup from "../components/SuiviDetailsEvanPopup";
+
 
 export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
@@ -224,10 +226,10 @@ export default function MembresCellule() {
                   <td className="px-4 py-2">
                     <div className="flex gap-3">
                       <button
-                        onClick={() => setDetailsMember(m)}
+                        onClick={() => setDetailsMember(detailsMember?.id === m.id ? null : m)}
                         className="text-orange-500 underline text-sm"
                       >
-                        Détails
+                        {detailsMember?.id === m.id ? "Fermer" : "Détails"}
                       </button>
 
                       <button
@@ -256,9 +258,15 @@ export default function MembresCellule() {
 
       {/* POPUP DETAILS */}
       {detailsMember && (
-        <MemberDetailsPopup
-          member={detailsMember}
-          onClose={() => setDetailsMember(null)}
+    <SuiviDetailsEvanPopup
+    membre={detailsMember}
+    onClose={() => setDetailsMember(null)}
+    statusChanges={statusChanges}
+    commentChanges={commentChanges}
+    handleStatusChange={handleStatusChange}
+    handleCommentChange={handleCommentChange}
+    updateSuivi={updateSuivi}
+    updating={updating}
         />
       )}
     </div>

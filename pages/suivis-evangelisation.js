@@ -136,47 +136,68 @@ export default function SuivisEvangelisation() {
       {loading ? (
         <p className="text-white">Chargement...</p>
       ) : view === "card" ? (
-        // VUE CARTE (inchangée, carré grandissant)
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-          {suivis.map(m => (
-            <div
-              key={m.id}
-              className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
-              style={{ borderLeftColor: getBorderColor(m) }}
-            >
-              <div className="flex flex-col items-center">
-                <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
-                <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellules?.cellule || "—"}</p>
-
-                <button
-                  onClick={() => setDetailsSuivi(detailsSuivi === m.id ? null : m.id)}
-                  className="text-orange-500 underline text-sm mt-1"
+        
+        // Partie carte (à remplacer dans le return)
+          {view === "card" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
+              {suivis.map(m => (
+                <div
+                  key={m.id}
+                  className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
+                  style={{ borderLeftColor: getBorderColor(m) }}
                 >
-                  {detailsSuivi === m.id ? "Fermer détails" : "Détails"}
-                </button>
-
-                {/* carré grandissant pour carte */}
-                <div className={`transition-all duration-500 overflow-hidden ${detailsSuivi === m.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
-                  {detailsSuivi === m.id && (
-                    <SuiviDetailsEvanPopup
-                      membre={m}
-                      onClose={() => setDetailsSuivi(null)}
-                      statusChanges={statusChanges}
-                      commentChanges={commentChanges}
-                      handleStatusChange={handleStatusChange}
-                      handleCommentChange={handleCommentChange}
-                      updateSuivi={updateSuivi}
-                      updating={updating}
-                    />
-                  )}
+                  <div className="flex flex-col items-center">
+                    <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
+                    <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
+                    <p className="text-sm text-gray-700 mb-1">📌 Cellule : {m.cellules?.cellule || "—"}</p>
+          
+                    <button
+                      onClick={() => setDetailsSuivi(detailsSuivi === m.id ? null : m.id)}
+                      className="text-orange-500 underline text-sm mt-1"
+                    >
+                      {detailsSuivi === m.id ? "Fermer détails" : "Détails"}
+                    </button>
+          
+                    {/* carré grandissant pour carte */}
+                    <div className={`transition-all duration-500 overflow-hidden ${detailsSuivi === m.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
+                      {detailsSuivi === m.id && (
+                        <div className="text-black text-sm space-y-2 w-full">
+                          <p>🏙 Ville : {m.ville || "—"}</p>
+                          <p>❓Besoin : {(!m.besoin ? "—" : Array.isArray(m.besoin) 
+                            ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); 
+                              return Array.isArray(arr) ? arr.join(", ") : m.besoin; } 
+                            catch { return m.besoin; } })())}</p>
+                          <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+          
+                          {/* Statut et commentaire */}
+                          <label className="text-black text-sm mt-2 block">📋 Statut Suivi :</label>
+                          <select value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""} onChange={(e) => handleStatusChange(m.id, e.target.value)} className="w-full border rounded-md px-2 py-1">
+                            <option value="">-- Choisir un statut --</option>
+                            <option value="En cours">🕊 En cours</option>
+                            <option value="Integrer">🔥 Intégrer</option>
+                            <option value="Venu à l’église">⛪ Venu à l’église</option>
+                            <option value="Veut venir à la famille d’impact">👨‍👩‍👧‍👦 Veut venir à la famille d’impact</option>
+                            <option value="Veut être visité">🏡 Veut être visité</option>
+                            <option value="Ne souhaite pas continuer">🚫 Ne souhaite pas continuer</option>
+                          </select>
+          
+                          <textarea value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""} onChange={(e) => handleCommentChange(m.id, e.target.value)} rows={2} className="w-full border rounded-md px-2 py-1 mt-2 resize-none" placeholder="Ajouter un commentaire..." />
+          
+                          <button onClick={() => updateSuivi(m.id)} disabled={updating[m.id]} className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${updating[m.id] ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"}`}>
+                            {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+          
+                  </div>
                 </div>
-
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-      ) : (
+          ) : (
+            // ...vue table reste inchangée
+)}
+
         // VUE TABLE
         <div className="w-full max-w-6xl relative overflow-x-auto flex justify-center">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">

@@ -142,23 +142,18 @@ export default function MembresCellule() {
           {membres.map(m => (
               <div
                 key={m.id}
-                className="w-full rounded-3xl border border-gray-200 bg-white shadow-md p-4 text-left transition-all duration-300 hover:shadow-lg relative overflow-hidden"
+                className="bg-white p-4 rounded-xl shadow-md border-l-4 w-full transition hover:shadow-lg"
+                style={{ borderLeftColor: getBorderColor(m) }}
               >
-                {/* Border gauche dynamique */}
-                <div
-                  className="absolute top-0 left-0 h-full w-1 rounded-l-3xl"
-                  style={{ backgroundColor: getBorderColor(m) }}
-                />
-            
-                <div className="flex flex-col">
-                  <h2 className="font-bold text-black text-base mb-1">
+                <div className="flex flex-col items-center">
+                  <h2 className="font-bold text-black text-base text-center mb-1">
                     {m.prenom} {m.nom}
                   </h2>
             
                   <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
                   <p className="text-sm text-gray-700 mb-1">📌 Cellule : {getCellule(m)}</p>
             
-                  {/* BOUTON DÉTAILS */}
+                  {/* Bouton détails */}
                   <button
                     onClick={() => setSelectedMembre(selectedMembre === m.id ? null : m.id)}
                     className="text-orange-500 underline text-sm mt-1"
@@ -166,12 +161,12 @@ export default function MembresCellule() {
                     {selectedMembre === m.id ? "Fermer détails" : "Détails"}
                   </button>
             
-                  {/* CARRÉ EXTENSIBLE */}
+                  {/* Détails */}
                   {selectedMembre === m.id && (
-                    <div className="mt-3 w-full bg-gray-50 p-4 rounded-2xl">
-                      <p className="text-sm mb-2"><strong>Ville :</strong> {m.ville || "—"}</p>
-                      <p className="text-sm mb-2"><strong>WhatsApp :</strong> {m.is_whatsapp ? "Oui" : "Non"}</p>
-                      <p className="text-sm mb-2">
+                    <div className="mt-3 w-full bg-gray-50 p-4 rounded-lg text-left space-y-2">
+                      <p><strong>Ville :</strong> {m.ville || "—"}</p>
+                      <p><strong>WhatsApp :</strong> {m.is_whatsapp ? "Oui" : "Non"}</p>
+                      <p>
                         <strong>Besoin :</strong>{" "}
                         {(() => {
                           if (!m.besoin) return "—";
@@ -184,14 +179,13 @@ export default function MembresCellule() {
                           }
                         })()}
                       </p>
+                      <p><strong>Infos :</strong> {m.infos_supplementaires || "—"}</p>
             
-                      <p className="text-sm mb-4"><strong>Infos :</strong> {m.infos_supplementaires || "—"}</p>
-            
-                      {/* BOUTON MODIFIER centré */}
-                      <div className="flex justify-center">
+                      {/* Bouton modifier centré */}
+                      <div className="flex justify-center pt-2">
                         <button
                           onClick={() => setEditingMember(m)}
-                          className="mt-1 text-blue-600 font-semibold bg-white/0 px-3 py-2 rounded-md"
+                          className="text-orange-600 "
                         >
                           ✏️ Modifier le contact
                         </button>
@@ -200,7 +194,8 @@ export default function MembresCellule() {
                   )}
                 </div>
               </div>
-))}
+            ))}
+
 
 
         </div>

@@ -253,6 +253,7 @@ export default function ListMembers() {
                         <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
                         <div className="flex flex-col space-y-1 text-sm text-gray-600 w-full items-center">
                           <div className="flex justify-center items-center space-x-2"><span>📱</span><span>{m.telephone || "—"}</span></div>
+                          <div className="flex justify-center items-center space-x-2"><span>🏙</span><span>{m.ville || "—"}</span></div>      
                           <div className="flex justify-center items-center space-x-2"><span>🕊</span><span>Statut : {m.statut || "—"}</span></div>
                           <div className="flex justify-center items-center space-x-2">
                             <span>🏠</span>
@@ -306,8 +307,7 @@ export default function ListMembers() {
 
                         {isOpen && (
                           <div className="text-gray-700 text-sm mt-3 w-full space-y-2">
-                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                            <p>🏙 Ville : {m.ville || "—"}</p>
+                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>                            
                             <p>❓Besoin : {(!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })())}</p>
                             <p>📝 Infos : {m.infos_supplementaires || ""}</p>
                             <p>📌 Statut Suivis : {m.suivi_statut_libelle || "—"}</p>

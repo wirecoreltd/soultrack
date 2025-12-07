@@ -40,39 +40,28 @@ export default function MembresCellule() {
 
         let membresData = [];
 
-        // 🔹 ADMINISTRATEUR
+        // ----------------------------------------------------------
+        // 🔹 1. ADMINISTRATEUR : voit TOUT membre ayant une cellule
+        // ----------------------------------------------------------
         if (userRole.includes("Administrateur")) {
-          const { data: cellulesAdmin, error: cellulesAdminErr } = await supabase
-            .from("cellules")
-            .select("id");
-
-          if (cellulesAdminErr) throw cellulesAdminErr;
-
-          if (!cellulesAdmin || cellulesAdmin.length === 0) {
-            setMessage("Vous n’avez aucune cellule assignée pour le moment.");
-            setMembres([]);
-            return;
-          }
-
-          const celluleIds = cellulesAdmin.map(c => c.id);
-
           const { data, error } = await supabase
             .from("v_membres_full")
             .select("*")
-            .in("cellule_id", celluleIds)
             .or("cellule_nom.not.is.null,suivi_cellule_nom.not.is.null");
 
           if (error) throw error;
-
           membresData = data;
         }
 
-        // 🔹 RESPONSABLE CELLULE
+        // ----------------------------------------------------------
+        // 🔹 2. RESPONSABLE CELLULE : voit uniquement SES cellules
+        // ----------------------------------------------------------
         else if (userRole.includes("ResponsableCellule")) {
           const { data: cellulesData, error: cellulesError } = await supabase
             .from("cellules")
             .select("id")
             .eq("responsable_id", responsableId);
+
           if (cellulesError) throw cellulesError;
 
           if (!cellulesData || cellulesData.length === 0) {
@@ -86,15 +75,11 @@ export default function MembresCellule() {
           const { data, error } = await supabase
             .from("v_membres_full")
             .select("*")
-            .in("cellule_id", celluleIds)
-            .or("cellule_nom.not.is.null,suivi_cellule_nom.not.is.null");
+            .in("cellule_id", celluleIds);
+
           if (error) throw error;
 
           membresData = data;
-
-          if (!membresData || membresData.length === 0) {
-            setMessage("Aucun membre assigné à vos cellules.");
-          }
         }
 
         setMembres(membresData || []);

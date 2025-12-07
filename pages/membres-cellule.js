@@ -40,41 +40,47 @@ export default function MembresCellule() {
 
         let membresData = [];
 
-        if (userRole.includes("Administrateur")) {
-          const { data, error } = await supabase
-            .from("v_membres_full")
-            .select("*")
-            .or("cellule_nom.not.is.null,suivi_cellule_nom.not.is.null");
-          if (error) throw error;
-          membresData = data;
-        } else if (userRole.includes("ResponsableCellule")) {
-          const { data: cellulesData, error: cellulesError } = await supabase
-            .from("cellules")
-            .select("id")
-            .eq("responsable_id", responsableId);
-          if (cellulesError) throw cellulesError;
+        else if (userRole.includes("ResponsableCellule")) {
+  // 1️⃣ Récupération de la ou des cellules du responsable
+  const { data: cellulesData, error: cellulesError } = await supabase
+    .from("cellules")
+    .select("id, cellule")
+    .eq("responsable_id", responsableId);
 
-          if (!cellulesData || cellulesData.length === 0) {
-            setMessage("Vous n’êtes responsable d’aucune cellule pour le moment.");
-            setMembres([]);
-            return;
-          }
+  if (cellulesError) throw cellulesError;
 
-          const celluleIds = cellulesData.map(c => c.id);
+  if (!cellulesData || cellulesData.length === 0) {
+    setMessage("Vous n’êtes responsable d’aucune cellule pour le moment.");
+    setMembres([]);
+    return;
+  }
 
-          const { data, error } = await supabase
-            .from("v_membres_full")
-            .select("*")
-            .in("cellule_id", celluleIds)
-            .or("cellule_nom.not.is.null,suivi_cellule_nom.not.is.null");
-          if (error) throw error;
+  const celluleIds = cellulesData.map(c => c.id);
+  const celluleNoms = cellulesData.map(c => c.cellule); // très important : correspond à suivi_cellule_nom
 
-          membresData = data;
+  // 2️⃣ On construit dynamiquement le OR pour matcher plusieurs cellules
+  const orFilters = [
+    ...celluleIds.map(id => `cellule_id.eq.${id}`),
+    ...celluleNoms.map(nom => `suivi_cellule_nom.eq.${nom}`),
+    ...celluleNoms.map(nom => `cellule_nom.eq.${nom}`),
+    `suivi_responsable.eq.${prenom}` // pour capturer les envois directs au responsable
+  ].join(",");
 
-          if (!membresData || membresData.length === 0) {
-            setMessage("Aucun membre assigné à vos cellules.");
-          }
-        }
+  // 3️⃣ Requête finale
+  const { data, error } = await supabase
+    .from("v_membres_full")
+    .select("*")
+    .or(orFilters);
+
+  if (error) throw error;
+
+  membresData = data;
+
+  if (!membresData || membresData.length === 0) {
+    setMessage("Aucun membre assigné à vos cellules.");
+  }
+}
+
 
         setMembres(membresData || []);
       } catch (err) {

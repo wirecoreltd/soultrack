@@ -79,6 +79,15 @@ export default function MembresHub() {
             <div className="text-lg font-bold text-gray-800 text-center">Liste des Conseillers</div>
           </Link>
         </div>
+
+          <Link
+          href="/attendance"
+          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
+          border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+        >
+          <div className="text-4xl mb-2">⛪</div>
+          <div className="text-lg font-bold text-gray-800 text-center">Rapport du Culte</div>
+        </Link>
         
         {/* 🔹 Bouton popup ajouté sous les cartes */}
         <div className="w-full max-w-md mb-10">

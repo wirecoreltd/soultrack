@@ -157,6 +157,15 @@ export default function AddEvangelise() {
             onChange={(e)=>setFormData({ ...formData, telephone:e.target.value })}
             required
           />
+              {/* WhatsApp */}
+          <label className="flex items-center gap-2 text-gray-700">
+            <input type="checkbox"
+              checked={formData.is_whatsapp}
+              onChange={(e)=>setFormData({ ...formData, is_whatsapp:e.target.checked })}
+              className="w-5 h-5 accent-indigo-600 cursor-pointer"
+            />
+            WhatsApp
+          </label>
           <input className="input" type="text" placeholder="Ville"
             value={formData.ville}
             onChange={(e)=>setFormData({ ...formData, ville:e.target.value })}
@@ -172,17 +181,7 @@ export default function AddEvangelise() {
             <option value="">Sexe</option>
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
-          </select>
-
-          {/* WhatsApp */}
-          <label className="flex items-center gap-2 text-gray-700">
-            <input type="checkbox"
-              checked={formData.is_whatsapp}
-              onChange={(e)=>setFormData({ ...formData, is_whatsapp:e.target.checked })}
-              className="w-5 h-5 accent-indigo-600 cursor-pointer"
-            />
-            WhatsApp
-          </label>
+          </select>          
 
           {/* 🔹 PRIERE DU SALUT */}
           <select

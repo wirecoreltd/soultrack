@@ -393,6 +393,10 @@ const anciensFiltres = filterBySearch(
                             <span>🕊</span>
                             <span>Statut : {m.statut || "—"}</span>
                           </div>
+                             <div className="flex justify-center items-center space-x-2">
+                            <span>🕊</span>
+                            <span>Statut : {m.suivi_responsable || "—"}</span>
+                          </div>     
                           <div className="flex justify-center items-center space-x-2">
                             <span>🏠</span>
                             <span>Cellule : {m.cellule_nom || "—"}

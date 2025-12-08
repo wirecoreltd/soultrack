@@ -38,37 +38,58 @@ export default function RapportEvangelisation() {
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
-      {/* 🔹 Logo + Titre */}
-      <div className="flex flex-col items-center mb-8">
+      {/* Logo + titre */}
+      <div className="flex flex-col items-center mb-6">
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
         <h1 className="text-3xl font-bold text-gray-800 mt-2">Rapport Évangélisation</h1>
         <p className="text-gray-600 italic mt-1">Résumé des évangélisations par date</p>
       </div>
 
-      {/* 🔹 Liste des rapports sous forme de cartes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {rapports.map((r) => (
-          <div key={r.date} className="bg-white p-5 rounded-2xl shadow-md border-l-4 border-indigo-500">
-            <h2 className="font-semibold text-lg mb-2">{new Date(r.date).toLocaleDateString()}</h2>
-            <div className="space-y-1 text-gray-700">
-              <p>👨 Hommes : {r.hommes}</p>
-              <p>👩 Femmes : {r.femmes}</p>
-              <p>🙏 Prière : {r.priere}</p>
-              <p>✝️ Nouveau converti : {r.nouveau_converti}</p>
-              <p>🔄 Réconciliation : {r.reconciliation}</p>
-              <p>🌾 Moissonneurs : {r.moissonneurs || "-"}</p>
-            </div>
-            <button
-              onClick={() => { setSelectedRapport(r); setEditOpen(true); }}
-              className="mt-3 w-full py-2 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition-all"
-            >
-              Modifier
-            </button>
-          </div>
-        ))}
+      {/* Tableau moderne */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full border-separate border-spacing-0 shadow-lg rounded-2xl overflow-hidden">
+          <thead className="bg-indigo-500 text-white">
+            <tr>
+              <th className="py-3 px-4 text-left">Date</th>
+              <th className="py-3 px-4">Hommes</th>
+              <th className="py-3 px-4">Femmes</th>
+              <th className="py-3 px-4">Prière</th>
+              <th className="py-3 px-4">Nouveau converti</th>
+              <th className="py-3 px-4">Réconciliation</th>
+              <th className="py-3 px-4">Moissonneurs</th>
+              <th className="py-3 px-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rapports.map((r, index) => (
+              <tr
+                key={r.date}
+                className={`text-center ${
+                  index % 2 === 0 ? "bg-white" : "bg-indigo-50"
+                } hover:bg-indigo-100 transition-colors`}
+              >
+                <td className="py-2 px-4 text-left font-medium">{new Date(r.date).toLocaleDateString()}</td>
+                <td className="py-2 px-4">{r.hommes}</td>
+                <td className="py-2 px-4">{r.femmes}</td>
+                <td className="py-2 px-4">{r.priere}</td>
+                <td className="py-2 px-4">{r.nouveau_converti}</td>
+                <td className="py-2 px-4">{r.reconciliation}</td>
+                <td className="py-2 px-4">{r.moissonneurs || "-"}</td>
+                <td className="py-2 px-4">
+                  <button
+                    onClick={() => { setSelectedRapport(r); setEditOpen(true); }}
+                    className="px-3 py-1 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-all"
+                  >
+                    Modifier
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* 🔹 Popup pour modification */}
+      {/* Popup pour modification */}
       {selectedRapport && (
         <EditEvanRapportLine
           isOpen={editOpen}

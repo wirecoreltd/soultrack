@@ -1,4 +1,4 @@
-          "use client";
+"use client";
 
 /**
  * Page: Liste des Membres
@@ -44,14 +44,14 @@ export default function ListMembers() {
     setShowingToast(true);
     setTimeout(() => setShowingToast(false), 3500);
   };
-          const statutLabels = {
-            1: "En cours",
-            2: "En attente",
-            3: "Intégrer",
-            4: "Refus"
-          };
 
-          
+  const statutLabels = {
+    1: "En cours",
+    2: "En attente",
+    3: "Intégrer",
+    4: "Refus"
+  };
+
   // -------------------- FETCH --------------------
   const fetchMembers = async (profile = null) => {
     setLoading(true);
@@ -114,80 +114,83 @@ export default function ListMembers() {
     setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, ...extra } : m)));
   };
 
-  // -------------------- HANDLE AFTER SEND --------------------
-  // -------------------- HANDLE AFTER SEND --------------------
-          const handleAfterSend = async (memberId, type, cible, newStatut = "ancien") => {
-            try {
-              const membre = members.find((m) => m.id === memberId);
-              if (!membre) return;
-          
-              // Préparer l'objet de mise à jour
-              const update = { statut: newStatut };
-              if (type === "cellule") {
-                update.cellule_id = cible.id;
-                update.cellule_nom = cible.cellule;
-              } else if (type === "conseiller") {
-                update.conseiller_id = cible.id;
-              }
-          
-              // 1️⃣ Mettre à jour le membre dans la table "membres"
-              const { error: updateError } = await supabase
-                .from("membres")
-                .update(update)
-                .eq("id", memberId);
-              if (updateError) throw updateError;
-          
-              // 2️⃣ Ajouter un suivi dans "suivis_membres"
-              const suiviData = {
-                membre_id: memberId,
-                cellule_id: type === "cellule" ? cible.id : null,
-                conseiller_id: type === "conseiller" ? cible.id : null,
-                statut: "envoye",
-                created_at: new Date().toISOString(),
-                prenom: membre.prenom,
-                nom: membre.nom,
-                statut_membre: membre.statut,
-                besoin: membre.besoin,
-                infos_supplementaires: membre.infos_supplementaires,
-                telephone: membre.telephone,
-                cellule_nom: membre.cellule_nom,
-                responsable: membre.responsable_prenom ? `${membre.responsable_prenom} ${membre.responsable_nom}` : null,
-                is_whatsapp: membre.is_whatsapp,
-                ville: membre.ville,
-                commentaire_suivis: "",
-              };
-              const { error: suiviError } = await supabase.from("suivis_membres").insert([suiviData]);
-              if (suiviError) throw suiviError;
-          
-              // 3️⃣ Mettre à jour le state local immédiatement
-              setMembers((prev) =>
-                prev.map((m) => (m.id === memberId ? { ...m, ...update } : m))
-              );
-          
-              // 4️⃣ Afficher le toast
-              showToast("✅ Contact envoyé et suivi enregistré");
-            } catch (err) {
-              console.error("Erreur handleAfterSend:", err);
-              showToast("❌ Une erreur est survenue lors de l'envoi");
-            }
-};
+  // -------------------- HANDLE STATUS CHANGE --------------------
+  const handleStatusChange = async (memberId, newStatus) => {
+    // Immediate local update for instant UI feedback
+    updateMemberLocally(memberId, { statut: newStatus });
+    try {
+      const { error } = await supabase.from("membres").update({ statut: newStatus }).eq("id", memberId);
+      if (error) throw error;
+      showToast("✅ Statut mis à jour");
+    } catch (err) {
+      console.error("Erreur update statut:", err);
+      showToast("⚠️ Erreur lors de la mise à jour du statut");
+    }
+  };
 
+  // -------------------- HANDLE AFTER SEND --------------------
+  const handleAfterSend = async (memberId, type, cible, newStatut = "ancien") => {
+    try {
+      const membre = members.find((m) => m.id === memberId);
+      if (!membre) return;
+
+      // Préparer l'objet de mise à jour
+      const update = { statut: newStatut };
+      if (type === "cellule") {
+        update.cellule_id = cible.id;
+        update.cellule_nom = cible.cellule;
+      } else if (type === "conseiller") {
+        update.conseiller_id = cible.id;
+      }
+
+      // 1️⃣ Mise à jour locale immédiate (pour que l'UI change sans refresh)
+      updateMemberLocally(memberId, update);
+
+      // 2️⃣ Mettre à jour la base
+      const { error: updateError } = await supabase.from("membres").update(update).eq("id", memberId);
+      if (updateError) throw updateError;
+
+      // 3️⃣ Ajouter un suivi
+      const suiviData = {
+        membre_id: memberId,
+        cellule_id: type === "cellule" ? cible.id : null,
+        conseiller_id: type === "conseiller" ? cible.id : null,
+        statut: "envoye",
+        created_at: new Date().toISOString(),
+        prenom: membre.prenom,
+        nom: membre.nom,
+        statut_membre: membre.statut,
+        besoin: membre.besoin,
+        infos_supplementaires: membre.infos_supplementaires,
+        telephone: membre.telephone,
+        cellule_nom: membre.cellule_nom,
+        responsable: membre.responsable_prenom ? `${membre.responsable_prenom} ${membre.responsable_nom}` : null,
+        is_whatsapp: membre.is_whatsapp,
+        ville: membre.ville,
+        commentaire_suivis: "",
+      };
+      const { error: suiviError } = await supabase.from("suivis_membres").insert([suiviData]);
+      if (suiviError) throw suiviError;
+
+      showToast("✅ Contact envoyé et suivi enregistré");
+    } catch (err) {
+      console.error("Erreur handleAfterSend:", err);
+      showToast("❌ Une erreur est survenue lors de l'envoi");
+    }
+  };
 
   const getBorderColor = (m) => {
-  const status = m.statut || "";
-  const suiviStatus = m.suivi_statut_libelle || "";
+    const status = m.statut || "";
+    const suiviStatus = m.suivi_statut_libelle || "";
 
-  if (status === "refus" || suiviStatus === "refus") return "#f56f22";
-  if (status === "actif" || suiviStatus === "actif") return "#4285F4";
-  if (status === "a déjà son église" || suiviStatus === "a déjà son église") return "#f21705";        
-  if (status === "ancien" || suiviStatus === "ancien") return "#999999";
-  if (status === "visiteur" || suiviStatus === "visiteur") return "#34A853";
-  if (status === "veut rejoindre ICC" || suiviStatus === "veut rejoindre ICC") return "#34A853";
-  if (status === "refus" || suiviStatus === "refus") return "#f56f22";
-  
-  return "#ccc";
-};
-
+    if (status === "refus" || suiviStatus === "refus") return "#f56f22";
+    if (status === "actif" || suiviStatus === "actif") return "#4285F4";
+    if (status === "a déjà son église" || suiviStatus === "a déjà son église") return "#f21705";
+    if (status === "ancien" || suiviStatus === "ancien") return "#999999";
+    if (status === "visiteur" || suiviStatus === "visiteur") return "#34A853";
+    if (status === "veut rejoindre ICC" || suiviStatus === "veut rejoindre ICC") return "#34A853";
+    return "#ccc";
+  };
 
   const formatDate = (dateStr) => {
     try {
@@ -204,25 +207,24 @@ export default function ListMembers() {
   const anciens = members.filter((m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC");
 
   const nouveauxFiltres = filterBySearch(
-  filter
-    ? nouveaux.filter((m) =>
-        m.statut === filter || 
-        m.suivi_statut_libelle === filter || 
-        (m.statut_suivis_actuel && statutLabels[m.statut_suivis_actuel] === filter)
-      )
-    : nouveaux
-);
+    filter
+      ? nouveaux.filter((m) =>
+          m.statut === filter ||
+          m.suivi_statut_libelle === filter ||
+          (m.statut_suivis_actuel && statutLabels[m.statut_suivis_actuel] === filter)
+        )
+      : nouveaux
+  );
 
-const anciensFiltres = filterBySearch(
-  filter
-    ? anciens.filter((m) =>
-        m.statut === filter || 
-        m.suivi_statut_libelle === filter || 
-        (m.statut_suivis_actuel && statutLabels[m.statut_suivis_actuel] === filter)
-      )
-    : anciens
-);
-
+  const anciensFiltres = filterBySearch(
+    filter
+      ? anciens.filter((m) =>
+          m.statut === filter ||
+          m.suivi_statut_libelle === filter ||
+          (m.statut_suivis_actuel && statutLabels[m.statut_suivis_actuel] === filter)
+        )
+      : anciens
+  );
 
   const statusOptions = ["actif", "ancien", "visiteur", "veut rejoindre ICC", "refus", "integrer", "En cours", "a déjà son église"];
   const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
@@ -284,34 +286,51 @@ const anciensFiltres = filterBySearch(
                         <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
                         <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
                           <div className="flex justify-center items-center space-x-2"><span>📱</span><span>{m.telephone || "—"}</span></div>
-                          <div className="flex justify-center items-center space-x-2"><span>🏙</span><span>{m.ville || "—"}</span></div>      
                           <div className="flex justify-center items-center space-x-2"><span>🕊</span><span>Statut : {m.statut || "—"}</span></div>
-                          <div className="flex justify-center items-center space-x-2">
-                            <span>🏠</span>
-                            <span>Cellule : {m.cellule_nom || "—"}{m.responsable_prenom ? ` - ${m.responsable_prenom} ${m.responsable_nom}` : ""}</span>
-                          </div>
-                          <div className="flex justify-center items-center space-x-2">
-                            <span>👤</span>
-                            <span>Conseiller : {m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</span>
-                          </div>
+                          <div className="flex justify-center items-center space-x-2"><span>🏠</span><span>Cellule : {m.cellule_nom || "—"}</span></div>
+                          <div className="flex justify-center items-center space-x-2"><span>👤</span><span>Conseiller : {m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</span></div>
                         </div>
 
-                        <select value={statusChanges[m.id] ?? m.statut ?? ""} onChange={(e) => handleStatusChange(m.id, e.target.value)} className="border rounded-md px-2 py-1 text-sm w-full mt-2">
+                        {/* Statut */}
+                        <select
+                          value={statusChanges[m.id] ?? m.statut ?? ""}
+                          onChange={async (e) => {
+                            const newStatus = e.target.value;
+                            setStatusChanges((prev) => ({ ...prev, [m.id]: newStatus }));
+                            try {
+                              await supabase.from("membres").update({ statut: newStatus }).eq("id", m.id);
+                              updateMemberLocally(m.id, { statut: newStatus });
+                              showToast("✅ Statut mis à jour");
+                            } catch (err) {
+                              console.error(err);
+                              showToast("⚠️ Erreur lors de la mise à jour du statut");
+                            }
+                          }}
+                          className="border rounded-md px-2 py-1 text-sm w-full mt-2"
+                        >
                           <option value="">-- Choisir un statut --</option>
                           {statusOptions.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
 
-                        {/* ENVOYER À */}
+                        {/* Envoi à */}
                         <div className="mt-2">
                           <label className="font-semibold text-sm">Envoyer à :</label>
-                          <select value={selectedTargetType[m.id] || ""} onChange={(e) => setSelectedTargetType((prev) => ({ ...prev, [m.id]: e.target.value }))} className="mt-1 w-full border rounded px-2 py-1 text-sm">
+                          <select
+                            value={selectedTargetType[m.id] || ""}
+                            onChange={(e) => setSelectedTargetType((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                            className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                          >
                             <option value="">-- Choisir une option --</option>
                             <option value="cellule">Une Cellule</option>
                             <option value="conseiller">Un Conseiller</option>
                           </select>
 
                           {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
-                            <select value={selectedTargets[m.id] || ""} onChange={(e) => setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))} className="mt-1 w-full border rounded px-2 py-1 text-sm">
+                            <select
+                              value={selectedTargets[m.id] || ""}
+                              onChange={(e) => setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                              className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                            >
                               <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
                               {selectedTargetType[m.id] === "cellule"
                                 ? cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>)
@@ -334,206 +353,9 @@ const anciensFiltres = filterBySearch(
                           )}
                         </div>
 
-                        <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">{isOpen ? "Fermer détails" : "Détails"}</button>
-
-                        {isOpen && (
-                          <div className="text-black-700 text-sm mt-3 w-full space-y-2">
-                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>                            
-                            <p>❓Besoin : {(!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })())}</p>
-                            <p>📝 Infos : {m.infos_supplementaires || ""}</p>
-                            <p>🕊 Statut : {m.statut_suivis_actuel ? statutLabels[m.statut_suivis_actuel] : m.statut || "—"}</p>
-                            <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>
-                            <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-6 block mx-auto">✏️ Modifier le contact</button>
-                          </div>
-                        )}
+                        {/* Modifier contact */}
+                        <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-6 block mx-auto">✏️ Modifier le contact</button>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Anciens membres */}
-          {anciensFiltres.length > 0 && (
-            <div className="mt-8">
-              <h3 className="text-white text-lg mb-3 font-semibold">
-                <span
-                  style={{
-                    background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                    WebkitBackgroundClip: "text",
-                    color: "transparent",
-                  }}
-                >
-                  Membres existants
-                </span>
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {anciensFiltres.map((m) => {
-                  const isOpen = detailsOpen[m.id];
-                  return (
-                    <div
-                      key={m.id}
-                      className="bg-white p-3 rounded-xl shadow-md border-l-4 relative"
-                      style={{ borderLeftColor: getBorderColor(m) }}
-                    >
-                      {m.star && (
-                        <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>
-                      )}
-                      <div className="flex flex-col items-center">
-                        <h2 className="text-lg font-bold text-center">
-                          {m.prenom} {m.nom}
-                        </h2>
-                        <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
-                          <div className="flex justify-center items-center space-x-2">
-                            <span>📱</span>
-                            <span>{m.telephone || "—"}</span>
-                          </div>
-                          <div className="flex justify-center items-center space-x-2">
-                            <span>🕊</span>
-                            <span>Statut : {m.statut || "—"}</span>
-                          </div>
-                             <div className="flex justify-center items-center space-x-2">
-                            <span>🕊</span>
-                            <span>Statut : {m.suivi_responsable || "—"}</span>
-                          </div>     
-                          <div className="flex justify-center items-center space-x-2">
-                            <span>🏠</span>
-                            <span>Cellule : {m.cellule_nom || "—"}
-                            {m.responsable_prenom ? ` - ${m.responsable_prenom} ${m.responsable_nom}` : ""}</span>
-                          </div>
-                          <div className="flex justify-center items-center space-x-2">
-                            <span>👤</span>
-                            <span>Conseiller : {m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</span>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => toggleDetails(m.id)}
-                          className="text-orange-500 underline text-sm mt-2"
-                        >
-                          {isOpen ? "Fermer détails" : "Détails"}
-                        </button>
-
-                        {isOpen && (
-                          <div className="text-black-700 text-sm mt-3 w-full space-y-2">
-                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                            <p>🏙 Ville : {m.ville || "—"}</p>
-                            <p>
-                              ❓Besoin :{" "}
-                              {(() => {
-                                if (!m.besoin) return "—";
-                                if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                                try {
-                                  const arr = JSON.parse(m.besoin);
-                                  return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                                } catch {
-                                  return m.besoin;
-                                }
-                              })()}
-                            </p>
-                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                            <p>🕊 Statut : {m.statut_suivis_actuel ? statutLabels[m.statut_suivis_actuel] : m.statut || "—"}</p>
-                            <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>                             
-
-                            {/* ENVOYER À */}
-                              <div className="mt-2">
-                                <label className="font-semibold text-sm">Envoyer à :</label>
-                                <select
-                                  value={selectedTargetType[m.id] || ""}
-                                  onChange={(e) =>
-                                    setSelectedTargetType((prev) => ({ ...prev, [m.id]: e.target.value }))
-                                  }
-                                  className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                                >
-                                  <option value="">-- Choisir une option --</option>
-                                  <option value="cellule">Une Cellule</option>
-                                  <option value="conseiller">Un Conseiller</option>
-                                </select>
-                              
-                                {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
-                                  <select
-                                    value={selectedTargets[m.id] || ""}
-                                    onChange={(e) =>
-                                      setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))
-                                    }
-                                    className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                                  >
-                                    <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
-                                    {selectedTargetType[m.id] === "cellule"
-                                      ? cellules.map((c) => (
-                                          <option key={c.id} value={c.id}>
-                                            {c.cellule} ({c.responsable})
-                                          </option>
-                                        ))
-                                      : conseillers.map((c) => (
-                                          <option key={c.id} value={c.id}>
-                                            {c.prenom} {c.nom}
-                                          </option>
-                                        ))}
-                                  </select>
-                                )}
-                              
-                                {selectedTargets[m.id] && (
-                                  <div className="pt-2">
-                                    <BoutonEnvoyer
-                                      membre={m}
-                                      type={selectedTargetType[m.id]}
-                                      cible={
-                                        selectedTargetType[m.id] === "cellule"
-                                          ? cellules.find((c) => c.id === selectedTargets[m.id])
-                                          : conseillers.find((c) => c.id === selectedTargets[m.id])
-                                      }
-                                      onEnvoyer={async (id) => {
-                                        const type = selectedTargetType[m.id];
-                                        const cibleItem =
-                                          type === "cellule"
-                                            ? cellules.find((c) => c.id === selectedTargets[m.id])
-                                            : conseillers.find((c) => c.id === selectedTargets[m.id]);
-                              
-                                        // Mise à jour locale
-                                        const update = {};
-                                        if (type === "cellule") {
-                                          update.cellule_id = cibleItem.id;
-                                          update.cellule_nom = cibleItem.cellule;
-                                        } else {
-                                          update.conseiller_id = cibleItem.id;
-                                        }
-                                        setMembers((prev) =>
-                                          prev.map((m) => (m.id === id ? { ...m, ...update } : m))
-                                        );
-                              
-                                        // Mise à jour Supabase automatique
-                                        try {
-                                          const { error } = await supabase
-                                            .from("membres")
-                                            .update(update)
-                                            .eq("id", id);
-                                          if (error) throw error;
-                                          showToast("✅ Contact envoyé et suivi enregistré");
-                                        } catch (err) {
-                                          console.error("Erreur update membre:", err);
-                                          showToast("⚠️ Erreur lors de la mise à jour du membre");
-                                        }
-                                      }}
-                                      session={session}
-                                      showToast={showToast}
-                                    />
-                                  </div>
-                                )}
-                              </div>
-
-                             {/* Modifier contact */}
-                            <button
-                            onClick={() => setEditMember(m)}
-                            className="text-blue-600 text-sm mt-6 block mx-auto"
-                          >
-                            ✏️ Modifier le contact
-                          </button>   
-                          </div>
-                        )}
-                      </div>
-                          
                     </div>
                   );
                 })}

@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
+import { useRouter } from "next/router";
 import EditEvanRapportLine from "../components/EditEvanRapportLine";
 
 export default function RapportEvangelisation() {
+  const router = useRouter();
   const [rapports, setRapports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
@@ -37,7 +39,15 @@ export default function RapportEvangelisation() {
   if (loading) return <p className="text-center mt-10">Chargement des rapports...</p>;
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
+    <div className="min-h-screen p-6" style={{ background: "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)" }}>
+      {/* 🔹 Bouton retour */}
+      <button
+        onClick={() => router.back()}
+        className="mb-4 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded shadow text-gray-800"
+      >
+        ← Retour
+      </button>
+
       {/* Logo + titre */}
       <div className="flex flex-col items-center mb-6">
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
@@ -48,7 +58,7 @@ export default function RapportEvangelisation() {
       {/* Tableau moderne */}
       <div className="overflow-x-auto">
         <table className="min-w-full border-separate border-spacing-0 shadow-lg rounded-2xl overflow-hidden">
-          <thead className="bg-indigo-500 text-white">
+          <thead className="bg-orange-500 text-white">
             <tr>
               <th className="py-3 px-4 text-left">Date</th>
               <th className="py-3 px-4">Hommes</th>
@@ -65,8 +75,8 @@ export default function RapportEvangelisation() {
               <tr
                 key={r.date}
                 className={`text-center ${
-                  index % 2 === 0 ? "bg-white" : "bg-indigo-50"
-                } hover:bg-indigo-100 transition-colors`}
+                  index % 2 === 0 ? "bg-white" : "bg-orange-50"
+                } hover:bg-orange-100 transition-colors`}
               >
                 <td className="py-2 px-4 text-left font-medium">{new Date(r.date).toLocaleDateString()}</td>
                 <td className="py-2 px-4">{r.hommes}</td>
@@ -78,7 +88,7 @@ export default function RapportEvangelisation() {
                 <td className="py-2 px-4">
                   <button
                     onClick={() => { setSelectedRapport(r); setEditOpen(true); }}
-                    className="px-3 py-1 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-all"
+                    className="px-3 py-1 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all"
                   >
                     Modifier
                   </button>

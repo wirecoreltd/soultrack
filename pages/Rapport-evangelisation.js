@@ -2,151 +2,167 @@
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
-import { useRouter } from "next/router";
 import Image from "next/image";
 
-export default function RapportEvangelisation() {
-  const router = useRouter();
-  const [userName, setUserName] = useState("");
-  const [rapport, setRapport] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+// 🔹 Popup pour modifier un rapport
+function EditRapportPopup({ isOpen, onClose, rapport, onSave }) {
+  const [formData, setFormData] = useState(rapport);
 
   useEffect(() => {
-    const name = localStorage.getItem("userName") || "Utilisateur";
-    const prenom = name.split(" ")[0];
-    setUserName(prenom);
-  }, []);
+    setFormData(rapport);
+  }, [rapport]);
 
-  // 🔹 Fetch et total par date
-  const fetchRapport = async () => {
+  if (!isOpen) return null;
+
+  const handleSave = () => {
+    onSave(formData);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-6 w-96 shadow-lg">
+        <h2 className="text-xl font-bold mb-4 text-center">Modifier le rapport</h2>
+
+        <input
+          type="date"
+          className="input mb-2"
+          value={formData.date}
+          onChange={e => setFormData({ ...formData, date: e.target.value })}
+        />
+        <input
+          type="number"
+          className="input mb-2"
+          value={formData.hommes || 0}
+          onChange={e => setFormData({ ...formData, hommes: parseInt(e.target.value) || 0 })}
+          placeholder="Hommes"
+        />
+        <input
+          type="number"
+          className="input mb-2"
+          value={formData.femmes || 0}
+          onChange={e => setFormData({ ...formData, femmes: parseInt(e.target.value) || 0 })}
+          placeholder="Femmes"
+        />
+        <input
+          type="number"
+          className="input mb-2"
+          value={formData.priere || 0}
+          onChange={e => setFormData({ ...formData, priere: parseInt(e.target.value) || 0 })}
+          placeholder="Prière du salut"
+        />
+        <input
+          type="number"
+          className="input mb-2"
+          value={formData.nouveau_converti || 0}
+          onChange={e => setFormData({ ...formData, nouveau_converti: parseInt(e.target.value) || 0 })}
+          placeholder="Nouveau converti"
+        />
+        <input
+          type="number"
+          className="input mb-2"
+          value={formData.reconciliation || 0}
+          onChange={e => setFormData({ ...formData, reconciliation: parseInt(e.target.value) || 0 })}
+          placeholder="Réconciliation"
+        />
+        <input
+          type="text"
+          className="input mb-2"
+          value={formData.moissonneurs || ""}
+          onChange={e => setFormData({ ...formData, moissonneurs: e.target.value })}
+          placeholder="Moissonneurs"
+        />
+
+        <div className="flex justify-end gap-3 mt-4">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-400 rounded hover:bg-gray-500 text-white"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600 text-white"
+          >
+            Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function RapportEvangelisation() {
+  const [rapports, setRapports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedRapport, setSelectedRapport] = useState(null);
+
+  const fetchRapports = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("evangelises")
+      .from("rapport_evangelisation")
       .select("*")
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      setError("Impossible de récupérer les données.");
-      setLoading(false);
-      return;
-    }
-
-    const grouped = {};
-    (data || []).forEach(ev => {
-      const date = new Date(ev.created_at).toLocaleDateString();
-      if (!grouped[date]) {
-        grouped[date] = {
-          hommes: 0,
-          femmes: 0,
-          priere: 0,
-          nouveauConverti: 0,
-          reconciliation: 0,
-          moissonneurs: "",  // champ libre
-        };
-      }
-      if (ev.sexe === "Homme") grouped[date].hommes += 1;
-      if (ev.sexe === "Femme") grouped[date].femmes += 1;
-      if (ev.priere_salut) {
-        grouped[date].priere += 1;
-        if (ev.type_conversion === "Nouveau converti") grouped[date].nouveauConverti += 1;
-        if (ev.type_conversion === "Réconciliation") grouped[date].reconciliation += 1;
-      }
-    });
-
-    const rapportArray = Object.keys(grouped).map(date => ({
-      date,
-      ...grouped[date]
-    }));
-
-    setRapport(rapportArray);
+      .order("date", { ascending: true });
+    if (error) console.error(error);
+    else setRapports(data);
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchRapport();
-  }, []);
-
-  // 🔹 Mise à jour moissonneur pour une date
-  const updateMoissonneur = async (date, value) => {
-    try {
-      // ici on peut créer ou mettre à jour une table de rapport par date
-      const { error } = await supabase
-        .from("rapport_evangelisation")
-        .upsert([{ date, moissonneurs: value }], { onConflict: ["date"] });
-      if (error) throw error;
-      fetchRapport();
-    } catch (err) {
-      alert("Erreur mise à jour Moissonneur : " + err.message);
-    }
+  const handleSaveRapport = async (updated) => {
+    const { data, error } = await supabase
+      .from("rapport_evangelisation")
+      .upsert(updated, { onConflict: ["date"] });
+    if (error) console.error("Erreur mise à jour rapport :", error);
+    else fetchRapports();
   };
 
-  if (loading) return <p className="text-center mt-10 text-white">Chargement du rapport...</p>;
-  if (error) return <p className="text-center mt-10 text-red-600">{error}</p>;
+  useEffect(() => {
+    fetchRapports();
+  }, []);
+
+  if (loading) return <p className="text-center mt-10">Chargement des rapports...</p>;
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 space-y-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-      
-      {/* 🔹 Top bar */}
-      <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
-        <button onClick={() => router.back()} className="flex items-center text-white hover:text-gray-200 transition-colors">← Retour</button>
-        <p className="text-orange-200 text-sm">👋 Bienvenue {userName}</p>
+    <div className="min-h-screen p-6 bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100">
+      {/* 🔹 Logo + Titre */}
+      <div className="flex flex-col items-center mb-6">
+        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
+        <h1 className="text-3xl font-bold text-gray-800 mt-2">Rapport Évangélisation</h1>
+        <p className="text-gray-600 italic mt-1">Résumé des évangélisations par date</p>
       </div>
 
-      {/* 🔹 Logo et titre */}
-      <div className="text-center mb-6">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} className="mx-auto" />
-        <h1 className="text-3xl font-bold text-white mt-4">Rapport Évangélisation</h1>
-        <p className="text-white text-lg italic max-w-xl mx-auto">Total par date des évangélisés et conversions.</p>
-      </div>
-
-      {/* 🔹 Tableau rapport */}
-      <div className="w-full max-w-5xl overflow-x-auto">
-        <table className="min-w-full bg-white rounded-xl shadow-md overflow-hidden">
-          <thead className="bg-gray-100">
+      {/* 🔹 Tableau */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white rounded-2xl shadow-lg">
+          <thead className="bg-blue-500 text-white">
             <tr>
-              <th className="p-2 border">Date</th>
-              <th className="p-2 border">Hommes</th>
-              <th className="p-2 border">Femmes</th>
-              <th className="p-2 border">Prière du salut</th>
-              <th className="p-2 border">Nouveau converti</th>
-              <th className="p-2 border">Réconciliation</th>
-              <th className="p-2 border">Moissonneur</th>
-              <th className="p-2 border">Actions</th>
+              <th className="py-2 px-3">Date</th>
+              <th className="py-2 px-3">Hommes</th>
+              <th className="py-2 px-3">Femmes</th>
+              <th className="py-2 px-3">Prière du salut</th>
+              <th className="py-2 px-3">Nouveau converti</th>
+              <th className="py-2 px-3">Réconciliation</th>
+              <th className="py-2 px-3">Moissonneurs</th>
+              <th className="py-2 px-3">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {rapport.length === 0 && (
-              <tr>
-                <td colSpan={8} className="text-center p-4">Aucune donnée disponible</td>
-              </tr>
-            )}
-            {rapport.map((r, idx) => (
-              <tr key={idx} className="hover:bg-gray-50">
-                <td className="p-2 border">{r.date}</td>
-                <td className="p-2 border">{r.hommes}</td>
-                <td className="p-2 border">{r.femmes}</td>
-                <td className="p-2 border">{r.priere}</td>
-                <td className="p-2 border">{r.nouveauConverti}</td>
-                <td className="p-2 border">{r.reconciliation}</td>
-                <td className="p-2 border">
-                  <input
-                    type="text"
-                    value={r.moissonneurs || ""}
-                    onChange={(e) => {
-                      const temp = [...rapport];
-                      temp[idx].moissonneurs = e.target.value;
-                      setRapport(temp);
-                    }}
-                    className="w-full border rounded px-2 py-1"
-                  />
-                </td>
-                <td className="p-2 border">
+            {rapports.map(r => (
+              <tr key={r.date} className="text-center border-b">
+                <td className="py-2 px-3">{r.date}</td>
+                <td className="py-2 px-3">{r.hommes}</td>
+                <td className="py-2 px-3">{r.femmes}</td>
+                <td className="py-2 px-3">{r.priere}</td>
+                <td className="py-2 px-3">{r.nouveau_converti}</td>
+                <td className="py-2 px-3">{r.reconciliation}</td>
+                <td className="py-2 px-3">{r.moissonneurs}</td>
+                <td className="py-2 px-3">
                   <button
-                    onClick={() => updateMoissonneur(r.date, r.moissonneurs)}
-                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+                    onClick={() => { setSelectedRapport(r); setEditOpen(true); }}
+                    className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
                   >
-                    Mise à jour
+                    Modifier
                   </button>
                 </td>
               </tr>
@@ -154,6 +170,16 @@ export default function RapportEvangelisation() {
           </tbody>
         </table>
       </div>
+
+      {/* 🔹 Popup */}
+      {selectedRapport && (
+        <EditRapportPopup
+          isOpen={editOpen}
+          onClose={() => setEditOpen(false)}
+          rapport={selectedRapport}
+          onSave={handleSaveRapport}
+        />
+      )}
     </div>
   );
 }

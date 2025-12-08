@@ -41,13 +41,15 @@ export default function MembresCellule() {
         let membresData = [];
 
         if (userRole.includes("Administrateur")) {
+          // Admin voit tous les membres avec cellule ou suivi cellule
           const { data, error } = await supabase
             .from("v_membres_full")
             .select("*")
-            .not("cellule_id", "is", null);
+            .or("cellule_id.not.is.null,suivi_cellule_nom.not.is.null");
           if (error) throw error;
           membresData = data;
         } else if (userRole.includes("ResponsableCellule")) {
+          // Récupère toutes les cellules du responsable
           const { data: cellulesData, error: cellulesError } = await supabase
             .from("cellules")
             .select("id")
@@ -62,10 +64,16 @@ export default function MembresCellule() {
 
           const celluleIds = cellulesData.map(c => c.id);
 
+          // Récupère tous les membres ayant soit cellule_id soit suivi_cellule_nom correspondant
+          const orFilter = celluleIds
+            .map(id => `cellule_id.eq.${id},suivi_cellule_nom.eq.${cellulesData.find(c => c.id === id).cellule}`)
+            .join(",");
+          
           const { data, error } = await supabase
             .from("v_membres_full")
             .select("*")
-            .in("cellule_id", celluleIds);
+            .or(orFilter);
+
           if (error) throw error;
 
           membresData = data;
@@ -88,7 +96,7 @@ export default function MembresCellule() {
     fetchMembres();
   }, []);
 
-  const getCellule = (m) => m.cellule_nom || "—";
+  const getCellule = (m) => m.cellule_nom || m.suivi_cellule_nom || "—";
 
   const getBorderColor = (m) => {
     if (m.statut === "actif") return "#34A853";

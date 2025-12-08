@@ -1,116 +1,99 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
-import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function RapportEvangelisation() {
   const [contacts, setContacts] = useState([]);
+  const [stats, setStats] = useState({
+    hommes: 0,
+    femmes: 0,
+    villes: {},
+  });
 
-  // 🔹 Fetch des contacts depuis Supabase
+  const COLORS = ["#0088FE", "#FF8042", "#00C49F", "#FFBB28", "#AA00FF", "#FF00AA"];
+
   const fetchContacts = async () => {
     const { data } = await supabase
       .from("evangelises")
       .select("*")
       .order("created_at", { ascending: false });
+    
     setContacts(data || []);
+    computeStats(data || []);
+  };
+
+  const computeStats = (data) => {
+    const hommes = data.filter(c => c.sexe === "Homme").length;
+    const femmes = data.filter(c => c.sexe === "Femme").length;
+
+    const villes = {};
+    data.forEach(c => {
+      const ville = c.ville || "Inconnu";
+      villes[ville] = (villes[ville] || 0) + 1;
+    });
+
+    setStats({ hommes, femmes, villes });
   };
 
   useEffect(() => {
     fetchContacts();
 
-    // 🔹 Écoute en temps réel pour mise à jour automatique
-    const subscription = supabase
-      .channel('realtime-evangelises')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'evangelises' },
-        (payload) => {
-          console.log('Changement détecté :', payload);
-          fetchContacts(); // reload dès qu'il y a une insertion/suppression
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(subscription);
-    };
+    // Mise à jour automatique toutes les 5 secondes
+    const interval = setInterval(fetchContacts, 5000);
+    return () => clearInterval(interval);
   }, []);
 
-  // 🔹 Statistiques
-  const total = contacts.length;
-  const hommes = contacts.filter(c => c.sexe === "Homme").length;
-  const femmes = contacts.filter(c => c.sexe === "Femme").length;
-  const jeunes = contacts.filter(c => c.ageGroup === "Jeune").length;
-
-  const villes = [...new Set(contacts.map(c => c.ville))];
-
-  // 🔹 Graphique Sexe
   const sexeData = [
-    { name: "Hommes", value: hommes },
-    { name: "Femmes", value: femmes }
+    { name: "Hommes", value: stats.hommes },
+    { name: "Femmes", value: stats.femmes },
   ];
 
-  const COLORS = ["#0088FE", "#FF8042"];
-
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold mb-6 text-center">📊 Rapport d'Évangélisation</h1>
+    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100">
+      <h1 className="text-4xl font-bold text-center mb-6">📊 Rapport Évangélisation</h1>
 
-      {/* Statistiques globales */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded shadow text-center">
-          <h2 className="font-semibold">Total</h2>
-          <p>{total}</p>
-        </div>
-        <div className="bg-white p-4 rounded shadow text-center">
-          <h2 className="font-semibold">Hommes</h2>
-          <p>{hommes}</p>
-        </div>
-        <div className="bg-white p-4 rounded shadow text-center">
-          <h2 className="font-semibold">Femmes</h2>
-          <p>{femmes}</p>
-        </div>
-        <div className="bg-white p-4 rounded shadow text-center">
-          <h2 className="font-semibold">Jeunes</h2>
-          <p>{jeunes}</p>
-        </div>
+      {/* Statistiques Sexe */}
+      <div className="w-full max-w-3xl mb-10 bg-white p-6 rounded-3xl shadow-lg">
+        <h2 className="text-2xl font-semibold mb-4">Répartition Hommes / Femmes</h2>
+        <ResponsiveContainer width="100%" height={250}>
+          <PieChart>
+            <Pie data={sexeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label>
+              {sexeData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip />
+          </PieChart>
+        </ResponsiveContainer>
+        <p className="mt-4 text-center">Hommes: {stats.hommes} | Femmes: {stats.femmes}</p>
       </div>
 
-      {/* Graphique Sexe */}
-      <div className="flex justify-center mb-6">
-        <PieChart width={200} height={200}>
-          <Pie data={sexeData} dataKey="value" nameKey="name" outerRadius={80} fill="#8884d8">
-            {sexeData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip />
-          <Legend />
-        </PieChart>
-      </div>
-
-      {/* Répartition par ville */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Répartition par ville</h2>
-        <ul className="bg-white rounded shadow p-4 space-y-1">
-          {villes.map(v => {
-            const count = contacts.filter(c => c.ville === v).length;
-            return <li key={v}>{v} : {count}</li>;
-          })}
-        </ul>
-      </div>
-
-      {/* Liste détaillée */}
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Contacts récents</h2>
-        <ul className="bg-white rounded shadow p-4 space-y-1">
-          {contacts.map(c => (
-            <li key={c.id}>
-              {c.prenom} {c.nom} - {c.sexe} - {c.ageGroup} - {c.ville} - {new Date(c.created_at).toLocaleDateString()}
-            </li>
+      {/* Statistiques Ville */}
+      <div className="w-full max-w-3xl mb-10 bg-white p-6 rounded-3xl shadow-lg">
+        <h2 className="text-2xl font-semibold mb-4">Contacts par Ville</h2>
+        <ul className="list-disc list-inside space-y-1">
+          {Object.entries(stats.villes).map(([ville, count]) => (
+            <li key={ville}><span className="font-semibold">{ville}</span>: {count}</li>
           ))}
         </ul>
+      </div>
+
+      {/* Liste complète */}
+      <div className="w-full max-w-5xl bg-white p-6 rounded-3xl shadow-lg">
+        <h2 className="text-2xl font-semibold mb-4">Liste des contacts</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {contacts.map(c => (
+            <div key={c.id} className="bg-gray-50 p-4 rounded-2xl shadow-md border-l-4 border-blue-400">
+              <p className="font-bold">{c.prenom} {c.nom}</p>
+              <p>Sexe: {c.sexe || "—"}</p>
+              <p>Ville: {c.ville || "—"}</p>
+              <p>Téléphone: {c.telephone || "—"}</p>
+              <p>Besoins: {c.besoin ? c.besoin.join(", ") : "—"}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

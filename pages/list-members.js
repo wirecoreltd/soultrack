@@ -430,17 +430,7 @@ const anciensFiltres = filterBySearch(
                             </p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
                             <p>🕊 Statut : {m.statut_suivis_actuel ? statutLabels[m.statut_suivis_actuel] : m.statut || "—"}</p>
-                            <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>
-                            <select
-                              value={statusChanges[m.id] ?? m.statut ?? ""}
-                              onChange={(e) => handleStatusChange(m.id, e.target.value)}
-                              className="border rounded-md px-2 py-1 text-sm w-full mt-2"
-                            >
-                              <option value="">-- Choisir un statut --</option>
-                              {statusOptions.map((s) => (
-                                <option key={s} value={s}>{s}</option>
-                              ))}
-                            </select> 
+                            <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>                             
 
                             {/* ENVOYER À */}
                               <div className="mt-2">

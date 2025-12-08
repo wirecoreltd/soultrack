@@ -12,68 +12,39 @@ function EditRapportPopup({ isOpen, onClose, rapport, onSave }) {
     onClose();
   };
 
+  const fields = [
+    { key: "date", label: "Date", type: "date" },
+    { key: "hommes", label: "Hommes", type: "number" },
+    { key: "femmes", label: "Femmes", type: "number" },
+    { key: "priere", label: "Prière du salut", type: "number" },
+    { key: "nouveau_converti", label: "Nouveau converti", type: "number" },
+    { key: "reconciliation", label: "Réconciliation", type: "number" },
+    { key: "moissonneurs", label: "Moissonneurs", type: "text" },
+  ];
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 w-96 shadow-lg">
+      <div className="bg-white rounded-2xl p-6 w-80 shadow-lg max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4 text-center">Modifier le rapport</h2>
 
-        <div className="grid grid-cols-2 gap-2 items-center">
-          <span className="font-semibold">Date :</span>
-          <input
-            type="date"
-            className="input"
-            value={formData.date}
-            onChange={e => setFormData({ ...formData, date: e.target.value })}
-          />
-
-          <span className="font-semibold">Hommes :</span>
-          <input
-            type="number"
-            className="input"
-            value={formData.hommes || 0}
-            onChange={e => setFormData({ ...formData, hommes: parseInt(e.target.value) || 0 })}
-          />
-
-          <span className="font-semibold">Femmes :</span>
-          <input
-            type="number"
-            className="input"
-            value={formData.femmes || 0}
-            onChange={e => setFormData({ ...formData, femmes: parseInt(e.target.value) || 0 })}
-          />
-
-          <span className="font-semibold">Prière du salut :</span>
-          <input
-            type="number"
-            className="input"
-            value={formData.priere || 0}
-            onChange={e => setFormData({ ...formData, priere: parseInt(e.target.value) || 0 })}
-          />
-
-          <span className="font-semibold">Nouveau converti :</span>
-          <input
-            type="number"
-            className="input"
-            value={formData.nouveau_converti || 0}
-            onChange={e => setFormData({ ...formData, nouveau_converti: parseInt(e.target.value) || 0 })}
-          />
-
-          <span className="font-semibold">Réconciliation :</span>
-          <input
-            type="number"
-            className="input"
-            value={formData.reconciliation || 0}
-            onChange={e => setFormData({ ...formData, reconciliation: parseInt(e.target.value) || 0 })}
-          />
-
-          <span className="font-semibold">Moissonneurs :</span>
-          <input
-            type="text"
-            className="input"
-            value={formData.moissonneurs || ""}
-            onChange={e => setFormData({ ...formData, moissonneurs: e.target.value })}
-            placeholder="Entrer le nombre"
-          />
+        <div className="flex flex-col gap-3">
+          {fields.map(f => (
+            <div key={f.key} className="flex flex-col">
+              <label className="font-semibold mb-1">{f.label}</label>
+              <input
+                type={f.type}
+                className="input"
+                value={formData[f.key] ?? (f.type === "number" ? 0 : "")}
+                onChange={e =>
+                  setFormData({
+                    ...formData,
+                    [f.key]: f.type === "number" ? parseInt(e.target.value) || 0 : e.target.value,
+                  })
+                }
+                placeholder={f.label}
+              />
+            </div>
+          ))}
         </div>
 
         <div className="flex justify-end gap-3 mt-4">
@@ -103,5 +74,3 @@ function EditRapportPopup({ isOpen, onClose, rapport, onSave }) {
     </div>
   );
 }
-
-export default EditRapportPopup;

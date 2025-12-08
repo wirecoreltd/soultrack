@@ -166,40 +166,6 @@ export default function ListMembers() {
     }
   };
 
-  // -------------------- HANDLE STATUS / CELLULE / CONSEILLER CHANGE --------------------
-  const handleStatusChange = async (memberId, newValue, type = "statut") => {
-    const update = {};
-    if (type === "statut") update.statut = newValue;
-    else if (type === "cellule") {
-      const cellule = cellules.find((c) => c.id === newValue);
-      if (!cellule) return;
-      update.cellule_id = cellule.id;
-      update.cellule_nom = cellule.cellule;
-    } else if (type === "conseiller") {
-      const conseiller = conseillers.find((c) => c.id === newValue);
-      if (!conseiller) return;
-      update.conseiller_id = conseiller.id;
-    }
-
-    // 1️⃣ Mise à jour locale instantanée
-    setMembers((prev) =>
-      prev.map((m) => (m.id === memberId ? { ...m, ...update } : m))
-    );
-
-    // 2️⃣ Sauvegarde dans Supabase
-    try {
-      const { error } = await supabase
-        .from("membres")
-        .update(update)
-        .eq("id", memberId);
-      if (error) throw error;
-      showToast("✅ Membre mis à jour avec succès");
-    } catch (err) {
-      console.error("Erreur mise à jour membre:", err);
-      showToast("⚠️ Erreur lors de la mise à jour du membre");
-    }
-  };
-
   const getBorderColor = (m) => {
     const status = m.statut || "";
     const suiviStatus = m.suivi_statut_libelle || "";
@@ -210,8 +176,7 @@ export default function ListMembers() {
     if (status === "ancien" || suiviStatus === "ancien") return "#999999";
     if (status === "visiteur" || suiviStatus === "visiteur") return "#34A853";
     if (status === "veut rejoindre ICC" || suiviStatus === "veut rejoindre ICC") return "#34A853";
-    if (status === "refus" || suiviStatus === "refus") return "#f56f22";
-  
+    
     return "#ccc";
   };
 
@@ -249,8 +214,11 @@ export default function ListMembers() {
       : anciens
   );
 
+  // ✅ Définir displayedMembers pour éviter l'erreur
+  const displayedMembers = [...nouveauxFiltres, ...anciensFiltres];
+
   const statusOptions = ["actif", "ancien", "visiteur", "veut rejoindre ICC", "refus", "integrer", "En cours", "a déjà son église"];
-  const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
+  const totalCount = displayedMembers.length;
 
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -291,6 +259,7 @@ export default function ListMembers() {
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
       </div>
+
       {/* ==================== CARDS ==================== */}
       {view === "card" && (
         <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

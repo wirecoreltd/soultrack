@@ -224,7 +224,7 @@ const anciensFiltres = filterBySearch(
 );
 
 
-  const statusOptions = ["actif", "ancien", "visiteur", "veut rejoindre ICC", "refus", "integrer", "en cours", "a déjà son église"];
+  const statusOptions = ["actif", "ancien", "visiteur", "veut rejoindre ICC", "refus", "integrer", "En cours", "a déjà son église"];
   const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
 
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));

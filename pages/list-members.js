@@ -261,9 +261,7 @@
                             <span>Cellule : {m.cellule_nom || "—"}{m.responsable_prenom ? ` - ${m.responsable_prenom} ${m.responsable_nom}` : ""}</span>
                           </div>
                           <div className="flex justify-center items-center space-x-2">
-                            <span>👤</span>
-                            //<span>Conseiller : {m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</span>//
-                              <span>Conseiller : {m.suivi_responsable ? : "—"}</span>
+                            <span>👤</span> <span>Conseiller : {m.conseiller_prenom ? ${m.conseiller_prenom} ${m.conseiller_nom} : "—"}</span>
                           </div>
                         </div>
 

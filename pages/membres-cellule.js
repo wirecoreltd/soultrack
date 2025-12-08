@@ -44,7 +44,7 @@ export default function MembresCellule() {
           const { data, error } = await supabase
             .from("v_membres_full")
             .select("*")
-            .or("cellule_nom.not.is.null,suivi_cellule_nom.not.is.null");
+            .not("cellule_id", "is", null);
           if (error) throw error;
           membresData = data;
         } else if (userRole.includes("ResponsableCellule")) {
@@ -62,11 +62,10 @@ export default function MembresCellule() {
 
           const celluleIds = cellulesData.map(c => c.id);
 
-          // ✅ Version corrigée : utilise la nouvelle vue et filtre sur cellule ou suivi_cellule
           const { data, error } = await supabase
-            .from("v_membres_full_with_suivi")
+            .from("v_membres_full")
             .select("*")
-            .or(`cellule_id.in.(${celluleIds.join(",")}),suivi_cellule_id.in.(${celluleIds.join(",")})`);
+            .in("cellule_id", celluleIds);
           if (error) throw error;
 
           membresData = data;
@@ -89,7 +88,7 @@ export default function MembresCellule() {
     fetchMembres();
   }, []);
 
-  const getCellule = (m) => m.cellule_nom || m.suivi_cellule_nom || "—";
+  const getCellule = (m) => m.cellule_nom || "—";
 
   const getBorderColor = (m) => {
     if (m.statut === "actif") return "#34A853";

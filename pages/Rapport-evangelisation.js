@@ -4,37 +4,87 @@ import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 
-// 🔹 Popup pour modifier le champ libre "Moissonneurs"
-function EditMoissonneursPopup({ isOpen, onClose, rapport, onSave }) {
-  const [moissonneurs, setMoissonneurs] = useState(rapport.moissonneurs || "");
+// 🔹 Popup pour modifier une ligne du rapport
+function EditRapportPopup({ isOpen, onClose, rapport, onSave }) {
+  const [formData, setFormData] = useState(rapport);
 
   useEffect(() => {
-    setMoissonneurs(rapport.moissonneurs || "");
+    setFormData(rapport);
   }, [rapport]);
 
   if (!isOpen) return null;
 
   const handleSave = () => {
-    onSave({ ...rapport, moissonneurs });
+    onSave(formData);
     onClose();
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl p-6 w-96 shadow-lg">
-        <h2 className="text-xl font-bold mb-4 text-center">Modifier Moissonneurs</h2>
-        <textarea
-          rows={4}
-          className="input w-full mb-4"
-          value={moissonneurs}
-          onChange={(e) => setMoissonneurs(e.target.value)}
-          placeholder="Liste des moissonneurs..."
+        <h2 className="text-xl font-bold mb-4 text-center">Modifier le rapport</h2>
+
+        <input
+          type="date"
+          className="input mb-2"
+          value={formData.date}
+          onChange={e => setFormData({ ...formData, date: e.target.value })}
         />
-        <div className="flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 bg-gray-400 rounded hover:bg-gray-500 text-white">
+        <input
+          type="number"
+          className="input mb-2"
+          value={formData.hommes || 0}
+          onChange={e => setFormData({ ...formData, hommes: parseInt(e.target.value) || 0 })}
+          placeholder="Hommes"
+        />
+        <input
+          type="number"
+          className="input mb-2"
+          value={formData.femmes || 0}
+          onChange={e => setFormData({ ...formData, femmes: parseInt(e.target.value) || 0 })}
+          placeholder="Femmes"
+        />
+        <input
+          type="number"
+          className="input mb-2"
+          value={formData.priere || 0}
+          onChange={e => setFormData({ ...formData, priere: parseInt(e.target.value) || 0 })}
+          placeholder="Prière du salut"
+        />
+        <input
+          type="number"
+          className="input mb-2"
+          value={formData.nouveau_converti || 0}
+          onChange={e => setFormData({ ...formData, nouveau_converti: parseInt(e.target.value) || 0 })}
+          placeholder="Nouveau converti"
+        />
+        <input
+          type="number"
+          className="input mb-2"
+          value={formData.reconciliation || 0}
+          onChange={e => setFormData({ ...formData, reconciliation: parseInt(e.target.value) || 0 })}
+          placeholder="Réconciliation"
+        />
+        {/* 🔹 Moissonneurs : champ libre */}
+        <input
+          type="text"
+          className="input mb-2"
+          value={formData.moissonneurs || ""}
+          onChange={e => setFormData({ ...formData, moissonneurs: e.target.value })}
+          placeholder="Moissonneurs"
+        />
+
+        <div className="flex justify-end gap-3 mt-4">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-400 rounded hover:bg-gray-500 text-white"
+          >
             Annuler
           </button>
-          <button onClick={handleSave} className="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600 text-white">
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600 text-white"
+          >
             Enregistrer
           </button>
         </div>
@@ -49,57 +99,25 @@ export default function RapportEvangelisation() {
   const [editOpen, setEditOpen] = useState(false);
   const [selectedRapport, setSelectedRapport] = useState(null);
 
-  // 🔹 Générer les rapports automatiquement à partir de la table "evangelises"
+  // 🔹 Récupérer les rapports
   const fetchRapports = async () => {
     setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("evangelises")
-        .select("*")
-        .order("created_at", { ascending: true });
-
-      if (error) throw error;
-
-      // Grouper par date
-      const rapportsMap = {};
-      data.forEach(item => {
-        const date = item.created_at.split("T")[0]; // YYYY-MM-DD
-        if (!rapportsMap[date]) {
-          rapportsMap[date] = {
-            date,
-            hommes: 0,
-            femmes: 0,
-            priere: 0,
-            nouveau_converti: 0,
-            reconciliation: 0,
-            moissonneurs: ""
-          };
-        }
-
-        if (item.sexe === "Homme") rapportsMap[date].hommes += 1;
-        if (item.sexe === "Femme") rapportsMap[date].femmes += 1;
-        if (item.priere_salut) rapportsMap[date].priere += 1;
-        if (item.type_conversion === "Nouveau converti") rapportsMap[date].nouveau_converti += 1;
-        if (item.type_conversion === "Réconciliation") rapportsMap[date].reconciliation += 1;
-      });
-
-      // Transformer en tableau
-      const rapportsArray = Object.values(rapportsMap).sort((a,b)=> a.date.localeCompare(b.date));
-      setRapports(rapportsArray);
-
-    } catch(err) {
-      console.error("Erreur fetch rapports :", err);
-    }
+    const { data, error } = await supabase
+      .from("rapport_evangelisation")
+      .select("*")
+      .order("date", { ascending: true });
+    if (error) console.error(error);
+    else setRapports(data);
     setLoading(false);
   };
 
+  // 🔹 Sauvegarder une ligne modifiée
   const handleSaveRapport = async (updated) => {
-    // 🔹 Mettre à jour le champ libre moissonneurs dans la table "rapport_evangelisation"
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("rapport_evangelisation")
       .upsert(updated, { onConflict: ["date"] });
-    if (error) console.error("Erreur mise à jour moissonneurs :", error);
-    fetchRapports();
+    if (error) console.error("Erreur mise à jour rapport :", error);
+    else fetchRapports();
   };
 
   useEffect(() => {
@@ -110,14 +128,14 @@ export default function RapportEvangelisation() {
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100">
-      {/* 🔹 Logo + Titre */}
+      {/* Logo + Titre */}
       <div className="flex flex-col items-center mb-6">
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
         <h1 className="text-3xl font-bold text-gray-800 mt-2">Rapport Évangélisation</h1>
         <p className="text-gray-600 italic mt-1">Résumé des évangélisations par date</p>
       </div>
 
-      {/* 🔹 Tableau */}
+      {/* Tableau */}
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white rounded-2xl shadow-lg">
           <thead className="bg-blue-500 text-white">
@@ -133,44 +151,50 @@ export default function RapportEvangelisation() {
             </tr>
           </thead>
           <tbody>
-            {rapports.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="text-center py-4 text-gray-500">Aucun rapport disponible</td>
+            {rapports.map(r => (
+              <tr key={r.date} className="text-center border-b">
+                <td className="py-2 px-3">{r.date}</td>
+                <td className="py-2 px-3">{r.hommes}</td>
+                <td className="py-2 px-3">{r.femmes}</td>
+                <td className="py-2 px-3">{r.priere}</td>
+                <td className="py-2 px-3">{r.nouveau_converti}</td>
+                <td className="py-2 px-3">{r.reconciliation}</td>
+                <td className="py-2 px-3">{r.moissonneurs}</td>
+                <td className="py-2 px-3">
+                  <button
+                    onClick={() => { setSelectedRapport(r); setEditOpen(true); }}
+                    className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                  >
+                    Modifier
+                  </button>
+                </td>
               </tr>
-            ) : (
-              rapports.map(r => (
-                <tr key={r.date} className="text-center border-b">
-                  <td className="py-2 px-3">{r.date}</td>
-                  <td className="py-2 px-3">{r.hommes}</td>
-                  <td className="py-2 px-3">{r.femmes}</td>
-                  <td className="py-2 px-3">{r.priere}</td>
-                  <td className="py-2 px-3">{r.nouveau_converti}</td>
-                  <td className="py-2 px-3">{r.reconciliation}</td>
-                  <td className="py-2 px-3">{r.moissonneurs || "-"}</td>
-                  <td className="py-2 px-3">
-                    <button
-                      onClick={() => { setSelectedRapport(r); setEditOpen(true); }}
-                      className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-                    >
-                      Modifier
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
+            ))}
           </tbody>
         </table>
       </div>
 
-      {/* 🔹 Popup */}
+      {/* Popup */}
       {selectedRapport && (
-        <EditMoissonneursPopup
+        <EditRapportPopup
           isOpen={editOpen}
           onClose={() => setEditOpen(false)}
           rapport={selectedRapport}
           onSave={handleSaveRapport}
         />
       )}
+
+      <style jsx>{`
+        .input {
+          width: 100%;
+          border: 1px solid #ccc;
+          border-radius: 12px;
+          padding: 8px;
+          text-align: left;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+          color: black;
+        }
+      `}</style>
     </div>
   );
 }

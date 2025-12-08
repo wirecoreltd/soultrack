@@ -1,4 +1,3 @@
-// 🔹 Popup pour modifier un rapport
 function EditRapportPopup({ isOpen, onClose, rapport, onSave }) {
   const [formData, setFormData] = useState(rapport);
 
@@ -18,8 +17,8 @@ function EditRapportPopup({ isOpen, onClose, rapport, onSave }) {
       <div className="bg-white rounded-2xl p-6 w-96 shadow-lg">
         <h2 className="text-xl font-bold mb-4 text-center">Modifier le rapport</h2>
 
-        <div className="flex flex-col gap-2">
-          <label className="font-semibold">Date :</label>
+        <div className="grid grid-cols-2 gap-2 items-center">
+          <span className="font-semibold">Date :</span>
           <input
             type="date"
             className="input"
@@ -27,7 +26,7 @@ function EditRapportPopup({ isOpen, onClose, rapport, onSave }) {
             onChange={e => setFormData({ ...formData, date: e.target.value })}
           />
 
-          <label className="font-semibold">Hommes :</label>
+          <span className="font-semibold">Hommes :</span>
           <input
             type="number"
             className="input"
@@ -35,7 +34,7 @@ function EditRapportPopup({ isOpen, onClose, rapport, onSave }) {
             onChange={e => setFormData({ ...formData, hommes: parseInt(e.target.value) || 0 })}
           />
 
-          <label className="font-semibold">Femmes :</label>
+          <span className="font-semibold">Femmes :</span>
           <input
             type="number"
             className="input"
@@ -43,7 +42,7 @@ function EditRapportPopup({ isOpen, onClose, rapport, onSave }) {
             onChange={e => setFormData({ ...formData, femmes: parseInt(e.target.value) || 0 })}
           />
 
-          <label className="font-semibold">Prière du salut :</label>
+          <span className="font-semibold">Prière du salut :</span>
           <input
             type="number"
             className="input"
@@ -51,7 +50,7 @@ function EditRapportPopup({ isOpen, onClose, rapport, onSave }) {
             onChange={e => setFormData({ ...formData, priere: parseInt(e.target.value) || 0 })}
           />
 
-          <label className="font-semibold">Nouveau converti :</label>
+          <span className="font-semibold">Nouveau converti :</span>
           <input
             type="number"
             className="input"
@@ -59,7 +58,7 @@ function EditRapportPopup({ isOpen, onClose, rapport, onSave }) {
             onChange={e => setFormData({ ...formData, nouveau_converti: parseInt(e.target.value) || 0 })}
           />
 
-          <label className="font-semibold">Réconciliation :</label>
+          <span className="font-semibold">Réconciliation :</span>
           <input
             type="number"
             className="input"
@@ -67,13 +66,13 @@ function EditRapportPopup({ isOpen, onClose, rapport, onSave }) {
             onChange={e => setFormData({ ...formData, reconciliation: parseInt(e.target.value) || 0 })}
           />
 
-          <label className="font-semibold">Moissonneurs :</label>
+          <span className="font-semibold">Moissonneurs :</span>
           <input
             type="text"
             className="input"
             value={formData.moissonneurs || ""}
             onChange={e => setFormData({ ...formData, moissonneurs: e.target.value })}
-            placeholder="Entrer le nombre de moissonneurs"
+            placeholder="Entrer le nombre"
           />
         </div>
 
@@ -97,8 +96,7 @@ function EditRapportPopup({ isOpen, onClose, rapport, onSave }) {
             width: 100%;
             border: 1px solid #ccc;
             border-radius: 12px;
-            padding: 10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            padding: 8px;
           }
         `}</style>
       </div>

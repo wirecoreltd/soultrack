@@ -1,5 +1,4 @@
 // pages/membres-cellule.js
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -28,9 +27,10 @@ export default function MembresCellule() {
 
         if (!userEmail) throw new Error("Utilisateur non connecté");
 
+        // Récupération du profil actuel
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, prenom")
+          .select("id, prenom, nom")
           .eq("email", userEmail)
           .single();
         if (profileError) throw profileError;
@@ -52,12 +52,11 @@ export default function MembresCellule() {
             .from("v_membres_full")
             .select("*")
             .or(
-              `responsable_cellule.eq.${profileData.prenom} ${profileData.nom},` +
-              `suivi_responsable.eq.${profileData.prenom} ${profileData.nom}`
+              `responsable_id.eq.${responsableId},` +
+              `suivi_responsable_id.eq.${responsableId}`
             );
 
           if (error) throw error;
-
           membresData = allMembres;
 
           if (!membresData || membresData.length === 0) {
@@ -129,61 +128,60 @@ export default function MembresCellule() {
       {view === "card" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">        
           {membres.map(m => (
-              <div
-                key={m.id}
-                className="bg-white p-4 rounded-xl shadow-md border-l-4 w-full transition hover:shadow-lg"
-                style={{ borderLeftColor: getBorderColor(m) }}
-              >
-                <div className="flex flex-col items-center">
-                  <h2 className="font-bold text-black text-base text-center mb-1">
-                    {m.prenom} {m.nom}
-                  </h2>
-            
-                  <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">📌 Cellule : {getCellule(m)}</p>
-            
-                  {/* Bouton détails */}
-                  <button
-                    onClick={() => setSelectedMembre(selectedMembre === m.id ? null : m.id)}
-                    className="text-orange-500 text-sm mt-1"
-                  >
-                    {selectedMembre === m.id ? "Fermer détails" : "Détails"}
-                  </button>
-            
-                  {/* Détails */}
-                  {selectedMembre === m.id && (
-                    <div className="mt-3 w-full bg-gray-50 p-4 rounded-lg text-left space-y-2">
-                      <p><strong>Ville :</strong> {m.ville || "—"}</p>
-                      <p><strong>WhatsApp :</strong> {m.is_whatsapp ? "Oui" : "Non"}</p>
-                      <p>
-                        <strong>Besoin :</strong>{" "}
-                        {(() => {
-                          if (!m.besoin) return "—";
-                          if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                          try {
-                            const arr = JSON.parse(m.besoin);
-                            return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                          } catch {
-                            return m.besoin;
-                          }
-                        })()}
-                      </p>
-                      <p><strong>Infos :</strong> {m.infos_supplementaires || "—"}</p>
-            
-                      {/* Bouton modifier centré */}
-                      <div className="flex justify-center pt-2">
-                        <button
-                          onClick={() => setEditingMember(m)}
-                          className="text-orange-500 text-sm mt-1"
-                        >
-                          ✏️ Modifier le contact
-                        </button>
-                      </div>
+            <div
+              key={m.id}
+              className="bg-white p-4 rounded-xl shadow-md border-l-4 w-full transition hover:shadow-lg"
+              style={{ borderLeftColor: getBorderColor(m) }}
+            >
+              <div className="flex flex-col items-center">
+                <h2 className="font-bold text-black text-base text-center mb-1">
+                  {m.prenom} {m.nom}
+                </h2>
+                <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
+                <p className="text-sm text-gray-700 mb-1">📌 Cellule : {getCellule(m)}</p>
+
+                {/* Bouton détails */}
+                <button
+                  onClick={() => setSelectedMembre(selectedMembre === m.id ? null : m.id)}
+                  className="text-orange-500 text-sm mt-1"
+                >
+                  {selectedMembre === m.id ? "Fermer détails" : "Détails"}
+                </button>
+
+                {/* Détails */}
+                {selectedMembre === m.id && (
+                  <div className="mt-3 w-full bg-gray-50 p-4 rounded-lg text-left space-y-2">
+                    <p><strong>Ville :</strong> {m.ville || "—"}</p>
+                    <p><strong>WhatsApp :</strong> {m.is_whatsapp ? "Oui" : "Non"}</p>
+                    <p>
+                      <strong>Besoin :</strong>{" "}
+                      {(() => {
+                        if (!m.besoin) return "—";
+                        if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                        try {
+                          const arr = JSON.parse(m.besoin);
+                          return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                        } catch {
+                          return m.besoin;
+                        }
+                      })()}
+                    </p>
+                    <p><strong>Infos :</strong> {m.infos_supplementaires || "—"}</p>
+
+                    {/* Bouton modifier centré */}
+                    <div className="flex justify-center pt-2">
+                      <button
+                        onClick={() => setEditingMember(m)}
+                        className="text-orange-500 text-sm mt-1"
+                      >
+                        ✏️ Modifier le contact
+                      </button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
-            ))}
+            </div>
+          ))}
         </div>
       ) : (
         // Vue Table

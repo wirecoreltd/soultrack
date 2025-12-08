@@ -259,10 +259,11 @@
                           <div className="flex justify-center items-center space-x-2">
                             <span>🏠</span>
                             <span>Cellule : {m.cellule_nom || "—"}{m.responsable_prenom ? ` - ${m.responsable_prenom} ${m.responsable_nom}` : ""}</span>
-                          </div>
                           <div className="flex justify-center items-center space-x-2">
-                            <span>👤</span> <span>Conseiller : {m.conseiller_prenom ? ${m.conseiller_prenom} ${m.conseiller_nom} : "—"}</span>
-                          </div>
+                              <span>👤</span>
+                              <span>Responsable suivi : {m.suivi_responsable ? m.suivi_responsable : "—"}</span>
+                            </div>
+
                         </div>
 
                         <select value={statusChanges[m.id] ?? m.statut ?? ""} onChange={(e) => handleStatusChange(m.id, e.target.value)} className="border rounded-md px-2 py-1 text-sm w-full mt-2">

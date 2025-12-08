@@ -40,23 +40,20 @@ export default function MembresCellule() {
 
         let membresData = [];
 
-        // ----------------------------------------------------------
-        // 🔹 1. ADMINISTRATEUR : voit TOUT membre ayant une cellule
-        // ----------------------------------------------------------
+        // 1️⃣ ADMIN = voit tous les contacts assignés à une cellule
         if (userRole.includes("Administrateur")) {
           const { data, error } = await supabase
             .from("v_membres_full")
             .select("*")
             .or("cellule_nom.not.is.null,suivi_cellule_nom.not.is.null");
-
           if (error) throw error;
+
           membresData = data;
         }
 
-        // ----------------------------------------------------------
-        // 🔹 2. RESPONSABLE CELLULE : voit uniquement SES cellules
-        // ----------------------------------------------------------
+        // 2️⃣ RESPONSABLE DE CELLULE = voit tous les membres assignés à ses cellules
         else if (userRole.includes("ResponsableCellule")) {
+
           const { data: cellulesData, error: cellulesError } = await supabase
             .from("cellules")
             .select("id")
@@ -72,14 +69,21 @@ export default function MembresCellule() {
 
           const celluleIds = cellulesData.map(c => c.id);
 
+          // 🔥🔥 CORRECTION DU FILTRE ICI 🔥🔥
           const { data, error } = await supabase
             .from("v_membres_full")
             .select("*")
-            .in("cellule_id", celluleIds);
+            .or(
+              `cellule_id.in.(${celluleIds.join(",")}),suivi_cellule_id.in.(${celluleIds.join(",")})`
+            );
 
           if (error) throw error;
 
           membresData = data;
+
+          if (!membresData || membresData.length === 0) {
+            setMessage("Aucun membre assigné à vos cellules.");
+          }
         }
 
         setMembres(membresData || []);
@@ -117,7 +121,6 @@ export default function MembresCellule() {
       className="min-h-screen flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* HEADER */}
       <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
         <button onClick={() => window.history.back()} className="text-white hover:text-gray-200 transition">← Retour</button>
         <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
@@ -132,7 +135,7 @@ export default function MembresCellule() {
         <p className="text-white text-lg max-w-xl mx-auto italic">Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️</p>
       </div>
 
-      {/* Toggle Carte/Table */}
+      {/* Toggle Vue */}
       <div className="mb-4 flex justify-between w-full max-w-6xl">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
@@ -214,14 +217,10 @@ export default function MembresCellule() {
             </thead>
             <tbody>
               {membres.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-2 text-white text-center">Aucun membre</td>
-                </tr>
+                <tr><td colSpan={5} className="px-4 py-2 text-white text-center">Aucun membre</td></tr>
               ) : membres.map(m => (
                 <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                  <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>
-                    {m.prenom} {m.nom}
-                  </td>
+                  <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.ville || "—"}</td>
                   <td className="px-4 py-2">{getCellule(m)}</td>

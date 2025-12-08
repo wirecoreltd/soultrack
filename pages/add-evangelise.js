@@ -15,6 +15,7 @@ export default function AddEvangelise() {
     telephone: "",
     ville: "",
     statut: "evangelisé",
+    sexe: "", // 🔹 ajouté
     besoin: [],
     infos_supplementaires: "",
     is_whatsapp: false,
@@ -85,6 +86,7 @@ export default function AddEvangelise() {
         telephone: "",
         ville: "",
         statut: "evangelisé",
+        sexe: "", // 🔹 reset
         besoin: [],
         infos_supplementaires: "",
         is_whatsapp: false,
@@ -103,6 +105,7 @@ export default function AddEvangelise() {
       telephone: "",
       ville: "",
       statut: "evangelisé",
+      sexe: "",
       besoin: [],
       infos_supplementaires: "",
       is_whatsapp: false,
@@ -138,6 +141,18 @@ export default function AddEvangelise() {
           <input className="input" type="text" placeholder="Nom" value={formData.nom} onChange={(e)=>setFormData({...formData,nom:e.target.value})} required />
           <input className="input" type="text" placeholder="Téléphone" value={formData.telephone} onChange={(e)=>setFormData({...formData,telephone:e.target.value})} required />
           <input className="input" type="text" placeholder="Ville" value={formData.ville} onChange={(e)=>setFormData({...formData,ville:e.target.value})} />
+
+          {/* 🔹 Champ Sexe */}
+          <select
+            className="input"
+            value={formData.sexe}
+            onChange={(e)=>setFormData({...formData,sexe:e.target.value})}
+            required
+          >
+            <option value="">-- Sexe --</option>
+            <option value="Homme">Homme</option>
+            <option value="Femme">Femme</option>
+          </select>
 
           {/* WhatsApp */}
           <label className="flex items-center gap-2 text-gray-700">

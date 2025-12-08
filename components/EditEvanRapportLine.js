@@ -1,4 +1,9 @@
-function EditRapportPopup({ isOpen, onClose, rapport, onSave }) {
+// components/EditEvanRapportLine.js
+"use client";
+
+import { useEffect, useState } from "react";
+
+export default function EditEvanRapportLine({ isOpen, onClose, rapport, onSave }) {
   const [formData, setFormData] = useState(rapport);
 
   useEffect(() => {
@@ -19,7 +24,7 @@ function EditRapportPopup({ isOpen, onClose, rapport, onSave }) {
     { key: "priere", label: "Prière du salut", type: "number" },
     { key: "nouveau_converti", label: "Nouveau converti", type: "number" },
     { key: "reconciliation", label: "Réconciliation", type: "number" },
-    { key: "moissonneurs", label: "Moissonneurs", type: "text" },
+    { key: "moissonneurs", label: "Moissonneurs", type: "text" }, // champ libre
   ];
 
   return (

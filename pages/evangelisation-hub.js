@@ -1,36 +1,89 @@
-/* ✅ pages/evangelisation-hub.js */
-
 "use client";
 
-import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
-import SendLinkPopup from "../components/SendLinkPopup";
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
 
-export default function EvangelisationHub() {
+export default function RapportEvangelisation() {
   const router = useRouter();
   const [userName, setUserName] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [rapport, setRapport] = useState([]);
+
+  // Champs libres
+  const [gagneurAme, setGagneurAme] = useState("");
+  const [nombreGagneurs, setNombreGagneurs] = useState("");
+  const [nombreMoissonneurs, setNombreMoissonneurs] = useState("");
 
   useEffect(() => {
     const name = localStorage.getItem("userName") || "Utilisateur";
-    const prenom = name.split(" ")[0];
-    setUserName(prenom);
+    setUserName(name.split(" ")[0]);
+    fetchRapport();
   }, []);
+
+  async function fetchRapport() {
+    setLoading(true);
+
+    const { data, error } = await supabase
+      .from("evangelises")
+      .select("*");
+
+    if (error) {
+      console.log(error);
+      setLoading(false);
+      return;
+    }
+
+    // Groupement par date
+    const grouped = {};
+
+    data.forEach((item) => {
+      const date = item.created_at?.split("T")[0];
+
+      if (!grouped[date]) {
+        grouped[date] = {
+          hommes: 0,
+          femmes: 0,
+          priere_salut: 0,
+          nouveau_converti: 0,
+          reconciliation: 0,
+        };
+      }
+
+      if (item.sexe === "Homme") grouped[date].hommes++;
+      if (item.sexe === "Femme") grouped[date].femmes++;
+
+      if (item.priere_salut) grouped[date].priere_salut++;
+
+      if (item.type_conversion === "nouveau_converti")
+        grouped[date].nouveau_converti++;
+
+      if (item.type_conversion === "reconciliation")
+        grouped[date].reconciliation++;
+    });
+
+    const finalArray = Object.entries(grouped).map(([date, stats]) => ({
+      date,
+      ...stats,
+    }));
+
+    setRapport(finalArray);
+    setLoading(false);
+  }
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
+      className="min-h-screen flex flex-col p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
       {/* 🔹 Top bar */}
-      <div className="w-full max-w-5xl mb-6">
-        {/* Ligne principale : Retour + Déconnexion */}
+      <div className="w-full max-w-5xl mx-auto mb-6">
         <div className="flex justify-between items-center">
           <button
             onClick={() => router.back()}
-            className="flex items-center text-white hover:text-gray-200 transition-colors"
+            className="flex items-center text-white hover:text-gray-200 transition"
           >
             ← Retour
           </button>
@@ -38,95 +91,112 @@ export default function EvangelisationHub() {
           <LogoutLink />
         </div>
 
-        {/* Ligne du dessous : Bienvenue aligné à droite */}
         <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">
-            👋 Bienvenue {userName}
-          </p>
+          <p className="text-orange-200 text-sm">👋 Bienvenue {userName}</p>
         </div>
       </div>
 
-      {/* 🔹 Logo centré */}
-      <div className="mb-6">
-        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
+      {/* Logo */}
+      <div className="flex justify-center mb-6">
+        <Image src="/logo.png" width={80} height={80} alt="Logo" />
       </div>
 
-      {/* 🔹 Titre + texte motivant */}
-      <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">
-          Espace Évangélisation
-        </h1>
-        <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
-          Va, fais de toutes les nations des disciples.  
-          Chaque rencontre compte, chaque âme est précieuse. ✨
-        </p>
-      </div>
+      {/* Title */}
+      <h1 className="text-3xl text-white font-bold text-center mb-4">
+        📊 Rapport Évangélisation
+      </h1>
 
-      {/* 🔹 Cartes principales */}
-      <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6">
-        {/* Ajouter un évangélisé */}
-        <Link
-          href="/add-evangelise"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#4285F4] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
-        >
-          <div className="text-4xl mb-2">➕</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            Ajouter un évangélisé
+      {/* Subtitle */}
+      <p className="text-white text-center italic mb-6 max-w-xl mx-auto">
+        “Chaque âme rencontrée est un miracle en devenir.” ✨
+      </p>
+
+      {/* 🔹 Champs libres dans card blanche */}
+      <div className="bg-white p-6 rounded-2xl shadow-xl max-w-5xl mx-auto w-full mb-6">
+        <h2 className="text-xl font-bold mb-4 text-gray-700">Champs libres</h2>
+
+        <div className="grid md:grid-cols-3 gap-4">
+          {/* Gagneur d'âme */}
+          <div>
+            <label className="font-semibold">Gagneur d’âme (Nom)</label>
+            <input
+              type="text"
+              className="w-full p-3 mt-1 border rounded-xl shadow-sm"
+              value={gagneurAme}
+              onChange={(e) => setGagneurAme(e.target.value)}
+              placeholder="Ex : Jean Louis"
+            />
           </div>
-        </Link>
 
-        {/* Liste des évangélisés */}
-        <Link
-          href="/evangelisation"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
-        >
-          <div className="text-4xl mb-2">👥</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            Liste des évangélisés
+          {/* Nombre de gagneurs */}
+          <div>
+            <label className="font-semibold">Nombre de gagneurs d’âme</label>
+            <input
+              type="number"
+              className="w-full p-3 mt-1 border rounded-xl shadow-sm"
+              value={nombreGagneurs}
+              onChange={(e) => setNombreGagneurs(e.target.value)}
+              placeholder="Ex : 4"
+            />
           </div>
-        </Link>
 
-        {/* Suivis des évangélisés */}
-        <Link
-          href="/suivis-evangelisation"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
-        >
-          <div className="text-4xl mb-2">📋</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            Suivis des évangélisés
+          {/* Nombre de moissonneurs */}
+          <div>
+            <label className="font-semibold">Nombre de moissonneurs</label>
+            <input
+              type="number"
+              className="w-full p-3 mt-1 border rounded-xl shadow-sm"
+              value={nombreMoissonneurs}
+              onChange={(e) => setNombreMoissonneurs(e.target.value)}
+              placeholder="Ex : 3"
+            />
           </div>
-        </Link>
-
-          {/* Suivis des évangélisés */}
-        <Link
-          href="/Rapport-evangelisation"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
-        >
-          <div className="text-4xl mb-2">📋</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            Rapport Evangélisation
-          </div>
-        </Link>
-            
+        </div>
       </div>
 
-      {/* 🔹 Bouton popup ajouté sous les cartes */}
-      <div className="w-full max-w-md mb-10">
-        <SendLinkPopup
-          label="Envoyer l'appli – Évangélisé"
-          type="ajouter_evangelise"
-          buttonColor="from-[#09203F] to-[#537895]"
-        />
+      {/* 🔹 Tableau du rapport */}
+      <div className="bg-white p-6 rounded-2xl shadow-xl max-w-5xl mx-auto overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-200 text-gray-700 rounded-xl">
+            <tr>
+              <th className="p-3 text-left">Date</th>
+              <th className="p-3 text-center">Hommes</th>
+              <th className="p-3 text-center">Femmes</th>
+              <th className="p-3 text-center">Prière du salut</th>
+              <th className="p-3 text-center">Nouveau Converti</th>
+              <th className="p-3 text-center">Réconciliation</th>
+              <th className="p-3 text-center">Gagneur d’âme</th>
+              <th className="p-3 text-center">Nb. Gagneurs</th>
+              <th className="p-3 text-center">Nb. Moissonneurs</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {rapport.map((r) => (
+              <tr key={r.date} className="border-b">
+                <td className="p-3">{r.date}</td>
+                <td className="p-3 text-center">{r.hommes}</td>
+                <td className="p-3 text-center">{r.femmes}</td>
+                <td className="p-3 text-center">{r.priere_salut}</td>
+                <td className="p-3 text-center">{r.nouveau_converti}</td>
+                <td className="p-3 text-center">{r.reconciliation}</td>
+                <td className="p-3 text-center">{gagneurAme || "-"}</td>
+                <td className="p-3 text-center">{nombreGagneurs || "-"}</td>
+                <td className="p-3 text-center">{nombreMoissonneurs || "-"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {loading && (
+          <p className="text-center text-gray-500 mt-4">Chargement…</p>
+        )}
       </div>
 
-      {/* 🔹 Verset biblique inspirant */}
-      <div className="mt-auto mb-4 text-center text-white text-lg italic max-w-2xl leading-relaxed tracking-wide font-light">
-        “Comment donc invoqueront-ils celui en qui ils n’ont pas cru ?  
-        Et comment croiront-ils en celui dont ils n’ont pas entendu parler ?”  
-        <br />
-        Romains 10:14 ❤️
-      </div>
+      {/* Footer verse */}
+      <p className="text-white text-center mt-10 italic">
+        “Celui qui gagne des âmes est sage.” – Proverbes 11:30 ❤️
+      </p>
     </div>
   );
 }
-

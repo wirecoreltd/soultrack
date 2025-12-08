@@ -8,141 +8,119 @@ import Image from "next/image";
 export default function RapportEvangelisation() {
   const router = useRouter();
   const [userName, setUserName] = useState("");
-  const [evangelises, setEvangelises] = useState([]);
+  const [rapport, setRapport] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // 🔹 Récupération du nom de l'utilisateur
+  // 🔹 Nom utilisateur
   useEffect(() => {
     const name = localStorage.getItem("userName") || "Utilisateur";
     const prenom = name.split(" ")[0];
     setUserName(prenom);
   }, []);
 
-  // 🔹 Fetch des données
+  // 🔹 Fetch et calcul du rapport par date
   useEffect(() => {
-    const fetchEvangelises = async () => {
+    const fetchRapport = async () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("evangelises")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: true });
+
       if (error) {
         setError("Impossible de récupérer les données.");
-      } else {
-        setEvangelises(data || []);
+        setLoading(false);
+        return;
       }
+
+      // Grouper par date
+      const grouped = {};
+      (data || []).forEach(ev => {
+        const date = new Date(ev.created_at).toLocaleDateString();
+        if (!grouped[date]) {
+          grouped[date] = {
+            hommes: 0,
+            femmes: 0,
+            priere: 0,
+            nouveauConverti: 0,
+            reconciliation: 0,
+            moissonneurs: ""
+          };
+        }
+        if (ev.sexe === "Homme") grouped[date].hommes += 1;
+        if (ev.sexe === "Femme") grouped[date].femmes += 1;
+        if (ev.priere_salut) {
+          grouped[date].priere += 1;
+          if (ev.type_conversion) grouped[date].nouveauConverti += 1;
+          else grouped[date].reconciliation += 1;
+        }
+        if (ev.moissonneur) grouped[date].moissonneurs = ev.moissonneur; // champ libre
+      });
+
+      // Transformer en tableau
+      const rapportArray = Object.keys(grouped).map(date => ({
+        date,
+        ...grouped[date]
+      }));
+
+      setRapport(rapportArray);
       setLoading(false);
     };
-    fetchEvangelises();
+
+    fetchRapport();
   }, []);
 
-  // 🔹 Calculs pour le rapport
-  const hommes = (evangelises || []).filter(e => e.sexe === "Homme").length;
-  const femmes = (evangelises || []).filter(e => e.sexe === "Femme").length;
-  const priereOui = (evangelises || []).filter(e => e.priere_salut).length;
-  const nouveauConverti = (evangelises || []).filter(e => e.type_conversion === true).length;
-  const reconciliation = priereOui - nouveauConverti;
-
-  if (loading) return <p className="text-center mt-10 text-white">Chargement des données...</p>;
+  if (loading) return <p className="text-center mt-10 text-white">Chargement du rapport...</p>;
   if (error) return <p className="text-center mt-10 text-red-600">{error}</p>;
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-6 space-y-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
+    <div className="min-h-screen flex flex-col items-center p-6 space-y-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+      
       {/* 🔹 Top bar */}
-      <div className="w-full max-w-5xl mb-6">
-        <div className="flex justify-between items-center">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-white hover:text-gray-200 transition-colors"
-          >
-            ← Retour
-          </button>
-        </div>
-        <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">👋 Bienvenue {userName}</p>
-        </div>
+      <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
+        <button onClick={() => router.back()} className="flex items-center text-white hover:text-gray-200 transition-colors">← Retour</button>
+        <p className="text-orange-200 text-sm">👋 Bienvenue {userName}</p>
       </div>
 
-      {/* 🔹 Logo */}
-      <div className="mb-6">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} className="mx-auto" />
-      </div>
-
-      {/* 🔹 Titre */}
+      {/* 🔹 Logo et titre */}
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">Rapport Évangélisation</h1>
-        <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
-          Suivi détaillé des personnes évangélisées.
-        </p>
+        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} className="mx-auto" />
+        <h1 className="text-3xl font-bold text-white mt-4">Rapport Évangélisation</h1>
+        <p className="text-white text-lg italic max-w-xl mx-auto">Total par date des évangélisés et conversions.</p>
       </div>
 
-      {/* 🔹 Statistiques */}
-      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-xl shadow-md text-center">
-          <p className="text-gray-500 font-semibold">Hommes</p>
-          <p className="text-2xl font-bold">{hommes}</p>
-        </div>
-        <div className="bg-white p-4 rounded-xl shadow-md text-center">
-          <p className="text-gray-500 font-semibold">Femmes</p>
-          <p className="text-2xl font-bold">{femmes}</p>
-        </div>
-        <div className="bg-white p-4 rounded-xl shadow-md text-center">
-          <p className="text-gray-500 font-semibold">Prières du salut</p>
-          <p className="text-2xl font-bold">{priereOui}</p>
-        </div>
-        <div className="bg-white p-4 rounded-xl shadow-md text-center">
-          <p className="text-gray-500 font-semibold">Nouveaux convertis</p>
-          <p className="text-2xl font-bold">{nouveauConverti}</p>
-        </div>
-      </div>
-
-      {/* 🔹 Tableau des évangélisés */}
+      {/* 🔹 Tableau du rapport */}
       <div className="w-full max-w-5xl overflow-x-auto">
         <table className="min-w-full bg-white rounded-xl shadow-md overflow-hidden">
           <thead className="bg-gray-100">
             <tr>
               <th className="p-2 border">Date</th>
-              <th className="p-2 border">Nom</th>
-              <th className="p-2 border">Prénom</th>
-              <th className="p-2 border">Sexe</th>
-              <th className="p-2 border">Ville</th>
+              <th className="p-2 border">Hommes</th>
+              <th className="p-2 border">Femmes</th>
               <th className="p-2 border">Prière du salut</th>
-              <th className="p-2 border">Type conversion</th>
-              <th className="p-2 border">Besoin</th>
-              <th className="p-2 border">Infos supplémentaires</th>
+              <th className="p-2 border">Nouveau converti</th>
+              <th className="p-2 border">Réconciliation</th>
+              <th className="p-2 border">Moissonneur</th>
             </tr>
           </thead>
           <tbody>
-            {(evangelises.length > 0 ? evangelises : []).map(ev => (
-              <tr key={ev.id} className="hover:bg-gray-50">
-                <td className="p-2 border">{new Date(ev.created_at).toLocaleDateString()}</td>
-                <td className="p-2 border">{ev.nom || "-"}</td>
-                <td className="p-2 border">{ev.prenom || "-"}</td>
-                <td className="p-2 border">{ev.sexe || "-"}</td>
-                <td className="p-2 border">{ev.ville || "-"}</td>
-                <td className="p-2 border">{ev.priere_salut ? "Oui" : "Non"}</td>
-                <td className="p-2 border">
-                  {ev.priere_salut
-                    ? ev.type_conversion
-                      ? "Nouveau converti"
-                      : "Réconciliation"
-                    : "-"}
-                </td>
-                <td className="p-2 border">{ev.besoin || "-"}</td>
-                <td className="p-2 border">{ev.infos_supplementaires || "-"}</td>
-              </tr>
-            ))}
-            {evangelises.length === 0 && (
+            {rapport.length === 0 && (
               <tr>
-                <td colSpan={9} className="text-center p-4">
-                  Aucune donnée disponible
-                </td>
+                <td colSpan={7} className="text-center p-4">Aucune donnée disponible</td>
               </tr>
             )}
+            {rapport.map(r => (
+              <tr key={r.date} className="hover:bg-gray-50">
+                <td className="p-2 border">{r.date}</td>
+                <td className="p-2 border">{r.hommes}</td>
+                <td className="p-2 border">{r.femmes}</td>
+                <td className="p-2 border">{r.priere}</td>
+                <td className="p-2 border">{r.nouveauConverti}</td>
+                <td className="p-2 border">{r.reconciliation}</td>
+                <td className="p-2 border">{r.moissonneurs || "-"}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

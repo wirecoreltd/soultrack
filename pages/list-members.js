@@ -44,7 +44,14 @@ export default function ListMembers() {
     setShowingToast(true);
     setTimeout(() => setShowingToast(false), 3500);
   };
+          const statutLabels = {
+            1: "En cours",
+            2: "En attente",
+            3: "Intégrer",
+            4: "Refus"
+          };
 
+          
   // -------------------- FETCH --------------------
   const fetchMembers = async (profile = null) => {
     setLoading(true);
@@ -329,7 +336,7 @@ export default function ListMembers() {
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>                            
                             <p>❓Besoin : {(!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })())}</p>
                             <p>📝 Infos : {m.infos_supplementaires || ""}</p>
-                            <p>📌 Statut Suivis : {m.statut_suivis_actuel || "—"}</p>
+                            <span>🕊 Statut : {m.statut_suivis_actuel ? statutLabels[m.statut_suivis_actuel] : m.statut || "—"}</span>
                             <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>
                             <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-6 block mx-auto">✏️ Modifier le contact</button>
                           </div>
@@ -417,7 +424,7 @@ export default function ListMembers() {
                               })()}
                             </p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                            <p>📌 Statut Suivis : {m.suivi_statut_libelle || "—"}</p>
+                            <span>🕊 Statut : {m.statut_suivis_actuel ? statutLabels[m.statut_suivis_actuel] : m.statut || "—"}</span>
                             <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>
                             <select
                               value={statusChanges[m.id] ?? m.statut ?? ""}

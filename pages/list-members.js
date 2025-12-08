@@ -206,18 +206,23 @@ export default function ListMembers() {
   const nouveauxFiltres = filterBySearch(
   filter
     ? nouveaux.filter((m) =>
-        m.statut === filter || m.suivi_statut_libelle === filter
+        m.statut === filter || 
+        m.suivi_statut_libelle === filter || 
+        (m.statut_suivis_actuel && statutLabels[m.statut_suivis_actuel] === filter)
       )
     : nouveaux
 );
 
-  const anciensFiltres = filterBySearch(
+const anciensFiltres = filterBySearch(
   filter
     ? anciens.filter((m) =>
-        m.statut === filter || m.suivi_statut_libelle === filter
+        m.statut === filter || 
+        m.suivi_statut_libelle === filter || 
+        (m.statut_suivis_actuel && statutLabels[m.statut_suivis_actuel] === filter)
       )
     : anciens
 );
+
 
   const statusOptions = ["actif", "ancien", "visiteur", "veut rejoindre ICC", "refus", "integrer", "en cours", "a déjà son église"];
   const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
@@ -336,7 +341,7 @@ export default function ListMembers() {
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>                            
                             <p>❓Besoin : {(!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })())}</p>
                             <p>📝 Infos : {m.infos_supplementaires || ""}</p>
-                            <span>🕊 Statut : {m.statut_suivis_actuel ? statutLabels[m.statut_suivis_actuel] : m.statut || "—"}</span>
+                            <p>🕊 Statut : {m.statut_suivis_actuel ? statutLabels[m.statut_suivis_actuel] : m.statut || "—"}</p>
                             <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>
                             <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-6 block mx-auto">✏️ Modifier le contact</button>
                           </div>
@@ -424,7 +429,7 @@ export default function ListMembers() {
                               })()}
                             </p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                            <span>🕊 Statut : {m.statut_suivis_actuel ? statutLabels[m.statut_suivis_actuel] : m.statut || "—"}</span>
+                            <p>🕊 Statut : {m.statut_suivis_actuel ? statutLabels[m.statut_suivis_actuel] : m.statut || "—"}</p>
                             <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>
                             <select
                               value={statusChanges[m.id] ?? m.statut ?? ""}

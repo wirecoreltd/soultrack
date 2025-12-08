@@ -16,8 +16,8 @@ export default function AddEvangelise() {
     ville: "",
     statut: "evangelisé",
     sexe: "",
-    priere_salut: false,       // boolean
-    type_conversion: false,    // boolean
+    priere_salut: "Non",
+    type_conversion: "",
     besoin: [],
     infos_supplementaires: "",
     is_whatsapp: false,
@@ -55,11 +55,8 @@ export default function AddEvangelise() {
 
   const handleBesoinChange = (value) => {
     let updated = [...formData.besoin];
-    if (updated.includes(value)) {
-      updated = updated.filter((b) => b !== value);
-    } else {
-      updated.push(value);
-    }
+    if (updated.includes(value)) updated = updated.filter((b) => b !== value);
+    else updated.push(value);
     setFormData({ ...formData, besoin: updated });
   };
 
@@ -67,20 +64,60 @@ export default function AddEvangelise() {
     e.preventDefault();
 
     const finalBesoins = [...formData.besoin];
-    if (showOtherField && otherBesoin.trim()) {
-      finalBesoins.push(otherBesoin.trim());
-    }
+    if (showOtherField && otherBesoin.trim()) finalBesoins.push(otherBesoin.trim());
 
     try {
-      const { error } = await supabase.from("evangelises").insert([
+      // 1️⃣ Ajouter l'évangélisé
+      const { error: insertError } = await supabase.from("evangelises").insert([
         { ...formData, besoin: finalBesoins }
       ]);
-      if (error) throw error;
+      if (insertError) throw insertError;
 
+      // 2️⃣ Mettre à jour le rapport du jour
+      const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+      const hommes = formData.sexe === "Homme" ? 1 : 0;
+      const femmes = formData.sexe === "Femme" ? 1 : 0;
+      const priere = formData.priere_salut === "Oui" ? 1 : 0;
+      const nouveau_converti = formData.type_conversion === "Nouveau converti" ? 1 : 0;
+      const reconciliation = formData.type_conversion === "Réconciliation" ? 1 : 0;
+
+      const { data: existingReport, error: fetchError } = await supabase
+        .from("rapport_evangelisation")
+        .select("*")
+        .eq("date", today)
+        .single();
+
+      if (fetchError && fetchError.code !== "PGRST116") throw fetchError; // not found
+
+      if (existingReport) {
+        await supabase
+          .from("rapport_evangelisation")
+          .update({
+            hommes: existingReport.hommes + hommes,
+            femmes: existingReport.femmes + femmes,
+            priere: existingReport.priere + priere,
+            nouveau_converti: existingReport.nouveau_converti + nouveau_converti,
+            reconciliation: existingReport.reconciliation + reconciliation,
+          })
+          .eq("date", today);
+      } else {
+        await supabase.from("rapport_evangelisation").insert([
+          {
+            date: today,
+            hommes,
+            femmes,
+            priere,
+            nouveau_converti,
+            reconciliation,
+          }
+        ]);
+      }
+
+      // ✅ Réinitialiser le formulaire
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
-      // Reset du formulaire
       setFormData({
         nom: "",
         prenom: "",
@@ -88,14 +125,15 @@ export default function AddEvangelise() {
         ville: "",
         statut: "evangelisé",
         sexe: "",
-        priere_salut: false,
-        type_conversion: false,
+        priere_salut: "Non",
+        type_conversion: "",
         besoin: [],
         infos_supplementaires: "",
         is_whatsapp: false,
       });
       setShowOtherField(false);
       setOtherBesoin("");
+
     } catch (err) {
       alert(err.message);
     }
@@ -109,8 +147,8 @@ export default function AddEvangelise() {
       ville: "",
       statut: "evangelisé",
       sexe: "",
-      priere_salut: false,
-      type_conversion: false,
+      priere_salut: "Non",
+      type_conversion: "",
       besoin: [],
       infos_supplementaires: "",
       is_whatsapp: false,
@@ -144,71 +182,38 @@ export default function AddEvangelise() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
           
           <input className="input" type="text" placeholder="Prénom"
-            value={formData.prenom}
-            onChange={(e)=>setFormData({ ...formData, prenom:e.target.value })}
-            required
-          />
+            value={formData.prenom} onChange={(e)=>setFormData({...formData, prenom:e.target.value})} required />
           <input className="input" type="text" placeholder="Nom"
-            value={formData.nom}
-            onChange={(e)=>setFormData({ ...formData, nom:e.target.value })}
-            required
-          />
+            value={formData.nom} onChange={(e)=>setFormData({...formData, nom:e.target.value})} required />
           <input className="input" type="text" placeholder="Téléphone"
-            value={formData.telephone}
-            onChange={(e)=>setFormData({ ...formData, telephone:e.target.value })}
-            required
-          />
+            value={formData.telephone} onChange={(e)=>setFormData({...formData, telephone:e.target.value})} required />
+          <input className="input" type="text" placeholder="Ville"
+            value={formData.ville} onChange={(e)=>setFormData({...formData, ville:e.target.value})} />
 
           {/* WhatsApp */}
           <label className="flex items-center gap-2 text-gray-700">
-            <input type="checkbox"
-              checked={formData.is_whatsapp}
-              onChange={(e)=>setFormData({ ...formData, is_whatsapp:e.target.checked })}
-              className="w-5 h-5 accent-indigo-600 cursor-pointer"
-            />
+            <input type="checkbox" checked={formData.is_whatsapp} onChange={(e)=>setFormData({...formData, is_whatsapp:e.target.checked})}
+              className="w-5 h-5 accent-indigo-600 cursor-pointer" />
             WhatsApp
           </label>
 
-          <input className="input" type="text" placeholder="Ville"
-            value={formData.ville}
-            onChange={(e)=>setFormData({ ...formData, ville:e.target.value })}
-          />
-
-          {/* SEXE */}
-          <select
-            className="input"
-            value={formData.sexe}
-            onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}
-            required
-          >
+          {/* Sexe */}
+          <select className="input" value={formData.sexe} onChange={(e)=>setFormData({...formData, sexe:e.target.value})} required>
             <option value="">Sexe</option>
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
-          </select>          
+          </select>
 
-          {/* PRIERE DU SALUT */}
-          <select
-            className="input"
-            value={formData.priere_salut ? "Oui" : "Non"}
-            onChange={(e) =>
-              setFormData({ ...formData, priere_salut: e.target.value === "Oui" })
-            }
-          >
+          {/* Prière du salut */}
+          <select className="input" value={formData.priere_salut} onChange={(e)=>setFormData({...formData, priere_salut:e.target.value})}>
             <option value="Non">Prière du salut ?</option>
             <option value="Oui">Oui</option>
             <option value="Non">Non</option>
           </select>
 
-          {/* TYPE DE CONVERSION (Si oui) */}
-          {formData.priere_salut && (
-            <select
-              className="input"
-              value={formData.type_conversion ? "Nouveau converti" : "Réconciliation"}
-              onChange={(e) =>
-                setFormData({ ...formData, type_conversion: e.target.value === "Nouveau converti" })
-              }
-              required
-            >
+          {/* Type de conversion */}
+          {formData.priere_salut === "Oui" && (
+            <select className="input" value={formData.type_conversion} onChange={(e)=>setFormData({...formData, type_conversion:e.target.value})} required>
               <option value="">Type</option>
               <option value="Nouveau converti">Nouveau converti</option>
               <option value="Réconciliation">Réconciliation</option>
@@ -217,72 +222,38 @@ export default function AddEvangelise() {
 
           {/* Besoins */}
           <div className="mt-4">
-            <p className="font-semibold mb-2">Besoin :</p>
+            <p className="font-semibold mb-2">Besoins :</p>
             {besoinsList.map(b => (
               <label key={b} className="flex items-center gap-3 mb-2">
-                <input
-                  type="checkbox"
-                  value={b}
-                  checked={formData.besoin.includes(b)}
-                  onChange={() => handleBesoinChange(b)}
-                  className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600"
-                />
+                <input type="checkbox" value={b} checked={formData.besoin.includes(b)} onChange={() => handleBesoinChange(b)}
+                  className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600" />
                 <span>{b}</span>
               </label>
             ))}
-
             <label className="flex items-center gap-3 mb-2">
-              <input
-                type="checkbox"
-                checked={showOtherField}
-                onChange={() => setShowOtherField(!showOtherField)}
-                className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600"
-              />
+              <input type="checkbox" checked={showOtherField} onChange={()=>setShowOtherField(!showOtherField)}
+                className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600" />
               Autre
             </label>
-
             {showOtherField && (
-              <input
-                type="text"
-                placeholder="Précisez le besoin..."
-                value={otherBesoin}
-                onChange={(e)=>setOtherBesoin(e.target.value)}
-                className="input mt-1"
-              />
+              <input type="text" placeholder="Précisez le besoin..." value={otherBesoin} onChange={(e)=>setOtherBesoin(e.target.value)} className="input mt-1" />
             )}
           </div>
 
-          <textarea
-            placeholder="Informations supplémentaires..."
-            rows={3}
-            value={formData.infos_supplementaires}
-            onChange={(e)=>setFormData({ ...formData, infos_supplementaires: e.target.value })}
-            className="input"
-          />
+          <textarea placeholder="Informations supplémentaires..." rows={3}
+            value={formData.infos_supplementaires} onChange={(e)=>setFormData({...formData, infos_supplementaires:e.target.value})} className="input" />
 
           <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
-            >
+            <button type="button" onClick={handleCancel} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               Annuler
             </button>
-
-            <button
-              type="submit"
-              className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:scale-105 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
-            >
+            <button type="submit" className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:scale-105 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               Ajouter
             </button>
           </div>
         </form>
 
-        {success && (
-          <p className="text-green-600 font-semibold text-center mt-3 animate-bounce">
-            ✅ Personne évangélisée ajoutée avec succès !
-          </p>
-        )}
+        {success && <p className="text-green-600 font-semibold text-center mt-3 animate-bounce">✅ Personne évangélisée ajoutée avec succès !</p>}
 
         <style jsx>{`
           .input {

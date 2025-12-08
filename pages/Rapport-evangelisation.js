@@ -1,100 +1,135 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function RapportEvangelisation() {
-  const [contacts, setContacts] = useState([]);
-  const [stats, setStats] = useState({
-    hommes: 0,
-    femmes: 0,
-    villes: {},
-  });
-
-  const COLORS = ["#0088FE", "#FF8042", "#00C49F", "#FFBB28", "#AA00FF", "#FF00AA"];
-
-  const fetchContacts = async () => {
-    const { data } = await supabase
-      .from("evangelises")
-      .select("*")
-      .order("created_at", { ascending: false });
-    
-    setContacts(data || []);
-    computeStats(data || []);
-  };
-
-  const computeStats = (data) => {
-    const hommes = data.filter(c => c.sexe === "Homme").length;
-    const femmes = data.filter(c => c.sexe === "Femme").length;
-
-    const villes = {};
-    data.forEach(c => {
-      const ville = c.ville || "Inconnu";
-      villes[ville] = (villes[ville] || 0) + 1;
-    });
-
-    setStats({ hommes, femmes, villes });
-  };
+  const [loading, setLoading] = useState(true);
+  const [rapport, setRapport] = useState([]);
+  const [moissonneur, setMoissonneur] = useState("");
+  const [gagneurAme, setGagneurAme] = useState("");
 
   useEffect(() => {
-    fetchContacts();
-
-    // Mise à jour automatique toutes les 5 secondes
-    const interval = setInterval(fetchContacts, 5000);
-    return () => clearInterval(interval);
+    fetchRapport();
   }, []);
 
-  const sexeData = [
-    { name: "Hommes", value: stats.hommes },
-    { name: "Femmes", value: stats.femmes },
-  ];
+  async function fetchRapport() {
+    setLoading(true);
+
+    const { data, error } = await supabase
+      .from("evangelisation")
+      .select("*");
+
+    if (error) {
+      console.log(error);
+      setLoading(false);
+      return;
+    }
+
+    // Groupement par date
+    const grouped = {};
+
+    data.forEach((item) => {
+      const date = item.created_at.split("T")[0];
+
+      if (!grouped[date]) {
+        grouped[date] = {
+          hommes: 0,
+          femmes: 0,
+          priere_salut: 0,
+          nouveau_converti: 0,
+          reconciliation: 0,
+          gagneur_ame: "",
+          moissonneur: ""
+        };
+      }
+
+      if (item.sexe === "Homme") grouped[date].hommes++;
+      if (item.sexe === "Femme") grouped[date].femmes++;
+
+      if (item.priere_salut === true) grouped[date].priere_salut++;
+
+      if (item.type_conversion === "nouveau_converti")
+        grouped[date].nouveau_converti++;
+
+      if (item.type_conversion === "reconciliation")
+        grouped[date].reconciliation++;
+    });
+
+    // Transforme en tableau exploitable
+    const finalArray = Object.entries(grouped).map(([date, stats]) => ({
+      date,
+      ...stats,
+    }));
+
+    setRapport(finalArray);
+    setLoading(false);
+  }
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100">
-      <h1 className="text-4xl font-bold text-center mb-6">📊 Rapport Évangélisation</h1>
+    <div className="p-6 space-y-6">
+      <h1 className="text-2xl font-bold text-gray-800">📊 Rapport Évangélisation</h1>
 
-      {/* Statistiques Sexe */}
-      <div className="w-full max-w-3xl mb-10 bg-white p-6 rounded-3xl shadow-lg">
-        <h2 className="text-2xl font-semibold mb-4">Répartition Hommes / Femmes</h2>
-        <ResponsiveContainer width="100%" height={250}>
-          <PieChart>
-            <Pie data={sexeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label>
-              {sexeData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
-        <p className="mt-4 text-center">Hommes: {stats.hommes} | Femmes: {stats.femmes}</p>
-      </div>
+      {/* Champs libres gagnueur d'âme / moissonneur */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <div className="p-4 bg-white rounded-xl shadow">
+          <label className="font-semibold">Nombre de gagneurs d'âme</label>
+          <input
+            type="text"
+            className="w-full mt-2 p-2 border rounded-lg"
+            value={gagneurAme}
+            onChange={(e) => setGagneurAme(e.target.value)}
+            placeholder="Exemple : 5"
+          />
+        </div>
 
-      {/* Statistiques Ville */}
-      <div className="w-full max-w-3xl mb-10 bg-white p-6 rounded-3xl shadow-lg">
-        <h2 className="text-2xl font-semibold mb-4">Contacts par Ville</h2>
-        <ul className="list-disc list-inside space-y-1">
-          {Object.entries(stats.villes).map(([ville, count]) => (
-            <li key={ville}><span className="font-semibold">{ville}</span>: {count}</li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Liste complète */}
-      <div className="w-full max-w-5xl bg-white p-6 rounded-3xl shadow-lg">
-        <h2 className="text-2xl font-semibold mb-4">Liste des contacts</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {contacts.map(c => (
-            <div key={c.id} className="bg-gray-50 p-4 rounded-2xl shadow-md border-l-4 border-blue-400">
-              <p className="font-bold">{c.prenom} {c.nom}</p>
-              <p>Sexe: {c.sexe || "—"}</p>
-              <p>Ville: {c.ville || "—"}</p>
-              <p>Téléphone: {c.telephone || "—"}</p>
-              <p>Besoins: {c.besoin ? c.besoin.join(", ") : "—"}</p>
-            </div>
-          ))}
+        <div className="p-4 bg-white rounded-xl shadow">
+          <label className="font-semibold">Nombre de moissonneurs</label>
+          <input
+            type="text"
+            className="w-full mt-2 p-2 border rounded-lg"
+            value={moissonneur}
+            onChange={(e) => setMoissonneur(e.target.value)}
+            placeholder="Exemple : 3"
+          />
         </div>
       </div>
+
+      {/* Tableau */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full border rounded-xl overflow-hidden">
+          <thead className="bg-gray-200 text-gray-700">
+            <tr>
+              <th className="p-3 text-left">Date</th>
+              <th className="p-3">Hommes</th>
+              <th className="p-3">Femmes</th>
+              <th className="p-3">Prière du salut</th>
+              <th className="p-3">Nouveau Converti</th>
+              <th className="p-3">Réconciliation</th>
+              <th className="p-3">Gagneur d’âme</th>
+              <th className="p-3">Moissonneur</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {rapport.map((r) => (
+              <tr key={r.date} className="border-b">
+                <td className="p-3">{r.date}</td>
+                <td className="p-3 text-center">{r.hommes}</td>
+                <td className="p-3 text-center">{r.femmes}</td>
+                <td className="p-3 text-center">{r.priere_salut}</td>
+                <td className="p-3 text-center">{r.nouveau_converti}</td>
+                <td className="p-3 text-center">{r.reconciliation}</td>
+                <td className="p-3 text-center">{gagneurAme || "-"}</td>
+                <td className="p-3 text-center">{moissonneur || "-"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {loading && <p className="text-gray-500">Chargement...</p>}
     </div>
   );
 }

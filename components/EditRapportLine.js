@@ -1,39 +1,110 @@
-// components/EditRapportLine.jsx
-"use client";
-import { useState } from "react";
+function EditRapportPopup({ isOpen, onClose, rapport, onSave }) {
+  const [formData, setFormData] = useState(rapport);
 
-export default function EditRapportLine({ rapport, onSave }) {
-  const [moissonneurs, setMoissonneurs] = useState(rapport.moissonneurs || "");
+  useEffect(() => {
+    setFormData(rapport);
+  }, [rapport]);
+
+  if (!isOpen) return null;
 
   const handleSave = () => {
-    onSave({ ...rapport, moissonneurs });
+    onSave(formData);
+    onClose();
   };
 
   return (
-    <tr className="text-center border-b">
-      <td className="py-2 px-3">{rapport.date}</td>
-      <td className="py-2 px-3">{rapport.hommes}</td>
-      <td className="py-2 px-3">{rapport.femmes}</td>
-      <td className="py-2 px-3">{rapport.priere}</td>
-      <td className="py-2 px-3">{rapport.nouveau_converti}</td>
-      <td className="py-2 px-3">{rapport.reconciliation}</td>
-      <td className="py-2 px-3">
-        <input
-          type="text"
-          value={moissonneurs}
-          onChange={(e) => setMoissonneurs(e.target.value)}
-          className="border px-2 py-1 rounded w-24 text-center"
-          placeholder="Nombre ou noms"
-        />
-      </td>
-      <td className="py-2 px-3">
-        <button
-          onClick={handleSave}
-          className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          Enregistrer
-        </button>
-      </td>
-    </tr>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-6 w-96 shadow-lg">
+        <h2 className="text-xl font-bold mb-4 text-center">Modifier le rapport</h2>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex justify-between items-center">
+            <label>Date :</label>
+            <input
+              type="date"
+              className="input"
+              value={formData.date}
+              onChange={e => setFormData({ ...formData, date: e.target.value })}
+            />
+          </div>
+
+          <div className="flex justify-between items-center">
+            <label>Hommes :</label>
+            <input
+              type="number"
+              className="input"
+              value={formData.hommes || 0}
+              onChange={e => setFormData({ ...formData, hommes: parseInt(e.target.value) || 0 })}
+            />
+          </div>
+
+          <div className="flex justify-between items-center">
+            <label>Femmes :</label>
+            <input
+              type="number"
+              className="input"
+              value={formData.femmes || 0}
+              onChange={e => setFormData({ ...formData, femmes: parseInt(e.target.value) || 0 })}
+            />
+          </div>
+
+          <div className="flex justify-between items-center">
+            <label>Prière du salut :</label>
+            <input
+              type="number"
+              className="input"
+              value={formData.priere || 0}
+              onChange={e => setFormData({ ...formData, priere: parseInt(e.target.value) || 0 })}
+            />
+          </div>
+
+          <div className="flex justify-between items-center">
+            <label>Nouveau converti :</label>
+            <input
+              type="number"
+              className="input"
+              value={formData.nouveau_converti || 0}
+              onChange={e => setFormData({ ...formData, nouveau_converti: parseInt(e.target.value) || 0 })}
+            />
+          </div>
+
+          <div className="flex justify-between items-center">
+            <label>Réconciliation :</label>
+            <input
+              type="number"
+              className="input"
+              value={formData.reconciliation || 0}
+              onChange={e => setFormData({ ...formData, reconciliation: parseInt(e.target.value) || 0 })}
+            />
+          </div>
+
+          <div className="flex justify-between items-center">
+            <label>Moissonneurs :</label>
+            <input
+              type="text"
+              className="input"
+              value={formData.moissonneurs || ""}
+              onChange={e => setFormData({ ...formData, moissonneurs: e.target.value })}
+              placeholder="Nombre ou texte"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 mt-4">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-400 rounded hover:bg-gray-500 text-white"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600 text-white"
+          >
+            Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -212,7 +212,7 @@ export default function ListMembers() {
     : anciens
 );
 
-  const statusOptions = ["actif", "ancien", "visiteur", "veut rejoindre ICC", "refus", "integrer", "a déjà son église"];
+  const statusOptions = ["actif", "ancien", "visiteur", "veut rejoindre ICC", "refus", "integrer", "en cours", "a déjà son église"];
   const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
 
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -329,7 +329,7 @@ export default function ListMembers() {
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>                            
                             <p>❓Besoin : {(!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })())}</p>
                             <p>📝 Infos : {m.infos_supplementaires || ""}</p>
-                            <p>📌 Statut Suivis : {m.suivi_statut_libelle || "—"}</p>
+                            <p>📌 Statut Suivis : {m.statut_suivis_actuel || "—"}</p>
                             <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>
                             <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-6 block mx-auto">✏️ Modifier le contact</button>
                           </div>

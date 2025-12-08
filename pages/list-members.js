@@ -655,11 +655,14 @@ const anciensFiltres = filterBySearch(
       <EditMemberPopup
         member={editMember}
         onClose={() => setEditMember(null)}
-        onUpdated={() => {
-          fetchMembers();
-          setEditMember(null);
-          showToast("✅ Le membre a bien été mis à jour");
-        }}
+       onUpdated={(updatedMember) => {
+            setMembers((prev) =>
+              prev.map((m) => (m.id === updatedMember.id ? updatedMember : m))
+            );
+            setEditMember(null);
+            showToast("✅ Le membre a bien été mis à jour");
+          }}
+
         cellules={cellules}
         conseillers={conseillers}
       />

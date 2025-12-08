@@ -15,9 +15,9 @@ export default function AddEvangelise() {
     telephone: "",
     ville: "",
     statut: "evangelisé",
-    sexe: "",                       // 🔹 AJOUTÉ
-    priere_salut: "Non",            // 🔹 AJOUTÉ
-    type_conversion: "",            // 🔹 AJOUTÉ (nouveau converti ou réconciliation)
+    sexe: "",
+    priere_salut: false,       // boolean
+    type_conversion: false,    // boolean
     besoin: [],
     infos_supplementaires: "",
     is_whatsapp: false,
@@ -31,7 +31,7 @@ export default function AddEvangelise() {
 
   const besoinsList = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille", "Paix"];
 
-  // Vérifier token
+  // Vérification du token
   useEffect(() => {
     if (!token) return;
     const verifyToken = async () => {
@@ -80,6 +80,7 @@ export default function AddEvangelise() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
+      // Reset du formulaire
       setFormData({
         nom: "",
         prenom: "",
@@ -87,8 +88,8 @@ export default function AddEvangelise() {
         ville: "",
         statut: "evangelisé",
         sexe: "",
-        priere_salut: "Non",
-        type_conversion: "",
+        priere_salut: false,
+        type_conversion: false,
         besoin: [],
         infos_supplementaires: "",
         is_whatsapp: false,
@@ -108,8 +109,8 @@ export default function AddEvangelise() {
       ville: "",
       statut: "evangelisé",
       sexe: "",
-      priere_salut: "Non",
-      type_conversion: "",
+      priere_salut: false,
+      type_conversion: false,
       besoin: [],
       infos_supplementaires: "",
       is_whatsapp: false,
@@ -157,7 +158,8 @@ export default function AddEvangelise() {
             onChange={(e)=>setFormData({ ...formData, telephone:e.target.value })}
             required
           />
-              {/* WhatsApp */}
+
+          {/* WhatsApp */}
           <label className="flex items-center gap-2 text-gray-700">
             <input type="checkbox"
               checked={formData.is_whatsapp}
@@ -166,12 +168,13 @@ export default function AddEvangelise() {
             />
             WhatsApp
           </label>
+
           <input className="input" type="text" placeholder="Ville"
             value={formData.ville}
             onChange={(e)=>setFormData({ ...formData, ville:e.target.value })}
           />
 
-          {/* 🔹 SEXE */}
+          {/* SEXE */}
           <select
             className="input"
             value={formData.sexe}
@@ -183,23 +186,27 @@ export default function AddEvangelise() {
             <option value="Femme">Femme</option>
           </select>          
 
-          {/* 🔹 PRIERE DU SALUT */}
+          {/* PRIERE DU SALUT */}
           <select
             className="input"
-            value={formData.priere_salut}
-            onChange={(e) => setFormData({ ...formData, priere_salut: e.target.value })}
+            value={formData.priere_salut ? "Oui" : "Non"}
+            onChange={(e) =>
+              setFormData({ ...formData, priere_salut: e.target.value === "Oui" })
+            }
           >
             <option value="Non">Prière du salut ?</option>
             <option value="Oui">Oui</option>
             <option value="Non">Non</option>
           </select>
 
-          {/* 🔹 TYPE DE CONVERSION (Si oui) */}
-          {formData.priere_salut === "Oui" && (
+          {/* TYPE DE CONVERSION (Si oui) */}
+          {formData.priere_salut && (
             <select
               className="input"
-              value={formData.type_conversion}
-              onChange={(e) => setFormData({ ...formData, type_conversion: e.target.value })}
+              value={formData.type_conversion ? "Nouveau converti" : "Réconciliation"}
+              onChange={(e) =>
+                setFormData({ ...formData, type_conversion: e.target.value === "Nouveau converti" })
+              }
               required
             >
               <option value="">Type</option>

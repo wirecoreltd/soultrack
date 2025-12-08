@@ -48,33 +48,17 @@ export default function MembresCellule() {
           if (error) throw error;
           membresData = data;
         } else if (userRole.includes("ResponsableCellule")) {
-          // Récupérer toutes les cellules dont il est responsable
-          const { data: cellulesData, error: cellulesError } = await supabase
-            .from("cellules")
-            .select("id")
-            .eq("responsable_id", responsableId);
-          if (cellulesError) throw cellulesError;
-
-          if (!cellulesData || cellulesData.length === 0) {
-            setMessage("Vous n’êtes responsable d’aucune cellule pour le moment.");
-            setMembres([]);
-            return;
-          }
-
-          const celluleIds = cellulesData.map(c => c.id);
-
-          // Récupérer les membres associés à ces cellules OU aux suivis dont le responsable est le même
-          const { data, error } = await supabase
+          const { data: allMembres, error } = await supabase
             .from("v_membres_full")
             .select("*")
             .or(
-              `cellule_id.in.(${celluleIds.join(
-                ","
-              )}),suivi_responsable_id.eq.${responsableId}`
+              `responsable_cellule.eq.${profileData.prenom} ${profileData.nom},` +
+              `suivi_responsable.eq.${profileData.prenom} ${profileData.nom}`
             );
 
           if (error) throw error;
-          membresData = data;
+
+          membresData = allMembres;
 
           if (!membresData || membresData.length === 0) {
             setMessage("Aucun membre assigné à vos cellules.");
@@ -143,60 +127,63 @@ export default function MembresCellule() {
 
       {/* Vue Carte */}
       {view === "card" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">        
           {membres.map(m => (
-            <div
-              key={m.id}
-              className="bg-white p-4 rounded-xl shadow-md border-l-4 w-full transition hover:shadow-lg"
-              style={{ borderLeftColor: getBorderColor(m) }}
-            >
-              <div className="flex flex-col items-center">
-                <h2 className="font-bold text-black text-base text-center mb-1">
-                  {m.prenom} {m.nom}
-                </h2>
-
-                <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">📌 Cellule : {getCellule(m)}</p>
-
-                <button
-                  onClick={() => setSelectedMembre(selectedMembre === m.id ? null : m.id)}
-                  className="text-orange-500 text-sm mt-1"
-                >
-                  {selectedMembre === m.id ? "Fermer détails" : "Détails"}
-                </button>
-
-                {selectedMembre === m.id && (
-                  <div className="mt-3 w-full bg-gray-50 p-4 rounded-lg text-left space-y-2">
-                    <p><strong>Ville :</strong> {m.ville || "—"}</p>
-                    <p><strong>WhatsApp :</strong> {m.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p>
-                      <strong>Besoin :</strong>{" "}
-                      {(() => {
-                        if (!m.besoin) return "—";
-                        if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                        try {
-                          const arr = JSON.parse(m.besoin);
-                          return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                        } catch {
-                          return m.besoin;
-                        }
-                      })()}
-                    </p>
-                    <p><strong>Infos :</strong> {m.infos_supplementaires || "—"}</p>
-
-                    <div className="flex justify-center pt-2">
-                      <button
-                        onClick={() => setEditingMember(m)}
-                        className="text-orange-500 text-sm mt-1"
-                      >
-                        ✏️ Modifier le contact
-                      </button>
+              <div
+                key={m.id}
+                className="bg-white p-4 rounded-xl shadow-md border-l-4 w-full transition hover:shadow-lg"
+                style={{ borderLeftColor: getBorderColor(m) }}
+              >
+                <div className="flex flex-col items-center">
+                  <h2 className="font-bold text-black text-base text-center mb-1">
+                    {m.prenom} {m.nom}
+                  </h2>
+            
+                  <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
+                  <p className="text-sm text-gray-700 mb-1">📌 Cellule : {getCellule(m)}</p>
+            
+                  {/* Bouton détails */}
+                  <button
+                    onClick={() => setSelectedMembre(selectedMembre === m.id ? null : m.id)}
+                    className="text-orange-500 text-sm mt-1"
+                  >
+                    {selectedMembre === m.id ? "Fermer détails" : "Détails"}
+                  </button>
+            
+                  {/* Détails */}
+                  {selectedMembre === m.id && (
+                    <div className="mt-3 w-full bg-gray-50 p-4 rounded-lg text-left space-y-2">
+                      <p><strong>Ville :</strong> {m.ville || "—"}</p>
+                      <p><strong>WhatsApp :</strong> {m.is_whatsapp ? "Oui" : "Non"}</p>
+                      <p>
+                        <strong>Besoin :</strong>{" "}
+                        {(() => {
+                          if (!m.besoin) return "—";
+                          if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                          try {
+                            const arr = JSON.parse(m.besoin);
+                            return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                          } catch {
+                            return m.besoin;
+                          }
+                        })()}
+                      </p>
+                      <p><strong>Infos :</strong> {m.infos_supplementaires || "—"}</p>
+            
+                      {/* Bouton modifier centré */}
+                      <div className="flex justify-center pt-2">
+                        <button
+                          onClick={() => setEditingMember(m)}
+                          className="text-orange-500 text-sm mt-1"
+                        >
+                          ✏️ Modifier le contact
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       ) : (
         // Vue Table
@@ -244,6 +231,7 @@ export default function MembresCellule() {
         </div>
       )}
 
+      {/* POPUP MODIFIER */}
       {editingMember && (
         <EditMemberCellulePopup
           member={editingMember}
@@ -252,6 +240,7 @@ export default function MembresCellule() {
         />
       )}
 
+      {/* POPUP DETAILS */}
       {detailsMember && (
         <MemberDetailsPopup
           member={detailsMember}

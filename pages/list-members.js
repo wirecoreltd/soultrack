@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Page: Liste des Membres
+ * Description: Affiche les membres sous forme de carte ou tableau avec filtres et envoi WhatsApp.
+ */
+
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -19,11 +24,11 @@ export default function ListMembers() {
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [view, setView] = useState("card");
+  const [popupMember, setPopupMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
   const [session, setSession] = useState(null);
   const [prenom, setPrenom] = useState("");
   const [loading, setLoading] = useState(true);
-
   const searchParams = useSearchParams();
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
 
@@ -68,12 +73,12 @@ export default function ListMembers() {
   };
 
   const fetchCellules = async () => {
-    const { data } = await supabase.from("cellules").select("id, cellule, responsable");
+    const { data } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
     if (data) setCellules(data);
   };
 
   const fetchConseillers = async () => {
-    const { data } = await supabase.from("profiles").select("id, prenom, nom").eq("role", "Conseiller");
+    const { data } = await supabase.from("profiles").select("id, prenom, nom, telephone").eq("role", "Conseiller");
     if (data) setConseillers(data);
   };
 
@@ -105,43 +110,30 @@ export default function ListMembers() {
   }, []);
 
   // -------------------- UTILS --------------------
-  const updateMemberLocally = (id, updates) => {
-    setMembers(prev => prev.map(m => (m.id === id ? { ...m, ...updates } : m)));
+  const updateMemberLocally = (id, extra = {}) => {
+    setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, ...extra } : m)));
   };
 
-  const formatDate = (dateStr) => {
-    try {
-      return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr });
-    } catch {
-      return "";
-    }
-  };
-
-  const filterBySearch = (list) =>
-    list.filter((m) => `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase()));
-
-  // -------------------- HANDLE --------------------
+  // -------------------- HANDLE AFTER SEND --------------------
   const handleAfterSend = async (memberId, type, cible, newStatut = "ancien") => {
-    const membre = members.find((m) => m.id === memberId);
-    if (!membre) return;
-
-    const update = { statut: newStatut };
-    if (type === "cellule") {
-      update.cellule_id = cible.id;
-      update.cellule_nom = cible.cellule;
-    } else if (type === "conseiller") {
-      update.conseiller_id = cible.id;
-      update.conseiller_prenom = cible.prenom;
-      update.conseiller_nom = cible.nom;
-    }
-
-    updateMemberLocally(memberId, update); // mise à jour instantanée
-
     try {
-      const { error } = await supabase.from("membres").update(update).eq("id", memberId);
-      if (error) throw error;
+      const membre = members.find((m) => m.id === memberId);
+      if (!membre) return;
 
-      // ajout suivi
+      const update = { statut: newStatut };
+      if (type === "cellule") {
+        update.cellule_id = cible.id;
+        update.cellule_nom = cible.cellule;
+      } else if (type === "conseiller") {
+        update.conseiller_id = cible.id;
+      }
+
+      const { error: updateError } = await supabase
+        .from("membres")
+        .update(update)
+        .eq("id", memberId);
+      if (updateError) throw updateError;
+
       const suiviData = {
         membre_id: memberId,
         cellule_id: type === "cellule" ? cible.id : null,
@@ -163,52 +155,142 @@ export default function ListMembers() {
       const { error: suiviError } = await supabase.from("suivis_membres").insert([suiviData]);
       if (suiviError) throw suiviError;
 
+      setMembers((prev) =>
+        prev.map((m) => (m.id === memberId ? { ...m, ...update } : m))
+      );
+
       showToast("✅ Contact envoyé et suivi enregistré");
     } catch (err) {
-      console.error(err);
+      console.error("Erreur handleAfterSend:", err);
       showToast("❌ Une erreur est survenue lors de l'envoi");
     }
   };
 
-  // -------------------- DISPLAY --------------------
-  const statusOptions = ["actif", "ancien", "visiteur", "veut rejoindre ICC", "a déjà son église", "refus", "Integrer", "En cours"];
-  const displayedMembers = filterBySearch(
-    filter ? members.filter((m) => m.statut === filter || m.suivi_statut_libelle === filter) : members
+  // -------------------- HANDLE STATUS / CELLULE / CONSEILLER CHANGE --------------------
+  const handleStatusChange = async (memberId, newValue, type = "statut") => {
+    const update = {};
+    if (type === "statut") update.statut = newValue;
+    else if (type === "cellule") {
+      const cellule = cellules.find((c) => c.id === newValue);
+      if (!cellule) return;
+      update.cellule_id = cellule.id;
+      update.cellule_nom = cellule.cellule;
+    } else if (type === "conseiller") {
+      const conseiller = conseillers.find((c) => c.id === newValue);
+      if (!conseiller) return;
+      update.conseiller_id = conseiller.id;
+    }
+
+    // 1️⃣ Mise à jour locale instantanée
+    setMembers((prev) =>
+      prev.map((m) => (m.id === memberId ? { ...m, ...update } : m))
+    );
+
+    // 2️⃣ Sauvegarde dans Supabase
+    try {
+      const { error } = await supabase
+        .from("membres")
+        .update(update)
+        .eq("id", memberId);
+      if (error) throw error;
+      showToast("✅ Membre mis à jour avec succès");
+    } catch (err) {
+      console.error("Erreur mise à jour membre:", err);
+      showToast("⚠️ Erreur lors de la mise à jour du membre");
+    }
+  };
+
+  const getBorderColor = (m) => {
+    const status = m.statut || "";
+    const suiviStatus = m.suivi_statut_libelle || "";
+
+    if (status === "refus" || suiviStatus === "refus") return "#f56f22";
+    if (status === "actif" || suiviStatus === "actif") return "#4285F4";
+    if (status === "a déjà son église" || suiviStatus === "a déjà son église") return "#f21705";        
+    if (status === "ancien" || suiviStatus === "ancien") return "#999999";
+    if (status === "visiteur" || suiviStatus === "visiteur") return "#34A853";
+    if (status === "veut rejoindre ICC" || suiviStatus === "veut rejoindre ICC") return "#34A853";
+    if (status === "refus" || suiviStatus === "refus") return "#f56f22";
+  
+    return "#ccc";
+  };
+
+  const formatDate = (dateStr) => {
+    try {
+      return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr });
+    } catch {
+      return "";
+    }
+  };
+
+  const filterBySearch = (list) =>
+    list.filter((m) => `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase()));
+
+  const nouveaux = members.filter((m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");
+  const anciens = members.filter((m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC");
+
+  const nouveauxFiltres = filterBySearch(
+    filter
+      ? nouveaux.filter((m) =>
+          m.statut === filter || 
+          m.suivi_statut_libelle === filter || 
+          (m.statut_suivis_actuel && statutLabels[m.statut_suivis_actuel] === filter)
+        )
+      : nouveaux
   );
 
-  const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
+  const anciensFiltres = filterBySearch(
+    filter
+      ? anciens.filter((m) =>
+          m.statut === filter || 
+          m.suivi_statut_libelle === filter || 
+          (m.statut_suivis_actuel && statutLabels[m.statut_suivis_actuel] === filter)
+        )
+      : anciens
+  );
 
-  // -------------------- RENDER --------------------
+  const statusOptions = ["actif", "ancien", "visiteur", "veut rejoindre ICC", "refus", "integrer", "En cours", "a déjà son église"];
+  const totalCount = [...nouveauxFiltres, ...anciensFiltres].length;
+
+  const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  // -------------------- RETURN --------------------
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-blue-900 to-cyan-400">
+    <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
       {/* Top bar */}
-      <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
-        <button onClick={() => window.history.back()} className="text-white">← Retour</button>
-        <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg" />
-      </div>
-      <div className="flex justify-end w-full max-w-5xl mb-4">
-        <p className="text-orange-200 text-sm">👋 Bienvenue {prenom || "cher membre"}</p>
+      <div className="w-full max-w-5xl mb-6">
+        <div className="flex justify-between items-center">
+          <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black-200">← Retour</button>
+          <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20" />
+        </div>
+        <div className="flex justify-end mt-2">
+          <p className="text-orange-200 text-sm">👋 Bienvenue {prenom || "cher membre"}</p>
+        </div>
       </div>
 
-      <Image src="/logo.png" alt="Logo" className="w-20 h-18 mb-4" />
+      <div className="mb-4">
+        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
+      </div>
 
-      <h1 className="text-3xl font-bold text-white mb-2">Liste des Membres</h1>
+      <div className="text-center mb-4">
+        <h1 className="text-3xl font-bold text-white mb-2">Liste des Membres</h1>
+        <p className="text-white text-lg font-light italic max-w-xl mx-auto">Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️</p>
+      </div>
 
       {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">
         <div className="flex items-center space-x-2">
           <select value={filter} onChange={(e) => setFilter(e.target.value)} className="px-3 py-2 rounded-lg border text-sm">
             <option value="">Tous les statuts</option>
-            {statusOptions.map(s => <option key={s}>{s}</option>)}
+            {statusOptions.map((s) => <option key={s}>{s}</option>)}
           </select>
-          <input type="text" placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} className="px-3 py-2 rounded-lg border text-sm w-48" />
-          <span className="text-white text-sm">({displayedMembers.length})</span>
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." className="px-3 py-2 rounded-lg border text-sm w-48"/>
+          <span className="text-white text-sm">({totalCount})</span>
         </div>
         <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline">
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
       </div>
-
       {/* ==================== CARDS ==================== */}
       {view === "card" && (
         <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -4,86 +4,37 @@ import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 
-// 🔹 Popup pour modifier un rapport
-function EditRapportPopup({ isOpen, onClose, rapport, onSave }) {
-  const [formData, setFormData] = useState(rapport);
+// 🔹 Popup pour modifier le champ libre "Moissonneurs"
+function EditMoissonneursPopup({ isOpen, onClose, rapport, onSave }) {
+  const [moissonneurs, setMoissonneurs] = useState(rapport.moissonneurs || "");
 
   useEffect(() => {
-    setFormData(rapport);
+    setMoissonneurs(rapport.moissonneurs || "");
   }, [rapport]);
 
   if (!isOpen) return null;
 
   const handleSave = () => {
-    onSave(formData);
+    onSave({ ...rapport, moissonneurs });
     onClose();
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl p-6 w-96 shadow-lg">
-        <h2 className="text-xl font-bold mb-4 text-center">Modifier le rapport</h2>
-
-        <input
-          type="date"
-          className="input mb-2"
-          value={formData.date}
-          onChange={e => setFormData({ ...formData, date: e.target.value })}
+        <h2 className="text-xl font-bold mb-4 text-center">Modifier Moissonneurs</h2>
+        <textarea
+          rows={4}
+          className="input w-full mb-4"
+          value={moissonneurs}
+          onChange={(e) => setMoissonneurs(e.target.value)}
+          placeholder="Liste des moissonneurs..."
         />
-        <input
-          type="number"
-          className="input mb-2"
-          value={formData.hommes || 0}
-          onChange={e => setFormData({ ...formData, hommes: parseInt(e.target.value) || 0 })}
-          placeholder="Hommes"
-        />
-        <input
-          type="number"
-          className="input mb-2"
-          value={formData.femmes || 0}
-          onChange={e => setFormData({ ...formData, femmes: parseInt(e.target.value) || 0 })}
-          placeholder="Femmes"
-        />
-        <input
-          type="number"
-          className="input mb-2"
-          value={formData.priere || 0}
-          onChange={e => setFormData({ ...formData, priere: parseInt(e.target.value) || 0 })}
-          placeholder="Prière du salut"
-        />
-        <input
-          type="number"
-          className="input mb-2"
-          value={formData.nouveau_converti || 0}
-          onChange={e => setFormData({ ...formData, nouveau_converti: parseInt(e.target.value) || 0 })}
-          placeholder="Nouveau converti"
-        />
-        <input
-          type="number"
-          className="input mb-2"
-          value={formData.reconciliation || 0}
-          onChange={e => setFormData({ ...formData, reconciliation: parseInt(e.target.value) || 0 })}
-          placeholder="Réconciliation"
-        />
-        <input
-          type="text"
-          className="input mb-2"
-          value={formData.moissonneurs || ""}
-          onChange={e => setFormData({ ...formData, moissonneurs: e.target.value })}
-          placeholder="Moissonneurs"
-        />
-
-        <div className="flex justify-end gap-3 mt-4">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-400 rounded hover:bg-gray-500 text-white"
-          >
+        <div className="flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 bg-gray-400 rounded hover:bg-gray-500 text-white">
             Annuler
           </button>
-          <button
-            onClick={handleSave}
-            className="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600 text-white"
-          >
+          <button onClick={handleSave} className="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600 text-white">
             Enregistrer
           </button>
         </div>
@@ -98,22 +49,27 @@ export default function RapportEvangelisation() {
   const [editOpen, setEditOpen] = useState(false);
   const [selectedRapport, setSelectedRapport] = useState(null);
 
+  // 🔹 Récupérer tous les rapports
   const fetchRapports = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("rapport_evangelisation")
       .select("*")
       .order("date", { ascending: true });
-    if (error) console.error(error);
-    else setRapports(data);
+
+    if (error) console.error("Erreur fetch rapports :", error);
+    else setRapports(data || []);
     setLoading(false);
   };
 
+  // 🔹 Sauvegarder les modifications sur le champ libre "Moissonneurs"
   const handleSaveRapport = async (updated) => {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("rapport_evangelisation")
-      .upsert(updated, { onConflict: ["date"] });
-    if (error) console.error("Erreur mise à jour rapport :", error);
+      .update({ moissonneurs: updated.moissonneurs })
+      .eq("date", updated.date);
+
+    if (error) console.error("Erreur mise à jour moissonneurs :", error);
     else fetchRapports();
   };
 
@@ -148,32 +104,40 @@ export default function RapportEvangelisation() {
             </tr>
           </thead>
           <tbody>
-            {rapports.map(r => (
-              <tr key={r.date} className="text-center border-b">
-                <td className="py-2 px-3">{r.date}</td>
-                <td className="py-2 px-3">{r.hommes}</td>
-                <td className="py-2 px-3">{r.femmes}</td>
-                <td className="py-2 px-3">{r.priere}</td>
-                <td className="py-2 px-3">{r.nouveau_converti}</td>
-                <td className="py-2 px-3">{r.reconciliation}</td>
-                <td className="py-2 px-3">{r.moissonneurs}</td>
-                <td className="py-2 px-3">
-                  <button
-                    onClick={() => { setSelectedRapport(r); setEditOpen(true); }}
-                    className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-                  >
-                    Modifier
-                  </button>
+            {rapports.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="text-center py-4 text-gray-500">
+                  Aucun rapport disponible
                 </td>
               </tr>
-            ))}
+            ) : (
+              rapports.map((r) => (
+                <tr key={r.date} className="text-center border-b">
+                  <td className="py-2 px-3">{r.date}</td>
+                  <td className="py-2 px-3">{r.hommes}</td>
+                  <td className="py-2 px-3">{r.femmes}</td>
+                  <td className="py-2 px-3">{r.priere}</td>
+                  <td className="py-2 px-3">{r.nouveau_converti}</td>
+                  <td className="py-2 px-3">{r.reconciliation}</td>
+                  <td className="py-2 px-3">{r.moissonneurs || "-"}</td>
+                  <td className="py-2 px-3">
+                    <button
+                      onClick={() => { setSelectedRapport(r); setEditOpen(true); }}
+                      className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                    >
+                      Modifier
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
       {/* 🔹 Popup */}
       {selectedRapport && (
-        <EditRapportPopup
+        <EditMoissonneursPopup
           isOpen={editOpen}
           onClose={() => setEditOpen(false)}
           rapport={selectedRapport}

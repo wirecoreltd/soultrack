@@ -49,28 +49,57 @@ export default function RapportEvangelisation() {
   const [editOpen, setEditOpen] = useState(false);
   const [selectedRapport, setSelectedRapport] = useState(null);
 
-  // 🔹 Récupérer tous les rapports
+  // 🔹 Générer les rapports automatiquement à partir de la table "evangelises"
   const fetchRapports = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("rapport_evangelisation")
-      .select("*")
-      .order("date", { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from("evangelises")
+        .select("*")
+        .order("created_at", { ascending: true });
 
-    if (error) console.error("Erreur fetch rapports :", error);
-    else setRapports(data || []);
+      if (error) throw error;
+
+      // Grouper par date
+      const rapportsMap = {};
+      data.forEach(item => {
+        const date = item.created_at.split("T")[0]; // YYYY-MM-DD
+        if (!rapportsMap[date]) {
+          rapportsMap[date] = {
+            date,
+            hommes: 0,
+            femmes: 0,
+            priere: 0,
+            nouveau_converti: 0,
+            reconciliation: 0,
+            moissonneurs: ""
+          };
+        }
+
+        if (item.sexe === "Homme") rapportsMap[date].hommes += 1;
+        if (item.sexe === "Femme") rapportsMap[date].femmes += 1;
+        if (item.priere_salut) rapportsMap[date].priere += 1;
+        if (item.type_conversion === "Nouveau converti") rapportsMap[date].nouveau_converti += 1;
+        if (item.type_conversion === "Réconciliation") rapportsMap[date].reconciliation += 1;
+      });
+
+      // Transformer en tableau
+      const rapportsArray = Object.values(rapportsMap).sort((a,b)=> a.date.localeCompare(b.date));
+      setRapports(rapportsArray);
+
+    } catch(err) {
+      console.error("Erreur fetch rapports :", err);
+    }
     setLoading(false);
   };
 
-  // 🔹 Sauvegarder les modifications sur le champ libre "Moissonneurs"
   const handleSaveRapport = async (updated) => {
+    // 🔹 Mettre à jour le champ libre moissonneurs dans la table "rapport_evangelisation"
     const { error } = await supabase
       .from("rapport_evangelisation")
-      .update({ moissonneurs: updated.moissonneurs })
-      .eq("date", updated.date);
-
+      .upsert(updated, { onConflict: ["date"] });
     if (error) console.error("Erreur mise à jour moissonneurs :", error);
-    else fetchRapports();
+    fetchRapports();
   };
 
   useEffect(() => {
@@ -106,12 +135,10 @@ export default function RapportEvangelisation() {
           <tbody>
             {rapports.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-4 text-gray-500">
-                  Aucun rapport disponible
-                </td>
+                <td colSpan={8} className="text-center py-4 text-gray-500">Aucun rapport disponible</td>
               </tr>
             ) : (
-              rapports.map((r) => (
+              rapports.map(r => (
                 <tr key={r.date} className="text-center border-b">
                   <td className="py-2 px-3">{r.date}</td>
                   <td className="py-2 px-3">{r.hommes}</td>

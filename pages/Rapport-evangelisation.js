@@ -6,8 +6,9 @@ import supabase from "../lib/supabaseClient";
 export default function RapportEvangelisation() {
   const [loading, setLoading] = useState(true);
   const [rapport, setRapport] = useState([]);
-  const [moissonneur, setMoissonneur] = useState("");
   const [gagneurAme, setGagneurAme] = useState("");
+  const [nombreGagneurs, setNombreGagneurs] = useState("");
+  const [nombreMoissonneurs, setNombreMoissonneurs] = useState("");
 
   useEffect(() => {
     fetchRapport();
@@ -39,8 +40,6 @@ export default function RapportEvangelisation() {
           priere_salut: 0,
           nouveau_converti: 0,
           reconciliation: 0,
-          gagneur_ame: "",
-          moissonneur: ""
         };
       }
 
@@ -56,7 +55,6 @@ export default function RapportEvangelisation() {
         grouped[date].reconciliation++;
     });
 
-    // Transforme en tableau exploitable
     const finalArray = Object.entries(grouped).map(([date, stats]) => ({
       date,
       ...stats,
@@ -70,17 +68,28 @@ export default function RapportEvangelisation() {
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold text-gray-800">📊 Rapport Évangélisation</h1>
 
-      {/* Champs libres gagnueur d'âme / moissonneur */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Champs libres */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         
         <div className="p-4 bg-white rounded-xl shadow">
-          <label className="font-semibold">Nombre de gagneurs d'âme</label>
+          <label className="font-semibold">Gagneur d’âme (nom)</label>
           <input
             type="text"
             className="w-full mt-2 p-2 border rounded-lg"
             value={gagneurAme}
             onChange={(e) => setGagneurAme(e.target.value)}
-            placeholder="Exemple : 5"
+            placeholder="Nom du gagneur d’âme"
+          />
+        </div>
+
+        <div className="p-4 bg-white rounded-xl shadow">
+          <label className="font-semibold">Nombre de gagneurs d’âme</label>
+          <input
+            type="text"
+            className="w-full mt-2 p-2 border rounded-lg"
+            value={nombreGagneurs}
+            onChange={(e) => setNombreGagneurs(e.target.value)}
+            placeholder="Exemple : 4"
           />
         </div>
 
@@ -89,8 +98,8 @@ export default function RapportEvangelisation() {
           <input
             type="text"
             className="w-full mt-2 p-2 border rounded-lg"
-            value={moissonneur}
-            onChange={(e) => setMoissonneur(e.target.value)}
+            value={nombreMoissonneurs}
+            onChange={(e) => setNombreMoissonneurs(e.target.value)}
             placeholder="Exemple : 3"
           />
         </div>
@@ -108,7 +117,8 @@ export default function RapportEvangelisation() {
               <th className="p-3">Nouveau Converti</th>
               <th className="p-3">Réconciliation</th>
               <th className="p-3">Gagneur d’âme</th>
-              <th className="p-3">Moissonneur</th>
+              <th className="p-3">Nb. Gagneurs d’âme</th>
+              <th className="p-3">Nb. Moissonneurs</th>
             </tr>
           </thead>
 
@@ -122,7 +132,8 @@ export default function RapportEvangelisation() {
                 <td className="p-3 text-center">{r.nouveau_converti}</td>
                 <td className="p-3 text-center">{r.reconciliation}</td>
                 <td className="p-3 text-center">{gagneurAme || "-"}</td>
-                <td className="p-3 text-center">{moissonneur || "-"}</td>
+                <td className="p-3 text-center">{nombreGagneurs || "-"}</td>
+                <td className="p-3 text-center">{nombreMoissonneurs || "-"}</td>
               </tr>
             ))}
           </tbody>

@@ -12,64 +12,74 @@ export default function RapportEvangelisation() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // 🔹 Nom utilisateur
   useEffect(() => {
     const name = localStorage.getItem("userName") || "Utilisateur";
     const prenom = name.split(" ")[0];
     setUserName(prenom);
   }, []);
 
-  // 🔹 Fetch et calcul du rapport par date
-  useEffect(() => {
-    const fetchRapport = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("evangelises")
-        .select("*")
-        .order("created_at", { ascending: true });
+  // 🔹 Fetch et total par date
+  const fetchRapport = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("evangelises")
+      .select("*")
+      .order("created_at", { ascending: true });
 
-      if (error) {
-        setError("Impossible de récupérer les données.");
-        setLoading(false);
-        return;
-      }
-
-      // Grouper par date
-      const grouped = {};
-      (data || []).forEach(ev => {
-        const date = new Date(ev.created_at).toLocaleDateString();
-        if (!grouped[date]) {
-          grouped[date] = {
-            hommes: 0,
-            femmes: 0,
-            priere: 0,
-            nouveauConverti: 0,
-            reconciliation: 0,
-            moissonneurs: ""
-          };
-        }
-        if (ev.sexe === "Homme") grouped[date].hommes += 1;
-        if (ev.sexe === "Femme") grouped[date].femmes += 1;
-        if (ev.priere_salut) {
-          grouped[date].priere += 1;
-          if (ev.type_conversion) grouped[date].nouveauConverti += 1;
-          else grouped[date].reconciliation += 1;
-        }
-        if (ev.moissonneur) grouped[date].moissonneurs = ev.moissonneur; // champ libre
-      });
-
-      // Transformer en tableau
-      const rapportArray = Object.keys(grouped).map(date => ({
-        date,
-        ...grouped[date]
-      }));
-
-      setRapport(rapportArray);
+    if (error) {
+      setError("Impossible de récupérer les données.");
       setLoading(false);
-    };
+      return;
+    }
 
+    const grouped = {};
+    (data || []).forEach(ev => {
+      const date = new Date(ev.created_at).toLocaleDateString();
+      if (!grouped[date]) {
+        grouped[date] = {
+          hommes: 0,
+          femmes: 0,
+          priere: 0,
+          nouveauConverti: 0,
+          reconciliation: 0,
+          moissonneurs: "",  // champ libre
+        };
+      }
+      if (ev.sexe === "Homme") grouped[date].hommes += 1;
+      if (ev.sexe === "Femme") grouped[date].femmes += 1;
+      if (ev.priere_salut) {
+        grouped[date].priere += 1;
+        if (ev.type_conversion === "Nouveau converti") grouped[date].nouveauConverti += 1;
+        if (ev.type_conversion === "Réconciliation") grouped[date].reconciliation += 1;
+      }
+    });
+
+    const rapportArray = Object.keys(grouped).map(date => ({
+      date,
+      ...grouped[date]
+    }));
+
+    setRapport(rapportArray);
+    setLoading(false);
+  };
+
+  useEffect(() => {
     fetchRapport();
   }, []);
+
+  // 🔹 Mise à jour moissonneur pour une date
+  const updateMoissonneur = async (date, value) => {
+    try {
+      // ici on peut créer ou mettre à jour une table de rapport par date
+      const { error } = await supabase
+        .from("rapport_evangelisation")
+        .upsert([{ date, moissonneurs: value }], { onConflict: ["date"] });
+      if (error) throw error;
+      fetchRapport();
+    } catch (err) {
+      alert("Erreur mise à jour Moissonneur : " + err.message);
+    }
+  };
 
   if (loading) return <p className="text-center mt-10 text-white">Chargement du rapport...</p>;
   if (error) return <p className="text-center mt-10 text-red-600">{error}</p>;
@@ -90,7 +100,7 @@ export default function RapportEvangelisation() {
         <p className="text-white text-lg italic max-w-xl mx-auto">Total par date des évangélisés et conversions.</p>
       </div>
 
-      {/* 🔹 Tableau du rapport */}
+      {/* 🔹 Tableau rapport */}
       <div className="w-full max-w-5xl overflow-x-auto">
         <table className="min-w-full bg-white rounded-xl shadow-md overflow-hidden">
           <thead className="bg-gray-100">
@@ -102,23 +112,43 @@ export default function RapportEvangelisation() {
               <th className="p-2 border">Nouveau converti</th>
               <th className="p-2 border">Réconciliation</th>
               <th className="p-2 border">Moissonneur</th>
+              <th className="p-2 border">Actions</th>
             </tr>
           </thead>
           <tbody>
             {rapport.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-center p-4">Aucune donnée disponible</td>
+                <td colSpan={8} className="text-center p-4">Aucune donnée disponible</td>
               </tr>
             )}
-            {rapport.map(r => (
-              <tr key={r.date} className="hover:bg-gray-50">
+            {rapport.map((r, idx) => (
+              <tr key={idx} className="hover:bg-gray-50">
                 <td className="p-2 border">{r.date}</td>
                 <td className="p-2 border">{r.hommes}</td>
                 <td className="p-2 border">{r.femmes}</td>
                 <td className="p-2 border">{r.priere}</td>
                 <td className="p-2 border">{r.nouveauConverti}</td>
                 <td className="p-2 border">{r.reconciliation}</td>
-                <td className="p-2 border">{r.moissonneurs || "-"}</td>
+                <td className="p-2 border">
+                  <input
+                    type="text"
+                    value={r.moissonneurs || ""}
+                    onChange={(e) => {
+                      const temp = [...rapport];
+                      temp[idx].moissonneurs = e.target.value;
+                      setRapport(temp);
+                    }}
+                    className="w-full border rounded px-2 py-1"
+                  />
+                </td>
+                <td className="p-2 border">
+                  <button
+                    onClick={() => updateMoissonneur(r.date, r.moissonneurs)}
+                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+                  >
+                    Mise à jour
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

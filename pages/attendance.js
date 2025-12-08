@@ -15,8 +15,9 @@ export default function Attendance() {
     femmes: 0,
     jeunes: 0,
     enfants: 0,
-    evangelises: 0,
-    baptises: 0,
+    connectes: 0,
+    nouveauxVenus: 0,
+    nouveauxConvertis: 0,
   });
   const [editId, setEditId] = useState(null);
   const [message, setMessage] = useState("");
@@ -72,8 +73,9 @@ export default function Attendance() {
         femmes: 0,
         jeunes: 0,
         enfants: 0,
-        evangelises: 0,
-        baptises: 0,
+        connectes: 0,
+        nouveauxVenus: 0,
+        nouveauxConvertis: 0,
       });
       setEditId(null);
       fetchReports();
@@ -92,8 +94,9 @@ export default function Attendance() {
       femmes: report.femmes,
       jeunes: report.jeunes,
       enfants: report.enfants,
-      evangelises: report.evangelises,
-      baptises: report.baptises,
+      connectes: report.connectes,
+      nouveauxVenus: report.nouveauxVenus,
+      nouveauxConvertis: report.nouveauxConvertis,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -129,62 +132,29 @@ export default function Attendance() {
       {/* 🔹 Formulaire */}
       <div className="max-w-3xl mx-auto bg-white rounded-3xl p-6 shadow-lg mb-6">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input
-            type="date"
-            name="date"
-            value={formData.date}
-            onChange={handleChange}
-            className="input"
-            required
-          />
-          <input
-            type="number"
-            name="hommes"
-            value={formData.hommes}
-            onChange={handleChange}
-            placeholder="Hommes"
-            className="input"
-          />
-          <input
-            type="number"
-            name="femmes"
-            value={formData.femmes}
-            onChange={handleChange}
-            placeholder="Femmes"
-            className="input"
-          />
-          <input
-            type="number"
-            name="jeunes"
-            value={formData.jeunes}
-            onChange={handleChange}
-            placeholder="Jeunes"
-            className="input"
-          />
-          <input
-            type="number"
-            name="enfants"
-            value={formData.enfants}
-            onChange={handleChange}
-            placeholder="Enfants"
-            className="input"
-          />
-          <input
-            type="number"
-            name="evangelises"
-            value={formData.evangelises}
-            onChange={handleChange}
-            placeholder="Évangélisés"
-            className="input"
-          />
-          <input
-            type="number"
-            name="baptises"
-            value={formData.baptises}
-            onChange={handleChange}
-            placeholder="Baptisés"
-            className="input"
-          />
+          {[
+            { label: "Date", name: "date", type: "date" },
+            { label: "Hommes", name: "hommes", type: "number" },
+            { label: "Femmes", name: "femmes", type: "number" },
+            { label: "Jeunes", name: "jeunes", type: "number" },
+            { label: "Enfants", name: "enfants", type: "number" },
+            { label: "Connectés", name: "connectes", type: "number" },
+            { label: "Nouveaux venus", name: "nouveauxVenus", type: "number" },
+            { label: "Nouveaux convertis", name: "nouveauxConvertis", type: "number" },
+          ].map((field) => (
+            <div key={field.name} className="flex flex-col">
+              <label htmlFor={field.name} className="font-medium mb-1">{field.label}</label>
+              <input
+                type={field.type}
+                name={field.name}
+                id={field.name}
+                value={formData[field.name]}
+                onChange={handleChange}
+                className="input"
+                required={field.type === "date"}
+              />
+            </div>
+          ))}
 
           <button
             type="submit"
@@ -206,8 +176,9 @@ export default function Attendance() {
               <th className="py-3 px-4 text-left">Femmes</th>
               <th className="py-3 px-4 text-left">Jeunes</th>
               <th className="py-3 px-4 text-left">Enfants</th>
-              <th className="py-3 px-4 text-left">Évangélisés</th>
-              <th className="py-3 px-4 text-left">Baptisés</th>
+              <th className="py-3 px-4 text-left">Connectés</th>
+              <th className="py-3 px-4 text-left">Nouveaux venus</th>
+              <th className="py-3 px-4 text-left">Nouveaux convertis</th>
               <th className="py-3 px-4 text-center">Actions</th>
             </tr>
           </thead>
@@ -219,8 +190,9 @@ export default function Attendance() {
                 <td className="py-3 px-4">{r.femmes}</td>
                 <td className="py-3 px-4">{r.jeunes}</td>
                 <td className="py-3 px-4">{r.enfants}</td>
-                <td className="py-3 px-4">{r.evangelises}</td>
-                <td className="py-3 px-4">{r.baptises}</td>
+                <td className="py-3 px-4">{r.connectes}</td>
+                <td className="py-3 px-4">{r.nouveauxVenus}</td>
+                <td className="py-3 px-4">{r.nouveauxConvertis}</td>
                 <td className="py-3 px-4 flex justify-center gap-2">
                   <button
                     onClick={() => handleEdit(r)}

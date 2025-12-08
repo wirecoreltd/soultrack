@@ -140,6 +140,13 @@ export default function AddEvangelise() {
           <input className="input" type="text" placeholder="Prénom" value={formData.prenom} onChange={(e)=>setFormData({...formData,prenom:e.target.value})} required />
           <input className="input" type="text" placeholder="Nom" value={formData.nom} onChange={(e)=>setFormData({...formData,nom:e.target.value})} required />
           <input className="input" type="text" placeholder="Téléphone" value={formData.telephone} onChange={(e)=>setFormData({...formData,telephone:e.target.value})} required />
+          
+        {/* WhatsApp */}
+          <label className="flex items-center gap-2 text-gray-700">
+            <input type="checkbox" checked={formData.is_whatsapp} onChange={(e)=>setFormData({...formData,is_whatsapp:e.target.checked})} className="w-5 h-5 accent-indigo-600 cursor-pointer"/>
+            WhatsApp
+          </label>
+          
           <input className="input" type="text" placeholder="Ville" value={formData.ville} onChange={(e)=>setFormData({...formData,ville:e.target.value})} />
 
           {/* 🔹 Champ Sexe */}
@@ -154,11 +161,7 @@ export default function AddEvangelise() {
             <option value="Femme">Femme</option>
           </select>
 
-          {/* WhatsApp */}
-          <label className="flex items-center gap-2 text-gray-700">
-            <input type="checkbox" checked={formData.is_whatsapp} onChange={(e)=>setFormData({...formData,is_whatsapp:e.target.checked})} className="w-5 h-5 accent-indigo-600 cursor-pointer"/>
-            WhatsApp
-          </label>
+          
 
           {/* Besoins */}
           <div className="mt-4">

@@ -260,35 +260,395 @@ export default function ListMembers() {
         </button>
       </div>
 
-      {/* ==================== CARDS ==================== */}
-      {view === "card" && (
-        <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {displayedMembers.map(m => (
-            <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4 relative border-l-blue-500">
-              <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
-              <p>📱 {m.telephone || "—"}</p>
-              <p>🏠 Cellule: {m.cellule_nom || "—"}</p>
-              <p>👤 Conseiller: {m.conseiller_prenom || "—"} {m.conseiller_nom || ""}</p>
-
-              <select
-                value={m.statut}
-                onChange={async (e) => {
-                  const newStatus = e.target.value;
-                  updateMemberLocally(m.id, { statut: newStatus });
-                  await supabase.from("membres").update({ statut: newStatus }).eq("id", m.id);
-                  showToast("✅ Statut mis à jour");
-                }}
-                className="mt-2 w-full border rounded px-2 py-1 text-sm"
-              >
-                <option value="">-- Statut --</option>
-                {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-
-              <button onClick={() => setEditMember(m)} className="mt-2 text-blue-600 text-sm">✏️ Modifier</button>
+       {/* ==================== VUE CARTE ==================== */}
+          {view === "card" && (
+            <div className="w-full max-w-5xl space-y-8">
+          
+              {/* ------------------ NOUVEAUX MEMBRES ------------------ */}
+              {nouveauxFiltres.length > 0 && (
+                <div>
+                  <p className="text-white text-lg mb-4 ml-1">
+                    💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+                  </p>
+          
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {nouveauxFiltres.map(m => {
+                      const isOpen = detailsOpen[m.id];
+          
+                      return (
+                        <div key={m.id}
+                             className="bg-white p-3 rounded-xl shadow-md border-l-4 relative"
+                             style={{ borderLeftColor: getBorderColor(m) }}>
+                          
+                          {/* ⭐ */}
+                          {m.star && (
+                            <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>
+                          )}
+          
+                          {/* HEADER */}
+                          <div className="flex flex-col items-center">
+                            <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
+          
+                            {/* INFOS SIMPLES */}
+                            <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
+                              <div className="flex justify-center items-center space-x-2">
+                                <span>📱</span><span>{m.telephone || "—"}</span>
+                              </div>
+                              <div className="flex justify-center items-center space-x-2">
+                                <span>🏙</span><span>{m.ville || "—"}</span>
+                              </div>
+                              <div className="flex justify-center items-center space-x-2">
+                                <span>🕊</span><span>Statut : {m.statut || "—"}</span>
+                              </div>
+                              <div className="flex justify-center items-center space-x-2">
+                                <span>🏠</span>
+                                <span>
+                                  Cellule : {m.cellule_nom || "—"}
+                                  {m.responsable_prenom ? ` - ${m.responsable_prenom} ${m.responsable_nom}` : ""}
+                                </span>
+                              </div>
+                              <div className="flex justify-center items-center space-x-2">
+                                <span>👤</span>
+                                <span>
+                                  Conseiller : {m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}
+                                </span>
+                              </div>
+                            </div>
+          
+                            {/* ================== STATUT (INSTANT) ================== */}
+                            <select
+                              value={statusChanges[m.id] ?? m.statut ?? ""}
+                              onChange={(e) => {
+                                const newStatus = e.target.value;
+                                updateMemberLocally(m.id, { statut: newStatus });
+                                handleStatusChange(m.id, newStatus); // conserve ton système
+                              }}
+                              className="border rounded-md px-2 py-1 text-sm w-full mt-2"
+                            >
+                              <option value="">-- Choisir un statut --</option>
+                              {statusOptions.map((s) => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select>
+          
+                            {/* ================== ENVOYER À SUR CARTE ================== */}
+                            <div className="mt-2 w-full">
+                              <label className="font-semibold text-sm">Envoyer à :</label>
+          
+                              <select
+                                value={selectedTargetType[m.id] || ""}
+                                onChange={(e) =>
+                                  setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))
+                                }
+                                className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                              >
+                                <option value="">-- Choisir une option --</option>
+                                <option value="cellule">Une Cellule</option>
+                                <option value="conseiller">Un Conseiller</option>
+                              </select>
+          
+                              {(selectedTargetType[m.id] === "cellule" ||
+                                selectedTargetType[m.id] === "conseiller") && (
+                                <select
+                                  value={selectedTargets[m.id] || ""}
+                                  onChange={(e) =>
+                                    setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))
+                                  }
+                                  className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                                >
+                                  <option value="">
+                                    -- Choisir {selectedTargetType[m.id]} --
+                                  </option>
+          
+                                  {selectedTargetType[m.id] === "cellule"
+                                    ? cellules.map(c => (
+                                        <option key={c.id} value={c.id}>
+                                          {c.cellule} ({c.responsable})
+                                        </option>
+                                      ))
+                                    : conseillers.map(c => (
+                                        <option key={c.id} value={c.id}>
+                                          {c.prenom} {c.nom}
+                                        </option>
+                                      ))}
+                                </select>
+                              )}
+          
+                              {selectedTargets[m.id] && (
+                                <div className="pt-2">
+                                  <BoutonEnvoyer
+                                    membre={m}
+                                    type={selectedTargetType[m.id]}
+                                    cible={
+                                      selectedTargetType[m.id] === "cellule"
+                                        ? cellules.find(c => c.id === selectedTargets[m.id])
+                                        : conseillers.find(c => c.id === selectedTargets[m.id])
+                                    }
+                                    onEnvoyer={async (id) => {
+                                      const type = selectedTargetType[m.id];
+                                      const target =
+                                        type === "cellule"
+                                          ? cellules.find(c => c.id === selectedTargets[m.id])
+                                          : conseillers.find(c => c.id === selectedTargets[m.id]);
+          
+                                      const update = {};
+          
+                                      if (type === "cellule") {
+                                        update.cellule_id = target.id;
+                                        update.cellule_nom = target.cellule;
+                                      } else {
+                                        update.conseiller_id = target.id;
+                                      }
+          
+                                      updateMemberLocally(id, update);
+          
+                                      await supabase.from("membres").update(update).eq("id", id);
+                                      showToast("✅ Contact envoyé");
+                                    }}
+                                    session={session}
+                                    showToast={showToast}
+                                  />
+                                </div>
+                              )}
+                            </div>
+          
+                            {/* BOUTON DÉTAILS */}
+                            <button
+                              onClick={() => toggleDetails(m.id)}
+                              className="text-orange-500 underline text-sm mt-2"
+                            >
+                              {isOpen ? "Fermer détails" : "Détails"}
+                            </button>
+          
+                            {/* ------------------ DETAILS ------------------ */}
+                            {isOpen && (
+                              <div className="text-black-700 text-sm mt-3 w-full space-y-2">
+          
+                                <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                                <p>❓ Besoin :
+                                  {(!m.besoin
+                                    ? "—"
+                                    : Array.isArray(m.besoin)
+                                    ? m.besoin.join(", ")
+                                    : (() => {
+                                        try {
+                                          const arr = JSON.parse(m.besoin);
+                                          return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                                        } catch {
+                                          return m.besoin;
+                                        }
+                                      })())}
+                                </p>
+          
+                                <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                                <p>🕊 Statut : {m.statut_suivis_actuel
+                                  ? statutLabels[m.statut_suivis_actuel]
+                                  : m.statut || "—"}
+                                </p>
+                                <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>
+          
+                                {/* ================== MODIFIER DANS DETAILS ================== */}
+                                <button
+                                  onClick={() => setEditMember(m)}
+                                  className="text-blue-600 text-sm mt-6 block mx-auto"
+                                >
+                                  ✏️ Modifier le contact
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+          
+              {/* ------------------ ANCIENS MEMBRES ------------------ */}
+              {anciensFiltres.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="text-white text-lg mb-3 font-semibold">
+                    <span style={{
+                      background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                      WebkitBackgroundClip: "text",
+                      color: "transparent",
+                    }}>
+                      Membres existants
+                    </span>
+                  </h3>
+          
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {anciensFiltres.map(m => {
+                      const isOpen = detailsOpen[m.id];
+          
+                      return (
+                        <div key={m.id}
+                             className="bg-white p-3 rounded-xl shadow-md border-l-4 relative"
+                             style={{ borderLeftColor: getBorderColor(m) }}>
+                          
+                          {m.star && (
+                            <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>
+                          )}
+          
+                          <div className="flex flex-col items-center">
+                            <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
+          
+                            <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
+                              <div className="flex justify-center items-center space-x-2">
+                                <span>📱</span><span>{m.telephone || "—"}</span>
+                              </div>
+                              <div className="flex justify-center items-center space-x-2">
+                                <span>🕊</span><span>Statut : {m.statut || "—"}</span>
+                              </div>
+                              <div className="flex justify-center items-center space-x-2">
+                                <span>🏠</span>
+                                <span>
+                                  Cellule : {m.cellule_nom || "—"}
+                                  {m.responsable_prenom ? ` - ${m.responsable_prenom} ${m.responsable_nom}` : ""}
+                                </span>
+                              </div>
+                              <div className="flex justify-center items-center space-x-2">
+                                <span>👤</span>
+                                <span>
+                                  Conseiller : {m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}
+                                </span>
+                              </div>
+                            </div>
+          
+                            {/* DETAILS */}
+                            <button
+                              onClick={() => toggleDetails(m.id)}
+                              className="text-orange-500 underline text-sm mt-2"
+                            >
+                              {isOpen ? "Fermer détails" : "Détails"}
+                            </button>
+          
+                            {isOpen && (
+                              <div className="text-black-700 text-sm mt-3 w-full space-y-2">
+                                <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                                <p>🏙 Ville : {m.ville || "—"}</p>
+          
+                                <p>
+                                  ❓Besoin :{" "}
+                                  {(() => {
+                                    if (!m.besoin) return "—";
+                                    if (Array.isArray(m.besoin)) return m.besoin.join(", ");
+                                    try {
+                                      const arr = JSON.parse(m.besoin);
+                                      return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+                                    } catch {
+                                      return m.besoin;
+                                    }
+                                  })()}
+                                </p>
+          
+                                <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                                <p>🕊 Statut : {m.statut_suivis_actuel
+                                  ? statutLabels[m.statut_suivis_actuel]
+                                  : m.statut || "—"}
+                                </p>
+                                <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>
+          
+                                {/* ENVOYER À */}
+                                <div className="mt-2">
+                                  <label className="font-semibold text-sm">Envoyer à :</label>
+          
+                                  <select
+                                    value={selectedTargetType[m.id] || ""}
+                                    onChange={(e) =>
+                                      setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))
+                                    }
+                                    className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                                  >
+                                    <option value="">-- Choisir une option --</option>
+                                    <option value="cellule">Une Cellule</option>
+                                    <option value="conseiller">Un Conseiller</option>
+                                  </select>
+          
+                                  {(selectedTargetType[m.id] === "cellule" ||
+                                    selectedTargetType[m.id] === "conseiller") && (
+                                    <select
+                                      value={selectedTargets[m.id] || ""}
+                                      onChange={(e) =>
+                                        setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))
+                                      }
+                                      className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                                    >
+                                      <option value="">
+                                        -- Choisir {selectedTargetType[m.id]} --
+                                      </option>
+          
+                                      {selectedTargetType[m.id] === "cellule"
+                                        ? cellules.map(c => (
+                                            <option key={c.id} value={c.id}>
+                                              {c.cellule} ({c.responsable})
+                                            </option>
+                                          ))
+                                        : conseillers.map(c => (
+                                            <option key={c.id} value={c.id}>
+                                              {c.prenom} {c.nom}
+                                            </option>
+                                          ))}
+                                    </select>
+                                  )}
+          
+                                  {selectedTargets[m.id] && (
+                                    <div className="pt-2">
+                                      <BoutonEnvoyer
+                                        membre={m}
+                                        type={selectedTargetType[m.id]}
+                                        cible={
+                                          selectedTargetType[m.id] === "cellule"
+                                            ? cellules.find(c => c.id === selectedTargets[m.id])
+                                            : conseillers.find(c => c.id === selectedTargets[m.id])
+                                        }
+                                        onEnvoyer={async (id) => {
+                                          const type = selectedTargetType[m.id];
+                                          const target =
+                                            type === "cellule"
+                                              ? cellules.find(c => c.id === selectedTargets[m.id])
+                                              : conseillers.find(c => c.id === selectedTargets[m.id]);
+          
+                                          const update = {};
+          
+                                          if (type === "cellule") {
+                                            update.cellule_id = target.id;
+                                            update.cellule_nom = target.cellule;
+                                          } else {
+                                            update.conseiller_id = target.id;
+                                          }
+          
+                                          updateMemberLocally(id, update);
+          
+                                          await supabase.from("membres").update(update).eq("id", id);
+                                          showToast("✅ Contact envoyé");
+                                        }}
+                                        session={session}
+                                        showToast={showToast}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+          
+                                {/* MODIFIER CONTACT */}
+                                <button
+                                  onClick={() => setEditMember(m)}
+                                  className="text-blue-600 text-sm mt-6 block mx-auto"
+                                >
+                                  ✏️ Modifier le contact
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-      )}
+)}
+
 
       {/* ==================== TABLE ==================== */}
       {view === "table" && (

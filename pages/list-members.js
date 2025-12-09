@@ -647,63 +647,191 @@ export default function ListMembers() {
                 </div>
               )}
             </div>
+            )}
+
+              {/* ==================== VUE TABLE ==================== */}
+{view === "table" && (
+  <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+    <table className="w-full text-sm text-left border-separate border-spacing-0">
+      <thead className="bg-gray-200 text-black-800 text-sm uppercase">
+        <tr>
+          <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+          <th className="px-4 py-2">Téléphone</th>
+          <th className="px-4 py-2">Statut</th>
+          <th className="px-4 py-2 rounded-tr-lg">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        {/* ======= NOUVEAUX MEMBRES ======= */}
+        {nouveauxFiltres.length > 0 && (
+          <tr>
+            <td colSpan={4} className="px-4 py-2 text-white font-semibold">
+              💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+            </td>
+          </tr>
+        )}
+
+        {nouveauxFiltres.map((m) => (
+          <tr key={m.id} className="border-b border-gray-300">
+            <td
+              className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white"
+              style={{ borderLeftColor: getBorderColor(m) }}
+            >
+              {m.prenom} {m.nom}
+              {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+
+              <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">
+                Nouveau
+              </span>
+            </td>
+
+            <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
+
+            <td className="px-4 py-2 text-white">
+              {/* Statut instantané */}
+              <select
+                value={m.statut}
+                onChange={async (e) => {
+                  const newStatus = e.target.value;
+
+                  updateMemberLocally(m.id, { statut: newStatus });
+
+                  await supabase
+                    .from("membres")
+                    .update({ statut: newStatus })
+                    .eq("id", m.id);
+
+                  showToast("✅ Statut mis à jour");
+                }}
+                className="border rounded px-2 py-1 text-sm bg-white text-black"
+              >
+                <option value="">—</option>
+                {statusOptions.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </td>
+
+            {/* ACTIONS */}
+            <td className="px-4 py-2 flex items-center gap-2">
+
+              <button
+                onClick={() =>
+                  setPopupMember(
+                    popupMember?.id === m.id ? null : { ...m }
+                  )
+                }
+                className="text-orange-500 underline text-sm"
+              >
+                {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+              </button>
+
+            </td>
+          </tr>
+        ))}
+
+        {/* ======= ANCIENS MEMBRES ======= */}
+        {anciensFiltres.length > 0 && (
+          <>
+            <tr>
+              <td colSpan={4} className="px-4 py-2 font-semibold text-lg text-white">
+                <span
+                  style={{
+                    background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                    WebkitBackgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
+                  Membres existants
+                </span>
+              </td>
+            </tr>
+
+            {anciensFiltres.map((m) => (
+              <tr key={m.id} className="border-b border-gray-300">
+                <td
+                  className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white"
+                  style={{ borderLeftColor: getBorderColor(m) }}
+                >
+                  {m.prenom} {m.nom}
+                  {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                </td>
+
+                <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
+
+                <td className="px-4 py-2 text-white">
+                  <select
+                    value={m.statut}
+                    onChange={async (e) => {
+                      const newStatus = e.target.value;
+
+                      updateMemberLocally(m.id, { statut: newStatus });
+
+                      await supabase
+                        .from("membres")
+                        .update({ statut: newStatus })
+                        .eq("id", m.id);
+
+                      showToast("✅ Statut mis à jour");
+                    }}
+                    className="border rounded px-2 py-1 text-sm bg-white text-black"
+                  >
+                    <option value="">—</option>
+                    {statusOptions.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </td>
+
+                {/* ACTIONS */}
+                <td className="px-4 py-2 flex items-center gap-2">
+
+                  <button
+                    onClick={() =>
+                      setPopupMember(
+                        popupMember?.id === m.id ? null : { ...m }
+                      )
+                    }
+                    className="text-orange-500 underline text-sm"
+                  >
+                    {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                  </button>
+
+                </td>
+              </tr>
+            ))}
+          </>
+        )}
+      </tbody>
+    </table>
+  </div>
 )}
 
+{/* ==================== POPUPS ==================== */}
+{popupMember && (
+  <DetailsPopup
+    membre={popupMember}
+    onClose={() => setPopupMember(null)}
+    cellules={cellules}
+    conseillers={conseillers}
+    statusOptions={statusOptions}
+    onEdit={() => setEditMember(popupMember)}
+  />
+)}
 
-      {/* ==================== TABLE ==================== */}
-      {view === "table" && (
-        <div className="w-full max-w-5xl overflow-x-auto">
-          <table className="w-full bg-white rounded-xl shadow-md">
-            <thead>
-              <tr className="bg-blue-600 text-white">
-                <th className="p-2">Nom</th>
-                <th className="p-2">Téléphone</th>
-                <th className="p-2">Cellule</th>
-                <th className="p-2">Conseiller</th>
-                <th className="p-2">Statut</th>
-                <th className="p-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayedMembers.map(m => (
-                <tr key={m.id} className="border-b">
-                  <td className="p-2">{m.prenom} {m.nom}</td>
-                  <td className="p-2">{m.telephone || "—"}</td>
-                  <td className="p-2">{m.cellule_nom || "—"}</td>
-                  <td className="p-2">{m.conseiller_prenom || "—"} {m.conseiller_nom || ""}</td>
-                  <td className="p-2">
-                    <select
-                      value={m.statut}
-                      onChange={async (e) => {
-                        const newStatus = e.target.value;
-                        updateMemberLocally(m.id, { statut: newStatus });
-                        await supabase.from("membres").update({ statut: newStatus }).eq("id", m.id);
-                        showToast("✅ Statut mis à jour");
-                      }}
-                      className="border rounded px-2 py-1 text-sm"
-                    >
-                      <option value="">-- Statut --</option>
-                      {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </td>
-                  <td className="p-2">
-                    <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm">✏️ Modifier</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+{editMember && (
+  <EditMemberPopup
+    member={editMember}
+    onClose={() => setEditMember(null)}
+    onUpdated={(updatedMember) => {
+      updateMemberLocally(updatedMember.id, updatedMember);
+      setEditMember(null);
+      showToast("✅ Membre mis à jour");
+    }}
+    cellules={cellules}
+    conseillers={conseillers}
+  />
+)}
 
-      {/* ==================== POPUPS ==================== */}
-      {editMember && (
-        <EditMemberPopup
-          member={editMember}
-          onClose={() => setEditMember(null)}
-          onUpdateMember={(updated) => updateMemberLocally(updated.id, updated)}
-        />
-      )}
-    </div>
-  );
-}

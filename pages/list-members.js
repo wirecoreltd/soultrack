@@ -253,24 +253,26 @@ const handleAfterSend = (updatedMember, type, cible) => {
         
                             {/* Affichage Cellule ou Contact attribué */}
                               <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
-                              
                                 {/* ✔ PRIORITÉ : Cellule */}
                                 {m.cellule_nom && m.responsable_cellule ? (
                                   <div>
                                     <strong>Cellule :</strong> {m.cellule_nom} - {m.responsable_cellule}
                                   </div>
                                 ) : 
-                                /* ✔ Sinon : Conseiller / Suivi Responsable */
-                                (m.conseiller_prenom || m.conseiller_nom || m.suivi_responsable) ? (
+                                /* ✔ Sinon : Conseiller */
+                                (m.conseiller_prenom || m.conseiller_nom) ? (
                                   <div>
-                                    <strong>Contact attribué :</strong>{" "}
-                                    {m.conseiller_prenom || m.conseiller_nom
-                                      ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim()
-                                      : m.suivi_responsable}
+                                    <strong>Contact attribué :</strong> {`${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim()}
                                   </div>
-                                ) : null}                              
+                                ) : 
+                                /* ✔ Sinon : suivi_responsable + suivi_cellule_nom si existants */
+                                (m.suivi_responsable || m.suivi_cellule_nom) ? (
+                                  <div>
+                                    <strong>Cellule / Responsable :</strong> {m.suivi_cellule_nom ? `${m.suivi_cellule_nom} - ` : ""}{m.suivi_responsable || "—"}
+                                  </div>
+                                ) : null}
                               </div>
-                              </div>
+
 
         
                           {/* ENVOYER À */}
@@ -342,26 +344,28 @@ const handleAfterSend = (updatedMember, type, cible) => {
                     <div className="flex justify-center items-center space-x-2"><span>📱</span><span>{m.telephone || "—"}</span></div>
                     <div className="flex justify-center items-center space-x-2"><span>🕊</span><span>Statut : {m.statut || "—"}</span></div>
 
-                    {/* Affichage Cellule ou Contact attribué */}
-                              <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
-                              
-                                {/* ✔ PRIORITÉ : Cellule */}
-                                {m.cellule_nom && m.responsable_cellule ? (
-                                  <div>
-                                    <strong>Cellule :</strong> {m.cellule_nom} - {m.responsable_cellule}
-                                  </div>
-                                ) : 
-                                /* ✔ Sinon : Conseiller / Suivi Responsable */
-                                (m.conseiller_prenom || m.conseiller_nom || m.suivi_responsable) ? (
-                                  <div>
-                                    <strong>Contact attribué :</strong>{" "}
-                                    {m.conseiller_prenom || m.conseiller_nom
-                                      ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim()
-                                      : m.suivi_responsable}
-                                  </div>
-                                ) : null}                              
-                              </div>
-                              </div>
+                   {/* Affichage Cellule ou Contact attribué */}
+                    <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
+                      {/* ✔ PRIORITÉ : Cellule */}
+                      {m.cellule_nom && m.responsable_cellule ? (
+                        <div>
+                          <strong>Cellule :</strong> {m.cellule_nom} - {m.responsable_cellule}
+                        </div>
+                      ) : 
+                      /* ✔ Sinon : Conseiller */
+                      (m.conseiller_prenom || m.conseiller_nom) ? (
+                        <div>
+                          <strong>Contact attribué :</strong> {`${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim()}
+                        </div>
+                      ) : 
+                      /* ✔ Sinon : suivi_responsable + suivi_cellule_nom si existants */
+                      (m.suivi_responsable || m.suivi_cellule_nom) ? (
+                        <div>
+                          <strong>Cellule / Responsable :</strong> {m.suivi_cellule_nom ? `${m.suivi_cellule_nom} - ` : ""}{m.suivi_responsable || "—"}
+                        </div>
+                      ) : null}
+                    </div>
+
 
                   {/* ENVOYER À */}
                   <div className="mt-2">

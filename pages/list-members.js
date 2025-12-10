@@ -252,33 +252,23 @@ const handleAfterSend = (updatedMember, type, cible) => {
                             <div className="flex justify-center items-center space-x-2"><span>🕊</span><span>Statut : {m.statut || "—"}</span></div>
         
                             {/* Affichage Cellule ou Contact attribué avec emojis */}
-<div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
-  {/* Toujours afficher l’emoji */}
-  <div className="flex items-center space-x-1">
-    {m.cellule_nom || m.cellule_ville || m.suivi_cellule_nom ? (
-      <>
-        <span>🏠</span>
-        {(m.cellule_nom && m.cellule_ville) && <span>{m.cellule_ville} - {m.cellule_nom}</span>}
-        {(!m.cellule_nom && !m.cellule_ville && m.suivi_cellule_nom) && <span>{m.suivi_cellule_nom}</span>}
-      </>
-    ) : null}
+ {/* Cellule / Conseiller avec emojis */}
+                    <div className="flex items-center space-x-2">
+                      {/* Cellule */}
+                      <span>🏠</span>
+                      {(m.cellule_ville && m.cellule_nom) ? (
+                        <span>{m.cellule_ville} - {m.cellule_nom}</span>
+                      ) : m.suivi_cellule_nom ? (
+                        <span>{m.suivi_cellule_nom}</span>
+                      ) : null}
 
-    {m.conseiller_prenom || m.conseiller_nom ? (
-      <>
-        <span>👤</span>
-        <span>{`${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim()}</span>
-      </>
-    ) : null}
-
-    {/* Si aucune cellule ni conseiller, les emojis restent visibles seuls */}
-    {!m.cellule_nom && !m.cellule_ville && !m.suivi_cellule_nom && !m.conseiller_prenom && !m.conseiller_nom && (
-      <>
-        <span>🏠</span>
-        <span>👤</span>
-      </>
-    )}
-  </div>
-
+                      {/* Conseiller */}
+                      <span>👤</span>
+                      {(m.conseiller_prenom || m.conseiller_nom) && (
+                        <span>{`${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim()}</span>
+                      )}
+                    </div>
+                  </div>
                             
         
                           {/* ENVOYER À */}
@@ -351,31 +341,24 @@ const handleAfterSend = (updatedMember, type, cible) => {
                     <div className="flex justify-center items-center space-x-2"><span>🕊</span><span>Statut : {m.statut || "—"}</span></div>
 
                    <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
-  {/* Toujours afficher l’emoji */}
-  <div className="flex items-center space-x-1">
-    {m.cellule_nom || m.cellule_ville || m.suivi_cellule_nom ? (
-      <>
-        <span>🏠</span>
-        {(m.cellule_nom && m.cellule_ville) && <span>{m.cellule_ville} - {m.cellule_nom}</span>}
-        {(!m.cellule_nom && !m.cellule_ville && m.suivi_cellule_nom) && <span>{m.suivi_cellule_nom}</span>}
-      </>
-    ) : null}
 
-    {m.conseiller_prenom || m.conseiller_nom ? (
-      <>
-        <span>👤</span>
-        <span>{`${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim()}</span>
-      </>
-    ) : null}
+                   {/* Cellule / Conseiller avec emojis */}
+                    <div className="flex items-center space-x-2">
+                      {/* Cellule */}
+                      <span>🏠</span>
+                      {(m.cellule_ville && m.cellule_nom) ? (
+                        <span>{m.cellule_ville} - {m.cellule_nom}</span>
+                      ) : m.suivi_cellule_nom ? (
+                        <span>{m.suivi_cellule_nom}</span>
+                      ) : null}
 
-    {/* Si aucune cellule ni conseiller, les emojis restent visibles seuls */}
-    {!m.cellule_nom && !m.cellule_ville && !m.suivi_cellule_nom && !m.conseiller_prenom && !m.conseiller_nom && (
-      <>
-        <span>🏠</span>
-        <span>👤</span>
-      </>
-    )}
-  </div>
+                      {/* Conseiller */}
+                      <span>👤</span>
+                      {(m.conseiller_prenom || m.conseiller_nom) && (
+                        <span>{`${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim()}</span>
+                      )}
+                    </div>
+                  </div>
 
 
                   {/* ENVOYER À */}

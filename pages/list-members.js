@@ -267,7 +267,9 @@ const handleAfterSend = (updatedMember, type, cible) => {
                                       ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`
                                       : m.suivi_responsable}
                                   </div>
-                                ) : null}                            
+                                ) : null}     
+                                </div>
+                                </div>
 
         
                           {/* ENVOYER À */}
@@ -352,7 +354,9 @@ const handleAfterSend = (updatedMember, type, cible) => {
                                       ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`
                                       : m.suivi_responsable}
                                   </div>
-                                ) : null}                                                          
+                                ) : null}   
+                                  </div>
+                                  </div>
                                       
                           {/* ENVOYER À (identique aux nouveaux) */}
                           <div className="mt-2">

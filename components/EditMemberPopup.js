@@ -150,88 +150,108 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
         <div className="flex flex-col gap-4">
 
-          {/* Prénom et Nom */}
-          <div className="flex items-center gap-4">
-            <label className="w-32 text-right font-medium">Prénom :</label>
-            <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} className="input flex-1"/>
-          </div>
-          <div className="flex items-center gap-4">
-            <label className="w-32 text-right font-medium">Nom :</label>
-            <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input flex-1"/>
-          </div>
+         {/* Prénom */}
+<div className="flex flex-col">
+  <label className="font-medium mb-1 text-left">Prénom :</label>
+  <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} className="input"/>
+</div>
 
-          {/* Téléphone */}
-          <div className="flex items-center gap-4">
-            <label className="w-32 text-right font-medium">Téléphone :</label>
-            <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} className="input flex-1"/>
-          </div>
+{/* Nom */}
+<div className="flex flex-col">
+  <label className="font-medium mb-1 text-left">Nom :</label>
+  <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input"/>
+</div>
 
-          {/* Ville */}
-          <div className="flex items-center gap-4">
-            <label className="w-32 text-right font-medium">Ville :</label>
-            <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="input flex-1"/>
-          </div>
+{/* Téléphone */}
+<div className="flex flex-col">
+  <label className="font-medium mb-1 text-left">Téléphone :</label>
+  <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} className="input"/>
+</div>
 
-          {/* Statut */}
-          <div className="flex items-center gap-4">
-            <label className="w-32 text-right font-medium">Statut :</label>
-            <select name="statut" value={formData.statut} onChange={handleChange} className="input flex-1">
-              <option value="">-- Statut --</option>
-              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="visiteur">Visiteur</option>
-              <option value="actif">Actif</option>
-              <option value="ancien">Ancien</option>
-              <option value="Integrer">Intégrer</option>
-            </select>
-          </div>
+{/* Ville */}
+<div className="flex flex-col">
+  <label className="font-medium mb-1 text-left">Ville :</label>
+  <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="input"/>
+</div>
 
-          {/* Cellule */}
-          <div className="flex items-center gap-4">
-            <label className="w-32 text-right font-medium">Cellule :</label>
-            <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input flex-1">
-              <option value="">-- Cellule --</option>
-              {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule}</option>)}
-            </select>
-          </div>
+{/* Statut */}
+<div className="flex flex-col">
+  <label className="font-medium mb-1 text-left">Statut :</label>
+  <select name="statut" value={formData.statut} onChange={handleChange} className="input">
+    <option value="">-- Statut --</option>
+    <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+    <option value="a déjà son église">A déjà son église</option>
+    <option value="visiteur">Visiteur</option>
+    <option value="actif">Actif</option>
+    <option value="ancien">Ancien</option>
+    <option value="Integrer">Intégrer</option>
+  </select>
+</div>
 
-          {/* Conseiller */}
-          <div className="flex items-center gap-4">
-            <label className="w-32 text-right font-medium">Conseiller :</label>
-            <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input flex-1">
-              <option value="">-- Conseiller --</option>
-              {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
-            </select>
-          </div>
+{/* Cellule */}
+<div className="flex flex-col">
+  <label className="font-medium mb-1 text-left">Cellule :</label>
+  <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input">
+    <option value="">-- Cellule --</option>
+    {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule}</option>)}
+  </select>
+</div>
 
-          {/* Besoin */}
-          <div className="flex items-center gap-4">
-            <label className="w-32 text-right font-medium">Besoin :</label>
-            <div className="flex-1">
-              {besoinsOptions.map(item => (
-                <label key={item} className="flex items-center gap-3 mb-2">
-                  <input type="checkbox" value={item} checked={Array.isArray(formData.besoin) && formData.besoin.includes(item)} onChange={handleBesoinChange} />
-                  {item}
-                </label>
-              ))}
-              <label className="flex items-center gap-3 mb-2">
-                <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} />
-                Autre
-              </label>
-              {showAutre && (
-                <>
-                  <label className="block font-medium">Précisez :</label>
-                  <input type="text" name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input"/>
-                </>
-              )}
-            </div>
-          </div>
+{/* Conseiller */}
+<div className="flex flex-col">
+  <label className="font-medium mb-1 text-left">Conseiller :</label>
+  <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
+    <option value="">-- Conseiller --</option>
+    {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
+  </select>
+</div>
 
-          {/* Informations supplémentaires */}
-          <div className="flex items-center gap-4">
-            <label className="w-32 text-right font-medium">Informations :</label>
-            <textarea name="infos_supplementaires" rows={2} value={formData.infos_supplementaires} onChange={handleChange} className="input flex-1"/>
-          </div>
+{/* Besoin */}
+<div className="flex flex-col">
+  <label className="font-medium mb-2 text-left">Besoin :</label>
+
+  {besoinsOptions.map(item => (
+    <label key={item} className="flex items-center gap-3 mb-2">
+      <input type="checkbox"
+        value={item}
+        checked={Array.isArray(formData.besoin) && formData.besoin.includes(item)}
+        onChange={handleBesoinChange}
+      />
+      {item}
+    </label>
+  ))}
+
+  <label className="flex items-center gap-3 mb-2">
+    <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} />
+    Autre
+  </label>
+
+  {showAutre && (
+    <div className="flex flex-col mt-2">
+      <label className="font-medium mb-1">Précisez :</label>
+      <input
+        type="text"
+        name="autreBesoin"
+        value={formData.autreBesoin}
+        onChange={handleChange}
+        className="input"
+      />
+    </div>
+  )}
+</div>
+
+{/* Informations supplémentaires */}
+<div className="flex flex-col">
+  <label className="font-medium mb-1 text-left">Informations :</label>
+  <textarea
+    name="infos_supplementaires"
+    rows={2}
+    value={formData.infos_supplementaires}
+    onChange={handleChange}
+    className="input"
+  />
+</div>
+
 
           {/* Buttons */}
           <div className="flex gap-4 mt-2">

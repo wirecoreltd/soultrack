@@ -12,12 +12,16 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
     setLoading(true);
     try {
-      // Vérifier si le membre existe déjà dans suivis_membres
+      console.log("DEBUG: Membre à envoyer:", membre);
+      console.log("DEBUG: Type:", type, "Cible:", cible);
+
+      // Vérifier si le membre existe déjà
       const { data: existing, error: selectError } = await supabase
         .from("suivis_membres")
         .select("*")
         .eq("telephone", membre.telephone || "");
       if (selectError) throw selectError;
+      console.log("DEBUG: Existing suivis_membres:", existing);
 
       if (existing.length > 0) {
         alert(`⚠️ Le contact ${membre.prenom} ${membre.nom} est déjà suivi.`);
@@ -25,7 +29,6 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         return;
       }
 
-      // Préparer l'objet à insérer
       const suiviData = {
         membre_id: membre.id,
         prenom: membre.prenom,
@@ -48,11 +51,12 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         suiviData.responsable = `${cible?.prenom || ""} ${cible?.nom || ""}`.trim() || "—";
       }
 
-      // Inserer le suivi
+      console.log("DEBUG: Données à insérer:", suiviData);
+
       const { data: insertedData, error: insertError } = await supabase.from("suivis_membres").insert([suiviData]).select().single();
       if (insertError) throw insertError;
+      console.log("DEBUG: Inserted Data:", insertedData);
 
-      // Mise à jour du membre en local (statut)
       const { data: updatedMember, error: updateMemberError } = await supabase
         .from("membres")
         .update({ statut: "ancien" })
@@ -60,12 +64,12 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         .select()
         .single();
       if (updateMemberError) throw updateMemberError;
+      console.log("DEBUG: Membre mis à jour:", updatedMember);
 
       if (onEnvoyer) onEnvoyer(updatedMember);
 
       if (showToast) showToast(`✅ ${membre.prenom} ${membre.nom} envoyé à ${type === "cellule" ? cible.cellule : `${cible.prenom} ${cible.nom}`}`);
 
-      // Message WhatsApp
       const phone = (cible?.telephone || "").replace(/\D/g, "");
       if (phone) {
         let message = `👋 Bonjour ${cible?.responsable || (cible?.prenom || "")} !\n\n`;
@@ -76,9 +80,10 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         message += "Merci pour ton accompagnement ❤️";
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
       }
+
     } catch (err) {
-      console.error("Erreur sendToWhatsapp:", err);
-      alert("❌ Une erreur est survenue lors de l'envoi.");
+      console.error("❌ Erreur sendToWhatsapp:", err);
+      alert(`❌ Une erreur est survenue lors de l'envoi. Détails dans console.`);
     } finally {
       setLoading(false);
     }

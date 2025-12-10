@@ -270,6 +270,7 @@ const handleAfterSend = (updatedMember, type, cible) => {
                                   </div>
                                 ) : null}                              
                               </div>
+                              </div>
 
         
                           {/* ENVOYER À */}
@@ -359,6 +360,7 @@ const handleAfterSend = (updatedMember, type, cible) => {
                                       : m.suivi_responsable}
                                   </div>
                                 ) : null}                              
+                              </div>
                               </div>
 
                   {/* ENVOYER À */}

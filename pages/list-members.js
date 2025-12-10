@@ -250,18 +250,20 @@ const handleAfterSend = (updatedMember, type, cible) => {
                           <div className="flex justify-center items-center space-x-2"><span>📱</span><span>{m.telephone || "—"}</span></div>
                           <div className="flex justify-center items-center space-x-2"><span>🏙</span><span>{m.ville || "—"}</span></div>
                           <div className="flex justify-center items-center space-x-2"><span>🕊</span><span>Statut : {m.statut || "—"}</span></div>
-                          {/* Cellule / Contact attribué */}
-                            <div className="flex flex-col space-y-1">
-                              {/* Cas membre dans une cellule */}
-                              <div>
-                                <strong>Cellule :</strong>{" "}
-                                {m.cellule_nom ? `${m.cellule_nom} - ${m.responsable_cellule || ""}` : ""}
-                              </div>
-                              <div>
-                                <strong>Contact attribué :</strong>{" "}
-                                {!m.cellule_nom && m.conseiller_nom ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}` : ""}
-                              </div>   
-                                </div>
+                          <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
+                            {/* Cellule */}
+                            <div>
+                              <strong>Cellule :</strong>{" "}
+                              {m.cellule_nom ? `${m.cellule_nom} - ${m.responsable_cellule || ""}` : ""}
+                            </div>
+                          
+                            {/* Contact attribué */}
+                            <div>
+                              <strong>Contact attribué :</strong>{" "}
+                              {!m.cellule_nom && m.conseiller_nom ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}` : ""}
+                            </div>
+                          </div>
+
 
                           <div className="text-sm text-gray-700">
                             <strong>Contact attribué :</strong>{" "}
@@ -341,18 +343,19 @@ const handleAfterSend = (updatedMember, type, cible) => {
                         <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
                           <div className="flex justify-center items-center space-x-2"><span>📱</span><span>{m.telephone || "—"}</span></div>
                           <div className="flex justify-center items-center space-x-2"><span>🕊</span><span>Statut : {m.statut || "—"}</span></div>
-                          {/* Cellule / Contact attribué */}
-                            <div className="flex flex-col space-y-1">
-                              {/* Cas membre dans une cellule */}
-                              <div>
-                                <strong>Cellule :</strong>{" "}
-                                {m.cellule_nom ? `${m.cellule_nom} - ${m.responsable_cellule || ""}` : ""}
-                              </div>
-                              <div>
-                                <strong>Contact attribué :</strong>{" "}
-                                {!m.cellule_nom && m.conseiller_nom ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}` : ""}
-                              </div>
-                                </div>
+                          <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
+                            {/* Cellule */}
+                            <div>
+                              <strong>Cellule :</strong>{" "}
+                              {m.cellule_nom ? `${m.cellule_nom} - ${m.responsable_cellule || ""}` : ""}
+                            </div>
+                          
+                            {/* Contact attribué */}
+                            <div>
+                              <strong>Contact attribué :</strong>{" "}
+                              {!m.cellule_nom && m.conseiller_nom ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}` : ""}
+                            </div>
+                          </div>
 
                           <div className="text-sm text-gray-700">
                             <strong>Contact attribué :</strong>{" "}

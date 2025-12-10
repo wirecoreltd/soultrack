@@ -325,8 +325,8 @@ const handleAfterSend = (updatedMember, type, cible) => {
                                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                                             <p>❓ Besoin : {besoins}</p>
                                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                                            <p>🕊 Statut : {m.statut_suivis_actuel ? statutLabels[m.statut_suivis_actuel] : m.statut || "—"}</p>
-                                            <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>
+                                             <p>🏷 Suivi Statut : {m.suivi_statut || "—"}</p>
+                                             <p>📝 Suivi Commentaire : {m.suivi_commentaire || "—"}</p>
                                             <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-6 block mx-auto">
                                               ✏️ Modifier le contact
                                             </button>

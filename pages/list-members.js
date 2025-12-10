@@ -251,13 +251,14 @@ const handleAfterSend = (updatedMember, type, cible) => {
                           <div className="flex justify-center items-center space-x-2"><span>🏙</span><span>{m.ville || "—"}</span></div>
                           <div className="flex justify-center items-center space-x-2"><span>🕊</span><span>Statut : {m.statut || "—"}</span></div>
                           <div className="flex justify-center items-center space-x-2"><span>🏠</span><span>Cellule : {m.cellule_nom || "—"}{m.responsable_prenom ? ` - ${m.responsable_prenom} ${m.responsable_nom}` : ""}</span></div>
-                          < div className="flex justify-center items-center space-x-2">
-                            <span>👤</span>
-                            <span>
-                              Conseiller : {m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}
-                            </span>
+                          <div className="text-sm text-gray-700">
+                            <strong>Contact attribué :</strong>{" "}
+                            {m.conseiller_prenom
+                              ? `${m.conseiller_prenom} ${m.conseiller_nom}`
+                              : m.suivi_responsable
+                              ? m.suivi_responsable
+                              : "—"}
                           </div>
-
                         </div>
                         {/* ENVOYER À */}
                         <div className="mt-2">
@@ -329,12 +330,15 @@ const handleAfterSend = (updatedMember, type, cible) => {
                           <div className="flex justify-center items-center space-x-2"><span>📱</span><span>{m.telephone || "—"}</span></div>
                           <div className="flex justify-center items-center space-x-2"><span>🕊</span><span>Statut : {m.statut || "—"}</span></div>
                           <div className="flex justify-center items-center space-x-2"><span>🏠</span><span>Cellule : {m.cellule_nom || "—"}{m.responsable_prenom ? ` - ${m.responsable_prenom} ${m.responsable_nom}` : ""}</span></div>
-                          < div className="flex justify-center items-center space-x-2">
-                            <span>👤</span>
-                            <span>
-                              Conseiller : {m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}
-                            </span>
+                          <div className="text-sm text-gray-700">
+                            <strong>Contact attribué :</strong>{" "}
+                            {m.conseiller_prenom
+                              ? `${m.conseiller_prenom} ${m.conseiller_nom}`
+                              : m.suivi_responsable
+                              ? m.suivi_responsable
+                              : "—"}
                           </div>
+
                         </div>
                         {/* ENVOYER À */}
                         <div className="mt-2">

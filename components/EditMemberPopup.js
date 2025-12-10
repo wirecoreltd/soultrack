@@ -56,19 +56,17 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       }
     }
     loadData();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleCheckboxChange = (e) => {
     const { name, checked } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: checked }));
+    setFormData(prev => ({ ...prev, [name]: checked }));
   };
 
   const handleBesoinChange = (e) => {
@@ -77,31 +75,30 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     if (value === "Autre") {
       setShowAutre(checked);
       if (!checked) {
-        setFormData((prev) => ({ ...prev, autreBesoin: "", besoin: prev.besoin.filter((b) => b !== "Autre") }));
+        setFormData(prev => ({ ...prev, autreBesoin: "", besoin: prev.besoin.filter(b => b !== "Autre") }));
       } else {
-        setFormData((prev) => ({ ...prev, besoin: Array.from(new Set([...prev.besoin, "Autre"])) }));
+        setFormData(prev => ({ ...prev, besoin: Array.from(new Set([...prev.besoin, "Autre"])) }));
       }
       return;
     }
 
-    setFormData((prev) => {
-      const updated = checked ? [...prev.besoin, value] : prev.besoin.filter((b) => b !== value);
+    setFormData(prev => {
+      const updated = checked ? [...prev.besoin, value] : prev.besoin.filter(b => b !== value);
       return { ...prev, besoin: updated };
     });
   };
 
-  const toggleStar = () => setFormData((prev) => ({ ...prev, star: !prev.star }));
+  const toggleStar = () => setFormData(prev => ({ ...prev, star: !prev.star }));
 
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      // Préparer le tableau final de besoins
       let finalBesoin = Array.isArray(formData.besoin) ? [...formData.besoin] : parseBesoin(formData.besoin);
       if (showAutre && formData.autreBesoin?.trim()) {
-        finalBesoin = finalBesoin.filter((b) => b !== "Autre");
+        finalBesoin = finalBesoin.filter(b => b !== "Autre");
         finalBesoin.push(formData.autreBesoin.trim());
       } else {
-        finalBesoin = finalBesoin.filter((b) => b !== "Autre");
+        finalBesoin = finalBesoin.filter(b => b !== "Autre");
       }
 
       const payload = {
@@ -118,21 +115,16 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         besoin: JSON.stringify(finalBesoin),
       };
 
-      // 🔹 Mise à jour dans la table membres
-      const { error: updateError } = await supabase.from("membres").update(payload).eq("id", member.id);
-      if (updateError) throw updateError;
-
-      // 🔹 Récupérer le membre complet depuis la vue v_membres_full
-      const { data: fullMember, error: fetchError } = await supabase
-        .from("v_membres_full")
-        .select("*")
+      const { data, error } = await supabase
+        .from("membres")
+        .update(payload)
         .eq("id", member.id)
+        .select()
         .single();
 
-      if (fetchError) throw fetchError;
+      if (error) throw error;
 
-      // 🔹 Passer le membre complet au parent pour mise à jour instantanée
-      if (onUpdateMember) onUpdateMember(fullMember);
+      if (onUpdateMember) onUpdateMember(data); // 🔹 mise à jour instantanée
 
       setSuccess(true);
       setTimeout(() => {

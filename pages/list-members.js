@@ -255,21 +255,20 @@ const handleAfterSend = (updatedMember, type, cible) => {
                     <div className="flex justify-center items-center space-x-2"><span>🏙</span><span>{m.ville || "—"}</span></div>
                     <div className="flex justify-center items-center space-x-2"><span>🕊</span><span>Statut : {m.statut || "—"}</span></div>
 
-                    {/* Cellule / Conseiller sur lignes séparées */}
-                    <div className="flex flex-col items-center space-y-1">
-                      <div>🏠</div>
-                      {(m.cellule_ville && m.cellule_nom) ? (
-                        <div>{m.cellule_ville} - {m.cellule_nom}</div>
-                      ) : m.suivi_cellule_nom ? (
-                        <div>{m.suivi_cellule_nom}</div>
-                      ) : null}
+                   {/* Cellule / Conseiller avec emojis alignés à gauche */}
+<div className="flex flex-col items-start space-y-1 text-sm text-black-600 w-full">
+  {/* Cellule */}
+  <div>
+    <span>🏠</span> - {(m.cellule_ville && m.cellule_nom) ? `${m.cellule_ville} - ${m.cellule_nom}` : m.suivi_cellule_nom || ""}
+  </div>
 
-                      <div>👤</div>
-                      {(m.conseiller_prenom || m.conseiller_nom) && (
-                        <div>{`${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim()}</div>
-                      )}
-                    </div>
-                  </div>
+  {/* Conseiller */}
+  <div>
+    <span>👤</span> - {(m.conseiller_prenom || m.conseiller_nom) ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim() : ""}
+  </div>
+</div>
+
+
 
                   {/* ENVOYER À */}
                   <div className="mt-2 w-full">

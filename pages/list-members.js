@@ -251,22 +251,25 @@ const handleAfterSend = (updatedMember, type, cible) => {
                             <div className="flex justify-center items-center space-x-2"><span>🏙</span><span>{m.ville || "—"}</span></div>
                             <div className="flex justify-center items-center space-x-2"><span>🕊</span><span>Statut : {m.statut || "—"}</span></div>
         
-                            {/* Affichage Cellule ou Contact attribué */}
+                            {/* Affichage Cellule ou Contact attribué avec emojis */}
                               <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
                                 {m.cellule_nom && m.cellule_ville ? (
-                                  <div>
-                                    <strong>Cellule :</strong> {m.cellule_nom} - {m.cellule_ville}
+                                  <div className="flex items-center space-x-1">
+                                    <span>🏠</span>
+                                    <strong>Cellule :</strong> {m.cellule_ville} - {m.cellule_nom}
                                   </div>
                                 ) : (m.conseiller_prenom || m.conseiller_nom) ? (
-                                  <div>
+                                  <div className="flex items-center space-x-1">
+                                    <span>👤</span>
                                     <strong>Contact attribué :</strong> {`${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim()}
                                   </div>
                                 ) : (m.suivi_cellule_nom || m.suivi_responsable) ? (
-                                  <div>
+                                  <div className="flex items-center space-x-1">
+                                    <span>🏠</span>
                                     <strong>Cellule :</strong> {m.suivi_cellule_nom ? `${m.suivi_cellule_nom} - ` : ""}{m.suivi_responsable || "—"}
                                   </div>
                                 ) : null}
-                                </div>
+                              </div>
                               </div>
         
                           {/* ENVOYER À */}
@@ -338,22 +341,25 @@ const handleAfterSend = (updatedMember, type, cible) => {
                     <div className="flex justify-center items-center space-x-2"><span>📱</span><span>{m.telephone || "—"}</span></div>
                     <div className="flex justify-center items-center space-x-2"><span>🕊</span><span>Statut : {m.statut || "—"}</span></div>
 
-                   {/* Affichage Cellule ou Contact attribué */}
-                              <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
-                                {m.cellule_nom && m.cellule_ville ? (
-                                  <div>
-                                    <strong>Cellule :</strong> {m.cellule_nom} - {m.cellule_ville}
-                                  </div>
-                                ) : (m.conseiller_prenom || m.conseiller_nom) ? (
-                                  <div>
-                                    <strong>Contact attribué :</strong> {`${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim()}
-                                  </div>
-                                ) : (m.suivi_cellule_nom || m.suivi_responsable) ? (
-                                  <div>
-                                    <strong>Cellule :</strong> {m.suivi_cellule_nom ? `${m.suivi_cellule_nom} - ` : ""}{m.suivi_responsable || "—"}
-                                  </div>
-                                ) : null}
-                                </div>
+                   {/* Affichage Cellule ou Contact attribué avec emojis */}
+                      <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
+                        {m.cellule_nom && m.cellule_ville ? (
+                          <div className="flex items-center space-x-1">
+                            <span>🏠</span>
+                            <strong>Cellule :</strong> {m.cellule_ville} - {m.cellule_nom}
+                          </div>
+                        ) : (m.conseiller_prenom || m.conseiller_nom) ? (
+                          <div className="flex items-center space-x-1">
+                            <span>👤</span>
+                            <strong>Contact attribué :</strong> {`${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim()}
+                          </div>
+                        ) : (m.suivi_cellule_nom || m.suivi_responsable) ? (
+                          <div className="flex items-center space-x-1">
+                            <span>🏠</span>
+                            <strong>Cellule :</strong> {m.suivi_cellule_nom ? `${m.suivi_cellule_nom} - ` : ""}{m.suivi_responsable || "—"}
+                          </div>
+                        ) : null}
+                      </div>
                               </div>
 
 

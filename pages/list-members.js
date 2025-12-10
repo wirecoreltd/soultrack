@@ -272,8 +272,7 @@ const handleAfterSend = (updatedMember, type, cible) => {
                                   </div>
                                 ) : null}
                               </div>
-
-
+                              </div>
         
                           {/* ENVOYER À */}
                           <div className="mt-2">
@@ -364,6 +363,7 @@ const handleAfterSend = (updatedMember, type, cible) => {
                           <strong>Cellule / Responsable :</strong> {m.suivi_cellule_nom ? `${m.suivi_cellule_nom} - ` : ""}{m.suivi_responsable || "—"}
                         </div>
                       ) : null}
+                    </div>
                     </div>
 
 

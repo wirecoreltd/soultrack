@@ -37,6 +37,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   });
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -55,17 +56,19 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       }
     }
     loadData();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleCheckboxChange = (e) => {
     const { name, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: checked }));
+    setFormData((prev) => ({ ...prev, [name]: checked }));
   };
 
   const handleBesoinChange = (e) => {
@@ -73,31 +76,32 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
     if (value === "Autre") {
       setShowAutre(checked);
-      setFormData(prev => ({
-        ...prev,
-        besoin: checked ? Array.from(new Set([...prev.besoin, "Autre"])) : prev.besoin.filter(b => b !== "Autre"),
-        autreBesoin: checked ? prev.autreBesoin : "",
-      }));
+      if (!checked) {
+        setFormData((prev) => ({ ...prev, autreBesoin: "", besoin: prev.besoin.filter((b) => b !== "Autre") }));
+      } else {
+        setFormData((prev) => ({ ...prev, besoin: Array.from(new Set([...prev.besoin, "Autre"])) }));
+      }
       return;
     }
 
-    setFormData(prev => {
-      const updated = checked ? [...prev.besoin, value] : prev.besoin.filter(b => b !== value);
+    setFormData((prev) => {
+      const updated = checked ? [...prev.besoin, value] : prev.besoin.filter((b) => b !== value);
       return { ...prev, besoin: updated };
     });
   };
 
-  const toggleStar = () => setFormData(prev => ({ ...prev, star: !prev.star }));
+  const toggleStar = () => setFormData((prev) => ({ ...prev, star: !prev.star }));
 
   const handleSubmit = async () => {
     setLoading(true);
     try {
+      // Préparer le tableau final de besoins
       let finalBesoin = Array.isArray(formData.besoin) ? [...formData.besoin] : parseBesoin(formData.besoin);
       if (showAutre && formData.autreBesoin?.trim()) {
-        finalBesoin = finalBesoin.filter(b => b !== "Autre");
+        finalBesoin = finalBesoin.filter((b) => b !== "Autre");
         finalBesoin.push(formData.autreBesoin.trim());
       } else {
-        finalBesoin = finalBesoin.filter(b => b !== "Autre");
+        finalBesoin = finalBesoin.filter((b) => b !== "Autre");
       }
 
       const payload = {
@@ -114,19 +118,27 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         besoin: JSON.stringify(finalBesoin),
       };
 
-      const { data, error } = await supabase
-        .from("membres")
-        .update(payload)
+      // 🔹 Mise à jour dans la table membres
+      const { error: updateError } = await supabase.from("membres").update(payload).eq("id", member.id);
+      if (updateError) throw updateError;
+
+      // 🔹 Récupérer le membre complet depuis la vue v_membres_full
+      const { data: fullMember, error: fetchError } = await supabase
+        .from("v_membres_full")
+        .select("*")
         .eq("id", member.id)
-        .select()
         .single();
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
-      // 🔹 Mise à jour instantanée dans le parent
-      if (onUpdateMember) onUpdateMember(data);
+      // 🔹 Passer le membre complet au parent pour mise à jour instantanée
+      if (onUpdateMember) onUpdateMember(fullMember);
 
-      onClose(); // Fermeture immédiate
+      setSuccess(true);
+      setTimeout(() => {
+        setSuccess(false);
+        onClose();
+      }, 900);
     } catch (err) {
       console.error("Erreur handleSubmit EditMemberPopup:", err);
       alert("❌ Une erreur est survenue.");
@@ -148,14 +160,11 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           <input type="text" name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input"/>
           <input type="text" name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input"/>
           <input type="text" name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={handleChange} className="input"/>
-
           <label className="flex items-center gap-2">
             <input type="checkbox" name="is_whatsapp" checked={!!formData.is_whatsapp} onChange={handleCheckboxChange} />
             WhatsApp
           </label>
-
           <input type="text" name="ville" placeholder="Ville" value={formData.ville} onChange={handleChange} className="input"/>
-
           <select name="statut" value={formData.statut} onChange={handleChange} className="input">
             <option value="">-- Statut --</option>
             <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
@@ -165,12 +174,10 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             <option value="ancien">Ancien</option>
             <option value="Integrer">Intégrer</option>
           </select>
-
           <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input">
             <option value="">-- Cellule --</option>
             {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule}</option>)}
           </select>
-
           <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
             <option value="">-- Conseiller --</option>
             {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
@@ -201,6 +208,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               {loading ? "Enregistrement..." : "Sauvegarder"}
             </button>
           </div>
+
+          {success && <p className="text-green-600 font-semibold text-center mt-3">✔️ Modifié avec succès !</p>}
         </div>
 
         <style jsx>{`

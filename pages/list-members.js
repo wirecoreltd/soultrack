@@ -126,73 +126,57 @@ export default function ListMembers() {
 
   // -------------------- Realtime subscription --------------------
   useEffect(() => {
-  // cleanup si existant
-  if (realtimeChannelRef.current) {
-    try {
-      realtimeChannelRef.current.unsubscribe();
-    } catch (e) {
-      // ignore
-    }
-    realtimeChannelRef.current = null;
-  }
-
-  const channel = supabase.channel("realtime:v_membres_full_and_related");
-
-  // Quand la table membres change → re-fetch la view complète
-  channel.on(
-    "postgres_changes",
-    { event: "*", schema: "public", table: "membres" },
-    (payload) => {
-      // console.debug("membres change", payload);
-      fetchMembers();
-    }
-  );
-
-  // Si ta view utilise cellules (cellules / responsable)
-  channel.on(
-    "postgres_changes",
-    { event: "*", schema: "public", table: "cellules" },
-    (payload) => {
-      // console.debug("cellules change", payload);
-      fetchCellules(); // on rafraîchit la liste des cellules localement aussi
-      fetchMembers();
-    }
-  );
-
-  // Si ta view joint profiles (conseillers / responsables)
-  channel.on(
-    "postgres_changes",
-    { event: "*", schema: "public", table: "profiles" },
-    (payload) => {
-      // console.debug("profiles change", payload);
-      fetchConseillers(); // rafraîchit la liste des conseillers locales
-      fetchMembers();
-    }
-  );
-
-  // Ajoute d'autres tables si ta view en dépend (ex: suivis, suivis_hist, etc.)
-  // Ex:
-  // channel.on("postgres_changes", { event: "*", schema: "public", table: "suivis" }, () => fetchMembers());
-
-  channel.subscribe().catch((err) => {
-    console.warn("Erreur subscription realtime:", err);
-  });
-
-  realtimeChannelRef.current = channel;
-
-  return () => {
-    try {
-      if (realtimeChannelRef.current) {
+    if (realtimeChannelRef.current) {
+      try {
         realtimeChannelRef.current.unsubscribe();
-        realtimeChannelRef.current = null;
-      }
-    } catch (e) {
-      // ignore
+      } catch (e) {}
+      realtimeChannelRef.current = null;
     }
-  };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, []); // run once on mount
 
+    const channel = supabase.channel("realtime:v_membres_full_and_related");
+
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "membres" },
+      () => fetchMembers()
+    );
+
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "cellules" },
+      () => {
+        fetchCellules();
+        fetchMembers();
+      }
+    );
+
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "profiles" },
+      () => {
+        fetchConseillers();
+        fetchMembers();
+      }
+    );
+
+    // subscription avec gestion d'erreur
+    try {
+      channel.subscribe();
+    } catch (err) {
+      console.warn("Erreur subscription realtime:", err);
+    }
+
+    realtimeChannelRef.current = channel;
+
+    return () => {
+      try {
+        if (realtimeChannelRef.current) {
+          realtimeChannelRef.current.unsubscribe();
+          realtimeChannelRef.current = null;
+        }
+      } catch (e) {}
+    };
+  }, []);
 
   // -------------------- UTILS --------------------
   const updateMemberLocally = (id, extra = {}) => {
@@ -358,16 +342,12 @@ export default function ListMembers() {
                           value={statusChanges[m.id] ?? m.statut ?? ""}
                           onChange={async (e) => {
                             const newStatus = e.target.value;
-                            // immediate local update
                             updateMemberLocally(m.id, { statut: newStatus });
                             setStatusChanges((prev) => ({ ...prev, [m.id]: newStatus }));
-
-                            // persist to DB
                             try {
                               const { error } = await supabase.from("membres").update({ statut: newStatus }).eq("id", m.id);
                               if (error) throw error;
                               showToast("✅ Statut mis à jour");
-                              // we rely on realtime to sync other clients; we already updated locally
                             } catch (err) {
                               console.error("Erreur update statut:", err);
                               showToast("❌ Erreur mise à jour statut");
@@ -428,7 +408,6 @@ export default function ListMembers() {
                                     : conseillers.find((c) => c.id === selectedTargets[m.id])
                                 }
                                 onEnvoyer={async (id) => {
-                                  // local update for immediate feedback
                                   const type = selectedTargetType[m.id];
                                   const cibleItem =
                                     type === "cellule"
@@ -444,7 +423,6 @@ export default function ListMembers() {
                                   }
                                   updateMemberLocally(id, update);
 
-                                  // persist
                                   try {
                                     const { error } = await supabase.from("membres").update(update).eq("id", id);
                                     if (error) throw error;
@@ -503,7 +481,13 @@ export default function ListMembers() {
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
               <h3 className="text-white text-lg mb-3 font-semibold">
-                <span style={{ background: "linear-gradient(to right, #3B82F6, #D1D5DB)", WebkitBackgroundClip: "text", color: "transparent" }}>
+                <span
+                  style={{
+                    background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                    WebkitBackgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
                   Membres existants
                 </span>
               </h3>
@@ -676,7 +660,6 @@ export default function ListMembers() {
           member={editMember}
           onClose={() => setEditMember(null)}
           onUpdated={(updatedMember) => {
-            // updateMemberLocally expects id + extra; if backend returns full object, replace
             if (updatedMember?.id) updateMemberLocally(updatedMember.id, updatedMember);
             setEditMember(null);
             showToast("✅ Membre mis à jour");

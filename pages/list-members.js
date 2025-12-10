@@ -260,9 +260,12 @@ const handleAfterSend = (updatedMember, type, cible) => {
                             {/* Contact attribué */}
                             <div>
                               <strong>Contact attribué :</strong>{" "}
-                              {!m.cellule_nom && m.conseiller_nom ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}` : ""}
+                              {!m.cellule_nom && (m.conseiller_prenom || m.conseiller_nom) 
+                                ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}` 
+                                : ""}
                             </div>
                           </div>
+
 
 
                           <div className="text-sm text-gray-700">
@@ -353,9 +356,12 @@ const handleAfterSend = (updatedMember, type, cible) => {
                             {/* Contact attribué */}
                             <div>
                               <strong>Contact attribué :</strong>{" "}
-                              {!m.cellule_nom && m.conseiller_nom ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}` : ""}
+                              {!m.cellule_nom && (m.conseiller_prenom || m.conseiller_nom) 
+                                ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}` 
+                                : ""}
                             </div>
                           </div>
+
 
                           <div className="text-sm text-gray-700">
                             <strong>Contact attribué :</strong>{" "}

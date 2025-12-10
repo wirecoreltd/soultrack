@@ -37,7 +37,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   });
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -74,11 +73,11 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
     if (value === "Autre") {
       setShowAutre(checked);
-      if (!checked) {
-        setFormData(prev => ({ ...prev, autreBesoin: "", besoin: prev.besoin.filter(b => b !== "Autre") }));
-      } else {
-        setFormData(prev => ({ ...prev, besoin: Array.from(new Set([...prev.besoin, "Autre"])) }));
-      }
+      setFormData(prev => ({
+        ...prev,
+        besoin: checked ? Array.from(new Set([...prev.besoin, "Autre"])) : prev.besoin.filter(b => b !== "Autre"),
+        autreBesoin: checked ? prev.autreBesoin : "",
+      }));
       return;
     }
 
@@ -127,11 +126,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       // 🔹 Mise à jour instantanée dans le parent
       if (onUpdateMember) onUpdateMember(data);
 
-      setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        onClose();
-      }, 900);
+      onClose(); // Fermeture immédiate
     } catch (err) {
       console.error("Erreur handleSubmit EditMemberPopup:", err);
       alert("❌ Une erreur est survenue.");
@@ -206,8 +201,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               {loading ? "Enregistrement..." : "Sauvegarder"}
             </button>
           </div>
-
-          {success && <p className="text-green-600 font-semibold text-center mt-3">✔️ Modifié avec succès !</p>}
         </div>
 
         <style jsx>{`

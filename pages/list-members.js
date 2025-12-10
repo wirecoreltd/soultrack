@@ -265,6 +265,7 @@ const handleAfterSend = (updatedMember, type, cible) => {
                                   : m.suivi_responsable}
                               </div>
                             ) : null}
+                              </div>
 
                           <div className="text-sm text-gray-700">
                             <strong>Contact attribué :</strong>{" "}
@@ -358,6 +359,7 @@ const handleAfterSend = (updatedMember, type, cible) => {
                                   : m.suivi_responsable}
                               </div>
                             ) : null}
+                              </div>
                           <div className="text-sm text-gray-700">
                             <strong>Contact attribué :</strong>{" "}
                             {m.conseiller_prenom

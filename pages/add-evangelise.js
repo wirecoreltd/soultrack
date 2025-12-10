@@ -174,11 +174,6 @@ export default function AddEvangelise() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg relative">
 
-        {/* Retour */}
-        <button onClick={() => router.back()} className="absolute top-4 left-4 text-black hover:text-gray-800 transition">
-          ← Retour
-        </button>
-
         {/* Logo */}
         <div className="flex justify-center mb-6">
           <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />

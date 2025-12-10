@@ -260,7 +260,8 @@ const handleAfterSend = (updatedMember, type, cible) => {
                               <div>
                                 <strong>Contact attribué :</strong>{" "}
                                 {!m.cellule_nom && m.conseiller_nom ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}` : ""}
-                              </div>                         
+                              </div>   
+                                </div>
 
                           <div className="text-sm text-gray-700">
                             <strong>Contact attribué :</strong>{" "}
@@ -351,6 +352,7 @@ const handleAfterSend = (updatedMember, type, cible) => {
                                 <strong>Contact attribué :</strong>{" "}
                                 {!m.cellule_nom && m.conseiller_nom ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}` : ""}
                               </div>
+                                </div>
 
                           <div className="text-sm text-gray-700">
                             <strong>Contact attribué :</strong>{" "}

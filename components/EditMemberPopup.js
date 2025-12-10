@@ -149,8 +149,11 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         </div>
 
         <div className="flex flex-col gap-4">
+           <label className="block font-medium">Prénom :</label>
           <input type="text" name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input"/>
+           <label className="block font-medium">Nom :</label>
           <input type="text" name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input"/>
+          <label className="block font-medium">Téléphone :</label>
           <input type="text" name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={handleChange} className="input"/>
           <label className="flex items-center gap-2">
             <input type="checkbox" name="is_whatsapp" checked={!!formData.is_whatsapp} onChange={handleCheckboxChange} />

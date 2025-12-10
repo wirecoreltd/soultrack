@@ -83,6 +83,15 @@ export default function ListMembers() {
       setLoading(false);
     }
   };
+// -------------------- CALLBACK après envoi --------------------
+const handleAfterSend = (updatedMember, type, cible) => {
+  // Met à jour le membre localement
+  updateMemberLocally(updatedMember.id, updatedMember);
+
+  // Affiche un toast
+  const cibleName = type === "cellule" ? cible.cellule : `${cible.prenom} ${cible.nom}`;
+  showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
+};
 
   const fetchCellules = async () => {
     const { data } = await supabase.from("cellules").select("id, cellule, responsable, telephone");

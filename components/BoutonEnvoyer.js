@@ -12,6 +12,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
     setLoading(true);
     try {
+      // Vérifier si le membre existe déjà dans suivis_membres
       const { data: existing, error: selectError } = await supabase
         .from("suivis_membres")
         .select("*")
@@ -24,6 +25,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         return;
       }
 
+      // Préparer l'objet à insérer
       const suiviData = {
         membre_id: membre.id,
         prenom: membre.prenom,
@@ -38,18 +40,19 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       };
 
       if (type === "cellule") {
-        suiviData.cellule_id = cible.id;
-        suiviData.cellule_nom = cible.cellule;
-        suiviData.responsable = cible.responsable || null;
-      } else {
-        suiviData.conseiller_id = cible.id;
-        suiviData.responsable = `${cible.prenom || ""} ${cible.nom || ""}`.trim();
+        suiviData.cellule_id = cible?.id || null;
+        suiviData.cellule_nom = cible?.cellule || "—";
+        suiviData.responsable = cible?.responsable || "—";
+      } else if (type === "conseiller") {
+        suiviData.conseiller_id = cible?.id || null;
+        suiviData.responsable = `${cible?.prenom || ""} ${cible?.nom || ""}`.trim() || "—";
       }
 
-      const { error: insertError } = await supabase.from("suivis_membres").insert([suiviData]);
+      // Inserer le suivi
+      const { data: insertedData, error: insertError } = await supabase.from("suivis_membres").insert([suiviData]).select().single();
       if (insertError) throw insertError;
 
-      // 🔹 Mise à jour instantanée du membre
+      // Mise à jour du membre en local (statut)
       const { data: updatedMember, error: updateMemberError } = await supabase
         .from("membres")
         .update({ statut: "ancien" })
@@ -63,9 +66,9 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       if (showToast) showToast(`✅ ${membre.prenom} ${membre.nom} envoyé à ${type === "cellule" ? cible.cellule : `${cible.prenom} ${cible.nom}`}`);
 
       // Message WhatsApp
-      const phone = (cible.telephone || "").replace(/\D/g, "");
+      const phone = (cible?.telephone || "").replace(/\D/g, "");
       if (phone) {
-        let message = `👋 Bonjour ${cible.responsable || (cible.prenom || "")} !\n\n`;
+        let message = `👋 Bonjour ${cible?.responsable || (cible?.prenom || "")} !\n\n`;
         message += `- 👤 Nom: ${membre.prenom} ${membre.nom}\n`;
         message += `- 📱 Téléphone: ${membre.telephone || "—"}\n`;
         message += `- 🏙 Ville: ${membre.ville || "—"}\n`;
@@ -73,7 +76,6 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         message += "Merci pour ton accompagnement ❤️";
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
       }
-
     } catch (err) {
       console.error("Erreur sendToWhatsapp:", err);
       alert("❌ Une erreur est survenue lors de l'envoi.");

@@ -126,63 +126,73 @@ export default function ListMembers() {
 
   // -------------------- Realtime subscription --------------------
   useEffect(() => {
-    // If supabase client supports channel API (v2)
+  // cleanup si existant
+  if (realtimeChannelRef.current) {
     try {
-      // unsubscribe previous if exists
+      realtimeChannelRef.current.unsubscribe();
+    } catch (e) {
+      // ignore
+    }
+    realtimeChannelRef.current = null;
+  }
+
+  const channel = supabase.channel("realtime:v_membres_full_and_related");
+
+  // Quand la table membres change → re-fetch la view complète
+  channel.on(
+    "postgres_changes",
+    { event: "*", schema: "public", table: "membres" },
+    (payload) => {
+      // console.debug("membres change", payload);
+      fetchMembers();
+    }
+  );
+
+  // Si ta view utilise cellules (cellules / responsable)
+  channel.on(
+    "postgres_changes",
+    { event: "*", schema: "public", table: "cellules" },
+    (payload) => {
+      // console.debug("cellules change", payload);
+      fetchCellules(); // on rafraîchit la liste des cellules localement aussi
+      fetchMembers();
+    }
+  );
+
+  // Si ta view joint profiles (conseillers / responsables)
+  channel.on(
+    "postgres_changes",
+    { event: "*", schema: "public", table: "profiles" },
+    (payload) => {
+      // console.debug("profiles change", payload);
+      fetchConseillers(); // rafraîchit la liste des conseillers locales
+      fetchMembers();
+    }
+  );
+
+  // Ajoute d'autres tables si ta view en dépend (ex: suivis, suivis_hist, etc.)
+  // Ex:
+  // channel.on("postgres_changes", { event: "*", schema: "public", table: "suivis" }, () => fetchMembers());
+
+  channel.subscribe().catch((err) => {
+    console.warn("Erreur subscription realtime:", err);
+  });
+
+  realtimeChannelRef.current = channel;
+
+  return () => {
+    try {
       if (realtimeChannelRef.current) {
         realtimeChannelRef.current.unsubscribe();
         realtimeChannelRef.current = null;
       }
-
-      const channel = supabase
-  .channel("public:membres_changes")
-  .on(
-    "postgres_changes",
-    { event: "*", schema: "public", table: "v_membres_full" },
-    (payload) => {
-      const type = payload.eventType || payload.type || payload.event;
-      const newRow = payload.new ?? payload.record ?? null;
-      const oldRow = payload.old ?? payload.old_record ?? null;
-
-      if (type === "INSERT") {
-        if (newRow)
-          setMembers((prev) =>
-            prev.some((p) => p.id === newRow.id) ? prev : [newRow, ...prev]
-          );
-      }
-      if (type === "UPDATE") {
-        if (newRow)
-          setMembers((prev) =>
-            prev.map((m) => (m.id === newRow.id ? { ...m, ...newRow } : m))
-          );
-      }
-      if (type === "DELETE") {
-        if (oldRow)
-          setMembers((prev) => prev.filter((m) => m.id !== oldRow.id));
-      }
+    } catch (e) {
+      // ignore
     }
-  )
-  .subscribe();
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []); // run once on mount
 
-
-      realtimeChannelRef.current = channel;
-
-      return () => {
-        try {
-          if (realtimeChannelRef.current) {
-            realtimeChannelRef.current.unsubscribe();
-            realtimeChannelRef.current = null;
-          }
-        } catch (e) {
-          // ignore
-        }
-      };
-    } catch (err) {
-      // If channel API isn't available, ignore and continue (app will still fetch on load and update locally)
-      console.warn("Realtime subscription error (non-fatal):", err);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // once on mount
 
   // -------------------- UTILS --------------------
   const updateMemberLocally = (id, extra = {}) => {

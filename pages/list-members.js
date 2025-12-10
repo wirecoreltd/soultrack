@@ -251,23 +251,21 @@ const handleAfterSend = (updatedMember, type, cible) => {
                           <div className="flex justify-center items-center space-x-2"><span>🏙</span><span>{m.ville || "—"}</span></div>
                           <div className="flex justify-center items-center space-x-2"><span>🕊</span><span>Statut : {m.statut || "—"}</span></div>
                           <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
-                            {/* Cellule */}
-                            {m.cellule_nom && (
+                          {/* Cellule */}
+                          {/* Affichage Cellule ou Contact attribué */}
+                            {m.cellule_nom ? (
                               <div>
                                 <strong>Cellule :</strong> {m.cellule_nom} - {m.responsable_cellule}
                               </div>
-                            )}
-                          
-                            {/* Contact attribué uniquement si pas de cellule */}
-                            {!m.cellule_nom && (m.conseiller_prenom || m.conseiller_nom || m.suivi_responsable) && (
+                            ) : (m.conseiller_prenom || m.conseiller_nom || m.suivi_responsable) ? (
                               <div>
                                 <strong>Contact attribué :</strong>{" "}
                                 {m.conseiller_prenom || m.conseiller_nom
                                   ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`
                                   : m.suivi_responsable}
                               </div>
-                            )}
-                          </div>
+                            ) : null}
+
                           <div className="text-sm text-gray-700">
                             <strong>Contact attribué :</strong>{" "}
                             {m.conseiller_prenom
@@ -346,24 +344,20 @@ const handleAfterSend = (updatedMember, type, cible) => {
                         <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
                           <div className="flex justify-center items-center space-x-2"><span>📱</span><span>{m.telephone || "—"}</span></div>
                           <div className="flex justify-center items-center space-x-2"><span>🕊</span><span>Statut : {m.statut || "—"}</span></div>
-                          <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
-                            {/* Cellule */}
-                            {m.cellule_nom && (
+                          {/* Cellule */}
+                          {/* Affichage Cellule ou Contact attribué */}
+                            {m.cellule_nom ? (
                               <div>
                                 <strong>Cellule :</strong> {m.cellule_nom} - {m.responsable_cellule}
                               </div>
-                            )}
-                          
-                            {/* Contact attribué uniquement si pas de cellule */}
-                            {!m.cellule_nom && (m.conseiller_prenom || m.conseiller_nom || m.suivi_responsable) && (
+                            ) : (m.conseiller_prenom || m.conseiller_nom || m.suivi_responsable) ? (
                               <div>
                                 <strong>Contact attribué :</strong>{" "}
                                 {m.conseiller_prenom || m.conseiller_nom
                                   ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`
                                   : m.suivi_responsable}
                               </div>
-                            )}
-                          </div>
+                            ) : null}
                           <div className="text-sm text-gray-700">
                             <strong>Contact attribué :</strong>{" "}
                             {m.conseiller_prenom

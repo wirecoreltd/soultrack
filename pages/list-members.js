@@ -377,7 +377,6 @@ const handleAfterSend = (updatedMember, type, cible) => {
       </>
     )}
   </div>
-</div>
 
 
                   {/* ENVOYER À */}

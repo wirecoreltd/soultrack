@@ -262,8 +262,7 @@ const handleAfterSend = (updatedMember, type, cible) => {
                                     <strong>Contact attribué :</strong> {`${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`}
                                   </div>
                                 ) : null}
-                              </div>
-                            </div>
+                              </div>                            
 
                           <div className="text-sm text-gray-700">
                             <strong>Contact attribué :</strong>{" "}
@@ -354,8 +353,7 @@ const handleAfterSend = (updatedMember, type, cible) => {
                                 <div>
                                   <strong>Contact attribué :</strong> {`${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`}
                                 </div>
-                              ) : null}
-                            </div>
+                              ) : null}                            
                           </div>
 
                           <div className="text-sm text-gray-700">

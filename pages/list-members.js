@@ -135,39 +135,35 @@ export default function ListMembers() {
       }
 
       const channel = supabase
-        .channel("public:membres_changes")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "membres" },
-          (payload) => {
-            // payload contains eventType (INSERT, UPDATE, DELETE) in payload.eventType for some versions,
-            // but to be safe check payload.eventType or payload.type or payload.event.
-            const type = payload.eventType || payload.type || payload.event;
-            // New/Updated row
-            const newRow = payload.new ?? payload.record ?? null;
-            const oldRow = payload.old ?? payload.old_record ?? null;
+  .channel("public:membres_changes")
+  .on(
+    "postgres_changes",
+    { event: "*", schema: "public", table: "v_membres_full" },
+    (payload) => {
+      const type = payload.eventType || payload.type || payload.event;
+      const newRow = payload.new ?? payload.record ?? null;
+      const oldRow = payload.old ?? payload.old_record ?? null;
 
-            if (type === "INSERT" || type === "insert") {
-              if (newRow) setMembers((prev) => {
-                // avoid duplicate if already present
-                if (prev.some((p) => p.id === newRow.id)) return prev;
-                return [newRow, ...prev];
-              });
-            } else if (type === "UPDATE" || type === "update") {
-              if (newRow) {
-                setMembers((prev) => prev.map((m) => (m.id === newRow.id ? { ...m, ...newRow } : m)));
-              }
-            } else if (type === "DELETE" || type === "delete") {
-              if (oldRow) setMembers((prev) => prev.filter((m) => m.id !== oldRow.id));
-            } else {
-              // fallback: if payload contains .new and .old, treat accordingly
-              if (newRow && !oldRow) {
-                if (!members.some((p) => p.id === newRow.id)) setMembers((prev) => [newRow, ...prev]);
-              }
-            }
-          }
-        )
-        .subscribe();
+      if (type === "INSERT") {
+        if (newRow)
+          setMembers((prev) =>
+            prev.some((p) => p.id === newRow.id) ? prev : [newRow, ...prev]
+          );
+      }
+      if (type === "UPDATE") {
+        if (newRow)
+          setMembers((prev) =>
+            prev.map((m) => (m.id === newRow.id ? { ...m, ...newRow } : m))
+          );
+      }
+      if (type === "DELETE") {
+        if (oldRow)
+          setMembers((prev) => prev.filter((m) => m.id !== oldRow.id));
+      }
+    }
+  )
+  .subscribe();
+
 
       realtimeChannelRef.current = channel;
 

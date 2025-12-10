@@ -255,19 +255,21 @@ const handleAfterSend = (updatedMember, type, cible) => {
                             <div className="flex justify-center items-center space-x-2"><span>🕊</span><span>Statut : {m.statut || "—"}</span></div>
         
                             {/* Affichage Cellule ou Contact attribué */}
-                            {m.cellule_nom ? (
-                              <div>
-                                <strong>Cellule :</strong> {m.cellule_nom} - {m.responsable_cellule}
+                              <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
+                                {m.cellule_nom ? (
+                                  <div>
+                                    <strong>Cellule :</strong> {m.cellule_nom} - {m.responsable_cellule}
+                                  </div>
+                                ) : (m.conseiller_prenom || m.conseiller_nom || m.suivi_responsable) ? (
+                                  <div>
+                                    <strong>Contact attribué :</strong>{" "}
+                                    {m.conseiller_prenom || m.conseiller_nom
+                                      ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`
+                                      : m.suivi_responsable}
+                                  </div>
+                                ) : null}
                               </div>
-                            ) : (m.conseiller_prenom || m.conseiller_nom || m.suivi_responsable) ? (
-                              <div>
-                                <strong>Contact attribué :</strong>{" "}
-                                {m.conseiller_prenom || m.conseiller_nom
-                                  ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`
-                                  : m.suivi_responsable}
-                              </div>
-                            ) : null}
-                          </div>
+
         
                           {/* ENVOYER À */}
                           <div className="mt-2">
@@ -339,20 +341,21 @@ const handleAfterSend = (updatedMember, type, cible) => {
                             <div className="flex justify-center items-center space-x-2"><span>🕊</span><span>Statut : {m.statut || "—"}</span></div>
         
                             {/* Affichage Cellule ou Contact attribué */}
-                            {m.cellule_nom ? (
-                              <div>
-                                <strong>Cellule :</strong> {m.cellule_nom} - {m.responsable_cellule}
-                              </div>
-                            ) : (m.conseiller_prenom || m.conseiller_nom || m.suivi_responsable) ? (
-                              <div>
-                                <strong>Contact attribué :</strong>{" "}
-                                {m.conseiller_prenom || m.conseiller_nom
-                                  ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`
-                                  : m.suivi_responsable}
-                              </div>
-                            ) : null}
-                          </div>
-        
+                              <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
+                                {m.cellule_nom ? (
+                                  <div>
+                                    <strong>Cellule :</strong> {m.cellule_nom} - {m.responsable_cellule}
+                                  </div>
+                                ) : (m.conseiller_prenom || m.conseiller_nom || m.suivi_responsable) ? (
+                                  <div>
+                                    <strong>Contact attribué :</strong>{" "}
+                                    {m.conseiller_prenom || m.conseiller_nom
+                                      ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`
+                                      : m.suivi_responsable}
+                                  </div>
+                                ) : null}
+                              </div>                              
+                                      
                           {/* ENVOYER À (identique aux nouveaux) */}
                           <div className="mt-2">
                             <label className="font-semibold text-sm">Envoyer à :</label>

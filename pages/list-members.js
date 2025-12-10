@@ -244,6 +244,39 @@ export default function ListMembers() {
                           <div className="flex justify-center items-center space-x-2"><span>🏠</span><span>Cellule : {m.cellule_nom || "—"}{m.responsable_prenom ? ` - ${m.responsable_prenom} ${m.responsable_nom}` : ""}</span></div>
                           <div className="flex justify-center items-center space-x-2"><span>👤</span><span>Conseiller : {m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</span></div>
                         </div>
+                        {/* ENVOYER À */}
+                        <div className="mt-2">
+                          <label className="font-semibold text-sm">Envoyer à :</label>
+                          <select value={selectedTargetType[m.id] || ""} onChange={(e) => setSelectedTargetType((prev) => ({ ...prev, [m.id]: e.target.value }))} className="mt-1 w-full border rounded px-2 py-1 text-sm">
+                            <option value="">-- Choisir une option --</option>
+                            <option value="cellule">Une Cellule</option>
+                            <option value="conseiller">Un Conseiller</option>
+                          </select>
+
+                          {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
+                            <select value={selectedTargets[m.id] || ""} onChange={(e) => setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))} className="mt-1 w-full border rounded px-2 py-1 text-sm">
+                              <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
+                              {selectedTargetType[m.id] === "cellule"
+                                ? cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>)
+                                : conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)
+                              }
+                            </select>
+                          )}
+
+                          {selectedTargets[m.id] && (
+                            <div className="pt-2">
+                              <BoutonEnvoyer
+                                membre={m}
+                                type={selectedTargetType[m.id]}
+                                cible={selectedTargetType[m.id] === "cellule" ? cellules.find((c) => c.id === selectedTargets[m.id]) : conseillers.find((c) => c.id === selectedTargets[m.id])}
+                                onEnvoyer={(id) => handleAfterSend(id, selectedTargetType[m.id], selectedTargetType[m.id] === "cellule" ? cellules.find((c) => c.id === selectedTargets[m.id]) : conseillers.find((c) => c.id === selectedTargets[m.id]))}
+                                session={session}
+                                showToast={showToast}
+                              />
+                            </div>
+                          )}
+                        </div>
+
 
                         <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">{isOpen ? "Fermer détails" : "Détails"}</button>
 

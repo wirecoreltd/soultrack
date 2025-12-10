@@ -420,46 +420,109 @@ export default function ListMembers() {
         </div>
       )}
 
-      {/* ==================== Vue Table ==================== */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-          <table className="w-full text-sm text-left border-separate border-spacing-0">
-            <thead className="bg-gray-200 text-black-800 text-sm uppercase">
-              <tr>
-                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-                <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Statut</th>
-                <th className="px-4 py-2">Attribué à</th>
-                <th className="px-4 py-2 rounded-tr-lg">Actions</th>
+      {/* ==================== VUE TABLE ==================== */}
+{view === "table" && (
+  <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+    <table className="w-full text-sm text-left border-separate border-spacing-0">
+      <thead className="bg-gray-200 text-black-800 text-sm uppercase">
+        <tr>
+          <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+          <th className="px-4 py-2">Téléphone</th>
+          <th className="px-4 py-2">Statut</th>
+          <th className="px-4 py-2">Cellule</th>
+          <th className="px-4 py-2">Conseiller</th>
+          <th className="px-4 py-2 rounded-tr-lg">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {/* Nouveaux Membres */}
+        {nouveauxFiltres.length > 0 && (
+          <tr>
+            <td colSpan={6} className="px-4 py-2 text-white font-semibold">
+              💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+            </td>
+          </tr>
+        )}
+        {nouveauxFiltres.map((m) => (
+          <tr key={m.id} className="border-b border-gray-300">
+            <td
+              className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white"
+              style={{ borderLeftColor: getBorderColor(m) }}
+            >
+              {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+              <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
+            </td>
+            <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
+            <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
+            <td className="px-4 py-2 text-white">{m.cellule_nom ? `${m.cellule_nom} (${m.cellule_ville || "—"})` : "—"}</td>
+            <td className="px-4 py-2 text-white">{m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</td>
+            <td className="px-4 py-2 flex items-center gap-2">
+              <button
+                onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
+                className="text-orange-500 underline text-sm"
+              >
+                {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+              </button>
+              <button
+                onClick={() => setEditMember(m)}
+                className="text-blue-600 underline text-sm"
+              >
+                Modifier
+              </button>
+            </td>
+          </tr>
+        ))}
+
+        {/* Anciens Membres */}
+        {anciensFiltres.length > 0 && (
+          <>
+            <tr>
+              <td colSpan={6} className="px-4 py-2 font-semibold text-lg text-white">
+                <span
+                  style={{
+                    background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                    WebkitBackgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
+                  Membres existants
+                </span>
+              </td>
+            </tr>
+            {anciensFiltres.map((m) => (
+              <tr key={m.id} className="border-b border-gray-300">
+                <td
+                  className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white"
+                  style={{ borderLeftColor: getBorderColor(m) }}
+                >
+                  {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                </td>
+                <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
+                <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
+                <td className="px-4 py-2 text-white">{m.cellule_nom ? `${m.cellule_nom} (${m.cellule_ville || "—"})` : "—"}</td>
+                <td className="px-4 py-2 text-white">{m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</td>
+                <td className="px-4 py-2 flex items-center gap-2">
+                  <button
+                    onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
+                    className="text-orange-500 underline text-sm"
+                  >
+                    {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                  </button>
+                  <button
+                    onClick={() => setEditMember(m)}
+                    className="text-blue-600 underline text-sm"
+                  >
+                    Modifier
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {members.map((m) => (
-                <tr key={m.id} className="border-b border-gray-300">
-                  <td className="px-4 py-2">{m.prenom} {m.nom}</td>
-                  <td className="px-4 py-2">{m.telephone || "—"}</td>
-                  <td className="px-4 py-2">{m.statut || "—"}</td>
-                  <td className="px-4 py-2">{(m.conseiller_prenom || m.conseiller_nom) ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim() : ""}</td>
-                  <td className="px-4 py-2 flex items-center gap-2">
-                    <button
-                      onClick={() => setPopupMember(m)}
-                      className="text-orange-500 underline text-sm"
-                    >
-                      Détails
-                    </button>
-                    <button
-                      onClick={() => setEditMember(m)}
-                      className="text-blue-600 underline text-sm"
-                    >
-                      Modifier
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            ))}
+          </>
+        )}
+      </tbody>
+    </table>
+  </div>
+)}
 
       {/* ==================== Popups ==================== */}
       {editMember && (

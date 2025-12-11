@@ -74,19 +74,16 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
       const phone = (cible?.telephone || "").replace(/\D/g, "");
       if (phone) {
-        let message = `👋 Bonjour ${cible?.responsable || (cible?.prenom || "")} !\n\n`;
-          message += `✨ Un nouveau membre est placé sous tes soins pour être accompagné et encouragé.\n\n`;
-          
+          let message = `👋 Bonjour ${cible?.responsable || (cible?.prenom || "")} !\n\n`;
+          message += `✨ Un nouveau membre est placé sous tes soins pour être accompagné et encouragé.\n\n`;          
           message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
           message += `⚥ Sexe: ${membre.sexe || "—"}\n`;
           message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
           message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
           message += `🏙 Ville: ${membre.ville || "—"}\n`;
           message += `🙏 Besoin: ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}\n`;
-          message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;
-          
-          message += "Merci pour ton accompagnement et ta bienveillance ❤️";
-                
+          message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;          
+          message += "Merci pour ton accompagnement et ta bienveillance ❤️";                
 
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
       }

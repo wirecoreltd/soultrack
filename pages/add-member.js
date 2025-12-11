@@ -14,14 +14,14 @@ export default function AddMember() {
   const { token } = router.query;
 
   const [formData, setFormData] = useState({
+    sexe: "", // ajouté
     nom: "",
     prenom: "",
     telephone: "",
     ville: "",
     statut: "nouveau",
-    sexe,
     venu: "",
-    besoin: "",
+    besoin: [],
     autreBesoin: "",
     is_whatsapp: false,
     infos_supplementaires: "",
@@ -99,14 +99,15 @@ export default function AddMember() {
       setTimeout(() => setSuccess(false), 3000);
 
       setFormData({
+        sexe: "", // reset sexe
+        sexe: "", // reset sexe
         nom: "",
         prenom: "",
         telephone: "",
         ville: "",
         statut: "nouveau",
-        sexe: "",
         venu: "",
-        besoin: "",
+        besoin: [],
         autreBesoin: "",
         is_whatsapp: false,
         infos_supplementaires: "",
@@ -124,9 +125,8 @@ export default function AddMember() {
       telephone: "",
       ville: "",
       statut: "nouveau",
-      sexe:"",
       venu: "",
-      besoin: "",
+      besoin: [],
       autreBesoin: "",
       is_whatsapp: false,
       infos_supplementaires: "",
@@ -160,14 +160,13 @@ export default function AddMember() {
           <input type="text" placeholder="Prénom" value={formData.prenom} onChange={(e)=>setFormData({...formData, prenom:e.target.value})} className="input" required />
           <input type="text" placeholder="Nom" value={formData.nom} onChange={(e)=>setFormData({...formData, nom:e.target.value})} className="input" required />
           <input type="text" placeholder="Téléphone" value={formData.telephone} onChange={(e)=>setFormData({...formData, telephone:e.target.value})} className="input" required />
-          {/* Sexe */}
-          <select className="input" value={formData.sexe}
-            onChange={(e) => setFormData({ ...formData, sexe: e.target.value })} required>
-            <option value="">Sexe</option>
+          <input type="text" placeholder="Ville" value={formData.ville} onChange={(e)=>setFormData({...formData, ville:e.target.value})} className="input" />
+
+          <select value={formData.sexe} onChange={(e)=>setFormData({...formData, sexe:e.target.value})} className="input">
+            <option value="">-- Sexe --</option>
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
           </select>
-          <input type="text" placeholder="Ville" value={formData.ville} onChange={(e)=>setFormData({...formData, ville:e.target.value})} className="input" />
 
           <label className="flex items-center gap-2 mt-1 text-sm sm:text-base">
             <input type="checkbox" checked={formData.is_whatsapp} onChange={(e)=>setFormData({...formData, is_whatsapp:e.target.checked})} />
@@ -234,3 +233,4 @@ export default function AddMember() {
     </div>
   );
 }
+

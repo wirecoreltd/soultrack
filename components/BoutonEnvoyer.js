@@ -1,3 +1,5 @@
+//components/BoutonEnvoyer.js✅
+
 "use client";
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -78,8 +80,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         message += `- 📱 Téléphone: ${membre.telephone || "—"}\n`;
         message += `- 🏙 Ville: ${membre.ville || "—"}\n`;
         message += `- 🙏 Besoin: ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}\n\n`;
-        message += "Merci pour ton accompagnement";
-        message += `Ton engagement fait une vraie différence ! ❤️`;
+        message += "Merci pour ton accompagnement. Ton coeur fait une vraie différence ! ❤️";        
 
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
       }

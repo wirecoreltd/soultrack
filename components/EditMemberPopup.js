@@ -46,7 +46,10 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
     async function loadData() {
       try {
-        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule");
+        const { data: cellulesData } = await supabase
+          .from("cellules")
+          .select("id, cellule_full"); // <-- ON RÉCUPÈRE cellule_full
+
         const { data: conseillersData } = await supabase
           .from("profiles")
           .select("id, prenom, nom")
@@ -68,8 +71,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // 🔥 LOGIQUE EXCLUSIVE
-    // Sélection d'une cellule → effacer le conseiller
     if (name === "cellule_id") {
       setFormData(prev => ({
         ...prev,
@@ -79,7 +80,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       return;
     }
 
-    // Sélection d'un conseiller → effacer la cellule
     if (name === "conseiller_id") {
       setFormData(prev => ({
         ...prev,
@@ -187,80 +187,59 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
+
+        {/* BOUTON FERMER */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-red-500 font-bold text-xl hover:text-red-700"
-          aria-label="Fermer"
         >
           ✕
         </button>
 
         <h2 className="text-2xl font-bold text-center mb-4">Modifier le membre</h2>
 
-        <div className="flex justify-center mb-4">
-          <button onClick={toggleStar} className="text-4xl">
-            {formData.star ? "⭐" : "☆"}
-          </button>
-        </div>
-
         <div className="flex flex-col gap-4">
+
           {/* Prénom */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Prénom :</label>
-            <input
-              type="text"
-              name="prenom"
-              value={formData.prenom}
-              onChange={handleChange}
-              className="input"
-            />
+            <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} className="input" />
           </div>
 
           {/* Nom */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Nom :</label>
-            <input
-              type="text"
-              name="nom"
-              value={formData.nom}
-              onChange={handleChange}
-              className="input"
-            />
+            <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input" />
           </div>
+
+          {/* ⭐ DÉFINIR EN TANT QUE SERVITEUR */}
+          <label className="flex items-center gap-3 text-lg font-medium">
+            <input
+              type="checkbox"
+              name="star"
+              checked={formData.star}
+              onChange={toggleStar}
+              className="h-5 w-5"
+            />
+            Définir en tant que serviteur ⭐
+          </label>
 
           {/* Téléphone */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Téléphone :</label>
-            <input
-              type="text"
-              name="telephone"
-              value={formData.telephone}
-              onChange={handleChange}
-              className="input"
-            />
+            <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} className="input" />
           </div>
 
           {/* Ville */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Ville :</label>
-            <input
-              type="text"
-              name="ville"
-              value={formData.ville}
-              onChange={handleChange}
-              className="input"
-            />
+            <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="input" />
           </div>
 
           {/* Statut */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Statut :</label>
-            <select
-              name="statut"
-              value={formData.statut}
-              onChange={handleChange}
-              className="input"
-            >
+            <select name="statut" value={formData.statut} onChange={handleChange} className="input">
               <option value="">-- Statut --</option>
               <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
               <option value="a déjà son église">A déjà son église</option>
@@ -283,7 +262,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="">-- Cellule --</option>
               {cellules.map(c => (
                 <option key={c.id} value={c.id}>
-                  {c.cellule}
+                  {c.cellule_full}  {/* Rose Hill – Berto */}
                 </option>
               ))}
             </select>
@@ -393,6 +372,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
           }
         `}</style>
+
       </div>
     </div>
   );

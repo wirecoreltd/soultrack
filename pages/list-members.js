@@ -280,7 +280,8 @@ export default function ListMembers() {
                   />
                 </div>
               )}
-            </div>
+</div>
+
 
           {/* Détails */}
           <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2" aria-label={`Détails ${m.prenom} ${m.nom}`}>

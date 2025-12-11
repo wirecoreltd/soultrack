@@ -260,6 +260,9 @@ export default function ListMembers() {
                             <span>📱</span><span>{m.telephone || "—"}</span>
                           </div>
                           <div className="flex justify-center items-center space-x-2">
+                            <span>🏙️</span><span>Ville : {m.ville || "—"}</span>
+                          </div>
+                          <div className="flex justify-center items-center space-x-2">
                             <span>🕊</span><span>Statut : {m.statut || "—"}</span>
                           </div>
                           <div className="flex flex-col items-start space-y-1 text-sm text-black-600 w-full">
@@ -308,6 +311,10 @@ export default function ListMembers() {
                         {isOpen && (
                           <div className="text-black-700 text-sm mt-3 w-full space-y-2">
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                            <p className="text-base sm:text-lg">
+                            <span style={{ fontSize: '1.5rem', verticalAlign: 'middle' }}>⚥</span> Sexe : {m.sexe || "—"}
+                            </p>
+                            <p>📝 Infos : {m.sexe || "—"}</p>
                             <p>❓ Besoin : {besoins}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
                             <p>🏷 Statut Suivi : {m.suivi_statut_libelle || "—"}</p>
@@ -401,6 +408,9 @@ export default function ListMembers() {
                         {isOpen && (
                           <div className="text-black-700 text-sm mt-3 w-full space-y-2">
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                            <p className="text-base sm:text-lg">
+                            <span style={{ fontSize: '1.5rem', verticalAlign: 'middle' }}>⚥</span> Sexe : {m.sexe || "—"}
+                            </p>
                             <p>❓ Besoin : {besoins}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
                             <p>🏷 Statut Suivi : {m.suivi_statut_libelle || "—"}</p>

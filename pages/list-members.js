@@ -87,14 +87,12 @@ export default function ListMembers() {
   const fetchCellules = async () => {
   const { data, error } = await supabase
     .from("cellules")
-    .select("id, cellule, ville, cellule_full");
+    .select("id, cellule_full");
 
-  if (error) console.error("Erreur fetchCellules :", error);
-  if (data) {
-    console.log("DEBUG cellules après SELECT :", data);
-    setCellules(data);
-  }
+  if (error) console.error("Erreur:", error);
+  if (data) setCellules(data);
 };
+
 
 
   const fetchConseillers = async () => {

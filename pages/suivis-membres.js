@@ -233,11 +233,10 @@ export default function SuivisMembres() {
     {uniqueSuivis.map(item => (
       <div key={item.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4" style={{ borderLeftColor: getBorderColor(item) }}>
         <div className="flex flex-col items-center">
-          <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>
-          <p className="text-sm text-black-700 mb-1">⚧ {item.sexe || "—"}</p>
+          <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>          
           <p className="text-sm text-black-700 mb-1">📞 {item.telephone || "—"}</p>
           <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>
-          <p className="text-sm text-black-700 mb-1">📌 Attribué à : {item.cellule_nom ? `${item.ville || "—"} - ${item.cellule_nom}` : item.responsable || "—"}</p>
+          <p className="text-sm text-black-700 mb-1">📌 Attribué à : {item.cellule_full || item.responsable || "—"}</p>
           <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === item.id ? "Fermer détails" : "Détails"}</button>
         </div>
 
@@ -274,7 +273,7 @@ export default function SuivisMembres() {
               <td className="px-4 py-2">{m.sexe || "—"}</td>
               <td className="px-4 py-2">{m.telephone || "—"}</td>
               <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
-              <td className="px-4 py-2">{m.cellule_nom ? `${m.ville || "—"} - ${m.cellule_nom}` : m.responsable || "—"}</td>
+              <td className="px-4 py-2">{item.cellule_full || item.responsable || "—"}</td>
               <td className="px-4 py-2 flex items-center gap-2">
                 <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>
                 <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>

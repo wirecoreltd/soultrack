@@ -74,8 +74,9 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
       const phone = (cible?.telephone || "").replace(/\D/g, "");
       if (phone) {
-        let message = `✨ Un nouveau membre est placé sous tes soins pour être accompagné et encouragé.\n\n`;
-
+        let message = `👋 Bonjour ${cible?.responsable || (cible?.prenom || "")} !\n\n`;
+          message += `✨ Un nouveau membre est placé sous tes soins pour être accompagné et encouragé.\n\n`;
+          
           message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
           message += `⚥ Sexe: ${membre.sexe || "—"}\n`;
           message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
@@ -84,7 +85,8 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
           message += `🙏 Besoin: ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}\n`;
           message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;
           
-          message += "Merci pour ton accompagnement et ta bienveillance ❤️";                  
+          message += "Merci pour ton accompagnement et ta bienveillance ❤️";
+                
 
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
       }

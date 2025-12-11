@@ -217,46 +217,54 @@ export default function ListMembers() {
             <div className="flex justify-center items-center space-x-2">🏙️ Ville : {m.ville || "—"}</div>
             <div className="flex justify-center items-center space-x-2">🕊 Statut : {m.statut || "—"}</div>
             <div className="flex flex-col items-start space-y-1 w-full">
-              <div>🏠 {(m.cellule_ville && m.cellule_nom) ? `${m.cellule_ville} - ${m.cellule_nom}` : m.suivi_cellule_nom || ""}</div>
-              <div>👤 {(m.conseiller_prenom || m.conseiller_nom) ? `${m.conseiller_prenom} ${m.conseiller_nom}`.trim() : ""}</div>
+              <div>🏠 Cellule : {(m.cellule_ville && m.cellule_nom) ? `${m.cellule_ville} - ${m.cellule_nom}` : m.suivi_cellule_nom || ""}</div>
+              <div>👤 Conseiller : {(m.conseiller_prenom || m.conseiller_nom) ? `${m.conseiller_prenom} ${m.conseiller_nom}`.trim() : ""}</div>
             </div>
           </div>
 
         {/* ENVOYER À */}
-          <div className="mt-2 w-full">
-            <label className="font-semibold text-sm">Envoyer à :</label>
-            <select
-              value={selectedTargetType[m.id] || ""}
-              onChange={e => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
-              className="mt-1 w-full border rounded px-2 py-1 text-sm"
-            >
-              <option value="">-- Choisir une option --</option>
-              <option value="cellule">Une Cellule</option>
-              <option value="conseiller">Un Conseiller</option>
-            </select>
-          
-            {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
-              <select
-                value={selectedTargets[m.id] || ""}
-                onChange={e => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
-                className="mt-1 w-full border rounded px-2 py-1 text-sm"
-              >
-                <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
-          
-                {selectedTargetType[m.id] === "cellule"
-                  ? cellules.map(c => (
-                      <option key={c.id} value={c.id}>
-                        {c.ville ? c.ville : "—"} - {c.cellule ? c.cellule : "—"}
-                      </option>
-                    ))
-                  : conseillers.map(c => (
-                      <option key={c.id} value={c.id}>
-                        {c.prenom || "—"} {c.nom || ""}
-                      </option>
-                    ))
-                }
-              </select>
-            )}
+<div className="mt-2 w-full">
+  <label className="font-semibold text-sm">Envoyer à :</label>
+  <select
+    value={selectedTargetType[m.id] || ""}
+    onChange={e => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
+    className="mt-1 w-full border rounded px-2 py-1 text-sm"
+  >
+    <option value="">-- Choisir une option --</option>
+    <option value="cellule">Une Cellule</option>
+    <option value="conseiller">Un Conseiller</option>
+  </select>
+
+  {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
+    <select
+      value={selectedTargets[m.id] || ""}
+      onChange={e => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
+      className="mt-1 w-full border rounded px-2 py-1 text-sm"
+    >
+      <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
+
+      {selectedTargetType[m.id] === "cellule" ? (
+        <>
+          {console.log("DEBUG cellules:", cellules)}
+          {cellules && cellules.length > 0 ? (
+            cellules.map(c => (
+              <option key={c.id} value={c.id}>
+                {c.ville || "—"} - {c.cellule || "—"}
+              </option>
+            ))
+          ) : (
+            <option disabled>Chargement des cellules...</option>
+          )}
+        </>
+      ) : (
+        conseillers.map(c => (
+          <option key={c.id} value={c.id}>
+            {c.prenom || "—"} {c.nom || ""}
+          </option>
+        ))
+      )}
+    </select>
+  )}
 
             {selectedTargets[m.id] && (
               <div className="pt-2">

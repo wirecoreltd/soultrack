@@ -85,9 +85,17 @@ export default function ListMembers() {
   };
 
   const fetchCellules = async () => {
-    const { data } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
-    if (data) setCellules(data);
-  };
+  const { data, error } = await supabase
+    .from("cellules")
+    .select("id, cellule, ville, cellule_full");
+
+  if (error) console.error("Erreur fetchCellules :", error);
+  if (data) {
+    console.log("DEBUG cellules après SELECT :", data);
+    setCellules(data);
+  }
+};
+
 
   const fetchConseillers = async () => {
     const { data } = await supabase.from("profiles").select("id, prenom, nom, telephone").eq("role", "Conseiller");

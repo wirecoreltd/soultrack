@@ -196,7 +196,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           ✕
         </button>
 
-        <h2 className="text-2xl font-bold text-center mb-4">Modifier le membre</h2>
+        <h2 className="text-2xl font-bold text-center mb-4">
+          Éditer le profil de {member?.prenom} {member?.nom}
+        </h2>
 
         <div className="flex flex-col gap-4">
 

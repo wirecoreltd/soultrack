@@ -89,8 +89,8 @@ export default function ListCellules() {
       {/* Table */}
       <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xl">
         <div className="grid grid-cols-[2fr_2fr_2fr_2fr_auto] gap-4 px-4 py-2 bg-purple-600 text-white font-semibold">
-          <span>Nom de la cellule</span>
           <span>Zone / Ville</span>
+          <span>Nom de la cellule</span>
           <span>Responsable</span>
           <span>Téléphone</span>
           <span className="text-center">Actions</span>
@@ -101,8 +101,8 @@ export default function ListCellules() {
             key={c.id}
             className="grid grid-cols-[2fr_2fr_2fr_2fr_auto] gap-4 px-4 py-3 border-b border-gray-200 hover:bg-purple-50 transition-all"
           >
-            <span className="font-semibold text-gray-700">{c.cellule}</span>
             <span>{c.ville}</span>
+            <span className="font-semibold text-gray-700">{c.cellule}</span>            
             <span className="text-purple-700 font-medium">{c.responsable}</span>
             <span>{c.telephone}</span>
 

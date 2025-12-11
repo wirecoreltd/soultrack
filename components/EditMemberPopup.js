@@ -1,278 +1,183 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
-  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
-
-  const parseBesoin = (b) => {
-    if (!b) return [];
-    if (Array.isArray(b)) return b;
-    try {
-      const parsed = JSON.parse(b);
-      return Array.isArray(parsed) ? parsed : [String(b)];
-    } catch {
-      return [String(b)];
-    }
-  };
-
-  const initialBesoin = parseBesoin(member?.besoin);
+  const [form, setForm] = useState({
+    prenom: "",
+    nom: "",
+    telephone: "",
+    ville: "",
+    cellule_id: null,
+    conseiller_id: null,
+  });
 
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
-  const [formData, setFormData] = useState({
-    prenom: member?.prenom || "",
-    nom: member?.nom || "",
-    telephone: member?.telephone || "",
-    ville: member?.ville || "",
-    besoin: initialBesoin,
-    autreBesoin: "",
-    statut: member?.statut || "",
-    cellule_id: member?.cellule_id ?? "",
-    conseiller_id: member?.conseiller_id ?? "",
-    infos_supplementaires: member?.infos_supplementaires || "",
-    is_whatsapp: !!member?.is_whatsapp,
-    star: member?.star === true,
-  });
-  const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
 
+  // Charger les cellules & conseillers
   useEffect(() => {
-    let mounted = true;
-    async function loadData() {
-      try {
-        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule");
-        const { data: conseillersData } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom")
-          .eq("role", "Conseiller");
-        if (!mounted) return;
-        setCellules(cellulesData || []);
-        setConseillers(conseillersData || []);
-      } catch (err) {
-        console.error("Erreur loadData EditMemberPopup:", err);
-      }
-    }
-    loadData();
-    return () => { mounted = false; };
+    const load = async () => {
+      const { data: c } = await supabase.from("cellules").select("*");
+      const { data: p } = await supabase.from("profiles")
+        .select("id, prenom, nom")
+        .eq("role", "Conseiller");
+
+      if (c) setCellules(c);
+      if (p) setConseillers(p);
+    };
+    load();
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  // Charger les données du membre
+  useEffect(() => {
+    if (member) {
+      setForm({
+        prenom: member.prenom || "",
+        nom: member.nom || "",
+        telephone: member.telephone || "",
+        ville: member.ville || "",
+        cellule_id: member.cellule_id || null,
+        conseiller_id: member.conseiller_id || null,
+      });
+    }
+  }, [member]);
+
+  const updateField = (field, value) => {
+    setForm(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleCheckboxChange = (e) => {
-    const { name, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: checked }));
+  // 🔥 RÈGLE MÉTIER :
+  // CHOISIR CELLULE = supprimer le conseiller
+  const handleSelectCellule = (value) => {
+    setForm(prev => ({
+      ...prev,
+      cellule_id: value,
+      conseiller_id: null, // efface automatiquement le conseiller
+    }));
   };
 
-  const handleBesoinChange = (e) => {
-    const { value, checked } = e.target;
+  // 🔥 RÈGLE MÉTIER :
+  // CHOISIR CONSEILLER = supprimer la cellule
+  const handleSelectConseiller = (value) => {
+    setForm(prev => ({
+      ...prev,
+      conseiller_id: value,
+      cellule_id: null, // efface automatiquement la cellule
+    }));
+  };
 
-    if (value === "Autre") {
-      setShowAutre(checked);
-      if (!checked) {
-        setFormData(prev => ({ ...prev, autreBesoin: "", besoin: prev.besoin.filter(b => b !== "Autre") }));
-      } else {
-        setFormData(prev => ({ ...prev, besoin: Array.from(new Set([...prev.besoin, "Autre"])) }));
-      }
+  const handleSave = async () => {
+    setLoading(true);
+
+    const { data, error } = await supabase
+      .from("membres")
+      .update({
+        prenom: form.prenom,
+        nom: form.nom,
+        telephone: form.telephone,
+        ville: form.ville,
+        cellule_id: form.cellule_id,
+        conseiller_id: form.conseiller_id,
+      })
+      .eq("id", member.id)
+      .select()
+      .single();
+
+    setLoading(false);
+
+    if (error) {
+      console.error(error);
+      alert("Erreur lors de la mise à jour");
       return;
     }
 
-    setFormData(prev => {
-      const updated = checked ? [...prev.besoin, value] : prev.besoin.filter(b => b !== value);
-      return { ...prev, besoin: updated };
-    });
-  };
-
-  const toggleStar = () => setFormData(prev => ({ ...prev, star: !prev.star }));
-
-  const handleSubmit = async () => {
-    setLoading(true);
-    try {
-      let finalBesoin = Array.isArray(formData.besoin) ? [...formData.besoin] : parseBesoin(formData.besoin);
-      if (showAutre && formData.autreBesoin?.trim()) {
-        finalBesoin = finalBesoin.filter(b => b !== "Autre");
-        finalBesoin.push(formData.autreBesoin.trim());
-      } else {
-        finalBesoin = finalBesoin.filter(b => b !== "Autre");
-      }
-
-      const payload = {
-        prenom: formData.prenom || null,
-        nom: formData.nom || null,
-        telephone: formData.telephone || null,
-        ville: formData.ville || null,
-        statut: formData.statut || null,
-        cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
-        conseiller_id: formData.conseiller_id === "" ? null : formData.conseiller_id,
-        infos_supplementaires: formData.infos_supplementaires || null,
-        is_whatsapp: !!formData.is_whatsapp,
-        star: !!formData.star,
-        besoin: JSON.stringify(finalBesoin),
-      };
-
-      const { data, error } = await supabase
-        .from("membres")
-        .update(payload)
-        .eq("id", member.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      if (onUpdateMember) onUpdateMember(data); // 🔹 mise à jour instantanée
-
-      setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        onClose();
-      }, 900);
-    } catch (err) {
-      console.error("Erreur handleSubmit EditMemberPopup:", err);
-      alert("❌ Une erreur est survenue.");
-    } finally {
-      setLoading(false);
-    }
+    onUpdateMember(data);
+    onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
-        <button onClick={onClose} className="absolute top-3 right-3 text-red-500 font-bold text-xl hover:text-red-700" aria-label="Fermer">✕</button>
-        <h2 className="text-2xl font-bold text-center mb-4">Modifier le membre</h2>
-        <div className="flex justify-center mb-4">
-          <button onClick={toggleStar} className="text-4xl">{formData.star ? "⭐" : "☆"}</button>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-lg">
+        <h2 className="text-lg font-bold mb-4">Modifier le membre</h2>
+
+        {/* Prénom */}
+        <label className="block text-sm font-semibold">Prénom</label>
+        <input
+          className="border w-full p-2 rounded mb-3"
+          value={form.prenom}
+          onChange={(e) => updateField("prenom", e.target.value)}
+        />
+
+        {/* Nom */}
+        <label className="block text-sm font-semibold">Nom</label>
+        <input
+          className="border w-full p-2 rounded mb-3"
+          value={form.nom}
+          onChange={(e) => updateField("nom", e.target.value)}
+        />
+
+        {/* Téléphone */}
+        <label className="block text-sm font-semibold">Téléphone</label>
+        <input
+          className="border w-full p-2 rounded mb-3"
+          value={form.telephone}
+          onChange={(e) => updateField("telephone", e.target.value)}
+        />
+
+        {/* Ville */}
+        <label className="block text-sm font-semibold">Ville</label>
+        <input
+          className="border w-full p-2 rounded mb-3"
+          value={form.ville}
+          onChange={(e) => updateField("ville", e.target.value)}
+        />
+
+        {/* 🔥 SELECT CELLULE */}
+        <label className="block text-sm font-semibold">Cellule</label>
+        <select
+          className="border w-full p-2 rounded mb-3"
+          value={form.cellule_id || ""}
+          onChange={(e) => handleSelectCellule(e.target.value || null)}
+        >
+          <option value="">— Aucune —</option>
+          {cellules.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.ville} - {c.cellule}
+            </option>
+          ))}
+        </select>
+
+        {/* 🔥 SELECT CONSEILLER */}
+        <label className="block text-sm font-semibold">Conseiller</label>
+        <select
+          className="border w-full p-2 rounded mb-3"
+          value={form.conseiller_id || ""}
+          onChange={(e) => handleSelectConseiller(e.target.value || null)}
+        >
+          <option value="">— Aucun —</option>
+          {conseillers.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.prenom} {c.nom}
+            </option>
+          ))}
+        </select>
+
+        <div className="flex justify-end gap-3 mt-4">
+          <button className="px-4 py-2 bg-gray-300 rounded" onClick={onClose}>
+            Annuler
+          </button>
+
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded"
+            onClick={handleSave}
+            disabled={loading}
+          >
+            {loading ? "Enregistrement..." : "Enregistrer"}
+          </button>
         </div>
-
-        <div className="flex flex-col gap-4">
-
-         {/* Prénom */}
-<div className="flex flex-col">
-  <label className="font-medium mb-1 text-left">Prénom :</label>
-  <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} className="input"/>
-</div>
-
-{/* Nom */}
-<div className="flex flex-col">
-  <label className="font-medium mb-1 text-left">Nom :</label>
-  <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input"/>
-</div>
-
-{/* Téléphone */}
-<div className="flex flex-col">
-  <label className="font-medium mb-1 text-left">Téléphone :</label>
-  <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} className="input"/>
-</div>
-
-{/* Ville */}
-<div className="flex flex-col">
-  <label className="font-medium mb-1 text-left">Ville :</label>
-  <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="input"/>
-</div>
-
-{/* Statut */}
-<div className="flex flex-col">
-  <label className="font-medium mb-1 text-left">Statut :</label>
-  <select name="statut" value={formData.statut} onChange={handleChange} className="input">
-    <option value="">-- Statut --</option>
-    <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-    <option value="a déjà son église">A déjà son église</option>
-    <option value="visiteur">Visiteur</option>
-    <option value="actif">Actif</option>
-    <option value="ancien">Ancien</option>
-    <option value="Integrer">Intégrer</option>
-  </select>
-</div>
-
-{/* Cellule */}
-<div className="flex flex-col">
-  <label className="font-medium mb-1 text-left">Cellule :</label>
-  <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input">
-    <option value="">-- Cellule --</option>
-    {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule}</option>)}
-  </select>
-</div>
-
-{/* Conseiller */}
-<div className="flex flex-col">
-  <label className="font-medium mb-1 text-left">Conseiller :</label>
-  <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
-    <option value="">-- Conseiller --</option>
-    {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
-  </select>
-</div>
-
-{/* Besoin */}
-<div className="flex flex-col">
-  <label className="font-medium mb-2 text-left">Besoin :</label>
-
-  {besoinsOptions.map(item => (
-    <label key={item} className="flex items-center gap-3 mb-2">
-      <input type="checkbox"
-        value={item}
-        checked={Array.isArray(formData.besoin) && formData.besoin.includes(item)}
-        onChange={handleBesoinChange}
-      />
-      {item}
-    </label>
-  ))}
-
-  <label className="flex items-center gap-3 mb-2">
-    <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} />
-    Autre
-  </label>
-
-  {showAutre && (
-    <div className="flex flex-col mt-2">
-      <label className="font-medium mb-1">Précisez :</label>
-      <input
-        type="text"
-        name="autreBesoin"
-        value={formData.autreBesoin}
-        onChange={handleChange}
-        className="input"
-      />
-    </div>
-  )}
-</div>
-
-{/* Informations supplémentaires */}
-<div className="flex flex-col">
-  <label className="font-medium mb-1 text-left">Informations :</label>
-  <textarea
-    name="infos_supplementaires"
-    rows={2}
-    value={formData.infos_supplementaires}
-    onChange={handleChange}
-    className="input"
-  />
-</div>
-
-
-          {/* Buttons */}
-          <div className="flex gap-4 mt-2">
-            <button onClick={onClose} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md">Annuler</button>
-            <button onClick={handleSubmit} disabled={loading} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md">
-              {loading ? "Enregistrement..." : "Sauvegarder"}
-            </button>
-          </div>
-
-          {success && <p className="text-green-600 font-semibold text-center mt-3">✔️ Modifié avec succès !</p>}
-        </div>
-
-        <style jsx>{`
-          .input {
-            width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            padding: 12px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-          }
-        `}</style>
       </div>
     </div>
   );

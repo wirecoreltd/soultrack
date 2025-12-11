@@ -257,8 +257,6 @@ export default function ListMembers() {
       }
     </select>
   )}
-</div>
-
 
             {selectedTargets[m.id] && (
               <div className="pt-2">

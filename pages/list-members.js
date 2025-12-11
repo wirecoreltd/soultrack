@@ -309,18 +309,14 @@ export default function ListMembers() {
                         </button>
 
                         {isOpen && (
-                          <div className="text-black-700 text-sm mt-3 w-full space-y-2">
+                          <div className="text-black text-sm mt-2 w-full space-y-1">
                             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                            <p className="text-base sm:text-lg">
-                            <p>
-                              <span style={{ fontSize: '1.3rem' }}>⚥</span> Sexe : {m.sexe || "—"}
-                            </p>
-                            <p>📝 Infos : {m.sexe || "—"}</p>
+                            <p><span style={{ fontSize: '1.3rem' }}>⚥</span> Sexe : {m.sexe || "—"}</p>
                             <p>❓ Besoin : {besoins}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
                             <p>🏷 Statut Suivi : {m.suivi_statut_libelle || "—"}</p>
                             <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>
-                            <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-6 block mx-auto">
+                            <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">
                               ✏️ Modifier le contact
                             </button>
                           </div>

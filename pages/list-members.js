@@ -223,72 +223,62 @@ export default function ListMembers() {
           </div>
 
           {/* ENVOYER À */}
-            <div className="mt-2 w-full">
-              <label className="font-semibold text-sm">Envoyer à :</label>
-              <select
-                value={selectedTargetType[m.id] || ""}
-                onChange={e => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
-                className="mt-1 w-full border rounded px-2 py-1 text-sm"
-              >
-                <option value="">-- Choisir une option --</option>
-                <option value="cellule">Une Cellule</option>
-                <option value="conseiller">Un Conseiller</option>
-              </select>
-            
-              {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
-                <select
-                  value={selectedTargets[m.id] || ""}
-                  onChange={e => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
-                  className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                >
-                  <option value="">
-                    -- Choisir {selectedTargetType[m.id] === "cellule" ? "cellule" : "conseiller"} --
-                  </option>
-            
-                  {selectedTargetType[m.id] === "cellule"
-                    ? cellules.map(c => (
-                        <option key={c.id} value={c.id}>
-                          {c.ville} - {c.cellule}
-                        </option>
-                      ))
-                    : conseillers.map(c => (
-                        <option key={c.id} value={c.id}>
-                          {c.prenom} {c.nom}
-                        </option>
-                      ))
-                  }
-                </select>
-              )}
-            
-              {selectedTargets[m.id] && (
-                <div className="pt-2">
-                  <BoutonEnvoyer
-                    membre={m}
-                    type={selectedTargetType[m.id]}
-                    cible={
-                      selectedTargetType[m.id] === "cellule"
-                        ? cellules.find(c => c.id === selectedTargets[m.id])
-                        : conseillers.find(c => c.id === selectedTargets[m.id])
-                    }
-                    onEnvoyer={(updatedMember) => {
-                      updateMemberLocally(updatedMember.id, updatedMember);
-                      const cibleData = selectedTargetType[m.id] === "cellule"
-                        ? cellules.find(c => c.id === selectedTargets[m.id])
-                        : conseillers.find(c => c.id === selectedTargets[m.id]);
-                      const cibleName = selectedTargetType[m.id] === "cellule"
-                        ? `${cibleData.ville} - ${cibleData.cellule}`
-                        : `${cibleData.prenom} ${cibleData.nom}`;
-                      showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
-                    }}
-                    session={session}
-                    showToast={showToast}
-                  />
-                </div>
-              )}
+<div className="mt-2 w-full">
+  <label className="font-semibold text-sm">Envoyer à :</label>
+  <select
+    value={selectedTargetType[m.id] || ""}
+    onChange={e => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
+    className="mt-1 w-full border rounded px-2 py-1 text-sm"
+  >
+    <option value="">-- Choisir une option --</option>
+    <option value="cellule">Une Cellule</option>
+    <option value="conseiller">Un Conseiller</option>
+  </select>
+
+  {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
+    <select
+      value={selectedTargets[m.id] || ""}
+      onChange={e => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
+      className="mt-1 w-full border rounded px-2 py-1 text-sm"
+    >
+      <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
+
+      {selectedTargetType[m.id] === "cellule"
+        ? cellules.map(c => {
+            const label = `${c.ville?.trim() || "—"} - ${c.cellule?.trim() || "—"}`;
+            return <option key={c.id} value={c.id}>{label}</option>;
+          })
+        : conseillers.map(c => {
+            const label = `${c.prenom?.trim() || "—"} ${c.nom?.trim() || ""}`.trim();
+            return <option key={c.id} value={c.id}>{label}</option>;
+          })
+      }
+    </select>
+  )}
+
+  {selectedTargets[m.id] && (
+    <div className="pt-2">
+      <BoutonEnvoyer
+        membre={m}
+        type={selectedTargetType[m.id]}
+        cible={
+          selectedTargetType[m.id] === "cellule"
+            ? cellules.find(c => c.id === selectedTargets[m.id])
+            : conseillers.find(c => c.id === selectedTargets[m.id])
+        }
+        onEnvoyer={id => handleAfterSend(
+          id,
+          selectedTargetType[m.id],
+          selectedTargetType[m.id] === "cellule"
+            ? cellules.find(c => c.id === selectedTargets[m.id])
+            : conseillers.find(c => c.id === selectedTargets[m.id])
+        )}
+        session={session}
+        showToast={showToast}
+      />
+    </div>
+  )}
 </div>
-
-
-
           {/* Détails */}
           <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2" aria-label={`Détails ${m.prenom} ${m.nom}`}>
             {isOpen ? "Fermer détails" : "Détails"}

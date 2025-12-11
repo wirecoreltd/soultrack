@@ -243,7 +243,7 @@ export default function ListMembers() {
               >
                 <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
                 {selectedTargetType[m.id] === "cellule"
-                  ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule} ({c.responsable)</option>)
+                  ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_ville} ({c.cellule_nom)</option>)
                   : conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
               </select>
             )}

@@ -236,14 +236,7 @@ export default function SuivisMembres() {
           <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>          
           <p className="text-sm text-black-700 mb-1">📞 {item.telephone || "—"}</p>
           <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>
-          <p className="text-sm text-black-700 mb-1">
-            📌 Attribué à :{" "}
-            {item.cellule_full && item.cellule_full.trim() !== ""
-              ? item.cellule_full
-              : item.responsable && item.responsable.trim() !== ""
-              ? item.responsable
-              : "—"}
-          </p>
+          <p className="text-sm text-black-700 mb-1">📌 Attribué à : {item.attribue_a || "—"}</p>
           <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === item.id ? "Fermer détails" : "Détails"}</button>
         </div>
 

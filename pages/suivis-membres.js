@@ -6,7 +6,6 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditMemberPopup from "../components/EditMemberPopup";
-import BoutonEnvoyer from "../components/BoutonEnvoyer";
 import DetailsModal from "../components/DetailsModal";
 
 export default function SuivisMembres() {
@@ -30,22 +29,14 @@ export default function SuivisMembres() {
   const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
 
   // 🔹 Fonction pour gérer l'affichage "Attribué à"
-  // Détermine à qui le membre est attribué
-function getAttribution(item) {
-  // 1️⃣ Priorité : cellule complète
-  if (item.cellule_full) return item.cellule_full;
-
-  // 2️⃣ Si pas de cellule → on met le responsable du suivi (si existe)
-  if (item.suivi_responsable) return item.suivi_responsable;
-
-  // 3️⃣ Sinon conseiller direct (rare mais possible)
-  if (item.conseiller_prenom || item.conseiller_nom) {
-    return `${item.conseiller_prenom || ""} ${item.conseiller_nom || ""}`.trim();
+  function getAttribution(item) {
+    if (item.cellule_nom) return item.cellule_nom;
+    if (item.responsable) return item.responsable;
+    if (item.conseiller_prenom || item.conseiller_nom) {
+      return `${item.conseiller_prenom || ""} ${item.conseiller_nom || ""}`.trim();
+    }
+    return "—";
   }
-
-  // 4️⃣ Rien trouvé → —
-  return "—";
-}
 
   useEffect(() => {
     const fetchSuivis = async () => {
@@ -155,6 +146,7 @@ function getAttribution(item) {
     }
   };
 
+  // DetailsPopup component (inchangé)
   const DetailsPopup = ({ m }) => {
     const [cellules, setCellules] = useState([]);
     const [conseillers, setConseillers] = useState([]);
@@ -219,208 +211,124 @@ function getAttribution(item) {
   };
 
   return (
-  <div
-    className="min-h-screen flex flex-col items-center p-6"
-    style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-  >
-    <div className="w-full max-w-5xl mb-6">
-      <div className="flex justify-between items-center flex-wrap gap-2">
-        <button
-          onClick={() => window.history.back()}
-          className="flex items-center text-white hover:text-black-200 transition-colors"
-        >
-          ← Retour
-        </button>
-        <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
+    <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+      <div className="w-full max-w-5xl mb-6">
+        <div className="flex justify-between items-center flex-wrap gap-2">
+          <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black-200 transition-colors">← Retour</button>
+          <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
+        </div>
+        <div className="flex justify-end mt-2">
+          <p className="text-orange-200 text-sm">👋 Bienvenue {prenom}</p>
+        </div>
       </div>
 
-      <div className="flex justify-end mt-2">
-        <p className="text-orange-200 text-sm">👋 Bienvenue {prenom}</p>
+      <div className="mb-4">
+        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
-    </div>
 
-    <div className="mb-4">
-      <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
-    </div>
-
-    <div className="text-center mb-6">
-      <h1 className="text-3xl font-bold text-white mb-2">📋 Suivis des Membres</h1>
-      <p className="text-white text-lg max-w-xl mx-auto italic">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
-      </p>
-    </div>
-
-    <div className="mb-4 flex justify-between w-full max-w-6xl flex-wrap gap-2">
-      <button
-        onClick={() => setView(view === "card" ? "table" : "card")}
-        className="text-white text-sm underline hover:text-black-200"
-      >
-        {view === "card" ? "Vue Table" : "Vue Carte"}
-      </button>
-
-      <button
-        onClick={() => setShowRefus(!showRefus)}
-        className="text-orange-400 text-sm underline hover:text-orange-500"
-      >
-        {showRefus ? "Voir tous les suivis" : "Voir les refus"}
-      </button>
-    </div>
-
-    {message && (
-      <div
-        className={`mb-4 px-4 py-2 rounded-md text-sm ${
-          message.type === "error"
-            ? "bg-red-200 text-red-800"
-            : message.type === "success"
-            ? "bg-green-200 text-green-800"
-            : "bg-yellow-100 text-yellow-800"
-        }`}
-      >
-        {message.text}
+      <div className="text-center mb-6">
+        <h1 className="text-3xl font-bold text-white mb-2">📋 Suivis des Membres</h1>
+        <p className="text-white text-lg max-w-xl mx-auto italic">
+          Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
+        </p>
       </div>
-    )}
 
-    {/* ========== Attribué à ========== */}
-    {(() => {
-      const getAttribution = (m) => {
-        if (m.cellule_full) return m.cellule_full;
-        if (m.suivis_conseiller) return m.suivis_conseiller;
-        if (m.suivi_responsable) return m.suivi_responsable;
-        return "—";
-      };
+      <div className="mb-4 flex justify-between w-full max-w-6xl flex-wrap gap-2">
+        <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline hover:text-black-200">{view === "card" ? "Vue Table" : "Vue Carte"}</button>
+        <button onClick={() => setShowRefus(!showRefus)} className="text-orange-400 text-sm underline hover:text-orange-500">{showRefus ? "Voir tous les suivis" : "Voir les refus"}</button>
+      </div>
 
-      return (
-        <>
-          {/* VUE CARTE */}
-          {view === "card" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-              {uniqueSuivis.map((item) => (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
-                  style={{ borderLeftColor: getBorderColor(item) }}
-                >
-                  <div className="flex flex-col items-center">
-                    <h2 className="font-bold text-black text-base text-center mb-1">
-                      {item.prenom} {item.nom}
-                    </h2>
-                    <p className="text-sm text-black-700 mb-1">
-                      📞 {item.telephone || "—"}
-                    </p>
-                    <p className="text-sm text-black-700 mb-1">
-                      📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}
-                    </p>
-                    <p className="text-sm text-black-700 mb-1">
-                      📌 Attribué à : {getAttribution(item)}
-                    </p>
+      {message && (
+        <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
+          {message.text}
+        </div>
+      )}
 
-                    <button
-                      onClick={() => toggleDetails(item.id)}
-                      className="text-orange-500 underline text-sm mt-1"
-                    >
-                      {detailsOpen === item.id ? "Fermer détails" : "Détails"}
-                    </button>
-                  </div>
+      {/* ======== VUE CARTE ======== */}
+      {view === "card" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
+          {uniqueSuivis.map((item) => (
+            <div key={item.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4" style={{ borderLeftColor: getBorderColor(item) }}>
+              <div className="flex flex-col items-center">
+                <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>
+                <p className="text-sm text-black-700 mb-1">📞 {item.telephone || "—"}</p>
+                <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>
+                <p className="text-sm text-black-700 mb-1">📌 Attribué à : {getAttribution(item)}</p>
 
-                  {detailsOpen === item.id && (
-                    <div className="pt-2 mt-3 transition-all duration-500">
-                      <DetailsPopup m={item} />
-                    </div>
-                  )}
-                </div>
-              ))}
+                <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">
+                  {detailsOpen === item.id ? "Fermer détails" : "Détails"}
+                </button>
+              </div>
+
+              {detailsOpen === item.id && <div className="pt-2 mt-3 transition-all duration-500"><DetailsPopup m={item} /></div>}
             </div>
-          )}
+          ))}
+        </div>
+      )}
 
-          {/* VUE TABLE */}
-          {view === "table" && (
-            <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
-              <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-                <thead className="bg-gray-200 text-black-800 text-sm uppercase rounded-t-md">
-                  <tr>
-                    <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-                    <th className="px-4 py-2">Sexe</th>
-                    <th className="px-4 py-2">Téléphone</th>
-                    <th className="px-4 py-2">Statut Suivis</th>
-                    <th className="px-4 py-2">Attribué à</th>
-                    <th className="px-4 py-2 rounded-tr-lg">Action</th>
+      {/* ======== VUE TABLE ======== */}
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
+          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+            <thead className="bg-gray-200 text-black-800 text-sm uppercase rounded-t-md">
+              <tr>
+                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+                <th className="px-4 py-2">Sexe</th>
+                <th className="px-4 py-2">Téléphone</th>
+                <th className="px-4 py-2">Statut Suivis</th>
+                <th className="px-4 py-2">Attribué à</th>
+                <th className="px-4 py-2 rounded-tr-lg">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {uniqueSuivis.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
+                </tr>
+              ) : (
+                uniqueSuivis.map((m) => (
+                  <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
+                    <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>
+                      {m.prenom} {m.nom}
+                    </td>
+                    <td className="px-4 py-2">{m.sexe || "—"}</td>
+                    <td className="px-4 py-2">{m.telephone || "—"}</td>
+                    <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
+                    <td className="px-4 py-2">{getAttribution(m)}</td>
+                    <td className="px-4 py-2 flex items-center gap-2">
+                      <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>
+                      <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
+                    </td>
                   </tr>
-                </thead>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-                <tbody>
-                  {uniqueSuivis.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-2 text-white text-center">
-                        Aucun membre en suivi
-                      </td>
-                    </tr>
-                  ) : (
-                    uniqueSuivis.map((m) => (
-                      <tr
-                        key={m.id}
-                        className="hover:bg-white/10 transition duration-150 border-b border-gray-300"
-                      >
-                        <td
-                          className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
-                          style={{ borderLeftColor: getBorderColor(m) }}
-                        >
-                          {m.prenom} {m.nom}
-                        </td>
-                        <td className="px-4 py-2">{m.sexe || "—"}</td>
-                        <td className="px-4 py-2">{m.telephone || "—"}</td>
-                        <td className="px-4 py-2">
-                          {statutLabels[m.statut_suivis] || "—"}
-                        </td>
-                        <td className="px-4 py-2">{getAttribution(m)}</td>
+      {detailsModalMember && (
+        <DetailsModal
+          m={detailsModalMember}
+          onClose={() => setDetailsModalMember(null)}
+          handleStatusChange={handleStatusChange}
+          handleCommentChange={handleCommentChange}
+          statusChanges={statusChanges}
+          commentChanges={commentChanges}
+          updating={updating}
+          updateSuivi={updateSuivi}
+        />
+      )}
 
-                        <td className="px-4 py-2 flex items-center gap-2">
-                          <button
-                            onClick={() => setDetailsModalMember(m)}
-                            className="text-orange-500 underline text-sm"
-                          >
-                            Détails
-                          </button>
-                          <button
-                            onClick={() => setEditMember(m)}
-                            className="text-blue-600 underline text-sm"
-                          >
-                            Modifier
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </>
-      );
-    })()}
-
-    {detailsModalMember && (
-      <DetailsModal
-        m={detailsModalMember}
-        onClose={() => setDetailsModalMember(null)}
-        handleStatusChange={handleStatusChange}
-        handleCommentChange={handleCommentChange}
-        statusChanges={statusChanges}
-        commentChanges={commentChanges}
-        updating={updating}
-        updateSuivi={updateSuivi}
-      />
-    )}
-
-    {editMember && (
-      <EditMemberPopup
-        member={editMember}
-        cellules={[]}
-        conseillers={[]}
-        onClose={() => setEditMember(null)}
-        onUpdate={() => setEditMember(null)}
-      />
-    )}
-
+      {editMember && (
+        <EditMemberPopup
+          member={editMember}
+          cellules={[]}
+          conseillers={[]}
+          onClose={() => setEditMember(null)}
+          onUpdate={() => setEditMember(null)}
+        />
+      )}
     </div>
   );
 }

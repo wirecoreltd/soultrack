@@ -29,6 +29,19 @@ export default function SuivisMembres() {
   const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
   const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
 
+  // 🔹 Fonction pour gérer l'affichage "Attribué à"
+  const getAttribution = (m) => {
+    return (
+      m.cellule_full ||
+      m.suivis_conseiller ||
+      m.cellule?.nom ||
+      (m.conseiller_prenom && m.conseiller_nom
+        ? `${m.conseiller_prenom} ${m.conseiller_nom}`
+        : null) ||
+      "—"
+    );
+  };
+
   useEffect(() => {
     const fetchSuivis = async () => {
       setLoading(true);
@@ -229,65 +242,64 @@ export default function SuivisMembres() {
       {message && <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{message.text}</div>}
       
       {view === "card" && (
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-    {uniqueSuivis.map(item => (
-      <div key={item.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4" style={{ borderLeftColor: getBorderColor(item) }}>
-        <div className="flex flex-col items-center">
-          <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>          
-          <p className="text-sm text-black-700 mb-1">📞 {item.telephone || "—"}</p>
-          <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>
-          <p className="text-sm text-black-700 mb-1">
-  📌 Attribué à : {item.cellule_full || item.suivis_conseiller || "—"}
-</p>
-          <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === item.id ? "Fermer détails" : "Détails"}</button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
+          {uniqueSuivis.map(item => (
+            <div key={item.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4" style={{ borderLeftColor: getBorderColor(item) }}>
+              <div className="flex flex-col items-center">
+                <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>          
+                <p className="text-sm text-black-700 mb-1">📞 {item.telephone || "—"}</p>
+                <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>
+                <p className="text-sm text-black-700 mb-1">
+                  📌 Attribué à : {getAttribution(item)}
+                </p>
+                <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === item.id ? "Fermer détails" : "Détails"}</button>
+              </div>
+
+              <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === item.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
+                {detailsOpen === item.id && <div className="pt-2"><DetailsPopup m={item} /></div>}
+              </div>
+            </div>
+          ))}
         </div>
+      )}
 
-        <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === item.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
-          {detailsOpen === item.id && <div className="pt-2"><DetailsPopup m={item} /></div>}
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
+          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+            <thead className="bg-gray-200 text-black-800 text-sm uppercase rounded-t-md">
+              <tr>
+                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+                <th className="px-4 py-2">Sexe</th>
+                <th className="px-4 py-2">Téléphone</th>
+                <th className="px-4 py-2">Statut Suivis</th>
+                <th className="px-4 py-2">Attribué à</th>
+                <th className="px-4 py-2 rounded-tr-lg">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {uniqueSuivis.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
+                </tr>
+              ) : (
+                uniqueSuivis.map(m => (
+                  <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
+                    <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
+                    <td className="px-4 py-2">{m.sexe || "—"}</td>
+                    <td className="px-4 py-2">{m.telephone || "—"}</td>
+                    <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
+                    <td className="px-4 py-2">{getAttribution(m)}</td>
+                    <td className="px-4 py-2 flex items-center gap-2">
+                      <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>
+                      <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      </div>
-    ))}
-  </div>
-)}
-
-{view === "table" && (
-  <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
-    <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-      <thead className="bg-gray-200 text-black-800 text-sm uppercase rounded-t-md">
-        <tr>
-          <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-          <th className="px-4 py-2">Sexe</th>
-          <th className="px-4 py-2">Téléphone</th>
-          <th className="px-4 py-2">Statut Suivis</th>
-          <th className="px-4 py-2">Attribué à</th>
-          <th className="px-4 py-2 rounded-tr-lg">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {uniqueSuivis.length === 0 ? (
-          <tr>
-            <td colSpan={6} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
-          </tr>
-        ) : (
-          uniqueSuivis.map(m => (
-            <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-              <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
-              <td className="px-4 py-2">{m.sexe || "—"}</td>
-              <td className="px-4 py-2">{m.telephone || "—"}</td>
-              <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
-              <td className="px-4 py-2">{item.cellule_full || item.responsable || "—"}</td>
-              <td className="px-4 py-2 flex items-center gap-2">
-                <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>
-                <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
-              </td>
-            </tr>
-          ))
-        )}
-      </tbody>
-    </table>
-  </div>
-)}
-
+      )}
 
       {detailsModalMember && (
         <DetailsModal

@@ -30,17 +30,22 @@ export default function SuivisMembres() {
   const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
 
   // 🔹 Fonction pour gérer l'affichage "Attribué à"
-  const getAttribution = (m) => {
-    return (
-      m.cellule_full ||
-      m.suivis_conseiller ||
-      m.cellule?.nom ||
-      (m.conseiller_prenom && m.conseiller_nom
-        ? `${m.conseiller_prenom} ${m.conseiller_nom}`
-        : null) ||
-      "—"
-    );
-  };
+  // Détermine à qui le membre est attribué
+function getAttribution(item) {
+  // 1️⃣ Priorité : cellule complète
+  if (item.cellule_full) return item.cellule_full;
+
+  // 2️⃣ Si pas de cellule → on met le responsable du suivi (si existe)
+  if (item.suivi_responsable) return item.suivi_responsable;
+
+  // 3️⃣ Sinon conseiller direct (rare mais possible)
+  if (item.conseiller_prenom || item.conseiller_nom) {
+    return `${item.conseiller_prenom || ""} ${item.conseiller_nom || ""}`.trim();
+  }
+
+  // 4️⃣ Rien trouvé → —
+  return "—";
+}
 
   useEffect(() => {
     const fetchSuivis = async () => {

@@ -214,13 +214,21 @@ export default function SuivisMembres() {
   };
 
   return (
-  <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-    
+  <div
+    className="min-h-screen flex flex-col items-center p-6"
+    style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+  >
     <div className="w-full max-w-5xl mb-6">
       <div className="flex justify-between items-center flex-wrap gap-2">
-        <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black-200 transition-colors">← Retour</button>
+        <button
+          onClick={() => window.history.back()}
+          className="flex items-center text-white hover:text-black-200 transition-colors"
+        >
+          ← Retour
+        </button>
         <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
       </div>
+
       <div className="flex justify-end mt-2">
         <p className="text-orange-200 text-sm">👋 Bienvenue {prenom}</p>
       </div>
@@ -232,20 +240,42 @@ export default function SuivisMembres() {
 
     <div className="text-center mb-6">
       <h1 className="text-3xl font-bold text-white mb-2">📋 Suivis des Membres</h1>
-      <p className="text-white text-lg max-w-xl mx-auto italic">Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️</p>
+      <p className="text-white text-lg max-w-xl mx-auto italic">
+        Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
+      </p>
     </div>
 
     <div className="mb-4 flex justify-between w-full max-w-6xl flex-wrap gap-2">
-      <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline hover:text-black-200">{view === "card" ? "Vue Table" : "Vue Carte"}</button>
-      <button onClick={() => setShowRefus(!showRefus)} className="text-orange-400 text-sm underline hover:text-orange-500">{showRefus ? "Voir tous les suivis" : "Voir les refus"}</button>
+      <button
+        onClick={() => setView(view === "card" ? "table" : "card")}
+        className="text-white text-sm underline hover:text-black-200"
+      >
+        {view === "card" ? "Vue Table" : "Vue Carte"}
+      </button>
+
+      <button
+        onClick={() => setShowRefus(!showRefus)}
+        className="text-orange-400 text-sm underline hover:text-orange-500"
+      >
+        {showRefus ? "Voir tous les suivis" : "Voir les refus"}
+      </button>
     </div>
 
-    {message && <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{message.text}</div>}
+    {message && (
+      <div
+        className={`mb-4 px-4 py-2 rounded-md text-sm ${
+          message.type === "error"
+            ? "bg-red-200 text-red-800"
+            : message.type === "success"
+            ? "bg-green-200 text-green-800"
+            : "bg-yellow-100 text-yellow-800"
+        }`}
+      >
+        {message.text}
+      </div>
+    )}
 
-    {/* Fonction pour déterminer à qui est attribué le suivi */}
-    {/*
-      Ordre : cellule_full > suivis_conseiller > suivi_responsable > "—"
-    */}
+    {/* ========== Attribué à ========== */}
     {(() => {
       const getAttribution = (m) => {
         if (m.cellule_full) return m.cellule_full;
@@ -259,19 +289,39 @@ export default function SuivisMembres() {
           {/* VUE CARTE */}
           {view === "card" && (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-              {uniqueSuivis.map(item => (
-                <div key={item.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4" style={{ borderLeftColor: getBorderColor(item) }}>
+              {uniqueSuivis.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
+                  style={{ borderLeftColor: getBorderColor(item) }}
+                >
                   <div className="flex flex-col items-center">
-                    <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>          
-                    <p className="text-sm text-black-700 mb-1">📞 {item.telephone || "—"}</p>
-                    <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>
-                    <p className="text-sm text-black-700 mb-1">📌 Attribué à : {getAttribution(item)}</p>
-                    <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === item.id ? "Fermer détails" : "Détails"}</button>
+                    <h2 className="font-bold text-black text-base text-center mb-1">
+                      {item.prenom} {item.nom}
+                    </h2>
+                    <p className="text-sm text-black-700 mb-1">
+                      📞 {item.telephone || "—"}
+                    </p>
+                    <p className="text-sm text-black-700 mb-1">
+                      📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}
+                    </p>
+                    <p className="text-sm text-black-700 mb-1">
+                      📌 Attribué à : {getAttribution(item)}
+                    </p>
+
+                    <button
+                      onClick={() => toggleDetails(item.id)}
+                      className="text-orange-500 underline text-sm mt-1"
+                    >
+                      {detailsOpen === item.id ? "Fermer détails" : "Détails"}
+                    </button>
                   </div>
 
-                  <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === item.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
-                    {detailsOpen === item.id && <div className="pt-2"><DetailsPopup m={item} /></div>}
-                  </div>
+                  {detailsOpen === item.id && (
+                    <div className="pt-2 mt-3 transition-all duration-500">
+                      <DetailsPopup m={item} />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -291,22 +341,46 @@ export default function SuivisMembres() {
                     <th className="px-4 py-2 rounded-tr-lg">Action</th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {uniqueSuivis.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
+                      <td colSpan={6} className="px-4 py-2 text-white text-center">
+                        Aucun membre en suivi
+                      </td>
                     </tr>
                   ) : (
-                    uniqueSuivis.map(m => (
-                      <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                        <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
+                    uniqueSuivis.map((m) => (
+                      <tr
+                        key={m.id}
+                        className="hover:bg-white/10 transition duration-150 border-b border-gray-300"
+                      >
+                        <td
+                          className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2"
+                          style={{ borderLeftColor: getBorderColor(m) }}
+                        >
+                          {m.prenom} {m.nom}
+                        </td>
                         <td className="px-4 py-2">{m.sexe || "—"}</td>
                         <td className="px-4 py-2">{m.telephone || "—"}</td>
-                        <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
+                        <td className="px-4 py-2">
+                          {statutLabels[m.statut_suivis] || "—"}
+                        </td>
                         <td className="px-4 py-2">{getAttribution(m)}</td>
+
                         <td className="px-4 py-2 flex items-center gap-2">
-                          <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>
-                          <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
+                          <button
+                            onClick={() => setDetailsModalMember(m)}
+                            className="text-orange-500 underline text-sm"
+                          >
+                            Détails
+                          </button>
+                          <button
+                            onClick={() => setEditMember(m)}
+                            className="text-blue-600 underline text-sm"
+                          >
+                            Modifier
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -332,6 +406,15 @@ export default function SuivisMembres() {
       />
     )}
 
-    {editMember && <EditMemberPopup member={editMember} cellules={[]} conseillers={[]} onClose={() => setEditMember(null)} onUpdate={() => setEditMember(null)} />}
+    {editMember && (
+      <EditMemberPopup
+        member={editMember}
+        cellules={[]}
+        conseillers={[]}
+        onClose={() => setEditMember(null)}
+        onUpdate={() => setEditMember(null)}
+      />
+    )}
+
   </div>
 );

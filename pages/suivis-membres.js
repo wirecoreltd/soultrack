@@ -235,7 +235,9 @@ export default function SuivisMembres() {
                 <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>
                 <p className="text-sm text-black-700 mb-1">📞 {item.telephone || "—"}</p>
                 <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>
-                📌 Attribué à : {item.cellule_full || "—"}
+                📌 Attribué à : {item.cellule_full
+                  ? item.cellule_full
+                  : item.suivi_responsable || "—"}
                 <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === item.id ? "Fermer détails" : "Détails"}</button>
               </div>
 
@@ -271,8 +273,10 @@ export default function SuivisMembres() {
                     <td className="px-4 py-2">{m.telephone || "—"}</td>
                     <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
                    <td className="px-4 py-2">
-  {m.cellule_full || m.responsable || "—"}
-</td>
+                      {item.cellule_full
+                      ? item.cellule_full
+                      : item.suivi_responsable || "—"}
+                    </td>
 
                     <td className="px-4 py-2 flex items-center gap-2">
                       <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>

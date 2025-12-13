@@ -84,6 +84,19 @@ export default function SuivisMembres() {
 
   const handleStatusChange = (id, value) => setStatusChanges(prev => ({ ...prev, [id]: parseInt(value, 10) }));
   const handleCommentChange = (id, value) => setCommentChanges(prev => ({ ...prev, [id]: value }));
+  
+  const getAttribution = (m) => {
+  if (m.cellule_full && m.cellule_full.trim() !== "") {
+    return m.cellule_full;
+  }
+
+  if (m.suivi_responsable && m.suivi_responsable.trim() !== "") {
+    return m.suivi_responsable;
+  }
+
+  return "—";
+};
+
 
   const getBorderColor = (m) => {
     if (!m) return "#ccc";
@@ -235,7 +248,9 @@ export default function SuivisMembres() {
                 <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>
                 <p className="text-sm text-black-700 mb-1">📞 {item.telephone || "—"}</p>
                 <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>
-                📌 Attribué à : {item.cellule_full || "—"}
+                <p className="text-sm text-black-700 mb-1">
+                  📌 Attribué à : {getAttribution(item)}
+                </p>
                 <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === item.id ? "Fermer détails" : "Détails"}</button>
               </div>
 
@@ -271,8 +286,8 @@ export default function SuivisMembres() {
                     <td className="px-4 py-2">{m.telephone || "—"}</td>
                     <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
                    <td className="px-4 py-2">
-  {m.cellule_full || m.responsable || "—"}
-</td>
+                      {getAttribution(m)}
+                    </td>
 
                     <td className="px-4 py-2 flex items-center gap-2">
                       <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>

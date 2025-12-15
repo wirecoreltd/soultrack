@@ -174,7 +174,7 @@ export default function SuivisMembres() {
       <div className="text-black text-sm space-y-2 w-full">
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
         <p>🏙 Ville : {m.ville || "—"}</p>
-        <p>🧩 Comment est-il venu : {item.venu || "—"}</p>
+        <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
         <p>❓Besoin : {(!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })())}</p>
         <p>📝 Infos : {m.infos_supplementaires || "—"}</p>      
 

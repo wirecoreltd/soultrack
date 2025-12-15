@@ -236,7 +236,7 @@ export default function SuivisMembres() {
                 <p className="text-sm text-black-700 mb-1">📞 {item.telephone || "—"}</p>
                 <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p
                 <p className="text-sm text-black-700 mb-1">🏠 Cellule : {item.cellule_full || "—"}</p>
-                <p className="text-sm text-black-700 mb-1">👤 Conseiller : {item.cellule_id === null ? item.responsable || "—" : "—"}</p>        
+                <p className="text-sm text-black-700 mb-1">👤 Conseiller : {item.cellule_id === null ? item.responsable || "—" : "—"</p>                      
                 <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === item.id ? "Fermer détails" : "Détails"}</button>
               </div>
 

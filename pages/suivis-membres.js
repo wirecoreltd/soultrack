@@ -236,7 +236,7 @@ export default function SuivisMembres() {
                 <p className="text-sm text-black-700 mb-1">📞 {item.telephone || "—"}</p>
                 <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p
                 <p className="text-sm text-black-700 mb-1">🏠 Cellule : {item.cellule_full || "—"}</p>
-                <p className="text-sm text-black-700 mb-1">👤 Conseiller : {item.cellule_full || "—"}</p>        
+                <p className="text-sm text-black-700 mb-1">👤 Conseiller : {item.cellule_id === null ? item.responsable || "—" : "—"}</p>        
                 <button onClick={() => toggleDetails(item.id)} className="text-orange-500 underline text-sm mt-1">{detailsOpen === item.id ? "Fermer détails" : "Détails"}</button>
               </div>
 
@@ -271,10 +271,7 @@ export default function SuivisMembres() {
                     <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
                     <td className="px-4 py-2">{m.telephone || "—"}</td>
                     <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
-                   <td className="px-4 py-2">
-  {m.cellule_full || m.responsable || "—"}
-</td>
-
+                   <td className="px-4 py-2"> {m.cellule_full || m.responsable || "—"}</td>
                     <td className="px-4 py-2 flex items-center gap-2">
                       <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>
                       <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>

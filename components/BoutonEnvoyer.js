@@ -31,13 +31,12 @@ export default function BoutonEnvoyer({
     setLoading(true);
 
     try {
-      // Vérifier si déjà envoyé
-      const { data: existing, error: selectError } = await supabase
+      const { data: existing, error } = await supabase
         .from("suivis_membres")
         .select("id")
         .eq("telephone", membre.telephone || "");
 
-      if (selectError) throw selectError;
+      if (error) throw error;
 
       if (existing.length > 0) {
         alert(`⚠️ ${membre.prenom} ${membre.nom} est déjà suivi.`);
@@ -45,29 +44,23 @@ export default function BoutonEnvoyer({
         return;
       }
 
-      // Insertion suivi
-      const suiviData = {
-        membre_id: membre.id,
-        prenom: membre.prenom,
-        nom: membre.nom,
-        telephone: membre.telephone,
-        is_whatsapp: true,
-        ville: membre.ville,
-        besoin: membre.besoin,
-        infos_supplementaires: membre.infos_supplementaires,
-        statut_suivis: statutIds.envoye,
-        conseiller_id: cible?.id || null,
-        responsable: prenomResponsable || "—",
-        created_at: new Date().toISOString(),
-      };
+      await supabase.from("suivis_membres").insert([
+        {
+          membre_id: membre.id,
+          prenom: membre.prenom,
+          nom: membre.nom,
+          telephone: membre.telephone,
+          is_whatsapp: true,
+          ville: membre.ville,
+          besoin: membre.besoin,
+          infos_supplementaires: membre.infos_supplementaires,
+          statut_suivis: statutIds.envoye,
+          conseiller_id: cible?.id || null,
+          responsable: prenomResponsable || "—",
+          created_at: new Date().toISOString(),
+        },
+      ]);
 
-      const { error: insertError } = await supabase
-        .from("suivis_membres")
-        .insert([suiviData]);
-
-      if (insertError) throw insertError;
-
-      // Message WhatsApp (TEL QUE TU L’AS FOURNI)
       const message = `
 🌿 Salut ${prenomResponsable} 👋,
 
@@ -76,6 +69,7 @@ Un nouveau contact t’est confié pour le suivi. Voici les informations :
 👤 *Nom* : ${membre.prenom} ${membre.nom}
 ⚥ *Sexe* : ${membre.sexe || "—"}
 📱 *Téléphone* : ${membre.telephone || "—"}
+📌 *Statut* : ${membre.statut || "—"}
 💬 *WhatsApp* : ${membre.is_whatsapp ? "Oui" : "Non"}
 🏙 *Ville* : ${membre.ville || "—"}
 🙏 *Besoin(s)* : ${
@@ -86,8 +80,6 @@ Un nouveau contact t’est confié pour le suivi. Voici les informations :
 📝 *Infos supplémentaires* : ${membre.infos_supplementaires || "—"}
 
 Merci pour ton engagement, ta disponibilité et ton cœur.
-Nous prions que Dieu te fortifie et t’inspire dans cet accompagnement.
-
 Que le Seigneur te bénisse abondamment 🙌
       `;
 
@@ -107,7 +99,7 @@ Que le Seigneur te bénisse abondamment 🙌
       setPhoneNumber("");
     } catch (err) {
       console.error("Erreur WhatsApp :", err);
-      alert("❌ Une erreur est survenue. Voir la console.");
+      alert("❌ Une erreur est survenue.");
     } finally {
       setLoading(false);
     }
@@ -115,14 +107,27 @@ Que le Seigneur te bénisse abondamment 🙌
 
   return (
     <>
+      {/* ✅ BOUTON — DESIGN IDENTIQUE À SendAppLinkEvangelise */}
       <button
         onClick={() => setShowPopup(true)}
         disabled={loading}
-        className="w-full py-3 rounded-xl font-semibold text-green-700 bg-gradient-to-r from-green-100 to-white border border-green-400 hover:opacity-90 transition"
+        className="
+          w-full
+          py-2.5
+          rounded-xl
+          font-semibold
+          text-white
+          bg-gradient-to-r
+          from-green-600
+          to-green-400
+          hover:opacity-90
+          transition
+        "
       >
-        {loading ? "Envoi..." : "Envoyer par WhatsApp"}
+        {loading ? "Envoi..." : "📤 Envoyer par WhatsApp"}
       </button>
 
+      {/* POPUP */}
       {showPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
@@ -131,7 +136,7 @@ Que le Seigneur te bénisse abondamment 🙌
             </h2>
 
             <p className="text-gray-700 mb-4">
-              Laisse vide pour choisir un contact dans WhatsApp,
+              Laisse vide pour choisir un contact dans WhatsApp
               ou saisis un numéro manuellement.
             </p>
 
@@ -149,14 +154,14 @@ Que le Seigneur te bénisse abondamment 🙌
                   setShowPopup(false);
                   setPhoneNumber("");
                 }}
-                className="flex-1 py-3 bg-gray-200 hover:bg-gray-300 rounded-2xl font-semibold"
+                className="flex-1 py-2.5 bg-gray-200 hover:bg-gray-300 rounded-2xl font-semibold"
               >
                 Annuler
               </button>
 
               <button
                 onClick={handleEnvoyer}
-                className="flex-1 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:opacity-90 text-white rounded-2xl font-semibold"
+                className="flex-1 py-2.5 rounded-2xl font-semibold text-white bg-gradient-to-r from-green-600 to-green-500 hover:opacity-90 transition"
               >
                 Envoyer
               </button>

@@ -308,7 +308,7 @@ export default function ListMembers() {
               <p>❓ Besoin : {besoins}</p>
               <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-              <p>🧩 Statut Initial : {m.statut_initial}</p>
+              <p>🧩 Statut Initial : {m.statut_initial || "—"}</p>
               <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>
               <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">
                 ✏️ Modifier le contact

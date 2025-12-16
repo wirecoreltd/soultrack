@@ -17,13 +17,14 @@ export default function BoutonEnvoyer({ membre, type, cible, onEnvoyer, session,
         `✨ Un nouveau membre est placé sous tes soins pour être accompagné et encouragé.\n\n` +
         `📌 Statut: ${membre.statut || "—"}\n\n` +        
         `👤 Nom: ${membre.prenom} ${membre.nom}\n` +
-        `⚥ Sexe: ${membre.sexe || "—"}\n` +
+        ` ⚥ Sexe: ${membre.sexe || "—"}\n` +
         `📱 Téléphone: ${membre.telephone || "—"}\n` +
         `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n` +
         `🏙 Ville: ${membre.ville || "—"}\n` +
-        `🙏 Besoin: ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}\n` +
+        `🧩 Comment est-il venu : ${membre.venu || "—"}\n` +
+        `❓ Besoin: ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}\n` +
         `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n` +
-        `Merci pour ton accompagnement et ta bienveillance. Que Dieu te benisse abondament`;
+        `Merci pour ton accompagnement et ta bienveillance. Que Dieu te benisse abondament 🙏`;
        
       // Ouvrir WhatsApp
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, "_blank");

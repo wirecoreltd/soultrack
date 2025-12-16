@@ -75,7 +75,11 @@ export default function ListMembers() {
 
       const { data, error } = await query;
       if (error) throw error;
-      setMembers(data || []);
+
+      // Ajouter le statut initial à chaque membre
+      const withInitial = (data || []).map(m => ({ ...m, statut_initial: m.statut }));
+
+      setMembers(withInitial);
     } catch (err) {
       console.error("Erreur fetchMembers:", err);
       setMembers([]);
@@ -85,15 +89,12 @@ export default function ListMembers() {
   };
 
   const fetchCellules = async () => {
-  const { data, error } = await supabase
-    .from("cellules")
-    .select("id, cellule_full");
-
-  if (error) console.error("Erreur:", error);
-  if (data) setCellules(data);
-};
-
-
+    const { data, error } = await supabase
+      .from("cellules")
+      .select("id, cellule_full");
+    if (error) console.error("Erreur:", error);
+    if (data) setCellules(data);
+  };
 
   const fetchConseillers = async () => {
     const { data } = await supabase.from("profiles").select("id, prenom, nom, telephone").eq("role", "Conseiller");
@@ -101,7 +102,10 @@ export default function ListMembers() {
   };
 
   const handleAfterSend = (updatedMember, type, cible) => {
-    updateMemberLocally(updatedMember.id, updatedMember);
+    // Mettre à jour le statut du membre à "actif" après envoi
+    const updatedWithActif = { ...updatedMember, statut: "actif" };
+    updateMemberLocally(updatedMember.id, updatedWithActif);
+
     const cibleName = type === "cellule" ? cible.cellule : `${cible.prenom} ${cible.nom}`;
     showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
   };
@@ -229,80 +233,69 @@ export default function ListMembers() {
           </div>
 
           {/* ENVOYER À */}
-              <div className="mt-2 w-full">
-                <label className="font-semibold text-sm">Envoyer à :</label>
-              
-                {/* Choix du type */}
-                <select
-                  value={selectedTargetType[m.id] || ""}
-                  onChange={e =>
-                    setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))
+          <div className="mt-2 w-full">
+            <label className="font-semibold text-sm">Envoyer à :</label>
+            <select
+              value={selectedTargetType[m.id] || ""}
+              onChange={e =>
+                setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))
+              }
+              className="mt-1 w-full border rounded px-2 py-1 text-sm"
+            >
+              <option value="">-- Choisir une option --</option>
+              <option value="cellule">Une Cellule</option>
+              <option value="conseiller">Un Conseiller</option>
+            </select>
+            {(selectedTargetType[m.id] === "cellule" ||
+              selectedTargetType[m.id] === "conseiller") && (
+              <select
+                value={selectedTargets[m.id] || ""}
+                onChange={e =>
+                  setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))
+                }
+                className="mt-1 w-full border rounded px-2 py-1 text-sm"
+              >
+                <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
+                {selectedTargetType[m.id] === "cellule"
+                  ? cellules.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.cellule_full || "—"}
+                      </option>
+                    ))
+                  : null}
+                {selectedTargetType[m.id] === "conseiller"
+                  ? conseillers.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.prenom || "—"} {c.nom || ""}
+                      </option>
+                    ))
+                  : null}
+              </select>
+            )}
+            {selectedTargets[m.id] && (
+              <div className="pt-2">
+                <BoutonEnvoyer
+                  membre={m}
+                  type={selectedTargetType[m.id]}
+                  cible={
+                    selectedTargetType[m.id] === "cellule"
+                      ? cellules.find(c => c.id === selectedTargets[m.id])
+                      : conseillers.find(c => c.id === selectedTargets[m.id])
                   }
-                  className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                >
-                  <option value="">-- Choisir une option --</option>
-                  <option value="cellule">Une Cellule</option>
-                  <option value="conseiller">Un Conseiller</option>
-                </select>
-              
-                {/* Dropdown cellule OU conseiller */}
-                {(selectedTargetType[m.id] === "cellule" ||
-                  selectedTargetType[m.id] === "conseiller") && (
-                  <select
-                    value={selectedTargets[m.id] || ""}
-                    onChange={e =>
-                      setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))
-                    }
-                    className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                  >
-                    <option value="">
-                      -- Choisir {selectedTargetType[m.id]} --
-                    </option>
-              
-                    {/* CELLULES */}
-                    {selectedTargetType[m.id] === "cellule"
-                      ? cellules.map(c => (
-                          <option key={c.id} value={c.id}>
-                            {c.cellule_full || "—"}
-                          </option>
-                        ))
-                      : null}
-              
-                    {/* CONSEILLERS */}
-                    {selectedTargetType[m.id] === "conseiller"
-                      ? conseillers.map(c => (
-                          <option key={c.id} value={c.id}>
-                            {c.prenom || "—"} {c.nom || ""}
-                          </option>
-                        ))
-                      : null}
-                  </select>
-                )}         
-
-
-                {selectedTargets[m.id] && (
-                  <div className="pt-2">
-                    <BoutonEnvoyer
-                      membre={m}
-                      type={selectedTargetType[m.id]}
-                      cible={
-                        selectedTargetType[m.id] === "cellule"
-                          ? cellules.find(c => c.id === selectedTargets[m.id])
-                          : conseillers.find(c => c.id === selectedTargets[m.id])
-                      }
-                      onEnvoyer={id => handleAfterSend(
-                        id,
-                        selectedTargetType[m.id],
-                        selectedTargetType[m.id] === "cellule"
-                          ? cellules.find(c => c.id === selectedTargets[m.id])
-                          : conseillers.find(c => c.id === selectedTargets[m.id])
-                      )}
-                      session={session}
-                      showToast={showToast}
-                    />
-                  </div>
-                )}
+                  onEnvoyer={id => handleAfterSend(
+                    id,
+                    selectedTargetType[m.id],
+                    selectedTargetType[m.id] === "cellule"
+                      ? cellules.find(c => c.id === selectedTargets[m.id])
+                      : conseillers.find(c => c.id === selectedTargets[m.id])
+                  )}
+                  session={session}
+                  showToast={showToast}
+                />
               </div>
+            )}
+          </div>
+
           {/* Détails */}
           <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2" aria-label={`Détails ${m.prenom} ${m.nom}`}>
             {isOpen ? "Fermer détails" : "Détails"}
@@ -314,7 +307,8 @@ export default function ListMembers() {
               <p>⚥ Sexe : {m.sexe || "—"}</p>
               <p>❓ Besoin : {besoins}</p>
               <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-              <p>🧩 Comment est-il venu : {m.venu || "—"}</p> 
+              <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+              <p>🧩 Statut Initial : {m.statut_initial || m.statut}</p> {/* <-- ajouté */}
               <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>
               <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">
                 ✏️ Modifier le contact

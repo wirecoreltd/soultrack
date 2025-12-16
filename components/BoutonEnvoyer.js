@@ -5,163 +5,158 @@ import supabase from "../lib/supabaseClient";
 
 export default function BoutonEnvoyer({
   membre,
-  type = "cellule",
   cible,
   session,
+  prenomResponsable,
   onEnvoyer,
   showToast,
-  label = "Envoyer par WhatsApp",
 }) {
-  const [showPopup, setShowPopup] = useState(false);
-  const [manualPhone, setManualPhone] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
 
-  const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
+  const statutIds = {
+    envoye: 1,
+    "en attente": 2,
+    integrer: 3,
+    refus: 4,
+  };
 
-  const handleSend = () => {
-    if (!session) return alert("❌ Vous devez être connecté.");
+  const handleEnvoyer = async () => {
+    if (!session) {
+      alert("❌ Vous devez être connecté.");
+      return;
+    }
 
     setLoading(true);
 
     try {
+      // Vérifier si déjà envoyé
+      const { data: existing, error: selectError } = await supabase
+        .from("suivis_membres")
+        .select("id")
+        .eq("telephone", membre.telephone || "");
+
+      if (selectError) throw selectError;
+
+      if (existing.length > 0) {
+        alert(`⚠️ ${membre.prenom} ${membre.nom} est déjà suivi.`);
+        setLoading(false);
+        return;
+      }
+
+      // Insertion suivi
+      const suiviData = {
+        membre_id: membre.id,
+        prenom: membre.prenom,
+        nom: membre.nom,
+        telephone: membre.telephone,
+        is_whatsapp: true,
+        ville: membre.ville,
+        besoin: membre.besoin,
+        infos_supplementaires: membre.infos_supplementaires,
+        statut_suivis: statutIds.envoye,
+        conseiller_id: cible?.id || null,
+        responsable: prenomResponsable || "—",
+        created_at: new Date().toISOString(),
+      };
+
+      const { error: insertError } = await supabase
+        .from("suivis_membres")
+        .insert([suiviData]);
+
+      if (insertError) throw insertError;
+
+      // Message WhatsApp (TEL QUE TU L’AS FOURNI)
       const message = `
-👋 Bonjour !
+🌿 Salut ${prenomResponsable} 👋,
 
-✨ Un nouveau membre est placé sous tes soins pour être accompagné et encouragé.
+Un nouveau contact t’est confié pour le suivi. Voici les informations :
 
-👤 Nom: ${membre.prenom} ${membre.nom}
-⚥ Sexe: ${membre.sexe || "—"}
-📱 Téléphone: ${membre.telephone || "—"}
-💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}
-🏙 Ville: ${membre.ville || "—"}
-🙏 Besoin: ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}
-📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}
+👤 *Nom* : ${membre.prenom} ${membre.nom}
+⚥ *Sexe* : ${membre.sexe || "—"}
+📱 *Téléphone* : ${membre.telephone || "—"}
+💬 *WhatsApp* : ${membre.is_whatsapp ? "Oui" : "Non"}
+🏙 *Ville* : ${membre.ville || "—"}
+🙏 *Besoin(s)* : ${
+        Array.isArray(membre.besoin)
+          ? membre.besoin.join(", ")
+          : membre.besoin || "—"
+      }
+📝 *Infos supplémentaires* : ${membre.infos_supplementaires || "—"}
 
-Merci pour ton accompagnement ❤️
-`;
+Merci pour ton engagement, ta disponibilité et ton cœur.
+Nous prions que Dieu te fortifie et t’inspire dans cet accompagnement.
 
-      // 🔹 Numéro cible OU numéro manuel
-      let phone = (cible?.telephone || manualPhone || "").replace(/\D/g, "");
-      if (phone && phone.length <= 8) phone = "230" + phone; // Maurice
+Que le Seigneur te bénisse abondamment 🙌
+      `;
 
-      // 🔹 WhatsApp : avec numéro OU choix du contact
-      const whatsappUrl = phone
-        ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`
+      const whatsappLink = phoneNumber
+        ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(
+            message
+          )}`
         : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
 
-      window.open(whatsappUrl, "_blank");
+      window.open(whatsappLink, "_blank");
+
+      if (onEnvoyer) onEnvoyer();
+      if (showToast)
+        showToast(`✅ ${membre.prenom} ${membre.nom} envoyé avec succès`);
 
       setShowPopup(false);
-      setManualPhone("");
-
-      // 🔹 Supabase en arrière-plan
-      (async () => {
-        try {
-          const { data: existing } = await supabase
-            .from("suivis_membres")
-            .select("id")
-            .eq("telephone", membre.telephone || "");
-
-          if (!existing || existing.length === 0) {
-            const suiviData = {
-              membre_id: membre.id,
-              prenom: membre.prenom,
-              nom: membre.nom,
-              telephone: membre.telephone,
-              ville: membre.ville,
-              besoin: membre.besoin,
-              infos_supplementaires: membre.infos_supplementaires,
-              statut_suivis: statutIds.envoye,
-              created_at: new Date().toISOString(),
-            };
-
-            if (type === "cellule") {
-              suiviData.cellule_id = cible?.id || null;
-              suiviData.cellule_nom = cible?.cellule || "—";
-              suiviData.responsable = cible?.responsable || "—";
-            } else if (type === "conseiller") {
-              suiviData.conseiller_id = cible?.id || null;
-              suiviData.responsable =
-                `${cible?.prenom || ""} ${cible?.nom || ""}`.trim() || "—";
-            }
-
-            await supabase.from("suivis_membres").insert([suiviData]);
-          }
-
-          const { data: updatedMember } = await supabase
-            .from("membres")
-            .update({ statut: "ancien" })
-            .eq("id", membre.id)
-            .select()
-            .single();
-
-          if (onEnvoyer) onEnvoyer(updatedMember);
-          if (showToast)
-            showToast(`✅ ${membre.prenom} ${membre.nom} envoyé via WhatsApp`);
-        } catch (err) {
-          console.error("Erreur Supabase :", err);
-        } finally {
-          setLoading(false);
-        }
-      })();
+      setPhoneNumber("");
     } catch (err) {
       console.error("Erreur WhatsApp :", err);
+      alert("❌ Une erreur est survenue. Voir la console.");
+    } finally {
       setLoading(false);
     }
   };
 
   return (
     <>
-      {/* BOUTON PRINCIPAL */}
       <button
         onClick={() => setShowPopup(true)}
         disabled={loading}
-        className="w-full py-3 rounded-xl font-semibold text-white
-                   bg-gradient-to-r from-green-500 to-emerald-600
-                   hover:opacity-90 transition"
+        className="w-full py-3 rounded-xl font-semibold text-green-700 bg-gradient-to-r from-green-100 to-white border border-green-400 hover:opacity-90 transition"
       >
-        {loading ? "Envoi..." : label}
+        {loading ? "Envoi..." : "Envoyer par WhatsApp"}
       </button>
 
-      {/* POPUP */}
       {showPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
-            <h2 className="text-xl font-bold mb-3">{label}</h2>
+            <h2 className="text-xl font-bold mb-3 text-green-700">
+              Envoyer par WhatsApp
+            </h2>
 
             <p className="text-gray-700 mb-4">
-              Cliquez sur <span className="font-semibold">Envoyer</span> pour
-              choisir un contact dans WhatsApp ou saisissez un numéro
-              manuellement.
+              Laisse vide pour choisir un contact dans WhatsApp,
+              ou saisis un numéro manuellement.
             </p>
 
             <input
-              type="tel"
-              placeholder="Numéro WhatsApp (optionnel)"
-              value={manualPhone}
-              onChange={(e) => setManualPhone(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4
-                         focus:outline-none focus:ring-2 focus:ring-green-400"
+              type="text"
+              placeholder="Numéro WhatsApp (ex: +2305xxxxxx)"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-green-400"
             />
 
             <div className="flex gap-3">
               <button
                 onClick={() => {
                   setShowPopup(false);
-                  setManualPhone("");
+                  setPhoneNumber("");
                 }}
-                className="flex-1 py-3 rounded-2xl font-semibold
-                           bg-white border border-green-500 text-green-600
-                           hover:bg-green-50 transition"
+                className="flex-1 py-3 bg-gray-200 hover:bg-gray-300 rounded-2xl font-semibold"
               >
                 Annuler
               </button>
 
               <button
-                onClick={handleSend}
-                className="flex-1 py-3 rounded-2xl font-semibold text-white
-                           bg-gradient-to-r from-green-500 to-green-700
-                           hover:opacity-90 transition"
+                onClick={handleEnvoyer}
+                className="flex-1 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:opacity-90 text-white rounded-2xl font-semibold"
               >
                 Envoyer
               </button>

@@ -31,12 +31,13 @@ export default function BoutonEnvoyer({
     setLoading(true);
 
     try {
-      const { data: existing, error } = await supabase
+      // Vérifier si déjà suivi
+      const { data: existing, error: selectError } = await supabase
         .from("suivis_membres")
         .select("id")
         .eq("telephone", membre.telephone || "");
 
-      if (error) throw error;
+      if (selectError) throw selectError;
 
       if (existing.length > 0) {
         alert(`⚠️ ${membre.prenom} ${membre.nom} est déjà suivi.`);
@@ -44,47 +45,50 @@ export default function BoutonEnvoyer({
         return;
       }
 
-      await supabase.from("suivis_membres").insert([
-        {
-          membre_id: membre.id,
-          prenom: membre.prenom,
-          nom: membre.nom,
-          telephone: membre.telephone,
-          is_whatsapp: true,
-          ville: membre.ville,
-          besoin: membre.besoin,
-          infos_supplementaires: membre.infos_supplementaires,
-          statut_suivis: statutIds.envoye,
-          conseiller_id: cible?.id || null,
-          responsable: prenomResponsable || "—",
-          created_at: new Date().toISOString(),
-        },
-      ]);
+      // Insérer suivi dans Supabase
+      const suiviData = {
+        membre_id: membre.id,
+        prenom: membre.prenom,
+        nom: membre.nom,
+        telephone: membre.telephone,
+        is_whatsapp: true,
+        ville: membre.ville,
+        besoin: membre.besoin,
+        infos_supplementaires: membre.infos_supplementaires,
+        statut_suivis: statutIds.envoye,
+        conseiller_id: cible?.id || null,
+        responsable: prenomResponsable || cible?.responsable || "—",
+        created_at: new Date().toISOString(),
+      };
 
-      const message = `
-🌿 Salut ${prenomResponsable} 👋,
+      const { error: insertError } = await supabase
+        .from("suivis_membres")
+        .insert([suiviData]);
 
-Un nouveau contact t’est confié pour le suivi. Voici les informations :
+      if (insertError) throw insertError;
 
-👤 *Nom* : ${membre.prenom} ${membre.nom}
-⚥ *Sexe* : ${membre.sexe || "—"}
-📱 *Téléphone* : ${membre.telephone || "—"}
-📌 *Statut* : ${membre.statut || "—"}
-💬 *WhatsApp* : ${membre.is_whatsapp ? "Oui" : "Non"}
-🏙 *Ville* : ${membre.ville || "—"}
-🙏 *Besoin(s)* : ${
+      // 🔹 MESSAGE LIGNE PAR LIGNE COMME DEMANDÉ
+      let message = `🌿 Salut ${prenomResponsable || cible?.responsable || ""} 👋,\n\n`;
+      message += `Un nouveau contact t’est confié pour le suivi. Voici les informations :\n\n`;
+      message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
+      message += `⚥ Sexe: ${membre.sexe || "—"}\n`;
+      message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
+      message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
+      message += `🏙 Ville: ${membre.ville || "—"}\n`;
+      message += `🙏 Besoin(s): ${
         Array.isArray(membre.besoin)
           ? membre.besoin.join(", ")
           : membre.besoin || "—"
-      }
-📝 *Infos supplémentaires* : ${membre.infos_supplementaires || "—"}
+      }\n`;
+      message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;
+      message += `Merci pour ton engagement, ta disponibilité et ton cœur.\n`;
+      message += `Nous prions que Dieu te fortifie et t’inspire dans cet accompagnement.\n\n`;
+      message += `Que le Seigneur te bénisse abondamment 🙌`;
 
-Merci pour ton engagement, ta disponibilité et ton cœur.
-Que le Seigneur te bénisse abondamment 🙌
-      `;
-
-      const whatsappLink = phoneNumber
-        ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(
+      // 🔹 WHATSAPP
+      const phone = phoneNumber ? phoneNumber.replace(/\D/g, "") : "";
+      const whatsappLink = phone
+        ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(
             message
           )}`
         : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
@@ -99,7 +103,7 @@ Que le Seigneur te bénisse abondamment 🙌
       setPhoneNumber("");
     } catch (err) {
       console.error("Erreur WhatsApp :", err);
-      alert("❌ Une erreur est survenue.");
+      alert("❌ Une erreur est survenue. Voir la console.");
     } finally {
       setLoading(false);
     }
@@ -107,7 +111,7 @@ Que le Seigneur te bénisse abondamment 🙌
 
   return (
     <>
-      {/* ✅ BOUTON — DESIGN IDENTIQUE À SendAppLinkEvangelise */}
+      {/* BOUTON PRINCIPAL */}
       <button
         onClick={() => setShowPopup(true)}
         disabled={loading}
@@ -124,7 +128,7 @@ Que le Seigneur te bénisse abondamment 🙌
           transition
         "
       >
-        {loading ? "Envoi..." : "📤 Envoyer par WhatsApp"}
+        {loading ? "Envoi..." : "Envoyer par WhatsApp"}
       </button>
 
       {/* POPUP */}
@@ -136,8 +140,8 @@ Que le Seigneur te bénisse abondamment 🙌
             </h2>
 
             <p className="text-gray-700 mb-4">
-              Laisse vide pour choisir un contact dans WhatsApp
-              ou saisis un numéro manuellement.
+              Laisse vide pour choisir un contact dans WhatsApp ou saisis un
+              numéro manuellement.
             </p>
 
             <input

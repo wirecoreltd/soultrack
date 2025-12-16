@@ -220,9 +220,8 @@ export default function ListMembers() {
           <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
           <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
             <div className="flex justify-center items-center space-x-2">📱 {m.telephone || "—"}</div>
-            <div className="flex justify-center items-center space-x-2">🏙️ Ville : {m.ville || "—"}</div>
-
-   <div className="flex justify-center items-center space-x-2">🏙️ full : {m.cellule_full || "—"}</div>         <div className="flex justify-center items-center space-x-2">🕊 Statut : {m.statut || "—"}</div>
+            <div className="flex justify-center items-center space-x-2">🏙️ Ville : {m.ville || "—"}</div>                 
+            <div className="flex justify-center items-center space-x-2">🕊 Statut : {m.statut || "—"}</div>            
             <div className="flex flex-col items-start space-y-1 w-full">
               <div>🏠 Cellule : {(m.cellule_ville && m.cellule_nom) ? `${m.cellule_ville} - ${m.cellule_nom}` : m.suivi_cellule_nom || ""}</div>
               <div>👤 Conseiller : {(m.conseiller_prenom || m.conseiller_nom) ? `${m.conseiller_prenom} ${m.conseiller_nom}`.trim() : ""}</div>

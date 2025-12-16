@@ -366,15 +366,23 @@ export default function ListMembers() {
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
              
-              <span
-                                style={{
-                                  background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                                  WebkitBackgroundClip: "text",
-                                  color: "transparent",
-                                }}
-                              >
-                                Membres existants
-                              </span>
+              <h3
+                  style={{
+                    marginBottom: "16px", // espace sous le h3
+                    fontSize: "1.25rem", // ajuste la taille si besoin
+                    fontWeight: "bold",
+                  }}
+                >
+                  <span
+                    style={{
+                      background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                      WebkitBackgroundClip: "text",
+                      color: "transparent",
+                    }}
+                  >
+                    Membres existants
+                  </span>
+                </h3>
                                   
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {anciensFiltres.map(renderMemberCard)}

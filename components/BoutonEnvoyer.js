@@ -3,31 +3,29 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast, label = "Envoyer par WhatsApp", buttonColor = "from-[#09203F] to-[#537895]" }) {
+export default function BoutonEnvoyer({
+  membre,
+  type = "cellule",
+  cible,
+  session,
+  onEnvoyer,
+  showToast,
+  label = "Envoyer par WhatsApp",
+}) {
   const [showPopup, setShowPopup] = useState(false);
   const [manualPhone, setManualPhone] = useState("");
-  const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
   const [loading, setLoading] = useState(false);
 
-  const getPhone = () => {
-    let phone = (cible?.telephone || manualPhone).replace(/\D/g, "");
-    if (!phone) return null;
-    if (phone.length <= 8) phone = "230" + phone; // indicatif pays Maurice
-    return phone;
-  };
+  const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
 
   const handleSend = () => {
     if (!session) return alert("❌ Vous devez être connecté.");
 
-    const phone = getPhone();
-    if (!phone) return alert("❌ Veuillez saisir un numéro WhatsApp !");
-
     setLoading(true);
 
     try {
-      // Préparer le message
       const message = `
-👋 Bonjour ${cible?.responsable || (cible?.prenom || "")} !
+👋 Bonjour !
 
 ✨ Un nouveau membre est placé sous tes soins pour être accompagné et encouragé.
 
@@ -39,18 +37,29 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 🙏 Besoin: ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}
 📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}
 
-Merci pour ton accompagnement et ta bienveillance ❤️
+Merci pour ton accompagnement ❤️
 `;
 
-      // Ouvrir WhatsApp immédiatement
-      window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`, "_blank");
+      // 🔹 Numéro cible OU numéro manuel
+      let phone = (cible?.telephone || manualPhone || "").replace(/\D/g, "");
+      if (phone && phone.length <= 8) phone = "230" + phone; // Maurice
 
-      // Insert / update Supabase en arrière-plan
+      // 🔹 WhatsApp : avec numéro OU choix du contact
+      const whatsappUrl = phone
+        ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`
+        : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+
+      window.open(whatsappUrl, "_blank");
+
+      setShowPopup(false);
+      setManualPhone("");
+
+      // 🔹 Supabase en arrière-plan
       (async () => {
         try {
           const { data: existing } = await supabase
             .from("suivis_membres")
-            .select("*")
+            .select("id")
             .eq("telephone", membre.telephone || "");
 
           if (!existing || existing.length === 0) {
@@ -59,11 +68,10 @@ Merci pour ton accompagnement et ta bienveillance ❤️
               prenom: membre.prenom,
               nom: membre.nom,
               telephone: membre.telephone,
-              is_whatsapp: true,
               ville: membre.ville,
               besoin: membre.besoin,
               infos_supplementaires: membre.infos_supplementaires,
-              statut_suivis: statutIds["envoye"],
+              statut_suivis: statutIds.envoye,
               created_at: new Date().toISOString(),
             };
 
@@ -73,7 +81,8 @@ Merci pour ton accompagnement et ta bienveillance ❤️
               suiviData.responsable = cible?.responsable || "—";
             } else if (type === "conseiller") {
               suiviData.conseiller_id = cible?.id || null;
-              suiviData.responsable = `${cible?.prenom || ""} ${cible?.nom || ""}`.trim() || "—";
+              suiviData.responsable =
+                `${cible?.prenom || ""} ${cible?.nom || ""}`.trim() || "—";
             }
 
             await supabase.from("suivis_membres").insert([suiviData]);
@@ -88,63 +97,71 @@ Merci pour ton accompagnement et ta bienveillance ❤️
 
           if (onEnvoyer) onEnvoyer(updatedMember);
           if (showToast)
-            showToast(`✅ ${membre.prenom} ${membre.nom} envoyé à ${type === "cellule" ? cible.cellule : `${cible.prenom} ${cible.nom}`}`);
+            showToast(`✅ ${membre.prenom} ${membre.nom} envoyé via WhatsApp`);
         } catch (err) {
-          console.error("Erreur insert/update Supabase :", err);
+          console.error("Erreur Supabase :", err);
         } finally {
           setLoading(false);
         }
       })();
-
-      // Fermer le popup et réinitialiser le numéro manuel
-      setShowPopup(false);
-      setManualPhone("");
     } catch (err) {
-      console.error("Erreur handleSend :", err);
+      console.error("Erreur WhatsApp :", err);
       setLoading(false);
-      alert("❌ Une erreur est survenue lors de l'envoi.");
     }
   };
 
   return (
     <>
+      {/* BOUTON PRINCIPAL */}
       <button
         onClick={() => setShowPopup(true)}
-        className={`w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r ${buttonColor} hover:opacity-90 transition`}
         disabled={loading}
+        className="w-full py-3 rounded-xl font-semibold text-white
+                   bg-gradient-to-r from-green-500 to-emerald-600
+                   hover:opacity-90 transition"
       >
         {loading ? "Envoi..." : label}
       </button>
 
+      {/* POPUP */}
       {showPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl relative">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
             <h2 className="text-xl font-bold mb-3">{label}</h2>
+
             <p className="text-gray-700 mb-4">
-              Cliquez sur <span className="font-semibold">Envoyer</span> si le contact figure déjà dans votre liste WhatsApp,
-              ou saisissez un numéro manuellement.
+              Cliquez sur <span className="font-semibold">Envoyer</span> pour
+              choisir un contact dans WhatsApp ou saisissez un numéro
+              manuellement.
             </p>
 
-            {!cible?.telephone && (
-              <input
-                type="tel"
-                placeholder="Saisir le numéro WhatsApp"
-                value={manualPhone}
-                onChange={(e) => setManualPhone(e.target.value)}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              />
-            )}
+            <input
+              type="tel"
+              placeholder="Numéro WhatsApp (optionnel)"
+              value={manualPhone}
+              onChange={(e) => setManualPhone(e.target.value)}
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4
+                         focus:outline-none focus:ring-2 focus:ring-green-400"
+            />
 
-            <div className="flex gap-3 justify-end">
+            <div className="flex gap-3">
               <button
-                onClick={() => { setShowPopup(false); setManualPhone(""); }}
-                className="flex-1 py-3 bg-gray-300 hover:bg-gray-400 rounded-2xl font-semibold transition"
+                onClick={() => {
+                  setShowPopup(false);
+                  setManualPhone("");
+                }}
+                className="flex-1 py-3 rounded-2xl font-semibold
+                           bg-white border border-green-500 text-green-600
+                           hover:bg-green-50 transition"
               >
                 Annuler
               </button>
+
               <button
                 onClick={handleSend}
-                className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-semibold transition"
+                className="flex-1 py-3 rounded-2xl font-semibold text-white
+                           bg-gradient-to-r from-green-500 to-green-700
+                           hover:opacity-90 transition"
               >
                 Envoyer
               </button>

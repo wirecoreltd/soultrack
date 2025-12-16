@@ -3,20 +3,31 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
-  const [loading, setLoading] = useState(false);
+export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast, label = "Envoyer par WhatsApp", buttonColor = "from-[#09203F] to-[#537895]" }) {
+  const [showPopup, setShowPopup] = useState(false);
+  const [manualPhone, setManualPhone] = useState("");
   const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
+  const [loading, setLoading] = useState(false);
 
-  const sendToWhatsapp = () => {
+  const getPhone = () => {
+    let phone = (cible?.telephone || manualPhone).replace(/\D/g, "");
+    if (!phone) return null;
+    if (phone.length <= 8) phone = "230" + phone; // indicatif pays Maurice
+    return phone;
+  };
+
+  const handleSend = () => {
     if (!session) return alert("❌ Vous devez être connecté.");
-    if (!cible || !cible.telephone) return alert("❌ La cible n’a pas de numéro WhatsApp.");
+
+    const phone = getPhone();
+    if (!phone) return alert("❌ Veuillez saisir un numéro WhatsApp !");
 
     setLoading(true);
 
     try {
-      // Construire le message
+      // Préparer le message
       const message = `
-👋 Bonjour ${cible?.responsable || `${cible?.prenom || ""}`} !
+👋 Bonjour ${cible?.responsable || (cible?.prenom || "")} !
 
 ✨ Un nouveau membre est placé sous tes soins pour être accompagné et encouragé.
 
@@ -31,17 +42,12 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 Merci pour ton accompagnement et ta bienveillance ❤️
 `;
 
-      // Formater le numéro avec indicatif pays
-      let phone = cible.telephone.replace(/\D/g, "");
-      if (phone.length <= 8) phone = "230" + phone; // exemple pour Maurice
-
-      // 🔹 Ouvrir WhatsApp immédiatement
+      // Ouvrir WhatsApp immédiatement
       window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`, "_blank");
 
-      // 🔹 Insert / update Supabase en arrière-plan
+      // Insert / update Supabase en arrière-plan
       (async () => {
         try {
-          // Vérifier si le membre est déjà suivi
           const { data: existing } = await supabase
             .from("suivis_membres")
             .select("*")
@@ -73,7 +79,6 @@ Merci pour ton accompagnement et ta bienveillance ❤️
             await supabase.from("suivis_membres").insert([suiviData]);
           }
 
-          // Mettre à jour le membre
           const { data: updatedMember } = await supabase
             .from("membres")
             .update({ statut: "ancien" })
@@ -90,22 +95,63 @@ Merci pour ton accompagnement et ta bienveillance ❤️
           setLoading(false);
         }
       })();
+
+      // Fermer le popup et réinitialiser le numéro manuel
+      setShowPopup(false);
+      setManualPhone("");
     } catch (err) {
-      console.error("Erreur sendToWhatsapp :", err);
+      console.error("Erreur handleSend :", err);
       setLoading(false);
       alert("❌ Une erreur est survenue lors de l'envoi.");
     }
   };
 
   return (
-    <button
-      onClick={sendToWhatsapp}
-      disabled={loading}
-      className={`w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#09203F] to-[#537895] hover:opacity-90 transition ${
-        loading ? "opacity-50 cursor-not-allowed" : ""
-      }`}
-    >
-      {loading ? "Envoi..." : "📤 Envoyer par WhatsApp"}
-    </button>
+    <>
+      <button
+        onClick={() => setShowPopup(true)}
+        className={`w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r ${buttonColor} hover:opacity-90 transition`}
+        disabled={loading}
+      >
+        {loading ? "Envoi..." : label}
+      </button>
+
+      {showPopup && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl relative">
+            <h2 className="text-xl font-bold mb-3">{label}</h2>
+            <p className="text-gray-700 mb-4">
+              Cliquez sur <span className="font-semibold">Envoyer</span> si le contact figure déjà dans votre liste WhatsApp,
+              ou saisissez un numéro manuellement.
+            </p>
+
+            {!cible?.telephone && (
+              <input
+                type="tel"
+                placeholder="Saisir le numéro WhatsApp"
+                value={manualPhone}
+                onChange={(e) => setManualPhone(e.target.value)}
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+            )}
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => { setShowPopup(false); setManualPhone(""); }}
+                className="flex-1 py-3 bg-gray-300 hover:bg-gray-400 rounded-2xl font-semibold transition"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleSend}
+                className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-semibold transition"
+              >
+                Envoyer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

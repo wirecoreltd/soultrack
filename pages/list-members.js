@@ -365,7 +365,7 @@ export default function ListMembers() {
           )}
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
-              //<h3 className="text-white text-lg mb-3 font-semibold">Membres existants</h3>//
+             
               <span
                                 style={{
                                   background: "linear-gradient(to right, #3B82F6, #D1D5DB)",

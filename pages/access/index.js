@@ -1,4 +1,3 @@
-// pages/access/index.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -32,19 +31,13 @@ export default function AccessIndex() {
       let tokenToUse;
 
       if (!tokens || tokens.length === 0 || new Date(tokens[0].created_at) <= new Date(now.getTime() - 7*24*60*60*1000)) {
-        // Créer un nouveau token
         const newToken = uuidv4();
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7);
 
-        const { error: insertError } = await supabase.from("access_tokens").insert([
-          {
-            token: newToken,
-            access_type: "ajouter_membre",
-            created_at: now,
-            expires_at: expiresAt,
-          },
-        ]);
+        const { error: insertError } = await supabase
+          .from("access_tokens")
+          .insert([{ token: newToken, access_type: "ajouter_membre", created_at: now, expires_at: expiresAt }]);
 
         if (insertError) {
           setErrorMsg("Erreur lors de la création du token : " + insertError.message);
@@ -65,7 +58,7 @@ export default function AccessIndex() {
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      {loading ? <p>Génération du lien d'accès...</p> : <p className="text-red-500">{errorMsg}</p>}
+      {loading ? <p className="text-gray-700 text-lg">Génération du lien d'accès...</p> : <p className="text-red-500 text-lg">{errorMsg}</p>}
     </div>
   );
 }

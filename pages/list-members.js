@@ -313,8 +313,7 @@ export default function ListMembers() {
               <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
               <p>⚥ Sexe : {m.sexe || "—"}</p>
               <p>❓ Besoin : {besoins}</p>
-              <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-              <p>🏷 Statut Suivi : {m.suivi_statut_libelle || "—"}</p>
+              <p>📝 Infos : {m.infos_supplementaires || "—"}</p>              
               <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>
               <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">
                 ✏️ Modifier le contact

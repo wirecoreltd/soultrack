@@ -410,152 +410,39 @@ export default function ListMembers() {
 {/* ==================== VUE TABLE ==================== */}
 {view === "table" && (
   <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-    <table className="w-full text-sm text-left border-separate border-spacing-0">
-      <thead className="bg-gray-200 text-black-800 text-sm uppercase">
-        <tr>
-          <th className="px-2 py-2 rounded-tl-lg text-left">Nom complet</th>
-          <th className="px-2 py-2 text-left">Téléphone</th>
-          <th className="px-2 py-2 text-left">Statut</th>
-          <th className="px-2 py-2 text-left">Affectation</th>
-          <th className="px-2 py-2 rounded-tr-lg text-left">Actions</th>
-        </tr>
-      </thead>
-
-      <tbody>
-  {/* Nouveaux Membres */}
-  {nouveauxFiltres.length > 0 && (
-    <tr>
-      <td colSpan={5} className="px-2 py-2 text-white font-semibold">
-        💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-      </td>
-    </tr>
-  )}
-
-  {nouveauxFiltres.map((m) => (
-    <tr key={m.id} className="border-b border-gray-300">
-      <td
-        className="px-2 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white whitespace-nowrap"
-        style={{ borderLeftColor: getBorderColor(m) }}
-      >
-        {m.prenom} {m.nom}
-        {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-        <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">
-          Nouveau
-        </span>
-      </td>
-
-      <td className="px-2 py-2 text-white whitespace-nowrap relative">
-        {m.telephone ? (
-          <>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
-              }}
-              className="text-orange-500 underline font-semibold"
-            >
-              {m.telephone}
-            </button>
-
-            {openPhoneMenuId === m.id && (
-              <div
-                className="absolute top-full mt-1 bg-white border rounded-lg shadow-lg w-48 z-50 phone-menu"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <a
-                  href={`tel:${m.telephone}`}
-                  className="block px-4 py-2 hover:bg-gray-100 text-black"
-                >
-                  📞 Appeler
-                </a>
-                <a
-                  href={`sms:${m.telephone}`}
-                  className="block px-4 py-2 hover:bg-gray-100 text-black"
-                >
-                  ✉️ SMS
-                </a>
-                <a
-                  href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
-                  target="_blank"
-                  className="block px-4 py-2 hover:bg-gray-100 text-black"
-                >
-                  💬 WhatsApp
-                </a>
-                <a
-                  href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?text=Bonjour`}
-                  target="_blank"
-                  className="block px-4 py-2 hover:bg-gray-100 text-black"
-                >
-                  📱 Message WhatsApp
-                </a>
-              </div>
-            )}
-          </>
-        ) : (
-          "—"
-        )}
-      </td>
-
-      <td className="px-2 py-2 text-white whitespace-nowrap">
-        {m.statut || "—"}
-      </td>
-
-      <td className="px-2 py-2 text-white">
-        {m.cellule_nom
-          ? `🏠 ${m.cellule_ville || "—"} - ${m.cellule_nom}`
-          : m.conseiller_prenom
-          ? `👤 ${m.conseiller_prenom} ${m.conseiller_nom}`
-          : "—"}
-      </td>
-
-      <td className="px-2 py-2 flex items-center gap-3 whitespace-nowrap">
-        <button
-          onClick={() =>
-            setPopupMember(popupMember?.id === m.id ? null : { ...m })
-          }
-          className="text-orange-500 underline text-sm"
-        >
-          {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-        </button>
-
-        <button
-          onClick={() => setEditMember(m)}
-          className="text-blue-600 underline text-sm"
-        >
-          Modifier
-        </button>
-      </td>
-    </tr>
-  ))}
-
-  {/* Anciens Membres */}
-  {anciensFiltres.length > 0 && (
-    <>
+  <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto">
+    <thead className="bg-gray-200 text-black-800 text-sm uppercase">
       <tr>
-        <td colSpan={5} className="px-2 py-2 font-semibold text-lg text-white">
-          <span
-            style={{
-              background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-              WebkitBackgroundClip: "text",
-              color: "transparent",
-            }}
-          >
-            Membres existants
-          </span>
-        </td>
+        <th className="px-1 py-1 rounded-tl-lg text-left">Nom complet</th>
+        <th className="px-1 py-1 text-left">Téléphone</th>
+        <th className="px-1 py-1 text-left">Statut</th>
+        <th className="px-1 py-1 text-left">Affectation</th>
+        <th className="px-1 py-1 rounded-tr-lg text-left">Actions</th>
       </tr>
+    </thead>
 
-      {anciensFiltres.map((m) => (
+    <tbody>
+      {/* Nouveaux Membres */}
+      {nouveauxFiltres.length > 0 && (
+        <tr>
+          <td colSpan={5} className="px-1 py-1 text-white font-semibold">
+            💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+          </td>
+        </tr>
+      )}
+
+      {nouveauxFiltres.map((m) => (
         <tr key={m.id} className="border-b border-gray-300">
           <td
-            className="px-2 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white whitespace-nowrap"
+            className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 text-white whitespace-nowrap"
             style={{ borderLeftColor: getBorderColor(m) }}
           >
             {m.prenom} {m.nom}
             {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+            <span className="bg-blue-500 text-white text-xs px-1 rounded ml-1">Nouveau</span>
           </td>
 
-          <td className="px-2 py-2 text-white whitespace-nowrap relative">
+          <td className="px-1 py-1 text-white whitespace-nowrap relative">
             {m.telephone ? (
               <>
                 <button
@@ -563,72 +450,41 @@ export default function ListMembers() {
                     e.stopPropagation();
                     setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
                   }}
-                  className="text-orange-500 underline font-semibold"
+                  className="text-orange-500 underline font-semibold text-sm"
                 >
                   {m.telephone}
                 </button>
 
                 {openPhoneMenuId === m.id && (
                   <div
-                    className="absolute top-full mt-1 bg-white border rounded-lg shadow-lg w-48 z-50 phone-menu"
+                    className="absolute top-full mt-1 bg-white border rounded-lg shadow-lg w-40 z-50 phone-menu"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <a
-                      href={`tel:${m.telephone}`}
-                      className="block px-4 py-2 hover:bg-gray-100 text-black"
-                    >
-                      📞 Appeler
-                    </a>
-                    <a
-                      href={`sms:${m.telephone}`}
-                      className="block px-4 py-2 hover:bg-gray-100 text-black"
-                    >
-                      ✉️ SMS
-                    </a>
-                    <a
-                      href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
-                      target="_blank"
-                      className="block px-4 py-2 hover:bg-gray-100 text-black"
-                    >
-                      💬 WhatsApp
-                    </a>
-                    <a
-                      href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?text=Bonjour`}
-                      target="_blank"
-                      className="block px-4 py-2 hover:bg-gray-100 text-black"
-                    >
-                      📱 Message WhatsApp
-                    </a>
+                    <a href={`tel:${m.telephone}`} className="block px-2 py-1 hover:bg-gray-100 text-black text-sm">📞 Appeler</a>
+                    <a href={`sms:${m.telephone}`} className="block px-2 py-1 hover:bg-gray-100 text-black text-sm">✉️ SMS</a>
+                    <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-2 py-1 hover:bg-gray-100 text-black text-sm">💬 WhatsApp</a>
+                    <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-2 py-1 hover:bg-gray-100 text-black text-sm">📱 Message WhatsApp</a>
                   </div>
                 )}
               </>
-            ) : (
-              "—"
-            )}
+            ) : "—"}
           </td>
 
-          <td className="px-2 py-2 text-white whitespace-nowrap">
-            {m.statut || "—"}
+          <td className="px-1 py-1 text-white whitespace-nowrap">{m.statut || "—"}</td>
+
+          <td className="px-1 py-1 text-white whitespace-nowrap">
+            {m.cellule_nom ? `🏠 ${m.cellule_ville || "—"} - ${m.cellule_nom}` 
+            : m.conseiller_prenom ? `👤 ${m.conseiller_prenom} ${m.conseiller_nom}` 
+            : "—"}
           </td>
 
-          <td className="px-2 py-2 text-white">
-            {m.cellule_nom
-              ? `🏠 ${m.cellule_ville || "—"} - ${m.cellule_nom}`
-              : m.conseiller_prenom
-              ? `👤 ${m.conseiller_prenom} ${m.conseiller_nom}`
-              : "—"}
-          </td>
-
-          <td className="px-2 py-2 flex items-center gap-3 whitespace-nowrap">
+          <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
             <button
-              onClick={() =>
-                setPopupMember(popupMember?.id === m.id ? null : { ...m })
-              }
+              onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
               className="text-orange-500 underline text-sm"
             >
               {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
             </button>
-
             <button
               onClick={() => setEditMember(m)}
               className="text-blue-600 underline text-sm"
@@ -638,10 +494,88 @@ export default function ListMembers() {
           </td>
         </tr>
       ))}
-    </>
-  )}
-</tbody>
 
+      {/* Anciens Membres - identique, px-1 py-1 et whitespace-nowrap */}
+      {anciensFiltres.length > 0 && (
+        <>
+          <tr>
+            <td colSpan={5} className="px-1 py-1 font-semibold text-lg text-white">
+              <span
+                style={{
+                  background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                  WebkitBackgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                Membres existants
+              </span>
+            </td>
+          </tr>
+
+          {anciensFiltres.map((m) => (
+            <tr key={m.id} className="border-b border-gray-300">
+              <td
+                className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 text-white whitespace-nowrap"
+                style={{ borderLeftColor: getBorderColor(m) }}
+              >
+                {m.prenom} {m.nom}
+                {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+              </td>
+
+              <td className="px-1 py-1 text-white whitespace-nowrap relative">
+                {m.telephone ? (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
+                      }}
+                      className="text-orange-500 underline font-semibold text-sm"
+                    >
+                      {m.telephone}
+                    </button>
+                    {openPhoneMenuId === m.id && (
+                      <div
+                        className="absolute top-full mt-1 bg-white border rounded-lg shadow-lg w-40 z-50 phone-menu"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <a href={`tel:${m.telephone}`} className="block px-2 py-1 hover:bg-gray-100 text-black text-sm">📞 Appeler</a>
+                        <a href={`sms:${m.telephone}`} className="block px-2 py-1 hover:bg-gray-100 text-black text-sm">✉️ SMS</a>
+                        <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-2 py-1 hover:bg-gray-100 text-black text-sm">💬 WhatsApp</a>
+                        <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-2 py-1 hover:bg-gray-100 text-black text-sm">📱 Message WhatsApp</a>
+                      </div>
+                    )}
+                  </>
+                ) : "—"}
+              </td>
+
+              <td className="px-1 py-1 text-white whitespace-nowrap">{m.statut || "—"}</td>
+
+              <td className="px-1 py-1 text-white whitespace-nowrap">
+                {m.cellule_nom ? `🏠 ${m.cellule_ville || "—"} - ${m.cellule_nom}` 
+                : m.conseiller_prenom ? `👤 ${m.conseiller_prenom} ${m.conseiller_nom}` 
+                : "—"}
+              </td>
+
+              <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
+                <button
+                  onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
+                  className="text-orange-500 underline text-sm"
+                >
+                  {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                </button>
+                <button
+                  onClick={() => setEditMember(m)}
+                  className="text-blue-600 underline text-sm"
+                >
+                  Modifier
+                </button>
+              </td>
+            </tr>
+          ))}
+        </>
+      )}
+    </tbody>
     </table>
   </div>
 )}

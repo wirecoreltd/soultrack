@@ -73,7 +73,6 @@ export default function ListMembers() {
 
       const { data, error } = await query;
       if (error) throw error;
-
       const withInitial = (data || []).map(m => ({ ...m, statut_initial: m.statut }));
       setMembers(data || []);
     } catch (err) {
@@ -222,7 +221,7 @@ export default function ListMembers() {
         {m.star && <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>}
         <div className="flex flex-col items-center">
           <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
-                    <div className="flex flex-col space-y-1 text-black-600 w-full items-center">
+          <div className="flex flex-col space-y-1 text-black w-full items-center">
             <div className="relative flex items-center gap-2">
               {m.telephone ? (
                 <>
@@ -362,7 +361,8 @@ export default function ListMembers() {
           {view === "table" && <button onClick={() => setView("card")} className="text-white font-semibold text-base underline">Vue Carte</button>}
         </div>
       </div>
-             {/* Contenu */}
+
+      {/* Contenu */}
       {view === "card" ? (
         <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
           {nouveauxFiltres.map(renderMemberCard)}
@@ -393,9 +393,7 @@ export default function ListMembers() {
                     {m.conseiller_prenom ? <><br />👤 Conseiller : {m.conseiller_prenom} {m.conseiller_nom}</> : ""}
                   </td>
                   <td className="px-3 py-2 flex justify-center gap-2">
-                    <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">
-                      {popupMember?.id === m.id ? "Fermer" : "Détails"}
-                    </button>
+                    <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">{popupMember?.id === m.id ? "Fermer" : "Détails"}</button>
                     <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
                   </td>
                 </tr>
@@ -405,17 +403,15 @@ export default function ListMembers() {
         </div>
       )}
 
-      {/* Popups */}
       {popupMember && <DetailsPopup member={popupMember} onClose={() => setPopupMember(null)} />}
       {editMember && <EditMemberPopup member={editMember} onClose={() => setEditMember(null)} />}
-
+      
       {/* Toast */}
       {showingToast && (
-        <div className="fixed bottom-6 right-6 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
+        <div className="fixed bottom-6 right-6 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
           {toastMessage}
         </div>
       )}
     </div>
   );
-}     
-
+}

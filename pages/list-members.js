@@ -441,9 +441,29 @@ export default function ListMembers() {
       )}
 
         {/* Popups */}
-      {editMember && <EditMemberPopup member={editMember} onClose={() => setEditMember(null)} onUpdateMember={(updatedMember) => { updateMemberLocally(updatedMember.id, updatedMember); setEditMember(null); showToast("✅ Membre mis à jour"); }} />}
-      {popupMember && <DetailsPopup membre={popupMember} onClose={() => setPopupMember(null)} cellules={cellules} conseillers={conseillers} statusOptions={statusOptions} showToast={showToast} />}
- 
+        {editMember && (
+          <EditMemberPopup
+            member={editMember}
+            onClose={() => setEditMember(null)}
+            onUpdateMember={(updatedMember) => {
+              updateMemberLocally(updatedMember.id, updatedMember);
+              setEditMember(null);
+              showToast("✅ Membre mis à jour");
+            }}
+          />
+        )}
+        
+        {popupMember && (
+          <DetailsPopup
+            membre={popupMember}
+            onClose={() => setPopupMember(null)}
+            cellules={cellules}
+            conseillers={conseillers}
+            statusOptions={statusOptions}
+            showToast={showToast}
+          />
+        )}  
+        
       {/* Toast */}
       {showingToast && <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-lg">{toastMessage}</div>}
     </div>

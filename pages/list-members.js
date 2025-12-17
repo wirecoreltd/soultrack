@@ -261,8 +261,8 @@ export default function ListMembers() {
         
           {/* INFOS ALIGNÉES À GAUCHE (MÊME SIZE QUE DETAILS) */}
           <div className="w-full mt-2 text-sm text-black space-y-1">
-            <p>🏙️ Ville : {m.ville || "—"}</p>
-            <p>🕊 Statut : {m.statut || "—"}</p>
+            <p className="text-center">🏙️ Ville : {m.ville || "—"}</p>
+            <p className="text-center">🕊 Statut : {m.statut || "—"}</p>
             <p>
               🏠 Cellule :{" "}
               {(m.cellule_ville && m.cellule_nom)
@@ -413,47 +413,63 @@ export default function ListMembers() {
     <table className="w-full text-sm text-left border-separate border-spacing-0">
       <thead className="bg-gray-200 text-black-800 text-sm uppercase">
         <tr>
-          <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-          <th className="px-4 py-2">Téléphone</th>
-          <th className="px-4 py-2">Statut</th>
-          <th className="px-4 py-2">Affectation</th>
-          <th className="px-4 py-2 rounded-tr-lg">Actions</th>
+          <th className="px-2 py-2 rounded-tl-lg text-left">Nom complet</th>
+          <th className="px-2 py-2 text-left">Téléphone</th>
+          <th className="px-2 py-2 text-left">Statut</th>
+          <th className="px-2 py-2 text-left">Affectation</th>
+          <th className="px-2 py-2 rounded-tr-lg text-left">Actions</th>
         </tr>
       </thead>
+
       <tbody>
         {/* Nouveaux Membres */}
         {nouveauxFiltres.length > 0 && (
           <tr>
-            <td colSpan={5} className="px-4 py-2 text-white font-semibold">
+            <td colSpan={5} className="px-2 py-2 text-white font-semibold">
               💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
             </td>
           </tr>
         )}
+
         {nouveauxFiltres.map((m) => (
           <tr key={m.id} className="border-b border-gray-300">
             <td
-              className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white"
+              className="px-2 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white whitespace-nowrap"
               style={{ borderLeftColor: getBorderColor(m) }}
             >
-              {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-              <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
+              {m.prenom} {m.nom}
+              {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+              <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">
+                Nouveau
+              </span>
             </td>
-            <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
-            <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
-            <td className="px-4 py-2 text-white text-center">
+
+            <td className="px-2 py-2 text-white whitespace-nowrap">
+              {m.telephone || "—"}
+            </td>
+
+            <td className="px-2 py-2 text-white whitespace-nowrap">
+              {m.statut || "—"}
+            </td>
+
+            <td className="px-2 py-2 text-white">
               {m.cellule_nom
-                ? `🏠 ${m.cellule_nom}${m.cellule_ville ? ` (${m.cellule_ville})` : ""}`
+                ? `🏠 ${m.cellule_ville || "—"} - ${m.cellule_nom}`
                 : m.conseiller_prenom
                 ? `👤 ${m.conseiller_prenom} ${m.conseiller_nom}`
                 : "—"}
             </td>
-            <td className="px-4 py-2 flex items-center gap-2">
+
+            <td className="px-2 py-2 flex items-center gap-3 whitespace-nowrap">
               <button
-                onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
+                onClick={() =>
+                  setPopupMember(popupMember?.id === m.id ? null : { ...m })
+                }
                 className="text-orange-500 underline text-sm"
               >
                 {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
               </button>
+
               <button
                 onClick={() => setEditMember(m)}
                 className="text-blue-600 underline text-sm"
@@ -468,7 +484,7 @@ export default function ListMembers() {
         {anciensFiltres.length > 0 && (
           <>
             <tr>
-              <td colSpan={5} className="px-4 py-2 font-semibold text-lg text-white">
+              <td colSpan={5} className="px-2 py-2 font-semibold text-lg text-white">
                 <span
                   style={{
                     background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
@@ -480,30 +496,43 @@ export default function ListMembers() {
                 </span>
               </td>
             </tr>
+
             {anciensFiltres.map((m) => (
               <tr key={m.id} className="border-b border-gray-300">
                 <td
-                  className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white"
+                  className="px-2 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white whitespace-nowrap"
                   style={{ borderLeftColor: getBorderColor(m) }}
                 >
-                  {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                  {m.prenom} {m.nom}
+                  {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                 </td>
-                <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
-                <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
-                <td className="px-4 py-2 text-white text-center">
+
+                <td className="px-2 py-2 text-white whitespace-nowrap">
+                  {m.telephone || "—"}
+                </td>
+
+                <td className="px-2 py-2 text-white whitespace-nowrap">
+                  {m.statut || "—"}
+                </td>
+
+                <td className="px-2 py-2 text-white">
                   {m.cellule_nom
-                    ? `🏠 ${m.cellule_nom}${m.cellule_ville ? ` (${m.cellule_ville})` : ""}`
+                    ? `🏠 ${m.cellule_ville || "—"} - ${m.cellule_nom}`
                     : m.conseiller_prenom
                     ? `👤 ${m.conseiller_prenom} ${m.conseiller_nom}`
                     : "—"}
                 </td>
-                <td className="px-4 py-2 flex items-center gap-2">
+
+                <td className="px-2 py-2 flex items-center gap-3 whitespace-nowrap">
                   <button
-                    onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
+                    onClick={() =>
+                      setPopupMember(popupMember?.id === m.id ? null : { ...m })
+                    }
                     className="text-orange-500 underline text-sm"
                   >
                     {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
                   </button>
+
                   <button
                     onClick={() => setEditMember(m)}
                     className="text-blue-600 underline text-sm"
@@ -519,7 +548,6 @@ export default function ListMembers() {
     </table>
   </div>
 )}
-
 
       {/* Liste */}
       {view === "card" ? (

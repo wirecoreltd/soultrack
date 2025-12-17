@@ -442,215 +442,119 @@ export default function ListMembers() {
       )}
 
             {/* ==================== VUE TABLE ==================== */}
-              {view === "table" && (
-                <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-                  <table className="w-full text-sm text-left border-separate border-spacing-0">
-                    <thead className="bg-gray-200 text-black-800 text-sm uppercase">
-                      <tr>
-                        <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-                        <th className="px-4 py-2">Téléphone</th>
-                        <th className="px-4 py-2">Statut</th>
-                        <th className="px-4 py-2">Cellule / Conseiller</th>
-                        <th className="px-4 py-2 rounded-tr-lg">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {/* Nouveaux Membres */}
-                      {nouveauxFiltres.length > 0 && (
-                        <tr>
-                          <td colSpan={5} className="px-4 py-2 text-white font-semibold">
-                            💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-                          </td>
-                        </tr>
-                      )}
-                      {nouveauxFiltres.map((m) => (
-                        <tr key={m.id} className="border-b border-gray-300">
-                          <td
-                            className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white"
-                            style={{ borderLeftColor: getBorderColor(m) }}
-                          >
-                            {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                            <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
-                          </td>
-              
-                          {/* TELEPHONE CLIQUABLE */}
-                          <td className="px-4 py-2">
-                            {m.telephone ? (
-                              <div className="relative">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setPhoneActionsOpen(phoneActionsOpen === m.id ? null : m.id)
-                                  }
-                                  className="text-orange-400 font-semibold text-sm"
-                                >
-                                  {m.telephone} 📞 💬
-                                </button>
-              
-                                {phoneActionsOpen === m.id && (
-                                  <div
-                                    className="absolute z-20 mt-2 bg-white rounded-lg shadow-lg border w-44"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <a
-                                      href={`tel:${m.telephone}`}
-                                      className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
-                                    >
-                                      📞 Appeler
-                                    </a>
-                                    <a
-                                      href={`sms:${m.telephone}`}
-                                      className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
-                                    >
-                                      ✉️ SMS
-                                    </a>
-                                    <a
-                                      href={`https://wa.me/${m.telephone.replace(/\s+/g, "")}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
-                                    >
-                                      💬 WhatsApp
-                                    </a>
-                                  </div>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-gray-400">—</span>
-                            )}
-                          </td>
-              
-                          <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
-              
-                          <td className="px-4 py-2 text-white">
-                            {m.cellule_nom && m.cellule_ville
-                              ? `${m.cellule_ville} - ${m.cellule_nom}`
-                              : m.conseiller_prenom
-                              ? `${m.conseiller_prenom} ${m.conseiller_nom || ""}`.trim()
-                              : "—"}
-                          </td>
-              
-                          <td className="px-4 py-2 flex items-center gap-2">
-                            <button
-                              onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
-                              className="text-orange-500 underline text-sm"
-                            >
-                              {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                            </button>
-                            <button
-                              onClick={() => setEditMember(m)}
-                              className="text-blue-600 underline text-sm"
-                            >
-                              Modifier
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-              
-                      {/* Anciens Membres */}
-                      {anciensFiltres.length > 0 && (
-                        <>
-                          <tr>
-                            <td colSpan={5} className="px-4 py-2 font-semibold text-lg text-white">
-                              <span
-                                style={{
-                                  background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                                  WebkitBackgroundClip: "text",
-                                  color: "transparent",
-                                }}
-                              >
-                                Membres existants
-                              </span>
-                            </td>
-                          </tr>
-                          {anciensFiltres.map((m) => (
-                            <tr key={m.id} className="border-b border-gray-300">
-                              <td
-                                className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white"
-                                style={{ borderLeftColor: getBorderColor(m) }}
-                              >
-                                {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                              </td>
-              
-                              {/* TELEPHONE CLIQUABLE */}
-                              <td className="px-4 py-2">
-                                {m.telephone ? (
-                                  <div className="relative">
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        setPhoneActionsOpen(phoneActionsOpen === m.id ? null : m.id)
-                                      }
-                                      className="text-orange-400 font-semibold text-sm"
-                                    >
-                                      {m.telephone} 📞 💬
-                                    </button>
-              
-                                    {phoneActionsOpen === m.id && (
-                                      <div
-                                        className="absolute z-20 mt-2 bg-white rounded-lg shadow-lg border w-44"
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
-                                        <a
-                                          href={`tel:${m.telephone}`}
-                                          className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
-                                        >
-                                          📞 Appeler
-                                        </a>
-                                        <a
-                                          href={`sms:${m.telephone}`}
-                                          className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
-                                        >
-                                          ✉️ SMS
-                                        </a>
-                                        <a
-                                          href={`https://wa.me/${m.telephone.replace(/\s+/g, "")}`}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
-                                        >
-                                          💬 WhatsApp
-                                        </a>
-                                      </div>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <span className="text-gray-400">—</span>
-                                )}
-                              </td>
-              
-                              <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
-              
-                              <td className="px-4 py-2 text-white">
-                                {m.cellule_nom && m.cellule_ville
-                                  ? `${m.cellule_ville} - ${m.cellule_nom}`
-                                  : m.conseiller_prenom
-                                  ? `${m.conseiller_prenom} ${m.conseiller_nom || ""}`.trim()
-                                  : "—"}
-                              </td>
-              
-                              <td className="px-4 py-2 flex items-center gap-2">
-                                <button
-                                  onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
-                                  className="text-orange-500 underline text-sm"
-                                >
-                                  {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                                </button>
-                                <button
-                                  onClick={() => setEditMember(m)}
-                                  className="text-blue-600 underline text-sm"
-                                >
-                                  Modifier
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+{view === "table" && (
+  <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+    <table className="w-full text-sm text-left border-separate border-spacing-0">
+      <thead className="bg-gray-200 text-black-800 text-sm uppercase">
+        <tr>
+          <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+          <th className="px-4 py-2">Téléphone</th>
+          <th className="px-4 py-2">Statut</th>
+          <th className="px-4 py-2">Cellule / Conseiller</th>
+          <th className="px-4 py-2 rounded-tr-lg">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {/* Nouveaux Membres */}
+        {nouveauxFiltres.length > 0 && (
+          <tr>
+            <td colSpan={5} className="px-4 py-2 text-white font-semibold">
+              💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+            </td>
+          </tr>
+        )}
+        {(nouveauxFiltres.length > 0 ? nouveauxFiltres : anciensFiltres).map((m) => (
+          <tr key={m.id} className="border-b border-gray-300">
+            <td
+              className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white"
+              style={{ borderLeftColor: getBorderColor(m) }}
+            >
+              {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+              {nouveauxFiltres.includes(m) && (
+                <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
               )}
+            </td>
+
+            {/* Numéro avec menu */}
+            <td className="px-4 py-2 relative">
+              {m.telephone ? (
+                <>
+                  <button
+                    type="button"
+                    className="text-orange-500 font-semibold text-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPhoneActionsOpen(phoneActionsOpen === m.id ? null : m.id);
+                    }}
+                  >
+                    {m.telephone}
+                  </button>
+
+                  {phoneActionsOpen === m.id && (
+                    <div
+                      className="absolute z-20 mt-2 bg-white rounded-lg shadow-lg border w-40"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <a
+                        href={`tel:${m.telephone}`}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
+                      >
+                        📞 Appeler
+                      </a>
+                      <a
+                        href={`sms:${m.telephone}`}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
+                      >
+                        ✉️ SMS
+                      </a>
+                      <a
+                        href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
+                      >
+                        💬 WhatsApp
+                      </a>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <span className="text-gray-400">—</span>
+              )}
+            </td>
+
+            <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
+
+            {/* Cellule / Conseiller */}
+            <td className="px-4 py-2 text-white">
+              {m.cellule_nom && m.cellule_ville
+                ? `${m.cellule_ville} - ${m.cellule_nom}`
+                : m.conseiller_prenom
+                  ? `${m.conseiller_prenom} ${m.conseiller_nom || ""}`.trim()
+                  : "—"}
+            </td>
+
+            <td className="px-4 py-2 flex items-center gap-2">
+              <button
+                onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
+                className="text-orange-500 underline text-sm"
+              >
+                {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+              </button>
+              <button
+                onClick={() => setEditMember(m)}
+                className="text-blue-600 underline text-sm"
+              >
+                Modifier
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
+
 
 
       {/* Popups */}

@@ -219,7 +219,7 @@ export default function ListMembers() {
     })();
 
     return (
-      <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4 relative">
+      <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4 relative" style={{ borderLeftColor: getBorderColor(m) }}>
         {m.star && <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>}
         <div className="flex flex-col items-center">
           <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
@@ -239,7 +239,6 @@ export default function ListMembers() {
                       <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-black text-sm hover:bg-gray-100">📞 Appeler par téléphone</a>
                       <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-black text-sm hover:bg-gray-100">✉️ Envoyer SMS</a>
                       <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-black text-sm hover:bg-gray-100">💬 WhatsApp</a>
-                      <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-black text-sm hover:bg-gray-100">📱 Envoyer message WhatsApp</a>
                     </div>
                   )}
                 </>
@@ -326,7 +325,7 @@ export default function ListMembers() {
             </div>
           )}
         </div>
-      );
+    );
   };
 
   return (
@@ -336,10 +335,13 @@ export default function ListMembers() {
         <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black-200">← Retour</button>
         <LogoutLink className="bg-white/10 text-white px-3 py-1 rounded-lg hover:bg-white/20 text-sm" />
       </div>
+
       <div className="w-full max-w-5xl flex justify-center mb-2">
         <p className="text-orange-200 text-base">👋 Bienvenue {prenom || "cher membre"}</p>
       </div>
+
       <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} className="mx-auto mb-4" />
+
       <h1 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">Liste des Membres</h1>
 
       {/* Recherche + filtre + toggle */}
@@ -364,14 +366,13 @@ export default function ListMembers() {
         </div>
       </div>
 
-      {/* Contenu */}
+      {/* Membres */}
       {view === "card" ? (
         <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-          {nouveauxFiltres.map(renderMemberCard)}
-          {anciensFiltres.map(renderMemberCard)}
+          {members.map(renderMemberCard)}
         </div>
       ) : (
-        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+        <div className="w-full max-w-6xl overflow-x-auto">
           <table className="w-full border-separate border-spacing-0 text-center text-base">
             <thead className="bg-gray-200 text-black uppercase">
               <tr>
@@ -379,25 +380,15 @@ export default function ListMembers() {
                 <th className="px-3 py-2">Téléphone</th>
                 <th className="px-3 py-2">Statut</th>
                 <th className="px-3 py-2">Cellule / Conseiller</th>
-                <th className="px-3 py-2 rounded-tr-lg">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {nouveauxFiltres.concat(anciensFiltres).map((m) => (
+              {members.map(m => (
                 <tr key={m.id} className="border-b border-gray-300 text-center">
-                  <td className="px-3 py-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
-                    {m.prenom} {m.nom} {m.star && <span className="text-yellow-400">⭐</span>}
-                  </td>
+                  <td className="px-3 py-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
                   <td className="px-3 py-2 text-black">{m.telephone || "—"}</td>
                   <td className="px-3 py-2">{m.statut || "—"}</td>
-                  <td className="px-3 py-2">
-                    {m.cellule_nom ? `🏠 Cellule : ${m.cellule_nom}` : ""}
-                    {m.conseiller_prenom ? <><br />👤 Conseiller : {m.conseiller_prenom} {m.conseiller_nom}</> : ""}
-                  </td>
-                  <td className="px-3 py-2 flex justify-center gap-2">
-                    <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">{popupMember?.id === m.id ? "Fermer" : "Détails"}</button>
-                    <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
-                  </td>
+                  <td className="px-3 py-2">{m.cellule_nom ? `🏠 Cellule : ${m.cellule_nom}` : ""}{m.conseiller_prenom ? <><br />👤 Conseiller : {m.conseiller_prenom} {m.conseiller_nom}</> : ""}</td>
                 </tr>
               ))}
             </tbody>
@@ -405,13 +396,10 @@ export default function ListMembers() {
         </div>
       )}
 
+      {editMember && <EditMemberPopup member={editMember} onClose={() => setEditMember(null)} onUpdated={updateMemberLocally} />}
       {popupMember && <DetailsPopup member={popupMember} onClose={() => setPopupMember(null)} />}
-      {editMember && <EditMemberPopup member={editMember} onClose={() => setEditMember(null)} />}
-      
-      {/* Toast */}
-      {showingToast && (
-        <div className="fixed bottom-6 right-6 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
-          {toastMessage}
-        </div>     
+      {showingToast && <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">{toastMessage}</div>}
+
+    </div>
   );
 }

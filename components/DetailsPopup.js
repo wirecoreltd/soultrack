@@ -47,47 +47,53 @@ export default function DetailsPopup({
         </button>
 
         {/* Nom */}
-        <h2 className="text-xl font-bold mb-4 text-center">
-          {membre.prenom} {membre.nom} {membre.star && "⭐"}
-        </h2>
+          <h2 className="text-xl font-bold text-center">
+            {membre.prenom} {membre.nom} {membre.star && "⭐"}
+          </h2>
+          
+          {/* Téléphone centré */}
+          {membre.telephone && (
+            <div className="relative mt-1 flex justify-center">
+              <button
+                onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
+                className="text-orange-500 underline font-semibold"
+              >
+                {membre.telephone}
+              </button>
+          
+              {openPhoneMenu && (
+                <div className="absolute top-6 bg-white border rounded-lg shadow w-48 z-50">
+                  <a
+                    href={`tel:${membre.telephone}`}
+                    className="block px-4 py-2 hover:bg-gray-100 text-black"
+                  >
+                    📞 Appeler
+                  </a>
+                  <a
+                    href={`sms:${membre.telephone}`}
+                    className="block px-4 py-2 hover:bg-gray-100 text-black"
+                  >
+                    ✉️ SMS
+                  </a>
+                  <a
+                    href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`}
+                    target="_blank"
+                    className="block px-4 py-2 hover:bg-gray-100 text-black"
+                  >
+                    💬 WhatsApp
+                  </a>
+                  <a
+                    href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}?text=Bonjour`}
+                    target="_blank"
+                    className="block px-4 py-2 hover:bg-gray-100 text-black"
+                  >
+                    📱 Message WhatsApp
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
 
-        {/* Infos – IDENTIQUES À LA VUE CARTE */}
-        <div className="space-y-2 text-sm text-black">
-
-          {/* Téléphone */}
-          <div className="relative">
-            <p className="font-semibold">📱 Téléphone :</p>
-            {membre.telephone ? (
-              <>
-                <button
-                  onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
-                  className="text-blue-600 underline"
-                >
-                  {membre.telephone}
-                </button>
-
-                {openPhoneMenu && (
-                  <div className="absolute z-50 mt-2 bg-white border rounded-lg shadow w-44">
-                    <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100">
-                      📞 Appeler
-                    </a>
-                    <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100">
-                      ✉️ SMS
-                    </a>
-                    <a
-                      href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`}
-                      target="_blank"
-                      className="block px-4 py-2 hover:bg-gray-100"
-                    >
-                      💬 WhatsApp
-                    </a>
-                  </div>
-                )}
-              </>
-            ) : (
-              <span>—</span>
-            )}
-          </div>
 
           <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
           <p>🏙 Ville : {membre.ville || "—"}</p>

@@ -1,6 +1,4 @@
-//pages/list-members.js✅
-
-"use client";
+          "use client";
 
 /**
  * Page: Liste des Membres
@@ -39,8 +37,9 @@ export default function ListMembers() {
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
 
+  const [phoneMenuOpen, setPhoneMenuOpen] = useState(null); // <-- Ajouté pour la Vue Carte
+  const [phoneActionsOpen, setPhoneActionsOpen] = useState(null); // pour la Vue Table
   const realtimeChannelRef = useRef(null);
-  const [phoneActionsOpen, setPhoneActionsOpen] = useState(null);
 
   const statutLabels = {
     1: "En cours",
@@ -77,9 +76,7 @@ export default function ListMembers() {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Ajouter le statut initial à chaque membre
       const withInitial = (data || []).map(m => ({ ...m, statut_initial: m.statut }));
-
       setMembers(data || []);
     } catch (err) {
       console.error("Erreur fetchMembers:", err);
@@ -90,9 +87,7 @@ export default function ListMembers() {
   };
 
   const fetchCellules = async () => {
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("id, cellule_full");
+    const { data, error } = await supabase.from("cellules").select("id, cellule_full");
     if (error) console.error("Erreur:", error);
     if (data) setCellules(data);
   };
@@ -103,7 +98,6 @@ export default function ListMembers() {
   };
 
   const handleAfterSend = (updatedMember, type, cible) => {
-    // Mettre à jour le statut du membre à "actif" après envoi
     const updatedWithActif = { ...updatedMember, statut: "actif" };
     updateMemberLocally(updatedMember.id, updatedWithActif);
 
@@ -113,9 +107,7 @@ export default function ListMembers() {
 
   useEffect(() => {
     const fetchSessionAndProfile = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
 
       if (session?.user) {
@@ -212,10 +204,7 @@ export default function ListMembers() {
     const besoins = (() => {
       if (!m.besoin) return "—";
       if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-      try {
-        const arr = JSON.parse(m.besoin);
-        return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-      } catch { return m.besoin; }
+      try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; }
     })();
 
     return (

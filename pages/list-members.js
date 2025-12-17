@@ -400,8 +400,7 @@ export default function ListMembers() {
           <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
           <th className="px-4 py-2">Téléphone</th>
           <th className="px-4 py-2">Statut</th>
-          <th className="px-4 py-2">Cellule</th>
-          <th className="px-4 py-2">Conseiller</th>
+          <th className="px-4 py-2">Affectation</th>
           <th className="px-4 py-2 rounded-tr-lg">Actions</th>
         </tr>
       </thead>
@@ -409,7 +408,7 @@ export default function ListMembers() {
         {/* Nouveaux Membres */}
         {nouveauxFiltres.length > 0 && (
           <tr>
-            <td colSpan={6} className="px-4 py-2 text-white font-semibold">
+            <td colSpan={5} className="px-4 py-2 text-white font-semibold">
               💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
             </td>
           </tr>
@@ -425,8 +424,13 @@ export default function ListMembers() {
             </td>
             <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
             <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
-            <td className="px-4 py-2 text-white">{m.cellule_nom ? `${m.cellule_nom} (${m.cellule_ville || "—"})` : "—"}</td>
-            <td className="px-4 py-2 text-white">{m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</td>
+            <td className="px-4 py-2 text-white text-center">
+              {m.cellule_nom
+                ? `🏠 ${m.cellule_nom}${m.cellule_ville ? ` (${m.cellule_ville})` : ""}`
+                : m.conseiller_prenom
+                ? `👤 ${m.conseiller_prenom} ${m.conseiller_nom}`
+                : "—"}
+            </td>
             <td className="px-4 py-2 flex items-center gap-2">
               <button
                 onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
@@ -448,7 +452,7 @@ export default function ListMembers() {
         {anciensFiltres.length > 0 && (
           <>
             <tr>
-              <td colSpan={6} className="px-4 py-2 font-semibold text-lg text-white">
+              <td colSpan={5} className="px-4 py-2 font-semibold text-lg text-white">
                 <span
                   style={{
                     background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
@@ -470,8 +474,13 @@ export default function ListMembers() {
                 </td>
                 <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
                 <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
-                <td className="px-4 py-2 text-white">{m.cellule_nom ? `${m.cellule_nom} (${m.cellule_ville || "—"})` : "—"}</td>
-                <td className="px-4 py-2 text-white">{m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</td>
+                <td className="px-4 py-2 text-white text-center">
+                  {m.cellule_nom
+                    ? `🏠 ${m.cellule_nom}${m.cellule_ville ? ` (${m.cellule_ville})` : ""}`
+                    : m.conseiller_prenom
+                    ? `👤 ${m.conseiller_prenom} ${m.conseiller_nom}`
+                    : "—"}
+                </td>
                 <td className="px-4 py-2 flex items-center gap-2">
                   <button
                     onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}

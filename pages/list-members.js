@@ -36,12 +36,29 @@ export default function ListMembers() {
   const [selectedTargetType, setSelectedTargetType] = useState({});
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
-  const [phoneMenuOpen, setPhoneMenuOpen] = useState(null); // pour carte
-  const [phoneActionsOpen, setPhoneActionsOpen] = useState(null); // pour table
-  const realtimeChannelRef = useRef(null);
 
-  const statutLabels = { 1: "En cours", 2: "En attente", 3: "Intégrer", 4: "Refus" };
-  const statusOptions = ["actif", "ancien", "visiteur", "veut rejoindre ICC", "refus", "integrer", "En cours", "a déjà son église"];
+  const [phoneMenuOpen, setPhoneMenuOpen] = useState(null);
+  const [phoneActionType, setPhoneActionType] = useState({}); // "tel" ou "whatsapp"
+  const realtimeChannelRef = useRef(null);
+  const phoneMenuRef = useRef(null);
+
+  const statutLabels = {
+    1: "En cours",
+    2: "En attente",
+    3: "Intégrer",
+    4: "Refus",
+  };
+
+  const statusOptions = [
+    "actif",
+    "ancien",
+    "visiteur",
+    "veut rejoindre ICC",
+    "refus",
+    "integrer",
+    "En cours",
+    "a déjà son église",
+  ];
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -135,14 +152,16 @@ export default function ListMembers() {
     };
   }, []);
 
-  // -------------------- Click en dehors pour fermer menu --------------------
+  // -------------------- Click outside pour fermer le menu téléphone --------------------
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest(".phone-menu")) setPhoneMenuOpen(null);
-      if (!e.target.closest(".phone-actions")) setPhoneActionsOpen(null);
+    const handleClickOutside = (event) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(event.target)) {
+        setPhoneMenuOpen(null);
+        setPhoneActionType({});
+      }
     };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => { document.removeEventListener("mousedown", handleClickOutside); };
   }, []);
 
   // -------------------- UTILS --------------------
@@ -153,12 +172,14 @@ export default function ListMembers() {
   const getBorderColor = (m) => {
     const status = m.statut || "";
     const suiviStatus = m.suivi_statut_libelle || "";
+
     if (status === "refus" || suiviStatus === "refus") return "#f56f22";
     if (status === "actif" || suiviStatus === "actif") return "#4285F4";
     if (status === "a déjà son église" || suiviStatus === "a déjà son église") return "#f21705";
     if (status === "ancien" || suiviStatus === "ancien") return "#999999";
     if (status === "visiteur" || suiviStatus === "visiteur") return "#34A853";
     if (status === "veut rejoindre ICC" || suiviStatus === "veut rejoindre ICC") return "#34A853";
+
     return "#ccc";
   };
 
@@ -191,7 +212,7 @@ export default function ListMembers() {
 
   const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
 
-  // -------------------- RENDER --------------------
+  // -------------------- Carte --------------------
   const renderMemberCard = (m) => {
     const isOpen = detailsOpen[m.id];
     const besoins = (() => {
@@ -205,35 +226,63 @@ export default function ListMembers() {
         {m.star && <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>}
         <div className="flex flex-col items-center">
           <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
+          <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
 
-          {/* TELEPHONE / WHATSAPP */}
-          <div className="relative flex items-center gap-2">
-            {m.telephone ? (
-              <>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setPhoneMenuOpen(phoneMenuOpen === m.id ? null : m.id); }}
-                  className="text-orange-400 font-semibold select-text"
-                >
-                  {m.telephone} 📞
-                </button>
+            {/* Numéro / Appel / WhatsApp */}
+            <div className="relative flex items-center gap-2" ref={phoneMenuRef}>
+              {m.telephone ? (
+                <>
+                  <button
+                    type="button"
+                    className="text-orange-400 font-semibold select-text"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPhoneMenuOpen(phoneMenuOpen === m.id ? null : m.id);
+                      setPhoneActionType({});
+                    }}
+                  >
+                    {m.telephone}
+                  </button>
 
-                {phoneMenuOpen === m.id && (
-                  <div className="absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border w-40 phone-menu z-50" onClick={(e) => e.stopPropagation()}>
-                    <a href={`tel:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100">📞 Appeler</a>
-                    <a href={`sms:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100">✉️ SMS</a>
-                    <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100">💬 WhatsApp</a>
-                  </div>
-                )}
-              </>
-            ) : <span className="text-gray-400">—</span>}
-          </div>
+                  {phoneMenuOpen === m.id && (
+                    <div className="absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border z-50 w-40">
+                      <button
+                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                        onClick={() => setPhoneActionType(prev => ({ ...prev, [m.id]: "tel" }))}
+                      >
+                        📞 Téléphone
+                      </button>
+                      <button
+                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                        onClick={() => setPhoneActionType(prev => ({ ...prev, [m.id]: "whatsapp" }))}
+                      >
+                        💬 WhatsApp
+                      </button>
+                      {phoneActionType[m.id] && (
+                        <a
+                          href={phoneActionType[m.id] === "tel"
+                            ? `tel:${m.telephone}`
+                            : `https://wa.me/230${m.telephone.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block w-full text-left px-4 py-2 text-sm text-blue-600 font-semibold hover:bg-gray-100"
+                          onClick={() => { setPhoneMenuOpen(null); setPhoneActionType({}); }}
+                        >
+                          Confirmer
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : <span className="text-gray-400">—</span>}
+            </div>
 
-          <div className="flex justify-center items-center space-x-2">🏙️ Ville : {m.ville || "—"}</div>                 
-          <div className="flex justify-center items-center space-x-2">🕊 Statut : {m.statut || "—"}</div>            
-          <div className="flex flex-col items-start space-y-1 w-full">
-            <div>🏠 Cellule : {(m.cellule_ville && m.cellule_nom) ? `${m.cellule_ville} - ${m.cellule_nom}` : m.suivi_cellule_nom || ""}</div>
-            <div>👤 Conseiller : {(m.conseiller_prenom || m.conseiller_nom) ? `${m.conseiller_prenom} ${m.conseiller_nom}`.trim() : ""}</div>
+            <div className="flex justify-center items-center space-x-2">🏙️ Ville : {m.ville || "—"}</div>                 
+            <div className="flex justify-center items-center space-x-2">🕊 Statut : {m.statut || "—"}</div>            
+            <div className="flex flex-col items-start space-y-1 w-full">
+              <div>🏠 Cellule : {(m.cellule_ville && m.cellule_nom) ? `${m.cellule_ville} - ${m.cellule_nom}` : m.suivi_cellule_nom || ""}</div>
+              <div>👤 Conseiller : {(m.conseiller_prenom || m.conseiller_nom) ? `${m.conseiller_prenom} ${m.conseiller_nom}`.trim() : ""}</div>
+            </div>
           </div>
 
           {/* ENVOYER À */}
@@ -241,26 +290,39 @@ export default function ListMembers() {
             <label className="font-semibold text-sm">Envoyer à :</label>
             <select
               value={selectedTargetType[m.id] || ""}
-              onChange={e => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
+              onChange={e =>
+                setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))
+              }
               className="mt-1 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Choisir une option --</option>
               <option value="cellule">Une Cellule</option>
               <option value="conseiller">Un Conseiller</option>
             </select>
-            {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
+            {(selectedTargetType[m.id] === "cellule" ||
+              selectedTargetType[m.id] === "conseiller") && (
               <select
                 value={selectedTargets[m.id] || ""}
-                onChange={e => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
+                onChange={e =>
+                  setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))
+                }
                 className="mt-1 w-full border rounded px-2 py-1 text-sm"
               >
                 <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
-                {selectedTargetType[m.id] === "cellule" ? cellules.map(c => (
-                  <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>
-                )) : null}
-                {selectedTargetType[m.id] === "conseiller" ? conseillers.map(c => (
-                  <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>
-                )) : null}
+                {selectedTargetType[m.id] === "cellule"
+                  ? cellules.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.cellule_full || "—"}
+                      </option>
+                    ))
+                  : null}
+                {selectedTargetType[m.id] === "conseiller"
+                  ? conseillers.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.prenom || "—"} {c.nom || ""}
+                      </option>
+                    ))
+                  : null}
               </select>
             )}
             {selectedTargets[m.id] && (
@@ -268,11 +330,17 @@ export default function ListMembers() {
                 <BoutonEnvoyer
                   membre={m}
                   type={selectedTargetType[m.id]}
-                  cible={selectedTargetType[m.id] === "cellule" ? cellules.find(c => c.id === selectedTargets[m.id]) : conseillers.find(c => c.id === selectedTargets[m.id])}
+                  cible={
+                    selectedTargetType[m.id] === "cellule"
+                      ? cellules.find(c => c.id === selectedTargets[m.id])
+                      : conseillers.find(c => c.id === selectedTargets[m.id])
+                  }
                   onEnvoyer={id => handleAfterSend(
                     id,
                     selectedTargetType[m.id],
-                    selectedTargetType[m.id] === "cellule" ? cellules.find(c => c.id === selectedTargets[m.id]) : conseillers.find(c => c.id === selectedTargets[m.id])
+                    selectedTargetType[m.id] === "cellule"
+                      ? cellules.find(c => c.id === selectedTargets[m.id])
+                      : conseillers.find(c => c.id === selectedTargets[m.id])
                   )}
                   session={session}
                   showToast={showToast}
@@ -305,6 +373,7 @@ export default function ListMembers() {
     );
   };
 
+  // -------------------- Rendu principal --------------------
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
       {/* Top Bar */}
@@ -312,78 +381,108 @@ export default function ListMembers() {
         <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black-200">← Retour</button>
         <LogoutLink className="bg-white/10 text-white px-3 py-1 rounded-lg hover:bg-white/20 text-sm" />
       </div>
+
       <div className="w-full max-w-5xl flex justify-end mb-4"><p className="text-orange-200 text-sm">👋 Bienvenue {prenom || "cher membre"}</p></div>
-      <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} className="mx-auto mb-4" />
-      <h1 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">Liste des Membres</h1>
 
-      {/* Search & Filter */}
-      <div className="flex flex-col sm:flex-row justify-between w-full max-w-5xl gap-2 mb-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <select value={filter} onChange={e => setFilter(e.target.value)} className="px-2 py-1 rounded-lg border text-sm">
-            <option value="">Tous les statuts</option>
-            {statusOptions.map(s => (<option key={s}>{s}</option>))}
-          </select>
-          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..." className="px-2 py-1 rounded-lg border text-sm w-40 sm:w-48" />
-          <span className="text-white text-sm">({nouveauxFiltres.length + anciensFiltres.length})</span>
-        </div>
-        <button onClick={() => setView(view === "card" ? "table" : "card")} className="px-3 py-1 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20">
-          {view === "card" ? "Vue Table" : "Vue Carte"}
-        </button>
-      </div>
-
-      {/* CARDS */}
+      {/* VUE CARTE */}
       {view === "card" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-5xl">
-          {loading ? <p className="text-white text-center col-span-full">Chargement...</p> : [...nouveauxFiltres, ...anciensFiltres].map(renderMemberCard)}
+        <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {members.map(renderMemberCard)}
         </div>
       )}
 
-      {/* TABLE */}
+      {/* VUE TABLE */}
       {view === "table" && (
-        <div className="overflow-x-auto w-full max-w-5xl bg-white rounded-lg shadow-lg">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-gray-100">
+        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+          <table className="w-full text-sm text-left border-separate border-spacing-0">
+            <thead className="bg-gray-200 text-black-800 text-sm uppercase">
               <tr>
-                <th className="px-2 py-1 border">Nom</th>
-                <th className="px-2 py-1 border">Prénom</th>
-                <th className="px-2 py-1 border">Téléphone</th>
-                <th className="px-2 py-1 border">Cellule</th>
-                <th className="px-2 py-1 border">Conseiller</th>
-                <th className="px-2 py-1 border">Statut</th>
-                <th className="px-2 py-1 border">Actions</th>
+                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+                <th className="px-4 py-2">Téléphone</th>
+                <th className="px-4 py-2">Statut</th>
+                <th className="px-4 py-2">Cellule</th>
+                <th className="px-4 py-2">Conseiller</th>
+                <th className="px-4 py-2 rounded-tr-lg">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {loading ? (
-                <tr><td colSpan={7} className="px-2 py-2 text-center">Chargement...</td></tr>
-              ) : (
-                [...nouveauxFiltres, ...anciensFiltres].map((m) => (
-                  <tr key={m.id} className="hover:bg-gray-50">
-                    <td className="px-2 py-1 border">{m.nom}</td>
-                    <td className="px-2 py-1 border">{m.prenom}</td>
-                    <td className="px-2 py-1 border relative">
-                      {m.telephone ? (
-                        <button onClick={(e) => { e.stopPropagation(); setPhoneActionsOpen(phoneActionsOpen === m.id ? null : m.id); }} className="text-orange-500 font-semibold">
-                          {m.telephone} 📞
-                        </button>
-                      ) : "—"}
-                      {phoneActionsOpen === m.id && (
-                        <div className="absolute top-full mt-1 left-0 bg-white border rounded shadow-lg w-40 phone-actions z-50" onClick={(e) => e.stopPropagation()}>
-                          <a href={`tel:${m.telephone}`} className="block px-3 py-1 hover:bg-gray-100">📞 Appeler</a>
-                          <a href={`sms:${m.telephone}`} className="block px-3 py-1 hover:bg-gray-100">✉️ SMS</a>
-                          <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-3 py-1 hover:bg-gray-100">💬 WhatsApp</a>
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-2 py-1 border">{m.cellule_full || "—"}</td>
-                    <td className="px-2 py-1 border">{m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</td>
-                    <td className="px-2 py-1 border">{m.statut || "—"}</td>
-                    <td className="px-2 py-1 border flex gap-2">
-                      <button onClick={() => setPopupMember(m)} className="text-blue-600 text-sm">Détails</button>
-                      <button onClick={() => setEditMember(m)} className="text-orange-500 text-sm">Modifier</button>
+              {nouveauxFiltres.length > 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-2 text-white font-semibold">
+                    💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+                  </td>
+                </tr>
+              )}
+              {nouveauxFiltres.map((m) => (
+                <tr key={m.id} className="border-b border-gray-300">
+                  <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white" style={{ borderLeftColor: getBorderColor(m) }}>
+                    {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                    <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
+                  </td>
+                  <td className="px-4 py-2 text-white">
+                    <button
+                      className="text-orange-400 font-semibold"
+                      onClick={() => {
+                        setPhoneMenuOpen(phoneMenuOpen === m.id ? null : m.id);
+                        setPhoneActionType({});
+                      }}
+                    >
+                      📞 Appeler
+                    </button>
+                  </td>
+                  <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
+                  <td className="px-4 py-2 text-white">{m.cellule_nom ? `${m.cellule_nom} (${m.cellule_ville || "—"})` : "—"}</td>
+                  <td className="px-4 py-2 text-white">{m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</td>
+                  <td className="px-4 py-2 flex items-center gap-2">
+                    <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">
+                      {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                    </button>
+                    <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">
+                      Modifier
+                    </button>
+                  </td>
+                </tr>
+              ))}
+
+              {anciensFiltres.length > 0 && (
+                <>
+                  <tr>
+                    <td colSpan={6} className="px-4 py-2 font-semibold text-lg text-white">
+                      <span style={{ background: "linear-gradient(to right, #3B82F6, #D1D5DB)", WebkitBackgroundClip: "text", color: "transparent" }}>
+                        Membres existants
+                      </span>
                     </td>
                   </tr>
-                ))
+                  {anciensFiltres.map((m) => (
+                    <tr key={m.id} className="border-b border-gray-300">
+                      <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white" style={{ borderLeftColor: getBorderColor(m) }}>
+                        {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                      </td>
+                      <td className="px-4 py-2 text-white">
+                        <button
+                          className="text-orange-400 font-semibold"
+                          onClick={() => {
+                            setPhoneMenuOpen(phoneMenuOpen === m.id ? null : m.id);
+                            setPhoneActionType({});
+                          }}
+                        >
+                          📞 Appeler
+                        </button>
+                      </td>
+                      <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
+                      <td className="px-4 py-2 text-white">{m.cellule_nom ? `${m.cellule_nom} (${m.cellule_ville || "—"})` : "—"}</td>
+                      <td className="px-4 py-2 text-white">{m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</td>
+                      <td className="px-4 py-2 flex items-center gap-2">
+                        <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">
+                          {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                        </button>
+                        <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">
+                          Modifier
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </>
               )}
             </tbody>
           </table>

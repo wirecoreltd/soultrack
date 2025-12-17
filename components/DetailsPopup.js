@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BoutonEnvoyer from "./BoutonEnvoyer";
 
 export default function DetailsPopup({
@@ -17,6 +17,13 @@ export default function DetailsPopup({
   const [selectedTargetType, setSelectedTargetType] = useState("");
   const [selectedTarget, setSelectedTarget] = useState(null);
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
+  const [status, setStatus] = useState(membre.statut || "");
+
+  useEffect(() => {
+    setStatus(membre.statut || "");
+    setSelectedTargetType("");
+    setSelectedTarget(null);
+  }, [membre]);
 
   const handleSend = () => {
     if (!selectedTargetType || !selectedTarget) return;
@@ -28,7 +35,7 @@ export default function DetailsPopup({
 
     if (!cible) return;
 
-    handleAfterSend(membre.id, selectedTargetType, cible, membre.statut);
+    handleAfterSend(membre.id, selectedTargetType, cible, status);
     showToast?.("✅ Contact envoyé et suivi enregistré");
     setSelectedTarget(null);
     setSelectedTargetType("");
@@ -38,7 +45,7 @@ export default function DetailsPopup({
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
 
-        {/* Fermer */}
+        {/* Bouton fermer */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
@@ -47,82 +54,88 @@ export default function DetailsPopup({
         </button>
 
         {/* Nom */}
-          <h2 className="text-xl font-bold text-center">
-            {membre.prenom} {membre.nom} {membre.star && "⭐"}
-          </h2>
-          
-          {/* Téléphone centré */}
-          {membre.telephone && (
-            <div className="relative mt-1 flex justify-center">
-              <button
-                onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
-                className="text-orange-500 underline font-semibold"
-              >
-                {membre.telephone}
-              </button>
-          
-              {openPhoneMenu && (
-                <div className="absolute top-6 bg-white border rounded-lg shadow w-48 z-50">
-                  <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">
-                    📞 Appeler
-                  </a>
-                  <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">
-                    ✉️ SMS
-                  </a>
-                  <a
-                    href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`}
-                    target="_blank"
-                    className="block px-4 py-2 hover:bg-gray-100 text-black"
-                  >
-                    💬 WhatsApp
-                  </a>
-                  <a
-                    href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}?text=Bonjour`}
-                    target="_blank"
-                    className="block px-4 py-2 hover:bg-gray-100 text-black"
-                  >
-                    📱 Message WhatsApp
-                  </a>
-                </div>
-              )}
-            </div>
-          )}
-          
-          /* --------------------- Infos Membre --------------------- */
-          <div className="space-y-1 mt-4 text-sm text-gray-700">
-            <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
-            <p>🏙 Ville : {membre.ville || "—"}</p>
-            <p>🕊 Statut : {membre.statut || "—"}</p>
-            <p>
-              🏠 Cellule :{" "}
-              {membre.cellule_nom
-                ? `${membre.cellule_ville || "—"} - ${membre.cellule_nom}`
-                : "—"}
-            </p>
-            <p>
-              👤 Conseiller :{" "}
-              {membre.conseiller_prenom
-                ? `${membre.conseiller_prenom} ${membre.conseiller_nom || ""}`
-                : "—"}
-            </p>
-            <p>
-              ❓ Besoin :{" "}
-              {(() => {
-                if (!membre.besoin) return "—";
-                if (Array.isArray(membre.besoin)) return membre.besoin.join(", ");
-                try {
-                  const arr = JSON.parse(membre.besoin);
-                  return Array.isArray(arr) ? arr.join(", ") : membre.besoin;
-                } catch {
-                  return membre.besoin;
-                }
-              })()}
-            </p>
-            <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
-            <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
-            <p>🧩 Statut initial : {membre.statut_initial || "—"}</p>
-            <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
+        <h2 className="text-xl font-bold text-center">
+          {membre.prenom} {membre.nom} {membre.star && "⭐"}
+        </h2>
+
+        {/* Téléphone centré */}
+        {membre.telephone && (
+          <div className="relative mt-2 flex justify-center">
+            <button
+              onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
+              className="text-orange-500 underline font-semibold"
+            >
+              {membre.telephone}
+            </button>
+
+            {openPhoneMenu && (
+              <div className="absolute top-6 bg-white border rounded-lg shadow w-48 z-50">
+                <a
+                  href={`tel:${membre.telephone}`}
+                  className="block px-4 py-2 hover:bg-gray-100 text-black"
+                >
+                  📞 Appeler
+                </a>
+                <a
+                  href={`sms:${membre.telephone}`}
+                  className="block px-4 py-2 hover:bg-gray-100 text-black"
+                >
+                  ✉️ SMS
+                </a>
+                <a
+                  href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`}
+                  target="_blank"
+                  className="block px-4 py-2 hover:bg-gray-100 text-black"
+                >
+                  💬 WhatsApp
+                </a>
+                <a
+                  href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}?text=Bonjour`}
+                  target="_blank"
+                  className="block px-4 py-2 hover:bg-gray-100 text-black"
+                >
+                  📱 Message WhatsApp
+                </a>
+              </div>
+            )}
           </div>
+        )}
+
+        {/* Infos Membre */}
+        <div className="space-y-1 mt-4 text-sm text-gray-700">
+          <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
+          <p>🏙 Ville : {membre.ville || "—"}</p>
+          <p>🕊 Statut : {status || "—"}</p>
+          <p>
+            🏠 Cellule :{" "}
+            {membre.cellule_nom
+              ? `${membre.cellule_ville || "—"} - ${membre.cellule_nom}`
+              : "—"}
+          </p>
+          <p>
+            👤 Conseiller :{" "}
+            {membre.conseiller_prenom
+              ? `${membre.conseiller_prenom} ${membre.conseiller_nom || ""}`
+              : "—"}
+          </p>
+          <p>
+            ❓ Besoin :{" "}
+            {(() => {
+              if (!membre.besoin) return "—";
+              if (Array.isArray(membre.besoin)) return membre.besoin.join(", ");
+              try {
+                const arr = JSON.parse(membre.besoin);
+                return Array.isArray(arr) ? arr.join(", ") : membre.besoin;
+              } catch {
+                return membre.besoin;
+              }
+            })()}
+          </p>
+          <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
+          <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
+          <p>🧩 Statut initial : {membre.statut_initial || "—"}</p>
+          <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
+        </div>
 
         {/* Envoyer à */}
         <div className="mt-5">

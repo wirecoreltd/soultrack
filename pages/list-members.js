@@ -276,8 +276,6 @@ export default function ListMembers() {
                 : "—"}
             </p>
           </div>
-        </div>
-
 
           {/* ENVOYER À */}
           <div className="mt-2 w-full">

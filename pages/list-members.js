@@ -578,7 +578,7 @@ export default function ListMembers() {
     </tbody>
     </table>
   </div>
-)}      
+)}
 
       {/* Liste */}
       {view === "card" ? (
@@ -586,6 +586,7 @@ export default function ListMembers() {
           {nouveauxFiltres.map(renderMemberCard)}
           {anciensFiltres.map(renderMemberCard)}
         </div>
+      ) : (           
 
       {popupMember && (
         <DetailsPopup

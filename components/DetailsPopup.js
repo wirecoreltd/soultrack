@@ -91,10 +91,7 @@ export default function DetailsPopup({
                   </a>
                 </div>
               )}
-            </div>
-          )}
-
-
+                
           <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
           <p>🏙 Ville : {membre.ville || "—"}</p>
           <p>🕊 Statut : {membre.statut || "—"}</p>

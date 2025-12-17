@@ -15,7 +15,7 @@ export default function DetailsPopup({
   if (!membre || !membre.id) return null;
 
   const [selectedTargetType, setSelectedTargetType] = useState("");
-  const [selectedTarget, setSelectedTarget] = useState("");
+  const [selectedTarget, setSelectedTarget] = useState(null);
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
 
   // Fermer le menu téléphone si clic en dehors
@@ -49,7 +49,7 @@ export default function DetailsPopup({
         {membre.telephone && (
           <div className="relative flex justify-center mb-2">
             <button
-              className="text-orange-500 underline font-semibold phone-button"
+              className="text-blue-500 underline font-semibold phone-button"
               onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
             >
               {membre.telephone}
@@ -60,10 +60,16 @@ export default function DetailsPopup({
                 className="phone-menu absolute top-full mt-2 bg-white border rounded-lg shadow w-48 z-50"
                 onClick={(e) => e.stopPropagation()}
               >
-                <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">
+                <a
+                  href={`tel:${membre.telephone}`}
+                  className="block px-4 py-2 hover:bg-gray-100 text-black"
+                >
                   📞 Appeler
                 </a>
-                <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">
+                <a
+                  href={`sms:${membre.telephone}`}
+                  className="block px-4 py-2 hover:bg-gray-100 text-black"
+                >
                   ✉️ SMS
                 </a>
                 <a
@@ -120,7 +126,7 @@ export default function DetailsPopup({
           <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
         </div>
 
-        {/* Envoyer à (comme vue carte) */}
+        {/* Envoyer à (fonctionnel) */}
         <div className="mt-4 w-full">
           <label className="text-sm font-semibold">Envoyer à :</label>
 
@@ -128,7 +134,7 @@ export default function DetailsPopup({
             value={selectedTargetType}
             onChange={(e) => {
               setSelectedTargetType(e.target.value);
-              setSelectedTarget("");
+              setSelectedTarget(null);
             }}
             className="mt-1 w-full border rounded px-2 py-1 text-sm"
           >
@@ -140,18 +146,22 @@ export default function DetailsPopup({
           {selectedTargetType && (
             <select
               value={selectedTarget || ""}
-              onChange={(e) => setSelectedTarget(e.target.value)}
+              onChange={(e) => setSelectedTarget(Number(e.target.value))}
               className="mt-2 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Sélectionner --</option>
               {selectedTargetType === "cellule"
                 ? cellules.map((c) => (
-                    <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>
+                    <option key={c.id} value={c.id}>
+                      {c.cellule_full || "—"}
+                    </option>
                   ))
                 : null}
               {selectedTargetType === "conseiller"
                 ? conseillers.map((c) => (
-                    <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>
+                    <option key={c.id} value={c.id}>
+                      {c.prenom || "—"} {c.nom || ""}
+                    </option>
                   ))
                 : null}
             </select>
@@ -164,18 +174,17 @@ export default function DetailsPopup({
                 type={selectedTargetType}
                 cible={
                   selectedTargetType === "cellule"
-                    ? cellules.find(c => c.id === Number(selectedTarget))
-                    : conseillers.find(c => c.id === Number(selectedTarget))
+                    ? cellules.find((c) => c.id === Number(selectedTarget))
+                    : conseillers.find((c) => c.id === Number(selectedTarget))
                 }
-                onEnvoyer={(updatedMember) =>
-                  handleAfterSend(
-                    updatedMember,
-                    selectedTargetType,
+                onEnvoyer={(updatedMember) => {
+                  const cible =
                     selectedTargetType === "cellule"
-                      ? cellules.find(c => c.id === Number(selectedTarget))
-                      : conseillers.find(c => c.id === Number(selectedTarget))
-                  )
-                }
+                      ? cellules.find((c) => c.id === Number(selectedTarget))
+                      : conseillers.find((c) => c.id === Number(selectedTarget));
+                  if (!cible) return;
+                  handleAfterSend(updatedMember, selectedTargetType, cible);
+                }}
                 session={session}
                 showToast={showToast}
               />

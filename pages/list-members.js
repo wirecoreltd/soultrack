@@ -237,7 +237,7 @@ export default function ListMembers() {
                     e.stopPropagation();
                     setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
                   }}
-                  className="text-blue-600 font-semibold text-center"
+                  className="text-blue-600 underline font-semibold text-center"
                 >
                   {m.telephone}
                 </button>

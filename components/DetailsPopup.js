@@ -146,7 +146,7 @@ export default function DetailsPopup({
           {selectedTargetType && (
             <select
               value={selectedTarget || ""}
-              onChange={(e) => setSelectedTarget(Number(e.target.value))}
+              onChange={(e) => setSelectedTarget(e.target.value)}
               className="mt-2 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Sélectionner --</option>

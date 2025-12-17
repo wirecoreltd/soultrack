@@ -580,6 +580,13 @@ export default function ListMembers() {
   </div>
 )}      
 
+      {/* Liste */}
+      {view === "card" ? (
+        <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+          {nouveauxFiltres.map(renderMemberCard)}
+          {anciensFiltres.map(renderMemberCard)}
+        </div>
+
       {popupMember && (
         <DetailsPopup
           membre={popupMember}

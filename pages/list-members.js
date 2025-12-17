@@ -223,7 +223,40 @@ export default function ListMembers() {
         <div className="flex flex-col items-center">
           <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
           <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
-            <div className="flex justify-center items-center space-x-2">📱 {m.telephone || "—"}</div>
+            <div className="flex justify-center items-center gap-3">
+              {m.telephone ? (
+                <>
+                  {/* Numéro */}
+                  <span className="text-bleu-400 font-semibold select-text">
+                    {m.telephone}
+                  </span>
+            
+                  {/* 📞 Appel */}
+                  <a
+                    href={`tel:${m.telephone}`}
+                    className="text-blue-400 text-lg"
+                    onClick={(e) => e.stopPropagation()}
+                    title="Appeler"
+                  >
+                    📞
+                  </a>
+            
+                  {/* 💬 WhatsApp */}
+                  <a
+                    href={`https://wa.me/230${m.telephone.replace(/\D/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-green-400 text-lg"
+                    onClick={(e) => e.stopPropagation()}
+                    title="WhatsApp"
+                  >
+                    💬
+                  </a>
+                </>
+              ) : (
+                <span className="text-gray-400">—</span>
+              )}
+            </div>
             <div className="flex justify-center items-center space-x-2">🏙️ Ville : {m.ville || "—"}</div>                 
             <div className="flex justify-center items-center space-x-2">🕊 Statut : {m.statut || "—"}</div>            
             <div className="flex flex-col items-start space-y-1 w-full">
@@ -420,15 +453,36 @@ export default function ListMembers() {
                           </td>
                           <td className="px-4 py-2">
                             {m.telephone ? (
-                              <a
-                                href={`tel:${m.telephone}`}
-                                className="inline-flex items-center
-                                           text-blue-400 font-semibold
-                                           cursor-pointer select-text"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                {m.telephone}
-                              </a>
+                              <div className="flex items-center gap-3">
+                          
+                                {/* Numéro (non déclencheur) */}
+                                <span className="text-orange-400 font-semibold select-text">
+                                  {m.telephone}
+                                </span>
+                          
+                                {/* 📞 Appel */}
+                                <a
+                                  href={`tel:${m.telephone}`}
+                                  className="text-blue-400 text-lg"
+                                  onClick={(e) => e.stopPropagation()}
+                                  title="Appeler"
+                                >
+                                  📞
+                                </a>
+                          
+                                {/* 💬 WhatsApp */}
+                                <a
+                                  href={`https://wa.me/${m.telephone.replace(/\s+/g, "")}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-green-400 text-lg"
+                                  onClick={(e) => e.stopPropagation()}
+                                  title="WhatsApp"
+                                >
+                                  💬
+                                </a>
+                          
+                              </div>
                             ) : (
                               <span className="text-gray-400">—</span>
                             )}
@@ -485,20 +539,40 @@ export default function ListMembers() {
                               </td>
                               <td className="px-4 py-2">
                                 {m.telephone ? (
-                                  <a
-                                    href={`tel:${m.telephone}`}
-                                    className="inline-flex items-center
-                                               text-blue-400 font-semibold
-                                               cursor-pointer select-text"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    {m.telephone}
-                                  </a>
+                                  <div className="flex items-center gap-3">
+                              
+                                    {/* Numéro (non déclencheur) */}
+                                    <span className="text-orange-400 font-semibold select-text">
+                                      {m.telephone}
+                                    </span>
+                              
+                                    {/* 📞 Appel */}
+                                    <a
+                                      href={`tel:${m.telephone}`}
+                                      className="text-blue-400 text-lg"
+                                      onClick={(e) => e.stopPropagation()}
+                                      title="Appeler"
+                                    >
+                                      📞
+                                    </a>
+                              
+                                    {/* 💬 WhatsApp */}
+                                    <a
+                                      href={`https://wa.me/${m.telephone.replace(/\s+/g, "")}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-green-400 text-lg"
+                                      onClick={(e) => e.stopPropagation()}
+                                      title="WhatsApp"
+                                    >
+                                      💬
+                                    </a>
+                              
+                                  </div>
                                 ) : (
                                   <span className="text-gray-400">—</span>
                                 )}
                               </td>
-
                               <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
                               <td className="px-4 py-2 text-white">
                                 {m.cellule_nom && m.cellule_ville

@@ -36,7 +36,8 @@ export default function ListMembers() {
   const [selectedTargetType, setSelectedTargetType] = useState({});
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
-  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
+
+  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null); // menu téléphone/whatsapp
   const realtimeChannelRef = useRef(null);
 
   const statutLabels = {
@@ -73,6 +74,7 @@ export default function ListMembers() {
 
       const { data, error } = await query;
       if (error) throw error;
+
       const withInitial = (data || []).map(m => ({ ...m, statut_initial: m.statut }));
       setMembers(data || []);
     } catch (err) {
@@ -98,7 +100,7 @@ export default function ListMembers() {
     const updatedWithActif = { ...updatedMember, statut: "actif" };
     updateMemberLocally(updatedMember.id, updatedWithActif);
 
-    const cibleName = type === "cellule" ? cible.cellule : `${cible.prenom} ${cible.nom}`;
+    const cibleName = type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`;
     showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
   };
 
@@ -221,36 +223,42 @@ export default function ListMembers() {
         {m.star && <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>}
         <div className="flex flex-col items-center">
           <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
-          <div className="flex flex-col space-y-1 text-black w-full items-center">
+          <div className="flex flex-col space-y-1 text-black w-full items-center text-center">
+            {/* Numéro avec menu */}
             <div className="relative flex items-center gap-2">
               {m.telephone ? (
                 <>
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
+                    }}
                     className="text-orange-400 font-semibold select-text"
                   >
                     {m.telephone}
                   </button>
+
                   {openPhoneMenuId === m.id && (
-                    <div className="phone-menu absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border z-50 w-44" onClick={(e) => e.stopPropagation()}>
-                      <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-black text-sm hover:bg-gray-100">📞 Appeler par téléphone</a>
-                      <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-black text-sm hover:bg-gray-100">✉️ Envoyer SMS</a>
-                      <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-black text-sm hover:bg-gray-100">💬 WhatsApp</a>
-                      <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-black text-sm hover:bg-gray-100">📱 Envoyer message WhatsApp</a>
+                    <div
+                      className="phone-menu absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border z-50 w-44"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler par téléphone</a>
+                      <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ Envoyer SMS</a>
+                      <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 WhatsApp</a>
+                      <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Envoyer message WhatsApp</a>
                     </div>
                   )}
                 </>
               ) : <span className="text-gray-400">—</span>}
             </div>
 
-            <div className="text-center w-full">🏙️ Ville : {m.ville || "—"}</div>
-            <div className="text-center w-full">🕊 Statut : {m.statut || "—"}</div>
+            <div>🏙️ Ville : {m.ville || "—"}</div>                 
+            <div>🕊 Statut : {m.statut || "—"}</div>            
+            <div>🏠 Cellule : {(m.cellule_ville && m.cellule_nom) ? `${m.cellule_ville} - ${m.cellule_nom}` : m.suivi_cellule_nom || ""}</div>
+            <div>👤 Conseiller : {(m.conseiller_prenom || m.conseiller_nom) ? `${m.conseiller_prenom} ${m.conseiller_nom}`.trim() : ""}</div>
 
-            <div className="flex flex-col items-start space-y-1 w-full">
-              <div>🏠 Cellule : {(m.cellule_ville && m.cellule_nom) ? `${m.cellule_ville} - ${m.cellule_nom}` : m.suivi_cellule_nom || ""}</div>
-              <div>👤 Conseiller : {(m.conseiller_prenom || m.conseiller_nom) ? `${m.conseiller_prenom} ${m.conseiller_nom}`.trim() : ""}</div>
-            </div>
           </div>
 
           {/* ENVOYER À */}
@@ -258,25 +266,34 @@ export default function ListMembers() {
             <label className="font-semibold text-sm">Envoyer à :</label>
             <select
               value={selectedTargetType[m.id] || ""}
-              onChange={e => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
+              onChange={e =>
+                setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))
+              }
               className="mt-1 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Choisir une option --</option>
               <option value="cellule">Une Cellule</option>
               <option value="conseiller">Un Conseiller</option>
             </select>
-            {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
+            {(selectedTargetType[m.id] === "cellule" ||
+              selectedTargetType[m.id] === "conseiller") && (
               <select
                 value={selectedTargets[m.id] || ""}
-                onChange={e => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
+                onChange={e =>
+                  setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))
+                }
                 className="mt-1 w-full border rounded px-2 py-1 text-sm"
               >
                 <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
                 {selectedTargetType[m.id] === "cellule"
-                  ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)
+                  ? cellules.map(c => (
+                      <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>
+                    ))
                   : null}
                 {selectedTargetType[m.id] === "conseiller"
-                  ? conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)
+                  ? conseillers.map(c => (
+                      <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>
+                    ))
                   : null}
               </select>
             )}
@@ -324,77 +341,70 @@ export default function ListMembers() {
             </div>
           )}
         </div>
-      );
+      </div>
+    );
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-2 sm:p-4 md:p-6 bg-gradient-to-r from-blue-800 to-cyan-300">
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
       {/* Top Bar */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-2">
         <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black-200">← Retour</button>
         <LogoutLink className="bg-white/10 text-white px-3 py-1 rounded-lg hover:bg-white/20 text-sm" />
       </div>
-      <div className="w-full max-w-5xl flex justify-center mb-2">
-        <p className="text-orange-200 text-base">👋 Bienvenue {prenom || "cher membre"}</p>
-      </div>
-      <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} className="mx-auto mb-4" />
-      <h1 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">Liste des Membres</h1>
+      <div className="w-full max-w-5xl flex justify-end mb-2"><p className="text-orange-200 text-sm">👋 Bienvenue {prenom || "cher membre"}</p></div>
+      <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} className="mx-auto mb-2" />
+      <h1 className="text-2xl sm:text-3xl font-bold text-white text-center mb-2">Liste des Membres</h1>
 
-      {/* Recherche + filtre + toggle */}
-      <div className="flex flex-col items-center w-full max-w-6xl mb-2">
-        <input type="text" placeholder="Recherche..." value={search} onChange={e => setSearch(e.target.value)}
-          className="w-3/4 sm:w-2/3 md:w-1/2 px-3 py-2 rounded-md border text-black text-base mb-2" />
-
-        <div className="flex justify-center items-center gap-2 flex-wrap mb-2">
-          <select value={filter} onChange={e => setFilter(e.target.value)}
-            className="px-3 py-2 rounded-md border text-black text-base">
-            <option value="">-- Tous les statuts --</option>
-            {statusOptions.map((s, idx) => <option key={idx} value={s}>{s}</option>)}
-          </select>
-          <span className="text-white text-base ml-2">
-            {members.filter(m => !filter || m.statut === filter).length} membres
-          </span>
-        </div>
-
-        <div className="flex justify-center gap-4 mb-4">
-          {view === "card" && <button onClick={() => setView("table")} className="text-white font-semibold text-base underline">Vue Table</button>}
-          {view === "table" && <button onClick={() => setView("card")} className="text-white font-semibold text-base underline">Vue Carte</button>}
-        </div>
+      {/* Barre de recherche */}
+      <div className="w-full max-w-4xl flex justify-center mb-2">
+        <input
+          type="text"
+          placeholder="Recherche..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-2/3 px-3 py-1 rounded-md border text-black"
+        />
       </div>
 
-      {/* Contenu */}
+      {/* Toggle Vue Carte / Vue Table */}
+      <div className="w-full max-w-6xl flex justify-center gap-4 mb-2">
+        {view === "card" ? (
+          <button onClick={() => setView("table")} className="text-sm font-semibold text-white underline">Vue Table</button>
+        ) : (
+          <button onClick={() => setView("card")} className="text-sm font-semibold text-white underline">Vue Carte</button>
+        )}
+      </div>
+
+      {/* Liste */}
       {view === "card" ? (
         <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
           {nouveauxFiltres.map(renderMemberCard)}
           {anciensFiltres.map(renderMemberCard)}
         </div>
       ) : (
-        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-          <table className="w-full border-separate border-spacing-0 text-center text-base">
-            <thead className="bg-gray-200 text-black uppercase">
+        <div className="w-full max-w-6xl overflow-x-auto">
+          <table className="w-full border-collapse text-center">
+            <thead className="bg-gray-200 text-black">
               <tr>
-                <th className="px-3 py-2 rounded-tl-lg">Nom complet</th>
-                <th className="px-3 py-2">Téléphone</th>
-                <th className="px-3 py-2">Statut</th>
-                <th className="px-3 py-2">Cellule / Conseiller</th>
-                <th className="px-3 py-2 rounded-tr-lg">Actions</th>
+                <th className="px-2 py-1">Nom complet</th>
+                <th className="px-2 py-1">Téléphone</th>
+                <th className="px-2 py-1">Statut</th>
+                <th className="px-2 py-1">Cellule / Conseiller</th>
+                <th className="px-2 py-1">Actions</th>
               </tr>
             </thead>
             <tbody>
               {nouveauxFiltres.concat(anciensFiltres).map((m) => (
-                <tr key={m.id} className="border-b border-gray-300 text-center">
-                  <td className="px-3 py-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
-                    {m.prenom} {m.nom} {m.star && <span className="text-yellow-400">⭐</span>}
-                  </td>
-                  <td className="px-3 py-2 text-black">{m.telephone || "—"}</td>
-                  <td className="px-3 py-2">{m.statut || "—"}</td>
-                  <td className="px-3 py-2">
-                    {m.cellule_nom ? `🏠 Cellule : ${m.cellule_nom}` : ""}
-                    {m.conseiller_prenom ? <><br />👤 Conseiller : {m.conseiller_prenom} {m.conseiller_nom}</> : ""}
-                  </td>
-                  <td className="px-3 py-2 flex justify-center gap-2">
-                    <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">{popupMember?.id === m.id ? "Fermer" : "Détails"}</button>
-                    <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
+                <tr key={m.id} className="border-b border-gray-300">
+                  <td className="px-2 py-1">{m.prenom} {m.nom} {m.star && "⭐"}</td>
+                  <td className="px-2 py-1 text-black">{m.telephone || "—"}</td>
+                  <td className="px-2 py-1">{m.statut || "—"}</td>
+                  <td className="px-2 py-1">{m.cellule_nom || m.conseiller_prenom ? `${m.cellule_nom || ""} ${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim() : "—"}</td>
+                  <td className="px-2 py-1">
+                    <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-xs">
+                      {popupMember?.id === m.id ? "Fermer" : "Détails"}
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -403,14 +413,32 @@ export default function ListMembers() {
         </div>
       )}
 
-      {popupMember && <DetailsPopup member={popupMember} onClose={() => setPopupMember(null)} />}
-      {editMember && <EditMemberPopup member={editMember} onClose={() => setEditMember(null)} />}
-      
+      {/* Filtre en bas avec compteur */}
+      <div className="w-full max-w-6xl flex justify-center items-center mb-2 gap-2 flex-wrap">
+        <select
+          value={filter}
+          onChange={e => setFilter(e.target.value)}
+          className="px-3 py-1 rounded-md border text-black text-sm"
+        >
+          <option value="">-- Tous les statuts --</option>
+          {statusOptions.map((s, idx) => <option key={idx} value={s}>{s}</option>)}
+        </select>
+        <span className="text-white text-sm ml-2">
+          {members.filter(m => !filter || m.statut === filter).length} membres
+        </span>
+      </div>
+
+      {popupMember && (
+        <DetailsPopup member={popupMember} onClose={() => setPopupMember(null)} />
+      )}
+
+      {editMember && (
+        <EditMemberPopup member={editMember} onClose={() => setEditMember(null)} onUpdated={updateMemberLocally} />
+      )}
+
       {/* Toast */}
       {showingToast && (
-        <div className="fixed bottom-6 right-6 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
-          {toastMessage}
-        </div>
+        <div className="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50">{toastMessage}</div>
       )}
     </div>
   );

@@ -79,7 +79,7 @@ export default function ListMembers() {
       // Ajouter le statut initial à chaque membre
       const withInitial = (data || []).map(m => ({ ...m, statut_initial: m.statut }));
 
-      setMembers(withInitial);
+      setMembers(data || []);
     } catch (err) {
       console.error("Erreur fetchMembers:", err);
       setMembers([]);

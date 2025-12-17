@@ -450,7 +450,7 @@ export default function ListMembers() {
                         <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                         <th className="px-4 py-2">Téléphone</th>
                         <th className="px-4 py-2">Statut</th>
-                        <th className="px-4 py-2">Cellule / Conseiller</th>                        
+                        <th className="px-4 py-2">Cellule / Conseiller</th>
                         <th className="px-4 py-2 rounded-tr-lg">Actions</th>
                       </tr>
                     </thead>
@@ -458,7 +458,7 @@ export default function ListMembers() {
                       {/* Nouveaux Membres */}
                       {nouveauxFiltres.length > 0 && (
                         <tr>
-                          <td colSpan={6} className="px-4 py-2 text-white font-semibold">
+                          <td colSpan={5} className="px-4 py-2 text-white font-semibold">
                             💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
                           </td>
                         </tr>
@@ -472,39 +472,38 @@ export default function ListMembers() {
                             {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                             <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
                           </td>
+              
+                          {/* TELEPHONE CLIQUABLE */}
                           <td className="px-4 py-2">
                             {m.telephone ? (
                               <div className="relative">
-                                {/* NUMÉRO */}
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    setPhoneActionsOpen(
-                                      phoneActionsOpen === m.id ? null : m.id
-                                    )
+                                    setPhoneActionsOpen(phoneActionsOpen === m.id ? null : m.id)
                                   }
-                                  className="text-orange-500 font-semibold text-sm"
+                                  className="text-orange-400 font-semibold text-sm"
                                 >
-                                  {m.telephone}
+                                  {m.telephone} 📞 💬
                                 </button>
-                          
-                                {/* ACTIONS */}
+              
                                 {phoneActionsOpen === m.id && (
-                                  <div className="absolute z-20 mt-2 bg-white rounded-lg shadow-lg border w-40">
+                                  <div
+                                    className="absolute z-20 mt-2 bg-white rounded-lg shadow-lg border w-44"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
                                     <a
                                       href={`tel:${m.telephone}`}
                                       className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
                                     >
                                       📞 Appeler
                                     </a>
-                          
                                     <a
                                       href={`sms:${m.telephone}`}
                                       className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
                                     >
                                       ✉️ SMS
                                     </a>
-                          
                                     <a
                                       href={`https://wa.me/${m.telephone.replace(/\s+/g, "")}`}
                                       target="_blank"
@@ -520,14 +519,17 @@ export default function ListMembers() {
                               <span className="text-gray-400">—</span>
                             )}
                           </td>
+              
                           <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
+              
                           <td className="px-4 py-2 text-white">
                             {m.cellule_nom && m.cellule_ville
                               ? `${m.cellule_ville} - ${m.cellule_nom}`
                               : m.conseiller_prenom
-                                ? `${m.conseiller_prenom} ${m.conseiller_nom || ""}`.trim()
-                                : "—"}
+                              ? `${m.conseiller_prenom} ${m.conseiller_nom || ""}`.trim()
+                              : "—"}
                           </td>
+              
                           <td className="px-4 py-2 flex items-center gap-2">
                             <button
                               onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
@@ -549,7 +551,7 @@ export default function ListMembers() {
                       {anciensFiltres.length > 0 && (
                         <>
                           <tr>
-                            <td colSpan={6} className="px-4 py-2 font-semibold text-lg text-white">
+                            <td colSpan={5} className="px-4 py-2 font-semibold text-lg text-white">
                               <span
                                 style={{
                                   background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
@@ -569,40 +571,38 @@ export default function ListMembers() {
                               >
                                 {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                               </td>
-                              {/* Telephone cliquable */}    
+              
+                              {/* TELEPHONE CLIQUABLE */}
                               <td className="px-4 py-2">
                                 {m.telephone ? (
                                   <div className="relative">
-                                    {/* NUMÉRO */}
                                     <button
                                       type="button"
                                       onClick={() =>
-                                        setPhoneActionsOpen(
-                                          phoneActionsOpen === m.id ? null : m.id
-                                        )
+                                        setPhoneActionsOpen(phoneActionsOpen === m.id ? null : m.id)
                                       }
-                                      className="text-orange-500 font-semibold text-sm"
+                                      className="text-orange-400 font-semibold text-sm"
                                     >
-                                      {m.telephone}
+                                      {m.telephone} 📞 💬
                                     </button>
-                              
-                                    {/* ACTIONS */}
+              
                                     {phoneActionsOpen === m.id && (
-                                      <div className="absolute z-20 mt-2 bg-white rounded-lg shadow-lg border w-40">
+                                      <div
+                                        className="absolute z-20 mt-2 bg-white rounded-lg shadow-lg border w-44"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
                                         <a
                                           href={`tel:${m.telephone}`}
                                           className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
                                         >
                                           📞 Appeler
                                         </a>
-                              
                                         <a
                                           href={`sms:${m.telephone}`}
                                           className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
                                         >
                                           ✉️ SMS
                                         </a>
-                              
                                         <a
                                           href={`https://wa.me/${m.telephone.replace(/\s+/g, "")}`}
                                           target="_blank"
@@ -618,14 +618,17 @@ export default function ListMembers() {
                                   <span className="text-gray-400">—</span>
                                 )}
                               </td>
+              
                               <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
+              
                               <td className="px-4 py-2 text-white">
                                 {m.cellule_nom && m.cellule_ville
                                   ? `${m.cellule_ville} - ${m.cellule_nom}`
                                   : m.conseiller_prenom
-                                    ? `${m.conseiller_prenom} ${m.conseiller_nom || ""}`.trim()
-                                    : "—"}
+                                  ? `${m.conseiller_prenom} ${m.conseiller_nom || ""}`.trim()
+                                  : "—"}
                               </td>
+              
                               <td className="px-4 py-2 flex items-center gap-2">
                                 <button
                                   onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
@@ -647,7 +650,8 @@ export default function ListMembers() {
                     </tbody>
                   </table>
                 </div>
-)}
+              )}
+
 
       {/* Popups */}
       {editMember && <EditMemberPopup member={editMember} onClose={() => setEditMember(null)} onUpdateMember={(updatedMember) => { updateMemberLocally(updatedMember.id, updatedMember); setEditMember(null); showToast("✅ Membre mis à jour"); }} />}

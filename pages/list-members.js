@@ -40,6 +40,7 @@ export default function ListMembers() {
   const [showingToast, setShowingToast] = useState(false);
 
   const realtimeChannelRef = useRef(null);
+  const [phoneActionsOpen, setPhoneActionsOpen] = useState(null);
 
   const statutLabels = {
     1: "En cours",
@@ -223,40 +224,60 @@ export default function ListMembers() {
         <div className="flex flex-col items-center">
           <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
           <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
-            <div className="flex justify-center items-center gap-3">
+            {/* Telephone cliquable */}
+            <div className="relative flex items-center gap-2">
               {m.telephone ? (
                 <>
                   {/* Numéro */}
-                  <span className="text-bleu-400 font-semibold select-text">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPhoneMenuOpen(
+                        phoneMenuOpen === m.id ? null : m.id
+                      );
+                    }}
+                    className="text-orange-400 font-semibold select-text"
+                  >
                     {m.telephone}
-                  </span>
+                  </button>
             
-                  {/* 📞 Appel */}
-                  <a
-                    href={`tel:${m.telephone}`}
-                    className="text-blue-400 text-lg"
-                    onClick={(e) => e.stopPropagation()}
-                    title="Appeler"
-                  >
-                    📞
-                  </a>
+                  {/* Menu actions */}
+                  {phoneMenuOpen === m.id && (
+                    <div
+                      className="absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border z-50 w-40"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <a
+                        href={`tel:${m.telephone}`}
+                        className="block px-4 py-2 text-sm hover:bg-gray-100"
+                      >
+                        📞 Appeler
+                      </a>
             
-                  {/* 💬 WhatsApp */}
-                  <a
-                    href={`https://wa.me/230${m.telephone.replace(/\D/g, "")}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-green-400 text-lg"
-                    onClick={(e) => e.stopPropagation()}
-                    title="WhatsApp"
-                  >
-                    💬
-                  </a>
+                      <a
+                        href={`sms:${m.telephone}`}
+                        className="block px-4 py-2 text-sm hover:bg-gray-100"
+                      >
+                        ✉️ SMS
+                      </a>
+            
+                      <a
+                        href={`https://wa.me/230${m.telephone.replace(/\D/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block px-4 py-2 text-sm hover:bg-gray-100"
+                      >
+                        💬 WhatsApp
+                      </a>
+                    </div>
+                  )}
                 </>
               ) : (
                 <span className="text-gray-400">—</span>
               )}
             </div>
+
             <div className="flex justify-center items-center space-x-2">🏙️ Ville : {m.ville || "—"}</div>                 
             <div className="flex justify-center items-center space-x-2">🕊 Statut : {m.statut || "—"}</div>            
             <div className="flex flex-col items-start space-y-1 w-full">
@@ -451,42 +472,56 @@ export default function ListMembers() {
                             {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                             <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
                           </td>
+                          {/* Telepone cliquable */}
                           <td className="px-4 py-2">
                             {m.telephone ? (
-                              <div className="flex items-center gap-3">
-                          
-                                {/* Numéro (non déclencheur) */}
-                                <span className="text-orange-400 font-semibold select-text">
+                              <div className="relative">
+                                {/* NUMÉRO */}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setPhoneActionsOpen(
+                                      phoneActionsOpen === m.id ? null : m.id
+                                    )
+                                  }
+                                  className="text-orange-500 font-semibold text-sm"
+                                >
                                   {m.telephone}
-                                </span>
+                                </button>
                           
-                                {/* 📞 Appel */}
-                                <a
-                                  href={`tel:${m.telephone}`}
-                                  className="text-blue-400 text-lg"
-                                  onClick={(e) => e.stopPropagation()}
-                                  title="Appeler"
-                                >
-                                  📞
-                                </a>
+                                {/* ACTIONS */}
+                                {phoneActionsOpen === m.id && (
+                                  <div className="absolute z-20 mt-2 bg-white rounded-lg shadow-lg border w-40">
+                                    <a
+                                      href={`tel:${m.telephone}`}
+                                      className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
+                                    >
+                                      📞 Appeler
+                                    </a>
                           
-                                {/* 💬 WhatsApp */}
-                                <a
-                                  href={`https://wa.me/${m.telephone.replace(/\s+/g, "")}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-green-400 text-lg"
-                                  onClick={(e) => e.stopPropagation()}
-                                  title="WhatsApp"
-                                >
-                                  💬
-                                </a>
+                                    <a
+                                      href={`sms:${m.telephone}`}
+                                      className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
+                                    >
+                                      ✉️ SMS
+                                    </a>
                           
+                                    <a
+                                      href={`https://wa.me/${m.telephone.replace(/\s+/g, "")}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
+                                    >
+                                      💬 WhatsApp
+                                    </a>
+                                  </div>
+                                )}
                               </div>
                             ) : (
                               <span className="text-gray-400">—</span>
                             )}
                           </td>
+
                           <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
                           <td className="px-4 py-2 text-white">
                             {m.cellule_nom && m.cellule_ville
@@ -495,7 +530,6 @@ export default function ListMembers() {
                                 ? `${m.conseiller_prenom} ${m.conseiller_nom || ""}`.trim()
                                 : "—"}
                           </td>
-
                           <td className="px-4 py-2 flex items-center gap-2">
                             <button
                               onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
@@ -537,38 +571,56 @@ export default function ListMembers() {
                               >
                                 {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                               </td>
+                              {/* Telephone cliquable */}    
                               <td className="px-4 py-2">
                                 {m.telephone ? (
-                                  <div className="flex items-center gap-3">
-                              
-                                    {/* Numéro (non déclencheur) */}
-                                    <span className="text-orange-400 font-semibold select-text">
+                                  <div className="relative">
+                                    {/* NUMÉRO */}
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setPhoneActionsOpen(
+                                          phoneActionsOpen === m.id ? null : m.id
+                                        )
+                                      }
+                                      className="text-orange-500 font-semibold text-sm"
+                                    >
                                       {m.telephone}
-                                    </span>
+                                    </button>
                               
-                                    {/* 📞 Appel */}
-                                    <a
-                                      href={`tel:${m.telephone}`}
-                                      className="text-blue-400 text-lg"
-                                      onClick={(e) => e.stopPropagation()}
-                                      title="Appeler"
-                                    >
-                                      📞
-                                    </a>
+                                    {/* ACTIONS */}
+                                    {phoneActionsOpen === m.id && (
+                                      <div className="absolute z-20 mt-2 bg-white rounded-lg shadow-lg border w-40">
+                                        <a
+                                          href={`tel:${m.telephone}`}
+                                          className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
+                                        >
+                                          📞 Appeler
+                                        </a>
                               
-                                    {/* 💬 WhatsApp */}
-                                    <a
-                                      href={`https://wa.me/${m.telephone.replace(/\s+/g, "")}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-green-400 text-lg"
-                                      onClick={(e) => e.stopPropagation()}
-                                      title="WhatsApp"
-                                    >
-                                      💬
-                                    </a>
+                                        <a
+                                          href={`sms:${m.telephone}`}
+                                          className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
+                                        >
+                                          ✉️ SMS
+                                        </a>
                               
+                                        <a
+                                          href={`https://wa.me/${m.telephone.replace(/\s+/g, "")}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="flex items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
+                                        >
+                                          💬 WhatsApp
+                                        </a>
+                                      </div>
+                                    )}
                                   </div>
+                                ) : (
+                                  <span className="text-gray-400">—</span>
+                                )}
+                              </td>
+
                                 ) : (
                                   <span className="text-gray-400">—</span>
                                 )}
@@ -581,8 +633,6 @@ export default function ListMembers() {
                                     ? `${m.conseiller_prenom} ${m.conseiller_nom || ""}`.trim()
                                     : "—"}
                               </td>
-
-
                               <td className="px-4 py-2 flex items-center gap-2">
                                 <button
                                   onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}

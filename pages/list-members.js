@@ -222,44 +222,62 @@ export default function ListMembers() {
       <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4 relative">
         {m.star && <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>}
         <div className="flex flex-col items-center">
-          <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
-          <div className="flex flex-col space-y-1 text-black w-full items-center text-center">
-            {/* Numéro avec menu */}
-            <div className="relative flex items-center gap-2">
-              {m.telephone ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
-                    }}
-                    className="text-orange-400 font-semibold select-text"
+          {/* NOM / PRENOM */}
+          <h2 className="text-lg font-bold text-center">
+            {m.prenom} {m.nom}
+          </h2>
+        
+          {/* TELEPHONE */}
+          <div className="relative flex justify-center mt-1">
+            {m.telephone ? (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
+                  }}
+                  className="text-blue-600 font-semibold text-center"
+                >
+                  {m.telephone}
+                </button>
+        
+                {openPhoneMenuId === m.id && (
+                  <div
+                    className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-44"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    {m.telephone}
-                  </button>
-
-                  {openPhoneMenuId === m.id && (
-                    <div
-                      className="phone-menu absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border z-50 w-44"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler par téléphone</a>
-                      <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ Envoyer SMS</a>
-                      <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 WhatsApp</a>
-                      <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Envoyer message WhatsApp</a>
-                    </div>
-                  )}
-                </>
-              ) : <span className="text-gray-400">—</span>}
-            </div>
-
-            <div>🏙️ Ville : {m.ville || "—"}</div>                 
-            <div>🕊 Statut : {m.statut || "—"}</div>            
-            <div>🏠 Cellule : {(m.cellule_ville && m.cellule_nom) ? `${m.cellule_ville} - ${m.cellule_nom}` : m.suivi_cellule_nom || ""}</div>
-            <div>👤 Conseiller : {(m.conseiller_prenom || m.conseiller_nom) ? `${m.conseiller_prenom} ${m.conseiller_nom}`.trim() : ""}</div>
-
+                    <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
+                    <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
+                    <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 WhatsApp</a>
+                    <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Message WhatsApp</a>
+                  </div>
+                )}
+              </>
+            ) : (
+              <span className="text-gray-400">—</span>
+            )}
           </div>
+        
+          {/* INFOS ALIGNÉES À GAUCHE (MÊME SIZE QUE DETAILS) */}
+          <div className="w-full mt-2 text-sm text-black space-y-1">
+            <p>🏙️ Ville : {m.ville || "—"}</p>
+            <p>🕊 Statut : {m.statut || "—"}</p>
+            <p>
+              🏠 Cellule :{" "}
+              {(m.cellule_ville && m.cellule_nom)
+                ? `${m.cellule_ville} - ${m.cellule_nom}`
+                : "—"}
+            </p>
+            <p>
+              👤 Conseiller :{" "}
+              {(m.conseiller_prenom || m.conseiller_nom)
+                ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim()
+                : "—"}
+            </p>
+          </div>
+        </div>
+
 
           {/* ENVOYER À */}
           <div className="mt-2 w-full">

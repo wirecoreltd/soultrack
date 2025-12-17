@@ -422,129 +422,226 @@ export default function ListMembers() {
       </thead>
 
       <tbody>
-        {/* Nouveaux Membres */}
-        {nouveauxFiltres.length > 0 && (
-          <tr>
-            <td colSpan={5} className="px-2 py-2 text-white font-semibold">
-              💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-            </td>
-          </tr>
-        )}
+  {/* Nouveaux Membres */}
+  {nouveauxFiltres.length > 0 && (
+    <tr>
+      <td colSpan={5} className="px-2 py-2 text-white font-semibold">
+        💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+      </td>
+    </tr>
+  )}
 
-        {nouveauxFiltres.map((m) => (
-          <tr key={m.id} className="border-b border-gray-300">
-            <td
-              className="px-2 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white whitespace-nowrap"
-              style={{ borderLeftColor: getBorderColor(m) }}
-            >
-              {m.prenom} {m.nom}
-              {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-              <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">
-                Nouveau
-              </span>
-            </td>
+  {nouveauxFiltres.map((m) => (
+    <tr key={m.id} className="border-b border-gray-300">
+      <td
+        className="px-2 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white whitespace-nowrap"
+        style={{ borderLeftColor: getBorderColor(m) }}
+      >
+        {m.prenom} {m.nom}
+        {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+        <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">
+          Nouveau
+        </span>
+      </td>
 
-            <td className="px-2 py-2 text-white whitespace-nowrap">
-              {m.telephone || "—"}
-            </td>
-
-            <td className="px-2 py-2 text-white whitespace-nowrap">
-              {m.statut || "—"}
-            </td>
-
-            <td className="px-2 py-2 text-white">
-              {m.cellule_nom
-                ? `🏠 ${m.cellule_ville || "—"} - ${m.cellule_nom}`
-                : m.conseiller_prenom
-                ? `👤 ${m.conseiller_prenom} ${m.conseiller_nom}`
-                : "—"}
-            </td>
-
-            <td className="px-2 py-2 flex items-center gap-3 whitespace-nowrap">
-              <button
-                onClick={() =>
-                  setPopupMember(popupMember?.id === m.id ? null : { ...m })
-                }
-                className="text-orange-500 underline text-sm"
-              >
-                {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-              </button>
-
-              <button
-                onClick={() => setEditMember(m)}
-                className="text-blue-600 underline text-sm"
-              >
-                Modifier
-              </button>
-            </td>
-          </tr>
-        ))}
-
-        {/* Anciens Membres */}
-        {anciensFiltres.length > 0 && (
+      <td className="px-2 py-2 text-white whitespace-nowrap relative">
+        {m.telephone ? (
           <>
-            <tr>
-              <td colSpan={5} className="px-2 py-2 font-semibold text-lg text-white">
-                <span
-                  style={{
-                    background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                    WebkitBackgroundClip: "text",
-                    color: "transparent",
-                  }}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
+              }}
+              className="text-orange-500 underline font-semibold"
+            >
+              {m.telephone}
+            </button>
+
+            {openPhoneMenuId === m.id && (
+              <div
+                className="absolute top-full mt-1 bg-white border rounded-lg shadow-lg w-48 z-50 phone-menu"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <a
+                  href={`tel:${m.telephone}`}
+                  className="block px-4 py-2 hover:bg-gray-100 text-black"
                 >
-                  Membres existants
-                </span>
-              </td>
-            </tr>
-
-            {anciensFiltres.map((m) => (
-              <tr key={m.id} className="border-b border-gray-300">
-                <td
-                  className="px-2 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white whitespace-nowrap"
-                  style={{ borderLeftColor: getBorderColor(m) }}
+                  📞 Appeler
+                </a>
+                <a
+                  href={`sms:${m.telephone}`}
+                  className="block px-4 py-2 hover:bg-gray-100 text-black"
                 >
-                  {m.prenom} {m.nom}
-                  {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                </td>
-
-                <td className="px-2 py-2 text-white whitespace-nowrap">
-                  {m.telephone || "—"}
-                </td>
-
-                <td className="px-2 py-2 text-white whitespace-nowrap">
-                  {m.statut || "—"}
-                </td>
-
-                <td className="px-2 py-2 text-white">
-                  {m.cellule_nom
-                    ? `🏠 ${m.cellule_ville || "—"} - ${m.cellule_nom}`
-                    : m.conseiller_prenom
-                    ? `👤 ${m.conseiller_prenom} ${m.conseiller_nom}`
-                    : "—"}
-                </td>
-
-                <td className="px-2 py-2 flex items-center gap-3 whitespace-nowrap">
-                  <button
-                    onClick={() =>
-                      setPopupMember(popupMember?.id === m.id ? null : { ...m })
-                    }
-                    className="text-orange-500 underline text-sm"
-                  >
-                    {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                  </button>
-
-                  <button
-                    onClick={() => setEditMember(m)}
-                    className="text-blue-600 underline text-sm"
-                  >
-                    Modifier
-                  </button>
-                </td>
-              </tr>
-            ))}
+                  ✉️ SMS
+                </a>
+                <a
+                  href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
+                  target="_blank"
+                  className="block px-4 py-2 hover:bg-gray-100 text-black"
+                >
+                  💬 WhatsApp
+                </a>
+                <a
+                  href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?text=Bonjour`}
+                  target="_blank"
+                  className="block px-4 py-2 hover:bg-gray-100 text-black"
+                >
+                  📱 Message WhatsApp
+                </a>
+              </div>
+            )}
           </>
+        ) : (
+          "—"
         )}
-      </tbody>
+      </td>
+
+      <td className="px-2 py-2 text-white whitespace-nowrap">
+        {m.statut || "—"}
+      </td>
+
+      <td className="px-2 py-2 text-white">
+        {m.cellule_nom
+          ? `🏠 ${m.cellule_ville || "—"} - ${m.cellule_nom}`
+          : m.conseiller_prenom
+          ? `👤 ${m.conseiller_prenom} ${m.conseiller_nom}`
+          : "—"}
+      </td>
+
+      <td className="px-2 py-2 flex items-center gap-3 whitespace-nowrap">
+        <button
+          onClick={() =>
+            setPopupMember(popupMember?.id === m.id ? null : { ...m })
+          }
+          className="text-orange-500 underline text-sm"
+        >
+          {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+        </button>
+
+        <button
+          onClick={() => setEditMember(m)}
+          className="text-blue-600 underline text-sm"
+        >
+          Modifier
+        </button>
+      </td>
+    </tr>
+  ))}
+
+  {/* Anciens Membres */}
+  {anciensFiltres.length > 0 && (
+    <>
+      <tr>
+        <td colSpan={5} className="px-2 py-2 font-semibold text-lg text-white">
+          <span
+            style={{
+              background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+              WebkitBackgroundClip: "text",
+              color: "transparent",
+            }}
+          >
+            Membres existants
+          </span>
+        </td>
+      </tr>
+
+      {anciensFiltres.map((m) => (
+        <tr key={m.id} className="border-b border-gray-300">
+          <td
+            className="px-2 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white whitespace-nowrap"
+            style={{ borderLeftColor: getBorderColor(m) }}
+          >
+            {m.prenom} {m.nom}
+            {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+          </td>
+
+          <td className="px-2 py-2 text-white whitespace-nowrap relative">
+            {m.telephone ? (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
+                  }}
+                  className="text-orange-500 underline font-semibold"
+                >
+                  {m.telephone}
+                </button>
+
+                {openPhoneMenuId === m.id && (
+                  <div
+                    className="absolute top-full mt-1 bg-white border rounded-lg shadow-lg w-48 z-50 phone-menu"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <a
+                      href={`tel:${m.telephone}`}
+                      className="block px-4 py-2 hover:bg-gray-100 text-black"
+                    >
+                      📞 Appeler
+                    </a>
+                    <a
+                      href={`sms:${m.telephone}`}
+                      className="block px-4 py-2 hover:bg-gray-100 text-black"
+                    >
+                      ✉️ SMS
+                    </a>
+                    <a
+                      href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
+                      target="_blank"
+                      className="block px-4 py-2 hover:bg-gray-100 text-black"
+                    >
+                      💬 WhatsApp
+                    </a>
+                    <a
+                      href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?text=Bonjour`}
+                      target="_blank"
+                      className="block px-4 py-2 hover:bg-gray-100 text-black"
+                    >
+                      📱 Message WhatsApp
+                    </a>
+                  </div>
+                )}
+              </>
+            ) : (
+              "—"
+            )}
+          </td>
+
+          <td className="px-2 py-2 text-white whitespace-nowrap">
+            {m.statut || "—"}
+          </td>
+
+          <td className="px-2 py-2 text-white">
+            {m.cellule_nom
+              ? `🏠 ${m.cellule_ville || "—"} - ${m.cellule_nom}`
+              : m.conseiller_prenom
+              ? `👤 ${m.conseiller_prenom} ${m.conseiller_nom}`
+              : "—"}
+          </td>
+
+          <td className="px-2 py-2 flex items-center gap-3 whitespace-nowrap">
+            <button
+              onClick={() =>
+                setPopupMember(popupMember?.id === m.id ? null : { ...m })
+              }
+              className="text-orange-500 underline text-sm"
+            >
+              {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+            </button>
+
+            <button
+              onClick={() => setEditMember(m)}
+              className="text-blue-600 underline text-sm"
+            >
+              Modifier
+            </button>
+          </td>
+        </tr>
+      ))}
+    </>
+  )}
+</tbody>
+
     </table>
   </div>
 )}

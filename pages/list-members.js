@@ -602,8 +602,17 @@ export default function ListMembers() {
       </div>
 
       {popupMember && (
-        <DetailsPopup member={popupMember} onClose={() => setPopupMember(null)} />
+        <DetailsPopup
+          membre={popupMember}
+          onClose={() => setPopupMember(null)}
+          cellules={cellules}
+          conseillers={conseillers}
+          handleAfterSend={handleAfterSend}
+          session={session}
+          showToast={showToast}
+        />
       )}
+
 
       {editMember && (
         <EditMemberPopup member={editMember} onClose={() => setEditMember(null)} onUpdated={updateMemberLocally} />

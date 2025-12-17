@@ -472,7 +472,6 @@ export default function ListMembers() {
                             {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                             <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
                           </td>
-                          {/* Telepone cliquable */}
                           <td className="px-4 py-2">
                             {m.telephone ? (
                               <div className="relative">
@@ -521,7 +520,6 @@ export default function ListMembers() {
                               <span className="text-gray-400">—</span>
                             )}
                           </td>
-
                           <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
                           <td className="px-4 py-2 text-white">
                             {m.cellule_nom && m.cellule_ville
@@ -616,11 +614,6 @@ export default function ListMembers() {
                                       </div>
                                     )}
                                   </div>
-                                ) : (
-                                  <span className="text-gray-400">—</span>
-                                )}
-                              </td>
-
                                 ) : (
                                   <span className="text-gray-400">—</span>
                                 )}

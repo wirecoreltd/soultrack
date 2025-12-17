@@ -418,18 +418,23 @@ export default function ListMembers() {
                             {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                             <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
                           </td>
-                          <td className="px-4 py-2 text-white">
-                            {m.telephone ? (
-                              <a
-                                href={`tel:${m.telephone}`}
-                                className="underline text-blue-300 hover:text-blue-500"
-                              >
-                                {m.telephone}
-                              </a>
-                            ) : "—"}
-                          </td>
+                          <td className="px-4 py-2">
+                              {m.telephone ? (
+                                <a
+                                  href={`tel:${m.telephone}`}
+                                  className="text-blue-400 font-medium
+                                             pointer-events-auto relative z-10"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {m.telephone}
+                                </a>
+                              ) : (
+                                <span className="text-gray-400">—</span>
+                              )}
+                            </td>
+
                           <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
-                          <td className="px-4 py-2 text-white">{m.cellule_nom ? `${m.cellule_nom} (${m.cellule_ville || "—"})` : "—"}</td>
+                          <td className="px-4 py-2 text-white">{m.cellule_nom ? `${m.cellule_ville || "—"} ${m.cellule_nom}` : "—"}</td>
                           <td className="px-4 py-2 text-white">{m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</td>
                           <td className="px-4 py-2 flex items-center gap-2">
                             <button

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import BoutonEnvoyer from "./BoutonEnvoyer";
 
 export default function DetailsPopup({
@@ -17,13 +17,19 @@ export default function DetailsPopup({
   const [selectedTargetType, setSelectedTargetType] = useState("");
   const [selectedTarget, setSelectedTarget] = useState(null);
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
-  const [status, setStatus] = useState(membre.statut || "");
+  const popupRef = useRef(null);
+  const phoneMenuRef = useRef(null);
 
+  // Fermer le popup du téléphone si on clique en dehors
   useEffect(() => {
-    setStatus(membre.statut || "");
-    setSelectedTargetType("");
-    setSelectedTarget(null);
-  }, [membre]);
+    const handleClickOutside = (event) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(event.target)) {
+        setOpenPhoneMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleSend = () => {
     if (!selectedTargetType || !selectedTarget) return;
@@ -35,17 +41,17 @@ export default function DetailsPopup({
 
     if (!cible) return;
 
-    handleAfterSend(membre.id, selectedTargetType, cible, status);
-    showToast?.("✅ Contact envoyé et suivi enregistré");
+    handleAfterSend(membre.id, selectedTargetType, cible, membre.statut);
+    showToast?.(`✅ Contact envoyé à ${cible.prenom || cible.responsable || ""}`);
     setSelectedTarget(null);
     setSelectedTargetType("");
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
+      <div ref={popupRef} className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
 
-        {/* Bouton fermer */}
+        {/* Fermer */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
@@ -58,9 +64,9 @@ export default function DetailsPopup({
           {membre.prenom} {membre.nom} {membre.star && "⭐"}
         </h2>
 
-        {/* Téléphone centré */}
+        {/* Téléphone centré avec menu */}
         {membre.telephone && (
-          <div className="relative mt-2 flex justify-center">
+          <div className="relative mt-2 flex justify-center" ref={phoneMenuRef}>
             <button
               onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
               className="text-orange-500 underline font-semibold"
@@ -70,16 +76,10 @@ export default function DetailsPopup({
 
             {openPhoneMenu && (
               <div className="absolute top-6 bg-white border rounded-lg shadow w-48 z-50">
-                <a
-                  href={`tel:${membre.telephone}`}
-                  className="block px-4 py-2 hover:bg-gray-100 text-black"
-                >
+                <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">
                   📞 Appeler
                 </a>
-                <a
-                  href={`sms:${membre.telephone}`}
-                  className="block px-4 py-2 hover:bg-gray-100 text-black"
-                >
+                <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">
                   ✉️ SMS
                 </a>
                 <a
@@ -101,26 +101,19 @@ export default function DetailsPopup({
           </div>
         )}
 
-        {/* Infos Membre */}
+        {/* Infos membre */}
         <div className="space-y-1 mt-4 text-sm text-gray-700">
           <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
           <p>🏙 Ville : {membre.ville || "—"}</p>
-          <p>🕊 Statut : {status || "—"}</p>
+          <p>🕊 Statut : {membre.statut || "—"}</p>
           <p>
-            🏠 Cellule :{" "}
-            {membre.cellule_nom
-              ? `${membre.cellule_ville || "—"} - ${membre.cellule_nom}`
-              : "—"}
+            🏠 Cellule : {membre.cellule_nom ? `${membre.cellule_ville || "—"} - ${membre.cellule_nom}` : "—"}
           </p>
           <p>
-            👤 Conseiller :{" "}
-            {membre.conseiller_prenom
-              ? `${membre.conseiller_prenom} ${membre.conseiller_nom || ""}`
-              : "—"}
+            👤 Conseiller : {membre.conseiller_prenom ? `${membre.conseiller_prenom} ${membre.conseiller_nom || ""}` : "—"}
           </p>
           <p>
-            ❓ Besoin :{" "}
-            {(() => {
+            ❓ Besoin : {(() => {
               if (!membre.besoin) return "—";
               if (Array.isArray(membre.besoin)) return membre.besoin.join(", ");
               try {

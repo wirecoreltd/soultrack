@@ -578,59 +578,7 @@ export default function ListMembers() {
     </tbody>
     </table>
   </div>
-)}
-
-      {/* Liste */}
-      {view === "card" ? (
-        <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-          {nouveauxFiltres.map(renderMemberCard)}
-          {anciensFiltres.map(renderMemberCard)}
-        </div>
-      ) : (
-        <div className="w-full max-w-6xl overflow-x-auto">
-          <table className="w-full border-collapse text-center">
-            <thead className="bg-gray-200 text-black">
-              <tr>
-                <th className="px-2 py-1">Nom complet</th>
-                <th className="px-2 py-1">Téléphone</th>
-                <th className="px-2 py-1">Statut</th>
-                <th className="px-2 py-1">Cellule / Conseiller</th>
-                <th className="px-2 py-1">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {nouveauxFiltres.concat(anciensFiltres).map((m) => (
-                <tr key={m.id} className="border-b border-gray-300">
-                  <td className="px-2 py-1">{m.prenom} {m.nom} {m.star && "⭐"}</td>
-                  <td className="px-2 py-1 text-black">{m.telephone || "—"}</td>
-                  <td className="px-2 py-1">{m.statut || "—"}</td>
-                  <td className="px-2 py-1">{m.cellule_nom || m.conseiller_prenom ? `${m.cellule_nom || ""} ${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim() : "—"}</td>
-                  <td className="px-2 py-1">
-                    <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-xs">
-                      {popupMember?.id === m.id ? "Fermer" : "Détails"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Filtre en bas avec compteur */}
-      <div className="w-full max-w-6xl flex justify-center items-center mb-2 gap-2 flex-wrap">
-        <select
-          value={filter}
-          onChange={e => setFilter(e.target.value)}
-          className="px-3 py-1 rounded-md border text-black text-sm"
-        >
-          <option value="">-- Tous les statuts --</option>
-          {statusOptions.map((s, idx) => <option key={idx} value={s}>{s}</option>)}
-        </select>
-        <span className="text-white text-sm ml-2">
-          {members.filter(m => !filter || m.statut === filter).length} membres
-        </span>
-      </div>
+)}      
 
       {popupMember && (
         <DetailsPopup

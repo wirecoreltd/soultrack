@@ -580,37 +580,38 @@ export default function ListMembers() {
   </div>
 )}
 
+{/* Liste carte */}
+{view === "card" && (
+  <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+    {nouveauxFiltres.map(renderMemberCard)}
+    {anciensFiltres.map(renderMemberCard)}
+  </div>
+)}
 
-      {/* Liste */}
-      {view === "card" ? (
-        <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-          {nouveauxFiltres.map(renderMemberCard)}
-          {anciensFiltres.map(renderMemberCard)}
-        </div>
-      ) : (
-        
+{/* Popups */}
+{popupMember && (
+  <DetailsPopup
+    membre={popupMember}
+    onClose={() => setPopupMember(null)}
+    cellules={cellules}
+    conseillers={conseillers}
+    handleAfterSend={handleAfterSend}
+    session={session}
+    showToast={showToast}
+  />
+)}
 
-      {popupMember && (
-        <DetailsPopup
-          membre={popupMember}
-          onClose={() => setPopupMember(null)}
-          cellules={cellules}
-          conseillers={conseillers}
-          handleAfterSend={handleAfterSend}
-          session={session}
-          showToast={showToast}
-        />
-      )}
+{editMember && (
+  <EditMemberPopup
+    member={editMember}
+    onClose={() => setEditMember(null)}
+    onUpdated={updateMemberLocally}
+  />
+)}
 
-
-      {editMember && (
-        <EditMemberPopup member={editMember} onClose={() => setEditMember(null)} onUpdated={updateMemberLocally} />
-      )}
-
-      {/* Toast */}
-      {showingToast && (
-        <div className="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50">{toastMessage}</div>
-      )}
-    </div>
-  );
-}
+{/* Toast */}
+{showingToast && (
+  <div className="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50">
+    {toastMessage}
+  </div>
+)}

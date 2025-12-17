@@ -396,8 +396,7 @@ export default function ListMembers() {
                         <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                         <th className="px-4 py-2">Téléphone</th>
                         <th className="px-4 py-2">Statut</th>
-                        <th className="px-4 py-2">Cellule</th>
-                        <th className="px-4 py-2">Conseiller</th>
+                        <th className="px-4 py-2">Cellule / Conseiller</th>                        
                         <th className="px-4 py-2 rounded-tr-lg">Actions</th>
                       </tr>
                     </thead>
@@ -419,7 +418,16 @@ export default function ListMembers() {
                             {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                             <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
                           </td>
-                          <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
+                          <td className="px-4 py-2 text-white">
+                            {m.telephone ? (
+                              <a
+                                href={`tel:${m.telephone}`}
+                                className="underline text-blue-300 hover:text-blue-500"
+                              >
+                                {m.telephone}
+                              </a>
+                            ) : "—"}
+                          </td>
                           <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
                           <td className="px-4 py-2 text-white">{m.cellule_nom ? `${m.cellule_nom} (${m.cellule_ville || "—"})` : "—"}</td>
                           <td className="px-4 py-2 text-white">{m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</td>
@@ -466,8 +474,14 @@ export default function ListMembers() {
                               </td>
                               <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
                               <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
-                              <td className="px-4 py-2 text-white">{m.cellule_nom ? `${m.cellule_nom} (${m.cellule_ville || "—"})` : "—"}</td>
-                              <td className="px-4 py-2 text-white">{m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</td>
+                              <td className="px-4 py-2 text-white">
+                                {m.cellule_nom
+                                  ? `${m.cellule_nom} (${m.cellule_ville || "—"})`
+                                  : m.conseiller_prenom
+                                    ? `${m.conseiller_prenom} ${m.conseiller_nom}`
+                                    : "—"}
+                              </td>
+
                               <td className="px-4 py-2 flex items-center gap-2">
                                 <button
                                   onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}

@@ -15,15 +15,14 @@ export default function DetailsPopup({
   if (!membre || !membre.id) return null;
 
   const [selectedTargetType, setSelectedTargetType] = useState("");
-  const [selectedTarget, setSelectedTarget] = useState(null);
+  const [selectedTarget, setSelectedTarget] = useState("");
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
-  const popupRef = useRef(null);
   const phoneMenuRef = useRef(null);
 
-  // Fermer le popup du téléphone si on clique en dehors
+  // Fermer le menu téléphone en cliquant en dehors
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (phoneMenuRef.current && !phoneMenuRef.current.contains(event.target)) {
+    const handleClickOutside = (e) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
         setOpenPhoneMenu(false);
       }
     };
@@ -31,26 +30,9 @@ export default function DetailsPopup({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSend = () => {
-    if (!selectedTargetType || !selectedTarget) return;
-
-    const cible =
-      selectedTargetType === "cellule"
-        ? cellules.find((c) => c.id === Number(selectedTarget))
-        : conseillers.find((c) => c.id === Number(selectedTarget));
-
-    if (!cible) return;
-
-    handleAfterSend(membre.id, selectedTargetType, cible, membre.statut);
-    showToast?.(`✅ Contact envoyé à ${cible.prenom || cible.responsable || ""}`);
-    setSelectedTarget(null);
-    setSelectedTargetType("");
-  };
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-      <div ref={popupRef} className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
-
+      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
         {/* Fermer */}
         <button
           onClick={onClose}
@@ -64,7 +46,7 @@ export default function DetailsPopup({
           {membre.prenom} {membre.nom} {membre.star && "⭐"}
         </h2>
 
-        {/* Téléphone centré avec menu */}
+        {/* Téléphone centré */}
         {membre.telephone && (
           <div className="relative mt-2 flex justify-center" ref={phoneMenuRef}>
             <button
@@ -82,18 +64,10 @@ export default function DetailsPopup({
                 <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">
                   ✉️ SMS
                 </a>
-                <a
-                  href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`}
-                  target="_blank"
-                  className="block px-4 py-2 hover:bg-gray-100 text-black"
-                >
+                <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">
                   💬 WhatsApp
                 </a>
-                <a
-                  href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}?text=Bonjour`}
-                  target="_blank"
-                  className="block px-4 py-2 hover:bg-gray-100 text-black"
-                >
+                <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">
                   📱 Message WhatsApp
                 </a>
               </div>
@@ -102,47 +76,33 @@ export default function DetailsPopup({
         )}
 
         {/* Infos membre */}
-        <div className="space-y-1 mt-4 text-sm text-gray-700">
+        <div className="mt-4 space-y-1 text-sm text-gray-700">
           <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
           <p>🏙 Ville : {membre.ville || "—"}</p>
           <p>🕊 Statut : {membre.statut || "—"}</p>
-          <p>
-            🏠 Cellule : {membre.cellule_nom ? `${membre.cellule_ville || "—"} - ${membre.cellule_nom}` : "—"}
-          </p>
-          <p>
-            👤 Conseiller : {membre.conseiller_prenom ? `${membre.conseiller_prenom} ${membre.conseiller_nom || ""}` : "—"}
-          </p>
-          <p>
-            ❓ Besoin : {(() => {
-              if (!membre.besoin) return "—";
-              if (Array.isArray(membre.besoin)) return membre.besoin.join(", ");
-              try {
-                const arr = JSON.parse(membre.besoin);
-                return Array.isArray(arr) ? arr.join(", ") : membre.besoin;
-              } catch {
-                return membre.besoin;
-              }
-            })()}
-          </p>
+          <p>🏠 Cellule : {membre.cellule_nom ? `${membre.cellule_ville || "—"} - ${membre.cellule_nom}` : "—"}</p>
+          <p>👤 Conseiller : {membre.conseiller_prenom ? `${membre.conseiller_prenom} ${membre.conseiller_nom || ""}`.trim() : "—"}</p>
+          <p>❓ Besoin : {(() => {
+            if (!membre.besoin) return "—";
+            if (Array.isArray(membre.besoin)) return membre.besoin.join(", ");
+            try { const arr = JSON.parse(membre.besoin); return Array.isArray(arr) ? arr.join(", ") : membre.besoin; } catch { return membre.besoin; }
+          })()}</p>
           <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
           <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
           <p>🧩 Statut initial : {membre.statut_initial || "—"}</p>
           <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
         </div>
 
-        {/* Envoyer à */}
-        <div className="mt-5">
+        {/* Envoyer à (identique à la vue carte) */}
+        <div className="mt-4 w-full">
           <label className="text-sm font-semibold">Envoyer à :</label>
 
           <select
             value={selectedTargetType}
-            onChange={(e) => {
-              setSelectedTargetType(e.target.value);
-              setSelectedTarget(null);
-            }}
+            onChange={(e) => { setSelectedTargetType(e.target.value); setSelectedTarget(""); }}
             className="mt-1 w-full border rounded px-2 py-1 text-sm"
           >
-            <option value="">-- Choisir --</option>
+            <option value="">-- Choisir une option --</option>
             <option value="cellule">Une Cellule</option>
             <option value="conseiller">Un Conseiller</option>
           </select>
@@ -150,35 +110,28 @@ export default function DetailsPopup({
           {selectedTargetType && (
             <select
               value={selectedTarget || ""}
-              onChange={(e) => setSelectedTarget(Number(e.target.value))}
+              onChange={(e) => setSelectedTarget(e.target.value)}
               className="mt-2 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Sélectionner --</option>
               {selectedTargetType === "cellule"
-                ? cellules.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.ville} - {c.cellule}
-                    </option>
-                  ))
-                : conseillers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.prenom} {c.nom}
-                    </option>
-                  ))}
+                ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)
+                : null}
+              {selectedTargetType === "conseiller"
+                ? conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)
+                : null}
             </select>
           )}
 
           {selectedTarget && (
-            <div className="mt-4 text-center">
+            <div className="mt-2 text-center">
               <BoutonEnvoyer
                 membre={membre}
                 type={selectedTargetType}
-                cible={
-                  selectedTargetType === "cellule"
-                    ? cellules.find((c) => c.id === Number(selectedTarget))
-                    : conseillers.find((c) => c.id === Number(selectedTarget))
-                }
-                onEnvoyer={handleSend}
+                cible={selectedTargetType === "cellule"
+                  ? cellules.find(c => c.id === Number(selectedTarget))
+                  : conseillers.find(c => c.id === Number(selectedTarget))}
+                onEnvoyer={handleAfterSend}
                 session={session}
                 showToast={showToast}
               />

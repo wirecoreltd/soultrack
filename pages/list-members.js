@@ -37,8 +37,7 @@ export default function ListMembers() {
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
 
-  const [phoneMenuOpen, setPhoneMenuOpen] = useState(null); // pour vue carte
-  const [phoneActionsOpen, setPhoneActionsOpen] = useState(null); // pour vue table
+  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null); // menu téléphone/whatsapp
   const realtimeChannelRef = useRef(null);
 
   const statutLabels = {
@@ -151,6 +150,17 @@ export default function ListMembers() {
     };
   }, []);
 
+  // -------------------- Fermer menu téléphone en cliquant dehors --------------------
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".phone-menu")) {
+        setOpenPhoneMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // -------------------- UTILS --------------------
   const updateMemberLocally = (id, updatedMember) => {
     setMembers(prev => prev.map(m => (m.id === id ? { ...m, ...updatedMember } : m)));
@@ -199,7 +209,7 @@ export default function ListMembers() {
 
   const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
 
-  // -------------------- RENDER CARTE --------------------
+  // -------------------- Rendu Carte --------------------
   const renderMemberCard = (m) => {
     const isOpen = detailsOpen[m.id];
     const besoins = (() => {
@@ -214,35 +224,38 @@ export default function ListMembers() {
         <div className="flex flex-col items-center">
           <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
           <div className="flex flex-col space-y-1 text-sm text-black-600 w-full items-center">
-            {/* Numéro avec menu pour carte */}
+            {/* Numéro avec menu */}
             <div className="relative flex items-center gap-2">
               {m.telephone ? (
                 <>
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); setPhoneMenuOpen(phoneMenuOpen === m.id ? null : m.id); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
+                    }}
                     className="text-orange-400 font-semibold select-text"
                   >
                     {m.telephone}
                   </button>
 
-                  {phoneMenuOpen === m.id && (
+                  {openPhoneMenuId === m.id && (
                     <div
-                      className="absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border z-50 w-40"
+                      className="phone-menu absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border z-50 w-44"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">📞 Téléphone</a>
-                      <a href={`https://wa.me/230${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm hover:bg-gray-100">💬 WhatsApp</a>
+                      <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">📞 Appeler par téléphone</a>
+                      <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">✉️ Envoyer SMS</a>
+                      <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm hover:bg-gray-100">💬 WhatsApp</a>
+                      <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm hover:bg-gray-100">📱 Envoyer message WhatsApp</a>
                     </div>
                   )}
                 </>
-              ) : (
-                <span className="text-gray-400">—</span>
-              )}
+              ) : <span className="text-gray-400">—</span>}
             </div>
 
-            <div className="flex justify-center items-center space-x-2">🏙️ Ville : {m.ville || "—"}</div>
-            <div className="flex justify-center items-center space-x-2">🕊 Statut : {m.statut || "—"}</div>
+            <div className="flex justify-center items-center space-x-2">🏙️ Ville : {m.ville || "—"}</div>                 
+            <div className="flex justify-center items-center space-x-2">🕊 Statut : {m.statut || "—"}</div>            
             <div className="flex flex-col items-start space-y-1 w-full">
               <div>🏠 Cellule : {(m.cellule_ville && m.cellule_nom) ? `${m.cellule_ville} - ${m.cellule_nom}` : m.suivi_cellule_nom || ""}</div>
               <div>👤 Conseiller : {(m.conseiller_prenom || m.conseiller_nom) ? `${m.conseiller_prenom} ${m.conseiller_nom}`.trim() : ""}</div>
@@ -263,7 +276,8 @@ export default function ListMembers() {
               <option value="cellule">Une Cellule</option>
               <option value="conseiller">Un Conseiller</option>
             </select>
-            {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
+            {(selectedTargetType[m.id] === "cellule" ||
+              selectedTargetType[m.id] === "conseiller") && (
               <select
                 value={selectedTargets[m.id] || ""}
                 onChange={e =>
@@ -289,9 +303,10 @@ export default function ListMembers() {
                 <BoutonEnvoyer
                   membre={m}
                   type={selectedTargetType[m.id]}
-                  cible={selectedTargetType[m.id] === "cellule"
-                    ? cellules.find(c => c.id === selectedTargets[m.id])
-                    : conseillers.find(c => c.id === selectedTargets[m.id])
+                  cible={
+                    selectedTargetType[m.id] === "cellule"
+                      ? cellules.find(c => c.id === selectedTargets[m.id])
+                      : conseillers.find(c => c.id === selectedTargets[m.id])
                   }
                   onEnvoyer={id => handleAfterSend(
                     id,
@@ -308,7 +323,7 @@ export default function ListMembers() {
           </div>
 
           {/* Détails */}
-          <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">
+          <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2" aria-label={`Détails ${m.prenom} ${m.nom}`}>
             {isOpen ? "Fermer détails" : "Détails"}
           </button>
 
@@ -321,7 +336,9 @@ export default function ListMembers() {
               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
               <p>🧩 Statut initial : {m.statut_initial || "—"}</p>
               <p>📝 Commentaire Suivis : {m.suivi_commentaire_suivis || "—"}</p>
-              <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">✏️ Modifier le contact</button>
+              <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">
+                ✏️ Modifier le contact
+              </button>
             </div>
           )}
         </div>
@@ -329,7 +346,6 @@ export default function ListMembers() {
     );
   };
 
-  // -------------------- RENDER --------------------
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
       {/* Top Bar */}
@@ -337,41 +353,44 @@ export default function ListMembers() {
         <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black-200">← Retour</button>
         <LogoutLink className="bg-white/10 text-white px-3 py-1 rounded-lg hover:bg-white/20 text-sm" />
       </div>
-
-      <div className="w-full max-w-5xl flex justify-end mb-4">
-        <p className="text-orange-200 text-sm">👋 Bienvenue {prenom || "cher membre"}</p>
-      </div>
-
+      <div className="w-full max-w-5xl flex justify-end mb-4"><p className="text-orange-200 text-sm">👋 Bienvenue {prenom || "cher membre"}</p></div>
       <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} className="mx-auto mb-4" />
-
       <h1 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">Liste des Membres</h1>
 
       {/* Search & Filter */}
-      <div className="flex flex-col sm:flex-row justify-between w-full max-w-5xl gap-2 mb-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <select value={filter} onChange={e => setFilter(e.target.value)} className="px-2 py-1 rounded-lg border text-sm">
-            <option value="">Tous les statuts</option>
-            {statusOptions.map(s => (<option key={s}>{s}</option>))}
-          </select>
-          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..." className="px-2 py-1 rounded-lg border text-sm w-40 sm:w-48" />
-          <span className="text-white text-sm">({nouveauxFiltres.length + anciensFiltres.length})</span>
-        </div>
-        <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline">{view === "card" ? "Vue Table" : "Vue Carte"}</button>
+      <div className="flex flex-col sm:flex-row justify-between w-full max-w-6xl mb-4 gap-2">
+        <input
+          type="text"
+          placeholder="Recherche..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="flex-1 px-3 py-2 rounded-md border text-black text-sm"
+        />
+        <select
+          value={filter}
+          onChange={e => setFilter(e.target.value)}
+          className="px-3 py-2 rounded-md border text-black text-sm"
+        >
+          <option value="">-- Tous les statuts --</option>
+          {statusOptions.map((s, idx) => <option key={idx} value={s}>{s}</option>)}
+        </select>
+        <select
+          value={view}
+          onChange={e => setView(e.target.value)}
+          className="px-3 py-2 rounded-md border text-black text-sm"
+        >
+          <option value="card">Carte</option>
+          <option value="table">Table</option>
+        </select>
       </div>
 
-      {/* Loading */}
-      {loading && <div className="text-white text-lg mt-10">Chargement...</div>}
-
-      {/* Membres */}
-      {!loading && view === "card" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-6xl">
+      {/* Liste des Membres */}
+      {view === "card" ? (
+        <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {nouveauxFiltres.map(renderMemberCard)}
           {anciensFiltres.map(renderMemberCard)}
         </div>
-      )}
-
-      {/* ==================== VUE TABLE ==================== */}
-      {view === "table" && (
+      ) : (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left border-separate border-spacing-0">
             <thead className="bg-gray-200 text-black-800 text-sm uppercase">
@@ -385,7 +404,6 @@ export default function ListMembers() {
               </tr>
             </thead>
             <tbody>
-              {/* Nouveaux Membres */}
               {nouveauxFiltres.length > 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-2 text-white font-semibold">
@@ -395,111 +413,72 @@ export default function ListMembers() {
               )}
               {nouveauxFiltres.map((m) => (
                 <tr key={m.id} className="border-b border-gray-300">
-                  <td
-                    className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white"
-                    style={{ borderLeftColor: getBorderColor(m) }}
-                  >
+                  <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white" style={{ borderLeftColor: getBorderColor(m) }}>
                     {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                     <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
                   </td>
                   <td className="px-4 py-2 text-white">
-                    {m.telephone ? (
-                      <div className="relative inline-block">
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); setPhoneActionsOpen(phoneActionsOpen === m.id ? null : m.id); }}
-                          className="text-orange-400 font-semibold select-text"
-                        >
-                          📞 Appeler
-                        </button>
-                        {phoneActionsOpen === m.id && (
-                          <div className="absolute top-full mt-1 left-0 bg-white rounded-lg shadow-lg border z-50 w-40">
-                            <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">📞 Téléphone</a>
-                            <a href={`https://wa.me/230${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm hover:bg-gray-100">💬 WhatsApp</a>
-                          </div>
-                        )}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id); }}
+                      className="text-orange-400 font-semibold select-text"
+                    >
+                      {m.telephone || "—"}
+                    </button>
+                    {openPhoneMenuId === m.id && (
+                      <div
+                        className="phone-menu absolute bg-white rounded-lg shadow-lg border z-50 w-44"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">📞 Appeler par téléphone</a>
+                        <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">✉️ Envoyer SMS</a>
+                        <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm hover:bg-gray-100">💬 WhatsApp</a>
+                        <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm hover:bg-gray-100">📱 Envoyer message WhatsApp</a>
                       </div>
-                    ) : "—"}
+                    )}
                   </td>
                   <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
                   <td className="px-4 py-2 text-white">{m.cellule_nom ? `${m.cellule_nom} (${m.cellule_ville || "—"})` : "—"}</td>
                   <td className="px-4 py-2 text-white">{m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</td>
                   <td className="px-4 py-2 flex items-center gap-2">
-                    <button
-                      onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
-                      className="text-orange-500 underline text-sm"
-                    >
-                      {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                    </button>
-                    <button
-                      onClick={() => setEditMember(m)}
-                      className="text-blue-600 underline text-sm"
-                    >
-                      Modifier
-                    </button>
+                    <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">{popupMember?.id === m.id ? "Fermer détails" : "Détails"}</button>
+                    <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
                   </td>
                 </tr>
               ))}
-
-              {/* Anciens Membres */}
               {anciensFiltres.length > 0 && (
                 <>
                   <tr>
                     <td colSpan={6} className="px-4 py-2 font-semibold text-lg text-white">
-                      <span
-                        style={{
-                          background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                          WebkitBackgroundClip: "text",
-                          color: "transparent",
-                        }}
-                      >
+                      <span style={{ background: "linear-gradient(to right, #3B82F6, #D1D5DB)", WebkitBackgroundClip: "text", color: "transparent" }}>
                         Membres existants
                       </span>
                     </td>
                   </tr>
                   {anciensFiltres.map((m) => (
                     <tr key={m.id} className="border-b border-gray-300">
-                      <td
-                        className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white"
-                        style={{ borderLeftColor: getBorderColor(m) }}
-                      >
+                      <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white" style={{ borderLeftColor: getBorderColor(m) }}>
                         {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                       </td>
                       <td className="px-4 py-2 text-white">
-                        {m.telephone ? (
-                          <div className="relative inline-block">
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); setPhoneActionsOpen(phoneActionsOpen === m.id ? null : m.id); }}
-                              className="text-orange-400 font-semibold select-text"
-                            >
-                              📞 Appeler
-                            </button>
-                            {phoneActionsOpen === m.id && (
-                              <div className="absolute top-full mt-1 left-0 bg-white rounded-lg shadow-lg border z-50 w-40">
-                                <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">📞 Téléphone</a>
-                                <a href={`https://wa.me/230${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm hover:bg-gray-100">💬 WhatsApp</a>
-                              </div>
-                            )}
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id); }} className="text-orange-400 font-semibold select-text">
+                          {m.telephone || "—"}
+                        </button>
+                        {openPhoneMenuId === m.id && (
+                          <div className="phone-menu absolute bg-white rounded-lg shadow-lg border z-50 w-44" onClick={(e) => e.stopPropagation()}>
+                            <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">📞 Appeler par téléphone</a>
+                            <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">✉️ Envoyer SMS</a>
+                            <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm hover:bg-gray-100">💬 WhatsApp</a>
+                            <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm hover:bg-gray-100">📱 Envoyer message WhatsApp</a>
                           </div>
-                        ) : "—"}
+                        )}
                       </td>
                       <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
                       <td className="px-4 py-2 text-white">{m.cellule_nom ? `${m.cellule_nom} (${m.cellule_ville || "—"})` : "—"}</td>
                       <td className="px-4 py-2 text-white">{m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</td>
                       <td className="px-4 py-2 flex items-center gap-2">
-                        <button
-                          onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
-                          className="text-orange-500 underline text-sm"
-                        >
-                          {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                        </button>
-                        <button
-                          onClick={() => setEditMember(m)}
-                          className="text-blue-600 underline text-sm"
-                        >
-                          Modifier
-                        </button>
+                        <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm">{popupMember?.id === m.id ? "Fermer détails" : "Détails"}</button>
+                        <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
                       </td>
                     </tr>
                   ))}
@@ -511,8 +490,23 @@ export default function ListMembers() {
       )}
 
       {/* Popups */}
-      {editMember && <EditMemberPopup member={editMember} onClose={() => setEditMember(null)} onUpdateMember={(updatedMember) => { updateMemberLocally(updatedMember.id, updatedMember); setEditMember(null); showToast("✅ Membre mis à jour"); }} />}
-      {popupMember && <DetailsPopup membre={popupMember} onClose={() => setPopupMember(null)} cellules={cellules} conseillers={conseillers} statusOptions={statusOptions} showToast={showToast} />}
+      {editMember && (
+        <EditMemberPopup
+          member={editMember}
+          onClose={() => setEditMember(null)}
+          onUpdateMember={(updatedMember) => { updateMemberLocally(updatedMember.id, updatedMember); setEditMember(null); showToast("✅ Membre mis à jour"); }}
+        />
+      )}
+      {popupMember && (
+        <DetailsPopup
+          membre={popupMember}
+          onClose={() => setPopupMember(null)}
+          cellules={cellules}
+          conseillers={conseillers}
+          statusOptions={statusOptions}
+          showToast={showToast}
+        />
+      )}
 
       {/* Toast */}
       {showingToast && <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-lg">{toastMessage}</div>}

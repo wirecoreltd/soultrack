@@ -63,16 +63,10 @@ export default function DetailsPopup({
           
               {openPhoneMenu && (
                 <div className="absolute top-6 bg-white border rounded-lg shadow w-48 z-50">
-                  <a
-                    href={`tel:${membre.telephone}`}
-                    className="block px-4 py-2 hover:bg-gray-100 text-black"
-                  >
+                  <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">
                     📞 Appeler
                   </a>
-                  <a
-                    href={`sms:${membre.telephone}`}
-                    className="block px-4 py-2 hover:bg-gray-100 text-black"
-                  >
+                  <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">
                     ✉️ SMS
                   </a>
                   <a
@@ -91,44 +85,44 @@ export default function DetailsPopup({
                   </a>
                 </div>
               )}
-                
-          <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
-          <p>🏙 Ville : {membre.ville || "—"}</p>
-          <p>🕊 Statut : {membre.statut || "—"}</p>
-
-          <p>
-            🏠 Cellule :{" "}
-            {membre.cellule_nom
-              ? `${membre.cellule_ville || "—"} - ${membre.cellule_nom}`
-              : "—"}
-          </p>
-
-          <p>
-            👤 Conseiller :{" "}
-            {membre.conseiller_prenom
-              ? `${membre.conseiller_prenom} ${membre.conseiller_nom || ""}`
-              : "—"}
-          </p>
-
-          <p>
-            ❓ Besoin :{" "}
-            {(() => {
-              if (!membre.besoin) return "—";
-              if (Array.isArray(membre.besoin)) return membre.besoin.join(", ");
-              try {
-                const arr = JSON.parse(membre.besoin);
-                return Array.isArray(arr) ? arr.join(", ") : membre.besoin;
-              } catch {
-                return membre.besoin;
-              }
-            })()}
-          </p>
-
-          <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
-          <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
-          <p>🧩 Statut initial : {membre.statut_initial || "—"}</p>
-          <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
-        </div>
+            </div>
+          )}
+          
+          /* --------------------- Infos Membre --------------------- */
+          <div className="space-y-1 mt-4 text-sm text-gray-700">
+            <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
+            <p>🏙 Ville : {membre.ville || "—"}</p>
+            <p>🕊 Statut : {membre.statut || "—"}</p>
+            <p>
+              🏠 Cellule :{" "}
+              {membre.cellule_nom
+                ? `${membre.cellule_ville || "—"} - ${membre.cellule_nom}`
+                : "—"}
+            </p>
+            <p>
+              👤 Conseiller :{" "}
+              {membre.conseiller_prenom
+                ? `${membre.conseiller_prenom} ${membre.conseiller_nom || ""}`
+                : "—"}
+            </p>
+            <p>
+              ❓ Besoin :{" "}
+              {(() => {
+                if (!membre.besoin) return "—";
+                if (Array.isArray(membre.besoin)) return membre.besoin.join(", ");
+                try {
+                  const arr = JSON.parse(membre.besoin);
+                  return Array.isArray(arr) ? arr.join(", ") : membre.besoin;
+                } catch {
+                  return membre.besoin;
+                }
+              })()}
+            </p>
+            <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
+            <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
+            <p>🧩 Statut initial : {membre.statut_initial || "—"}</p>
+            <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
+          </div>
 
         {/* Envoyer à */}
         <div className="mt-5">

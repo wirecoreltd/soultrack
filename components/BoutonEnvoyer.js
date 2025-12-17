@@ -15,7 +15,7 @@ export default function BoutonEnvoyer({ membre, type, cible, onEnvoyer, session,
       // Générer le message WhatsApp
       const message = `👋 Bonjour ${cible.prenom || cible.responsable || ""} !\n\n` +
         `✨ Un nouveau membre est placé sous tes soins pour être accompagné et encouragé.\n\n` +
-        `📌 Statut: ${membre.statut || "—"}\n\n` +        
+        `📌 Statut: ${membre.statut_initial || "—"}\n\n` +        
         `👤 Nom: ${membre.prenom} ${membre.nom}\n` +
         ` ⚥ Sexe: ${membre.sexe || "—"}\n` +
         `📱 Téléphone: ${membre.telephone || "—"}\n` +

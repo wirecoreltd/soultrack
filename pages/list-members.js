@@ -409,97 +409,230 @@ export default function ListMembers() {
 
 <div className="w-full max-w-6xl">
   {/* ==================== VUE TABLE ==================== */}
-  {view === "table" && (
-    <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-      <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto">
-        <thead className="bg-gray-200 text-black-800 text-sm uppercase">
-          <tr>
-            <th className="px-1 py-1 rounded-tl-lg text-left">Nom complet</th>
-            <th className="px-1 py-1 text-left">Téléphone</th>
-            <th className="px-1 py-1 text-left">Statut</th>
-            <th className="px-1 py-1 text-left">Affectation</th>
-            <th className="px-1 py-1 rounded-tr-lg text-left">Actions</th>
-          </tr>
-        </thead>
+{view === "table" && (
+  <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+    <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto">
+      <thead className="bg-gray-200 text-black-800 text-sm uppercase">
+        <tr>
+          <th className="px-1 py-1 rounded-tl-lg text-left">Nom complet</th>
+          <th className="px-1 py-1 text-left">Téléphone</th>
+          <th className="px-1 py-1 text-left">Statut</th>
+          <th className="px-1 py-1 text-left">Affectation</th>
+          <th className="px-1 py-1 rounded-tr-lg text-left">Actions</th>
+        </tr>
+      </thead>
 
-        <tbody>
-          {/* Nouveaux Membres */}
-          {nouveauxFiltres.length > 0 && (
+      <tbody>
+        {/* Nouveaux Membres */}
+        {nouveauxFiltres.length > 0 && (
+          <tr>
+            <td colSpan={5} className="px-1 py-1 text-white font-semibold">
+              💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+            </td>
+          </tr>
+        )}
+
+        {nouveauxFiltres.map((m) => (
+          <tr key={m.id} className="border-b border-gray-300">
+            <td
+              className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 text-white whitespace-nowrap"
+              style={{ borderLeftColor: getBorderColor(m) }}
+            >
+              {m.prenom} {m.nom}
+              {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+              <span className="bg-blue-500 text-white text-xs px-1 rounded ml-1">Nouveau</span>
+            </td>
+
+            <td className="px-1 py-1 text-white whitespace-nowrap relative">
+              {m.telephone ? (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
+                    }}
+                    className="text-orange-500 underline font-semibold text-sm"
+                  >
+                    {m.telephone}
+                  </button>
+
+                  {openPhoneMenuId === m.id && (
+                    <div
+                      className="absolute top-full mt-1 bg-white border rounded-lg shadow-lg w-40 z-50 phone-menu"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <a href={`tel:${m.telephone}`} className="block px-2 py-1 hover:bg-gray-100 text-black text-sm">📞 Appeler</a>
+                      <a href={`sms:${m.telephone}`} className="block px-2 py-1 hover:bg-gray-100 text-black text-sm">✉️ SMS</a>
+                      <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-2 py-1 hover:bg-gray-100 text-black text-sm">💬 WhatsApp</a>
+                      <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-2 py-1 hover:bg-gray-100 text-black text-sm">📱 Message WhatsApp</a>
+                    </div>
+                  )}
+                </>
+              ) : "—"}
+            </td>
+
+            <td className="px-1 py-1 text-white whitespace-nowrap">{m.statut || "—"}</td>
+
+            <td className="px-1 py-1 text-white whitespace-nowrap">
+              {m.cellule_nom
+                ? `🏠 ${m.cellule_ville || "—"} - ${m.cellule_nom}`
+                : m.conseiller_prenom
+                ? `👤 ${m.conseiller_prenom} ${m.conseiller_nom}`
+                : "—"}
+            </td>
+
+            <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
+              <button
+                onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
+                className="text-orange-500 underline text-sm"
+              >
+                {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+              </button>
+              <button
+                onClick={() => setEditMember(m)}
+                className="text-blue-600 underline text-sm"
+              >
+                Modifier
+              </button>
+            </td>
+          </tr>
+        ))}
+
+        {/* Anciens Membres */}
+        {anciensFiltres.length > 0 && (
+          <>
             <tr>
-              <td colSpan={5} className="px-1 py-1 text-white font-semibold">
-                💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+              <td colSpan={5} className="px-1 py-1 font-semibold text-lg text-white">
+                <span
+                  style={{
+                    background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                    WebkitBackgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
+                  Membres existants
+                </span>
               </td>
             </tr>
-          )}
 
-          {nouveauxFiltres.map((m) => (
-            <tr key={m.id} className="border-b border-gray-300">
-              {/* ... cellules du tableau ... */}
-            </tr>
-          ))}
+            {anciensFiltres.map((m) => (
+              <tr key={m.id} className="border-b border-gray-300">
+                <td
+                  className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 text-white whitespace-nowrap"
+                  style={{ borderLeftColor: getBorderColor(m) }}
+                >
+                  {m.prenom} {m.nom}
+                  {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                </td>
 
-          {/* Anciens Membres */}
-          {anciensFiltres.length > 0 && (
-            <>
-              <tr>
-                <td colSpan={5} className="px-1 py-1 font-semibold text-lg text-white">
-                  <span
-                    style={{
-                      background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                      WebkitBackgroundClip: "text",
-                      color: "transparent",
-                    }}
+                <td className="px-1 py-1 text-white whitespace-nowrap relative">
+                  {m.telephone ? (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
+                        }}
+                        className="text-orange-500 underline font-semibold text-sm"
+                      >
+                        {m.telephone}
+                      </button>
+                      {openPhoneMenuId === m.id && (
+                        <div
+                          className="absolute top-full mt-1 bg-white border rounded-lg shadow-lg w-40 z-50 phone-menu"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <a href={`tel:${m.telephone}`} className="block px-2 py-1 hover:bg-gray-100 text-black text-sm">📞 Appeler</a>
+                          <a href={`sms:${m.telephone}`} className="block px-2 py-1 hover:bg-gray-100 text-black text-sm">✉️ SMS</a>
+                          <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-2 py-1 hover:bg-gray-100 text-black text-sm">💬 WhatsApp</a>
+                          <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-2 py-1 hover:bg-gray-100 text-black text-sm">📱 Message WhatsApp</a>
+                        </div>
+                      )}
+                    </>
+                  ) : "—"}
+                </td>
+
+                <td className="px-1 py-1 text-white whitespace-nowrap">{m.statut || "—"}</td>
+
+                <td className="px-1 py-1 text-white whitespace-nowrap">
+                  {m.cellule_nom
+                    ? `🏠 ${m.cellule_ville || "—"} - ${m.cellule_nom}`
+                    : m.conseiller_prenom
+                    ? `👤 ${m.conseiller_prenom} ${m.conseiller_nom}`
+                    : "—"}
+                </td>
+
+                <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
+                  <button
+                    onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
+                    className="text-orange-500 underline text-sm"
                   >
-                    Membres existants
-                  </span>
+                    {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                  </button>
+                  <button
+                    onClick={() => setEditMember(m)}
+                    className="text-blue-600 underline text-sm"
+                  >
+                    Modifier
+                  </button>
                 </td>
               </tr>
+            ))}
+          </>
+        )}
+      </tbody>
+    </table>
+  </div>
+)}
 
-              {anciensFiltres.map((m) => (
-                <tr key={m.id} className="border-b border-gray-300">
-                  {/* ... cellules du tableau ... */}
-                </tr>
-              ))}
-            </>
-          )}
-        </tbody>
-      </table>
-    </div>
-  )}
+{/* Vue carte */}
+{view === "card" && (
+  <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+    {nouveauxFiltres.map(renderMemberCard)}
+    {anciensFiltres.map(renderMemberCard)}
+  </div>
+)}
 
-  {/* Liste carte */}
-  {view === "card" && (
-    <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-      {nouveauxFiltres.map(renderMemberCard)}
-      {anciensFiltres.map(renderMemberCard)}
-    </div>
-  )}
+{/* Popups */}
+{popupMember && (
+  <DetailsPopup
+    membre={popupMember}
+    onClose={() => setPopupMember(null)}
+    cellules={cellules}
+    conseillers={conseillers}
+    handleAfterSend={handleAfterSend}
+    session={session}
+    showToast={showToast}
+  />
+)}
 
-  {/* Popups */}
-  {popupMember && (
-    <DetailsPopup
-      membre={popupMember}
-      onClose={() => setPopupMember(null)}
-      cellules={cellules}
-      conseillers={conseillers}
-      handleAfterSend={handleAfterSend}
-      session={session}
-      showToast={showToast}
-    />
-  )}
+{editMember && (
+  <EditMemberPopup
+    member={editMember}
+    onClose={() => setEditMember(null)}
+    onUpdated={updateMemberLocally}
+  />
+)}
 
-  {editMember && (
-    <EditMemberPopup
-      member={editMember}
-      onClose={() => setEditMember(null)}
-      onUpdated={updateMemberLocally}
-    />
-  )}
-
-  {/* Toast */}
-  {showingToast && (
-    <div className="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50">
-      {toastMessage}
-    </div>
-  )}
+{/* Filtre en bas avec compteur */}
+<div className="w-full max-w-6xl flex justify-center items-center mb-2 gap-2 flex-wrap">
+  <select
+    value={filter}
+    onChange={e => setFilter(e.target.value)}
+    className="px-3 py-1 rounded-md border text-black text-sm"
+  >
+    <option value="">-- Tous les statuts --</option>
+    {statusOptions.map((s, idx) => <option key={idx} value={s}>{s}</option>)}
+  </select>
+  <span className="text-white text-sm ml-2">
+    {members.filter(m => !filter || m.statut === filter).length} membres
+  </span>
 </div>
+
+{/* Toast */}
+{showingToast && (
+  <div className="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50">
+    {toastMessage}
+  </div>
+)}
+

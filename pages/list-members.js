@@ -442,7 +442,6 @@ export default function ListMembers() {
               {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
               <span className="bg-blue-500 text-white text-xs px-1 rounded ml-1">Nouveau</span>
             </td>
-
             <td className="px-1 py-1 text-white whitespace-nowrap relative">
               {m.telephone ? (
                 <>
@@ -455,7 +454,6 @@ export default function ListMembers() {
                   >
                     {m.telephone}
                   </button>
-
                   {openPhoneMenuId === m.id && (
                     <div
                       className="absolute top-full mt-1 bg-white border rounded-lg shadow-lg w-40 z-50 phone-menu"
@@ -470,9 +468,7 @@ export default function ListMembers() {
                 </>
               ) : "—"}
             </td>
-
             <td className="px-1 py-1 text-white whitespace-nowrap">{m.statut || "—"}</td>
-
             <td className="px-1 py-1 text-white whitespace-nowrap">
               {m.cellule_nom
                 ? `🏠 ${m.cellule_ville || "—"} - ${m.cellule_nom}`
@@ -480,7 +476,6 @@ export default function ListMembers() {
                 ? `👤 ${m.conseiller_prenom} ${m.conseiller_nom}`
                 : "—"}
             </td>
-
             <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
               <button
                 onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
@@ -524,7 +519,6 @@ export default function ListMembers() {
                   {m.prenom} {m.nom}
                   {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                 </td>
-
                 <td className="px-1 py-1 text-white whitespace-nowrap relative">
                   {m.telephone ? (
                     <>
@@ -551,9 +545,7 @@ export default function ListMembers() {
                     </>
                   ) : "—"}
                 </td>
-
                 <td className="px-1 py-1 text-white whitespace-nowrap">{m.statut || "—"}</td>
-
                 <td className="px-1 py-1 text-white whitespace-nowrap">
                   {m.cellule_nom
                     ? `🏠 ${m.cellule_ville || "—"} - ${m.cellule_nom}`
@@ -561,7 +553,6 @@ export default function ListMembers() {
                     ? `👤 ${m.conseiller_prenom} ${m.conseiller_nom}`
                     : "—"}
                 </td>
-
                 <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
                   <button
                     onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
@@ -635,7 +626,5 @@ export default function ListMembers() {
     {toastMessage}
   </div>
 )}
-    </div>
-  );
-}
+
 

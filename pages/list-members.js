@@ -357,24 +357,144 @@ export default function ListMembers() {
       <h1 className="text-2xl sm:text-3xl font-bold text-white text-center mb-2">Liste des Membres</h1>
 
       {/* Barre de recherche */}
-      <div className="w-full max-w-4xl flex justify-center mb-2">
-        <input
-          type="text"
-          placeholder="Recherche..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="w-2/3 px-3 py-1 rounded-md border text-black"
-        />
-      </div>
+<div className="w-full max-w-4xl flex justify-center mb-2">
+  <input
+    type="text"
+    placeholder="Recherche..."
+    value={search}
+    onChange={e => setSearch(e.target.value)}
+    className="w-2/3 px-3 py-1 rounded-md border text-black"
+  />
+</div>
 
-      {/* Toggle Vue Carte / Vue Table */}
-      <div className="w-full max-w-6xl flex justify-center gap-4 mb-2">
-        {view === "card" ? (
-          <button onClick={() => setView("table")} className="text-sm font-semibold text-white underline">Vue Table</button>
-        ) : (
-          <button onClick={() => setView("card")} className="text-sm font-semibold text-white underline">Vue Carte</button>
+{/* Filtre sous la barre de recherche */}
+<div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">
+  <select
+    value={filter}
+    onChange={e => setFilter(e.target.value)}
+    className="px-3 py-1 rounded-md border text-black text-sm"
+  >
+    <option value="">-- Tous les statuts --</option>
+    {statusOptions.map((s, idx) => <option key={idx} value={s}>{s}</option>)}
+  </select>
+  <span className="text-white text-sm ml-2">
+    {members.filter(m => !filter || m.statut === filter).length} membres
+  </span>
+</div>
+
+{/* Toggle Vue Carte / Vue Table */}
+<div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
+  {view === "card" ? (
+    <button onClick={() => setView("table")} className="text-sm font-semibold text-white underline">Vue Table</button>
+  ) : (
+    <button onClick={() => setView("card")} className="text-sm font-semibold text-white underline">Vue Carte</button>
+  )}
+</div>
+
+{/* ==================== VUE TABLE ==================== */}
+{view === "table" && (
+  <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+    <table className="w-full text-sm text-left border-separate border-spacing-0">
+      <thead className="bg-gray-200 text-black-800 text-sm uppercase">
+        <tr>
+          <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+          <th className="px-4 py-2">Téléphone</th>
+          <th className="px-4 py-2">Statut</th>
+          <th className="px-4 py-2">Cellule</th>
+          <th className="px-4 py-2">Conseiller</th>
+          <th className="px-4 py-2 rounded-tr-lg">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {/* Nouveaux Membres */}
+        {nouveauxFiltres.length > 0 && (
+          <tr>
+            <td colSpan={6} className="px-4 py-2 text-white font-semibold">
+              💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+            </td>
+          </tr>
         )}
-      </div>
+        {nouveauxFiltres.map((m) => (
+          <tr key={m.id} className="border-b border-gray-300">
+            <td
+              className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white"
+              style={{ borderLeftColor: getBorderColor(m) }}
+            >
+              {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+              <span className="bg-blue-500 text-white text-xs px-1 rounded ml-2">Nouveau</span>
+            </td>
+            <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
+            <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
+            <td className="px-4 py-2 text-white">{m.cellule_nom ? `${m.cellule_nom} (${m.cellule_ville || "—"})` : "—"}</td>
+            <td className="px-4 py-2 text-white">{m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</td>
+            <td className="px-4 py-2 flex items-center gap-2">
+              <button
+                onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
+                className="text-orange-500 underline text-sm"
+              >
+                {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+              </button>
+              <button
+                onClick={() => setEditMember(m)}
+                className="text-blue-600 underline text-sm"
+              >
+                Modifier
+              </button>
+            </td>
+          </tr>
+        ))}
+
+        {/* Anciens Membres */}
+        {anciensFiltres.length > 0 && (
+          <>
+            <tr>
+              <td colSpan={6} className="px-4 py-2 font-semibold text-lg text-white">
+                <span
+                  style={{
+                    background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                    WebkitBackgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
+                  Membres existants
+                </span>
+              </td>
+            </tr>
+            {anciensFiltres.map((m) => (
+              <tr key={m.id} className="border-b border-gray-300">
+                <td
+                  className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2 text-white"
+                  style={{ borderLeftColor: getBorderColor(m) }}
+                >
+                  {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                </td>
+                <td className="px-4 py-2 text-white">{m.telephone || "—"}</td>
+                <td className="px-4 py-2 text-white">{m.statut || "—"}</td>
+                <td className="px-4 py-2 text-white">{m.cellule_nom ? `${m.cellule_nom} (${m.cellule_ville || "—"})` : "—"}</td>
+                <td className="px-4 py-2 text-white">{m.conseiller_prenom ? `${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</td>
+                <td className="px-4 py-2 flex items-center gap-2">
+                  <button
+                    onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
+                    className="text-orange-500 underline text-sm"
+                  >
+                    {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                  </button>
+                  <button
+                    onClick={() => setEditMember(m)}
+                    className="text-blue-600 underline text-sm"
+                  >
+                    Modifier
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </>
+        )}
+      </tbody>
+    </table>
+  </div>
+)}
+
 
       {/* Liste */}
       {view === "card" ? (

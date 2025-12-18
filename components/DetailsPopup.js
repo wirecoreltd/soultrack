@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import BoutonEnvoyerPopup from "./BoutonEnvoyerPopup"; // Nouveau composant pour ce popup
 
 export default function DetailsPopup({
   membre,
@@ -29,7 +28,6 @@ export default function DetailsPopup({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Formater les besoins
   const formatBesoins = () => {
     if (!membre.besoin) return "—";
     if (Array.isArray(membre.besoin)) return membre.besoin.join(", ");
@@ -41,15 +39,21 @@ export default function DetailsPopup({
     }
   };
 
-  // Récupérer la cible sélectionnée
-  const getCible = () => {
-    if (!selectedTargetType || !selectedTarget) return null;
-    return selectedTargetType === "cellule"
+  const cible = selectedTargetType
+    ? selectedTargetType === "cellule"
       ? cellules.find((c) => c.id === Number(selectedTarget))
-      : conseillers.find((c) => c.id === Number(selectedTarget));
+      : conseillers.find((c) => c.id === Number(selectedTarget))
+    : null;
+
+  const handleSend = () => {
+    if (!cible) return;
+    handleAfterSend(membre, selectedTargetType, cible);
+    setSelectedTargetType("");
+    setSelectedTarget("");
+    showToast?.("✅ Contact envoyé et suivi enregistré");
   };
 
-  const cible = getCible();
+  const phone = membre.telephone ? membre.telephone.replace(/\D/g, "") : "";
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
@@ -67,7 +71,7 @@ export default function DetailsPopup({
           {membre.prenom} {membre.nom} {membre.star && "⭐"}
         </h2>
 
-        {/* Téléphone centré */}
+        {/* Téléphone */}
         {membre.telephone && (
           <div className="relative flex justify-center mb-2">
             <button
@@ -76,7 +80,6 @@ export default function DetailsPopup({
             >
               {membre.telephone}
             </button>
-
             {openPhoneMenu && (
               <div
                 className="phone-menu absolute top-full mt-2 bg-white border rounded-lg shadow w-48 z-50"
@@ -84,14 +87,14 @@ export default function DetailsPopup({
               >
                 <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler</a>
                 <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">✉️ SMS</a>
-                <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 WhatsApp</a>
-                <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Message WA</a>
+                <a href={`https://wa.me/${phone}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 WhatsApp</a>
+                <a href={`https://wa.me/${phone}?text=Bonjour`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Message WA</a>
               </div>
             )}
           </div>
         )}
 
-        {/* Infos du membre */}
+        {/* Infos */}
         <div className="text-sm text-black space-y-1">
           <p className="text-center">🏙 Ville : {membre.ville || "—"}</p>
           <p className="text-center">🕊 Statut : {membre.statut || "—"}</p>
@@ -112,7 +115,7 @@ export default function DetailsPopup({
             value={selectedTargetType}
             onChange={(e) => {
               setSelectedTargetType(e.target.value);
-              setSelectedTarget(""); // reset
+              setSelectedTarget("");
             }}
             className="mt-1 w-full border rounded px-2 py-1 text-sm"
           >
@@ -135,22 +138,25 @@ export default function DetailsPopup({
             </select>
           )}
 
-          {/* Affiche le bouton uniquement si une cible est sélectionnée */}
+          {/* Bouton Envoyer */}
           {cible && (
             <div className="mt-2 text-center">
-              <BoutonEnvoyerPopup
-                membre={membre}
-                type={selectedTargetType}
-                cible={cible}
-                onEnvoyer={(updatedMember) => {
-                  handleAfterSend(updatedMember, selectedTargetType, cible);
-                  setSelectedTargetType("");
-                  setSelectedTarget("");
-                  showToast?.("✅ Contact envoyé et suivi enregistré");
-                }}
-                session={session}
-                showToast={showToast}
-              />
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                onClick={handleSend}
+              >
+                Envoyer
+              </button>
+
+              {/* Liens rapides */}
+              {membre.telephone && (
+                <div className="flex justify-between mt-2 text-sm">
+                  <a href={`tel:${membre.telephone}`} className="text-blue-500 hover:underline">📞 Appeler</a>
+                  <a href={`sms:${membre.telephone}`} className="text-green-500 hover:underline">✉️ SMS</a>
+                  <a href={`https://wa.me/${phone}`} target="_blank" className="text-green-700 hover:underline">💬 WhatsApp</a>
+                  <a href={`https://wa.me/${phone}?text=Bonjour`} target="_blank" className="text-purple-600 hover:underline">📱 Message WA</a>
+                </div>
+              )}
             </div>
           )}
         </div>

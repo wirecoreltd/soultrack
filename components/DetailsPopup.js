@@ -1,31 +1,160 @@
 "use client";
 
-export default function BoutonEnvoyerPopup({ membre, type, cible, onEnvoyer, session, showToast }) {
-  if (!cible) return null;
+import { useState, useEffect } from "react";
+import BoutonEnvoyerPopup from "./BoutonEnvoyerPopup"; // Nouveau composant pour ce popup
 
-  const handleClick = () => {
-    // Ici tu peux gérer l'envoi réel
-    onEnvoyer(membre);
-    showToast?.(`✅ ${membre.prenom} envoyé à ${type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`}`);
+export default function DetailsPopup({
+  membre,
+  onClose,
+  cellules = [],
+  conseillers = [],
+  handleAfterSend,
+  session,
+  showToast,
+}) {
+  if (!membre || !membre.id) return null;
+
+  const [selectedTargetType, setSelectedTargetType] = useState("");
+  const [selectedTarget, setSelectedTarget] = useState("");
+  const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
+
+  // Fermer le menu téléphone si clic en dehors
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".phone-menu") && !e.target.closest(".phone-button")) {
+        setOpenPhoneMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Formater les besoins
+  const formatBesoins = () => {
+    if (!membre.besoin) return "—";
+    if (Array.isArray(membre.besoin)) return membre.besoin.join(", ");
+    try {
+      const arr = JSON.parse(membre.besoin);
+      return Array.isArray(arr) ? arr.join(", ") : membre.besoin;
+    } catch {
+      return membre.besoin;
+    }
   };
 
-  return (
-    <div className="flex flex-col items-center space-y-2">
-      <button
-        onClick={handleClick}
-        className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded"
-      >
-        Envoyer
-      </button>
+  // Récupérer la cible sélectionnée
+  const getCible = () => {
+    if (!selectedTargetType || !selectedTarget) return null;
+    return selectedTargetType === "cellule"
+      ? cellules.find((c) => c.id === Number(selectedTarget))
+      : conseillers.find((c) => c.id === Number(selectedTarget));
+  };
 
-      {/* Actions rapides */}
-      {membre.telephone && (
-        <div className="flex space-x-2 mt-1 text-sm">
-          <a href={`tel:${membre.telephone}`} className="text-blue-500 underline">📞 Appeler</a>
-          <a href={`sms:${membre.telephone}`} className="text-blue-500 underline">✉️ SMS</a>
-          <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`} target="_blank" className="text-blue-500 underline">💬 WhatsApp</a>
+  const cible = getCible();
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
+        {/* Bouton fermer */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+        >
+          ✖
+        </button>
+
+        {/* Nom */}
+        <h2 className="text-xl font-bold text-center mb-1">
+          {membre.prenom} {membre.nom} {membre.star && "⭐"}
+        </h2>
+
+        {/* Téléphone centré */}
+        {membre.telephone && (
+          <div className="relative flex justify-center mb-2">
+            <button
+              className="text-blue-500 underline font-semibold phone-button"
+              onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
+            >
+              {membre.telephone}
+            </button>
+
+            {openPhoneMenu && (
+              <div
+                className="phone-menu absolute top-full mt-2 bg-white border rounded-lg shadow w-48 z-50"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler</a>
+                <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">✉️ SMS</a>
+                <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 WhatsApp</a>
+                <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Message WA</a>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Infos du membre */}
+        <div className="text-sm text-black space-y-1">
+          <p className="text-center">🏙 Ville : {membre.ville || "—"}</p>
+          <p className="text-center">🕊 Statut : {membre.statut || "—"}</p>
+          <p>🏠 Cellule : {membre.cellule_ville && membre.cellule_nom ? `${membre.cellule_ville} - ${membre.cellule_nom}` : "—"}</p>
+          <p>👤 Conseiller : {(membre.conseiller_prenom || membre.conseiller_nom) ? `${membre.conseiller_prenom || ""} ${membre.conseiller_nom || ""}`.trim() : "—"}</p>
+          <p>❓ Besoin : {formatBesoins()}</p>
+          <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
+          <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
+          <p>🧩 Statut initial : {membre.statut_initial || "—"}</p>
+          <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
         </div>
-      )}
+
+        {/* Envoyer à */}
+        <div className="mt-4 w-full">
+          <label className="text-sm font-semibold">Envoyer à :</label>
+
+          <select
+            value={selectedTargetType}
+            onChange={(e) => {
+              setSelectedTargetType(e.target.value);
+              setSelectedTarget(""); // reset
+            }}
+            className="mt-1 w-full border rounded px-2 py-1 text-sm"
+          >
+            <option value="">-- Choisir une option --</option>
+            <option value="cellule">Une Cellule</option>
+            <option value="conseiller">Un Conseiller</option>
+          </select>
+
+          {selectedTargetType && (
+            <select
+              value={selectedTarget}
+              onChange={(e) => setSelectedTarget(e.target.value)}
+              className="mt-2 w-full border rounded px-2 py-1 text-sm"
+            >
+              <option value="">-- Sélectionner --</option>
+              {selectedTargetType === "cellule"
+                ? cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)
+                : conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)
+              }
+            </select>
+          )}
+
+          {/* Affiche le bouton uniquement si une cible est sélectionnée */}
+          {cible && (
+            <div className="mt-2 text-center">
+              <BoutonEnvoyerPopup
+                membre={membre}
+                type={selectedTargetType}
+                cible={cible}
+                onEnvoyer={(updatedMember) => {
+                  handleAfterSend(updatedMember, selectedTargetType, cible);
+                  setSelectedTargetType("");
+                  setSelectedTarget("");
+                  showToast?.("✅ Contact envoyé et suivi enregistré");
+                }}
+                session={session}
+                showToast={showToast}
+              />
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

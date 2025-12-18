@@ -1,132 +1,174 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import BoutonEnvoyer from "./BoutonEnvoyer";
+import { useEffect, useState, useRef } from "react";
+import supabase from "../lib/supabaseClient";
+import Image from "next/image";
+import LogoutLink from "../components/LogoutLink";
+import DetailsPopup from "../components/DetailsPopup";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
-export default function DetailsPopup({
-  membre,
-  onClose,
-  cellules = [],
-  conseillers = [],
-  handleAfterSend,
-  session,
-  showToast,
-}) {
-  if (!membre || !membre.id) return null;
+export default function ListMembers() {
+  const [members, setMembers] = useState([]);
+  const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [popupMember, setPopupMember] = useState(null);
+  const [session, setSession] = useState(null);
+  const [prenom, setPrenom] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
 
-  const [targetType, setTargetType] = useState("");
-  const [targetId, setTargetId] = useState("");
-  const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
+  const statutLabels = {
+    1: "En cours",
+    2: "En attente",
+    3: "Intégrer",
+    4: "Refus",
+  };
 
-  // fermer menu téléphone
-  useEffect(() => {
-    const close = (e) => {
-      if (!e.target.closest(".phone-menu") && !e.target.closest(".phone-button")) {
-        setOpenPhoneMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, []);
+  const statusOptions = [
+    "actif",
+    "ancien",
+    "visiteur",
+    "veut rejoindre ICC",
+    "refus",
+    "integrer",
+    "En cours",
+    "a déjà son église",
+  ];
 
-  const cible =
-    targetType === "cellule"
-      ? cellules.find((c) => c.id === targetId)
-      : conseillers.find((c) => c.id === targetId);
+  const getBorderColor = (m) => {
+    const status = m.statut || "";
+    const suiviStatus = m.suivi_statut_libelle || "";
+
+    if (status === "refus" || suiviStatus === "refus") return "#f56f22";
+    if (status === "actif" || suiviStatus === "actif") return "#4285F4";
+    if (status === "a déjà son église" || suiviStatus === "a déjà son église") return "#f21705";
+    if (status === "ancien" || suiviStatus === "ancien") return "#999999";
+    if (status === "visiteur" || suiviStatus === "visiteur") return "#34A853";
+    if (status === "veut rejoindre ICC" || suiviStatus === "veut rejoindre ICC") return "#34A853";
+
+    return "#ccc";
+  };
+
+  const formatDate = (dateStr) => {
+    try { return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr }); } catch { return ""; }
+  };
+
+  const filterBySearch = (list) =>
+    list.filter((m) => `${(m.prenom || "")} ${(m.nom || "")}`.toLowerCase().includes(search.toLowerCase()));
+
+  const nouveaux = members.filter((m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");
+  const anciens = members.filter((m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC");
+
+  const nouveauxFiltres = filterBySearch(filter ? nouveaux.filter((m) =>
+    m.statut === filter || m.suivi_statut_libelle === filter || (m.statut_suivis_actuel && statutLabels[m.statut_suivis_actuel] === filter)
+  ) : nouveaux);
+
+  const anciensFiltres = filterBySearch(filter ? anciens.filter((m) =>
+    m.statut === filter || m.suivi_statut_libelle === filter || (m.statut_suivis_actuel && statutLabels[m.statut_suivis_actuel] === filter)
+  ) : anciens);
+
+  const renderMemberCard = (m) => (
+    <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4 relative">
+      {m.star && <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>}
+
+      <div className="flex flex-col items-center">
+        <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
+
+        <div className="relative flex justify-center mt-1">
+          {m.telephone ? (
+            <>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id); }}
+                className="text-blue-600 underline font-semibold text-center"
+              >
+                {m.telephone}
+              </button>
+
+              {openPhoneMenuId === m.id && (
+                <div className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-44" onClick={(e) => e.stopPropagation()}>
+                  <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
+                  <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
+                  <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 WhatsApp</a>
+                  <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Message WhatsApp</a>
+                </div>
+              )}
+            </>
+          ) : <span className="text-gray-400">—</span>}
+        </div>
+
+        <div className="w-full mt-2 text-sm text-black space-y-1 text-center">
+          <p>🏙 Ville : {m.ville || "—"}</p>
+          <p>🕊 Statut : {m.statut || "—"}</p>
+          <p>🏠 Cellule : {(m.cellule_ville && m.cellule_nom) ? `${m.cellule_ville} - ${m.cellule_nom}` : "—"}</p>
+          <p>👤 Conseiller : {(m.conseiller_prenom || m.conseiller_nom) ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim() : "—"}</p>
+        </div>
+
+        <button
+          onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
+          className="text-orange-500 underline text-sm mt-2"
+          aria-label={`Détails ${m.prenom} ${m.nom}`}
+        >
+          {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+        </button>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative max-h-[90vh] overflow-auto">
-        {/* fermer */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
-        >
-          ✖
-        </button>
-
-        {/* Nom */}
-        <h2 className="text-xl font-bold text-center mb-1">
-          {membre.prenom} {membre.nom} {membre.star && "⭐"}
-        </h2>
-
-        {/* Téléphone */}
-        {membre.telephone && (
-          <div className="relative flex justify-center mb-2">
-            <button
-              className="text-blue-500 underline font-semibold phone-button"
-              onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
-            >
-              {membre.telephone}
-            </button>
-
-            {openPhoneMenu && (
-              <div className="phone-menu absolute top-full mt-2 bg-white border rounded-lg shadow w-48 z-50">
-                <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100">📞 Appeler</a>
-                <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100">✉️ SMS</a>
-                <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">💬 WhatsApp</a>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Infos */}
-        <div className="text-sm text-black space-y-1">
-          <p className="text-center">🏙 Ville : {membre.ville || "—"}</p>
-          <p className="text-center">🕊 Statut : {membre.statut || "—"}</p>
-          <p>🏠 Cellule : {membre.cellule_ville && membre.cellule_nom ? `${membre.cellule_ville} - ${membre.cellule_nom}` : "—"}</p>
-          <p>👤 Conseiller : {membre.conseiller_prenom ? `${membre.conseiller_prenom} ${membre.conseiller_nom}` : "—"}</p>
-        </div>
-
-        {/* ENVOYER À */}
-        <div className="mt-4">
-          <label className="font-semibold text-sm">Envoyer à :</label>
-
-          <select
-            value={targetType}
-            onChange={(e) => {
-              setTargetType(e.target.value);
-              setTargetId("");
-            }}
-            className="mt-1 w-full border rounded px-2 py-1 text-sm"
-          >
-            <option value="">-- Choisir une option --</option>
-            <option value="cellule">Une Cellule</option>
-            <option value="conseiller">Un Conseiller</option>
-          </select>
-
-          {targetType && (
-            <select
-              value={targetId}
-              onChange={(e) => setTargetId(e.target.value)}
-              className="mt-2 w-full border rounded px-2 py-1 text-sm"
-            >
-              <option value="">-- Sélectionner --</option>
-              {targetType === "cellule" &&
-                cellules.map((c) => (
-                  <option key={c.id} value={c.id}>{c.cellule_full}</option>
-                ))}
-              {targetType === "conseiller" &&
-                conseillers.map((c) => (
-                  <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
-                ))}
-            </select>
-          )}
-
-          {cible && (
-            <div className="mt-3">
-              <BoutonEnvoyer
-                membre={membre}
-                type={targetType}
-                cible={cible}
-                onEnvoyer={(updated) => handleAfterSend(updated, targetType, cible)}
-                session={session}
-                showToast={showToast}
-              />
-            </div>
-          )}
-        </div>
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+      {/* Top Bar */}
+      <div className="w-full max-w-5xl flex justify-between items-center mb-2">
+        <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black-200">← Retour</button>
+        <LogoutLink className="bg-white/10 text-white px-3 py-1 rounded-lg hover:bg-white/20 text-sm" />
       </div>
+
+      <div className="w-full max-w-5xl flex justify-end mb-2">
+        <p className="text-orange-200 text-sm">👋 Bienvenue {prenom || "cher membre"}</p>
+      </div>
+
+      <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} className="mx-auto mb-2" />
+      <h1 className="text-2xl sm:text-3xl font-bold text-white text-center mb-2">Liste des Membres</h1>
+
+      {/* Barre de recherche */}
+      <div className="w-full max-w-4xl flex justify-center mb-2">
+        <input
+          type="text"
+          placeholder="Recherche..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-2/3 px-3 py-1 rounded-md border text-black"
+        />
+      </div>
+
+      {/* Filtre */}
+      <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">
+        <select
+          value={filter}
+          onChange={e => setFilter(e.target.value)}
+          className="px-3 py-1 rounded-md border text-black text-sm"
+        >
+          <option value="">-- Tous les statuts --</option>
+          {statusOptions.map((s, idx) => <option key={idx} value={s}>{s}</option>)}
+        </select>
+        <span className="text-white text-sm ml-2">{members.filter(m => !filter || m.statut === filter).length} membres</span>
+      </div>
+
+      {/* Liste carte */}
+      <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+        {nouveauxFiltres.map(renderMemberCard)}
+        {anciensFiltres.map(renderMemberCard)}
+      </div>
+
+      {/* ==================== DetailsPopup ==================== */}
+      {popupMember && (
+        <DetailsPopup
+          membre={popupMember}
+          onClose={() => setPopupMember(null)}
+          session={session}
+        />
+      )}
     </div>
   );
 }

@@ -15,7 +15,7 @@ export default function DetailsPopup({
   if (!membre || !membre.id) return null;
 
   const [selectedTargetType, setSelectedTargetType] = useState("");
-  const [selectedTarget, setSelectedTarget] = useState("");
+  const [selectedTarget, setSelectedTarget] = useState(null);
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
 
   // Fermer le menu téléphone si clic en dehors
@@ -81,8 +81,8 @@ export default function DetailsPopup({
           </div>
         )}
 
-        {/* Infos identiques à la vue carte */}
-        <div className="text-sm text-black space-y-1">
+        {/* Infos membre */}
+        <div className="text-sm text-black space-y-1 mb-4">
           <p className="text-center">🏙 Ville : {membre.ville || "—"}</p>
           <p className="text-center">🕊 Statut : {membre.statut || "—"}</p>
           <p>🏠 Cellule : {membre.cellule_ville && membre.cellule_nom ? `${membre.cellule_ville} - ${membre.cellule_nom}` : "—"}</p>
@@ -102,7 +102,7 @@ export default function DetailsPopup({
             value={selectedTargetType}
             onChange={(e) => {
               setSelectedTargetType(e.target.value);
-              setSelectedTarget("");
+              setSelectedTarget(null);
             }}
             className="mt-1 w-full border rounded px-2 py-1 text-sm"
           >
@@ -113,38 +113,38 @@ export default function DetailsPopup({
 
           {selectedTargetType && (
             <select
-              value={selectedTarget}
-              onChange={(e) => setSelectedTarget(e.target.value)}
+              value={selectedTarget || ""}
+              onChange={(e) => setSelectedTarget(Number(e.target.value))}
               className="mt-2 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Sélectionner --</option>
               {selectedTargetType === "cellule"
                 ? cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)
-                : null}
-              {selectedTargetType === "conseiller"
-                ? conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)
-                : null}
+                : conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)
+              }
             </select>
           )}
 
-          {selectedTarget && selectedTarget !== "" && (
+          {/* Bouton s'affiche uniquement si une cible est sélectionnée */}
+          {selectedTarget && (
             <div className="mt-2 text-center">
               <BoutonEnvoyer
                 membre={membre}
                 type={selectedTargetType}
                 cible={
                   selectedTargetType === "cellule"
-                    ? cellules.find((c) => c.id == selectedTarget)
-                    : conseillers.find((c) => c.id == selectedTarget)
+                    ? cellules.find((c) => c.id === Number(selectedTarget))
+                    : conseillers.find((c) => c.id === Number(selectedTarget))
                 }
-                onEnvoyer={() => {
+                onEnvoyer={(updatedMember) => {
                   const cible =
                     selectedTargetType === "cellule"
-                      ? cellules.find((c) => c.id == selectedTarget)
-                      : conseillers.find((c) => c.id == selectedTarget);
+                      ? cellules.find((c) => c.id === Number(selectedTarget))
+                      : conseillers.find((c) => c.id === Number(selectedTarget));
                   if (!cible) return;
-                  handleAfterSend(membre, selectedTargetType, cible);
-                  setSelectedTarget("");
+                  handleAfterSend(updatedMember, selectedTargetType, cible);
+                  // Reset sélection après envoi
+                  setSelectedTarget(null);
                   setSelectedTargetType("");
                 }}
                 session={session}

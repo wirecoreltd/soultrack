@@ -29,7 +29,6 @@ export default function DetailsPopup({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Formater les besoins
   const formatBesoins = () => {
     if (!membre.besoin) return "—";
     if (Array.isArray(membre.besoin)) return membre.besoin.join(", ");
@@ -57,7 +56,7 @@ export default function DetailsPopup({
           {membre.prenom} {membre.nom} {membre.star && "⭐"}
         </h2>
 
-        {/* Téléphone centré */}
+        {/* Téléphone */}
         {membre.telephone && (
           <div className="relative flex justify-center mb-2">
             <button
@@ -127,7 +126,7 @@ export default function DetailsPopup({
             </select>
           )}
 
-          {/* Nouveau bouton d'envoi uniquement si cellule/conseiller sélectionné */}
+          {/* Bouton d'envoi seulement si sélectionné */}
           {selectedTarget && (
             <div className="mt-2 text-center">
               <BoutonEnvoyerPopup

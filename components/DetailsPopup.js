@@ -15,7 +15,7 @@ export default function DetailsPopup({
   if (!membre || !membre.id) return null;
 
   const [selectedTargetType, setSelectedTargetType] = useState("");
-  const [selectedTarget, setSelectedTarget] = useState("");
+  const [selectedTarget, setSelectedTarget] = useState(null);
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
 
   // Fermer le menu téléphone si clic en dehors
@@ -29,6 +29,7 @@ export default function DetailsPopup({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Formater les besoins
   const formatBesoins = () => {
     if (!membre.besoin) return "—";
     if (Array.isArray(membre.besoin)) return membre.besoin.join(", ");
@@ -40,11 +41,13 @@ export default function DetailsPopup({
     }
   };
 
-  const cibleSelectionnee = selectedTargetType && selectedTarget
-    ? selectedTargetType === "cellule"
-      ? cellules.find(c => c.id === Number(selectedTarget))
-      : conseillers.find(c => c.id === Number(selectedTarget))
-    : null;
+  // Déterminer si une cible est sélectionnée
+  const cibleSelectionnee =
+    selectedTargetType && selectedTarget
+      ? selectedTargetType === "cellule"
+        ? cellules.find(c => String(c.id) === String(selectedTarget))
+        : conseillers.find(c => String(c.id) === String(selectedTarget))
+      : null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
@@ -58,11 +61,11 @@ export default function DetailsPopup({
         </button>
 
         {/* Nom */}
-        <h2 className="text-xl font-bold text-center mb-2">
+        <h2 className="text-xl font-bold text-center mb-1">
           {membre.prenom} {membre.nom} {membre.star && "⭐"}
         </h2>
 
-        {/* Téléphone */}
+        {/* Téléphone centré */}
         {membre.telephone && (
           <div className="relative flex justify-center mb-2">
             <button
@@ -75,18 +78,19 @@ export default function DetailsPopup({
             {openPhoneMenu && (
               <div
                 className="phone-menu absolute top-full mt-2 bg-white border rounded-lg shadow w-48 z-50"
-                onClick={e => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
               >
                 <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler</a>
                 <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">✉️ SMS</a>
                 <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 WhatsApp</a>
+                <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Message WhatsApp</a>
               </div>
             )}
           </div>
         )}
 
-        {/* Infos du membre */}
-        <div className="text-sm text-black space-y-1 mb-4">
+        {/* Infos identiques à la vue carte */}
+        <div className="text-sm text-black space-y-1">
           <p className="text-center">🏙 Ville : {membre.ville || "—"}</p>
           <p className="text-center">🕊 Statut : {membre.statut || "—"}</p>
           <p>🏠 Cellule : {membre.cellule_ville && membre.cellule_nom ? `${membre.cellule_ville} - ${membre.cellule_nom}` : "—"}</p>
@@ -99,13 +103,14 @@ export default function DetailsPopup({
         </div>
 
         {/* Envoyer à */}
-        <div className="mt-2 w-full">
+        <div className="mt-4 w-full">
           <label className="text-sm font-semibold">Envoyer à :</label>
+
           <select
             value={selectedTargetType}
-            onChange={e => {
+            onChange={(e) => {
               setSelectedTargetType(e.target.value);
-              setSelectedTarget("");
+              setSelectedTarget(null);
             }}
             className="mt-1 w-full border rounded px-2 py-1 text-sm"
           >
@@ -116,20 +121,22 @@ export default function DetailsPopup({
 
           {selectedTargetType && (
             <select
-              value={selectedTarget}
-              onChange={e => setSelectedTarget(e.target.value)}
+              value={selectedTarget || ""}
+              onChange={(e) => setSelectedTarget(e.target.value)} // garder en string
               className="mt-2 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Sélectionner --</option>
               {selectedTargetType === "cellule"
-                ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)
-                : conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
+                ? cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)
+                : null}
+              {selectedTargetType === "conseiller"
+                ? conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)
+                : null}
             </select>
           )}
 
-          {/* Bouton Envoyer uniquement si une cible est choisie */}
           {cibleSelectionnee && (
-            <div className="mt-3 text-center">
+            <div className="mt-2 text-center">
               <BoutonEnvoyer
                 membre={membre}
                 type={selectedTargetType}

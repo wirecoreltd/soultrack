@@ -13,7 +13,6 @@ export default function DetailsPopup({
   session,
   showToast,
 }) {
-
   if (!membre || !membre.id) return null; 
   
   const [selectedTargetType, setSelectedTargetType] = useState("");
@@ -42,6 +41,13 @@ export default function DetailsPopup({
     setSelectedTargetType("");
   };
 
+  const besoins = (() => {
+    if (!membre.besoin) return "—";
+    if (Array.isArray(membre.besoin)) return membre.besoin.join(", ");
+    try { const arr = JSON.parse(membre.besoin); return Array.isArray(arr) ? arr.join(", ") : membre.besoin; } 
+    catch { return membre.besoin; }
+  })();
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
@@ -63,22 +69,10 @@ export default function DetailsPopup({
           <p>📱 Téléphone : {membre.telephone || "—"}</p>
           <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
           <p>🏙 Ville : {membre.ville || "—"}</p>
-          <p>
-            ❓ Besoin :{" "}
-            {(() => {
-              if (!membre.besoin) return "—";
-              if (Array.isArray(membre.besoin)) return membre.besoin.join(", ");
-              try {
-                const arr = JSON.parse(membre.besoin);
-                return Array.isArray(arr) ? arr.join(", ") : membre.besoin;
-              } catch {
-                return membre.besoin;
-              }
-            })()}
-          </p>
+          <p>❓ Besoin : {besoins}</p>
           <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
           <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
-          <p>🏠 Cellule : {membre.cellule_nom || "—"} - {membre.responsable_nom || "—"}</p>
+          <p>🏠 Cellule : {membre.cellule_nom || "—"} {membre.responsable_nom ? `- ${membre.responsable_nom}` : ""}</p>
           <p>👤 Conseiller : {membre.conseiller_prenom || "—"} {membre.conseiller_nom || ""}</p>
         </div>
 
@@ -92,9 +86,7 @@ export default function DetailsPopup({
           >
             <option value="">-- Choisir un statut --</option>
             {statusOptions.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
+              <option key={s} value={s}>{s}</option>
             ))}
           </select>
         </div>
@@ -104,10 +96,7 @@ export default function DetailsPopup({
           <label className="text-gray-700 text-sm font-semibold">Envoyer à :</label>
           <select
             value={selectedTargetType}
-            onChange={(e) => {
-              setSelectedTargetType(e.target.value);
-              setSelectedTarget(null);
-            }}
+            onChange={(e) => { setSelectedTargetType(e.target.value); setSelectedTarget(null); }}
             className="mt-1 w-full border rounded px-2 py-1 text-sm"
           >
             <option value="">-- Choisir une option --</option>
@@ -125,7 +114,7 @@ export default function DetailsPopup({
               {selectedTargetType === "cellule"
                 ? cellules.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.cellule} ({c.responsable})
+                      {c.cellule_full || c.cellule} {c.responsable ? `(${c.responsable})` : ""}
                     </option>
                   ))
                 : conseillers.map((c) => (

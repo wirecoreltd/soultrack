@@ -1,31 +1,44 @@
 "use client";
 
-export default function BoutonEnvoyerPopup({ membre, type, cible, onEnvoyer, session, showToast }) {
-  if (!cible) return null;
+import React from "react";
+
+export default function BoutonEnvoyerPopup({
+  membre,
+  type,
+  cible,
+  onEnvoyer,
+  session,
+  showToast,
+}) {
+  if (!membre || !cible) return null;
+
+  const phone = membre.telephone ? membre.telephone.replace(/\D/g, "") : "";
 
   const handleClick = () => {
-    // Ici tu peux gérer l'envoi réel
     onEnvoyer(membre);
-    showToast?.(`✅ ${membre.prenom} envoyé à ${type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`}`);
+    showToast?.("✅ Contact envoyé et suivi enregistré");
   };
 
   return (
-    <div className="flex flex-col items-center space-y-2">
-      <button
-        onClick={handleClick}
-        className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded"
-      >
-        Envoyer
-      </button>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2 shadow-md">
+      <div className="flex flex-col items-center gap-2">
+        <button
+          onClick={handleClick}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full"
+        >
+          Envoyer à {type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`}
+        </button>
 
-      {/* Actions rapides */}
-      {membre.telephone && (
-        <div className="flex space-x-2 mt-1 text-sm">
-          <a href={`tel:${membre.telephone}`} className="text-blue-500 underline">📞 Appeler</a>
-          <a href={`sms:${membre.telephone}`} className="text-blue-500 underline">✉️ SMS</a>
-          <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`} target="_blank" className="text-blue-500 underline">💬 WhatsApp</a>
-        </div>
-      )}
+        {/* Actions téléphone */}
+        {phone && (
+          <div className="flex justify-between w-full text-sm mt-1">
+            <a href={`tel:${membre.telephone}`} className="text-blue-500 hover:underline">📞 Appeler</a>
+            <a href={`sms:${membre.telephone}`} className="text-green-500 hover:underline">✉️ SMS</a>
+            <a href={`https://wa.me/${phone}`} target="_blank" className="text-green-700 hover:underline">💬 WhatsApp</a>
+            <a href={`https://wa.me/${phone}?text=Bonjour`} target="_blank" className="text-purple-600 hover:underline">📱 Message WA</a>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

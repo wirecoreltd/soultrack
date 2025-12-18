@@ -36,7 +36,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     is_whatsapp: !!member?.is_whatsapp,
     star: member?.star === true,
 
-    // 🔥 CHAMPS AJOUTÉS
+    // ✅ AJOUTS DEMANDÉS
     sexe: member?.sexe || "",
     venu: member?.venu || "",
     suivi_commentaire_suivis: member?.suivi_commentaire_suivis || "",
@@ -50,19 +50,23 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     let mounted = true;
 
     async function loadData() {
-      const { data: cellulesData } = await supabase
-        .from("cellules")
-        .select("id, cellule_full");
+      try {
+        const { data: cellulesData } = await supabase
+          .from("cellules")
+          .select("id, cellule_full");
 
-      const { data: conseillersData } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom")
-        .eq("role", "Conseiller");
+        const { data: conseillersData } = await supabase
+          .from("profiles")
+          .select("id, prenom, nom")
+          .eq("role", "Conseiller");
 
-      if (!mounted) return;
+        if (!mounted) return;
 
-      setCellules(cellulesData || []);
-      setConseillers(conseillersData || []);
+        setCellules(cellulesData || []);
+        setConseillers(conseillersData || []);
+      } catch (err) {
+        console.error("Erreur loadData EditMemberPopup:", err);
+      }
     }
 
     loadData();
@@ -93,27 +97,39 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleCheckboxChange = (e) => {
+    const { name, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: checked }));
+  };
+
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
 
     if (value === "Autre") {
       setShowAutre(checked);
-      setFormData(prev => ({
-        ...prev,
-        autreBesoin: checked ? prev.autreBesoin : "",
-        besoin: checked
-          ? [...prev.besoin, "Autre"]
-          : prev.besoin.filter(b => b !== "Autre")
-      }));
+
+      if (!checked) {
+        setFormData(prev => ({
+          ...prev,
+          autreBesoin: "",
+          besoin: prev.besoin.filter(b => b !== "Autre")
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          besoin: Array.from(new Set([...prev.besoin, "Autre"]))
+        }));
+      }
       return;
     }
 
-    setFormData(prev => ({
-      ...prev,
-      besoin: checked
+    setFormData(prev => {
+      const updated = checked
         ? [...prev.besoin, value]
-        : prev.besoin.filter(b => b !== value)
-    }));
+        : prev.besoin.filter(b => b !== value);
+
+      return { ...prev, besoin: updated };
+    });
   };
 
   const toggleStar = () =>
@@ -123,9 +139,11 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     setLoading(true);
 
     try {
-      let finalBesoin = [...formData.besoin];
+      let finalBesoin = Array.isArray(formData.besoin)
+        ? [...formData.besoin]
+        : parseBesoin(formData.besoin);
 
-      if (showAutre && formData.autreBesoin.trim()) {
+      if (showAutre && formData.autreBesoin?.trim()) {
         finalBesoin = finalBesoin.filter(b => b !== "Autre");
         finalBesoin.push(formData.autreBesoin.trim());
       } else {
@@ -138,14 +156,14 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         telephone: formData.telephone || null,
         ville: formData.ville || null,
         statut: formData.statut || null,
-        cellule_id: formData.cellule_id || null,
-        conseiller_id: formData.conseiller_id || null,
+        cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
+        conseiller_id: formData.conseiller_id === "" ? null : formData.conseiller_id,
         infos_supplementaires: formData.infos_supplementaires || null,
         is_whatsapp: !!formData.is_whatsapp,
         star: !!formData.star,
         besoin: JSON.stringify(finalBesoin),
 
-        // 🔥 CHAMPS SAUVEGARDÉS
+        // ✅ AJOUTS DEMANDÉS
         sexe: formData.sexe || null,
         venu: formData.venu || null,
         suivi_commentaire_suivis: formData.suivi_commentaire_suivis || null,
@@ -168,7 +186,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         onClose();
       }, 900);
     } catch (err) {
-      console.error(err);
+      console.error("Erreur handleSubmit EditMemberPopup:", err);
       alert("❌ Une erreur est survenue.");
     } finally {
       setLoading(false);
@@ -179,7 +197,10 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
 
-        <button onClick={onClose} className="absolute top-3 right-3 text-red-500 font-bold text-xl">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-red-500 font-bold text-xl"
+        >
           ✕
         </button>
 
@@ -189,17 +210,59 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
         <div className="flex flex-col gap-4">
 
-          <input className="input" name="prenom" value={formData.prenom} onChange={handleChange} placeholder="Prénom" />
-          <input className="input" name="nom" value={formData.nom} onChange={handleChange} placeholder="Nom" />
+          {/* Prénom */}
+          <input className="input" name="prenom" value={formData.prenom} onChange={handleChange} />
 
-          {/* Sexe */}
+          {/* Nom */}
+          <input className="input" name="nom" value={formData.nom} onChange={handleChange} />
+
+          {/* ⭐ */}
+          <label className="flex items-center gap-3 text-lg font-medium">
+            <input type="checkbox" checked={formData.star} onChange={toggleStar} />
+            Définir en tant que serviteur ⭐
+          </label>
+
+          {/* Téléphone */}
+          <input className="input" name="telephone" value={formData.telephone} onChange={handleChange} />
+
+          {/* Ville */}
+          <input className="input" name="ville" value={formData.ville} onChange={handleChange} />
+
+          {/* ✅ SEXE */}
           <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
             <option value="">-- Sexe --</option>
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
           </select>
 
-          {/* Comment il est venu */}
+          {/* Statut */}
+          <select name="statut" value={formData.statut} onChange={handleChange} className="input">
+            <option value="">-- Statut --</option>
+            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+            <option value="a déjà son église">A déjà son église</option>
+            <option value="visiteur">Visiteur</option>
+            <option value="actif">Actif</option>
+            <option value="ancien">Ancien</option>
+            <option value="Integrer">Intégrer</option>
+          </select>
+
+          {/* Cellule */}
+          <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input">
+            <option value="">-- Cellule --</option>
+            {cellules.map(c => (
+              <option key={c.id} value={c.id}>{c.cellule_full}</option>
+            ))}
+          </select>
+
+          {/* Conseiller */}
+          <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
+            <option value="">-- Conseiller --</option>
+            {conseillers.map(c => (
+              <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
+            ))}
+          </select>
+
+          {/* ✅ COMMENT IL EST VENU */}
           <input
             className="input"
             name="venu"
@@ -208,7 +271,28 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             placeholder="Comment est-il venu ?"
           />
 
-          {/* Commentaire suivis */}
+          {/* Besoin */}
+          {besoinsOptions.map(item => (
+            <label key={item} className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                value={item}
+                checked={formData.besoin.includes(item)}
+                onChange={handleBesoinChange}
+              />
+              {item}
+            </label>
+          ))}
+
+          {/* Infos */}
+          <textarea
+            className="input"
+            name="infos_supplementaires"
+            value={formData.infos_supplementaires}
+            onChange={handleChange}
+          />
+
+          {/* ✅ COMMENTAIRE DE SUIVIS */}
           <textarea
             className="input"
             rows={3}
@@ -238,7 +322,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             padding: 12px;
           }
         `}</style>
-
       </div>
     </div>
   );

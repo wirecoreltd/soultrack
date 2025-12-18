@@ -576,8 +576,7 @@ export default function ListMembers() {
             );
           }}
         />
-      )}
-      )}
+      )}      
 
       {/* Toast */}
       {showingToast && (

@@ -126,53 +126,75 @@ export default function DetailsPopup({
             <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
           </div>
 
-          {/* Envoyer à */}
-          <div className="mt-2">
-            <label className="text-sm font-semibold block mb-1">Envoyer à :</label>
+          <div className="mt-4 w-full">
+            <label className="font-semibold text-sm">Envoyer à :</label>
+          
             <select
-              value={selectedTargetType}
-              onChange={(e) => { setSelectedTargetType(e.target.value); setSelectedTarget(null); }}
-              className="w-full border rounded px-2 py-1 text-sm mb-2"
+              value={selectedTargetType[membre.id] || ""}
+              onChange={(e) =>
+                setSelectedTargetType((prev) => ({
+                  ...prev,
+                  [membre.id]: e.target.value,
+                }))
+              }
+              className="mt-1 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Choisir une option --</option>
               <option value="cellule">Une Cellule</option>
               <option value="conseiller">Un Conseiller</option>
             </select>
-
-            {selectedTargetType && (
+          
+            {(selectedTargetType[membre.id] === "cellule" ||
+              selectedTargetType[membre.id] === "conseiller") && (
               <select
-                value={selectedTarget || ""}
-                onChange={(e) => setSelectedTarget(Number(e.target.value))}
-                className="w-full border rounded px-2 py-1 text-sm mb-2"
+                value={selectedTargets[membre.id] || ""}
+                onChange={(e) =>
+                  setSelectedTargets((prev) => ({
+                    ...prev,
+                    [membre.id]: e.target.value,
+                  }))
+                }
+                className="mt-2 w-full border rounded px-2 py-1 text-sm"
               >
-                <option value="">-- Sélectionner --</option>
-                {selectedTargetType === "cellule"
-                  ? cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)
-                  : null}
-                {selectedTargetType === "conseiller"
-                  ? conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)
-                  : null}
+                <option value="">
+                  -- Choisir {selectedTargetType[membre.id]} --
+                </option>
+          
+                {selectedTargetType[membre.id] === "cellule" &&
+                  cellules.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.cellule_full || "—"}
+                    </option>
+                  ))}
+          
+                {selectedTargetType[membre.id] === "conseiller" &&
+                  conseillers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.prenom || "—"} {c.nom || ""}
+                    </option>
+                  ))}
               </select>
             )}
-
-            {selectedTarget && (
+          
+            {selectedTargets[membre.id] && (
               <div className="pt-2">
                 <BoutonEnvoyer
                   membre={membre}
-                  type={selectedTargetType}
+                  type={selectedTargetType[membre.id]}
                   cible={
-                    selectedTargetType === "cellule"
-                      ? cellules.find((c) => c.id === Number(selectedTarget))
-                      : conseillers.find((c) => c.id === Number(selectedTarget))
+                    selectedTargetType[membre.id] === "cellule"
+                      ? cellules.find((c) => c.id === selectedTargets[membre.id])
+                      : conseillers.find((c) => c.id === selectedTargets[membre.id])
                   }
-                  onEnvoyer={(updatedMember) => {
-                    const cible =
-                      selectedTargetType === "cellule"
-                        ? cellules.find((c) => c.id === Number(selectedTarget))
-                        : conseillers.find((c) => c.id === Number(selectedTarget));
-                    if (!cible) return;
-                    handleAfterSend(updatedMember, selectedTargetType, cible);
-                  }}
+                  onEnvoyer={(updatedMember) =>
+                    handleAfterSend(
+                      updatedMember,
+                      selectedTargetType[membre.id],
+                      selectedTargetType[membre.id] === "cellule"
+                        ? cellules.find((c) => c.id === selectedTargets[membre.id])
+                        : conseillers.find((c) => c.id === selectedTargets[membre.id])
+                    )
+                  }
                   session={session}
                   showToast={showToast}
                 />

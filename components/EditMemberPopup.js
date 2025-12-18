@@ -125,7 +125,16 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
       if (error) throw error;
 
-      if (onUpdateMember) onUpdateMember(data); // ← Mise à jour instantanée
+     const { data: refreshedMember, error: viewError } = await supabase
+        .from("v_membres_full")
+        .select("*")
+        .eq("id", member.id)
+        .single();
+      
+      if (viewError) throw viewError;
+      
+      if (onUpdateMember) onUpdateMember(refreshedMember);
+
 
       setSuccess(true);
       setTimeout(() => {

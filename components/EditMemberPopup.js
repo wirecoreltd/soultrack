@@ -46,7 +46,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   useEffect(() => {
     let mounted = true;
     async function loadData() {
-      const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
+      const { data: cellulesData } = await supabase
+        .from("cellules")
+        .select("id, cellule_full");
       const { data: conseillersData } = await supabase
         .from("profiles")
         .select("id, prenom, nom")
@@ -75,31 +77,22 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       setShowAutre(checked);
       setFormData(prev => ({
         ...prev,
-        besoin: checked
-          ? Array.from(new Set([...prev.besoin, "Autre"]))
-          : prev.besoin.filter(b => b !== "Autre"),
+        besoin: checked ? [...prev.besoin, "Autre"] : prev.besoin.filter(b => b !== "Autre"),
         autreBesoin: checked ? prev.autreBesoin : ""
       }));
       return;
     }
-    setFormData(prev => {
-      const updated = checked
-        ? [...prev.besoin, value]
-        : prev.besoin.filter(b => b !== value);
-      return { ...prev, besoin: updated };
-    });
+    setFormData(prev => ({
+      ...prev,
+      besoin: checked ? [...prev.besoin, value] : prev.besoin.filter(b => b !== value)
+    }));
   };
-
-  const toggleStar = () => setFormData(prev => ({ ...prev, star: !prev.star }));
 
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      let finalBesoin = Array.isArray(formData.besoin)
-        ? [...formData.besoin]
-        : parseBesoin(formData.besoin);
-
-      if (showAutre && formData.autreBesoin?.trim()) {
+      let finalBesoin = Array.isArray(formData.besoin) ? [...formData.besoin] : parseBesoin(formData.besoin);
+      if (showAutre && formData.autreBesoin.trim()) {
         finalBesoin = finalBesoin.filter(b => b !== "Autre");
         finalBesoin.push(formData.autreBesoin.trim());
       } else {
@@ -132,13 +125,13 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
       if (error) throw error;
 
-      if (onUpdateMember) onUpdateMember(data);
+      if (onUpdateMember) onUpdateMember(data); // ← Mise à jour instantanée
 
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
         onClose();
-      }, 500);
+      }, 300);
     } catch (err) {
       console.error("Erreur handleSubmit EditMemberPopup:", err);
       alert("❌ Une erreur est survenue.");
@@ -164,36 +157,29 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
         <div className="flex flex-col gap-4">
 
+          {/* Prénom */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Prénom :</label>
             <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} className="input" />
           </div>
 
+          {/* Nom */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Nom :</label>
             <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input" />
           </div>
 
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Téléphone :</label>
-            <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} className="input" />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Ville :</label>
-            <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="input" />
-          </div>
-
+          {/* Sexe */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Sexe :</label>
             <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
-              <option value="">-- Choisir --</option>
-              <option value="homme">Homme</option>
-              <option value="femme">Femme</option>
-              <option value="autre">Autre</option>
+              <option value="">-- Sexe --</option>
+              <option value="Homme">Homme</option>
+              <option value="Femme">Femme</option>
             </select>
           </div>
 
+          {/* Comment il est venu */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Comment est-il venu :</label>
             <select name="venu" value={formData.venu} onChange={handleChange} className="input">
@@ -205,6 +191,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             </select>
           </div>
 
+          {/* Commentaire suivis */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Commentaire Suivis :</label>
             <textarea
@@ -216,7 +203,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             />
           </div>
 
-          {/* Besoin */}
+          {/* Besoins */}
           <div className="flex flex-col">
             <label className="font-medium mb-2 text-left">Besoin :</label>
             {besoinsOptions.map(item => (
@@ -231,68 +218,33 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               </label>
             ))}
             <label className="flex items-center gap-3 mb-2">
-              <input
-                type="checkbox"
-                value="Autre"
-                checked={showAutre}
-                onChange={handleBesoinChange}
-              />
+              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} />
               Autre
             </label>
             {showAutre && (
               <div className="flex flex-col mt-2">
                 <label className="font-medium mb-1">Précisez :</label>
-                <input
-                  type="text"
-                  name="autreBesoin"
-                  value={formData.autreBesoin}
-                  onChange={handleChange}
-                  className="input"
-                />
+                <input type="text" name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input" />
               </div>
             )}
           </div>
 
-          <div className="flex flex-col">
-            <label className="flex items-center gap-3 text-lg font-medium">
-              <input type="checkbox" name="star" checked={formData.star} onChange={toggleStar} className="h-5 w-5"/>
-              Définir en tant que serviteur ⭐
-            </label>
-          </div>
-
+          {/* Infos supplémentaires */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Informations :</label>
-            <textarea
-              name="infos_supplementaires"
-              rows={2}
-              value={formData.infos_supplementaires}
-              onChange={handleChange}
-              className="input"
-            />
+            <textarea name="infos_supplementaires" rows={2} value={formData.infos_supplementaires} onChange={handleChange} className="input" />
           </div>
 
+          {/* Buttons */}
           <div className="flex gap-4 mt-2">
-            <button
-              onClick={onClose}
-              className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md"
-            >
-              Annuler
-            </button>
-
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md"
-            >
+            <button onClick={onClose} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md">Annuler</button>
+            <button onClick={handleSubmit} disabled={loading} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md">
               {loading ? "Enregistrement..." : "Sauvegarder"}
             </button>
           </div>
 
-          {success && (
-            <p className="text-green-600 font-semibold text-center mt-3">
-              ✔️ Modifié avec succès !
-            </p>
-          )}
+          {success && <p className="text-green-600 font-semibold text-center mt-3">✔️ Modifié avec succès !</p>}
+
         </div>
 
         <style jsx>{`
@@ -301,9 +253,10 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             border: 1px solid #ccc;
             border-radius: 12px;
             padding: 12px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
           }
         `}</style>
+
       </div>
     </div>
   );

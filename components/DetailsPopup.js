@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import BoutonEnvoyerPopup from "./BoutonEnvoyerPopup"; // Nouveau composant pour ce popup
 
 export default function DetailsPopup({
   membre,
@@ -17,16 +18,10 @@ export default function DetailsPopup({
   const [selectedTarget, setSelectedTarget] = useState(null);
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
 
-  // Fermer le menu téléphone si clic en dehors
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest(".phone-menu") && !e.target.closest(".phone-button")) {
-        setOpenPhoneMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    setSelectedTargetType("");
+    setSelectedTarget(null);
+  }, [membre]);
 
   const formatBesoins = () => {
     if (!membre.besoin) return "—";
@@ -55,7 +50,7 @@ export default function DetailsPopup({
           {membre.prenom} {membre.nom} {membre.star && "⭐"}
         </h2>
 
-        {/* Téléphone */}
+        {/* Menu téléphone */}
         {membre.telephone && (
           <div className="relative flex justify-center mb-2">
             <button
@@ -92,9 +87,10 @@ export default function DetailsPopup({
           <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
         </div>
 
-        {/* Sélection Envoyer à */}
+        {/* Sélection "Envoyer à" */}
         <div className="mt-4 w-full">
           <label className="text-sm font-semibold">Envoyer à :</label>
+
           <select
             value={selectedTargetType}
             onChange={(e) => {
@@ -110,41 +106,46 @@ export default function DetailsPopup({
 
           {selectedTargetType && (
             <select
-              value={selectedTarget || ""}
-              onChange={(e) => setSelectedTarget(Number(e.target.value))}
+              value={selectedTarget ?? ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSelectedTarget(val === "" ? null : Number(val));
+              }}
               className="mt-2 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Sélectionner --</option>
               {selectedTargetType === "cellule"
-                ? cellules.map(c => (
-                    <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>
-                  ))
-                : conseillers.map(c => (
-                    <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>
-                  ))
-              }
+                ? cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)
+                : null}
+              {selectedTargetType === "conseiller"
+                ? conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)
+                : null}
             </select>
           )}
 
-          {/* Bouton Envoyer uniquement si cible sélectionnée */}
-          {selectedTarget && (
-            <div className="mt-2 text-center">
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                onClick={() => {
-                  const cible =
-                    selectedTargetType === "cellule"
-                      ? cellules.find(c => c.id === Number(selectedTarget))
-                      : conseillers.find(c => c.id === Number(selectedTarget));
+          {/* Bouton Envoyer qui s'affiche seulement si une cellule ou conseiller est sélectionné */}
+          {selectedTarget !== null && (
+            <div className="mt-4 text-center">
+              <BoutonEnvoyerPopup
+                membre={membre}
+                type={selectedTargetType}
+                cible={selectedTargetType === "cellule"
+                  ? cellules.find((c) => c.id === selectedTarget)
+                  : conseillers.find((c) => c.id === selectedTarget)
+                }
+                onEnvoyer={() => {
+                  const cible = selectedTargetType === "cellule"
+                    ? cellules.find((c) => c.id === selectedTarget)
+                    : conseillers.find((c) => c.id === selectedTarget);
                   if (!cible) return;
                   handleAfterSend(membre.id, selectedTargetType, cible);
-                  showToast?.("✅ Contact envoyé et suivi enregistré");
                   setSelectedTarget(null);
                   setSelectedTargetType("");
+                  showToast?.("✅ Contact envoyé avec succès");
                 }}
-              >
-                Envoyer
-              </button>
+                session={session}
+                showToast={showToast}
+              />
             </div>
           )}
         </div>

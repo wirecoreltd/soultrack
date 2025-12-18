@@ -6,47 +6,40 @@ import BoutonEnvoyer from "./BoutonEnvoyer";
 export default function DetailsPopup({
   membre,
   onClose,
-  statusOptions = ["actif", "ancien", "visiteur", "veut rejoindre ICC", "a déjà son église"],
   cellules = [],
   conseillers = [],
   handleAfterSend,
   session,
   showToast,
 }) {
-  if (!membre || !membre.id) return null; 
-  
+  if (!membre || !membre.id) return null;
+
   const [selectedTargetType, setSelectedTargetType] = useState("");
-  const [selectedTarget, setSelectedTarget] = useState(null);
-  const [status, setStatus] = useState(membre.statut || "");
+  const [selectedTarget, setSelectedTarget] = useState("");
+  const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
 
+  // Fermer le menu téléphone si clic en dehors
   useEffect(() => {
-    setStatus(membre.statut || "");
-    setSelectedTargetType("");
-    setSelectedTarget(null);
-  }, [membre]);
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".phone-menu") && !e.target.closest(".phone-button")) {
+        setOpenPhoneMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  const handleSend = () => {
-    if (!selectedTargetType || !selectedTarget) return;
-
-    const cible =
-      selectedTargetType === "cellule"
-        ? cellules.find((c) => c.id === Number(selectedTarget))
-        : conseillers.find((c) => c.id === Number(selectedTarget));
-
-    if (!cible) return;
-
-    handleAfterSend(membre.id, selectedTargetType, cible, status);
-    showToast?.("✅ Contact envoyé et suivi enregistré");
-    setSelectedTarget(null);
-    setSelectedTargetType("");
-  };
-
-  const besoins = (() => {
+  // Formater les besoins
+  const formatBesoins = () => {
     if (!membre.besoin) return "—";
     if (Array.isArray(membre.besoin)) return membre.besoin.join(", ");
-    try { const arr = JSON.parse(membre.besoin); return Array.isArray(arr) ? arr.join(", ") : membre.besoin; } 
-    catch { return membre.besoin; }
-  })();
+    try {
+      const arr = JSON.parse(membre.besoin);
+      return Array.isArray(arr) ? arr.join(", ") : membre.besoin;
+    } catch {
+      return membre.besoin;
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
@@ -59,44 +52,58 @@ export default function DetailsPopup({
           ✖
         </button>
 
-        {/* Titre */}
-        <h2 className="text-xl font-bold mb-4 text-center">
+        {/* Nom */}
+        <h2 className="text-xl font-bold text-center mb-1">
           {membre.prenom} {membre.nom} {membre.star && "⭐"}
         </h2>
 
-        {/* Infos du membre */}
-        <div className="space-y-2 text-sm text-gray-700">
-          <p>📱 Téléphone : {membre.telephone || "—"}</p>
-          <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
-          <p>🏙 Ville : {membre.ville || "—"}</p>
-          <p>❓ Besoin : {besoins}</p>
-          <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
-          <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
-          <p>🏠 Cellule : {membre.cellule_nom || "—"} {membre.responsable_nom ? `- ${membre.responsable_nom}` : ""}</p>
-          <p>👤 Conseiller : {membre.conseiller_prenom || "—"} {membre.conseiller_nom || ""}</p>
-        </div>
+        {/* Téléphone centré */}
+        {membre.telephone && (
+          <div className="relative flex justify-center mb-2">
+            <button
+              className="text-blue-500 underline font-semibold phone-button"
+              onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
+            >
+              {membre.telephone}
+            </button>
 
-        {/* Statut */}
-        <div className="mt-4">
-          <label className="text-gray-700 text-sm font-semibold">🕊 Statut :</label>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="mt-1 w-full border rounded px-2 py-1 text-sm"
-          >
-            <option value="">-- Choisir un statut --</option>
-            {statusOptions.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+            {openPhoneMenu && (
+              <div
+                className="phone-menu absolute top-full mt-2 bg-white border rounded-lg shadow w-48 z-50"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler</a>
+                <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">✉️ SMS</a>
+                <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 WhatsApp</a>
+                <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Message WhatsApp</a>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Infos identiques à la vue carte */}
+        <div className="text-sm text-black space-y-1">
+          <p className="text-center">🏙 Ville : {membre.ville || "—"}</p>
+          <p className="text-center">🕊 Statut : {membre.statut || "—"}</p>
+          <p>🏠 Cellule : {membre.cellule_ville && membre.cellule_nom ? `${membre.cellule_ville} - ${membre.cellule_nom}` : "—"}</p>
+          <p>👤 Conseiller : {(membre.conseiller_prenom || membre.conseiller_nom) ? `${membre.conseiller_prenom || ""} ${membre.conseiller_nom || ""}`.trim() : "—"}</p>
+          <p>❓ Besoin : {formatBesoins()}</p>
+          <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
+          <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
+          <p>🧩 Statut initial : {membre.statut_initial || "—"}</p>
+          <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
         </div>
 
         {/* Envoyer à */}
-        <div className="mt-4">
-          <label className="text-gray-700 text-sm font-semibold">Envoyer à :</label>
+        <div className="mt-4 w-full">
+          <label className="text-sm font-semibold">Envoyer à :</label>
+
           <select
             value={selectedTargetType}
-            onChange={(e) => { setSelectedTargetType(e.target.value); setSelectedTarget(null); }}
+            onChange={(e) => {
+              setSelectedTargetType(e.target.value);
+              setSelectedTarget("");
+            }}
             className="mt-1 w-full border rounded px-2 py-1 text-sm"
           >
             <option value="">-- Choisir une option --</option>
@@ -106,42 +113,46 @@ export default function DetailsPopup({
 
           {selectedTargetType && (
             <select
-              value={selectedTarget || ""}
-              onChange={(e) => setSelectedTarget(Number(e.target.value))}
+              value={selectedTarget}
+              onChange={(e) => setSelectedTarget(e.target.value)}
               className="mt-2 w-full border rounded px-2 py-1 text-sm"
             >
-              <option value="">-- Choisir {selectedTargetType} --</option>
+              <option value="">-- Sélectionner --</option>
               {selectedTargetType === "cellule"
-                ? cellules.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.cellule_full || c.cellule} {c.responsable ? `(${c.responsable})` : ""}
-                    </option>
-                  ))
-                : conseillers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.prenom} {c.nom}
-                    </option>
-                  ))}
+                ? cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)
+                : null}
+              {selectedTargetType === "conseiller"
+                ? conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)
+                : null}
             </select>
           )}
 
-          {selectedTarget && (
-            <div className="mt-4 text-center">
+          {selectedTarget && selectedTarget !== "" && (
+            <div className="mt-2 text-center">
               <BoutonEnvoyer
                 membre={membre}
                 type={selectedTargetType}
                 cible={
                   selectedTargetType === "cellule"
-                    ? cellules.find((c) => c.id === Number(selectedTarget))
-                    : conseillers.find((c) => c.id === Number(selectedTarget))
+                    ? cellules.find((c) => c.id == selectedTarget)
+                    : conseillers.find((c) => c.id == selectedTarget)
                 }
-                onEnvoyer={handleSend}
+                onEnvoyer={() => {
+                  const cible =
+                    selectedTargetType === "cellule"
+                      ? cellules.find((c) => c.id == selectedTarget)
+                      : conseillers.find((c) => c.id == selectedTarget);
+                  if (!cible) return;
+                  handleAfterSend(membre, selectedTargetType, cible);
+                  setSelectedTarget("");
+                  setSelectedTargetType("");
+                }}
                 session={session}
                 showToast={showToast}
               />
             </div>
           )}
-        </div>        
+        </div>
       </div>
     </div>
   );

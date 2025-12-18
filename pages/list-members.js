@@ -1,72 +1,235 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
+/**
+ * Page: Liste des Membres
+ * Description: Affiche les membres sous forme de carte ou tableau avec filtres et envoi WhatsApp.
+ */
+
+import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
+import Image from "next/image";
 import BoutonEnvoyer from "../components/BoutonEnvoyer";
 import LogoutLink from "../components/LogoutLink";
+import DetailsPopup from "../components/DetailsPopup";
+import EditMemberPopup from "../components/EditMemberPopup";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { useSearchParams } from "next/navigation";
 
-export default function ListeMembres({ prenom, session }) {
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("");
-  const [view, setView] = useState("card"); // "card" ou "table"
+export default function ListMembers() {
   const [members, setMembers] = useState([]);
-  const [nouveauxFiltres, setNouveauxFiltres] = useState([]);
-  const [anciensFiltres, setAnciensFiltres] = useState([]);
-  const [selectedTargetType, setSelectedTargetType] = useState({});
-  const [selectedTargets, setSelectedTargets] = useState({});
-  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
+  const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
-  const [editMember, setEditMember] = useState(null);
-
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
+  const [view, setView] = useState("card");
+  const [popupMember, setPopupMember] = useState(null);
+  const [editMember, setEditMember] = useState(null);
+  const [session, setSession] = useState(null);
+  const [prenom, setPrenom] = useState("");
+  const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const conseillerIdFromUrl = searchParams.get("conseiller_id");
 
-  const statusOptions = ["Actif", "Inactif", "En attente"]; // exemple
+  const [selectedTargets, setSelectedTargets] = useState({});
+  const [selectedTargetType, setSelectedTargetType] = useState({});
+  const [toastMessage, setToastMessage] = useState("");
+  const [showingToast, setShowingToast] = useState(false);
+
+  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null); // menu téléphone/whatsapp
+  const realtimeChannelRef = useRef(null);
+
+  const statutLabels = {
+    1: "En cours",
+    2: "En attente",
+    3: "Intégrer",
+    4: "Refus",
+  };
+
+  const statusOptions = [
+    "actif",
+    "ancien",
+    "visiteur",
+    "veut rejoindre ICC",
+    "refus",
+    "integrer",
+    "En cours",
+    "a déjà son église",
+  ];
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setShowingToast(true);
+    setTimeout(() => setShowingToast(false), 3500);
+  };
+
+  // -------------------- FETCH --------------------
+  const fetchMembers = async (profile = null) => {
+    setLoading(true);
+    try {
+      let query = supabase.from("v_membres_full").select("*").order("created_at", { ascending: false });
+      if (conseillerIdFromUrl) query = query.eq("conseiller_id", conseillerIdFromUrl);
+      else if (profile?.role === "Conseiller") query = query.eq("conseiller_id", profile.id);
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const withInitial = (data || []).map(m => ({ ...m, statut_initial: m.statut }));
+      setMembers(data || []);
+    } catch (err) {
+      console.error("Erreur fetchMembers:", err);
+      setMembers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCellules = async () => {
+    const { data, error } = await supabase.from("cellules").select("id, cellule_full");
+    if (error) console.error("Erreur:", error);
+    if (data) setCellules(data);
+  };
+
+  const fetchConseillers = async () => {
+    const { data } = await supabase.from("profiles").select("id, prenom, nom, telephone").eq("role", "Conseiller");
+    if (data) setConseillers(data);
+  };
+
+  const handleAfterSend = (updatedMember, type, cible) => {
+    const updatedWithActif = { ...updatedMember, statut: "actif" };
+    updateMemberLocally(updatedMember.id, updatedWithActif);
+
+    const cibleName = type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`;
+    showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
+  };
 
   useEffect(() => {
-    // récupère les membres
-    async function fetchMembers() {
-      const { data } = await supabase.from("v_membres_full").select("*");
-      if (data) {
-        setMembers(data);
-        setNouveauxFiltres(data.filter(m => m.type === "nouveau"));
-        setAnciensFiltres(data.filter(m => m.type !== "nouveau"));
+    const fetchSessionAndProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+
+      if (session?.user) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, prenom, role")
+          .eq("id", session.user.id)
+          .single();
+        if (!profileError) {
+          setPrenom(profileData.prenom || "");
+          await fetchMembers(profileData);
+        } else console.error(profileError);
+      } else {
+        await fetchMembers();
       }
-    }
 
-    // récupère cellules et conseillers
-    async function fetchCellulesConseillers() {
-      const { data: cData } = await supabase.from("cellules").select("*");
-      const { data: consData } = await supabase.from("conseillers").select("*");
-      if (cData) setCellules(cData);
-      if (consData) setConseillers(consData);
-    }
+      fetchCellules();
+      fetchConseillers();
+    };
 
-    fetchMembers();
-    fetchCellulesConseillers();
+    fetchSessionAndProfile();
   }, []);
 
-  const toggleDetails = (id) => {
-    setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
-  };
+  // -------------------- Realtime --------------------
+  useEffect(() => {
+    if (realtimeChannelRef.current) {
+      try { realtimeChannelRef.current.unsubscribe(); } catch (e) {}
+      realtimeChannelRef.current = null;
+    }
 
-  const handleAfterSend = (membreId, type, cible) => {
-    // action après envoi
-    console.log("Envoyé à", type, cible);
-  };
+    const channel = supabase.channel("realtime:v_membres_full_and_related");
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "membres" }, () => fetchMembers());
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "cellules" }, () => { fetchCellules(); fetchMembers(); });
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { fetchConseillers(); fetchMembers(); });
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return "—";
-    const d = new Date(dateStr);
-    return d.toLocaleDateString();
+    try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
+
+    realtimeChannelRef.current = channel;
+    return () => {
+      try { if (realtimeChannelRef.current) { realtimeChannelRef.current.unsubscribe(); realtimeChannelRef.current = null; } } catch (e) {}
+    };
+  }, []);
+
+  // -------------------- Fermer menu téléphone en cliquant dehors --------------------
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".phone-menu")) {
+        setOpenPhoneMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // -------------------- UTILS --------------------
+  const updateMemberLocally = (id, updatedMember) => {
+    setMembers(prev => prev.map(m => (m.id === id ? { ...m, ...updatedMember } : m)));
   };
 
   const getBorderColor = (m) => {
-    // exemple : bleu pour actif, gris sinon
-    return m.statut === "Actif" ? "#3B82F6" : "#9CA3AF";
+    const status = m.statut || "";
+    const suiviStatus = m.suivi_statut_libelle || "";
+
+    if (status === "refus" || suiviStatus === "refus") return "#f56f22";
+    if (status === "actif" || suiviStatus === "actif") return "#4285F4";
+    if (status === "a déjà son église" || suiviStatus === "a déjà son église") return "#f21705";
+    if (status === "ancien" || suiviStatus === "ancien") return "#999999";
+    if (status === "visiteur" || suiviStatus === "visiteur") return "#34A853";
+    if (status === "veut rejoindre ICC" || suiviStatus === "veut rejoindre ICC") return "#34A853";
+
+    return "#ccc";
   };
 
+  const formatDate = (dateStr) => {
+    try { return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr }); } catch { return ""; }
+  };
+
+  const filterBySearch = (list) => list.filter((m) => `${(m.prenom || "")} ${(m.nom || "")}`.toLowerCase().includes(search.toLowerCase()));
+
+  const nouveaux = members.filter((m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");
+  const anciens = members.filter((m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC");
+
+  const nouveauxFiltres = filterBySearch(
+    filter ? nouveaux.filter(
+      (m) =>
+        m.statut === filter ||
+        m.suivi_statut_libelle === filter ||
+        (m.statut_suivis_actuel && statutLabels[m.statut_suivis_actuel] === filter)
+    ) : nouveaux
+  );
+
+  const anciensFiltres = filterBySearch(
+    filter ? anciens.filter(
+      (m) =>
+        m.statut === filter ||
+        m.suivi_statut_libelle === filter ||
+        (m.statut_suivis_actuel && statutLabels[m.statut_suivis_actuel] === filter)
+    ) : anciens
+  );
+
+  const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleStar = async (member) => {
+  try {
+    const { error } = await supabase
+      .from("membres")
+      .update({ star: !member.star })
+      .eq("id", member.id);
+
+    if (error) throw error;
+
+    // Mise à jour instantanée locale
+    setMembers(prev =>
+      prev.map(m =>
+        m.id === member.id ? { ...m, star: !member.star } : m
+      )
+    );
+  } catch (err) {
+    console.error("Erreur toggleStar:", err);
+  }
+};
+
+
+  // -------------------- Rendu Carte --------------------
   const renderMemberCard = (m) => {
     const isOpen = detailsOpen[m.id];
     const besoins = (() => {
@@ -76,7 +239,7 @@ export default function ListeMembres({ prenom, session }) {
     })();
 
     return (
-      <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4 relative" style={{ borderLeftColor: getBorderColor(m) }}>
+      <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4 relative">
         {m.star && <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>}
         <div className="flex flex-col items-center">
           <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
@@ -151,7 +314,7 @@ export default function ListeMembres({ prenom, session }) {
                       : conseillers.find(c => c.id === selectedTargets[m.id])
                   )}
                   session={session}
-                  showToast={() => {}}
+                  showToast={showToast}
                 />
               </div>
             )}
@@ -227,15 +390,7 @@ export default function ListeMembres({ prenom, session }) {
       {/* Liste */}
       {view === "card" ? (
         <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-          {/* Nouveaux Membres */}
-          {nouveauxFiltres.length > 0 && (
-            <>
-              <div className="col-span-full text-white font-semibold text-lg mb-2">
-                💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-              </div>
-              {nouveauxFiltres.map(renderMemberCard)}
-            </>
-          )}
+          {nouveauxFiltres.map(renderMemberCard)}
           {anciensFiltres.map(renderMemberCard)}
         </div>
       ) : (

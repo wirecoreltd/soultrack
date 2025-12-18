@@ -176,7 +176,15 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
       if (error) throw error;
 
+      // ⚡ Ici le comportement instantané :
       if (onUpdateMember) onUpdateMember(data);
+
+      setSuccess(true);
+      setTimeout(() => {
+        setSuccess(false);
+        onClose(); // fermeture automatique
+      }, 800);
+
     } catch (err) {
       console.error("Erreur handleSubmit EditMemberPopup:", err);
       alert("❌ Une erreur est survenue.");
@@ -239,13 +247,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
           {/* ⭐ Définir en tant que serviteur */}
           <label className="flex items-center gap-3 text-lg font-medium">
-            <input
-              type="checkbox"
-              name="star"
-              checked={formData.star}
-              onChange={toggleStar}
-              className="h-5 w-5"
-            />
+            <input type="checkbox" name="star" checked={formData.star} onChange={toggleStar} className="h-5 w-5" />
             Définir en tant que serviteur ⭐
           </label>
 
@@ -302,12 +304,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             <label className="font-medium mb-2 text-left">Besoin :</label>
             {besoinsOptions.map(item => (
               <label key={item} className="flex items-center gap-3 mb-2">
-                <input
-                  type="checkbox"
-                  value={item}
-                  checked={Array.isArray(formData.besoin) && formData.besoin.includes(item)}
-                  onChange={handleBesoinChange}
-                />
+                <input type="checkbox" value={item} checked={Array.isArray(formData.besoin) && formData.besoin.includes(item)} onChange={handleBesoinChange} />
                 {item}
               </label>
             ))}
@@ -340,6 +337,10 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             <button onClick={onClose} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md">Annuler</button>
             <button onClick={handleSubmit} disabled={loading} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md">{loading ? "Enregistrement..." : "Sauvegarder"}</button>
           </div>
+
+          {success && (
+            <p className="text-green-600 font-semibold text-center mt-3">✔️ Modifié avec succès !</p>
+          )}
         </div>
 
         <style jsx>{`

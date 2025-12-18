@@ -566,7 +566,17 @@ export default function ListMembers() {
       )}
 
       {editMember && (
-        <EditMemberPopup member={editMember} onClose={() => setEditMember(null)} onUpdated={updateMemberLocally} />
+        <EditMemberPopup
+          member={editMember}
+          onClose={() => setEditMember(null)}
+          onUpdateMember={(updatedMember) => {
+            // Mise à jour instantanée dans la liste
+            setMembers(prev =>
+              prev.map(m => (m.id === updatedMember.id ? { ...m, ...updatedMember } : m))
+            );
+          }}
+        />
+      )}
       )}
 
       {/* Toast */}

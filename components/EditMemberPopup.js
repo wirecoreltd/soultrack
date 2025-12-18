@@ -21,7 +21,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
-
   const [formData, setFormData] = useState({
     prenom: member?.prenom || "",
     nom: member?.nom || "",
@@ -35,6 +34,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     infos_supplementaires: member?.infos_supplementaires || "",
     is_whatsapp: !!member?.is_whatsapp,
     star: member?.star === true,
+    sexe: member?.sexe || "",
+    venu: member?.venu || "",
+    commentaire_suivis: member?.commentaire_suivis || "",
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -43,52 +45,22 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   useEffect(() => {
     let mounted = true;
-
     async function loadData() {
-      try {
-        const { data: cellulesData } = await supabase
-          .from("cellules")
-          .select("id, cellule_full"); // <-- ON RÉCUPÈRE cellule_full
-
-        const { data: conseillersData } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom")
-          .eq("role", "Conseiller");
-
-        if (!mounted) return;
-
-        setCellules(cellulesData || []);
-        setConseillers(conseillersData || []);
-      } catch (err) {
-        console.error("Erreur loadData EditMemberPopup:", err);
-      }
+      const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
+      const { data: conseillersData } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom")
+        .eq("role", "Conseiller");
+      if (!mounted) return;
+      setCellules(cellulesData || []);
+      setConseillers(conseillersData || []);
     }
-
     loadData();
     return () => { mounted = false; };
   }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    if (name === "cellule_id") {
-      setFormData(prev => ({
-        ...prev,
-        cellule_id: value,
-        conseiller_id: value ? "" : prev.conseiller_id
-      }));
-      return;
-    }
-
-    if (name === "conseiller_id") {
-      setFormData(prev => ({
-        ...prev,
-        conseiller_id: value,
-        cellule_id: value ? "" : prev.cellule_id
-      }));
-      return;
-    }
-
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -99,41 +71,29 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
-
     if (value === "Autre") {
       setShowAutre(checked);
-
-      if (!checked) {
-        setFormData(prev => ({
-          ...prev,
-          autreBesoin: "",
-          besoin: prev.besoin.filter(b => b !== "Autre")
-        }));
-      } else {
-        setFormData(prev => ({
-          ...prev,
-          besoin: Array.from(new Set([...prev.besoin, "Autre"]))
-        }));
-      }
-
+      setFormData(prev => ({
+        ...prev,
+        besoin: checked
+          ? Array.from(new Set([...prev.besoin, "Autre"]))
+          : prev.besoin.filter(b => b !== "Autre"),
+        autreBesoin: checked ? prev.autreBesoin : ""
+      }));
       return;
     }
-
     setFormData(prev => {
       const updated = checked
         ? [...prev.besoin, value]
         : prev.besoin.filter(b => b !== value);
-
       return { ...prev, besoin: updated };
     });
   };
 
-  const toggleStar = () =>
-    setFormData(prev => ({ ...prev, star: !prev.star }));
+  const toggleStar = () => setFormData(prev => ({ ...prev, star: !prev.star }));
 
   const handleSubmit = async () => {
     setLoading(true);
-
     try {
       let finalBesoin = Array.isArray(formData.besoin)
         ? [...formData.besoin]
@@ -158,6 +118,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         is_whatsapp: !!formData.is_whatsapp,
         star: !!formData.star,
         besoin: JSON.stringify(finalBesoin),
+        sexe: formData.sexe || null,
+        venu: formData.venu || null,
+        commentaire_suivis: formData.commentaire_suivis || null,
       };
 
       const { data, error } = await supabase
@@ -175,7 +138,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       setTimeout(() => {
         setSuccess(false);
         onClose();
-      }, 900);
+      }, 500);
     } catch (err) {
       console.error("Erreur handleSubmit EditMemberPopup:", err);
       alert("❌ Une erreur est survenue.");
@@ -188,7 +151,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
 
-        {/* BOUTON FERMER */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-red-500 font-bold text-xl hover:text-red-700"
@@ -202,96 +164,61 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
         <div className="flex flex-col gap-4">
 
-          {/* Prénom */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Prénom :</label>
             <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} className="input" />
           </div>
 
-          {/* Nom */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Nom :</label>
             <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input" />
           </div>
 
-          {/* ⭐ DÉFINIR EN TANT QUE SERVITEUR */}
-          <label className="flex items-center gap-3 text-lg font-medium">
-            <input
-              type="checkbox"
-              name="star"
-              checked={formData.star}
-              onChange={toggleStar}
-              className="h-5 w-5"
-            />
-            Définir en tant que serviteur ⭐
-          </label>
-
-          {/* Téléphone */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Téléphone :</label>
             <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} className="input" />
           </div>
 
-          {/* Ville */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Ville :</label>
             <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="input" />
           </div>
 
-          {/* Statut */}
           <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Statut :</label>
-            <select name="statut" value={formData.statut} onChange={handleChange} className="input">
-              <option value="">-- Statut --</option>
-              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="visiteur">Visiteur</option>
-              <option value="actif">Actif</option>
-              <option value="ancien">Ancien</option>
-              <option value="Integrer">Intégrer</option>
+            <label className="font-medium mb-1 text-left">Sexe :</label>
+            <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
+              <option value="">-- Choisir --</option>
+              <option value="homme">Homme</option>
+              <option value="femme">Femme</option>
+              <option value="autre">Autre</option>
             </select>
           </div>
 
-          {/* Cellule */}
           <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Cellule :</label>
-            <select
-              name="cellule_id"
-              value={formData.cellule_id ?? ""}
-              onChange={handleChange}
-              className="input"
-            >
-              <option value="">-- Cellule --</option>
-              {cellules.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.cellule_full}  {/* Rose Hill – Berto */}
-                </option>
-              ))}
+            <label className="font-medium mb-1 text-left">Comment est-il venu :</label>
+            <select name="venu" value={formData.venu} onChange={handleChange} className="input">
+              <option value="">-- Comment est-il venu ? --</option>
+              <option value="invité">Invité</option>
+              <option value="réseaux">Réseaux</option>
+              <option value="evangélisation">Évangélisation</option>
+              <option value="autre">Autre</option>
             </select>
           </div>
 
-          {/* Conseiller */}
           <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Conseiller :</label>
-            <select
-              name="conseiller_id"
-              value={formData.conseiller_id ?? ""}
+            <label className="font-medium mb-1 text-left">Commentaire Suivis :</label>
+            <textarea
+              name="commentaire_suivis"
+              rows={2}
+              value={formData.commentaire_suivis}
               onChange={handleChange}
               className="input"
-            >
-              <option value="">-- Conseiller --</option>
-              {conseillers.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.prenom} {c.nom}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           {/* Besoin */}
           <div className="flex flex-col">
             <label className="font-medium mb-2 text-left">Besoin :</label>
-
             {besoinsOptions.map(item => (
               <label key={item} className="flex items-center gap-3 mb-2">
                 <input
@@ -303,7 +230,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
                 {item}
               </label>
             ))}
-
             <label className="flex items-center gap-3 mb-2">
               <input
                 type="checkbox"
@@ -313,7 +239,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               />
               Autre
             </label>
-
             {showAutre && (
               <div className="flex flex-col mt-2">
                 <label className="font-medium mb-1">Précisez :</label>
@@ -328,7 +253,13 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             )}
           </div>
 
-          {/* Informations supplémentaires */}
+          <div className="flex flex-col">
+            <label className="flex items-center gap-3 text-lg font-medium">
+              <input type="checkbox" name="star" checked={formData.star} onChange={toggleStar} className="h-5 w-5"/>
+              Définir en tant que serviteur ⭐
+            </label>
+          </div>
+
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Informations :</label>
             <textarea
@@ -340,7 +271,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             />
           </div>
 
-          {/* Buttons */}
           <div className="flex gap-4 mt-2">
             <button
               onClick={onClose}
@@ -374,7 +304,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
           }
         `}</style>
-
       </div>
     </div>
   );

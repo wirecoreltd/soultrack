@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import BoutonEnvoyer from "./BoutonEnvoyer";
+import BoutonEnvoyerPopup from "./BoutonEnvoyerPopup";
 
 export default function DetailsPopup({
   membre,
@@ -40,14 +40,6 @@ export default function DetailsPopup({
       return membre.besoin;
     }
   };
-
-  // Déterminer si une cible est sélectionnée
-  const cibleSelectionnee =
-    selectedTargetType && selectedTarget
-      ? selectedTargetType === "cellule"
-        ? cellules.find(c => String(c.id) === String(selectedTarget))
-        : conseillers.find(c => String(c.id) === String(selectedTarget))
-      : null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
@@ -89,7 +81,7 @@ export default function DetailsPopup({
           </div>
         )}
 
-        {/* Infos identiques à la vue carte */}
+        {/* Infos du membre */}
         <div className="text-sm text-black space-y-1">
           <p className="text-center">🏙 Ville : {membre.ville || "—"}</p>
           <p className="text-center">🕊 Statut : {membre.statut || "—"}</p>
@@ -122,7 +114,7 @@ export default function DetailsPopup({
           {selectedTargetType && (
             <select
               value={selectedTarget || ""}
-              onChange={(e) => setSelectedTarget(e.target.value)} // garder en string
+              onChange={(e) => setSelectedTarget(Number(e.target.value))}
               className="mt-2 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Sélectionner --</option>
@@ -135,13 +127,24 @@ export default function DetailsPopup({
             </select>
           )}
 
-          {cibleSelectionnee && (
+          {/* Nouveau bouton d'envoi uniquement si cellule/conseiller sélectionné */}
+          {selectedTarget && (
             <div className="mt-2 text-center">
-              <BoutonEnvoyer
+              <BoutonEnvoyerPopup
                 membre={membre}
                 type={selectedTargetType}
-                cible={cibleSelectionnee}
-                onEnvoyer={() => handleAfterSend(membre, selectedTargetType, cibleSelectionnee)}
+                cible={
+                  selectedTargetType === "cellule"
+                    ? cellules.find(c => c.id === Number(selectedTarget))
+                    : conseillers.find(c => c.id === Number(selectedTarget))
+                }
+                onEnvoyer={(m) => handleAfterSend(
+                  m,
+                  selectedTargetType,
+                  selectedTargetType === "cellule"
+                    ? cellules.find(c => c.id === Number(selectedTarget))
+                    : conseillers.find(c => c.id === Number(selectedTarget))
+                )}
                 session={session}
                 showToast={showToast}
               />

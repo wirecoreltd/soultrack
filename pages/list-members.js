@@ -208,6 +208,26 @@ export default function ListMembers() {
   );
 
   const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleStar = async (member) => {
+  try {
+    const { error } = await supabase
+      .from("membres")
+      .update({ star: !member.star })
+      .eq("id", member.id);
+
+    if (error) throw error;
+
+    // Mise à jour instantanée locale
+    setMembers(prev =>
+      prev.map(m =>
+        m.id === member.id ? { ...m, star: !member.star } : m
+      )
+    );
+  } catch (err) {
+    console.error("Erreur toggleStar:", err);
+  }
+};
+
 
   // -------------------- Rendu Carte --------------------
   const renderMemberCard = (m) => {

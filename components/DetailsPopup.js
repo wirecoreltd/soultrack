@@ -12,10 +12,10 @@ export default function DetailsPopup({
   session,
   showToast,
 }) {
-  if (!membre || !membre.id) return null;
+  if (!membre) return null;
 
-  const [selectedTargetType, setSelectedTargetType] = useState("");
-  const [selectedTarget, setSelectedTarget] = useState(null);
+  const [selectedTargetType, setSelectedTargetType] = useState({});
+  const [selectedTargets, setSelectedTargets] = useState({});
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
 
   // Fermer le menu téléphone si clic en dehors

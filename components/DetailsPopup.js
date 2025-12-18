@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import BoutonEnvoyer from "./BoutonEnvoyer";
+import BoutonEnvoyerPopup from "./BoutonEnvoyerPopup";
 
 export default function DetailsPopup({
   membre,
@@ -15,19 +15,13 @@ export default function DetailsPopup({
   if (!membre || !membre.id) return null;
 
   const [selectedTargetType, setSelectedTargetType] = useState("");
-  const [selectedTarget, setSelectedTarget] = useState("");
+  const [selectedTarget, setSelectedTarget] = useState(null);
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
 
-  // Fermer le menu téléphone si clic en dehors
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest(".phone-menu") && !e.target.closest(".phone-button")) {
-        setOpenPhoneMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    setSelectedTargetType("");
+    setSelectedTarget(null);
+  }, [membre]);
 
   const formatBesoins = () => {
     if (!membre.besoin) return "—";
@@ -39,14 +33,6 @@ export default function DetailsPopup({
       return membre.besoin;
     }
   };
-
-  // Déterminer la cible sélectionnée correctement
-  const cible =
-    selectedTarget && selectedTargetType
-      ? selectedTargetType === "cellule"
-        ? cellules.find((c) => c.id === Number(selectedTarget))
-        : conseillers.find((c) => c.id === Number(selectedTarget))
-      : null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
@@ -73,31 +59,16 @@ export default function DetailsPopup({
             >
               {membre.telephone}
             </button>
+
             {openPhoneMenu && (
               <div
                 className="phone-menu absolute top-full mt-2 bg-white border rounded-lg shadow w-48 z-50"
                 onClick={(e) => e.stopPropagation()}
               >
-                <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">
-                  📞 Appeler
-                </a>
-                <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">
-                  ✉️ SMS
-                </a>
-                <a
-                  href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`}
-                  target="_blank"
-                  className="block px-4 py-2 hover:bg-gray-100 text-black"
-                >
-                  💬 WhatsApp
-                </a>
-                <a
-                  href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}?text=Bonjour`}
-                  target="_blank"
-                  className="block px-4 py-2 hover:bg-gray-100 text-black"
-                >
-                  📱 Message WhatsApp
-                </a>
+                <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler</a>
+                <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">✉️ SMS</a>
+                <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 WhatsApp</a>
+                <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Message WA</a>
               </div>
             )}
           </div>
@@ -107,12 +78,8 @@ export default function DetailsPopup({
         <div className="text-sm text-black space-y-1">
           <p className="text-center">🏙 Ville : {membre.ville || "—"}</p>
           <p className="text-center">🕊 Statut : {membre.statut || "—"}</p>
-          <p>
-            🏠 Cellule : {membre.cellule_ville && membre.cellule_nom ? `${membre.cellule_ville} - ${membre.cellule_nom}` : "—"}
-          </p>
-          <p>
-            👤 Conseiller : {(membre.conseiller_prenom || membre.conseiller_nom) ? `${membre.conseiller_prenom || ""} ${membre.conseiller_nom || ""}`.trim() : "—"}
-          </p>
+          <p>🏠 Cellule : {membre.cellule_ville && membre.cellule_nom ? `${membre.cellule_ville} - ${membre.cellule_nom}` : "—"}</p>
+          <p>👤 Conseiller : {(membre.conseiller_prenom || membre.conseiller_nom) ? `${membre.conseiller_prenom || ""} ${membre.conseiller_nom || ""}`.trim() : "—"}</p>
           <p>❓ Besoin : {formatBesoins()}</p>
           <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
           <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
@@ -128,7 +95,7 @@ export default function DetailsPopup({
             value={selectedTargetType}
             onChange={(e) => {
               setSelectedTargetType(e.target.value);
-              setSelectedTarget("");
+              setSelectedTarget(null);
             }}
             className="mt-1 w-full border rounded px-2 py-1 text-sm"
           >
@@ -139,36 +106,38 @@ export default function DetailsPopup({
 
           {selectedTargetType && (
             <select
-              value={selectedTarget}
-              onChange={(e) => setSelectedTarget(e.target.value)}
+              value={selectedTarget || ""}
+              onChange={(e) => setSelectedTarget(Number(e.target.value))}
               className="mt-2 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Sélectionner --</option>
               {selectedTargetType === "cellule"
-                ? cellules.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.cellule_full || "—"} ({c.responsable})
-                    </option>
-                  ))
+                ? cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)
                 : null}
               {selectedTargetType === "conseiller"
-                ? conseillers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.prenom || "—"} {c.nom || ""}
-                    </option>
-                  ))
+                ? conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)
                 : null}
             </select>
           )}
 
-          {/* Bouton qui s'affiche uniquement si une cible valide est sélectionnée */}
-          {cible && (
-            <div className="mt-2 text-center">
-              <BoutonEnvoyer
+          {selectedTarget && (
+            <div className="mt-2">
+              <BoutonEnvoyerPopup
                 membre={membre}
                 type={selectedTargetType}
-                cible={cible}
-                onEnvoyer={() => handleAfterSend(membre, selectedTargetType, cible)}
+                cible={
+                  selectedTargetType === "cellule"
+                    ? cellules.find((c) => c.id === Number(selectedTarget))
+                    : conseillers.find((c) => c.id === Number(selectedTarget))
+                }
+                onEnvoyer={(updatedMember) => {
+                  const cible =
+                    selectedTargetType === "cellule"
+                      ? cellules.find((c) => c.id === Number(selectedTarget))
+                      : conseillers.find((c) => c.id === Number(selectedTarget));
+                  if (!cible) return;
+                  handleAfterSend(updatedMember, selectedTargetType, cible);
+                }}
                 session={session}
                 showToast={showToast}
               />

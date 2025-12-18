@@ -177,12 +177,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       if (error) throw error;
 
       if (onUpdateMember) onUpdateMember(data);
-
-      setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        onClose();
-      }, 900);
     } catch (err) {
       console.error("Erreur handleSubmit EditMemberPopup:", err);
       alert("❌ Une erreur est survenue.");
@@ -195,7 +189,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
 
-        {/* BOUTON FERMER */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-red-500 font-bold text-xl hover:text-red-700"
@@ -229,6 +222,18 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="Homme">Homme</option>
               <option value="Femme">Femme</option>
               <option value="Autre">Autre</option>
+            </select>
+          </div>
+
+          {/* Comment il est venu */}
+          <div className="flex flex-col">
+            <label className="font-medium mb-1 text-left">Comment il est venu :</label>
+            <select name="venu" value={formData.venu} onChange={handleChange} className="input">
+              <option value="">-- Comment est-il venu ? --</option>
+              <option value="invité">Invité</option>
+              <option value="réseaux">Réseaux</option>
+              <option value="evangélisation">Évangélisation</option>
+              <option value="autre">Autre</option>
             </select>
           </div>
 
@@ -276,9 +281,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input">
               <option value="">-- Cellule --</option>
               {cellules.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.cellule_full}
-                </option>
+                <option key={c.id} value={c.id}>{c.cellule_full}</option>
               ))}
             </select>
           </div>
@@ -289,23 +292,14 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
               <option value="">-- Conseiller --</option>
               {conseillers.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.prenom} {c.nom}
-                </option>
+                <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
               ))}
             </select>
-          </div>
-
-          {/* Comment il est venu */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Comment il est venu :</label>
-            <input type="text" name="venu" value={formData.venu} onChange={handleChange} className="input" />
           </div>
 
           {/* Besoin */}
           <div className="flex flex-col">
             <label className="font-medium mb-2 text-left">Besoin :</label>
-
             {besoinsOptions.map(item => (
               <label key={item} className="flex items-center gap-3 mb-2">
                 <input
@@ -317,12 +311,10 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
                 {item}
               </label>
             ))}
-
             <label className="flex items-center gap-3 mb-2">
               <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} />
               Autre
             </label>
-
             {showAutre && (
               <div className="flex flex-col mt-2">
                 <label className="font-medium mb-1">Précisez :</label>
@@ -345,20 +337,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
           {/* Buttons */}
           <div className="flex gap-4 mt-2">
-            <button onClick={onClose} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md">
-              Annuler
-            </button>
-
-            <button onClick={handleSubmit} disabled={loading} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md">
-              {loading ? "Enregistrement..." : "Sauvegarder"}
-            </button>
+            <button onClick={onClose} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md">Annuler</button>
+            <button onClick={handleSubmit} disabled={loading} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md">{loading ? "Enregistrement..." : "Sauvegarder"}</button>
           </div>
-
-          {success && (
-            <p className="text-green-600 font-semibold text-center mt-3">
-              ✔️ Modifié avec succès !
-            </p>
-          )}
         </div>
 
         <style jsx>{`
@@ -370,7 +351,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
           }
         `}</style>
-
       </div>
     </div>
   );

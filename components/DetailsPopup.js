@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import BoutonEnvoyerPopup from "./BoutonEnvoyerPopup"; // Nouveau composant pour ce popup
 
 export default function DetailsPopup({
   membre,
@@ -29,7 +28,6 @@ export default function DetailsPopup({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Formater les besoins
   const formatBesoins = () => {
     if (!membre.besoin) return "—";
     if (Array.isArray(membre.besoin)) return membre.besoin.join(", ");
@@ -40,13 +38,6 @@ export default function DetailsPopup({
       return membre.besoin;
     }
   };
-
-  // Déterminer la cible sélectionnée
-  const cible = selectedTargetType && selectedTarget
-    ? selectedTargetType === "cellule"
-      ? cellules.find((c) => c.id === Number(selectedTarget))
-      : conseillers.find((c) => c.id === Number(selectedTarget))
-    : null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
@@ -64,7 +55,7 @@ export default function DetailsPopup({
           {membre.prenom} {membre.nom} {membre.star && "⭐"}
         </h2>
 
-        {/* Téléphone centré */}
+        {/* Téléphone */}
         {membre.telephone && (
           <div className="relative flex justify-center mb-2">
             <button
@@ -88,7 +79,7 @@ export default function DetailsPopup({
           </div>
         )}
 
-        {/* Infos du membre */}
+        {/* Infos membre */}
         <div className="text-sm text-black space-y-1">
           <p className="text-center">🏙 Ville : {membre.ville || "—"}</p>
           <p className="text-center">🕊 Statut : {membre.statut || "—"}</p>
@@ -101,7 +92,7 @@ export default function DetailsPopup({
           <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
         </div>
 
-        {/* Envoyer à */}
+        {/* Sélection Envoyer à */}
         <div className="mt-4 w-full">
           <label className="text-sm font-semibold">Envoyer à :</label>
           <select
@@ -125,25 +116,35 @@ export default function DetailsPopup({
             >
               <option value="">-- Sélectionner --</option>
               {selectedTargetType === "cellule"
-                ? cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)
-                : null}
-              {selectedTargetType === "conseiller"
-                ? conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)
-                : null}
+                ? cellules.map(c => (
+                    <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>
+                  ))
+                : conseillers.map(c => (
+                    <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>
+                  ))
+              }
             </select>
           )}
 
           {/* Bouton Envoyer uniquement si cible sélectionnée */}
-          {cible && (
-            <div className="mt-3 text-center">
-              <BoutonEnvoyerPopup
-                membre={membre}
-                type={selectedTargetType}
-                cible={cible}
-                onEnvoyer={() => handleAfterSend(membre.id, selectedTargetType, cible)}
-                session={session}
-                showToast={showToast}
-              />
+          {selectedTarget && (
+            <div className="mt-2 text-center">
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                onClick={() => {
+                  const cible =
+                    selectedTargetType === "cellule"
+                      ? cellules.find(c => c.id === Number(selectedTarget))
+                      : conseillers.find(c => c.id === Number(selectedTarget));
+                  if (!cible) return;
+                  handleAfterSend(membre.id, selectedTargetType, cible);
+                  showToast?.("✅ Contact envoyé et suivi enregistré");
+                  setSelectedTarget(null);
+                  setSelectedTargetType("");
+                }}
+              >
+                Envoyer
+              </button>
             </div>
           )}
         </div>

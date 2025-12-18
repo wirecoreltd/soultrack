@@ -238,6 +238,16 @@ export default function ListMembers() {
       try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; }
     })();
 
+    {view === "card" && (
+        <div className="w-full max-w-5xl space-y-8">
+          {/* Nouveaux Membres */}
+          {nouveauxFiltres.length > 0 && (
+            <div>
+              <p className="text-white text-lg mb-4 ml-1">💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {nouveauxFiltres.map((m) => {
+                  const isOpen = detailsOpen[m.id];
+                  
     return (
       <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4 relative">
         {m.star && <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>}

@@ -25,6 +25,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   const [formData, setFormData] = useState({
     prenom: member?.prenom || "",
     nom: member?.nom || "",
+    sexe: member?.sexe || "",
     telephone: member?.telephone || "",
     ville: member?.ville || "",
     besoin: initialBesoin,
@@ -35,9 +36,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     infos_supplementaires: member?.infos_supplementaires || "",
     is_whatsapp: !!member?.is_whatsapp,
     star: member?.star === true,
-    sexe: member?.sexe || "",
     venu: member?.venu || "",
-    commentaire_suivis: member?.suivi_commentaire_suivis || ""
+    commentaire_suivis: member?.commentaire_suivis || "",
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -49,7 +49,10 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
     async function loadData() {
       try {
-        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
+        const { data: cellulesData } = await supabase
+          .from("cellules")
+          .select("id, cellule_full");
+
         const { data: conseillersData } = await supabase
           .from("profiles")
           .select("id, prenom, nom")
@@ -146,6 +149,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       const payload = {
         prenom: formData.prenom || null,
         nom: formData.nom || null,
+        sexe: formData.sexe || null,
         telephone: formData.telephone || null,
         ville: formData.ville || null,
         statut: formData.statut || null,
@@ -155,7 +159,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         is_whatsapp: !!formData.is_whatsapp,
         star: !!formData.star,
         besoin: JSON.stringify(finalBesoin),
-        sexe: formData.sexe || null,
         venu: formData.venu || null,
         commentaire_suivis: formData.commentaire_suivis || null
       };
@@ -169,7 +172,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
       if (updateError) throw updateError;
 
-      // ⚡ Re-fetch le membre depuis la vue pour obtenir tous les champs calculés
+      // 🔥 Récupère la version à jour depuis la vue pour instantané
       const { data: refreshedMember, error: viewError } = await supabase
         .from("v_membres_full")
         .select("*")
@@ -178,31 +181,37 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
       if (viewError) throw viewError;
 
-      onUpdateMember(refreshedMember);
+      if (typeof onUpdateMember === "function") {
+        onUpdateMember(refreshedMember); // mise à jour instantanée
+      }
 
       setSuccess(true);
       setTimeout(() => { setSuccess(false); onClose(); }, 800);
     } catch (err) {
       console.error("Erreur handleSubmit EditMemberPopup:", err);
       alert("❌ Une erreur est survenue.");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
 
-        {/* BOUTON FERMER */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-red-500 font-bold text-xl hover:text-red-700"
-        >✕</button>
+        >
+          ✕
+        </button>
 
         <h2 className="text-2xl font-bold text-center mb-4">
           Éditer le profil de {member?.prenom} {member?.nom}
         </h2>
 
         <div className="flex flex-col gap-4">
+
           {/* Prénom */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Prénom :</label>
@@ -219,7 +228,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Sexe :</label>
             <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
-              <option value="">-- Sélectionnez --</option>
+              <option value="">-- Choisir le sexe --</option>
               <option value="Homme">Homme</option>
               <option value="Femme">Femme</option>
             </select>
@@ -249,14 +258,22 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             />
           </div>
 
-          {/* Le reste des champs existants… (Besoin, cellule, conseiller, infos, star) */}
+          {/* Les autres champs comme téléphone, statut, cellule, conseiller, besoins, infos, star restent identiques */}
 
           {/* Buttons */}
           <div className="flex gap-4 mt-2">
-            <button onClick={onClose} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md">
+            <button
+              onClick={onClose}
+              className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md"
+            >
               Annuler
             </button>
-            <button onClick={handleSubmit} disabled={loading} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md">
+
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md"
+            >
               {loading ? "Enregistrement..." : "Sauvegarder"}
             </button>
           </div>
@@ -274,9 +291,10 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             border: 1px solid #ccc;
             border-radius: 12px;
             padding: 12px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
           }
         `}</style>
+
       </div>
     </div>
   );

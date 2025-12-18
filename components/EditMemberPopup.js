@@ -187,6 +187,18 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="Femme">Femme</option>
             </select>
           </div>
+          {/* ⭐ DÉFINIR EN TANT QUE SERVITEUR */}
+          <label className="flex items-center gap-3 text-lg font-medium">
+            <input
+              type="checkbox"
+              name="star"
+              checked={formData.star}
+              onChange={toggleStar}
+              className="h-5 w-5"
+            />
+            Définir en tant que serviteur ⭐
+          </label>
+
 
           {/* Comment il est venu */}
           <div className="flex flex-col">

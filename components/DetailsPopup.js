@@ -17,7 +17,6 @@ export default function DetailsPopup({
   const [selectedTarget, setSelectedTarget] = useState("");
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
 
-  // Fermer le menu téléphone si clic en dehors
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (!e.target.closest(".phone-menu") && !e.target.closest(".phone-button")) {
@@ -39,11 +38,12 @@ export default function DetailsPopup({
     }
   };
 
-  const cible = selectedTargetType
-    ? selectedTargetType === "cellule"
-      ? cellules.find((c) => c.id === Number(selectedTarget))
-      : conseillers.find((c) => c.id === Number(selectedTarget))
-    : null;
+  const cible =
+    selectedTargetType && selectedTarget
+      ? selectedTargetType === "cellule"
+        ? cellules.find((c) => c.id === Number(selectedTarget))
+        : conseillers.find((c) => c.id === Number(selectedTarget))
+      : null;
 
   const handleSend = () => {
     if (!cible) return;
@@ -58,7 +58,6 @@ export default function DetailsPopup({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
-        {/* Bouton fermer */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
@@ -66,12 +65,10 @@ export default function DetailsPopup({
           ✖
         </button>
 
-        {/* Nom */}
         <h2 className="text-xl font-bold text-center mb-1">
           {membre.prenom} {membre.nom} {membre.star && "⭐"}
         </h2>
 
-        {/* Téléphone */}
         {membre.telephone && (
           <div className="relative flex justify-center mb-2">
             <button
@@ -94,23 +91,20 @@ export default function DetailsPopup({
           </div>
         )}
 
-        {/* Infos */}
         <div className="text-sm text-black space-y-1">
-          <p className="text-center">🏙 Ville : {membre.ville || "—"}</p>
-          <p className="text-center">🕊 Statut : {membre.statut || "—"}</p>
-          <p>🏠 Cellule : {membre.cellule_ville && membre.cellule_nom ? `${membre.cellule_ville} - ${membre.cellule_nom}` : "—"}</p>
-          <p>👤 Conseiller : {(membre.conseiller_prenom || membre.conseiller_nom) ? `${membre.conseiller_prenom || ""} ${membre.conseiller_nom || ""}`.trim() : "—"}</p>
+          <p className="text-center">🏙 Ville : {membre.ville || ""}</p>
+          <p className="text-center">🕊 Statut : {membre.statut || ""}</p>
+          <p>🏠 Cellule : {membre.cellule_ville && membre.cellule_nom ? `${membre.cellule_ville} - ${membre.cellule_nom}` : ""}</p>
+          <p>👤 Conseiller : {(membre.conseiller_prenom || membre.conseiller_nom) ? `${membre.conseiller_prenom || ""} ${membre.conseiller_nom || ""}`.trim() : ""}</p>
           <p>❓ Besoin : {formatBesoins()}</p>
-          <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
-          <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
-          <p>🧩 Statut initial : {membre.statut_initial || "—"}</p>
-          <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
+          <p>📝 Infos : {membre.infos_supplementaires || ""}</p>
+          <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || ""}</p>
+          <p>🧩 Statut initial : {membre.statut_initial || ""}</p>
+          <p>📝 Commentaire Suivis : {membre.commentaire_suivis || ""}</p>
         </div>
 
-        {/* Envoyer à */}
         <div className="mt-4 w-full">
           <label className="text-sm font-semibold">Envoyer à :</label>
-
           <select
             value={selectedTargetType}
             onChange={(e) => {
@@ -138,7 +132,7 @@ export default function DetailsPopup({
             </select>
           )}
 
-          {/* Bouton Envoyer */}
+          {/* Bouton Envoyer, seulement si une cible est sélectionnée */}
           {cible && (
             <div className="mt-2 text-center">
               <button
@@ -147,16 +141,16 @@ export default function DetailsPopup({
               >
                 Envoyer
               </button>
+            </div>
+          )}
 
-              {/* Liens rapides */}
-              {membre.telephone && (
-                <div className="flex justify-between mt-2 text-sm">
-                  <a href={`tel:${membre.telephone}`} className="text-blue-500 hover:underline">📞 Appeler</a>
-                  <a href={`sms:${membre.telephone}`} className="text-green-500 hover:underline">✉️ SMS</a>
-                  <a href={`https://wa.me/${phone}`} target="_blank" className="text-green-700 hover:underline">💬 WhatsApp</a>
-                  <a href={`https://wa.me/${phone}?text=Bonjour`} target="_blank" className="text-purple-600 hover:underline">📱 Message WA</a>
-                </div>
-              )}
+          {/* Liens WhatsApp / SMS / Appeler, toujours visibles si téléphone */}
+          {membre.telephone && (
+            <div className="flex justify-between mt-2 text-sm">
+              <a href={`tel:${membre.telephone}`} className="text-blue-500 hover:underline">📞 Appeler</a>
+              <a href={`sms:${membre.telephone}`} className="text-green-500 hover:underline">✉️ SMS</a>
+              <a href={`https://wa.me/${phone}`} target="_blank" className="text-green-700 hover:underline">💬 WhatsApp</a>
+              <a href={`https://wa.me/${phone}?text=Bonjour`} target="_blank" className="text-purple-600 hover:underline">📱 Message WA</a>
             </div>
           )}
         </div>

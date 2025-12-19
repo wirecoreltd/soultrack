@@ -208,7 +208,7 @@ export default function SuivisMembres() {
         <p>🏙 Ville : {m.ville || "—"}</p>
         <p>🧩 Comment est-il venu : {m.membre?.venu || m.venu || ""}</p>
         <p> ⚥ Sexe : {m.membre?.sexe || m.sexe || ""}</p>
-        <p>📋 Statut initial : {m.membre?.statut || statutLabels[m.statut_suivis] || ""}</p>
+        <p>📋 Statut initial : {m.membre?.m.statut_initial || statutLabels[m.m.statut_initial] || ""}</p>
         <p>❓Besoin : {(!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })())}</p>
         <p>📝 Infos : {m.infos_supplementaires || "—"}</p>      
 
@@ -270,7 +270,7 @@ export default function SuivisMembres() {
                 <p className="text-sm text-black-700 mb-1">📞 {item.telephone || "—"}</p>
                 <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>              
                 <p className="text-sm text-black-700 mb-1">🏠 Cellule : {item.cellule_full || ""}</p>
-                <p className="text-sm text-black-700 mb-1">🏠 Cellule : {item.cellule_id === null ? (item.responsable || "") : ""}</p>
+                <p className="text-sm text-black-700 mb-1">👤 Conseiller : {item.cellule_id === null ? (item.responsable || "") : ""}</p>
                 
               <button
                 onClick={() => toggleDetails(item.id)}

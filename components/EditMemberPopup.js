@@ -71,6 +71,14 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     setFormData(prev => ({ ...prev, [name]: checked }));
   };
 
+  const toggleStar = (e) => {
+    const checked = e.target.checked;
+    setFormData(prev => ({
+      ...prev,
+      star: checked
+    }));
+  };
+
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
     if (value === "Autre") {
@@ -116,25 +124,22 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         commentaire_suivis: formData.commentaire_suivis || null,
       };
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("membres")
         .update(payload)
-        .eq("id", member.id)
-        .select()
-        .single();
+        .eq("id", member.id);
 
       if (error) throw error;
 
-     const { data: refreshedMember, error: viewError } = await supabase
+      const { data: refreshedMember, error: viewError } = await supabase
         .from("v_membres_full")
         .select("*")
         .eq("id", member.id)
         .single();
-      
-      if (viewError) throw viewError;
-      
-      if (onUpdateMember) onUpdateMember(refreshedMember);
 
+      if (viewError) throw viewError;
+
+      if (onUpdateMember) onUpdateMember(refreshedMember);
 
       setSuccess(true);
       setTimeout(() => {
@@ -187,6 +192,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="Femme">Femme</option>
             </select>
           </div>
+
           {/* ⭐ DÉFINIR EN TANT QUE SERVITEUR */}
           <label className="flex items-center gap-3 text-lg font-medium">
             <input
@@ -198,7 +204,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             />
             Définir en tant que serviteur ⭐
           </label>
-
 
           {/* Comment il est venu */}
           <div className="flex flex-col">

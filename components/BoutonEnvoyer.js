@@ -12,46 +12,75 @@ export default function BoutonEnvoyer({
 }) {
   const [loading, setLoading] = useState(false);
 
-  const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
+  const statutIds = {
+    envoye: 1,
+    "en attente": 2,
+    integrer: 3,
+    refus: 4,
+  };
 
   const sendToWhatsapp = async () => {
     if (!session) {
-      alert("❌ Vous devez être connecté pour envoyer un membre.");
+      alert("❌ Vous devez être connecté.");
       return;
     }
-    if (!cible) {
-      alert("❌ Sélectionnez une cible !");
+
+    if (!cible?.id) {
+      alert("❌ Cible invalide.");
       return;
     }
 
     setLoading(true);
 
     try {
-      /* ================================
-         Vérification doublon
-      ================================= */
-      const { data: existing, error: selectError } = await supabase
-        .from("suivis_membres")
-        .select("id")
-        .eq("telephone", membre.telephone || "");
+      /* =========================
+         1️⃣ Recharger la cellule
+      ========================= */
+      let responsablePrenom = "";
+      let responsableTelephone = "";
 
-      if (selectError) throw selectError;
+      if (type === "cellule") {
+        const { data: cellule, error: celluleError } = await supabase
+          .from("cellules")
+          .select("id, cellule_full, responsable_id")
+          .eq("id", cible.id)
+          .single();
 
-      if (existing.length > 0) {
-        alert(`⚠️ ${membre.prenom} ${membre.nom} est déjà suivi.`);
-        setLoading(false);
-        return;
+        if (celluleError || !cellule?.responsable_id) {
+          throw new Error("Responsable de cellule introuvable");
+        }
+
+        const { data: responsable, error: respError } = await supabase
+          .from("profiles")
+          .select("prenom, telephone")
+          .eq("id", cellule.responsable_id)
+          .single();
+
+        if (respError || !responsable?.telephone) {
+          throw new Error("Le responsable n'a pas de numéro WhatsApp valide");
+        }
+
+        responsablePrenom = responsable.prenom;
+        responsableTelephone = responsable.telephone;
       }
 
-      /* ================================
-         Données de suivi
-      ================================= */
+      if (type === "conseiller") {
+        if (!cible.telephone) {
+          throw new Error("Le conseiller n'a pas de numéro WhatsApp valide");
+        }
+        responsablePrenom = cible.prenom;
+        responsableTelephone = cible.telephone;
+      }
+
+      /* =========================
+         2️⃣ Créer le suivi
+      ========================= */
       const suiviData = {
         membre_id: membre.id,
         prenom: membre.prenom,
         nom: membre.nom,
         telephone: membre.telephone,
-        is_whatsapp: membre.is_whatsapp,
+        is_whatsapp: true,
         ville: membre.ville,
         besoin: membre.besoin,
         infos_supplementaires: membre.infos_supplementaires,
@@ -59,49 +88,16 @@ export default function BoutonEnvoyer({
         created_at: new Date().toISOString(),
       };
 
-      let destPrenom = "—";
-      let destTelephone = "";
-
-      /* ================================
-         CELLULE → RESPONSABLE
-      ================================= */
       if (type === "cellule") {
         suiviData.cellule_id = cible.id;
-        suiviData.cellule_nom = cible.cellule_full || cible.cellule || "—";
-        suiviData.responsable = cible.responsable || "—";
-
-        if (!cible.responsable_id) {
-          throw new Error("Responsable de cellule introuvable");
-        }
-
-        const { data: responsable, error } = await supabase
-          .from("profiles")
-          .select("prenom, telephone")
-          .eq("id", cible.responsable_id)
-          .single();
-
-        if (error || !responsable) {
-          throw new Error("Profil du responsable introuvable");
-        }
-
-        destPrenom = responsable.prenom;
-        destTelephone = responsable.telephone;
+        suiviData.responsable = responsablePrenom;
       }
 
-      /* ================================
-         CONSEILLER
-      ================================= */
       if (type === "conseiller") {
         suiviData.conseiller_id = cible.id;
-        suiviData.responsable = `${cible.prenom} ${cible.nom}`.trim();
-
-        destPrenom = cible.prenom;
-        destTelephone = cible.telephone;
+        suiviData.responsable = responsablePrenom;
       }
 
-      /* ================================
-         Insertion suivi
-      ================================= */
       const { data: inserted, error: insertError } = await supabase
         .from("suivis_membres")
         .insert([suiviData])
@@ -117,10 +113,10 @@ export default function BoutonEnvoyer({
 
       if (onEnvoyer) onEnvoyer(inserted);
 
-      /* ================================
-         MESSAGE WHATSAPP (TON TEXTE)
-      ================================= */
-      let message = `👋 Bonjour ${destPrenom}\n\n`;
+      /* =========================
+         3️⃣ Message WhatsApp
+      ========================= */
+      let message = `👋 Bonjour ${responsablePrenom}\n\n`;
       message += `✨ Un nouveau membre est placé sous tes soins.\n\n`;
       message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
       message += `⚥ Sexe: ${membre.sexe || "—"}\n`;
@@ -137,12 +133,7 @@ export default function BoutonEnvoyer({
       }\n\n`;
       message += `Merci pour ton accompagnement ❤️`;
 
-      const phone = String(destTelephone || "").replace(/\D/g, "");
-
-      if (!phone) {
-        alert("❌ Le responsable n'a pas de numéro WhatsApp valide !");
-        return;
-      }
+      const phone = responsableTelephone.replace(/\D/g, "");
 
       window.open(
         `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
@@ -151,12 +142,12 @@ export default function BoutonEnvoyer({
 
       if (showToast) {
         showToast(
-          `✅ ${membre.prenom} ${membre.nom} a été envoyé à ${destPrenom}`
+          `✅ ${membre.prenom} ${membre.nom} envoyé à ${responsablePrenom}`
         );
       }
     } catch (err) {
-      console.error("Erreur sendToWhatsapp:", err);
-      alert("❌ Une erreur est survenue lors de l'envoi.");
+      console.error("Erreur sendToWhatsapp:", err.message);
+      alert(`❌ ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -166,7 +157,7 @@ export default function BoutonEnvoyer({
     <button
       onClick={sendToWhatsapp}
       disabled={loading}
-      className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg transition-all ${
+      className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg ${
         loading
           ? "bg-gray-400 cursor-not-allowed"
           : "bg-green-500 hover:bg-green-600"

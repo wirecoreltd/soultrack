@@ -34,7 +34,7 @@ export default function BoutonEnvoyer({
 
     try {
       /* =========================
-         1️⃣ Recharger la cellule
+         1️⃣ Recharger la cellule ou conseiller
       ========================= */
       let responsablePrenom = "";
       let responsableTelephone = "";
@@ -106,15 +106,23 @@ export default function BoutonEnvoyer({
 
       if (insertError) throw insertError;
 
-      await supabase
+      /* =========================
+         3️⃣ Mettre à jour le statut du membre
+      ========================= */
+      const { error: updateError } = await supabase
         .from("membres")
         .update({ statut: "actif" })
         .eq("id", membre.id);
 
-      if (onEnvoyer) onEnvoyer(inserted);
+      if (updateError) throw updateError;
 
       /* =========================
-         3️⃣ Message WhatsApp
+         4️⃣ Callback pour refresh UI
+      ========================= */
+      if (onEnvoyer) onEnvoyer({ ...membre, statut: "actif" });
+
+      /* =========================
+         5️⃣ Message WhatsApp
       ========================= */
       let message = `👋 Bonjour ${responsablePrenom}\n\n`;
       message += `✨ Un nouveau membre est placé sous tes soins.\n\n`;
@@ -122,18 +130,19 @@ export default function BoutonEnvoyer({
       message += `⚥ Sexe: ${membre.sexe || "—"}\n`;
       message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
       message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
-      message += `🧩 Comment est-il venu: ${membre.venu || "—"}\n`;
+      message += `🧩 Comment est-il venu : ${membre.venu || "—"}\n`;
       message += `🏙 Ville: ${membre.ville || "—"}\n`;
       message += `🙏 Besoin: ${
         Array.isArray(membre.besoin)
           ? membre.besoin.join(", ")
           : membre.besoin || "—"
       }\n`;
-      message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;
+      message += `📝 Infos supplémentaires: ${
+        membre.infos_supplementaires || "—"
+      }\n\n`;
       message += `Merci pour ton accompagnement ❤️`;
 
       const phone = responsableTelephone.replace(/\D/g, "");
-
       window.open(
         `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
         "_blank"

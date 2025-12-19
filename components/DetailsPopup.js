@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect, useRef } from "react";
 import BoutonEnvoyer from "./BoutonEnvoyer";
 
@@ -104,19 +105,16 @@ export default function DetailsPopup({
               </select>
             )}
 
+            {/* BoutonEnvoyer */}
             {selectedTarget && (() => {
-              const cible = selectedTargetType === "cellule"
-                ? cellules.find(c => String(c.id) === String(selectedTarget))
-                : conseillers.find(c => String(c.id) === String(selectedTarget));
-
-              if (!cible) return null;
+              const cibleId = selectedTarget; // juste l'id suffit
 
               return (
                 <div className="mt-3">
                   <BoutonEnvoyer
                     membre={membre}
                     type={selectedTargetType}
-                    cible={cible}
+                    cible={{ id: cibleId }}
                     session={session}
                     onEnvoyer={(data) => handleAfterSend && handleAfterSend(data, selectedTargetType)}
                     showToast={showToast}

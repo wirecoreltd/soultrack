@@ -121,6 +121,17 @@ export default function BoutonEnvoyer({
       ========================= */
       if (onEnvoyer) onEnvoyer({ ...membre, statut: "actif" });
 
+       let besoinsArray = [];
+      if (Array.isArray(membre.besoin)) {
+        besoinsArray = membre.besoin;
+      } else if (typeof membre.besoin === "string" && membre.besoin.startsWith("[")) {
+        try {
+          besoinsArray = JSON.parse(membre.besoin);
+        } catch {
+          besoinsArray = [];
+        }
+      }
+
       /* =========================
          5️⃣ Message WhatsApp
       ========================= */
@@ -133,9 +144,7 @@ export default function BoutonEnvoyer({
       message += `🧩 Comment est-il venu : ${membre.venu || "—"}\n`;
       message += `🏙 Ville: ${membre.ville || "—"}\n`;
       message += `🙏 Besoin: ${
-        Array.isArray(membre.besoin)
-          ? membre.besoin.join(", ")
-          : membre.besoin || "—"
+        besoinsArray.length > 0 ? besoinsArray.join(", ") : "—"
       }\n`;
       message += `📝 Infos supplémentaires: ${
         membre.infos_supplementaires || "—"

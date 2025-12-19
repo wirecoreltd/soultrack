@@ -33,7 +33,9 @@ export default function BoutonEnvoyer({
     setLoading(true);
 
     try {
-      // 1️⃣ Récupérer le responsable
+      /* =========================
+         1️⃣ Recharger la cellule
+      ========================= */
       let responsablePrenom = "";
       let responsableTelephone = "";
 
@@ -70,7 +72,9 @@ export default function BoutonEnvoyer({
         responsableTelephone = cible.telephone;
       }
 
-      // 2️⃣ Créer le suivi
+      /* =========================
+         2️⃣ Créer le suivi
+      ========================= */
       const suiviData = {
         membre_id: membre.id,
         prenom: membre.prenom,
@@ -79,7 +83,6 @@ export default function BoutonEnvoyer({
         is_whatsapp: true,
         ville: membre.ville,
         besoin: membre.besoin,
-        venu: membre.venu,
         infos_supplementaires: membre.infos_supplementaires,
         statut_suivis: statutIds.envoye,
         created_at: new Date().toISOString(),
@@ -103,37 +106,34 @@ export default function BoutonEnvoyer({
 
       if (insertError) throw insertError;
 
-      // 3️⃣ Mettre à jour le statut du membre
-      const { error: updateError } = await supabase
+      await supabase
         .from("membres")
         .update({ statut: "actif" })
         .eq("id", membre.id);
 
-      if (updateError) throw updateError;
-
-      // 🔁 Rafraîchissement automatique via callback parent
       if (onEnvoyer) onEnvoyer(inserted);
 
-      // 4️⃣ Envoyer message WhatsApp
+      /* =========================
+         3️⃣ Message WhatsApp
+      ========================= */
       let message = `👋 Bonjour ${responsablePrenom}\n\n`;
       message += `✨ Un nouveau membre est placé sous tes soins.\n\n`;
       message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
       message += `⚥ Sexe: ${membre.sexe || "—"}\n`;
       message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
       message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
-      message += `🧩 Venu: ${membre.venu || "—"}\n`;     
+      message += `🧩 Comment est-il venu: ${membre.venu || "—"}\n`;
       message += `🏙 Ville: ${membre.ville || "—"}\n`;
       message += `🙏 Besoin: ${
         Array.isArray(membre.besoin)
           ? membre.besoin.join(", ")
           : membre.besoin || "—"
       }\n`;
-      message += `📝 Infos supplémentaires: ${
-        membre.infos_supplementaires || "—"
-      }\n\n`;
+      message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;
       message += `Merci pour ton accompagnement ❤️`;
 
       const phone = responsableTelephone.replace(/\D/g, "");
+
       window.open(
         `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
         "_blank"

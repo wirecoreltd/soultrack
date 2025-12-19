@@ -37,6 +37,7 @@ export default function SuivisMembres() {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error("Utilisateur non connecté");
 
+      // 2️⃣ Récupérer le profil de l'utilisateur
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("id, prenom, nom, role")
@@ -47,34 +48,21 @@ export default function SuivisMembres() {
       setPrenom(profileData.prenom || "cher membre");
       setRole(profileData.role);
 
+      // 3️⃣ Récupérer les suivis selon le rôle
       const tableName = "suivis_membres_view";
       let suivisData = [];
 
       if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
         const { data, error } = await supabase
           .from(tableName)
-          .select(`
-            *,
-            membres (
-              sexe,
-              venu,
-              statut
-            )
-          `)
+          .select("*")
           .order("created_at", { ascending: false });
         if (error) throw error;
         suivisData = data;
       } else if (profileData.role === "Conseiller") {
         const { data, error } = await supabase
           .from(tableName)
-          .select(`
-            *,
-            membres (
-              sexe,
-              venu,
-              statut
-            )
-          `)
+          .select("*")
           .eq("conseiller_id", profileData.id)
           .order("created_at", { ascending: false });
         if (error) throw error;
@@ -90,14 +78,7 @@ export default function SuivisMembres() {
         if (celluleIds.length > 0) {
           const { data, error } = await supabase
             .from(tableName)
-            .select(`
-              *,
-              membres (
-                sexe,
-                venu,
-                statut
-              )
-            `)
+            .select("*")
             .in("cellule_id", celluleIds)
             .order("created_at", { ascending: false });
           if (error) throw error;
@@ -105,8 +86,21 @@ export default function SuivisMembres() {
         }
       }
 
-      setSuivis(suivisData || []);
-      if (!suivisData || suivisData.length === 0) setMessage("Aucun membre à afficher.");
+      // 4️⃣ Récupérer les infos des membres
+      const membresIds = suivisData.map(s => s.membre_id);
+      const { data: membresData } = await supabase
+        .from("membres")
+        .select("id, sexe, venu, statut")
+        .in("id", membresIds);
+
+      // 5️⃣ Fusionner les infos dans les suivis
+      const merged = suivisData.map(s => ({
+        ...s,
+        membre: membresData.find(m => m.id === s.membre_id) || {}
+      }));
+
+      setSuivis(merged);
+      if (!merged || merged.length === 0) setMessage("Aucun membre à afficher.");
     } catch (err) {
       console.error("❌ Erreur:", err.message || err);
       setMessage("Erreur lors de la récupération des suivis.");
@@ -118,6 +112,7 @@ export default function SuivisMembres() {
 
   fetchSuivis();
 }, []);
+
 
   const handleStatusChange = (id, value) => setStatusChanges(prev => ({ ...prev, [id]: parseInt(value, 10) }));
   const handleCommentChange = (id, value) => setCommentChanges(prev => ({ ...prev, [id]: value }));

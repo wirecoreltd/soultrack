@@ -107,10 +107,12 @@ export default function DetailsPopup({
 
             {selectedTarget && (() => {
               const cible = selectedTargetType === "cellule"
-                ? cellules.find((c) => String(c.id) === String(selectedTarget))
-                : conseillers.find((c) => String(c.id) === String(selectedTarget));
+                ? cellules.find(c => String(c.id) === String(selectedTarget))
+                : conseillers.find(c => String(c.id) === String(selectedTarget));
 
-              return cible ? (
+              if (!cible) return null;
+
+              return (
                 <div className="mt-3">
                   <BoutonEnvoyer
                     membre={membre}
@@ -121,10 +123,10 @@ export default function DetailsPopup({
                     showToast={showToast}
                   />
                 </div>
-              ) : null;
+              );
             })()}
-          </div>
 
+          </div>
         </div>
 
         {/* ================= ALIGNÉ À GAUCHE ================= */}

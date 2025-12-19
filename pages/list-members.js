@@ -436,13 +436,14 @@ return (
       </>
     )}  
 
-        {/* Liste */}
-        {view === "card" ? ( // ✅ MODIF : condition sur view
-          <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-            {nouveauxFiltres.map(m => renderMemberCard({ ...m, isNouveau: true }))}
-            {anciensFiltres.map(m => renderMemberCard(m))}
-          </div>
-        )}        
+        {/* Liste Vue Carte */}
+          {view === "card" && (
+            <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+              {nouveauxFiltres.map(m => renderMemberCard({ ...m, isNouveau: true }))}
+              {anciensFiltres.map(m => renderMemberCard(m))}
+            </div>
+          )}
+        
 
       {/* ==================== VUE TABLE ==================== */}
         {view === "table" && (

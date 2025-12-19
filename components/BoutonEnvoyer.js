@@ -19,7 +19,6 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
     setLoading(true);
     try {
-      // Vérification si déjà suivi
       const { data: existing, error: selectError } = await supabase
         .from("suivis_membres")
         .select("*")
@@ -33,7 +32,6 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         return;
       }
 
-      // Préparer l'objet de suivi
       const suiviData = {
         membre_id: membre.id,
         prenom: membre.prenom,
@@ -47,7 +45,6 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         created_at: new Date().toISOString(),
       };
 
-      // Gestion de la cible
       let cibleNom = "—";
       let ciblePhone = "";
 
@@ -64,7 +61,6 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         ciblePhone = cible.telephone || "";
       }
 
-      // Insérer le suivi
       const { data: insertedData, error: insertError } = await supabase
         .from("suivis_membres")
         .insert([suiviData])
@@ -72,14 +68,12 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         .single();
       if (insertError) throw insertError;
 
-      // Mettre à jour le statut du membre
       const { error: updateMemberError } = await supabase
         .from("membres")
         .update({ statut: "actif" })
         .eq("id", membre.id);
       if (updateMemberError) throw updateMemberError;
 
-      // Callback
       if (onEnvoyer) onEnvoyer(insertedData);
 
       // Message WhatsApp

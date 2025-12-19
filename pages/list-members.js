@@ -395,7 +395,7 @@ return (
       <span className="text-white text-sm ml-2">{members.filter(m => !filter || m.statut === filter).length} membres</span>
     </div>
 
-    {/* Toggle Vue Carte / Vue Table */}
+    {/* Toggle Vue Carte / Vue Table */}      
       <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}

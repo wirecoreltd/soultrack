@@ -309,26 +309,32 @@ const renderMemberCard = (m) => {
     </select>
   )}
 
-  {/* Affichage du bouton seulement si une cible est sélectionnée */}
-  {selectedTargets[m.id] && (
-    <div className="pt-2">
-      <BoutonEnvoyer
-        membre={m}
-        type={selectedTargetType[m.id]}
-        cible={selectedTargetType[m.id] === "cellule" ? cellules.find(c => c.id === selectedTargets[m.id]) : conseillers.find(c => c.id === selectedTargets[m.id])}
-        onEnvoyer={id => handleAfterSend(
-          id,
-          selectedTargetType[m.id],
-          selectedTargetType[m.id] === "cellule"
-            ? cellules.find(c => c.id === selectedTargets[m.id])
-            : conseillers.find(c => c.id === selectedTargets[m.id])
-        )}
-        session={session}
-        showToast={showToast}
-      />
-    </div>
-  )}
-</div>
+  {/* Affichage du bouton seulement si une option valide est sélectionnée */}
+    {selectedTargetType[m.id] && selectedTargets[m.id] && (
+      <div className="pt-2">
+        <BoutonEnvoyer
+          membre={m}
+          type={selectedTargetType[m.id]}
+          cible={
+            selectedTargetType[m.id] === "cellule"
+              ? cellules.find(c => c.id === selectedTargets[m.id])
+              : conseillers.find(c => c.id === selectedTargets[m.id])
+          }
+          onEnvoyer={id =>
+            handleAfterSend(
+              id,
+              selectedTargetType[m.id],
+              selectedTargetType[m.id] === "cellule"
+                ? cellules.find(c => c.id === selectedTargets[m.id])
+                : conseillers.find(c => c.id === selectedTargets[m.id])
+            )
+          }
+          session={session}
+          showToast={showToast}
+        />
+      </div>
+    )}
+  </div>
 
 
         <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2" aria-label={`Détails ${m.prenom} ${m.nom}`}>

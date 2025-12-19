@@ -228,7 +228,14 @@ export default function ListMembers() {
   }
 };
 
-
+  const today = new Date();
+const dateDuJour = today.toLocaleDateString("fr-FR", {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+  
   // -------------------- Rendu Carte --------------------
 const renderMemberCard = (m) => {
   const isOpen = detailsOpen[m.id];

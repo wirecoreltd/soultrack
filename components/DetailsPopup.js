@@ -112,12 +112,17 @@ export default function DetailsPopup({
 
               if (!cible) return null;
 
+              // Toujours passer un numéro de téléphone valide pour la cible
+              const ciblePhone = cible.telephone || cible.responsable_telephone || membre.telephone || "";
+
+              const cibleAvecPhone = { ...cible, telephone: ciblePhone };
+
               return (
                 <div className="mt-3">
                   <BoutonEnvoyer
                     membre={membre}
                     type={selectedTargetType}
-                    cible={cible}
+                    cible={cibleAvecPhone}
                     session={session}
                     onEnvoyer={(data) => handleAfterSend && handleAfterSend(data, selectedTargetType)}
                     showToast={showToast}

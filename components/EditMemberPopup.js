@@ -220,20 +220,16 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             </select>
           </div>
 
-          {/* Statut initial */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Statut à l'arrivée :</label>
-            <input type="text" name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="input" />
-          </div>
-
           {/* Statut */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Statut :</label>
             <select name="statut" value={formData.statut} onChange={handleChange} className="input">
               <option value="">-- Statut --</option>
-              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+              <option value="actif">Actif</option>
               <option value="a déjà son église">A déjà son église</option>
-              <option value="visiteur">Visiteur</option>              
+              <option value="integrer">Intégrer</option>
+              <option value="ancie">Ancien</option>
+            
             </select>
           </div>
 
@@ -325,6 +321,22 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Informations :</label>
             <textarea name="infos_supplementaires" rows={2} value={formData.infos_supplementaires} onChange={handleChange} className="input" />
+          </div>
+
+          {/* Statut initial */}
+          <div className="flex flex-col">
+            <label className="font-medium mb-1 text-left">Statut à l'arrivée :</label>
+            <select
+              name="statut_initial"
+              value={formData.statut_initial}
+              onChange={handleChange}
+              className="input"
+            >
+              <option value="">-- Statut --</option>
+              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+              <option value="a déjà son église">A déjà son église</option>
+              <option value="visiteur">Visiteur</option>
+            </select>
           </div>
 
           {/* Commentaire suivis */}

@@ -408,9 +408,7 @@ return (
           {anciensFiltres.map(m => renderMemberCard(m))}
         </div>
       </>
-    )}
-  </div>
-);
+    )}  
 
       {/* ==================== VUE TABLE ==================== */}
 {view === "table" && (

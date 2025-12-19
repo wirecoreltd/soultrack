@@ -442,8 +442,10 @@ return (
             {nouveauxFiltres.map(m => renderMemberCard({ ...m, isNouveau: true }))}
             {anciensFiltres.map(m => renderMemberCard(m))}
           </div>
-        ) : ( // ✅ MODIF : vue table
-          <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+            </>
+          )}
+        </>
+      )}        
 
       {/* ==================== VUE TABLE ==================== */}
         {view === "table" && (

@@ -31,13 +31,13 @@ export default function DetailsPopup({
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-xl max-w-md w-full p-6 relative overflow-y-auto max-h-[95vh]">
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
 
         {/* Fermer */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-red-500 font-bold text-xl hover:text-red-700"
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
         >
           ✖
         </button>
@@ -50,7 +50,7 @@ export default function DetailsPopup({
 
           {/* Téléphone */}
           {membre.telephone && (
-            <div className="relative mt-2" ref={phoneMenuRef}>
+            <div className="relative mt-1" ref={phoneMenuRef}>
               <button
                 onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
                 className="text-orange-500 underline font-semibold"
@@ -74,9 +74,7 @@ export default function DetailsPopup({
 
           {/* Envoyer à centré sous statut */}
           <div className="mt-3 w-full">
-            <label className="font-semibold text-sm mb-1 block">Envoyer à :</label>
-
-            {/* Type de cible */}
+            <label className="font-semibold text-sm">Envoyer à :</label>
             <select
               value={selectedTargetType}
               onChange={(e) => {
@@ -90,11 +88,10 @@ export default function DetailsPopup({
               <option value="conseiller">Un Conseiller</option>
             </select>
 
-            {/* Cible */}
             {selectedTargetType && (
               <select
                 value={selectedTarget || ""}
-                onChange={(e) => setSelectedTarget(Number(e.target.value))}
+                onChange={(e) => setSelectedTarget(e.target.value)}
                 className="mt-2 w-full border rounded px-2 py-1 text-sm"
               >
                 <option value="">-- Sélectionner --</option>
@@ -108,7 +105,6 @@ export default function DetailsPopup({
               </select>
             )}
 
-            {/* Bouton Envoyer */}
             {selectedTarget && (
               <div className="mt-3">
                 <BoutonEnvoyer

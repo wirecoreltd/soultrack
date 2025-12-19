@@ -30,57 +30,94 @@ export default function SuivisMembres() {
   const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
 
   useEffect(() => {
-    const fetchSuivis = async () => {
-      setLoading(true);
-      try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) throw new Error("Utilisateur non connecté");
+  const fetchSuivis = async () => {
+    setLoading(true);
+    try {
+      // 1️⃣ Récupérer l'utilisateur connecté
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error("Utilisateur non connecté");
 
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom, role")
-          .eq("id", user.id)
-          .single();
-        if (profileError || !profileData) throw profileError;
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, role")
+        .eq("id", user.id)
+        .single();
+      if (profileError || !profileData) throw profileError;
 
-        setPrenom(profileData.prenom || "cher membre");
-        setRole(profileData.role);
+      setPrenom(profileData.prenom || "cher membre");
+      setRole(profileData.role);
 
-        const tableName = "suivis_membres_view";
-        let suivisData = [];
+      const tableName = "suivis_membres_view";
+      let suivisData = [];
 
-        if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
-          const { data, error } = await supabase.from(tableName).select("*").order("created_at", { ascending: false });
+      if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
+        const { data, error } = await supabase
+          .from(tableName)
+          .select(`
+            *,
+            membres (
+              sexe,
+              venu,
+              statut
+            )
+          `)
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        suivisData = data;
+      } else if (profileData.role === "Conseiller") {
+        const { data, error } = await supabase
+          .from(tableName)
+          .select(`
+            *,
+            membres (
+              sexe,
+              venu,
+              statut
+            )
+          `)
+          .eq("conseiller_id", profileData.id)
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        suivisData = data;
+      } else if (profileData.role === "ResponsableCellule") {
+        const { data: cellulesData, error: cellulesError } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", profileData.id);
+        if (cellulesError) throw cellulesError;
+
+        const celluleIds = cellulesData?.map(c => c.id) || [];
+        if (celluleIds.length > 0) {
+          const { data, error } = await supabase
+            .from(tableName)
+            .select(`
+              *,
+              membres (
+                sexe,
+                venu,
+                statut
+              )
+            `)
+            .in("cellule_id", celluleIds)
+            .order("created_at", { ascending: false });
           if (error) throw error;
           suivisData = data;
-        } else if (profileData.role === "Conseiller") {
-          const { data, error } = await supabase.from(tableName).select("*").eq("conseiller_id", profileData.id).order("created_at", { ascending: false });
-          if (error) throw error;
-          suivisData = data;
-        } else if (profileData.role === "ResponsableCellule") {
-          const { data: cellulesData, error: cellulesError } = await supabase.from("cellules").select("id").eq("responsable_id", profileData.id);
-          if (cellulesError) throw cellulesError;
-
-          const celluleIds = cellulesData?.map(c => c.id) || [];
-          if (celluleIds.length > 0) {
-            const { data, error } = await supabase.from(tableName).select("*").in("cellule_id", celluleIds).order("created_at", { ascending: false });
-            if (error) throw error;
-            suivisData = data;
-          }
         }
-
-        setSuivis(suivisData || []);
-        if (!suivisData || suivisData.length === 0) setMessage("Aucun membre à afficher.");
-      } catch (err) {
-        console.error("❌ Erreur:", err.message || err);
-        setMessage("Erreur lors de la récupération des suivis.");
-        setSuivis([]);
-      } finally {
-        setLoading(false);
       }
-    };
-    fetchSuivis();
-  }, []);
+
+      setSuivis(suivisData || []);
+      if (!suivisData || suivisData.length === 0) setMessage("Aucun membre à afficher.");
+    } catch (err) {
+      console.error("❌ Erreur:", err.message || err);
+      setMessage("Erreur lors de la récupération des suivis.");
+      setSuivis([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchSuivis();
+}, []);
 
   const handleStatusChange = (id, value) => setStatusChanges(prev => ({ ...prev, [id]: parseInt(value, 10) }));
   const handleCommentChange = (id, value) => setCommentChanges(prev => ({ ...prev, [id]: value }));

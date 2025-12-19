@@ -120,12 +120,11 @@ export default function DetailsPopup({
                       session={session}
                       onEnvoyer={(data) => handleAfterSend && handleAfterSend(data, selectedTargetType)}
                       showToast={showToast}
-                            />
-
-              </div>
-            )}
-          </div>
-        </div>
+                    />
+                  </div>
+                ) : null;
+              })()
+            )}      
 
         {/* ================= ALIGNÉ À GAUCHE ================= */}
         <div className="mt-5 text-sm text-black space-y-1">

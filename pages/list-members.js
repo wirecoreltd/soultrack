@@ -395,7 +395,7 @@ return (
       <span className="text-white text-sm ml-2">{members.filter(m => !filter || m.statut === filter).length} membres</span>
     </div>
 
-    {/* Toggle Vue Carte / Vue Table */}      
+    {/* Toggle Vue Carte / Vue Table */}
       <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
@@ -404,41 +404,42 @@ return (
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
       </div>
-
-    {/* Section Nouveau */}
-    {nouveauxFiltres.length > 0 && (
-      <>
-        <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">💖 Bien aimé venu le {dateDuJour}</h2>
-        <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-          {nouveauxFiltres.map(m => renderMemberCard({ ...m, isNouveau: true }))}
-        </div>
-      </>
-    )}
-
-    {/* Section Ancien */}
-    {anciensFiltres.length > 0 && (
-      <>
-        <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">Membres existants</h2>
-        <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-          {anciensFiltres.map(m => renderMemberCard(m))}
-        </div>
-      </>
-    )}  
-
-        {/* Liste Vue Carte */}
-          {view === "card" && (
-            <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-              {nouveauxFiltres.map(m => renderMemberCard({ ...m, isNouveau: true }))}
-              {anciensFiltres.map(m => renderMemberCard(m))}
-            </div>
+      
+      {/* Affichage Vue Carte */}
+      {view === "card" && (
+        <>
+          {/* Section Nouveau */}
+          {nouveauxFiltres.length > 0 && (
+            <>
+              <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">
+                💖 Bien aimé venu le {dateDuJour}
+              </h2>
+              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+                {nouveauxFiltres.map(m => renderMemberCard({ ...m, isNouveau: true }))}
+              </div>
+            </>
           )}
-                    
-          {view === "table" && (
-            <div className="w-full max-w-6xl overflow-x-auto">
-              {/* Table des membres */}
-            </div>
+      
+          {/* Section Ancien */}
+          {anciensFiltres.length > 0 && (
+            <>
+              <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">
+                Membres existants
+              </h2>
+              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                {anciensFiltres.map(m => renderMemberCard(m))}
+              </div>
+            </>
           )}
-       
+        </>
+      )}
+      
+      {/* Affichage Vue Table */}
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto">
+          {/* Table des membres */}
+        </div>
+      )}       
 
       {/* ==================== VUE TABLE ==================== */}
         {view === "table" && (

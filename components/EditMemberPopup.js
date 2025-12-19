@@ -63,7 +63,17 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+
+    // Si on sélectionne un conseiller, on supprime la cellule
+    if (name === "conseiller_id" && value) {
+      setFormData(prev => ({ ...prev, conseiller_id: value, cellule_id: "" }));
+    }
+    // Si on sélectionne une cellule, on supprime le conseiller
+    else if (name === "cellule_id" && value) {
+      setFormData(prev => ({ ...prev, cellule_id: value, conseiller_id: "" }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleCheckboxChange = (e) => {
@@ -183,7 +193,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input" />
           </div>
 
-          {/* ⭐ DÉFINIR EN TANT QUE SERVITEUR */}
+          {/* ⭐ Serviteur */}
           <label className="flex items-center gap-3 text-lg font-medium">
             <input
               type="checkbox"
@@ -193,12 +203,21 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               className="h-5 w-5"
             />
             Définir en tant que serviteur ⭐
-          </label>  
+          </label>
 
           {/* Ville */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Ville :</label>
             <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="input" />
+          </div>
+
+          {/* WhatsApp */}
+          <div className="flex flex-col">
+            <label className="font-medium mb-1 text-left">WhatsApp :</label>
+            <select name="is_whatsapp" value={formData.is_whatsapp ? "oui" : "non"} onChange={(e) => setFormData(prev => ({ ...prev, is_whatsapp: e.target.value === "oui" }))} className="input">
+              <option value="oui">Oui</option>
+              <option value="non">Non</option>
+            </select>
           </div>
 
           {/* Statut */}
@@ -227,7 +246,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="">-- Cellule --</option>
               {cellules.map(c => (
                 <option key={c.id} value={c.id}>
-                  {c.cellule_full}  {/* Rose Hill – Berto */}
+                  {c.cellule_full}
                 </option>
               ))}
             </select>
@@ -299,7 +318,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             </select>
           </div>
 
-            {/* Infos supplémentaires */}
+          {/* Infos supplémentaires */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Informations :</label>
             <textarea name="infos_supplementaires" rows={2} value={formData.infos_supplementaires} onChange={handleChange} className="input" />

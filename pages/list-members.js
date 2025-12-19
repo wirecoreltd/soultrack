@@ -230,7 +230,7 @@ export default function ListMembers() {
 
 
   // -------------------- Rendu Carte --------------------
-const renderMemberCard = (m, isNouveau = false) => {
+const renderMemberCard = (m) => {
   const isOpen = detailsOpen[m.id];
   const besoins = (() => {
     if (!m.besoin) return "—";
@@ -241,7 +241,7 @@ const renderMemberCard = (m, isNouveau = false) => {
   return (
     <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4 relative">
       {m.star && <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>}
-      {isNouveau && <span className="absolute top-3 left-3 bg-green-400 text-white px-2 py-1 rounded text-xs font-semibold">Nouveau</span>}
+      {m.isNouveau && <span className="absolute top-3 left-3 bg-green-400 text-white px-2 py-1 rounded text-xs font-semibold">Nouveau</span>}
       
       <div className="flex flex-col items-center">
         <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
@@ -345,6 +345,7 @@ const renderMemberCard = (m, isNouveau = false) => {
   );
 };
 
+// -------------------- Rendu des sections Nouveau / Ancien --------------------
 return (
   <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
     {/* Top Bar */}
@@ -389,16 +390,27 @@ return (
       )}
     </div>
 
-    {/* Liste */}
-    {view === "card" ? (
-      <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-        {nouveauxFiltres.map(m => renderMemberCard(m, true))}   {/* Nouveau */}
-        {anciensFiltres.map(m => renderMemberCard(m))}          {/* Ancien */}
-      </div>
-    ) : (
-      <div className="w-full max-w-6xl overflow-x-auto transition duration-200">          
+    {/* Section Nouveau */}
+    {nouveauxFiltres.length > 0 && (
+      <>
+        <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">💖 Bien aimé venu le {dateDuJour}</h2>
+        <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+          {nouveauxFiltres.map(m => renderMemberCard({ ...m, isNouveau: true }))}
         </div>
-      )}
+      </>
+    )}
+
+    {/* Section Ancien */}
+    {anciensFiltres.length > 0 && (
+      <>
+        <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">Membres existants</h2>
+        <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+          {anciensFiltres.map(m => renderMemberCard(m))}
+        </div>
+      </>
+    )}
+  </div>
+);
 
       {/* ==================== VUE TABLE ==================== */}
 {view === "table" && (

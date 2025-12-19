@@ -29,6 +29,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     besoin: initialBesoin,
     autreBesoin: "",
     statut: member?.statut || "",
+    statut_initial: member?.statut_initial || "", // <--- Statut initial
     cellule_id: member?.cellule_id ?? "",
     conseiller_id: member?.conseiller_id ?? "",
     infos_supplementaires: member?.infos_supplementaires || "",
@@ -64,12 +65,10 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Si on sélectionne un conseiller, on supprime la cellule
+    // Gestion exclusivité cellule/conseiller
     if (name === "conseiller_id" && value) {
       setFormData(prev => ({ ...prev, conseiller_id: value, cellule_id: "" }));
-    }
-    // Si on sélectionne une cellule, on supprime le conseiller
-    else if (name === "cellule_id" && value) {
+    } else if (name === "cellule_id" && value) {
       setFormData(prev => ({ ...prev, cellule_id: value, conseiller_id: "" }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
@@ -123,6 +122,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         telephone: formData.telephone || null,
         ville: formData.ville || null,
         statut: formData.statut || null,
+        statut_initial: formData.statut_initial || null, // <--- Statut initial
         cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
         conseiller_id: formData.conseiller_id === "" ? null : formData.conseiller_id,
         infos_supplementaires: formData.infos_supplementaires || null,
@@ -220,6 +220,12 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             </select>
           </div>
 
+          {/* Statut initial */}
+          <div className="flex flex-col">
+            <label className="font-medium mb-1 text-left">Statut à l'arrivée :</label>
+            <input type="text" name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="input" />
+          </div>
+
           {/* Statut */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Statut :</label>
@@ -227,10 +233,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="">-- Statut --</option>
               <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
               <option value="a déjà son église">A déjà son église</option>
-              <option value="visiteur">Visiteur</option>
-              <option value="actif">Actif</option>
-              <option value="ancien">Ancien</option>
-              <option value="Integrer">Intégrer</option>
+              <option value="visiteur">Visiteur</option>              
             </select>
           </div>
 

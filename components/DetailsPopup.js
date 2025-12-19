@@ -112,13 +112,14 @@ export default function DetailsPopup({
                   type={selectedTargetType}
                   cible={
                     selectedTargetType === "cellule"
-                      ? cellules.find((c) => c.id === selectedTarget)
-                      : conseillers.find((c) => c.id === selectedTarget)
+                      ? cellules.find((c) => String(c.id) === String(selectedTarget))
+                      : conseillers.find((c) => String(c.id) === String(selectedTarget))
                   }
                   session={session}
                   onEnvoyer={(data) => handleAfterSend && handleAfterSend(data, selectedTargetType)}
                   showToast={showToast}
                 />
+
               </div>
             )}
           </div>

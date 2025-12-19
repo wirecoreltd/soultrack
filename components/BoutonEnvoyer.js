@@ -94,7 +94,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;
       message += `Merci pour ton accompagnement ❤️`;
 
-      const phone = (ciblePhone || "").replace(/\D/g, "");
+      const phone = ciblePhone.replace(/\D/g, "");
       if (!phone) alert("❌ La cible n'a pas de numéro WhatsApp valide !");
       else {
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");

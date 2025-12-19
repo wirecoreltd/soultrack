@@ -411,8 +411,6 @@ return (
           Vue Table
         </button>
       </div>
-      /div>
-
 
     {/* Section Nouveau */}
     {nouveauxFiltres.length > 0 && (

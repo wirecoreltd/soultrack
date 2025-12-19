@@ -400,17 +400,12 @@ return (
       <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
-          className={`text-sm underline ${view === "card" ? "text-yellow" : "text-gray-300"}`}
+          className="text-sm underline text-yellow"
         >
-          Vue Carte
-        </button>
-        <button
-          onClick={() => setView("table")}
-          className={`text-sm font-semibold underline ${view === "table" ? "text-white" : "text-gray-300"}`}
-        >
-          Vue Table
+          {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
       </div>
+
 
     {/* Section Nouveau */}
     {nouveauxFiltres.length > 0 && (

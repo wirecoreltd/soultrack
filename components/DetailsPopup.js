@@ -106,19 +106,21 @@ export default function DetailsPopup({
             )}
 
             {selectedTarget && (
-              <div className="mt-3">
-                <BoutonEnvoyer
-                  membre={membre}
-                  type={selectedTargetType}
-                  cible={
-                    selectedTargetType === "cellule"
-                      ? cellules.find((c) => String(c.id) === String(selectedTarget))
-                      : conseillers.find((c) => String(c.id) === String(selectedTarget))
-                  }
-                  session={session}
-                  onEnvoyer={(data) => handleAfterSend && handleAfterSend(data, selectedTargetType)}
-                  showToast={showToast}
-                />
+              (() => {
+                const cible = selectedTargetType === "cellule"
+                  ? cellules.find((c) => String(c.id) === String(selectedTarget))
+                  : conseillers.find((c) => String(c.id) === String(selectedTarget));
+            
+                return cible ? (
+                  <div className="mt-3">
+                    <BoutonEnvoyer
+                      membre={membre}
+                      type={selectedTargetType}
+                      cible={cible}
+                      session={session}
+                      onEnvoyer={(data) => handleAfterSend && handleAfterSend(data, selectedTargetType)}
+                      showToast={showToast}
+                            />
 
               </div>
             )}

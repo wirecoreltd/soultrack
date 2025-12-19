@@ -336,7 +336,6 @@ const renderMemberCard = (m) => {
             )}
           </div>
 
-
         <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2" aria-label={`Détails ${m.prenom} ${m.nom}`}>
           {isOpen ? "Fermer détails" : "Détails"}
         </button>
@@ -433,12 +432,13 @@ return (
               {anciensFiltres.map(m => renderMemberCard(m))}
             </div>
           )}
-          
+                    
           {view === "table" && (
             <div className="w-full max-w-6xl overflow-x-auto">
               {/* Table des membres */}
             </div>
-          )}       
+          )}
+       
 
       {/* ==================== VUE TABLE ==================== */}
         {view === "table" && (

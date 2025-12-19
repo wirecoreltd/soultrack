@@ -226,8 +226,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             <select name="statut" value={formData.statut} onChange={handleChange} className="input">
               <option value="">-- Statut --</option>
               <option value="actif">Actif</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="integrer">Intégrer</option>
+              <option value="a déjà son église">A déjà son église</option>              
               <option value="ancien">Ancien</option>
             
             </select>

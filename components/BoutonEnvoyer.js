@@ -19,7 +19,6 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
     setLoading(true);
     try {
-      // Vérification si déjà suivi
       const { data: existing, error: selectError } = await supabase
         .from("suivis_membres")
         .select("*")
@@ -49,16 +48,16 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
       if (type === "cellule") {
         suiviData.cellule_id = cible.id;
-        suiviData.cellule_nom = cible.cellule;
+        // fallback si cellule_full absent
+        suiviData.cellule_nom = cible.cellule_full || cible.cellule || "—";
         suiviData.responsable = cible.responsable || null;
         cible.telephone = cible.telephone || membre.telephone || "";
       } else if (type === "conseiller") {
         suiviData.conseiller_id = cible.id;
-        suiviData.responsable = `${cible.prenom || ""} ${cible.nom || ""}`.trim();
+        suiviData.responsable = `${cible.prenom || ""} ${cible.nom || ""}`.trim() || "—";
         cible.telephone = cible.telephone || membre.telephone || "";
       }
 
-      // Insérer le suivi
       const { data: insertedData, error: insertError } = await supabase
         .from("suivis_membres")
         .insert([suiviData])
@@ -66,19 +65,16 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         .single();
       if (insertError) throw insertError;
 
-      // Mettre à jour le statut du membre
       const { error: updateMemberError } = await supabase
         .from("membres")
         .update({ statut: "actif" })
         .eq("id", membre.id);
       if (updateMemberError) throw updateMemberError;
 
-      // Callback local
       if (onEnvoyer) onEnvoyer(insertedData);
 
-      // Message WhatsApp selon le format fourni
-      let message = `👋 Bonjour ${cible.prenom || cible.responsable || ""},\n\n`;
-      message += `✨ Un nouveau membre est placé sous tes soins pour être accompagné et encouragé.\n\n`;
+      let message = `👋 Bonjour ${cible.prenom || cible.responsable || "—"},\n\n`;
+      message += `✨ Un nouveau membre est placé sous tes soins.\n\n`;
       message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
       message += `⚥ Sexe: ${membre.sexe || "—"}\n`;
       message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
@@ -89,12 +85,11 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       message += `Merci pour ton accompagnement ❤️`;
 
       const phone = (cible.telephone || "").replace(/\D/g, "");
-      if (!phone) {
-        alert("❌ La cible n'a pas de numéro WhatsApp valide !");
-      } else {
+      if (!phone) alert("❌ La cible n'a pas de numéro WhatsApp valide !");
+      else {
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
         if (showToast)
-          showToast(`✅ ${membre.prenom} ${membre.nom} a été envoyé à ${type === "cellule" ? cible.cellule : `${cible.prenom} ${cible.nom}`} !`);
+          showToast(`✅ ${membre.prenom} ${membre.nom} a été envoyé à ${type === "cellule" ? suiviData.cellule_nom : `${cible.prenom} ${cible.nom}`} !`);
       }
 
     } catch (err) {

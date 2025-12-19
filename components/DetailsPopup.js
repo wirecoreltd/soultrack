@@ -105,26 +105,27 @@ export default function DetailsPopup({
               </select>
             )}
 
-            {selectedTarget && (
-              (() => {
-                const cible = selectedTargetType === "cellule"
-                  ? cellules.find((c) => String(c.id) === String(selectedTarget))
-                  : conseillers.find((c) => String(c.id) === String(selectedTarget));
-            
-                return cible ? (
-                  <div className="mt-3">
-                    <BoutonEnvoyer
-                      membre={membre}
-                      type={selectedTargetType}
-                      cible={cible}
-                      session={session}
-                      onEnvoyer={(data) => handleAfterSend && handleAfterSend(data, selectedTargetType)}
-                      showToast={showToast}
-                    />
-                  </div>
-                ) : null;
-              })()
-            )}      
+            {selectedTarget && (() => {
+              const cible = selectedTargetType === "cellule"
+                ? cellules.find((c) => String(c.id) === String(selectedTarget))
+                : conseillers.find((c) => String(c.id) === String(selectedTarget));
+
+              return cible ? (
+                <div className="mt-3">
+                  <BoutonEnvoyer
+                    membre={membre}
+                    type={selectedTargetType}
+                    cible={cible}
+                    session={session}
+                    onEnvoyer={(data) => handleAfterSend && handleAfterSend(data, selectedTargetType)}
+                    showToast={showToast}
+                  />
+                </div>
+              ) : null;
+            })()}
+          </div>
+
+        </div>
 
         {/* ================= ALIGNÉ À GAUCHE ================= */}
         <div className="mt-5 text-sm text-black space-y-1">

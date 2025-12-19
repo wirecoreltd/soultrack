@@ -19,7 +19,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
     setLoading(true);
     try {
-      // Vérification par numéro de téléphone
+      // Vérification si déjà suivi
       const { data: existing, error: selectError } = await supabase
         .from("suivis_membres")
         .select("*")
@@ -58,7 +58,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         cible.telephone = cible.telephone || membre.telephone || "";
       }
 
-      // Insérer le suivi et récupérer l'objet complet avec id
+      // Insérer le suivi
       const { data: insertedData, error: insertError } = await supabase
         .from("suivis_membres")
         .insert([suiviData])
@@ -66,23 +66,27 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         .single();
       if (insertError) throw insertError;
 
-      // Mettre à jour le membre pour qu’il devienne actif
+      // Mettre à jour le statut du membre
       const { error: updateMemberError } = await supabase
         .from("membres")
         .update({ statut: "actif" })
         .eq("id", membre.id);
       if (updateMemberError) throw updateMemberError;
 
-      // Callback pour mise à jour locale
+      // Callback local
       if (onEnvoyer) onEnvoyer(insertedData);
 
-      // Préparer message WhatsApp
-      let message = `👋 Salut ${cible.responsable || (cible.prenom ? `${cible.prenom} ${cible.nom}` : "")}!\n\n`;
-      message += `🙏 Nouveau membre à suivre :\n`;
-      message += `- 👤 Nom : ${membre.prenom} ${membre.nom}\n`;
-      message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
-      message += `- 🏙 Ville : ${membre.ville || "—"}\n`;
-      message += `- 🙏 Besoin : ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}\n\n🙏 Merci !`;
+      // Message WhatsApp selon le format fourni
+      let message = `👋 Bonjour ${cible.prenom || cible.responsable || ""},\n\n`;
+      message += `✨ Un nouveau membre est placé sous tes soins pour être accompagné et encouragé.\n\n`;
+      message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
+      message += `⚥ Sexe: ${membre.sexe || "—"}\n`;
+      message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
+      message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
+      message += `🏙 Ville: ${membre.ville || "—"}\n`;
+      message += `🙏 Besoin: ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}\n`;
+      message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;
+      message += `Merci pour ton accompagnement ❤️`;
 
       const phone = (cible.telephone || "").replace(/\D/g, "");
       if (!phone) {

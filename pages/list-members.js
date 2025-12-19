@@ -399,8 +399,8 @@ return (
     {/* Toggle Vue Carte / Vue Table */}
       <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
         <button
-          onClick={() => setView("card")}
-          className={`text-sm font-semibold underline ${view === "card" ? "text-white" : "text-gray-300"}`}
+          onClick={() => setView(view === "card" ? "table" : "card")}
+          className={`text-sm underline ${view === "card" ? "text-yellow" : "text-gray-300"}`}
         >
           Vue Carte
         </button>

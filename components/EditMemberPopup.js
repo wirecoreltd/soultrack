@@ -215,6 +215,42 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             </select>
           </div>
 
+          {/* Cellule */}
+          <div className="flex flex-col">
+            <label className="font-medium mb-1 text-left">Cellule :</label>
+            <select
+              name="cellule_id"
+              value={formData.cellule_id ?? ""}
+              onChange={handleChange}
+              className="input"
+            >
+              <option value="">-- Cellule --</option>
+              {cellules.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.cellule_full}  {/* Rose Hill – Berto */}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Conseiller */}
+          <div className="flex flex-col">
+            <label className="font-medium mb-1 text-left">Conseiller :</label>
+            <select
+              name="conseiller_id"
+              value={formData.conseiller_id ?? ""}
+              onChange={handleChange}
+              className="input"
+            >
+              <option value="">-- Conseiller --</option>
+              {conseillers.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.prenom} {c.nom}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Sexe */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Sexe :</label>

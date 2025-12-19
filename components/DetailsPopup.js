@@ -19,6 +19,7 @@ export default function DetailsPopup({
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
   const phoneMenuRef = useRef(null);
 
+  // Fermer menu téléphone en cliquant dehors
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
@@ -32,14 +33,31 @@ export default function DetailsPopup({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
-        <button onClick={onClose} className="absolute top-3 right-3 text-gray-500 hover:text-gray-700">✖</button>
 
+        {/* Fermer */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+        >
+          ✖
+        </button>
+
+        {/* ================= CENTRÉ ================= */}
         <div className="flex flex-col items-center text-center">
-          <h2 className="text-xl font-bold">{membre.prenom} {membre.nom} {membre.star && "⭐"}</h2>
+          <h2 className="text-xl font-bold">
+            {membre.prenom} {membre.nom} {membre.star && "⭐"}
+          </h2>
 
+          {/* Téléphone */}
           {membre.telephone && (
             <div className="relative mt-1" ref={phoneMenuRef}>
-              <button onClick={() => setOpenPhoneMenu(!openPhoneMenu)} className="text-orange-500 underline font-semibold">{membre.telephone}</button>
+              <button
+                onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
+                className="text-orange-500 underline font-semibold"
+              >
+                {membre.telephone}
+              </button>
+
               {openPhoneMenu && (
                 <div className="absolute top-full mt-2 bg-white border rounded-lg shadow w-56 z-50">
                   <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler par téléphone</a>
@@ -54,6 +72,7 @@ export default function DetailsPopup({
           <p className="mt-2">🏙️ Ville : {membre.ville || "—"}</p>
           <p>🕊 Statut : {membre.statut || "—"}</p>
 
+          {/* Envoyer à centré sous statut */}
           <div className="mt-3 w-full">
             <label className="font-semibold text-sm">Envoyer à :</label>
             <select
@@ -78,7 +97,7 @@ export default function DetailsPopup({
                 <option value="">-- Sélectionner --</option>
                 {selectedTargetType === "cellule"
                   ? cellules.map((c) => (
-                      <option key={c.id} value={c.id}>{c.cellule_full || c.cellule || "—"}</option>
+                      <option key={c.id} value={c.id}>{c.cellule_full || c.cellule}</option>
                     ))
                   : conseillers.map((c) => (
                       <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
@@ -93,17 +112,12 @@ export default function DetailsPopup({
 
               if (!cible) return null;
 
-              // Fallback pour cellule_full ou nom conseiller
-              const cibleSafe = selectedTargetType === "cellule"
-                ? { ...cible, cellule_full: cible.cellule_full || cible.cellule || "—" }
-                : cible;
-
               return (
                 <div className="mt-3">
                   <BoutonEnvoyer
                     membre={membre}
                     type={selectedTargetType}
-                    cible={cibleSafe}
+                    cible={cible}
                     session={session}
                     onEnvoyer={(data) => handleAfterSend && handleAfterSend(data, selectedTargetType)}
                     showToast={showToast}
@@ -111,9 +125,11 @@ export default function DetailsPopup({
                 </div>
               );
             })()}
+
           </div>
         </div>
 
+        {/* ================= ALIGNÉ À GAUCHE ================= */}
         <div className="mt-5 text-sm text-black space-y-1">
           <p>🏠 Cellule : {membre.cellule_nom ? `${membre.cellule_ville || "—"} - ${membre.cellule_nom}` : "—"}</p>
           <p>👤 Conseiller : {membre.conseiller_prenom ? `${membre.conseiller_prenom} ${membre.conseiller_nom || ""}` : "—"}</p>

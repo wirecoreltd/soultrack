@@ -442,10 +442,7 @@ return (
             {nouveauxFiltres.map(m => renderMemberCard({ ...m, isNouveau: true }))}
             {anciensFiltres.map(m => renderMemberCard(m))}
           </div>
-            </>
-          )}
-        </>
-      )}        
+        )}        
 
       {/* ==================== VUE TABLE ==================== */}
         {view === "table" && (

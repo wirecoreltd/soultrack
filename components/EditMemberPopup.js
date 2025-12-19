@@ -183,16 +183,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input" />
           </div>
 
-          {/* Sexe */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Sexe :</label>
-            <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
-              <option value="">-- Sexe --</option>
-              <option value="Homme">Homme</option>
-              <option value="Femme">Femme</option>
-            </select>
-          </div>
-
           {/* ⭐ DÉFINIR EN TANT QUE SERVITEUR */}
           <label className="flex items-center gap-3 text-lg font-medium">
             <input
@@ -203,30 +193,36 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               className="h-5 w-5"
             />
             Définir en tant que serviteur ⭐
-          </label>
+          </label>  
 
-          {/* Comment il est venu */}
+          {/* Ville */}
           <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Comment est-il venu :</label>
-            <select name="venu" value={formData.venu} onChange={handleChange} className="input">
-              <option value="">-- Comment est-il venu ? --</option>
-              <option value="invité">Invité</option>
-              <option value="réseaux">Réseaux</option>
-              <option value="evangélisation">Évangélisation</option>
-              <option value="autre">Autre</option>
+            <label className="font-medium mb-1 text-left">Ville :</label>
+            <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="input" />
+          </div>
+
+          {/* Statut */}
+          <div className="flex flex-col">
+            <label className="font-medium mb-1 text-left">Statut :</label>
+            <select name="statut" value={formData.statut} onChange={handleChange} className="input">
+              <option value="">-- Statut --</option>
+              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+              <option value="a déjà son église">A déjà son église</option>
+              <option value="visiteur">Visiteur</option>
+              <option value="actif">Actif</option>
+              <option value="ancien">Ancien</option>
+              <option value="Integrer">Intégrer</option>
             </select>
           </div>
 
-          {/* Commentaire suivis */}
+          {/* Sexe */}
           <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Commentaire Suivis :</label>
-            <textarea
-              name="commentaire_suivis"
-              rows={2}
-              value={formData.commentaire_suivis}
-              onChange={handleChange}
-              className="input"
-            />
+            <label className="font-medium mb-1 text-left">Sexe :</label>
+            <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
+              <option value="">-- Sexe --</option>
+              <option value="Homme">Homme</option>
+              <option value="Femme">Femme</option>
+            </select>
           </div>
 
           {/* Besoins */}
@@ -254,12 +250,36 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               </div>
             )}
           </div>
+          
+          {/* Comment il est venu */}
+          <div className="flex flex-col">
+            <label className="font-medium mb-1 text-left">Comment est-il venu :</label>
+            <select name="venu" value={formData.venu} onChange={handleChange} className="input">
+              <option value="">-- Comment est-il venu ? --</option>
+              <option value="invité">Invité</option>
+              <option value="réseaux">Réseaux</option>
+              <option value="evangélisation">Évangélisation</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
 
-          {/* Infos supplémentaires */}
+            {/* Infos supplémentaires */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Informations :</label>
             <textarea name="infos_supplementaires" rows={2} value={formData.infos_supplementaires} onChange={handleChange} className="input" />
           </div>
+
+          {/* Commentaire suivis */}
+          <div className="flex flex-col">
+            <label className="font-medium mb-1 text-left">Commentaire Suivis :</label>
+            <textarea
+              name="commentaire_suivis"
+              rows={2}
+              value={formData.commentaire_suivis}
+              onChange={handleChange}
+              className="input"
+            />
+          </div>          
 
           {/* Buttons */}
           <div className="flex gap-4 mt-2">

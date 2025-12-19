@@ -19,7 +19,6 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
     setLoading(true);
     try {
-      // Vérification si déjà suivi
       const { data: existing, error: selectError } = await supabase
         .from("suivis_membres")
         .select("*")
@@ -47,24 +46,18 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         created_at: new Date().toISOString(),
       };
 
-      // Gestion de la cible
-      let cibleNom = "—";
-      let ciblePhone = "";
-
       if (type === "cellule") {
         suiviData.cellule_id = cible.id;
+        // fallback si cellule_full absent
         suiviData.cellule_nom = cible.cellule_full || cible.cellule || "—";
-        suiviData.responsable = cible.responsable || "—";
-        cibleNom = cible.responsable || "—";
-        ciblePhone = cible.telephone || "";
+        suiviData.responsable = cible.responsable || null;
+        cible.telephone = cible.telephone || membre.telephone || "";
       } else if (type === "conseiller") {
         suiviData.conseiller_id = cible.id;
         suiviData.responsable = `${cible.prenom || ""} ${cible.nom || ""}`.trim() || "—";
-        cibleNom = `${cible.prenom || ""} ${cible.nom || ""}`.trim() || "—";
-        ciblePhone = cible.telephone || "";
+        cible.telephone = cible.telephone || membre.telephone || "";
       }
 
-      // Insérer le suivi
       const { data: insertedData, error: insertError } = await supabase
         .from("suivis_membres")
         .insert([suiviData])
@@ -72,21 +65,18 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         .single();
       if (insertError) throw insertError;
 
-      // Mettre à jour le statut du membre
       const { error: updateMemberError } = await supabase
         .from("membres")
         .update({ statut: "actif" })
         .eq("id", membre.id);
       if (updateMemberError) throw updateMemberError;
 
-      // Callback
       if (onEnvoyer) onEnvoyer(insertedData);
 
-      // Message WhatsApp
-      let message = `👋 Bonjour ${cibleNom},\n\n`;
+      let message = `👋 Bonjour ${cible.prenom || cible.responsable || "—"},\n\n`;
       message += `✨ Un nouveau membre est placé sous tes soins.\n\n`;
       message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
-      message += ` ⚥ Sexe: ${membre.sexe || "—"}\n`;
+      message += `⚥ Sexe: ${membre.sexe || "—"}\n`;
       message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
       message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
       message += `🏙 Ville: ${membre.ville || "—"}\n`;
@@ -94,12 +84,12 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;
       message += `Merci pour ton accompagnement ❤️`;
 
-      const phone = ciblePhone.replace(/\D/g, "");
+      const phone = (cible.telephone || "").replace(/\D/g, "");
       if (!phone) alert("❌ La cible n'a pas de numéro WhatsApp valide !");
       else {
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
         if (showToast)
-          showToast(`✅ ${membre.prenom} ${membre.nom} a été envoyé à ${type === "cellule" ? suiviData.cellule_nom : cibleNom} !`);
+          showToast(`✅ ${membre.prenom} ${membre.nom} a été envoyé à ${type === "cellule" ? suiviData.cellule_nom : `${cible.prenom} ${cible.nom}`} !`);
       }
 
     } catch (err) {

@@ -230,7 +230,7 @@ export default function ListMembers() {
 
 
   // -------------------- Rendu Carte --------------------
-  const renderMemberCard = (m, isNouveau = false) => {
+  const renderMemberCard = (m) => {
     const isOpen = detailsOpen[m.id];
     const besoins = (() => {
       if (!m.besoin) return "—";
@@ -241,8 +241,6 @@ export default function ListMembers() {
     return (
       <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4 relative">
         {m.star && <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>}
-        {isNouveau && <span className="absolute top-3 left-3 bg-green-400 text-white px-2 py-1 rounded text-xs font-semibold">Nouveau</span>}
-
         <div className="flex flex-col items-center">
           <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
           <div className="relative flex justify-center mt-1">
@@ -316,7 +314,7 @@ export default function ListMembers() {
                       : conseillers.find(c => c.id === selectedTargets[m.id])
                   )}
                   session={session}
-                  showToast={() => {}}
+                  showToast={showToast}
                 />
               </div>
             )}
@@ -349,12 +347,10 @@ export default function ListMembers() {
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
       {/* Top Bar */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-2">
-        <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black/80">← Retour</button>
+        <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black-200">← Retour</button>
         <LogoutLink className="bg-white/10 text-white px-3 py-1 rounded-lg hover:bg-white/20 text-sm" />
       </div>
-      <div className="w-full max-w-5xl flex justify-end mb-2">
-        <p className="text-orange-200 text-sm">👋 Bienvenue {prenom || "cher membre"}</p>
-      </div>
+      <div className="w-full max-w-5xl flex justify-end mb-2"><p className="text-orange-200 text-sm">👋 Bienvenue {prenom || "cher membre"}</p></div>
       <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} className="mx-auto mb-2" />
       <h1 className="text-2xl sm:text-3xl font-bold text-white text-center mb-2">Liste des Membres</h1>
 
@@ -369,7 +365,7 @@ export default function ListMembers() {
         />
       </div>
 
-      {/* Filtre */}
+      {/* Filtre sous la barre de recherche */}
       <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">
         <select
           value={filter}
@@ -382,7 +378,7 @@ export default function ListMembers() {
         <span className="text-white text-sm ml-2">{members.filter(m => !filter || m.statut === filter).length} membres</span>
       </div>
 
-      {/* Toggle Vue */}
+      {/* Toggle Vue Carte / Vue Table */}
       <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
         {view === "card" ? (
           <button onClick={() => setView("table")} className="text-sm font-semibold text-white underline">Vue Table</button>
@@ -394,8 +390,12 @@ export default function ListMembers() {
       {/* Liste */}
       {view === "card" ? (
         <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-          {nouveauxFiltres.map(m => renderMemberCard(m, true))}   {/* Nouveau */}
-          {anciensFiltres.map(m => renderMemberCard(m))}          {/* Ancien */}
+          {nouveauxFiltres.map(renderMemberCard)}
+          {anciensFiltres.map(renderMemberCard)}
+        </div>
+      ) : (
+        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+          {/* Tu peux remettre ta table ici si besoin */}
         </div>
       )}
 

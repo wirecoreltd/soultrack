@@ -398,22 +398,20 @@ return (
 
     {/* Toggle Vue Carte / Vue Table */}
       <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
-        {view === "card" ? (
-          <button 
-            onClick={() => setView("table")} // ✅ MODIF : déclenche le changement de vue
-            className="text-sm font-semibold text-white underline"
-          >
-            Vue Table
-          </button>
-        ) : (
-          <button 
-            onClick={() => setView("card")} // ✅ MODIF : déclenche le changement de vue
-            className="text-sm font-semibold text-white underline"
-          >
-            Vue Carte
-          </button>
-        )}
+        <button
+          onClick={() => setView("card")}
+          className={`text-sm font-semibold underline ${view === "card" ? "text-white" : "text-gray-300"}`}
+        >
+          Vue Carte
+        </button>
+        <button
+          onClick={() => setView("table")}
+          className={`text-sm font-semibold underline ${view === "table" ? "text-white" : "text-gray-300"}`}
+        >
+          Vue Table
+        </button>
       </div>
+      /div>
 
 
     {/* Section Nouveau */}
@@ -443,7 +441,12 @@ return (
               {anciensFiltres.map(m => renderMemberCard(m))}
             </div>
           )}
-        
+          
+          {view === "table" && (
+            <div className="w-full max-w-6xl overflow-x-auto">
+              {/* Table des membres */}
+            </div>
+          )}       
 
       {/* ==================== VUE TABLE ==================== */}
         {view === "table" && (

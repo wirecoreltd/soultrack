@@ -132,23 +132,38 @@ export default function ListMembers() {
 
   // -------------------- Realtime --------------------
   useEffect(() => {
-    if (realtimeChannelRef.current) {
-      try { realtimeChannelRef.current.unsubscribe(); } catch (e) {}
-      realtimeChannelRef.current = null;
-    }
+  if (realtimeChannelRef.current) {
+    try { realtimeChannelRef.current.unsubscribe(); } catch (e) {}
+    realtimeChannelRef.current = null;
+  }
 
-    const channel = supabase.channel("realtime:v_membres_full_and_related");
-    channel.on("postgres_changes", { event: "*", schema: "public", table: "membres" }, () => fetchMembers());
-    channel.on("postgres_changes", { event: "*", schema: "public", table: "cellules" }, () => { fetchCellules(); fetchMembers(); });
-    channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { fetchConseillers(); fetchMembers(); });
+  const channel = supabase.channel("realtime:v_membres_full_and_related");
 
-    try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
+  // Membres
+  channel.on("postgres_changes", { event: "*", schema: "public", table: "membres" }, () => fetchMembers());
+  // Cellules
+  channel.on("postgres_changes", { event: "*", schema: "public", table: "cellules" }, () => { fetchCellules(); fetchMembers(); });
+  // Conseillers
+  channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { fetchConseillers(); fetchMembers(); });
+  // 🔹 Suivis membres
+  channel.on("postgres_changes", { event: "*", schema: "public", table: "suivis_membres" }, ({ new: updatedSuivi }) => {
+    setMembers(prev =>
+      prev.map(m =>
+        m.id === updatedSuivi.membre_id
+          ? { ...m, suivi_statut_libelle: updatedSuivi.statut_suivis, commentaire_suivis: updatedSuivi.commentaire_suivis }
+          : m
+      )
+    );
+  });
 
-    realtimeChannelRef.current = channel;
-    return () => {
-      try { if (realtimeChannelRef.current) { realtimeChannelRef.current.unsubscribe(); realtimeChannelRef.current = null; } } catch (e) {}
-    };
-  }, []);
+  try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
+
+  realtimeChannelRef.current = channel;
+  return () => {
+    try { if (realtimeChannelRef.current) { realtimeChannelRef.current.unsubscribe(); realtimeChannelRef.current = null; } } catch (e) {}
+  };
+}, []);
+
 
   // -------------------- Fermer menu téléphone en cliquant dehors --------------------
   useEffect(() => {

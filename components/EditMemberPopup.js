@@ -29,7 +29,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     besoin: initialBesoin,
     autreBesoin: "",
     statut: member?.statut || "",
-    statut_initial: member?.statut_initial || "", // <--- Statut initial
+    statut_initial: member?.statut_initial || "",
     cellule_id: member?.cellule_id ?? "",
     conseiller_id: member?.conseiller_id ?? "",
     infos_supplementaires: member?.infos_supplementaires || "",
@@ -47,13 +47,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   useEffect(() => {
     let mounted = true;
     async function loadData() {
-      const { data: cellulesData } = await supabase
-        .from("cellules")
-        .select("id, cellule_full");
-      const { data: conseillersData } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom")
-        .eq("role", "Conseiller");
+      const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
+      const { data: conseillersData } = await supabase.from("profiles").select("id, prenom, nom").eq("role", "Conseiller");
       if (!mounted) return;
       setCellules(cellulesData || []);
       setConseillers(conseillersData || []);
@@ -64,8 +59,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    // Gestion exclusivité cellule/conseiller
     if (name === "conseiller_id" && value) {
       setFormData(prev => ({ ...prev, conseiller_id: value, cellule_id: "" }));
     } else if (name === "cellule_id" && value) {
@@ -82,10 +75,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   const toggleStar = (e) => {
     const checked = e.target.checked;
-    setFormData(prev => ({
-      ...prev,
-      star: checked
-    }));
+    setFormData(prev => ({ ...prev, star: checked }));
   };
 
   const handleBesoinChange = (e) => {
@@ -122,7 +112,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         telephone: formData.telephone || null,
         ville: formData.ville || null,
         statut: formData.statut || null,
-        statut_initial: formData.statut_initial || null, // <--- Statut initial
+        statut_initial: formData.statut_initial || null,
         cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
         conseiller_id: formData.conseiller_id === "" ? null : formData.conseiller_id,
         infos_supplementaires: formData.infos_supplementaires || null,
@@ -149,7 +139,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
       if (viewError) throw viewError;
 
-      if (onUpdateMember) onUpdateMember(refreshedMember);
+      // 🔹 Mise à jour instantanée via le contexte
+      if (onUpdateMember) onUpdateMember(refreshedMember.id, refreshedMember);
 
       setSuccess(true);
       setTimeout(() => {

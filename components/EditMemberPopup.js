@@ -235,11 +235,11 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
           {/* Buttons */}
           <div className="flex gap-4 mt-2">
-            <button onClick={onClose} className="flex-1 bg-gray-400 text-white py-2 rounded">Annuler</button>
-            <button onClick={handleSubmit} disabled={loading} className="flex-1 bg-blue-500 text-white py-2 rounded">{loading ? "Enregistrement..." : "Sauvegarder"}</button>
-          </div>
+            <button onClick={handleSubmit} disabled={loading}>
+          {loading ? "Enregistrement..." : "Sauvegarder"}
+        </button>
 
-          {success && <p className="text-green-600 font-semibold text-center mt-3">✔️ Modifié !</p>}
+        {success && <p className="text-green-600 text-center mt-2">✔️ Modifié !</p>}
         </div>
 
         <style jsx>{`

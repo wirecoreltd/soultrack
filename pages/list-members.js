@@ -59,7 +59,12 @@ export default function ListMembers() {
     "a déjà son église",
   ];
 
-  const { members, setAllMembers, updateMember } = useMembers();
+  const {
+    members,
+    setAllMembers,
+    updateMember,
+    loadingMembers
+  } = useMembers();
 
   const showToast = (msg) => {
     setToastMessage(msg);

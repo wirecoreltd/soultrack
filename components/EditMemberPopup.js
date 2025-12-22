@@ -1,9 +1,11 @@
-"use client";
+          "use client";
 
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
+  if (!member) return null; // ← ⚠️ Ne rend rien si member n'est pas défini
+
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
 
   const parseBesoin = (b) => {
@@ -21,15 +23,28 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
-  const [formData, setFormData] = useState({ ...member, besoin: initialBesoin });
+  const [formData, setFormData] = useState({
+    prenom: member?.prenom || "",
+    nom: member?.nom || "",
+    telephone: member?.telephone || "",
+    ville: member?.ville || "",
+    besoin: initialBesoin,
+    autreBesoin: "",
+    statut: member?.statut || "",
+    statut_initial: member?.statut_initial || "",
+    cellule_id: member?.cellule_id ?? "",
+    conseiller_id: member?.conseiller_id ?? "",
+    infos_supplementaires: member?.infos_supplementaires || "",
+    is_whatsapp: !!member?.is_whatsapp,
+    star: member?.star === true,
+    sexe: member?.sexe || "",
+    venu: member?.venu || "",
+    commentaire_suivis: member?.commentaire_suivis || "",
+  });
+
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-
-  useEffect(() => {
-    setFormData({ ...member, besoin: parseBesoin(member?.besoin) });
-    setShowAutre(parseBesoin(member?.besoin).includes("Autre"));
-  }, [member]);
 
   useEffect(() => {
     let mounted = true;
@@ -45,13 +60,19 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   }, []);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value
-    }));
-    if (name === "conseiller_id" && value) setFormData(prev => ({ ...prev, cellule_id: "" }));
-    if (name === "cellule_id" && value) setFormData(prev => ({ ...prev, conseiller_id: "" }));
+    const { name, value } = e.target;
+    if (name === "conseiller_id" && value) {
+      setFormData(prev => ({ ...prev, conseiller_id: value, cellule_id: "" }));
+    } else if (name === "cellule_id" && value) {
+      setFormData(prev => ({ ...prev, cellule_id: value, conseiller_id: "" }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const toggleStar = (e) => {
+    const checked = e.target.checked;
+    setFormData(prev => ({ ...prev, star: checked }));
   };
 
   const handleBesoinChange = (e) => {
@@ -75,7 +96,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     setLoading(true);
     try {
       let finalBesoin = Array.isArray(formData.besoin) ? [...formData.besoin] : parseBesoin(formData.besoin);
-      if (showAutre && formData.autreBesoin?.trim()) {
+      if (showAutre && formData.autreBesoin.trim()) {
         finalBesoin = finalBesoin.filter(b => b !== "Autre");
         finalBesoin.push(formData.autreBesoin.trim());
       } else {
@@ -100,11 +121,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         commentaire_suivis: formData.commentaire_suivis || null,
       };
 
-      const { error } = await supabase
-        .from("membres")
-        .update(payload)
-        .eq("id", member.id);
-
+      const { error } = await supabase.from("membres").update(payload).eq("id", member.id);
       if (error) throw error;
 
       const { data: refreshedMember, error: viewError } = await supabase
@@ -116,7 +133,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       if (viewError) throw viewError;
 
       // 🔹 Mise à jour instantanée via le contexte
-      if (onUpdateMember) onUpdateMember(refreshedMember.id, refreshedMember);
+      if (onUpdateMember) onUpdateMember(refreshedMember); // passe directement le membre mis à jour
 
       setSuccess(true);
       setTimeout(() => {
@@ -134,12 +151,19 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
-        <button onClick={onClose} className="absolute top-3 right-3 text-red-500 font-bold text-xl hover:text-red-700">✕</button>
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-red-500 font-bold text-xl hover:text-red-700"
+        >
+          ✕
+        </button>
+
         <h2 className="text-2xl font-bold text-center mb-4">
           Éditer le profil de {member?.prenom} {member?.nom}
         </h2>
 
         <div className="flex flex-col gap-4">
+          
           {/* Tous les champs du membre */}
           <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} className="input" placeholder="Prénom" />
           <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input" placeholder="Nom" />

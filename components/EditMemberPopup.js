@@ -234,19 +234,21 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           <textarea name="commentaire_suivis" rows={2} value={formData.commentaire_suivis} onChange={handleChange} className="input" placeholder="Commentaire suivis" />
 
           {/* Buttons */}
-            <div className="flex gap-4 mt-2">
-              <button onClick={handleSubmit} disabled={loading}>
-                {loading ? "Enregistrement..." : "Sauvegarder"}
-              </button>
-            </div>
-            
-            {success && (
-              <p className="text-green-600 text-center mt-2">
-                ✔️ Modifié !
-              </p>
-            )}
-            
-            </div> {/* ← 🔥 CE DIV MANQUAIT (ferme flex flex-col gap-4) */}
+          <div className="flex gap-4 mt-2">
+            <button 
+              onClick={onClose} 
+              className="flex-1 bg-gray-400 text-white py-2 rounded"
+            >
+              Annuler
+            </button>
+            <button 
+              onClick={handleSubmit} 
+              disabled={loading} 
+              className="flex-1 bg-blue-500 text-white py-2 rounded"
+            >
+              {loading ? "Enregistrement..." : "Sauvegarder"}
+            </button>
+          </div>
             
             <style jsx>{`
               .input {

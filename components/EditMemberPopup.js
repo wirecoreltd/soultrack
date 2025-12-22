@@ -233,23 +233,26 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           {/* Commentaire suivis */}
           <textarea name="commentaire_suivis" rows={2} value={formData.commentaire_suivis} onChange={handleChange} className="input" placeholder="Commentaire suivis" />
 
-          {/* Buttons */}
-          <div className="flex gap-4 mt-2">
-            <button 
-              onClick={onClose} 
-              className="flex-1 bg-gray-400 text-white py-2 rounded"
-            >
-              Annuler
-            </button>
-            <button 
-              onClick={handleSubmit} 
-              disabled={loading} 
-              className="flex-1 bg-blue-500 text-white py-2 rounded"
-            >
-              {loading ? "Enregistrement..." : "Sauvegarder"}
-            </button>
+           {/* Buttons */}
+            <div className="flex gap-4 mt-2">
+              <button 
+                onClick={onClose} 
+                className="flex-1 bg-gray-400 text-white py-2 rounded"
+              >
+                Annuler
+              </button>
+              <button 
+                onClick={handleSubmit} 
+                disabled={loading} 
+                className="flex-1 bg-blue-500 text-white py-2 rounded"
+              >
+                {loading ? "Enregistrement..." : "Sauvegarder"}
+              </button>
+            </div>
+    
+            {success && <p className="text-green-600 font-semibold text-center mt-3">✔️ Modifié !</p>}
           </div>
-            
+                
             <style jsx>{`
               .input {
                 width: 100%;

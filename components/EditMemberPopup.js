@@ -17,33 +17,40 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     }
   };
 
-  const initialBesoin = parseBesoin(member?.besoin);
-
+  const [formData, setFormData] = useState(null);
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
-  const [formData, setFormData] = useState({
-    prenom: member?.prenom || "",
-    nom: member?.nom || "",
-    telephone: member?.telephone || "",
-    ville: member?.ville || "",
-    besoin: initialBesoin,
-    autreBesoin: "",
-    statut: member?.statut || "",
-    statut_initial: member?.statut_initial || "",
-    cellule_id: member?.cellule_id ?? "",
-    conseiller_id: member?.conseiller_id ?? "",
-    infos_supplementaires: member?.infos_supplementaires || "",
-    is_whatsapp: !!member?.is_whatsapp,
-    star: member?.star === true,
-    sexe: member?.sexe || "",
-    venu: member?.venu || "",
-    commentaire_suivis: member?.commentaire_suivis || "",
-  });
-
-  const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
+  const [showAutre, setShowAutre] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  // Initialisation du formulaire dès que member est disponible
+  useEffect(() => {
+    if (!member) return;
+
+    const initialBesoin = parseBesoin(member.besoin);
+    setFormData({
+      prenom: member.prenom || "",
+      nom: member.nom || "",
+      telephone: member.telephone || "",
+      ville: member.ville || "",
+      besoin: initialBesoin,
+      autreBesoin: "",
+      statut: member.statut || "",
+      statut_initial: member.statut_initial || "",
+      cellule_id: member.cellule_id ?? "",
+      conseiller_id: member.conseiller_id ?? "",
+      infos_supplementaires: member.infos_supplementaires || "",
+      is_whatsapp: !!member.is_whatsapp,
+      star: member.star === true,
+      sexe: member.sexe || "",
+      venu: member.venu || "",
+      commentaire_suivis: member.commentaire_suivis || "",
+    });
+    setShowAutre(initialBesoin.includes("Autre"));
+  }, [member]);
+
+  // Chargement des cellules et conseillers
   useEffect(() => {
     let mounted = true;
     async function loadData() {
@@ -57,6 +64,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     return () => { mounted = false; };
   }, []);
 
+  if (!formData) return null; // Empêche le crash si member n'est pas encore défini
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "conseiller_id" && value) {
@@ -68,15 +77,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     }
   };
 
-  const handleCheckboxChange = (e) => {
-    const { name, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: checked }));
-  };
-
-  const toggleStar = (e) => {
-    const checked = e.target.checked;
-    setFormData(prev => ({ ...prev, star: checked }));
-  };
+  const toggleStar = (e) => setFormData(prev => ({ ...prev, star: e.target.checked }));
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
@@ -124,23 +125,14 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         commentaire_suivis: formData.commentaire_suivis || null,
       };
 
-      const { error } = await supabase
-        .from("membres")
-        .update(payload)
-        .eq("id", member.id);
-
+      const { error } = await supabase.from("membres").update(payload).eq("id", member.id);
       if (error) throw error;
 
-      const { data: refreshedMember, error: viewError } = await supabase
-        .from("v_membres_full")
-        .select("*")
-        .eq("id", member.id)
-        .single();
-
+      const { data: refreshedMember, error: viewError } = await supabase.from("v_membres_full").select("*").eq("id", member.id).single();
       if (viewError) throw viewError;
 
       // 🔹 Mise à jour instantanée via le contexte
-      if (onUpdateMember) onUpdateMember(refreshedMember.id, refreshedMember);
+      if (onUpdateMember) onUpdateMember(refreshedMember);
 
       setSuccess(true);
       setTimeout(() => {
@@ -184,15 +176,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input" />
           </div>
 
-          {/* ⭐ Serviteur */}
+          {/* Serviteur ⭐ */}
           <label className="flex items-center gap-3 text-lg font-medium">
-            <input
-              type="checkbox"
-              name="star"
-              checked={formData.star}
-              onChange={toggleStar}
-              className="h-5 w-5"
-            />
+            <input type="checkbox" name="star" checked={formData.star} onChange={toggleStar} className="h-5 w-5" />
             Définir en tant que serviteur ⭐
           </label>
 
@@ -217,46 +203,27 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             <select name="statut" value={formData.statut} onChange={handleChange} className="input">
               <option value="">-- Statut --</option>
               <option value="actif">Actif</option>
-              <option value="a déjà son église">A déjà son église</option>             
+              <option value="a déjà son église">A déjà son église</option>
               <option value="ancien">Ancien</option>
               <option value="inactif">Inactif</option>
-            
             </select>
           </div>
 
           {/* Cellule */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Cellule :</label>
-            <select
-              name="cellule_id"
-              value={formData.cellule_id ?? ""}
-              onChange={handleChange}
-              className="input"
-            >
+            <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input">
               <option value="">-- Cellule --</option>
-              {cellules.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.cellule_full}
-                </option>
-              ))}
+              {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full}</option>)}
             </select>
           </div>
 
           {/* Conseiller */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Conseiller :</label>
-            <select
-              name="conseiller_id"
-              value={formData.conseiller_id ?? ""}
-              onChange={handleChange}
-              className="input"
-            >
+            <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
               <option value="">-- Conseiller --</option>
-              {conseillers.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.prenom} {c.nom}
-                </option>
-              ))}
+              {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
             </select>
           </div>
 
@@ -275,18 +242,12 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             <label className="font-medium mb-2 text-left">Besoin :</label>
             {besoinsOptions.map(item => (
               <label key={item} className="flex items-center gap-3 mb-2">
-                <input
-                  type="checkbox"
-                  value={item}
-                  checked={Array.isArray(formData.besoin) && formData.besoin.includes(item)}
-                  onChange={handleBesoinChange}
-                />
+                <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} />
                 {item}
               </label>
             ))}
             <label className="flex items-center gap-3 mb-2">
-              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} />
-              Autre
+              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} /> Autre
             </label>
             {showAutre && (
               <div className="flex flex-col mt-2">
@@ -295,7 +256,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               </div>
             )}
           </div>
-          
+
           {/* Comment il est venu */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Comment est-il venu :</label>
@@ -317,12 +278,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           {/* Statut initial */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Statut à l'arrivée :</label>
-            <select
-              name="statut_initial"
-              value={formData.statut_initial}
-              onChange={handleChange}
-              className="input"
-            >
+            <select name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="input">
               <option value="">-- Statut --</option>
               <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
               <option value="a déjà son église">A déjà son église</option>
@@ -333,14 +289,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           {/* Commentaire suivis */}
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-left">Commentaire Suivis :</label>
-            <textarea
-              name="commentaire_suivis"
-              rows={2}
-              value={formData.commentaire_suivis}
-              onChange={handleChange}
-              className="input"
-            />
-          </div>          
+            <textarea name="commentaire_suivis" rows={2} value={formData.commentaire_suivis} onChange={handleChange} className="input" />
+          </div>
 
           {/* Buttons */}
           <div className="flex gap-4 mt-2">

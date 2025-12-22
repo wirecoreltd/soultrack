@@ -167,6 +167,9 @@ export default function ListMembers() {
   };
 }, []);
 
+const onUpdateMember = (updatedMember) => {
+  updateMember(updatedMember.id, updatedMember);
+};
 
   // -------------------- Fermer menu téléphone en cliquant dehors --------------------
   useEffect(() => {

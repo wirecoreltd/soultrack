@@ -8,6 +8,7 @@ import LogoutLink from "../components/LogoutLink";
 import EditMemberPopup from "../components/EditMemberPopup";
 import BoutonEnvoyer from "../components/BoutonEnvoyer";
 import DetailsModal from "../components/DetailsModal";
+import { useMembers } from "../context/MembersContext";
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
@@ -22,6 +23,7 @@ export default function SuivisMembres() {
   const [view, setView] = useState("card");
   const [editMember, setEditMember] = useState(null);
   const [showRefus, setShowRefus] = useState(false);
+  const { members } = useMembers();
 
   const [detailsOpen, setDetailsOpen] = useState(null);
   const toggleDetails = (id) => setDetailsOpen((prev) => (prev === id ? null : id));

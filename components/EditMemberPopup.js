@@ -17,40 +17,20 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     }
   };
 
-  const [formData, setFormData] = useState(null);
+  const initialBesoin = parseBesoin(member?.besoin);
+
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
-  const [showAutre, setShowAutre] = useState(false);
+  const [formData, setFormData] = useState({ ...member, besoin: initialBesoin });
+  const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Initialisation du formulaire dès que member est disponible
   useEffect(() => {
-    if (!member) return;
-
-    const initialBesoin = parseBesoin(member.besoin);
-    setFormData({
-      prenom: member.prenom || "",
-      nom: member.nom || "",
-      telephone: member.telephone || "",
-      ville: member.ville || "",
-      besoin: initialBesoin,
-      autreBesoin: "",
-      statut: member.statut || "",
-      statut_initial: member.statut_initial || "",
-      cellule_id: member.cellule_id ?? "",
-      conseiller_id: member.conseiller_id ?? "",
-      infos_supplementaires: member.infos_supplementaires || "",
-      is_whatsapp: !!member.is_whatsapp,
-      star: member.star === true,
-      sexe: member.sexe || "",
-      venu: member.venu || "",
-      commentaire_suivis: member.commentaire_suivis || "",
-    });
-    setShowAutre(initialBesoin.includes("Autre"));
+    setFormData({ ...member, besoin: parseBesoin(member?.besoin) });
+    setShowAutre(parseBesoin(member?.besoin).includes("Autre"));
   }, [member]);
 
-  // Chargement des cellules et conseillers
   useEffect(() => {
     let mounted = true;
     async function loadData() {
@@ -64,20 +44,15 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     return () => { mounted = false; };
   }, []);
 
-  if (!formData) return null; // Empêche le crash si member n'est pas encore défini
-
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name === "conseiller_id" && value) {
-      setFormData(prev => ({ ...prev, conseiller_id: value, cellule_id: "" }));
-    } else if (name === "cellule_id" && value) {
-      setFormData(prev => ({ ...prev, cellule_id: value, conseiller_id: "" }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value
+    }));
+    if (name === "conseiller_id" && value) setFormData(prev => ({ ...prev, cellule_id: "" }));
+    if (name === "cellule_id" && value) setFormData(prev => ({ ...prev, conseiller_id: "" }));
   };
-
-  const toggleStar = (e) => setFormData(prev => ({ ...prev, star: e.target.checked }));
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
@@ -100,7 +75,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     setLoading(true);
     try {
       let finalBesoin = Array.isArray(formData.besoin) ? [...formData.besoin] : parseBesoin(formData.besoin);
-      if (showAutre && formData.autreBesoin.trim()) {
+      if (showAutre && formData.autreBesoin?.trim()) {
         finalBesoin = finalBesoin.filter(b => b !== "Autre");
         finalBesoin.push(formData.autreBesoin.trim());
       } else {
@@ -125,14 +100,23 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         commentaire_suivis: formData.commentaire_suivis || null,
       };
 
-      const { error } = await supabase.from("membres").update(payload).eq("id", member.id);
+      const { error } = await supabase
+        .from("membres")
+        .update(payload)
+        .eq("id", member.id);
+
       if (error) throw error;
 
-      const { data: refreshedMember, error: viewError } = await supabase.from("v_membres_full").select("*").eq("id", member.id).single();
+      const { data: refreshedMember, error: viewError } = await supabase
+        .from("v_membres_full")
+        .select("*")
+        .eq("id", member.id)
+        .single();
+
       if (viewError) throw viewError;
 
       // 🔹 Mise à jour instantanée via le contexte
-      if (onUpdateMember) onUpdateMember(refreshedMember);
+      if (onUpdateMember) onUpdateMember(refreshedMember.id, refreshedMember);
 
       setSuccess(true);
       setTimeout(() => {
@@ -150,158 +134,97 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
-
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-red-500 font-bold text-xl hover:text-red-700"
-        >
-          ✕
-        </button>
-
+        <button onClick={onClose} className="absolute top-3 right-3 text-red-500 font-bold text-xl hover:text-red-700">✕</button>
         <h2 className="text-2xl font-bold text-center mb-4">
           Éditer le profil de {member?.prenom} {member?.nom}
         </h2>
 
         <div className="flex flex-col gap-4">
+          {/* Tous les champs du membre */}
+          <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} className="input" placeholder="Prénom" />
+          <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input" placeholder="Nom" />
+          <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} className="input" placeholder="Téléphone" />
+          <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="input" placeholder="Ville" />
 
-          {/* Prénom */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Prénom :</label>
-            <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} className="input" />
-          </div>
-
-          {/* Nom */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Nom :</label>
-            <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input" />
-          </div>
-
-          {/* Serviteur ⭐ */}
-          <label className="flex items-center gap-3 text-lg font-medium">
-            <input type="checkbox" name="star" checked={formData.star} onChange={toggleStar} className="h-5 w-5" />
+          {/* Checkbox Serviteur */}
+          <label className="flex items-center gap-3">
+            <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} />
             Définir en tant que serviteur ⭐
           </label>
 
-          {/* Ville */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Ville :</label>
-            <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="input" />
-          </div>
-
-          {/* WhatsApp */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">WhatsApp :</label>
-            <select name="is_whatsapp" value={formData.is_whatsapp ? "oui" : "non"} onChange={(e) => setFormData(prev => ({ ...prev, is_whatsapp: e.target.value === "oui" }))} className="input">
-              <option value="oui">Oui</option>
-              <option value="non">Non</option>
-            </select>
-          </div>
-
           {/* Statut */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Statut Actuel:</label>
-            <select name="statut" value={formData.statut} onChange={handleChange} className="input">
-              <option value="">-- Statut --</option>
-              <option value="actif">Actif</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="ancien">Ancien</option>
-              <option value="inactif">Inactif</option>
-            </select>
-          </div>
+          <select name="statut" value={formData.statut} onChange={handleChange} className="input">
+            <option value="">-- Statut --</option>
+            <option value="actif">Actif</option>
+            <option value="a déjà son église">A déjà son église</option>
+            <option value="ancien">Ancien</option>
+            <option value="inactif">Inactif</option>
+          </select>
 
           {/* Cellule */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Cellule :</label>
-            <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input">
-              <option value="">-- Cellule --</option>
-              {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full}</option>)}
-            </select>
-          </div>
+          <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input">
+            <option value="">-- Cellule --</option>
+            {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full}</option>)}
+          </select>
 
           {/* Conseiller */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Conseiller :</label>
-            <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
-              <option value="">-- Conseiller --</option>
-              {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
-            </select>
-          </div>
+          <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
+            <option value="">-- Conseiller --</option>
+            {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
+          </select>
 
           {/* Sexe */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Sexe :</label>
-            <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
-              <option value="">-- Sexe --</option>
-              <option value="Homme">Homme</option>
-              <option value="Femme">Femme</option>
-            </select>
-          </div>
+          <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
+            <option value="">-- Sexe --</option>
+            <option value="Homme">Homme</option>
+            <option value="Femme">Femme</option>
+          </select>
 
           {/* Besoins */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-2 text-left">Besoin :</label>
+          <div>
             {besoinsOptions.map(item => (
-              <label key={item} className="flex items-center gap-3 mb-2">
+              <label key={item} className="flex items-center gap-2">
                 <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} />
                 {item}
               </label>
             ))}
-            <label className="flex items-center gap-3 mb-2">
-              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} /> Autre
+            <label className="flex items-center gap-2">
+              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} />
+              Autre
             </label>
-            {showAutre && (
-              <div className="flex flex-col mt-2">
-                <label className="font-medium mb-1">Précisez :</label>
-                <input type="text" name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input" />
-              </div>
-            )}
+            {showAutre && <input type="text" name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input" placeholder="Précisez" />}
           </div>
 
-          {/* Comment il est venu */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Comment est-il venu :</label>
-            <select name="venu" value={formData.venu} onChange={handleChange} className="input">
-              <option value="">-- Comment est-il venu ? --</option>
-              <option value="invité">Invité</option>
-              <option value="réseaux">Réseaux</option>
-              <option value="evangélisation">Évangélisation</option>
-              <option value="autre">Autre</option>
-            </select>
-          </div>
+          {/* Venu */}
+          <select name="venu" value={formData.venu} onChange={handleChange} className="input">
+            <option value="">-- Comment est-il venu ? --</option>
+            <option value="invité">Invité</option>
+            <option value="réseaux">Réseaux</option>
+            <option value="evangélisation">Évangélisation</option>
+            <option value="autre">Autre</option>
+          </select>
 
           {/* Infos supplémentaires */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Informations :</label>
-            <textarea name="infos_supplementaires" rows={2} value={formData.infos_supplementaires} onChange={handleChange} className="input" />
-          </div>
+          <textarea name="infos_supplementaires" rows={2} value={formData.infos_supplementaires} onChange={handleChange} className="input" placeholder="Informations supplémentaires" />
 
           {/* Statut initial */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Statut à l'arrivée :</label>
-            <select name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="input">
-              <option value="">-- Statut --</option>
-              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="visiteur">Visiteur</option>
-            </select>
-          </div>
+          <select name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="input">
+            <option value="">-- Statut à l'arrivée --</option>
+            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+            <option value="a déjà son église">A déjà son église</option>
+            <option value="visiteur">Visiteur</option>
+          </select>
 
           {/* Commentaire suivis */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-left">Commentaire Suivis :</label>
-            <textarea name="commentaire_suivis" rows={2} value={formData.commentaire_suivis} onChange={handleChange} className="input" />
-          </div>
+          <textarea name="commentaire_suivis" rows={2} value={formData.commentaire_suivis} onChange={handleChange} className="input" placeholder="Commentaire suivis" />
 
           {/* Buttons */}
           <div className="flex gap-4 mt-2">
-            <button onClick={onClose} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md">Annuler</button>
-            <button onClick={handleSubmit} disabled={loading} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md">
-              {loading ? "Enregistrement..." : "Sauvegarder"}
-            </button>
+            <button onClick={onClose} className="flex-1 bg-gray-400 text-white py-2 rounded">Annuler</button>
+            <button onClick={handleSubmit} disabled={loading} className="flex-1 bg-blue-500 text-white py-2 rounded">{loading ? "Enregistrement..." : "Sauvegarder"}</button>
           </div>
 
-          {success && <p className="text-green-600 font-semibold text-center mt-3">✔️ Modifié avec succès !</p>}
-
+          {success && <p className="text-green-600 font-semibold text-center mt-3">✔️ Modifié !</p>}
         </div>
 
         <style jsx>{`
@@ -311,9 +234,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             border-radius: 12px;
             padding: 12px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            margin-bottom: 8px;
           }
         `}</style>
-
       </div>
     </div>
   );

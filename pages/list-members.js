@@ -649,15 +649,15 @@ return (
 )}
 
 {editMember && (
-  <EditMemberPopup
-    member={editMember}
-    onClose={() => setEditMember(null)}
-    onUpdateMember={(updatedMember) => {
-      updateMember(updatedMember.id, updatedMember); // 🔹 mise à jour instantanée
-      setEditMember(null); // ferme le popup
-    }}
-  />
-)}
+        <EditMemberPopup
+          member={editMember}
+          onClose={() => setEditMember(null)}
+          onUpdateMember={(updatedMember) => {
+            updateMember(updatedMember); // ⚡ Mise à jour instantanée
+            setEditMember(null); // Ferme le popup
+          }}
+        />
+      )}
             
 
       {/* Toast */}

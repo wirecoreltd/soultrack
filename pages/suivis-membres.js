@@ -11,7 +11,7 @@ import DetailsModal from "../components/DetailsModal";
 import { useMembers } from "../context/MembersContext";
 
 export default function SuivisMembres() {
-  const { members, updateMember } = useMembers();
+  const { members, updateMember } = useMembers(); // <-- ajout pour utiliser le contexte
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
@@ -34,11 +34,9 @@ export default function SuivisMembres() {
     const fetchSuivis = async () => {
       setLoading(true);
       try {
-        // 1️⃣ Récupérer l'utilisateur connecté
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) throw new Error("Utilisateur non connecté");
 
-        // 2️⃣ Récupérer le profil de l'utilisateur
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("id, prenom, nom, role")
@@ -49,7 +47,6 @@ export default function SuivisMembres() {
         setPrenom(profileData.prenom || "cher membre");
         setRole(profileData.role);
 
-        // 3️⃣ Récupérer les suivis selon le rôle
         const tableName = "suivis_membres_view";
         let suivisData = [];
 
@@ -87,20 +84,18 @@ export default function SuivisMembres() {
           }
         }
 
-        // 4️⃣ Récupérer les infos des membres
         const membresIds = suivisData.map(s => s.membre_id);
         const { data: membresData } = await supabase
           .from("membres")
           .select("id, sexe, venu, statut")
           .in("id", membresIds);
 
-        // 5️⃣ Fusionner les infos dans les suivis
         const merged = suivisData.map(s => ({
           ...s,
           membre: membresData.find(m => m.id === s.membre_id) || {}
         }));
 
-        // 🔹 On met à jour le contexte members
+        // 🔹 Mise à jour du contexte pour chaque membre
         merged.forEach(s => updateMember(s.membre_id, s));
 
         if (!merged || merged.length === 0) setMessage("Aucun membre à afficher.");
@@ -140,10 +135,15 @@ export default function SuivisMembres() {
       if (newStatus) payload.statut_suivis = newStatus;
       if (newComment) payload.commentaire_suivis = newComment;
 
-      const { data: updatedSuivi, error: updateError } = await supabase.from("suivis_membres").update(payload).eq("id", id).select().single();
+      const { data: updatedSuivi, error: updateError } = await supabase
+        .from("suivis_membres")
+        .update(payload)
+        .eq("id", id)
+        .select()
+        .single();
       if (updateError) throw updateError;
 
-      // 🔹 Met à jour le membre dans le contexte
+      // 🔹 Mise à jour du contexte pour ce suivi
       updateMember(updatedSuivi.membre_id, updatedSuivi);
 
       setMessage({ type: "success", text: "Mise à jour effectuée." });
@@ -163,13 +163,9 @@ export default function SuivisMembres() {
 
   const uniqueSuivis = Array.from(new Map(filteredSuivis.map(item => [item.id, item])).values());
 
-  const handleAfterSend = async () => {
-    try {
-      const { data, error } = await supabase.from("suivis_membres").select("*").order("created_at", { ascending: false });
-      if (!error) data.forEach(s => updateMember(s.membre_id, s));
-    } catch (err) {
-      console.error("Erreur rafraîchissement suivis :", err);
-    }
+  const handleAfterSend = (updatedMember) => {
+    // 🔹 Mettre à jour le membre dans le contexte après envoi WhatsApp
+    updateMember(updatedMember);
   };
 
   const DetailsPopup = ({ m }) => {
@@ -204,6 +200,7 @@ export default function SuivisMembres() {
       if (typeEnvoi === "cellule") setCible(cellules.find(c => c.id === id) || null);
       else if (typeEnvoi === "conseiller") setCible(conseillers.find(c => c.id === id) || null);
     };
+
     return (
       <div className="text-black text-sm space-y-2 w-full">
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
@@ -345,14 +342,14 @@ export default function SuivisMembres() {
           updateSuivi={updateSuivi}
         />
       )}
-
+      
       {editMember && (
         <EditMemberPopup
           member={editMember}
           cellules={[]}
           conseillers={[]}
           onClose={() => setEditMember(null)}
-          onUpdateMember={updateMember} // 🔹 important
+          onUpdateMember={updateMember} // 🔹 ici on passe updateMember du contexte
         />
       )}
     </div>

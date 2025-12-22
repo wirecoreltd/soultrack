@@ -652,10 +652,11 @@ return (
         <EditMemberPopup
           member={editMember}
           onClose={() => setEditMember(null)}
-          onUpdateMember={onUpdateMember} // utilise la fonction du contexte MembersContext
+          onUpdateMember={(updatedMember) => {
+            updateMember(updatedMember.id, updatedMember); // ⚡ Mise à jour instantanée
+            setEditMember(null); // ferme le popup
         />
-      )}
-            
+      )}            
 
       {/* Toast */}
       {showingToast && (

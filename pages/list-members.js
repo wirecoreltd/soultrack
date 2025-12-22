@@ -637,24 +637,25 @@ return (
 
 
       {popupMember && (
-  <DetailsPopup
-    membre={popupMember}
-    onClose={() => setPopupMember(null)}
-    cellules={cellules}
-    conseillers={conseillers}
-    handleAfterSend={handleAfterSend}
-    session={session}
-    showToast={showToast}
-  />
-)}
+        <DetailsPopup
+          membre={popupMember}
+          onClose={() => setPopupMember(null)}
+          cellules={cellules}
+          conseillers={conseillers}
+          handleAfterSend={handleAfterSend}
+          session={session}
+          showToast={showToast}
+        />
+      )}
 
-{editMember && (
+      {editMember && (
         <EditMemberPopup
           member={editMember}
           onClose={() => setEditMember(null)}
           onUpdateMember={(updatedMember) => {
-            updateMember(updatedMember); // ⚡ Mise à jour instantanée
-            setEditMember(null); // Ferme le popup
+            if (!updatedMember?.id) return;
+            updateMember(updatedMember.id, updatedMember); // ⚡ Mise à jour instantanée
+            setEditMember(null);
           }}
         />
       )}

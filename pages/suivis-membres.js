@@ -161,6 +161,21 @@ export default function SuivisMembres() {
     return s.statut_suivis === statutIds["envoye"] || s.statut_suivis === statutIds["en attente"];
   });
 
+  const { members, setAllMembers, updateMember } = useMembers();
+
+useEffect(() => {
+  const fetchSuivis = async () => {
+    const { data } = await supabase
+      .from("suivis_membres_view")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    setAllMembers(data); // 🔥 OBLIGATOIRE
+  };
+
+  fetchSuivis();
+}, []);
+
   const uniqueSuivis = Array.from(new Map(filteredSuivis.map(item => [item.id, item])).values());
 
   const handleAfterSend = (updatedMember) => {

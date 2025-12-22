@@ -93,60 +93,67 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   };
 
   const handleSubmit = async () => {
-    setLoading(true);
-    try {
-      let finalBesoin = Array.isArray(formData.besoin) ? [...formData.besoin] : parseBesoin(formData.besoin);
-      if (showAutre && formData.autreBesoin.trim()) {
-        finalBesoin = finalBesoin.filter(b => b !== "Autre");
-        finalBesoin.push(formData.autreBesoin.trim());
-      } else {
-        finalBesoin = finalBesoin.filter(b => b !== "Autre");
-      }
-
-      const payload = {
-        prenom: formData.prenom || null,
-        nom: formData.nom || null,
-        telephone: formData.telephone || null,
-        ville: formData.ville || null,
-        statut: formData.statut || null,
-        statut_initial: formData.statut_initial || null,
-        cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
-        conseiller_id: formData.conseiller_id === "" ? null : formData.conseiller_id,
-        infos_supplementaires: formData.infos_supplementaires || null,
-        is_whatsapp: !!formData.is_whatsapp,
-        star: !!formData.star,
-        besoin: JSON.stringify(finalBesoin),
-        sexe: formData.sexe || null,
-        venu: formData.venu || null,
-        commentaire_suivis: formData.commentaire_suivis || null,
-      };
-
-      const { error } = await supabase.from("membres").update(payload).eq("id", member.id);
-      if (error) throw error;
-
-      const { data: refreshedMember, error: viewError } = await supabase
-        .from("v_membres_full")
-        .select("*")
-        .eq("id", member.id)
-        .single();
-
-      if (viewError) throw viewError;
-
-      // 🔹 Mise à jour instantanée via le contexte
-      if (onUpdateMember) onUpdateMember(refreshedMember); // passe directement le membre mis à jour
-
-      setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        onClose();
-      }, 300);
-    } catch (err) {
-      console.error("Erreur handleSubmit EditMemberPopup:", err);
-      alert("❌ Une erreur est survenue.");
-    } finally {
-      setLoading(false);
+  setLoading(true);
+  try {
+    let finalBesoin = Array.isArray(formData.besoin) ? [...formData.besoin] : parseBesoin(formData.besoin);
+    if (showAutre && formData.autreBesoin.trim()) {
+      finalBesoin = finalBesoin.filter(b => b !== "Autre");
+      finalBesoin.push(formData.autreBesoin.trim());
+    } else {
+      finalBesoin = finalBesoin.filter(b => b !== "Autre");
     }
-  };
+
+    const payload = {
+      prenom: formData.prenom || null,
+      nom: formData.nom || null,
+      telephone: formData.telephone || null,
+      ville: formData.ville || null,
+      statut: formData.statut || null,
+      statut_initial: formData.statut_initial || null,
+      cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
+      conseiller_id: formData.conseiller_id === "" ? null : formData.conseiller_id,
+      infos_supplementaires: formData.infos_supplementaires || null,
+      is_whatsapp: !!formData.is_whatsapp,
+      star: !!formData.star,
+      besoin: JSON.stringify(finalBesoin),
+      sexe: formData.sexe || null,
+      venu: formData.venu || null,
+      commentaire_suivis: formData.commentaire_suivis || null,
+    };
+
+    // Update Supabase
+    const { error } = await supabase
+      .from("membres")
+      .update(payload)
+      .eq("id", member.id);
+
+    if (error) throw error;
+
+    // Récupère la dernière version du membre
+    const { data: refreshedMember, error: viewError } = await supabase
+      .from("v_membres_full")
+      .select("*")
+      .eq("id", member.id)
+      .single();
+
+    if (viewError) throw viewError;
+
+    // ⚡ Mise à jour instantanée via le contexte
+    if (onUpdateMember) onUpdateMember(refreshedMember);
+
+    setSuccess(true);
+    setTimeout(() => {
+      setSuccess(false);
+      onClose();
+    }, 300);
+  } catch (err) {
+    console.error("Erreur handleSubmit EditMemberPopup:", err);
+    alert("❌ Une erreur est survenue.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

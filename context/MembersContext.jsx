@@ -8,14 +8,17 @@ export function MembersProvider({ children }) {
   const [members, setMembers] = useState([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
 
-  const updateMember = (updated) => {
+  // 🔹 Mise à jour d’un membre
+  const updateMember = (updatedMember) => {
+    if (!updatedMember?.id) return;
     setMembers(prev =>
-      prev.map(m => (m.id === updated.id ? { ...m, ...updated } : m))
+      prev.map(m => (m.id === updatedMember.id ? { ...m, ...updatedMember } : m))
     );
   };
 
+  // 🔹 Initialisation complète
   const setAllMembers = (data) => {
-    setMembers(data);
+    setMembers(data || []);
     setLoadingMembers(false);
   };
 

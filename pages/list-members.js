@@ -655,6 +655,7 @@ return (
           onUpdateMember={(updatedMember) => {
             updateMember(updatedMember.id, updatedMember); // ⚡ Mise à jour instantanée
             setEditMember(null); // ferme le popup
+          }}
         />
       )}            
 

@@ -15,9 +15,10 @@ import EditMemberPopup from "../components/EditMemberPopup";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useSearchParams } from "next/navigation";
+import { useMembers } from "../context/MembersContext";
 
 export default function ListMembers() {
-  const [members, setMembers] = useState([]);
+  
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
@@ -58,6 +59,8 @@ export default function ListMembers() {
     "a déjà son église",
   ];
 
+  const { members, setAllMembers, updateMember } = useMembers();
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setShowingToast(true);
@@ -76,7 +79,7 @@ export default function ListMembers() {
       if (error) throw error;
 
       const withInitial = (data || []).map(m => ({ ...m, statut_initial: m.statut }));
-      setMembers(data || []);
+      setAllMembers(data || []);
     } catch (err) {
       console.error("Erreur fetchMembers:", err);
       setMembers([]);

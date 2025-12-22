@@ -11,7 +11,7 @@ import DetailsModal from "../components/DetailsModal";
 import { useMembers } from "../context/MembersContext";
 
 export default function SuivisMembres() {
-  const [suivis, setSuivis] = useState([]);
+  const { members, updateMember } = useMembers();
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
@@ -23,7 +23,6 @@ export default function SuivisMembres() {
   const [view, setView] = useState("card");
   const [editMember, setEditMember] = useState(null);
   const [showRefus, setShowRefus] = useState(false);
-  const { members } = useMembers();
 
   const [detailsOpen, setDetailsOpen] = useState(null);
   const toggleDetails = (id) => setDetailsOpen((prev) => (prev === id ? null : id));
@@ -32,89 +31,89 @@ export default function SuivisMembres() {
   const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
 
   useEffect(() => {
-  const fetchSuivis = async () => {
-    setLoading(true);
-    try {
-      // 1️⃣ Récupérer l'utilisateur connecté
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error("Utilisateur non connecté");
+    const fetchSuivis = async () => {
+      setLoading(true);
+      try {
+        // 1️⃣ Récupérer l'utilisateur connecté
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) throw new Error("Utilisateur non connecté");
 
-      // 2️⃣ Récupérer le profil de l'utilisateur
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, role")
-        .eq("id", user.id)
-        .single();
-      if (profileError || !profileData) throw profileError;
+        // 2️⃣ Récupérer le profil de l'utilisateur
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, prenom, nom, role")
+          .eq("id", user.id)
+          .single();
+        if (profileError || !profileData) throw profileError;
 
-      setPrenom(profileData.prenom || "cher membre");
-      setRole(profileData.role);
+        setPrenom(profileData.prenom || "cher membre");
+        setRole(profileData.role);
 
-      // 3️⃣ Récupérer les suivis selon le rôle
-      const tableName = "suivis_membres_view";
-      let suivisData = [];
+        // 3️⃣ Récupérer les suivis selon le rôle
+        const tableName = "suivis_membres_view";
+        let suivisData = [];
 
-      if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
-        const { data, error } = await supabase
-          .from(tableName)
-          .select("*")
-          .order("created_at", { ascending: false });
-        if (error) throw error;
-        suivisData = data;
-      } else if (profileData.role === "Conseiller") {
-        const { data, error } = await supabase
-          .from(tableName)
-          .select("*")
-          .eq("conseiller_id", profileData.id)
-          .order("created_at", { ascending: false });
-        if (error) throw error;
-        suivisData = data;
-      } else if (profileData.role === "ResponsableCellule") {
-        const { data: cellulesData, error: cellulesError } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("responsable_id", profileData.id);
-        if (cellulesError) throw cellulesError;
-
-        const celluleIds = cellulesData?.map(c => c.id) || [];
-        if (celluleIds.length > 0) {
+        if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
           const { data, error } = await supabase
             .from(tableName)
             .select("*")
-            .in("cellule_id", celluleIds)
             .order("created_at", { ascending: false });
           if (error) throw error;
           suivisData = data;
+        } else if (profileData.role === "Conseiller") {
+          const { data, error } = await supabase
+            .from(tableName)
+            .select("*")
+            .eq("conseiller_id", profileData.id)
+            .order("created_at", { ascending: false });
+          if (error) throw error;
+          suivisData = data;
+        } else if (profileData.role === "ResponsableCellule") {
+          const { data: cellulesData, error: cellulesError } = await supabase
+            .from("cellules")
+            .select("id")
+            .eq("responsable_id", profileData.id);
+          if (cellulesError) throw cellulesError;
+
+          const celluleIds = cellulesData?.map(c => c.id) || [];
+          if (celluleIds.length > 0) {
+            const { data, error } = await supabase
+              .from(tableName)
+              .select("*")
+              .in("cellule_id", celluleIds)
+              .order("created_at", { ascending: false });
+            if (error) throw error;
+            suivisData = data;
+          }
         }
+
+        // 4️⃣ Récupérer les infos des membres
+        const membresIds = suivisData.map(s => s.membre_id);
+        const { data: membresData } = await supabase
+          .from("membres")
+          .select("id, sexe, venu, statut")
+          .in("id", membresIds);
+
+        // 5️⃣ Fusionner les infos dans les suivis
+        const merged = suivisData.map(s => ({
+          ...s,
+          membre: membresData.find(m => m.id === s.membre_id) || {}
+        }));
+
+        // 🔹 On met à jour le contexte members
+        merged.forEach(s => updateMember(s.membre_id, s));
+
+        if (!merged || merged.length === 0) setMessage("Aucun membre à afficher.");
+      } catch (err) {
+        console.error("❌ Erreur:", err.message || err);
+        setMessage("Erreur lors de la récupération des suivis.");
+      } finally {
+        setLoading(false);
       }
+    };
 
-      // 4️⃣ Récupérer les infos des membres
-      const membresIds = suivisData.map(s => s.membre_id);
-      const { data: membresData } = await supabase
-        .from("membres")
-        .select("id, sexe, venu, statut")
-        .in("id", membresIds);
-
-      // 5️⃣ Fusionner les infos dans les suivis
-      const merged = suivisData.map(s => ({
-        ...s,
-        membre: membresData.find(m => m.id === s.membre_id) || {}
-      }));
-
-      setSuivis(merged);
-      if (!merged || merged.length === 0) setMessage("Aucun membre à afficher.");
-    } catch (err) {
-      console.error("❌ Erreur:", err.message || err);
-      setMessage("Erreur lors de la récupération des suivis.");
-      setSuivis([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchSuivis();
-}, []);
-
+    fetchSuivis();
+  }, [updateMember]);
 
   const handleStatusChange = (id, value) => setStatusChanges(prev => ({ ...prev, [id]: parseInt(value, 10) }));
   const handleCommentChange = (id, value) => setCommentChanges(prev => ({ ...prev, [id]: value }));
@@ -144,7 +143,9 @@ export default function SuivisMembres() {
       const { data: updatedSuivi, error: updateError } = await supabase.from("suivis_membres").update(payload).eq("id", id).select().single();
       if (updateError) throw updateError;
 
-      setSuivis(prev => prev.map(s => s.id === id ? updatedSuivi : s));
+      // 🔹 Met à jour le membre dans le contexte
+      updateMember(updatedSuivi.membre_id, updatedSuivi);
+
       setMessage({ type: "success", text: "Mise à jour effectuée." });
     } catch (err) {
       console.error("Exception updateSuivi:", err);
@@ -154,7 +155,7 @@ export default function SuivisMembres() {
     }
   };
 
-  const filteredSuivis = suivis.filter(s => {
+  const filteredSuivis = members.filter(s => {
     if (s.statut_suivis === statutIds["integrer"]) return false;
     if (showRefus) return s.statut_suivis === statutIds["refus"];
     return s.statut_suivis === statutIds["envoye"] || s.statut_suivis === statutIds["en attente"];
@@ -165,7 +166,7 @@ export default function SuivisMembres() {
   const handleAfterSend = async () => {
     try {
       const { data, error } = await supabase.from("suivis_membres").select("*").order("created_at", { ascending: false });
-      if (!error) setSuivis(data);
+      if (!error) data.forEach(s => updateMember(s.membre_id, s));
     } catch (err) {
       console.error("Erreur rafraîchissement suivis :", err);
     }
@@ -203,7 +204,6 @@ export default function SuivisMembres() {
       if (typeEnvoi === "cellule") setCible(cellules.find(c => c.id === id) || null);
       else if (typeEnvoi === "conseiller") setCible(conseillers.find(c => c.id === id) || null);
     };
-
     return (
       <div className="text-black text-sm space-y-2 w-full">
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
@@ -346,7 +346,15 @@ export default function SuivisMembres() {
         />
       )}
 
-      {editMember && <EditMemberPopup member={editMember} cellules={[]} conseillers={[]} onClose={() => setEditMember(null)} onUpdate={() => setEditMember(null)} />}
+      {editMember && (
+        <EditMemberPopup
+          member={editMember}
+          cellules={[]}
+          conseillers={[]}
+          onClose={() => setEditMember(null)}
+          onUpdateMember={updateMember} // 🔹 important
+        />
+      )}
     </div>
   );
 }

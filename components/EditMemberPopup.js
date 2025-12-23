@@ -215,10 +215,17 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             </select>
           </div>
 
-          <div>
-            <label className="text font-semibold  text-black-500 float-left">Définir comme WhatsApp :  </label>
-            <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} className="accent-blue-500" />
-          </div>
+          {/* WhatsApp */}
+            <div className="flex items-center gap-2">
+              <input 
+                type="checkbox" 
+                name="is_whatsapp" 
+                checked={formData.is_whatsapp} 
+                onChange={handleChange} 
+                className="accent-blue-500 w-5 h-5 mt-0.5"
+              />
+              <label className="font-semibold text-black">Définir comme WhatsApp</label>
+            </div>
 
           <div>
             <label className="text font-semibold  text-black-500 float-left">Sexe</label>
@@ -300,7 +307,13 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
           {/* Buttons */}
           <div className="flex gap-4 mt-2">
-            <button onClick={onClose} className="flex-1 bg-black-400 text-white py-2 rounded">Annuler</button>
+           <div className="flex gap-4 mt-2">
+              <button 
+                onClick={onClose} 
+                className="flex-1 bg-gray-400 text-white py-2 rounded font-semibold"
+              >
+                Annuler
+              </button>
             <button onClick={handleSubmit} disabled={loading} className="flex-1 bg-blue-500 text-white py-2 rounded">{loading ? "Enregistrement..." : "Sauvegarder"}</button>
           </div>
 

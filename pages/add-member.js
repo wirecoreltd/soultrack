@@ -18,12 +18,12 @@ export default function AddMember() {
     statut: "nouveau",
     venu: "",
     besoin: [],
-    autreBesoin: "",
+    besoinLibre: "", // temporaire pour l'input libre
     is_whatsapp: false,
     infos_supplementaires: "",
   });
 
-  const [showAutre, setShowAutre] = useState(false);
+  const [showBesoinLibre, setShowBesoinLibre] = useState(false);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
@@ -36,7 +36,6 @@ export default function AddMember() {
 
     const verifyToken = async () => {
       setLoading(true);
-
       const { data, error } = await supabase
         .from("access_tokens")
         .select("*")
@@ -46,10 +45,8 @@ export default function AddMember() {
 
       if (error || !data) {
         setErrorMsg("Lien invalide ou expiré.");
-        setLoading(false);
-      } else {
-        setLoading(false);
       }
+      setLoading(false);
     };
 
     verifyToken();
@@ -59,15 +56,8 @@ export default function AddMember() {
     const { value, checked } = e.target;
 
     if (value === "Autre") {
-      setShowAutre(checked);
-      if (!checked) {
-        setFormData((prev) => ({
-          ...prev,
-          autreBesoin: "",
-          besoin: prev.besoin.filter((b) => b !== "Autre"),
-        }));
-      }
-      return;
+      setShowBesoinLibre(checked);
+      if (!checked) setFormData((prev) => ({ ...prev, besoinLibre: "" }));
     }
 
     setFormData((prev) => {
@@ -81,16 +71,16 @@ export default function AddMember() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Fusion des besoins et de l'autre besoin
-    const finalBesoin =
-      formData.autreBesoin && showAutre
-        ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
-        : formData.besoin;
+    const finalBesoin = showBesoinLibre && formData.besoinLibre
+      ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
+      : formData.besoin;
 
     const dataToSend = {
       ...formData,
       besoin: finalBesoin,
     };
+
+    delete dataToSend.besoinLibre; // plus utilisé
 
     try {
       const { error } = await supabase.from("membres_complets").insert([dataToSend]);
@@ -99,7 +89,6 @@ export default function AddMember() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
-      // Reset du formulaire
       setFormData({
         sexe: "",
         nom: "",
@@ -109,11 +98,11 @@ export default function AddMember() {
         statut: "nouveau",
         venu: "",
         besoin: [],
-        autreBesoin: "",
+        besoinLibre: "",
         is_whatsapp: false,
         infos_supplementaires: "",
       });
-      setShowAutre(false);
+      setShowBesoinLibre(false);
     } catch (err) {
       alert(err.message);
     }
@@ -129,11 +118,11 @@ export default function AddMember() {
       statut: "nouveau",
       venu: "",
       besoin: [],
-      autreBesoin: "",
+      besoinLibre: "",
       is_whatsapp: false,
       infos_supplementaires: "",
     });
-    setShowAutre(false);
+    setShowBesoinLibre(false);
   };
 
   if (loading) return <p className="text-center mt-10">Vérification du lien...</p>;
@@ -159,29 +148,31 @@ export default function AddMember() {
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
-          <input type="text" placeholder="Prénom" value={formData.prenom} onChange={(e)=>setFormData({...formData, prenom:e.target.value})} className="input" required />
-          <input type="text" placeholder="Nom" value={formData.nom} onChange={(e)=>setFormData({...formData, nom:e.target.value})} className="input" required />
-          <input type="text" placeholder="Téléphone" value={formData.telephone} onChange={(e)=>setFormData({...formData, telephone:e.target.value})} className="input" required />
-          <label className="flex items-center gap-2 mt-1 text-sm sm:text-base">
-            <input type="checkbox" checked={formData.is_whatsapp} onChange={(e)=>setFormData({...formData, is_whatsapp:e.target.checked})} />
-            Numéro WhatsApp  
-          </label>
-          <input type="text" placeholder="Ville" value={formData.ville} onChange={(e)=>setFormData({...formData, ville:e.target.value})} className="input" />
+          <input type="text" placeholder="Prénom" value={formData.prenom} onChange={(e) => setFormData({ ...formData, prenom: e.target.value })} className="input" required />
+          <input type="text" placeholder="Nom" value={formData.nom} onChange={(e) => setFormData({ ...formData, nom: e.target.value })} className="input" required />
+          <input type="text" placeholder="Téléphone" value={formData.telephone} onChange={(e) => setFormData({ ...formData, telephone: e.target.value })} className="input" required />
 
-          <select value={formData.sexe} onChange={(e)=>setFormData({...formData, sexe:e.target.value})} className="input">
+          <label className="flex items-center gap-2 mt-1 text-sm sm:text-base">
+            <input type="checkbox" checked={formData.is_whatsapp} onChange={(e) => setFormData({ ...formData, is_whatsapp: e.target.checked })} />
+            Numéro WhatsApp
+          </label>
+
+          <input type="text" placeholder="Ville" value={formData.ville} onChange={(e) => setFormData({ ...formData, ville: e.target.value })} className="input" />
+
+          <select value={formData.sexe} onChange={(e) => setFormData({ ...formData, sexe: e.target.value })} className="input">
             <option value="">-- Sexe --</option>
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
-          </select>          
+          </select>
 
-          <select value={formData.statut} onChange={(e)=>setFormData({...formData, statut:e.target.value})} className="input">
+          <select value={formData.statut} onChange={(e) => setFormData({ ...formData, statut: e.target.value })} className="input">
             <option value="">-- Statut --</option>
             <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
             <option value="a déjà son église">A déjà son église</option>
             <option value="visiteur">Visiteur</option>
           </select>
 
-          <select value={formData.venu} onChange={(e)=>setFormData({...formData, venu:e.target.value})} className="input">
+          <select value={formData.venu} onChange={(e) => setFormData({ ...formData, venu: e.target.value })} className="input">
             <option value="">-- Comment est-il venu ? --</option>
             <option value="invité">Invité</option>
             <option value="réseaux">Réseaux</option>
@@ -190,7 +181,7 @@ export default function AddMember() {
           </select>
 
           <div>
-            <p className="font-semibold mb-2 text-sm sm:text-base">Besoin :</p>
+            <p className="font-semibold mb-2 text-sm sm:text-base">Besoins :</p>
             {besoinsOptions.map(item => (
               <label key={item} className="flex items-center gap-3 mb-2 text-sm sm:text-base">
                 <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} className="w-4 h-4 sm:w-5 sm:h-5 rounded border-gray-400 cursor-pointer" />
@@ -199,16 +190,16 @@ export default function AddMember() {
             ))}
 
             <label className="flex items-center gap-3 mb-2 text-sm sm:text-base">
-              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} className="w-4 h-4 sm:w-5 sm:h-5 rounded border-gray-400 cursor-pointer" />
+              <input type="checkbox" value="Autre" checked={showBesoinLibre} onChange={handleBesoinChange} className="w-4 h-4 sm:w-5 sm:h-5 rounded border-gray-400 cursor-pointer" />
               Autre
             </label>
 
-            {showAutre && (
-              <input type="text" placeholder="Précisez..." value={formData.autreBesoin} onChange={(e)=>setFormData({...formData, autreBesoin:e.target.value})} className="input mt-1" />
+            {showBesoinLibre && (
+              <input type="text" placeholder="Précisez..." value={formData.besoinLibre} onChange={(e) => setFormData({ ...formData, besoinLibre: e.target.value })} className="input mt-1" />
             )}
           </div>
 
-          <textarea placeholder="Informations supplémentaires..." rows={2} value={formData.infos_supplementaires} onChange={(e)=>setFormData({...formData, infos_supplementaires:e.target.value})} className="input" />
+          <textarea placeholder="Informations supplémentaires..." rows={2} value={formData.infos_supplementaires} onChange={(e) => setFormData({ ...formData, infos_supplementaires: e.target.value })} className="input" />
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">
             <button type="button" onClick={handleCancel} className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">Annuler</button>

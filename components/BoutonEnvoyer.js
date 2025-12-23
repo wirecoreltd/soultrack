@@ -133,15 +133,16 @@ export default function BoutonEnvoyer({
         ? membre.besoin
         : [];
 
-      let message = `👋 Bonjour ${responsablePrenom}\n\n`;
-      message += `✨ Un nouveau membre est placé sous tes soins.\n\n`;
-      message += `👤 ${membre.prenom} ${membre.nom}\n`;
-      message += `📱 ${membre.telephone}\n`;
-      message += `🏙 ${membre.ville || "—"}\n`;
-      message += `🙏 Besoin: ${
-        besoinsArray.length ? besoinsArray.join(", ") : "—"
-      }\n\n`;
-      message += `Merci pour ton accompagnement ❤️`;
+       let message = `👋 Bonjour ${cible?.responsable || (cible?.prenom || "")} !\n\n`;
+          message += `✨ Un nouveau membre est placé sous tes soins pour être accompagné et encouragé.\n\n`;          
+          message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
+          message += `⚥ Sexe: ${membre.sexe || "—"}\n`;
+          message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
+          message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
+          message += `🏙 Ville: ${membre.ville || "—"}\n`;
+          message += `🙏 Besoin: ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}\n`;
+          message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;          
+          message += "Merci pour ton accompagnement et ta bienveillance ❤️";    
 
       const phone = responsableTelephone.replace(/\D/g, "");
       window.open(

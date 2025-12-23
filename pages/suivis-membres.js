@@ -1,23 +1,158 @@
-import { useState, useEffect } from "react";
-import Image from "next/image";
-import DetailsPopup from "../components/DetailsPopup";
-import DetailsModal from "../components/DetailsModal";
-import EditMemberPopup from "../components/EditMemberPopup";
-import LogoutLink from "../components/LogoutLink";
+"use client";
 
-export default function SuivisMembres({ members, prenom, statutLabels, statutIds, updateMember, updateSuivi }) {
-  const [view, setView] = useState("card");
-  const [showRefus, setShowRefus] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(null);
+import { useEffect, useState, useRef } from "react";
+import React from "react";
+import supabase from "../lib/supabaseClient";
+import Image from "next/image";
+import LogoutLink from "../components/LogoutLink";
+import EditMemberPopup from "../components/EditMemberPopup";
+import BoutonEnvoyer from "../components/BoutonEnvoyer";
+import DetailsModal from "../components/DetailsModal";
+import { useMembers } from "../context/MembersContext";
+
+export default function SuivisMembres() {
+  const { members, updateMember } = useMembers(); // <-- ajout pour utiliser le contexte
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+  const [prenom, setPrenom] = useState("");
+  const [role, setRole] = useState([]);
   const [detailsModalMember, setDetailsModalMember] = useState(null);
-  const [editMember, setEditMember] = useState(null);
-  const [message, setMessage] = useState(null);
   const [statusChanges, setStatusChanges] = useState({});
   const [commentChanges, setCommentChanges] = useState({});
-  const [updating, setUpdating] = useState(false);
+  const [updating, setUpdating] = useState({});
+  const [view, setView] = useState("card");
+  const [editMember, setEditMember] = useState(null);
+  const [showRefus, setShowRefus] = useState(false);
 
-  const toggleDetails = (id) => {
-    setDetailsOpen(detailsOpen === id ? null : id);
+  const [detailsOpen, setDetailsOpen] = useState(null);
+  const toggleDetails = (id) => setDetailsOpen((prev) => (prev === id ? null : id));
+
+  const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
+  const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
+
+  useEffect(() => {
+    const fetchSuivis = async () => {
+      setLoading(true);
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) throw new Error("Utilisateur non connecté");
+
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, prenom, nom, role")
+          .eq("id", user.id)
+          .single();
+        if (profileError || !profileData) throw profileError;
+
+        setPrenom(profileData.prenom || "cher membre");
+        setRole(profileData.role);
+
+        const tableName = "suivis_membres_view";
+        let suivisData = [];
+
+        if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
+          const { data, error } = await supabase
+            .from(tableName)
+            .select("*")
+            .order("created_at", { ascending: false });
+          if (error) throw error;
+          suivisData = data;
+        } else if (profileData.role === "Conseiller") {
+          const { data, error } = await supabase
+            .from(tableName)
+            .select("*")
+            .eq("conseiller_id", profileData.id)
+            .order("created_at", { ascending: false });
+          if (error) throw error;
+          suivisData = data;
+        } else if (profileData.role === "ResponsableCellule") {
+          const { data: cellulesData, error: cellulesError } = await supabase
+            .from("cellules")
+            .select("id")
+            .eq("responsable_id", profileData.id);
+          if (cellulesError) throw cellulesError;
+
+          const celluleIds = cellulesData?.map(c => c.id) || [];
+          if (celluleIds.length > 0) {
+            const { data, error } = await supabase
+              .from(tableName)
+              .select("*")
+              .in("cellule_id", celluleIds)
+              .order("created_at", { ascending: false });
+            if (error) throw error;
+            suivisData = data;
+          }
+        }
+
+        const membresIds = suivisData.map(s => s.membre_id);
+        const { data: membresData } = await supabase
+          .from("membres")
+          .select("id, sexe, venu, statut")
+          .in("id", membresIds);
+
+        const merged = suivisData.map(s => ({
+          ...s,
+          membre: membresData.find(m => m.id === s.membre_id) || {}
+        }));
+
+        // 🔹 Mise à jour du contexte pour chaque membre
+        merged.forEach(s => updateMember(s.membre_id, s));
+
+        if (!merged || merged.length === 0) setMessage("Aucun membre à afficher.");
+      } catch (err) {
+        console.error("❌ Erreur:", err.message || err);
+        setMessage("Erreur lors de la récupération des suivis.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSuivis();
+  }, [updateMember]);
+
+  const handleStatusChange = (id, value) => setStatusChanges(prev => ({ ...prev, [id]: parseInt(value, 10) }));
+  const handleCommentChange = (id, value) => setCommentChanges(prev => ({ ...prev, [id]: value }));
+
+  const getBorderColor = (m) => {
+    if (!m) return "#ccc";
+    if (m.statut_suivis === statutIds["en attente"]) return "#FFA500";
+    if (m.statut_suivis === statutIds["integrer"]) return "#34A853";
+    if (m.statut_suivis === statutIds["refus"]) return "#FF4B5C";
+    if (m.statut_suivis === statutIds["envoye"]) return "#3B82F6";
+    return "#ccc";
+  };
+
+  const updateSuivi = async (id) => {
+    const newStatus = statusChanges[id];
+    const newComment = commentChanges[id];
+    if (!newStatus && !newComment) {
+      setMessage({ type: "info", text: "Aucun changement détecté." });
+      return;
+    }
+    setUpdating(prev => ({ ...prev, [id]: true }));
+    try {
+      const payload = { updated_at: new Date() };
+      if (newStatus) payload.statut_suivis = newStatus;
+      if (newComment) payload.commentaire_suivis = newComment;
+
+      const { data: updatedSuivi, error: updateError } = await supabase
+        .from("suivis_membres")
+        .update(payload)
+        .eq("id", id)
+        .select()
+        .single();
+      if (updateError) throw updateError;
+
+      // 🔹 Mise à jour du contexte pour ce suivi
+      updateMember(updatedSuivi.membre_id, updatedSuivi);
+
+      setMessage({ type: "success", text: "Mise à jour effectuée." });
+    } catch (err) {
+      console.error("Exception updateSuivi:", err);
+      setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
+    } finally {
+      setUpdating(prev => ({ ...prev, [id]: false }));
+    }
   };
 
   const filteredSuivis = members.filter(s => {
@@ -26,26 +161,62 @@ export default function SuivisMembres({ members, prenom, statutLabels, statutIds
     return s.statut_suivis === statutIds["envoye"] || s.statut_suivis === statutIds["en attente"];
   });
 
-  const uniqueSuivis = filteredSuivis; // si tu faisais déjà un unique, adapte ici
+  const { members, setAllMembers, updateMember } = useMembers();
 
-  const getBorderColor = (item) => {
-    switch(item.statut_suivis) {
-      case statutIds["envoye"]: return "#facc15"; // jaune
-      case statutIds["en attente"]: return "#3b82f6"; // bleu
-      case statutIds["refus"]: return "#ef4444"; // rouge
-      default: return "#6b7280"; // gris
-    }
+useEffect(() => {
+  const fetchSuivis = async () => {
+    const { data } = await supabase
+      .from("suivis_membres_view")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    setAllMembers(data); // 🔥 OBLIGATOIRE
   };
 
-  const handleStatusChange = (id, status) => {
-    setStatusChanges(prev => ({ ...prev, [id]: status }));
+  fetchSuivis();
+}, []);
+
+  const uniqueSuivis = Array.from(new Map(filteredSuivis.map(item => [item.id, item])).values());
+
+  const handleAfterSend = (updatedMember) => {
+    // 🔹 Mettre à jour le membre dans le contexte après envoi WhatsApp
+    updateMember(updatedMember);
   };
 
-  const handleCommentChange = (id, comment) => {
-    setCommentChanges(prev => ({ ...prev, [id]: comment }));
-  };
+  const DetailsPopup = ({ m }) => {
+    const [cellules, setCellules] = useState([]);
+    const [conseillers, setConseillers] = useState([]);
+    const [typeEnvoi, setTypeEnvoi] = useState("");
+    const [cible, setCible] = useState(null);
+    const commentRef = useRef(null);
 
-  return (
+    useEffect(() => {
+      const loadData = async () => {
+        try {
+          const { data: cellulesData } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
+          const { data: conseillersData } = await supabase.from("profiles").select("id, prenom, nom, telephone").eq("role", "Conseiller");
+          setCellules(cellulesData || []);
+          setConseillers(conseillersData || []);
+        } catch (err) {
+          console.error("Erreur chargement cellules/conseillers :", err);
+        }
+      };
+      loadData();
+    }, []);
+
+    useEffect(() => {
+      if (commentRef.current) {
+        commentRef.current.focus();
+        commentRef.current.selectionStart = commentRef.current.value.length;
+      }
+    }, [commentChanges[m.id]]);
+
+    const handleSelectCible = (id) => {
+      if (typeEnvoi === "cellule") setCible(cellules.find(c => c.id === id) || null);
+      else if (typeEnvoi === "conseiller") setCible(conseillers.find(c => c.id === id) || null);
+    };
+
+    return (
       <div className="text-black text-sm space-y-2 w-full">
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
   <p>🏙 Ville : {m.ville || "—"}</p>

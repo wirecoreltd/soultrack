@@ -30,7 +30,7 @@ export default function SuivisMembres() {
     setDetailsOpen((prev) => (prev === id ? null : id));
 
   const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
-  const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
+  const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégré", 4: "Refus" };
 
   // 🔹 Fetch membres_complets
   useEffect(() => {
@@ -50,17 +50,36 @@ export default function SuivisMembres() {
         setPrenom(profileData.prenom || "cher membre");
         setRole(profileData.role);
 
-        let query = supabase.from("membres_complets").select("*").order("created_at", { ascending: false });
+        let query = supabase
+          .from("membres_complets")
+          .select(
+            `
+              *,
+              cellule_id,
+              cellule_full,
+              conseiller_id,
+              suivi_id,
+              suivi_statut,
+              suivi_responsable,
+              suivi_responsable_id,
+              suivi_updated_at
+            `
+          )
+          .order("created_at", { ascending: false })
+          .eq("statut", "actif");
 
         if (profileData.role === "Conseiller") {
           query = query.eq("conseiller_id", profileData.id);
         } else if (profileData.role === "ResponsableCellule") {
-          const { data: cellulesData } = await supabase.from("cellules").select("id").eq("responsable_id", profileData.id);
+          const { data: cellulesData } = await supabase
+            .from("cellules")
+            .select("id")
+            .eq("responsable_id", profileData.id);
           const celluleIds = cellulesData?.map(c => c.id) || [];
           if (celluleIds.length > 0) {
             query = query.in("cellule_id", celluleIds);
           } else {
-            query = query.eq("id", -1); // Aucun résultat
+            query = query.eq("id", -1);
           }
         }
 
@@ -148,8 +167,13 @@ export default function SuivisMembres() {
     useEffect(() => {
       const loadData = async () => {
         try {
-          const { data: cellulesData } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
-          const { data: conseillersData } = await supabase.from("profiles").select("id, prenom, nom, telephone").eq("role", "Conseiller");
+          const { data: cellulesData } = await supabase
+            .from("cellules")
+            .select("id, cellule_full, responsable, telephone");
+          const { data: conseillersData } = await supabase
+            .from("profiles")
+            .select("id, prenom, nom, telephone")
+            .eq("role", "Conseiller");
           setCellules(cellulesData || []);
           setConseillers(conseillersData || []);
         } catch (err) {
@@ -225,7 +249,7 @@ export default function SuivisMembres() {
 
       <div className="mb-4 flex justify-between w-full max-w-6xl">
         <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline hover:text-black-200">{view === "card" ? "Vue Table" : "Vue Carte"}</button>
-        <button onClick={() => setShowRefus(!showRefus)} className="text-orange-400 text-sm underline hover:text-orange-500">{showRefus ? "Voir tout les suivis" : "Voir les refus"}</button>
+        <button onClick={() => setShowRefus(!showRefus)} className="text-orange-400 text-sm underline hover:text-orange-500">{showRefus ? "Voir tous les suivis" : "Voir les refus"}</button>
       </div>
 
       {message && <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{message.text}</div>}
@@ -239,7 +263,7 @@ export default function SuivisMembres() {
                 <p className="text-sm text-black-700 mb-1">📞 {m.telephone || "—"}</p>
                 <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[m.statut_suivis] || "—"}</p>
                 <p className="text-sm text-black-700 mb-1">🏠 Cellule : {m.cellule_full || "—"}</p>
-                {!m.cellule_full && <p className="text-sm text-black-700 mb-1">👤 Conseiller : {m.responsable || "—"}</p>}
+                {!m.cellule_full && <p className="text-sm text-black-700 mb-1">👤 Conseiller : {m.suivi_responsable || "—"}</p>}
 
                 <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-1">
                   {detailsOpen === m.id ? "Fermer détails" : "Détails"}
@@ -276,7 +300,7 @@ export default function SuivisMembres() {
                     <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
                     <td className="px-4 py-2">{m.telephone || "—"}</td>
                     <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
-                    <td className="px-4 py-2">{m.cellule_full || m.responsable || "—"}</td>
+                    <td className="px-4 py-2">{m.cellule_full || m.suivi_responsable || "—"}</td>
                     <td className="px-4 py-2 flex items-center gap-2">
                       <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>
                       <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>

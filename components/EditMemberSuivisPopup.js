@@ -4,14 +4,11 @@ import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember }) {
-  if (!member) return null;
-
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
 
   const parseBesoin = (b) => {
     if (!b) return [];
     if (Array.isArray(b)) return b;
-    if (typeof b !== "string") return [String(b)];
     try {
       const parsed = JSON.parse(b);
       return Array.isArray(parsed) ? parsed : [String(b)];
@@ -20,47 +17,36 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
     }
   };
 
-  const initialBesoin = parseBesoin(member?.besoin);
-
-  const [formData, setFormData] = useState({
-    prenom: member?.prenom || "",
-    nom: member?.nom || "",
-    telephone: member?.telephone || "",
-    ville: member?.ville || "",
-    statut: member?.statut || "",
-    statut_initial: member?.statut_initial || "",
-    infos_supplementaires: member?.infos_supplementaires || "",
-    is_whatsapp: !!member?.is_whatsapp,
-    sexe: member?.sexe || "",
-    venu: member?.venu || "",
-    besoin: initialBesoin,
-    autreBesoin: "",
-    commentaire_suivis: member?.commentaire_suivis || "",
-  });
-
-  const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
+  const [formData, setFormData] = useState(null);
+  const [showAutre, setShowAutre] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  // 🔹 Synchroniser le formData uniquement quand le member change
   useEffect(() => {
-    // Si member change, on réinitialise formData pour éviter bug
+    if (!member) return;
+    const initialBesoin = parseBesoin(member.besoin);
+
     setFormData({
-      prenom: member?.prenom || "",
-      nom: member?.nom || "",
-      telephone: member?.telephone || "",
-      ville: member?.ville || "",
-      statut: member?.statut || "",
-      statut_initial: member?.statut_initial || "",
-      infos_supplementaires: member?.infos_supplementaires || "",
-      is_whatsapp: !!member?.is_whatsapp,
-      sexe: member?.sexe || "",
-      venu: member?.venu || "",
-      besoin: parseBesoin(member?.besoin),
+      prenom: member.prenom || "",
+      nom: member.nom || "",
+      telephone: member.telephone || "",
+      ville: member.ville || "",
+      statut: member.statut || "",
+      statut_initial: member.statut_initial || "",
+      infos_supplementaires: member.infos_supplementaires || "",
+      is_whatsapp: !!member.is_whatsapp,
+      sexe: member.sexe || "",
+      venu: member.venu || "",
+      besoin: initialBesoin,
       autreBesoin: "",
-      commentaire_suivis: member?.commentaire_suivis || "",
+      commentaire_suivis: member.commentaire_suivis || "",
     });
-    setShowAutre(parseBesoin(member?.besoin).includes("Autre"));
+
+    setShowAutre(initialBesoin.includes("Autre"));
   }, [member]);
+
+  if (!formData) return null; // ⚠️ attendre que formData soit prêt
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -141,7 +127,7 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
         <h2 className="text-2xl font-bold text-center mb-4">
-          Éditer le profil de {member?.prenom || ""} {member?.nom || ""}
+          Éditer le profil de {member.prenom} {member.nom}
         </h2>
 
         <div className="flex flex-col gap-3">

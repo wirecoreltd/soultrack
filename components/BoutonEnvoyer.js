@@ -34,26 +34,22 @@ export default function BoutonEnvoyer({
 
     try {
       /* =========================
-         1️⃣ Recharger la cellule ou conseiller
+         1️⃣ Responsable
       ========================= */
       let responsablePrenom = "";
       let responsableTelephone = "";
+      let responsableId = null;
 
-      let cellule = null;
-      
       if (type === "cellule") {
-        const { data, error } = await supabase
+        const { data: cellule, error } = await supabase
           .from("cellules")
-          .select("id, cellule_full, responsable_id")
+          .select("id, responsable_id")
           .eq("id", cible.id)
           .single();
-      
-        if (error || !data?.responsable_id) {
+
+        if (error || !cellule?.responsable_id) {
           throw new Error("Responsable de cellule introuvable");
         }
-      
-        cellule = data;
-      }      
 
         const { data: responsable, error: respError } = await supabase
           .from("profiles")
@@ -62,137 +58,88 @@ export default function BoutonEnvoyer({
           .single();
 
         if (respError || !responsable?.telephone) {
-          throw new Error("Le responsable n'a pas de numéro WhatsApp valide");
+          throw new Error("Numéro WhatsApp invalide");
         }
 
         responsablePrenom = responsable.prenom;
         responsableTelephone = responsable.telephone;
+        responsableId = cellule.responsable_id;
       }
 
       if (type === "conseiller") {
-        if (!cible.telephone) {
-          throw new Error("Le conseiller n'a pas de numéro WhatsApp valide");
-        }
         responsablePrenom = cible.prenom;
         responsableTelephone = cible.telephone;
+        responsableId = cible.id;
       }
 
       /* =========================
          2️⃣ Créer le suivi
       ========================= */
-      const suiviData = {
-        membre_id: membre.id,
-      
-        // snapshot membre
-        prenom: membre.prenom,
-        nom: membre.nom,
-        telephone: membre.telephone,
-        ville: membre.ville,
-        sexe: membre.sexe,
-        besoin: membre.besoin,
-        infos_supplementaires: membre.infos_supplementaires,
-      
-        // suivi
-        statut_suivis: statutIds.envoye,
-        statut_libelle: "statutIds.envoye",
-        is_whatsapp: true,
-      
-        // affectation
-        cellule_id: type === "cellule" ? cible.id : null,
-        conseiller_id: type === "conseiller" ? cible.id : null,
-        responsable: responsablePrenom,
-      
-        created_at: new Date().toISOString(),
-      };
+      const { data: suivi, error: suiviError } = await supabase
+        .from("suivis_membres")
+        .insert([
+          {
+            membre_id: membre.id,
+            prenom: membre.prenom,
+            nom: membre.nom,
+            telephone: membre.telephone,
+            ville: membre.ville,
+            sexe: membre.sexe,
+            besoin: membre.besoin,
+            infos_supplementaires: membre.infos_supplementaires,
+            statut_suivis: statutIds.envoye,
+            is_whatsapp: membre.is_whatsapp,
+            cellule_id: type === "cellule" ? cible.id : null,
+            conseiller_id: type === "conseiller" ? cible.id : null,
+            responsable: responsablePrenom,
+            created_at: new Date().toISOString(),
+          },
+        ])
+        .select()
+        .single();
 
-      if (type === "cellule") {
-        suiviData.cellule_id = cible.id;
-        suiviData.responsable = responsablePrenom;
-      }
+      if (suiviError) throw suiviError;
 
-      if (type === "conseiller") {
-        suiviData.conseiller_id = cible.id;
-        suiviData.responsable = responsablePrenom;
-      }
-
+      /* =========================
+         3️⃣ Update membre
+      ========================= */
       const { error: updateError } = await supabase
         .from("membres_complets")
         .update({
           statut: "actif",
-      
-          // 🔗 lien avec le suivi
           suivi_id: suivi.id,
           suivi_statut: statutIds.envoye,
           suivi_responsable: responsablePrenom,
-          suivi_responsable_id:
-            type === "cellule"
-              ? cellule.responsable_id
-              : cible.id,
+          suivi_responsable_id: responsableId,
           suivi_updated_at: new Date().toISOString(),
-      
-          // optionnel mais recommandé
           cellule_id: type === "cellule" ? cible.id : null,
           conseiller_id: type === "conseiller" ? cible.id : null,
         })
         .eq("id", membre.id);
-      
-      if (updateError) throw updateError;
 
-
-      /* =========================
-         3️⃣ Mettre à jour le statut du membre
-      ========================= */
-      const { error: updateError } = await supabase
-        .from("membres_complets")
-        .update({
-          statut: "actif",
-          suivi_id: suivi.id,
-          suivi_statut: statutIds.envoye,
-          suivi_responsable: responsablePrenom,
-          suivi_responsable_id:
-            type === "cellule"
-              ? cellule.responsable_id
-              : cible.id,
-          suivi_updated_at: new Date().toISOString(),
-        })
-        .eq("id", membre.id);
-      
       if (updateError) throw updateError;
 
       /* =========================
-         4️⃣ Callback pour refresh UI
+         4️⃣ Refresh UI
       ========================= */
       if (onEnvoyer) {
-  onEnvoyer({ ...membre, statut: "actif" });
-}
-
-       let besoinsArray = [];
-      if (Array.isArray(membre.besoin)) {
-        besoinsArray = membre.besoin;
-      } else if (typeof membre.besoin === "string" && membre.besoin.startsWith("[")) {
-        try {
-          besoinsArray = JSON.parse(membre.besoin);
-        } catch {
-          besoinsArray = [];
-        }
+        onEnvoyer({ ...membre, statut: "actif" });
       }
 
       /* =========================
-         5️⃣ Message WhatsApp
+         5️⃣ WhatsApp
       ========================= */
+      let besoinsArray = Array.isArray(membre.besoin)
+        ? membre.besoin
+        : [];
+
       let message = `👋 Bonjour ${responsablePrenom}\n\n`;
       message += `✨ Un nouveau membre est placé sous tes soins.\n\n`;
-      message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
-      message += `⚥ Sexe: ${membre.sexe || "—"}\n`;
-      message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
-      message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
-      message += `🧩 Comment est-il venu : ${membre.venu || "—"}\n`;
-      message += `🏙 Ville: ${membre.ville || "—"}\n`;
+      message += `👤 ${membre.prenom} ${membre.nom}\n`;
+      message += `📱 ${membre.telephone}\n`;
+      message += `🏙 ${membre.ville || "—"}\n`;
       message += `🙏 Besoin: ${
-        besoinsArray.length > 0 ? besoinsArray.join(", ") : "—"
-      }\n`;
-      message += `📝 Infos supplémentaires: ${
-        membre.infos_supplementaires || "—"
+        besoinsArray.length ? besoinsArray.join(", ") : "—"
       }\n\n`;
       message += `Merci pour ton accompagnement ❤️`;
 
@@ -208,7 +155,7 @@ export default function BoutonEnvoyer({
         );
       }
     } catch (err) {
-      console.error("Erreur sendToWhatsapp:", err.message);
+      console.error("Erreur sendToWhatsapp:", err);
       alert(`❌ ${err.message}`);
     } finally {
       setLoading(false);

@@ -36,6 +36,7 @@ export default function AddMember() {
 
     const verifyToken = async () => {
       setLoading(true);
+
       const { data, error } = await supabase
         .from("access_tokens")
         .select("*")
@@ -43,8 +44,12 @@ export default function AddMember() {
         .gte("expires_at", new Date().toISOString())
         .single();
 
-      if (error || !data) setErrorMsg("Lien invalide ou expiré.");
-      setLoading(false);
+      if (error || !data) {
+        setErrorMsg("Lien invalide ou expiré.");
+        setLoading(false);
+      } else {
+        setLoading(false);
+      }
     };
 
     verifyToken();
@@ -53,17 +58,22 @@ export default function AddMember() {
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
 
+    if (value === "Autre") {
+      setShowAutre(checked);
+      if (!checked) {
+        setFormData((prev) => ({
+          ...prev,
+          autreBesoin: "",
+          besoin: prev.besoin.filter((b) => b !== "Autre"),
+        }));
+      }
+      return;
+    }
+
     setFormData((prev) => {
-      let updatedBesoin = checked
+      const updatedBesoin = checked
         ? [...prev.besoin, value]
         : prev.besoin.filter((b) => b !== value);
-
-      if (value === "Autre") {
-        setShowAutre(checked);
-        if (!checked) prev.autreBesoin = "";
-        updatedBesoin = updatedBesoin.filter((b) => b !== "Autre");
-      }
-
       return { ...prev, besoin: updatedBesoin };
     });
   };
@@ -71,12 +81,15 @@ export default function AddMember() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Fusion des besoins et de l'autre besoin
+    const finalBesoin =
+      formData.autreBesoin && showAutre
+        ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
+        : formData.besoin;
+
     const dataToSend = {
       ...formData,
-      besoin:
-        showAutre && formData.autreBesoin
-          ? [...formData.besoin, formData.autreBesoin]
-          : formData.besoin,
+      besoin: finalBesoin,
     };
 
     try {
@@ -86,6 +99,7 @@ export default function AddMember() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
+      // Reset du formulaire
       setFormData({
         sexe: "",
         nom: "",
@@ -130,7 +144,7 @@ export default function AddMember() {
       <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-3xl shadow-lg relative">
         <button
           onClick={() => router.back()}
-          className="absolute top-3 left-3 sm:top-4 sm:left-4 text-black font-semibold hover:text-gray-800"
+          className="absolute top-3 left-3 sm:top-4 sm:left-4 flex items-center text-black font-semibold hover:text-gray-800 transition-colors"
         >
           ← Retour
         </button>
@@ -148,19 +162,17 @@ export default function AddMember() {
           <input type="text" placeholder="Prénom" value={formData.prenom} onChange={(e)=>setFormData({...formData, prenom:e.target.value})} className="input" required />
           <input type="text" placeholder="Nom" value={formData.nom} onChange={(e)=>setFormData({...formData, nom:e.target.value})} className="input" required />
           <input type="text" placeholder="Téléphone" value={formData.telephone} onChange={(e)=>setFormData({...formData, telephone:e.target.value})} className="input" required />
-
-          <label className="flex items-center gap-2 text-sm sm:text-base">
+          <label className="flex items-center gap-2 mt-1 text-sm sm:text-base">
             <input type="checkbox" checked={formData.is_whatsapp} onChange={(e)=>setFormData({...formData, is_whatsapp:e.target.checked})} />
             Numéro WhatsApp  
           </label>
-
           <input type="text" placeholder="Ville" value={formData.ville} onChange={(e)=>setFormData({...formData, ville:e.target.value})} className="input" />
 
           <select value={formData.sexe} onChange={(e)=>setFormData({...formData, sexe:e.target.value})} className="input">
             <option value="">-- Sexe --</option>
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
-          </select>
+          </select>          
 
           <select value={formData.statut} onChange={(e)=>setFormData({...formData, statut:e.target.value})} className="input">
             <option value="">-- Statut --</option>
@@ -182,13 +194,15 @@ export default function AddMember() {
             {besoinsOptions.map(item => (
               <label key={item} className="flex items-center gap-3 mb-2 text-sm sm:text-base">
                 <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} className="w-4 h-4 sm:w-5 sm:h-5 rounded border-gray-400 cursor-pointer" />
-                {item}
+                <span>{item}</span>
               </label>
             ))}
+
             <label className="flex items-center gap-3 mb-2 text-sm sm:text-base">
               <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} className="w-4 h-4 sm:w-5 sm:h-5 rounded border-gray-400 cursor-pointer" />
               Autre
             </label>
+
             {showAutre && (
               <input type="text" placeholder="Précisez..." value={formData.autreBesoin} onChange={(e)=>setFormData({...formData, autreBesoin:e.target.value})} className="input mt-1" />
             )}
@@ -210,8 +224,10 @@ export default function AddMember() {
             border: 1px solid #ccc;
             border-radius: 12px;
             padding: 12px;
-            font-size: 0.95rem;
+            text-align: left;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            color: black;
+            font-size: 0.95rem;
           }
         `}</style>
       </div>

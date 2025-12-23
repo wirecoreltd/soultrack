@@ -30,7 +30,7 @@ export default function SuivisMembres() {
     setDetailsOpen((prev) => (prev === id ? null : id));
 
   const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
-  const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégré", 4: "Refus" };
+  const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
 
   // 🔹 Fetch membres_complets
   useEffect(() => {
@@ -50,36 +50,17 @@ export default function SuivisMembres() {
         setPrenom(profileData.prenom || "cher membre");
         setRole(profileData.role);
 
-        let query = supabase
-          .from("membres_complets")
-          .select(
-            `
-              *,
-              cellule_id,
-              cellule_full,
-              conseiller_id,
-              suivi_id,
-              suivi_statut,
-              suivi_responsable,
-              suivi_responsable_id,
-              suivi_updated_at
-            `
-          )
-          .order("created_at", { ascending: false })
-          .eq("statut", "actif");
+        let query = supabase.from("membres_complets").select("*").order("created_at", { ascending: false });
 
         if (profileData.role === "Conseiller") {
           query = query.eq("conseiller_id", profileData.id);
         } else if (profileData.role === "ResponsableCellule") {
-          const { data: cellulesData } = await supabase
-            .from("cellules")
-            .select("id")
-            .eq("responsable_id", profileData.id);
+          const { data: cellulesData } = await supabase.from("cellules").select("id").eq("responsable_id", profileData.id);
           const celluleIds = cellulesData?.map(c => c.id) || [];
           if (celluleIds.length > 0) {
             query = query.in("cellule_id", celluleIds);
           } else {
-            query = query.eq("id", -1);
+            query = query.eq("id", -1); // Aucun résultat
           }
         }
 
@@ -106,10 +87,11 @@ export default function SuivisMembres() {
 
   const getBorderColor = (m) => {
     if (!m) return "#ccc";
-    if (m.statut_suivis === statutIds["en attente"]) return "#FFA500";
-    if (m.statut_suivis === statutIds["integrer"]) return "#34A853";
-    if (m.statut_suivis === statutIds["refus"]) return "#FF4B5C";
-    if (m.statut_suivis === statutIds["envoye"]) return "#3B82F6";
+    const status = m.statut_suivis ?? m.suivi_statut;
+    if (status === statutIds["en attente"]) return "#FFA500";
+    if (status === statutIds["integrer"]) return "#34A853";
+    if (status === statutIds["refus"]) return "#FF4B5C";
+    if (status === statutIds["envoye"]) return "#3B82F6";
     return "#ccc";
   };
 
@@ -146,9 +128,10 @@ export default function SuivisMembres() {
   };
 
   const filteredMembers = members.filter(s => {
-    if (s.statut_suivis === statutIds["integrer"]) return false;
-    if (showRefus) return s.statut_suivis === statutIds["refus"];
-    return s.statut_suivis === statutIds["envoye"] || s.statut_suivis === statutIds["en attente"];
+    const status = s.statut_suivis ?? s.suivi_statut;
+    if (status === statutIds["integrer"]) return false;
+    if (showRefus) return status === statutIds["refus"];
+    return status === statutIds["envoye"] || status === statutIds["en attente"];
   });
 
   const uniqueMembers = Array.from(new Map(filteredMembers.map(item => [item.id, item])).values());
@@ -167,13 +150,8 @@ export default function SuivisMembres() {
     useEffect(() => {
       const loadData = async () => {
         try {
-          const { data: cellulesData } = await supabase
-            .from("cellules")
-            .select("id, cellule_full, responsable, telephone");
-          const { data: conseillersData } = await supabase
-            .from("profiles")
-            .select("id, prenom, nom, telephone")
-            .eq("role", "Conseiller");
+          const { data: cellulesData } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
+          const { data: conseillersData } = await supabase.from("profiles").select("id, prenom, nom, telephone").eq("role", "Conseiller");
           setCellules(cellulesData || []);
           setConseillers(conseillersData || []);
         } catch (err) {
@@ -206,7 +184,7 @@ export default function SuivisMembres() {
         <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
         <label className="text-black text-sm mt-4 block">📋 Statut Suivis :</label>
-        <select value={statusChanges[m.id] ?? m.statut_suivis ?? ""} onChange={(e) => handleStatusChange(m.id, e.target.value)} className="w-full border rounded-md px-2 py-1">
+        <select value={statusChanges[m.id] ?? m.statut_suivis ?? m.suivi_statut ?? ""} onChange={(e) => handleStatusChange(m.id, e.target.value)} className="w-full border rounded-md px-2 py-1">
           <option value="">-- Choisir un statut --</option>
           <option value={1}>🕓 En Cours</option>
           <option value={3}>✅ Intégrer</option>
@@ -249,7 +227,7 @@ export default function SuivisMembres() {
 
       <div className="mb-4 flex justify-between w-full max-w-6xl">
         <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline hover:text-black-200">{view === "card" ? "Vue Table" : "Vue Carte"}</button>
-        <button onClick={() => setShowRefus(!showRefus)} className="text-orange-400 text-sm underline hover:text-orange-500">{showRefus ? "Voir tous les suivis" : "Voir les refus"}</button>
+        <button onClick={() => setShowRefus(!showRefus)} className="text-orange-400 text-sm underline hover:text-orange-500">{showRefus ? "Voir tout les suivis" : "Voir les refus"}</button>
       </div>
 
       {message && <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{message.text}</div>}
@@ -261,9 +239,9 @@ export default function SuivisMembres() {
               <div className="flex flex-col items-center">
                 <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
                 <p className="text-sm text-black-700 mb-1">📞 {m.telephone || "—"}</p>
-                <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[m.statut_suivis] || "—"}</p>
+                <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[m.statut_suivis ?? m.suivi_statut] || "—"}</p>
                 <p className="text-sm text-black-700 mb-1">🏠 Cellule : {m.cellule_full || "—"}</p>
-                {!m.cellule_full && <p className="text-sm text-black-700 mb-1">👤 Conseiller : {m.suivi_responsable || "—"}</p>}
+                {!m.cellule_full && <p className="text-sm text-black-700 mb-1">👤 Conseiller : {m.responsable || "—"}</p>}
 
                 <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-1">
                   {detailsOpen === m.id ? "Fermer détails" : "Détails"}
@@ -299,8 +277,8 @@ export default function SuivisMembres() {
                   <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
                     <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
                     <td className="px-4 py-2">{m.telephone || "—"}</td>
-                    <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
-                    <td className="px-4 py-2">{m.cellule_full || m.suivi_responsable || "—"}</td>
+                    <td className="px-4 py-2">{statutLabels[m.statut_suivis ?? m.suivi_statut] || "—"}</td>
+                    <td className="px-4 py-2">{m.cellule_full || m.responsable || "—"}</td>
                     <td className="px-4 py-2 flex items-center gap-2">
                       <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>
                       <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>

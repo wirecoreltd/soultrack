@@ -1,7 +1,3 @@
-//pages/add-member.js✅
-//description: Cette page permet d'ajouter un nouveau membre dans la base de données via un formulaire simple et accessible. 
-//Elle est entièrement responsive (mobile, tablette, desktop).
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -14,7 +10,7 @@ export default function AddMember() {
   const { token } = router.query;
 
   const [formData, setFormData] = useState({
-    sexe: "", // ajouté
+    sexe: "",
     nom: "",
     prenom: "",
     telephone: "",
@@ -31,6 +27,7 @@ export default function AddMember() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
 
   // Vérification du token
@@ -70,6 +67,7 @@ export default function AddMember() {
           besoin: prev.besoin.filter((b) => b !== "Autre"),
         }));
       }
+      return;
     }
 
     setFormData((prev) => {
@@ -83,24 +81,35 @@ export default function AddMember() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const finalBesoin =
+      formData.autreBesoin && showAutre
+        ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
+        : formData.besoin;
+
     const dataToSend = {
-      ...formData,
-      besoin:
-        formData.autreBesoin && showAutre
-          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
-          : formData.besoin,
+      prenom: formData.prenom || null,
+      nom: formData.nom || null,
+      sexe: formData.sexe || null,
+      telephone: formData.telephone || null,
+      ville: formData.ville || null,
+      statut: formData.statut || "visiteur",
+      venu: formData.venu || null,
+      besoin: JSON.stringify(finalBesoin),
+      is_whatsapp: formData.is_whatsapp || false,
+      infos_supplementaires: formData.infos_supplementaires || null,
+      created_at: new Date().toISOString(),
     };
 
     try {
-      const { error } = await supabase.from("membres").insert([dataToSend]);
+      const { error } = await supabase.from("membres_complets").insert([dataToSend]);
       if (error) throw error;
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
+      // Reset form
       setFormData({
-        sexe: "", // reset sexe
-        sexe: "", // reset sexe
+        sexe: "",
         nom: "",
         prenom: "",
         telephone: "",
@@ -120,6 +129,7 @@ export default function AddMember() {
 
   const handleCancel = () => {
     setFormData({
+      sexe: "",
       nom: "",
       prenom: "",
       telephone: "",
@@ -160,11 +170,13 @@ export default function AddMember() {
           <input type="text" placeholder="Prénom" value={formData.prenom} onChange={(e)=>setFormData({...formData, prenom:e.target.value})} className="input" required />
           <input type="text" placeholder="Nom" value={formData.nom} onChange={(e)=>setFormData({...formData, nom:e.target.value})} className="input" required />
           <input type="text" placeholder="Téléphone" value={formData.telephone} onChange={(e)=>setFormData({...formData, telephone:e.target.value})} className="input" required />
+          
           <label className="flex items-center gap-2 mt-1 text-sm sm:text-base">
-          <input type="checkbox" checked={formData.is_whatsapp} onChange={(e)=>setFormData({...formData, is_whatsapp:e.target.checked})} />
-           Numéro WhatsApp  
+            <input type="checkbox" checked={formData.is_whatsapp} onChange={(e)=>setFormData({...formData, is_whatsapp:e.target.checked})} />
+            Numéro WhatsApp  
           </label>
-            <input type="text" placeholder="Ville" value={formData.ville} onChange={(e)=>setFormData({...formData, ville:e.target.value})} className="input" />
+
+          <input type="text" placeholder="Ville" value={formData.ville} onChange={(e)=>setFormData({...formData, ville:e.target.value})} className="input" />
 
           <select value={formData.sexe} onChange={(e)=>setFormData({...formData, sexe:e.target.value})} className="input">
             <option value="">-- Sexe --</option>
@@ -188,7 +200,7 @@ export default function AddMember() {
           </select>
 
           <div>
-            <p className="font-semibold mb-2 text-sm sm:text-base">Besoin :</p>
+            <p className="font-semibold mb-2 text-sm sm:text-base">Besoins :</p>
             {besoinsOptions.map(item => (
               <label key={item} className="flex items-center gap-3 mb-2 text-sm sm:text-base">
                 <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} className="w-4 h-4 sm:w-5 sm:h-5 rounded border-gray-400 cursor-pointer" />
@@ -232,4 +244,3 @@ export default function AddMember() {
     </div>
   );
 }
-

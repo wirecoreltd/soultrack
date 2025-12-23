@@ -39,16 +39,21 @@ export default function BoutonEnvoyer({
       let responsablePrenom = "";
       let responsableTelephone = "";
 
+      let cellule = null;
+      
       if (type === "cellule") {
-        const { data: cellule, error: celluleError } = await supabase
+        const { data, error } = await supabase
           .from("cellules")
           .select("id, cellule_full, responsable_id")
           .eq("id", cible.id)
           .single();
-
-        if (celluleError || !cellule?.responsable_id) {
+      
+        if (error || !data?.responsable_id) {
           throw new Error("Responsable de cellule introuvable");
         }
+      
+        cellule = data;
+      }      
 
         const { data: responsable, error: respError } = await supabase
           .from("profiles")
@@ -110,20 +115,29 @@ export default function BoutonEnvoyer({
         suiviData.responsable = responsablePrenom;
       }
 
-      const { data: suivi, error: insertError } = await supabase
-        .from("suivis_membres")
-        .insert([{
-          membre_id: membre.id,
-          statut_suivis: statutIds.envoye,
+      const { error: updateError } = await supabase
+        .from("membres_complets")
+        .update({
+          statut: "actif",
+      
+          // 🔗 lien avec le suivi
+          suivi_id: suivi.id,
+          suivi_statut: statutIds.envoye,
+          suivi_responsable: responsablePrenom,
+          suivi_responsable_id:
+            type === "cellule"
+              ? cellule.responsable_id
+              : cible.id,
+          suivi_updated_at: new Date().toISOString(),
+      
+          // optionnel mais recommandé
           cellule_id: type === "cellule" ? cible.id : null,
           conseiller_id: type === "conseiller" ? cible.id : null,
-          responsable: responsablePrenom,
-          created_at: new Date().toISOString(),
-        }])
-        .select()
-        .single();
+        })
+        .eq("id", membre.id);
       
-      if (insertError) throw insertError;
+      if (updateError) throw updateError;
+
 
       /* =========================
          3️⃣ Mettre à jour le statut du membre
@@ -149,12 +163,8 @@ export default function BoutonEnvoyer({
          4️⃣ Callback pour refresh UI
       ========================= */
       if (onEnvoyer) {
-        onEnvoyer({
-          ...membre,
-          statut: "actif",
-          isNouveau: false,
-        });
-      }
+  onEnvoyer({ ...membre, statut: "actif" });
+}
 
        let besoinsArray = [];
       if (Array.isArray(membre.besoin)) {

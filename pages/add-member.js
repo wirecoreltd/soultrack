@@ -169,6 +169,7 @@ export default function AddMember() {
             <option value="">-- Statut --</option>
             <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
             <option value="a déjà son église">A déjà son église</option>
+            <option value="nouveau">Nouveau</option>  
             <option value="visiteur">Visiteur</option>
           </select>
 

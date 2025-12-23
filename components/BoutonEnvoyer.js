@@ -77,14 +77,26 @@ export default function BoutonEnvoyer({
       ========================= */
       const suiviData = {
         membre_id: membre.id,
+      
+        // snapshot membre
         prenom: membre.prenom,
         nom: membre.nom,
         telephone: membre.telephone,
-        is_whatsapp: true,
         ville: membre.ville,
+        sexe: membre.sexe,
         besoin: membre.besoin,
         infos_supplementaires: membre.infos_supplementaires,
+      
+        // suivi
         statut_suivis: statutIds.envoye,
+        statut_libelle: "envoyé",
+        is_whatsapp: true,
+      
+        // affectation
+        cellule_id: type === "cellule" ? cible.id : null,
+        conseiller_id: type === "conseiller" ? cible.id : null,
+        responsable: responsablePrenom,
+      
         created_at: new Date().toISOString(),
       };
 
@@ -109,17 +121,27 @@ export default function BoutonEnvoyer({
       /* =========================
          3️⃣ Mettre à jour le statut du membre
       ========================= */
-      const { error: updateError } = await supabase
-        .from("membres")
-        .update({ statut: "actif" })
-        .eq("id", membre.id);
+      await supabase
+      .from("membres_complets")
+      .update({
+        statut: "actif",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", membre.id);
+
 
       if (updateError) throw updateError;
 
       /* =========================
          4️⃣ Callback pour refresh UI
       ========================= */
-      if (onEnvoyer) onEnvoyer({ ...membre, statut: "actif" });
+      if (onEnvoyer) {
+        onEnvoyer({
+          ...membre,
+          statut: "actif",
+          isNouveau: false,
+        });
+      }
 
        let besoinsArray = [];
       if (Array.isArray(membre.besoin)) {

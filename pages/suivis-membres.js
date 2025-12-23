@@ -181,21 +181,7 @@ export default function SuivisMembres() {
         <p>⚥ Sexe : {m.sexe || "—"}</p>
         <p>📋 Statut initial : {m.statut_initial ?? m.statut ?? "—"}</p>
         <p>❓Besoin : {!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin}</p>
-        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-
-        <label className="text-black text-sm mt-4 block">📋 Statut Suivis :</label>
-        <select value={statusChanges[m.id] ?? m.statut_suivis ?? m.suivi_statut ?? ""} onChange={(e) => handleStatusChange(m.id, e.target.value)} className="w-full border rounded-md px-2 py-1">
-          <option value="">-- Choisir un statut --</option>
-          <option value={1}>🕓 En Cours</option>
-          <option value={3}>✅ Intégrer</option>
-          <option value={4}>❌ Refus</option>
-        </select>
-
-        <textarea ref={commentRef} value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""} onChange={(e) => handleCommentChange(m.id, e.target.value)} rows={2} className="w-full border rounded-md px-2 py-1 mt-2 resize-none" placeholder="Ajouter un commentaire..." />
-
-        <button onClick={() => updateSuivi(m.id)} disabled={updating[m.id]} className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${updating[m.id] ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"}`}>
-          {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
-        </button>
+        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>       
 
         <div className="mt-4 flex justify-center">
           <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-4">✏️ Modifier le contact</button>

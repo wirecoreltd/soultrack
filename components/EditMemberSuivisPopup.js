@@ -19,27 +19,35 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
     }
   };
 
-  const initialBesoin = parseBesoin(member?.besoin);
-
-  const [formData, setFormData] = useState({
-    prenom: member?.prenom || "",
-    nom: member?.nom || "",
-    telephone: member?.telephone || "",
-    ville: member?.ville || "",
-    statut: member?.statut || "",
-    statut_initial: member?.statut_initial || "",
-    infos_supplementaires: member?.infos_supplementaires || "",
-    is_whatsapp: !!member?.is_whatsapp,
-    sexe: member?.sexe || "",
-    venu: member?.venu || "",
-    besoin: initialBesoin,
-    autreBesoin: "",
-    commentaire_suivis: member?.commentaire_suivis || "",
-  });
-
-  const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
+  const [formData, setFormData] = useState({});
+  const [showAutre, setShowAutre] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // 🔹 Réinitialisation à chaque ouverture
+  useEffect(() => {
+    if (member) {
+      const besoinsInit = parseBesoin(member.besoin);
+      setFormData({
+        prenom: member.prenom || "",
+        nom: member.nom || "",
+        telephone: member.telephone || "",
+        ville: member.ville || "",
+        statut: member.statut || "",
+        statut_initial: member.statut_initial || "",
+        infos_supplementaires: member.infos_supplementaires || "",
+        is_whatsapp: !!member.is_whatsapp,
+        sexe: member.sexe || "",
+        venu: member.venu || "",
+        besoin: besoinsInit,
+        autreBesoin: "",
+        commentaire_suivis: member.commentaire_suivis || "",
+      });
+      setShowAutre(besoinsInit.includes("Autre"));
+      setLoading(false);
+      setSuccess(false);
+    }
+  }, [member]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -124,29 +132,14 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
         </h2>
 
         <div className="flex flex-col gap-3">
-          {/* Prénom */}
-          <div>
-            <label className="font-semibold text-black block mb-1">Prénom</label>
-            <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} className="input" />
-          </div>
-
-          {/* Nom */}
-          <div>
-            <label className="font-semibold text-black block mb-1">Nom</label>
-            <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input" />
-          </div>
-
-          {/* Téléphone */}
-          <div>
-            <label className="font-semibold text-black block mb-1">Téléphone</label>
-            <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} className="input" />
-          </div>
-
-          {/* Ville */}
-          <div>
-            <label className="font-semibold text-black block mb-1">Ville</label>
-            <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="input" />
-          </div>
+          {["prenom","nom","telephone","ville"].map(field => (
+            <div key={field}>
+              <label className="font-semibold text-black block mb-1">
+                {field.charAt(0).toUpperCase() + field.slice(1)}
+              </label>
+              <input type="text" name={field} value={formData[field]} onChange={handleChange} className="input" />
+            </div>
+          ))}
 
           {/* Statut */}
           <div>
@@ -196,7 +189,7 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
             )}
           </div>
 
-          {/* Infos supplémentaires */}
+          {/* Infos */}
           <div>
             <label className="font-semibold text-black block mb-1">Infos</label>
             <textarea name="infos_supplementaires" rows={2} value={formData.infos_supplementaires} onChange={handleChange} className="input" />

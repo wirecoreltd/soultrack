@@ -197,7 +197,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             <label className="font-semibold text-black block mb-1">Conseiller</label>
             <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
               <option value="">-- Conseiller --</option>
-              {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom} - WhatsApp : {c.telephone ? "Oui" : "Non"}</option>)}
+              {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
             </select>
           </div>
 

@@ -268,8 +268,9 @@ export default function ListMembers() {
           <div className="w-full mt-2 text-sm text-black space-y-1">
             <p className="text-center">🏙️ Ville : {m.ville || "—"}</p>
             <p className="text-center">🕊 Statut : {m.statut || "—"}</p>
-            <p>🏠 Cellule : {(m.cellule_ville && m.cellule_nom) ? `${m.cellule_ville} - ${m.cellule_nom}` : "—"}</p>
-            <p>👤 Conseiller : {(m.conseiller_prenom || m.conseiller_nom) ? `${m.conseiller_prenom || ""} ${m.conseiller_nom || ""}`.trim() : "—"}</p>
+            <p>🏠 Cellule : {m.cellule_id ? `${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` : "—"}</p>
+            <p>👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
+
           </div>
 
           <div className="mt-2 w-full">
@@ -443,7 +444,12 @@ export default function ListMembers() {
                   </td>
                   <td className="px-1 py-1 whitespace-nowrap relative">{m.telephone || "—"}</td>
                   <td className="px-1 py-1 whitespace-nowrap">{m.statut || "—"}</td>
-                  <td className="px-1 py-1 whitespace-nowrap">{m.cellule_nom ? `🏠 ${m.cellule_ville || "—"} - ${m.cellule_nom}` : m.conseiller_prenom ? `👤 ${m.conseiller_prenom} ${m.conseiller_nom}` : "—"}</td>
+                  <td className="px-1 py-1 whitespace-nowrap">
+                    {m.cellule_id ? `🏠 ${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` 
+                    : m.conseiller_id ? `👤 ${conseillers.find(c => c.id === m.conseiller_id)?.prenom} ${conseillers.find(c => c.id === m.conseiller_id)?.nom}` 
+                    : "—"}
+                  </td>
+
                   <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
                     <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })} className="text-orange-500 underline text-sm">
                       {popupMember?.id === m.id ? "Fermer détails" : "Détails"}

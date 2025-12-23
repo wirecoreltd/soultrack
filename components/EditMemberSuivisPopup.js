@@ -11,6 +11,7 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
   const parseBesoin = (b) => {
     if (!b) return [];
     if (Array.isArray(b)) return b;
+    if (typeof b !== "string") return [String(b)];
     try {
       const parsed = JSON.parse(b);
       return Array.isArray(parsed) ? parsed : [String(b)];
@@ -19,34 +20,46 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
     }
   };
 
-  const [formData, setFormData] = useState({});
-  const [showAutre, setShowAutre] = useState(false);
+  const initialBesoin = parseBesoin(member?.besoin);
+
+  const [formData, setFormData] = useState({
+    prenom: member?.prenom || "",
+    nom: member?.nom || "",
+    telephone: member?.telephone || "",
+    ville: member?.ville || "",
+    statut: member?.statut || "",
+    statut_initial: member?.statut_initial || "",
+    infos_supplementaires: member?.infos_supplementaires || "",
+    is_whatsapp: !!member?.is_whatsapp,
+    sexe: member?.sexe || "",
+    venu: member?.venu || "",
+    besoin: initialBesoin,
+    autreBesoin: "",
+    commentaire_suivis: member?.commentaire_suivis || "",
+  });
+
+  const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // 🔹 Réinitialisation à chaque ouverture
   useEffect(() => {
-    if (member) {
-      const besoinsInit = parseBesoin(member.besoin);
-      setFormData({
-        prenom: member.prenom || "",
-        nom: member.nom || "",
-        telephone: member.telephone || "",
-        ville: member.ville || "",
-        statut: member.statut || "",
-        statut_initial: member.statut_initial || "",
-        infos_supplementaires: member.infos_supplementaires || "",
-        is_whatsapp: !!member.is_whatsapp,
-        sexe: member.sexe || "",
-        venu: member.venu || "",
-        besoin: besoinsInit,
-        autreBesoin: "",
-        commentaire_suivis: member.commentaire_suivis || "",
-      });
-      setShowAutre(besoinsInit.includes("Autre"));
-      setLoading(false);
-      setSuccess(false);
-    }
+    // Si member change, on réinitialise formData pour éviter bug
+    setFormData({
+      prenom: member?.prenom || "",
+      nom: member?.nom || "",
+      telephone: member?.telephone || "",
+      ville: member?.ville || "",
+      statut: member?.statut || "",
+      statut_initial: member?.statut_initial || "",
+      infos_supplementaires: member?.infos_supplementaires || "",
+      is_whatsapp: !!member?.is_whatsapp,
+      sexe: member?.sexe || "",
+      venu: member?.venu || "",
+      besoin: parseBesoin(member?.besoin),
+      autreBesoin: "",
+      commentaire_suivis: member?.commentaire_suivis || "",
+    });
+    setShowAutre(parseBesoin(member?.besoin).includes("Autre"));
   }, [member]);
 
   const handleChange = (e) => {
@@ -128,18 +141,33 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
         <h2 className="text-2xl font-bold text-center mb-4">
-          Éditer le profil de {member?.prenom} {member?.nom}
+          Éditer le profil de {member?.prenom || ""} {member?.nom || ""}
         </h2>
 
         <div className="flex flex-col gap-3">
-          {["prenom","nom","telephone","ville"].map(field => (
-            <div key={field}>
-              <label className="font-semibold text-black block mb-1">
-                {field.charAt(0).toUpperCase() + field.slice(1)}
-              </label>
-              <input type="text" name={field} value={formData[field]} onChange={handleChange} className="input" />
-            </div>
-          ))}
+          {/* Prénom */}
+          <div>
+            <label className="font-semibold text-black block mb-1">Prénom</label>
+            <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} className="input" />
+          </div>
+
+          {/* Nom */}
+          <div>
+            <label className="font-semibold text-black block mb-1">Nom</label>
+            <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input" />
+          </div>
+
+          {/* Téléphone */}
+          <div>
+            <label className="font-semibold text-black block mb-1">Téléphone</label>
+            <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} className="input" />
+          </div>
+
+          {/* Ville */}
+          <div>
+            <label className="font-semibold text-black block mb-1">Ville</label>
+            <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="input" />
+          </div>
 
           {/* Statut */}
           <div>
@@ -189,7 +217,7 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
             )}
           </div>
 
-          {/* Infos */}
+          {/* Infos supplémentaires */}
           <div>
             <label className="font-semibold text-black block mb-1">Infos</label>
             <textarea name="infos_supplementaires" rows={2} value={formData.infos_supplementaires} onChange={handleChange} className="input" />

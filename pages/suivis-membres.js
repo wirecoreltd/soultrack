@@ -5,7 +5,7 @@ import React from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
-import EditMemberPopup from "../components/EditMemberPopup";
+import EditMemberSuivisPopup from "../components/EditMemberSuivisPopup";
 import BoutonEnvoyer from "../components/BoutonEnvoyer";
 import DetailsModal from "../components/DetailsModal";
 import { useMembers } from "../context/MembersContext";
@@ -305,7 +305,7 @@ export default function SuivisMembres() {
       )}
 
       {editMember && (
-        <EditMemberPopup
+        <EditMemberSuivisPopup
           member={editMember}
           cellules={[]}
           conseillers={[]}

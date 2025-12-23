@@ -89,7 +89,7 @@ export default function BoutonEnvoyer({
       
         // suivi
         statut_suivis: statutIds.envoye,
-        statut_libelle: "envoyé",
+        statut_libelle: "statutIds.envoye",
         is_whatsapp: true,
       
         // affectation
@@ -110,12 +110,19 @@ export default function BoutonEnvoyer({
         suiviData.responsable = responsablePrenom;
       }
 
-      const { data: inserted, error: insertError } = await supabase
+      const { data: suivi, error: insertError } = await supabase
         .from("suivis_membres")
-        .insert([suiviData])
+        .insert([{
+          membre_id: membre.id,
+          statut_suivis: statutIds.envoye,
+          cellule_id: type === "cellule" ? cible.id : null,
+          conseiller_id: type === "conseiller" ? cible.id : null,
+          responsable: responsablePrenom,
+          created_at: new Date().toISOString(),
+        }])
         .select()
         .single();
-
+      
       if (insertError) throw insertError;
 
       /* =========================
@@ -125,9 +132,19 @@ export default function BoutonEnvoyer({
       .from("membres_complets")
       .update({
         statut: "actif",
-        updated_at: new Date().toISOString(),
+    
+        // champs suivis (ce que la page lit)
+        suivi_id: suivi.id,
+        suivi_statut: statutIds.envoye,
+        suivi_responsable: responsablePrenom,
+        suivi_responsable_id: type === "cellule"
+          ? cible.responsable_id ?? null
+          : cible.id,
+    
+        suivi_updated_at: new Date().toISOString(),
       })
       .eq("id", membre.id);
+
 
 
       if (updateError) throw updateError;

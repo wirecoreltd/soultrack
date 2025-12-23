@@ -36,7 +36,6 @@ export default function ListMembers() {
   const [selectedTargetType, setSelectedTargetType] = useState({});
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
-
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const realtimeChannelRef = useRef(null);
 
@@ -58,11 +57,7 @@ export default function ListMembers() {
     "a déjà son église",
   ];
 
-  const {
-    members,
-    setAllMembers,
-    updateMember,
-  } = useMembers();
+  const { members, setAllMembers, updateMember } = useMembers();
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -103,7 +98,7 @@ export default function ListMembers() {
 
   const handleAfterSend = (updatedMember, type, cible) => {
     const updatedWithActif = { ...updatedMember, statut: "actif" };
-    updateMemberLocally(updatedMember.id, updatedWithActif);
+    updateMember(updatedWithActif);
 
     const cibleName = type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`;
     showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
@@ -156,8 +151,10 @@ export default function ListMembers() {
     };
   }, []);
 
-  const onUpdateMember = (updatedMember) => {
-    updateMember(updatedMember.id, updatedMember);
+  // -------------------- Update après édition --------------------
+  const onUpdateMemberHandler = (updatedMember) => {
+    updateMember(updatedMember); // mise à jour instantanée
+    setEditMember(null);         // fermeture automatique du popup
   };
 
   // -------------------- Fermer menu téléphone en cliquant dehors --------------------
@@ -170,10 +167,6 @@ export default function ListMembers() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const updateMemberLocally = (id, updatedMember) => {
-    setAllMembers(prev => prev.map(m => (m.id === id ? { ...m, ...updatedMember } : m)));
-  };
 
   const getBorderColor = (m) => {
     const status = m.statut || "";
@@ -199,21 +192,11 @@ export default function ListMembers() {
   const anciens = members.filter((m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC");
 
   const nouveauxFiltres = filterBySearch(
-    filter ? nouveaux.filter(
-      (m) =>
-        m.statut === filter ||
-        m.suivi_statut_libelle === filter ||
-        (m.statut_suivis_actuel && statutLabels[m.statut_suivis_actuel] === filter)
-    ) : nouveaux
+    filter ? nouveaux.filter(m => m.statut === filter || m.suivi_statut_libelle === filter) : nouveaux
   );
 
   const anciensFiltres = filterBySearch(
-    filter ? anciens.filter(
-      (m) =>
-        m.statut === filter ||
-        m.suivi_statut_libelle === filter ||
-        (m.statut_suivis_actuel && statutLabels[m.statut_suivis_actuel] === filter)
-    ) : anciens
+    filter ? anciens.filter(m => m.statut === filter || m.suivi_statut_libelle === filter) : anciens
   );
 
   const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
@@ -276,7 +259,6 @@ export default function ListMembers() {
                     <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
                     <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
                     <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 WhatsApp</a>
-                    <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Message WhatsApp</a>
                   </div>
                 )}
               </>
@@ -493,7 +475,7 @@ export default function ListMembers() {
         <EditMemberPopup
           member={editMember}
           onClose={() => setEditMember(null)}
-          onUpdateMember={(updatedMember) => onUpdateMember(updatedMember)}
+          onUpdateMember={onUpdateMemberHandler}
         />
       )}
 

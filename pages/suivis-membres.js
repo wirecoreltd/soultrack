@@ -11,7 +11,6 @@ import DetailsModal from "../components/DetailsModal";
 import { useMembers } from "../context/MembersContext";
 
 export default function SuivisMembres() {
-  // ✅ Une seule déclaration du contexte
   const { members, setAllMembers, updateMember } = useMembers();
 
   const [loading, setLoading] = useState(true);
@@ -33,9 +32,9 @@ export default function SuivisMembres() {
   const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
   const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
 
-  // 🔹 Fetch et initialisation des suivis
+  // 🔹 Fetch membres_complets
   useEffect(() => {
-    const fetchSuivis = async () => {
+    const fetchMembresComplets = async () => {
       setLoading(true);
       try {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -51,67 +50,34 @@ export default function SuivisMembres() {
         setPrenom(profileData.prenom || "cher membre");
         setRole(profileData.role);
 
-        const tableName = "suivis_membres_view";
-        let suivisData = [];
+        let query = supabase.from("membres_complets").select("*").order("created_at", { ascending: false });
 
-        if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
-          const { data, error } = await supabase
-            .from(tableName)
-            .select("*")
-            .order("created_at", { ascending: false });
-          if (error) throw error;
-          suivisData = data;
-        } else if (profileData.role === "Conseiller") {
-          const { data, error } = await supabase
-            .from(tableName)
-            .select("*")
-            .eq("conseiller_id", profileData.id)
-            .order("created_at", { ascending: false });
-          if (error) throw error;
-          suivisData = data;
+        if (profileData.role === "Conseiller") {
+          query = query.eq("conseiller_id", profileData.id);
         } else if (profileData.role === "ResponsableCellule") {
-          const { data: cellulesData, error: cellulesError } = await supabase
-            .from("cellules")
-            .select("id")
-            .eq("responsable_id", profileData.id);
-          if (cellulesError) throw cellulesError;
-
+          const { data: cellulesData } = await supabase.from("cellules").select("id").eq("responsable_id", profileData.id);
           const celluleIds = cellulesData?.map(c => c.id) || [];
           if (celluleIds.length > 0) {
-            const { data, error } = await supabase
-              .from(tableName)
-              .select("*")
-              .in("cellule_id", celluleIds)
-              .order("created_at", { ascending: false });
-            if (error) throw error;
-            suivisData = data;
+            query = query.in("cellule_id", celluleIds);
+          } else {
+            query = query.eq("id", -1); // Aucun résultat
           }
         }
 
-        const membresIds = suivisData.map(s => s.membre_id);
-        const { data: membresData } = await supabase
-          .from("membres")
-          .select("id, sexe, venu, statut")
-          .in("id", membresIds);
+        const { data, error } = await query;
+        if (error) throw error;
 
-        const merged = suivisData.map(s => ({
-          ...s,
-          membre: membresData.find(m => m.id === s.membre_id) || {}
-        }));
-
-        // 🔹 Mise à jour du contexte pour chaque membre
-        setAllMembers(merged);
-
-        if (!merged || merged.length === 0) setMessage("Aucun membre à afficher.");
+        setAllMembers(data || []);
+        if (!data || data.length === 0) setMessage("Aucun membre à afficher.");
       } catch (err) {
-        console.error("❌ Erreur:", err.message || err);
-        setMessage("Erreur lors de la récupération des suivis.");
+        console.error("❌ Erreur fetchMembresComplets:", err.message || err);
+        setMessage("Erreur lors de la récupération des membres.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSuivis();
+    fetchMembresComplets();
   }, [setAllMembers]);
 
   const handleStatusChange = (id, value) =>
@@ -141,16 +107,15 @@ export default function SuivisMembres() {
       if (newStatus) payload.statut_suivis = newStatus;
       if (newComment) payload.commentaire_suivis = newComment;
 
-      const { data: updatedSuivi, error: updateError } = await supabase
-        .from("suivis_membres")
+      const { data: updatedMember, error: updateError } = await supabase
+        .from("membres_complets")
         .update(payload)
         .eq("id", id)
         .select()
         .single();
       if (updateError) throw updateError;
 
-      // 🔹 Mise à jour du contexte pour ce suivi
-      updateMember(updatedSuivi.membre_id, updatedSuivi);
+      updateMember(updatedMember.id, updatedMember);
 
       setMessage({ type: "success", text: "Mise à jour effectuée." });
     } catch (err) {
@@ -161,19 +126,18 @@ export default function SuivisMembres() {
     }
   };
 
-  const filteredSuivis = members.filter(s => {
+  const filteredMembers = members.filter(s => {
     if (s.statut_suivis === statutIds["integrer"]) return false;
     if (showRefus) return s.statut_suivis === statutIds["refus"];
     return s.statut_suivis === statutIds["envoye"] || s.statut_suivis === statutIds["en attente"];
   });
 
-  const uniqueSuivis = Array.from(new Map(filteredSuivis.map(item => [item.id, item])).values());
+  const uniqueMembers = Array.from(new Map(filteredMembers.map(item => [item.id, item])).values());
 
   const handleAfterSend = (updatedMember) => {
-    updateMember(updatedMember);
+    updateMember(updatedMember.id, updatedMember);
   };
 
-  // 🔹 DetailsPopup reste inchangé
   const DetailsPopup = ({ m }) => {
     const [cellules, setCellules] = useState([]);
     const [conseillers, setConseillers] = useState([]);
@@ -213,12 +177,8 @@ export default function SuivisMembres() {
         <p>🏙 Ville : {m.ville || "—"}</p>
         <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
         <p>⚥ Sexe : {m.sexe || "—"}</p>
-        <p>📋 Statut initial : {m.statut_initial ?? m.statut_membre ?? "—"}</p>
-        <p>❓Besoin : {
-          !m.besoin ? "—" :
-          Array.isArray(m.besoin) ? m.besoin.join(", ") :
-          (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })()
-        }</p>
+        <p>📋 Statut initial : {m.statut_initial ?? m.statut ?? "—"}</p>
+        <p>❓Besoin : {!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin}</p>
         <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
         <label className="text-black text-sm mt-4 block">📋 Statut Suivis :</label>
@@ -244,7 +204,6 @@ export default function SuivisMembres() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-      {/* 🔹 Header */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
           <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black-200 transition-colors">← Retour</button>
@@ -255,57 +214,45 @@ export default function SuivisMembres() {
         </div>
       </div>
 
-      {/* 🔹 Logo */}
       <div className="mb-4">
         <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
 
-      {/* 🔹 Titre */}
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-white mb-2">📋 Suivis des Membres</h1>
         <p className="text-white text-lg max-w-xl mx-auto italic">Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️</p>
       </div>
 
-      {/* 🔹 Contrôles */}
       <div className="mb-4 flex justify-between w-full max-w-6xl">
         <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline hover:text-black-200">{view === "card" ? "Vue Table" : "Vue Carte"}</button>
         <button onClick={() => setShowRefus(!showRefus)} className="text-orange-400 text-sm underline hover:text-orange-500">{showRefus ? "Voir tout les suivis" : "Voir les refus"}</button>
       </div>
 
-      {/* 🔹 Message */}
       {message && <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{message.text}</div>}
 
-      {/* 🔹 Vue cartes */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-          {uniqueSuivis.map(item => (
-            <div key={item.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4" style={{ borderLeftColor: getBorderColor(item) }}>
+          {uniqueMembers.map(m => (
+            <div key={m.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
               <div className="flex flex-col items-center">
-                <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>
-                <p className="text-sm text-black-700 mb-1">📞 {item.telephone || "—"}</p>
-                <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>              
-                <p className="text-sm text-black-700 mb-1">🏠 Cellule : {item.cellule_full || "—"}</p>
-                {!item.cellule_full && (
-                  <p className="text-sm text-black-700 mb-1">👤 Conseiller : {item.responsable || "—"}</p>
-                )}
+                <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
+                <p className="text-sm text-black-700 mb-1">📞 {m.telephone || "—"}</p>
+                <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[m.statut_suivis] || "—"}</p>
+                <p className="text-sm text-black-700 mb-1">🏠 Cellule : {m.cellule_full || "—"}</p>
+                {!m.cellule_full && <p className="text-sm text-black-700 mb-1">👤 Conseiller : {m.responsable || "—"}</p>}
 
-                <button
-                  onClick={() => toggleDetails(item.id)}
-                  className="text-orange-500 underline text-sm mt-1"
-                >
-                  {detailsOpen === item.id ? "Fermer détails" : "Détails"}
+                <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-1">
+                  {detailsOpen === m.id ? "Fermer détails" : "Détails"}
                 </button>
               </div>
-
-              <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === item.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
-                {detailsOpen === item.id && <div className="pt-2"><DetailsPopup m={item} /></div>}
+              <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === m.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
+                {detailsOpen === m.id && <div className="pt-2"><DetailsPopup m={m} /></div>}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* 🔹 Vue table */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
@@ -319,12 +266,12 @@ export default function SuivisMembres() {
               </tr>
             </thead>
             <tbody>
-              {uniqueSuivis.length === 0 ? (
+              {uniqueMembers.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
                 </tr>
               ) : (
-                uniqueSuivis.map(m => (
+                uniqueMembers.map(m => (
                   <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
                     <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
                     <td className="px-4 py-2">{m.telephone || "—"}</td>
@@ -342,7 +289,6 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {/* 🔹 Modals */}
       {detailsModalMember && (
         <DetailsModal
           m={detailsModalMember}
@@ -355,14 +301,14 @@ export default function SuivisMembres() {
           updateSuivi={updateSuivi}
         />
       )}
-      
+
       {editMember && (
         <EditMemberPopup
           member={editMember}
           cellules={[]}
           conseillers={[]}
           onClose={() => setEditMember(null)}
-          onUpdateMember={updateMember} // 🔹 mise à jour contexte
+          onUpdateMember={updateMember}
         />
       )}
     </div>

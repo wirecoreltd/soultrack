@@ -1,17 +1,9 @@
-"use client";
-
-import { useEffect, useState, useRef } from "react";
-import React from "react";
-import supabase from "../lib/supabaseClient";
-import Image from "next/image";
-import LogoutLink from "../components/LogoutLink";
-import EditMemberPopup from "../components/EditMemberPopup";
-import BoutonEnvoyer from "../components/BoutonEnvoyer";
-import DetailsModal from "../components/DetailsModal";
+import { useState, useEffect } from "react";
 import { useMembers } from "../context/MembersContext";
+import { supabase } from "../lib/supabaseClient";
 
 export default function SuivisMembres() {
-  const { members, updateMember } = useMembers(); // <-- ajout pour utiliser le contexte
+  const { members, setAllMembers, updateMember } = useMembers(); // ✔ unique destructuration
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
@@ -23,8 +15,8 @@ export default function SuivisMembres() {
   const [view, setView] = useState("card");
   const [editMember, setEditMember] = useState(null);
   const [showRefus, setShowRefus] = useState(false);
-
   const [detailsOpen, setDetailsOpen] = useState(null);
+
   const toggleDetails = (id) => setDetailsOpen((prev) => (prev === id ? null : id));
 
   const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
@@ -110,8 +102,10 @@ export default function SuivisMembres() {
     fetchSuivis();
   }, [updateMember]);
 
-  const handleStatusChange = (id, value) => setStatusChanges(prev => ({ ...prev, [id]: parseInt(value, 10) }));
-  const handleCommentChange = (id, value) => setCommentChanges(prev => ({ ...prev, [id]: value }));
+  const handleStatusChange = (id, value) =>
+    setStatusChanges(prev => ({ ...prev, [id]: parseInt(value, 10) }));
+  const handleCommentChange = (id, value) =>
+    setCommentChanges(prev => ({ ...prev, [id]: value }));
 
   const getBorderColor = (m) => {
     if (!m) return "#ccc";
@@ -161,62 +155,7 @@ export default function SuivisMembres() {
     return s.statut_suivis === statutIds["envoye"] || s.statut_suivis === statutIds["en attente"];
   });
 
-  const { members, setAllMembers, updateMember } = useMembers();
-
-useEffect(() => {
-  const fetchSuivis = async () => {
-    const { data } = await supabase
-      .from("suivis_membres_view")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    setAllMembers(data); // 🔥 OBLIGATOIRE
-  };
-
-  fetchSuivis();
-}, []);
-
-  const uniqueSuivis = Array.from(new Map(filteredSuivis.map(item => [item.id, item])).values());
-
-  const handleAfterSend = (updatedMember) => {
-    // 🔹 Mettre à jour le membre dans le contexte après envoi WhatsApp
-    updateMember(updatedMember);
-  };
-
-  const DetailsPopup = ({ m }) => {
-    const [cellules, setCellules] = useState([]);
-    const [conseillers, setConseillers] = useState([]);
-    const [typeEnvoi, setTypeEnvoi] = useState("");
-    const [cible, setCible] = useState(null);
-    const commentRef = useRef(null);
-
-    useEffect(() => {
-      const loadData = async () => {
-        try {
-          const { data: cellulesData } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
-          const { data: conseillersData } = await supabase.from("profiles").select("id, prenom, nom, telephone").eq("role", "Conseiller");
-          setCellules(cellulesData || []);
-          setConseillers(conseillersData || []);
-        } catch (err) {
-          console.error("Erreur chargement cellules/conseillers :", err);
-        }
-      };
-      loadData();
-    }, []);
-
-    useEffect(() => {
-      if (commentRef.current) {
-        commentRef.current.focus();
-        commentRef.current.selectionStart = commentRef.current.value.length;
-      }
-    }, [commentChanges[m.id]]);
-
-    const handleSelectCible = (id) => {
-      if (typeEnvoi === "cellule") setCible(cellules.find(c => c.id === id) || null);
-      else if (typeEnvoi === "conseiller") setCible(conseillers.find(c => c.id === id) || null);
-    };
-
-    return (
+  return (
       <div className="text-black text-sm space-y-2 w-full">
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
   <p>🏙 Ville : {m.ville || "—"}</p>

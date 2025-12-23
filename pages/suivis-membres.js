@@ -11,7 +11,9 @@ import DetailsModal from "../components/DetailsModal";
 import { useMembers } from "../context/MembersContext";
 
 export default function SuivisMembres() {
-  const { members, updateMember } = useMembers(); // <-- ajout pour utiliser le contexte
+  // ✅ Une seule déclaration du contexte
+  const { members, setAllMembers, updateMember } = useMembers();
+
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
@@ -23,13 +25,15 @@ export default function SuivisMembres() {
   const [view, setView] = useState("card");
   const [editMember, setEditMember] = useState(null);
   const [showRefus, setShowRefus] = useState(false);
-
   const [detailsOpen, setDetailsOpen] = useState(null);
-  const toggleDetails = (id) => setDetailsOpen((prev) => (prev === id ? null : id));
+
+  const toggleDetails = (id) =>
+    setDetailsOpen((prev) => (prev === id ? null : id));
 
   const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
   const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
 
+  // 🔹 Fetch et initialisation des suivis
   useEffect(() => {
     const fetchSuivis = async () => {
       setLoading(true);
@@ -96,7 +100,7 @@ export default function SuivisMembres() {
         }));
 
         // 🔹 Mise à jour du contexte pour chaque membre
-        merged.forEach(s => updateMember(s.membre_id, s));
+        setAllMembers(merged);
 
         if (!merged || merged.length === 0) setMessage("Aucun membre à afficher.");
       } catch (err) {
@@ -108,10 +112,12 @@ export default function SuivisMembres() {
     };
 
     fetchSuivis();
-  }, [updateMember]);
+  }, [setAllMembers]);
 
-  const handleStatusChange = (id, value) => setStatusChanges(prev => ({ ...prev, [id]: parseInt(value, 10) }));
-  const handleCommentChange = (id, value) => setCommentChanges(prev => ({ ...prev, [id]: value }));
+  const handleStatusChange = (id, value) =>
+    setStatusChanges(prev => ({ ...prev, [id]: parseInt(value, 10) }));
+  const handleCommentChange = (id, value) =>
+    setCommentChanges(prev => ({ ...prev, [id]: value }));
 
   const getBorderColor = (m) => {
     if (!m) return "#ccc";
@@ -161,28 +167,13 @@ export default function SuivisMembres() {
     return s.statut_suivis === statutIds["envoye"] || s.statut_suivis === statutIds["en attente"];
   });
 
-  const { members, setAllMembers, updateMember } = useMembers();
-
-useEffect(() => {
-  const fetchSuivis = async () => {
-    const { data } = await supabase
-      .from("suivis_membres_view")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    setAllMembers(data); // 🔥 OBLIGATOIRE
-  };
-
-  fetchSuivis();
-}, []);
-
   const uniqueSuivis = Array.from(new Map(filteredSuivis.map(item => [item.id, item])).values());
 
   const handleAfterSend = (updatedMember) => {
-    // 🔹 Mettre à jour le membre dans le contexte après envoi WhatsApp
     updateMember(updatedMember);
   };
 
+  // 🔹 DetailsPopup reste inchangé
   const DetailsPopup = ({ m }) => {
     const [cellules, setCellules] = useState([]);
     const [conseillers, setConseillers] = useState([]);
@@ -219,16 +210,16 @@ useEffect(() => {
     return (
       <div className="text-black text-sm space-y-2 w-full">
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-  <p>🏙 Ville : {m.ville || "—"}</p>
-  <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-  <p>⚥ Sexe : {m.sexe || "—"}</p>
-  <p>📋 Statut initial : {m.statut_initial ?? m.statut_membre ?? "—"}</p>
-  <p>❓Besoin : {
-      !m.besoin ? "—" :
-      Array.isArray(m.besoin) ? m.besoin.join(", ") :
-      (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })()
-  }</p>
-  <p>📝 Infos : {m.infos_supplementaires || "—"}</p>    
+        <p>🏙 Ville : {m.ville || "—"}</p>
+        <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+        <p>⚥ Sexe : {m.sexe || "—"}</p>
+        <p>📋 Statut initial : {m.statut_initial ?? m.statut_membre ?? "—"}</p>
+        <p>❓Besoin : {
+          !m.besoin ? "—" :
+          Array.isArray(m.besoin) ? m.besoin.join(", ") :
+          (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })()
+        }</p>
+        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
         <label className="text-black text-sm mt-4 block">📋 Statut Suivis :</label>
         <select value={statusChanges[m.id] ?? m.statut_suivis ?? ""} onChange={(e) => handleStatusChange(m.id, e.target.value)} className="w-full border rounded-md px-2 py-1">
@@ -253,6 +244,7 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+      {/* 🔹 Header */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
           <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black-200 transition-colors">← Retour</button>
@@ -263,22 +255,27 @@ useEffect(() => {
         </div>
       </div>
 
+      {/* 🔹 Logo */}
       <div className="mb-4">
         <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
 
+      {/* 🔹 Titre */}
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-white mb-2">📋 Suivis des Membres</h1>
         <p className="text-white text-lg max-w-xl mx-auto italic">Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️</p>
       </div>
 
+      {/* 🔹 Contrôles */}
       <div className="mb-4 flex justify-between w-full max-w-6xl">
         <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline hover:text-black-200">{view === "card" ? "Vue Table" : "Vue Carte"}</button>
         <button onClick={() => setShowRefus(!showRefus)} className="text-orange-400 text-sm underline hover:text-orange-500">{showRefus ? "Voir tout les suivis" : "Voir les refus"}</button>
       </div>
 
+      {/* 🔹 Message */}
       {message && <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{message.text}</div>}
-      
+
+      {/* 🔹 Vue cartes */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
           {uniqueSuivis.map(item => (
@@ -288,17 +285,16 @@ useEffect(() => {
                 <p className="text-sm text-black-700 mb-1">📞 {item.telephone || "—"}</p>
                 <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>              
                 <p className="text-sm text-black-700 mb-1">🏠 Cellule : {item.cellule_full || "—"}</p>
-                  {!item.cellule_full && (
-                    <p className="text-sm text-black-700 mb-1">👤 Conseiller : {item.responsable || "—"}</p>
-                  )}
+                {!item.cellule_full && (
+                  <p className="text-sm text-black-700 mb-1">👤 Conseiller : {item.responsable || "—"}</p>
+                )}
 
-                
-              <button
-                onClick={() => toggleDetails(item.id)}
-                className="text-orange-500 underline text-sm mt-1"
-              >
-                {detailsOpen === item.id ? "Fermer détails" : "Détails"}
-              </button>
+                <button
+                  onClick={() => toggleDetails(item.id)}
+                  className="text-orange-500 underline text-sm mt-1"
+                >
+                  {detailsOpen === item.id ? "Fermer détails" : "Détails"}
+                </button>
               </div>
 
               <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === item.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
@@ -309,6 +305,7 @@ useEffect(() => {
         </div>
       )}
 
+      {/* 🔹 Vue table */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
           <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
@@ -332,7 +329,7 @@ useEffect(() => {
                     <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
                     <td className="px-4 py-2">{m.telephone || "—"}</td>
                     <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
-                   <td className="px-4 py-2"> {m.cellule_full || m.responsable || "—"}</td>
+                    <td className="px-4 py-2">{m.cellule_full || m.responsable || "—"}</td>
                     <td className="px-4 py-2 flex items-center gap-2">
                       <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>
                       <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
@@ -345,6 +342,7 @@ useEffect(() => {
         </div>
       )}
 
+      {/* 🔹 Modals */}
       {detailsModalMember && (
         <DetailsModal
           m={detailsModalMember}
@@ -364,7 +362,7 @@ useEffect(() => {
           cellules={[]}
           conseillers={[]}
           onClose={() => setEditMember(null)}
-          onUpdateMember={updateMember} // 🔹 ici on passe updateMember du contexte
+          onUpdateMember={updateMember} // 🔹 mise à jour contexte
         />
       )}
     </div>

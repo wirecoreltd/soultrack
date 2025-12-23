@@ -152,7 +152,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
-        <button onClick={onClose} className="absolute top-3 right-3 text-red-500 font-bold text-xl">✕</button>
+        <button onClick={onClose} className="absolute top-3 left-3 text-red-500 font-bold text-xl">✕</button>
         <h2 className="text-2xl font-bold text-center mb-4">
           Éditer le profil de {member?.prenom} {member?.nom}
         </h2>
@@ -160,24 +160,24 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         <div className="flex flex-col gap-3">
           {/* Champs avec label en haut à droite */}
           <div>
-            <label className="text-sm text-gray-500 float-right">Prénom</label>
+            <label className="text-sm font-semibold  text-gray-500 float-left">Prénom</label>
             <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} className="input" />
           </div>
           <div>
-            <label className="text-sm text-gray-500 float-right">Nom</label>
+            <label className="text-sm font-semibold  text-gray-500 float-left">Nom</label>
             <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input" />
           </div>
           <div>
-            <label className="text-sm text-gray-500 float-right">Téléphone</label>
+            <label className="text-sm font-semibold  text-gray-500 float-left">Téléphone</label>
             <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} className="input" />
           </div>
           <div>
-            <label className="text-sm text-gray-500 float-right">Ville</label>
+            <label className="text-sm font-semibold  text-gray-500 float-left">Ville</label>
             <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="input" />
           </div>
 
           <div>
-            <label className="text-sm text-gray-500 float-right">Statut</label>
+            <label className="text-sm font-semibold  text-gray-500 float-left">Statut</label>
             <select name="statut" value={formData.statut} onChange={handleChange} className="input">
               <option value="">-- Statut --</option>
               <option value="actif">Actif</option>
@@ -186,9 +186,21 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="inactif">Inactif</option>
             </select>
           </div>
+          <div>
+          <label className="flex items-center gap-3">
+            <input 
+              type="checkbox" 
+            name="star" 
+            checked={formData.star} 
+            onChange={handleChange} 
+            className="accent-blue-500"  // <-- couleur du bouton bleu
+          />
+          Définir en tant que serviteur ⭐
+        </label>   
+          </div>    
 
           <div>
-            <label className="text-sm text-gray-500 float-right">Cellule</label>
+            <label className="text-sm font-semibold  text-gray-500 float-left">Cellule</label>
             <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input">
               <option value="">-- Cellule --</option>
               {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full}</option>)}
@@ -196,7 +208,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </div>
 
           <div>
-            <label className="text-sm text-gray-500 float-right">Conseiller</label>
+            <label className="text-sm font-semibold  text-gray-500 float-left">Conseiller</label>
             <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
               <option value="">-- Conseiller --</option>
               {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom} - WhatsApp: {c.telephone ? "Oui" : "Non"}</option>)}
@@ -204,12 +216,12 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </div>
 
           <div>
-            <label className="text-sm text-gray-500 float-right">WhatsApp</label>
+            <label className="text-sm font-semibold  text-gray-500 float-left">WhatsApp</label>
             <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} className="accent-blue-500" />
           </div>
 
           <div>
-            <label className="text-sm text-gray-500 float-right">Sexe</label>
+            <label className="text-sm font-semibold  text-gray-500 float-left">Sexe</label>
             <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
               <option value="">-- Sexe --</option>
               <option value="Homme">Homme</option>
@@ -219,7 +231,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
           {/* Besoin */}
           <div>
-            <label className="text-sm text-gray-500 float-right">Besoins</label>
+            <label className="text-sm font-semibold  text-gray-500 float-left">Besoins</label>
             {besoinsOptions.map(item => (
               <label key={item} className="flex items-center gap-2">
                 <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} className="accent-blue-500" />
@@ -234,12 +246,12 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </div>
 
           <div>
-            <label className="text-sm text-gray-500 float-right">Infos</label>
+            <label className="text-sm font-semibold  text-gray-500 float-left">Infos</label>
             <textarea name="infos_supplementaires" rows={2} value={formData.infos_supplementaires} onChange={handleChange} className="input" />
           </div>
 
           <div>
-            <label className="text-sm text-gray-500 float-right">Comment est-il venu</label>
+            <label className="text-sm font-semibold  text-gray-500 float-left">Comment est-il venu</label>
             <select name="venu" value={formData.venu} onChange={handleChange} className="input">
               <option value="">-- Comment est-il venu ? --</option>
               <option value="invité">Invité</option>
@@ -250,7 +262,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </div>
 
           <div>
-            <label className="text-sm text-gray-500 float-right">Statut initial</label>
+            <label className="text-sm font-semibold  text-gray-500 float-left">Statut initial</label>
             <select name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="input">
               <option value="">-- Statut à l'arrivée --</option>
               <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
@@ -260,7 +272,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </div>
 
           <div>
-            <label className="text-sm text-gray-500 float-right">Commentaire Suivis</label>
+            <label className="text-sm font-semibold  text-gray-500 float-left">Commentaire Suivis</label>
             <textarea name="commentaire_suivis" rows={2} value={formData.commentaire_suivis} onChange={handleChange} className="input" />
           </div>
 

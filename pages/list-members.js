@@ -48,6 +48,7 @@ export default function ListMembers() {
 
   const statusOptions = [
     "actif",
+    "nouveau",
     "ancien",
     "visiteur",
     "veut rejoindre ICC",
@@ -177,6 +178,7 @@ export default function ListMembers() {
     if (status === "a déjà son église" || suiviStatus === "a déjà son église") return "#f21705";
     if (status === "ancien" || suiviStatus === "ancien") return "#999999";
     if (status === "visiteur" || suiviStatus === "visiteur") return "#34A853";
+    if (status === "nouveau" || suiviStatus === "nouveau") return "#34A853";
     if (status === "veut rejoindre ICC" || suiviStatus === "veut rejoindre ICC") return "#34A853";
 
     return "#ccc";
@@ -188,8 +190,15 @@ export default function ListMembers() {
 
   const filterBySearch = (list) => list.filter((m) => `${(m.prenom || "")} ${(m.nom || "")}`.toLowerCase().includes(search.toLowerCase()));
 
-  const nouveaux = members.filter((m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");
-  const anciens = members.filter((m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC");
+  const STATUTS_NOUVEAUX = ["visiteur", "veut rejoindre ICC", "nouveau"];
+  const nouveaux = members.filter(
+    (m) => STATUTS_NOUVEAUX.includes(m.statut)
+    );
+  
+  const anciens = members.filter(
+    (m) => !STATUTS_NOUVEAUX.includes(m.statut)
+  );
+
 
   const nouveauxFiltres = filterBySearch(
     filter ? nouveaux.filter(m => m.statut === filter || m.suivi_statut_libelle === filter) : nouveaux

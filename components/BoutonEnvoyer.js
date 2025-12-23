@@ -128,25 +128,21 @@ export default function BoutonEnvoyer({
       /* =========================
          3️⃣ Mettre à jour le statut du membre
       ========================= */
-      await supabase
-      .from("membres_complets")
-      .update({
-        statut: "actif",
-    
-        // champs suivis (ce que la page lit)
-        suivi_id: suivi.id,
-        suivi_statut: statutIds.envoye,
-        suivi_responsable: responsablePrenom,
-        suivi_responsable_id: type === "cellule"
-          ? cible.responsable_id ?? null
-          : cible.id,
-    
-        suivi_updated_at: new Date().toISOString(),
-      })
-      .eq("id", membre.id);
-
-
-
+      const { error: updateError } = await supabase
+        .from("membres_complets")
+        .update({
+          statut: "actif",
+          suivi_id: suivi.id,
+          suivi_statut: statutIds.envoye,
+          suivi_responsable: responsablePrenom,
+          suivi_responsable_id:
+            type === "cellule"
+              ? cellule.responsable_id
+              : cible.id,
+          suivi_updated_at: new Date().toISOString(),
+        })
+        .eq("id", membre.id);
+      
       if (updateError) throw updateError;
 
       /* =========================

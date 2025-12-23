@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * Page: Liste des Membres
- * Description: Affiche les membres sous forme de carte ou tableau avec filtres et envoi WhatsApp.
- */
-
 import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -18,7 +13,6 @@ import { useSearchParams } from "next/navigation";
 import { useMembers } from "../context/MembersContext";
 
 export default function ListMembers() {
-  
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
@@ -38,7 +32,7 @@ export default function ListMembers() {
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
 
-  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null); // menu téléphone/whatsapp
+  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const realtimeChannelRef = useRef(null);
 
   const statutLabels = {
@@ -59,12 +53,7 @@ export default function ListMembers() {
     "a déjà son église",
   ];
 
-  const {
-    members,
-    setAllMembers,
-    updateMember,
-    loadingMembers
-  } = useMembers();
+  const { members, setAllMembers, updateMember } = useMembers();
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -76,18 +65,17 @@ export default function ListMembers() {
   const fetchMembers = async (profile = null) => {
     setLoading(true);
     try {
-      let query = supabase.from("v_membres_full").select("*").order("created_at", { ascending: false });
+      let query = supabase.from("membres_complets").select("*").order("created_at", { ascending: false });
       if (conseillerIdFromUrl) query = query.eq("conseiller_id", conseillerIdFromUrl);
       else if (profile?.role === "Conseiller") query = query.eq("conseiller_id", profile.id);
 
       const { data, error } = await query;
       if (error) throw error;
 
-      const withInitial = (data || []).map(m => ({ ...m, statut_initial: m.statut }));
       setAllMembers(data || []);
     } catch (err) {
       console.error("Erreur fetchMembers:", err);
-      setMembers([]);
+      setAllMembers([]);
     } finally {
       setLoading(false);
     }
@@ -95,7 +83,7 @@ export default function ListMembers() {
 
   const fetchCellules = async () => {
     const { data, error } = await supabase.from("cellules").select("id, cellule_full");
-    if (error) console.error("Erreur:", error);
+    if (error) console.error("Erreur fetchCellules:", error);
     if (data) setCellules(data);
   };
 
@@ -140,56 +128,45 @@ export default function ListMembers() {
 
   // -------------------- Realtime --------------------
   useEffect(() => {
-  if (realtimeChannelRef.current) {
-    try { realtimeChannelRef.current.unsubscribe(); } catch (e) {}
-    realtimeChannelRef.current = null;
-  }
+    if (realtimeChannelRef.current) {
+      try { realtimeChannelRef.current.unsubscribe(); } catch (e) {}
+      realtimeChannelRef.current = null;
+    }
 
-  const channel = supabase.channel("realtime:v_membres_full_and_related");
+    const channel = supabase.channel("realtime:membres_complets");
 
-  // Membres
-  channel.on("postgres_changes", { event: "*", schema: "public", table: "membres" }, () => fetchMembers());
-  // Cellules
-  channel.on("postgres_changes", { event: "*", schema: "public", table: "cellules" }, () => { fetchCellules(); fetchMembers(); });
-  // Conseillers
-  channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { fetchConseillers(); fetchMembers(); });
-  // 🔹 Suivis membres
-  channel.on("postgres_changes", { event: "*", schema: "public", table: "suivis_membres" }, ({ new: updatedSuivi }) => {
-    setMembers(prev =>
-      prev.map(m =>
-        m.id === updatedSuivi.membre_id
-          ? { ...m, suivi_statut_libelle: updatedSuivi.statut_suivis, commentaire_suivis: updatedSuivi.commentaire_suivis }
-          : m
-      )
-    );
-  });
+    // Membres
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "membres_complets" }, () => fetchMembers());
+    // Cellules
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "cellules" }, () => { fetchCellules(); fetchMembers(); });
+    // Conseillers
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { fetchConseillers(); fetchMembers(); });
 
-  try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
+    try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
 
-  realtimeChannelRef.current = channel;
-  return () => {
-    try { if (realtimeChannelRef.current) { realtimeChannelRef.current.unsubscribe(); realtimeChannelRef.current = null; } } catch (e) {}
-  };
-}, []);
-
-const onUpdateMember = (updatedMember) => {
-  updateMember(updatedMember.id, updatedMember);
-};
-
-  // -------------------- Fermer menu téléphone en cliquant dehors --------------------
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest(".phone-menu")) {
-        setOpenPhoneMenuId(null);
-      }
+    realtimeChannelRef.current = channel;
+    return () => {
+      try { if (realtimeChannelRef.current) { realtimeChannelRef.current.unsubscribe(); realtimeChannelRef.current = null; } } catch (e) {}
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // -------------------- UTILS --------------------
   const updateMemberLocally = (id, updatedMember) => {
-    setMembers(prev => prev.map(m => (m.id === id ? { ...m, ...updatedMember } : m)));
+    setAllMembers(prev => prev.map(m => (m.id === id ? { ...m, ...updatedMember } : m)));
+  };
+
+  const toggleStar = async (member) => {
+    try {
+      const { error } = await supabase
+        .from("membres_complets")
+        .update({ star: !member.star })
+        .eq("id", member.id);
+
+      if (error) throw error;
+
+      updateMemberLocally(member.id, { star: !member.star });
+    } catch (err) {
+      console.error("Erreur toggleStar:", err);
+    }
   };
 
   const getBorderColor = (m) => {

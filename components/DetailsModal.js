@@ -72,58 +72,6 @@ export default function DetailsModal({
           <p className="mt-2">🏙️ Ville : {m.ville || "—"}</p>
           <p>🕊 Statut : {m.statut || "—"}</p>
 
-          {/* Envoyer à centré sous statut */}
-          <div className="mt-3 w-full">
-            <label className="font-semibold text-sm">Envoyer à :</label>
-            <select
-              value={selectedTargetType}
-              onChange={(e) => {
-                setSelectedTargetType(e.target.value);
-                setSelectedTarget(null);
-              }}
-              className="mt-1 w-full border rounded px-2 py-1 text-sm"
-            >
-              <option value="">-- Choisir --</option>
-              <option value="cellule">Une Cellule</option>
-              <option value="conseiller">Un Conseiller</option>
-            </select>
-
-            {selectedTargetType && (
-              <select
-                value={selectedTarget || ""}
-                onChange={(e) => setSelectedTarget(e.target.value)}
-                className="mt-2 w-full border rounded px-2 py-1 text-sm"
-              >
-                <option value="">-- Sélectionner --</option>
-                {selectedTargetType === "cellule"
-                  ? cellules.map((c) => (
-                      <option key={c.id} value={c.id}>{c.cellule_full || c.cellule}</option>
-                    ))
-                  : conseillers.map((c) => (
-                      <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
-                    ))}
-              </select>
-            )}
-
-            {/* BoutonEnvoyer */}
-            {selectedTarget && (() => {
-              const cibleId = selectedTarget;
-              return (
-                <div className="mt-3">
-                  <BoutonEnvoyer
-                    membre={m}
-                    type={selectedTargetType}
-                    cible={{ id: cibleId }}
-                    session={session}
-                    onEnvoyer={(data) => handleAfterSend && handleAfterSend(data, selectedTargetType)}
-                    showToast={showToast}
-                  />
-                </div>
-              );
-            })()}
-          </div>
-        </div>
-
         {/* ================= ALIGNÉ À GAUCHE ================= */}
         <div className="mt-5 text-sm text-black space-y-1">
           <p>🏠 Cellule : {m.cellule_id ? `${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` : "—"}</p>

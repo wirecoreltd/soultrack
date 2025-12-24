@@ -25,12 +25,16 @@ export default function SuivisMembres() {
   const [showRefus, setShowRefus] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(null);
 
+  const [cellules, setCellules] = useState([]);
+  const [conseillers, setConseillers] = useState([]);
+
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => (prev === id ? null : id));
 
   const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
   const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
 
+  // 🔹 Fetch membres_complets
   useEffect(() => {
     const fetchMembresComplets = async () => {
       setLoading(true);
@@ -58,7 +62,7 @@ export default function SuivisMembres() {
           if (celluleIds.length > 0) {
             query = query.in("cellule_id", celluleIds);
           } else {
-            query = query.eq("id", -1);
+            query = query.eq("id", -1); // Aucun résultat
           }
         }
 
@@ -75,7 +79,19 @@ export default function SuivisMembres() {
       }
     };
 
+    const fetchCellulesConseillers = async () => {
+      try {
+        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
+        const { data: conseillersData } = await supabase.from("profiles").select("id, prenom, nom").eq("role", "Conseiller");
+        setCellules(cellulesData || []);
+        setConseillers(conseillersData || []);
+      } catch (err) {
+        console.error("Erreur chargement cellules/conseillers :", err);
+      }
+    };
+
     fetchMembresComplets();
+    fetchCellulesConseillers();
   }, [setAllMembers]);
 
   const handleStatusChange = (id, value) =>
@@ -127,8 +143,8 @@ export default function SuivisMembres() {
 
   const filteredMembers = members.filter(m => {
     const status = m.statut_suivis ?? 0;
-    if (status === 3 || status === 4) return false;
-    return status === 1 || status === 2;
+    if (status === 3 || status === 4) return false; // intégrés ou refusés
+    return status === 1 || status === 2; // envoyés ou en attente
   });
 
   const uniqueMembers = Array.from(new Map(filteredMembers.map(item => [item.id, item])).values());
@@ -138,23 +154,7 @@ export default function SuivisMembres() {
   };
 
   const DetailsPopup = ({ m }) => {
-    const [cellules, setCellules] = useState([]);
-    const [conseillers, setConseillers] = useState([]);
     const commentRef = useRef(null);
-
-    useEffect(() => {
-      const loadData = async () => {
-        try {
-          const { data: cellulesData } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
-          const { data: conseillersData } = await supabase.from("profiles").select("id, prenom, nom, telephone").eq("role", "Conseiller");
-          setCellules(cellulesData || []);
-          setConseillers(conseillersData || []);
-        } catch (err) {
-          console.error("Erreur chargement cellules/conseillers :", err);
-        }
-      };
-      loadData();
-    }, []);
 
     useEffect(() => {
       if (commentRef.current) {
@@ -162,6 +162,11 @@ export default function SuivisMembres() {
         commentRef.current.selectionStart = commentRef.current.value.length;
       }
     }, [commentChanges[m.id]]);
+
+    const celluleNom = m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—";
+    const conseillerNom = m.conseiller_id
+      ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim()
+      : "—";
 
     return (
       <div className="text-black text-sm space-y-2 w-full">
@@ -171,9 +176,9 @@ export default function SuivisMembres() {
         <p>⚥ Sexe : {m.sexe || "—"}</p>
         <p>📋 Statut initial : {m.statut_initial ?? m.statut ?? "—"}</p>
         <p>❓Besoin : {!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin}</p>
-        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-        <p>🏠 Cellule : {m.cellule_full || "—"}</p>
-        <p>👤 Conseiller : {m.responsable || "—"}</p>
+        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>       
+        <p>🏠 Cellule : {celluleNom}</p>
+        <p>👤 Conseiller : {conseillerNom}</p>
 
         <div className="mt-4 flex justify-center">
           <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-4">✏️ Modifier le contact</button>
@@ -218,8 +223,8 @@ export default function SuivisMembres() {
                 <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
                 <p className="text-sm text-black-700 mb-1">📞 {m.telephone || "—"}</p>
                 <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[m.statut_suivis ?? m.suivi_statut] || "—"}</p>
-                <p className="text-sm text-black-700 mb-1">🏠 Cellule : {m.cellule_full || "—"}</p>
-                {!m.cellule_full && <p className="text-sm text-black-700 mb-1">👤 Conseiller : {m.responsable || "—"}</p>}
+                <p className="text-sm text-black-700 mb-1">🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}</p>
+                <p className="text-sm text-black-700 mb-1">👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
 
                 <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-1">
                   {detailsOpen === m.id ? "Fermer détails" : "Détails"}
@@ -241,14 +246,15 @@ export default function SuivisMembres() {
                 <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
                 <th className="px-4 py-2">Téléphone</th>
                 <th className="px-4 py-2">Statut Suivis</th>
-                <th className="px-4 py-2">Cellule / Conseiller</th>
+                <th className="px-4 py-2">Cellule</th>
+                <th className="px-4 py-2">Conseiller</th>
                 <th className="px-4 py-2 rounded-tr-lg">Action</th>
               </tr>
             </thead>
             <tbody>
               {uniqueMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
+                  <td colSpan={6} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
                 </tr>
               ) : (
                 uniqueMembers.map(m => (
@@ -256,7 +262,8 @@ export default function SuivisMembres() {
                     <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
                     <td className="px-4 py-2">{m.telephone || "—"}</td>
                     <td className="px-4 py-2">{statutLabels[m.statut_suivis ?? m.suivi_statut] || "—"}</td>
-                    <td className="px-4 py-2">{m.cellule_full || m.cellule || m.responsable || m.conseiller || "—"}</td>
+                    <td className="px-4 py-2">{m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}</td>
+                    <td className="px-4 py-2">{m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</td>
                     <td className="px-4 py-2 flex items-center gap-2">
                       <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>
                       <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
@@ -285,8 +292,8 @@ export default function SuivisMembres() {
       {editMember && (
         <EditMemberSuivisPopup
           member={editMember}
-          cellules={[]}
-          conseillers={[]}
+          cellules={cellules}
+          conseillers={conseillers}
           onClose={() => setEditMember(null)}
           onUpdateMember={updateMember}
         />

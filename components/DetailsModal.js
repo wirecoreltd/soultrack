@@ -6,8 +6,6 @@ import BoutonEnvoyer from "./BoutonEnvoyer";
 export default function DetailsModal({
   m,
   onClose,
-  cellules = [],
-  conseillers = [],
   session,
   handleAfterSend,
   showToast,
@@ -60,10 +58,32 @@ export default function DetailsModal({
 
               {openPhoneMenu && (
                 <div className="absolute top-full mt-2 bg-white border rounded-lg shadow w-56 z-50">
-                  <a href={`tel:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler par téléphone</a>
-                  <a href={`sms:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">✉️ Envoyer SMS</a>
-                  <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 WhatsApp</a>
-                  <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Envoyer message WhatsApp</a>
+                  <a
+                    href={`tel:${m.telephone}`}
+                    className="block px-4 py-2 hover:bg-gray-100 text-black"
+                  >
+                    📞 Appeler par téléphone
+                  </a>
+                  <a
+                    href={`sms:${m.telephone}`}
+                    className="block px-4 py-2 hover:bg-gray-100 text-black"
+                  >
+                    ✉️ Envoyer SMS
+                  </a>
+                  <a
+                    href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
+                    target="_blank"
+                    className="block px-4 py-2 hover:bg-gray-100 text-black"
+                  >
+                    💬 WhatsApp
+                  </a>
+                  <a
+                    href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?text=Bonjour`}
+                    target="_blank"
+                    className="block px-4 py-2 hover:bg-gray-100 text-black"
+                  >
+                    📱 Envoyer message WhatsApp
+                  </a>
                 </div>
               )}
             </div>
@@ -71,21 +91,81 @@ export default function DetailsModal({
 
           <p className="mt-2">🏙️ Ville : {m.ville || "—"}</p>
           <p>🕊 Statut : {m.statut || "—"}</p>
-        </div> {/* <-- Fermeture de la div centrée */}
 
-        {/* ================= ALIGNÉ À GAUCHE ================= */}
+          {/* Envoyer */}
+          <div className="mt-3 w-full">
+            <label className="font-semibold text-sm">Envoyer à :</label>
+            <select
+              value={selectedTargetType}
+              onChange={(e) => {
+                setSelectedTargetType(e.target.value);
+                setSelectedTarget(null);
+              }}
+              className="mt-1 w-full border rounded px-2 py-1 text-sm"
+            >
+              <option value="">-- Choisir --</option>
+              <option value="cellule">Une Cellule</option>
+              <option value="conseiller">Un Conseiller</option>
+            </select>
+
+            {selectedTargetType && (
+              <select
+                value={selectedTarget || ""}
+                onChange={(e) => setSelectedTarget(e.target.value)}
+                className="mt-2 w-full border rounded px-2 py-1 text-sm"
+              >
+                <option value="">-- Sélectionner --</option>
+
+                {selectedTargetType === "cellule" && m.cellule_id && (
+                  <option value={m.cellule_id}>
+                    {m.cellule_full}
+                  </option>
+                )}
+
+                {selectedTargetType === "conseiller" && m.conseiller_id && (
+                  <option value={m.conseiller_id}>
+                    {m.responsable}
+                  </option>
+                )}
+              </select>
+            )}
+
+            {selectedTarget && (
+              <div className="mt-3">
+                <BoutonEnvoyer
+                  membre={m}
+                  type={selectedTargetType}
+                  cible={{ id: selectedTarget }}
+                  session={session}
+                  onEnvoyer={(data) =>
+                    handleAfterSend && handleAfterSend(data, selectedTargetType)
+                  }
+                  showToast={showToast}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ================= DÉTAILS (IDENTIQUE À SUIVIS MEMBRES) ================= */}
         <div className="mt-5 text-sm text-black space-y-1">
-          <p>🏠 Cellule : {m.cellule_id ? `${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` : "—"}</p>
-          <p>👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
+          <p>🏠 Cellule : {m.cellule_full || "—"}</p>
+          <p>👤 Conseiller : {m.responsable || "—"}</p>
           <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
           <p>⚥ Sexe : {m.sexe || "—"}</p>
-          <p>❓ Besoin : {Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin || "—"}</p>
+          <p>
+            ❓ Besoin :{" "}
+            {!m.besoin
+              ? "—"
+              : Array.isArray(m.besoin)
+              ? m.besoin.join(", ")
+              : m.besoin}
+          </p>
           <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-          <p>🧩 Comment est-il venu : {m.comment_est_il_venu || "—"}</p>
+          <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
           <p>📋 Statut initial : {(m.statut_initial ?? m.statut) || "—"}</p>
           <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
         </div>
-
       </div>
     </div>
   );

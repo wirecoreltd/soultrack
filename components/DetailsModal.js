@@ -71,6 +71,7 @@ export default function DetailsModal({
 
           <p className="mt-2">🏙️ Ville : {m.ville || "—"}</p>
           <p>🕊 Statut : {m.statut || "—"}</p>
+        </div> {/* <-- Fermeture de la div centrée */}
 
         {/* ================= ALIGNÉ À GAUCHE ================= */}
         <div className="mt-5 text-sm text-black space-y-1">
@@ -84,6 +85,7 @@ export default function DetailsModal({
           <p>📋 Statut initial : {(m.statut_initial ?? m.statut) || "—"}</p>
           <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
         </div>
+
       </div>
     </div>
   );

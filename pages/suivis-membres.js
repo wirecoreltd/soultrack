@@ -164,8 +164,7 @@ export default function SuivisMembres() {
         </div>
         <div className="flex justify-end mt-2">
           <p className="text-orange-200 text-sm">👋 Bienvenue {prenom}</p>
-        </div>
-      </div>
+        </div>      
 
       <div className="mb-4">
         <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />

@@ -4,17 +4,11 @@ import { useState, useEffect, useRef } from "react";
 import BoutonEnvoyer from "./BoutonEnvoyer";
 
 export default function DetailsModal({
-  m,                  // membre
+  m,
   onClose,
   cellules = [],
   conseillers = [],
   session,
-  handleStatusChange,
-  handleCommentChange,
-  statusChanges = {},
-  commentChanges = {},
-  updating = {},
-  updateSuivi,
   handleAfterSend,
   showToast,
 }) {
@@ -36,14 +30,9 @@ export default function DetailsModal({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const celluleNom = m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—";
-  const conseillerNom = m.conseiller_id
-    ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim()
-    : "—";
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative overflow-y-auto max-h-[90vh]">
+      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
 
         {/* Fermer */}
         <button
@@ -53,7 +42,7 @@ export default function DetailsModal({
           ✖
         </button>
 
-        {/* CENTRÉ */}
+        {/* ================= CENTRÉ ================= */}
         <div className="flex flex-col items-center text-center">
           <h2 className="text-xl font-bold">
             {m.prenom} {m.nom} {m.star && "⭐"}
@@ -68,9 +57,10 @@ export default function DetailsModal({
               >
                 {m.telephone}
               </button>
+
               {openPhoneMenu && (
                 <div className="absolute top-full mt-2 bg-white border rounded-lg shadow w-56 z-50">
-                  <a href={`tel:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler</a>
+                  <a href={`tel:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler par téléphone</a>
                   <a href={`sms:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">✉️ Envoyer SMS</a>
                   <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 WhatsApp</a>
                   <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Envoyer message WhatsApp</a>
@@ -79,10 +69,10 @@ export default function DetailsModal({
             </div>
           )}
 
-          <p className="mt-2">🏙 Ville : {m.ville || "—"}</p>
+          <p className="mt-2">🏙️ Ville : {m.ville || "—"}</p>
           <p>🕊 Statut : {m.statut || "—"}</p>
 
-          {/* Envoyer à */}
+          {/* Envoyer à centré sous statut */}
           <div className="mt-3 w-full">
             <label className="font-semibold text-sm">Envoyer à :</label>
             <select
@@ -115,6 +105,7 @@ export default function DetailsModal({
               </select>
             )}
 
+            {/* BoutonEnvoyer */}
             {selectedTarget && (() => {
               const cibleId = selectedTarget;
               return (
@@ -133,16 +124,16 @@ export default function DetailsModal({
           </div>
         </div>
 
-        {/* ALIGNÉ À GAUCHE - DÉTAILS COMPLÈTES */}
+        {/* ================= ALIGNÉ À GAUCHE ================= */}
         <div className="mt-5 text-sm text-black space-y-1">
-          <p>🏠 Cellule : {celluleNom}</p>
-          <p>👤 Conseiller : {conseillerNom}</p>
+          <p>🏠 Cellule : {m.cellule_id ? `${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` : "—"}</p>
+          <p>👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
           <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
           <p>⚥ Sexe : {m.sexe || "—"}</p>
           <p>❓ Besoin : {Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin || "—"}</p>
           <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
           <p>🧩 Comment est-il venu : {m.comment_est_il_venu || "—"}</p>
-          <p>📋 Statut initial : {m.statut_initial ?? m.statut || "—"}</p>
+          <p>📋 Statut initial : {(m.statut_initial ?? m.statut) || "—"}</p>
           <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
         </div>
       </div>

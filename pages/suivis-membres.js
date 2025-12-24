@@ -177,8 +177,6 @@ export default function SuivisMembres() {
         <p>📋 Statut initial : {m.statut_initial ?? m.statut ?? "—"}</p>
         <p>❓Besoin : {!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin}</p>
         <p>📝 Infos : {m.infos_supplementaires || "—"}</p>       
-        <p>🏠 Cellule : {celluleNom}</p>
-        <p>👤 Conseiller : {conseillerNom}</p>
 
         <div className="mt-4 flex justify-center">
           <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-4">✏️ Modifier le contact</button>

@@ -150,12 +150,7 @@ export default function SuivisMembres() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-      {/* … LE RESTE DU FICHIER EST STRICTEMENT IDENTIQUE À TON ORIGINAL … */}
-    </div>
-  );
-}
-
+       
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
@@ -164,7 +159,8 @@ export default function SuivisMembres() {
         </div>
         <div className="flex justify-end mt-2">
           <p className="text-orange-200 text-sm">👋 Bienvenue {prenom}</p>
-        </div>      
+        </div>  
+         </div>    
 
       <div className="mb-4">
         <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />

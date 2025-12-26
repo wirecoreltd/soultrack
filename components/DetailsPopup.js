@@ -140,33 +140,31 @@ export default function DetailsPopup({
           </div>          
 
         {/* ================= ALIGNÉ À GAUCHE ================= */}
-        <div className="mt-5 text-sm text-black space-y-1 text-left">
-          <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
-          <p>⚥ Sexe : {membre.sexe || "—"}</p>
-          <p>
-            ❓ Besoin :{" "}
-            {membre.besoin
-              ? (() => {
-                  try {
-                    const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
-                    return Array.isArray(besoins) ? besoins.join(", ") : besoins;
-                  } catch (e) {
-                    return membre.besoin;
-                  }
-                })()
-              : "—"}
-          </p>
-          <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
-          <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
-          <p>🧩 Raison de la venue : {membre.statut_initial || "visiteur"}</p>
-          <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
-        </div>
+          <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
+            <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
+            <p>⚥ Sexe : {membre.sexe || "—"}</p>
+            <p>
+              ❓ Besoin :{" "}
+              {membre.besoin
+                ? (() => {
+                    try {
+                      const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
+                      return Array.isArray(besoins) ? besoins.join(", ") : besoins;
+                    } catch (e) {
+                      return membre.besoin;
+                    }
+                  })()
+                : "—"}
+            </p>
+            <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
+            <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
+            <p>🧩 Raison de la venue : {membre.statut_initial || "visiteur"}</p>
+            <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
+          </div>
+
           {/* ✏️ Modifier le contact */}
             <div className="mt-2 flex justify-center">
-              <button
-                onClick={() => setEditMember(membre)}
-                className="bg-blue-500 text-white px-4 py-2 rounded font-semibold hover:bg-blue-600 flex items-center gap-2"
-              >
+              <button onClick={() => setEditMember(membre)} className="text-blue-600 text-sm mt-2 w-full">
                 ✏️ Modifier le contact
               </button>
             </div>

@@ -17,6 +17,7 @@ export default function DetailsEvangePopup({ member, onClose, onEdit }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-96 relative shadow-xl max-h-[90vh] overflow-y-auto">
+        
         {/* Croix fermeture */}
         <button
           onClick={onClose}
@@ -37,16 +38,20 @@ export default function DetailsEvangePopup({ member, onClose, onEdit }) {
           <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
           <p>☀️ Type : {member.type_conversion || "—"}</p>
           <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-          <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
+          <p>📝 Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
         </div>
 
         {/* Bouton Modifier centré */}
-        <div className="mt-4 flex justify-center">
-          <button onClick={() => setEditEvangelisePopup(m)} className="text-blue-600 text-sm mt-2 w-full">
-                ✏️ Modifier le contact
-              </button>
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={() => onEdit(member)}
+            className="text-blue-600 text-sm font-semibold hover:underline"
+          >
+            ✏️ Modifier le contact
+          </button>
         </div>
       </div>
     </div>
   );
 }
+

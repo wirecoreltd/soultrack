@@ -50,8 +50,3 @@ export default function DetailsEvangePopup({ member, onClose, onEdit }) {
     </div>
   );
 }
-
-
-<button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">
-                ✏️ Modifier le contact
-              </button>

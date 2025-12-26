@@ -50,7 +50,7 @@ export default function ListMembers() {
     "actif",
     "ancien",
     "visiteur",
-    "noveau",
+    "nouveau",
     "veut rejoindre ICC",
     "refus",
     "integrer",

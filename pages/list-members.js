@@ -446,13 +446,14 @@ export default function ListMembers() {
         {view === "table" && (
           <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
             <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto">
-              <thead className="bg-gray-200 text-black-800 text-sm uppercase">
-                <tr>
-                  <th className="px-1 py-1 rounded-tl-lg text-left">Nom complet</th>
-                  <th className="px-1 py-1 text-left">Téléphone</th>
-                  <th className="px-1 py-1 text-left">Statut</th>
-                  <th className="px-1 py-1 text-left">Affectation</th>
-                  <th className="px-1 py-1 rounded-tr-lg text-left">Actions</th>
+              {/* Header */}
+              <thead className="text-sm uppercase">
+                <tr className="bg-gray-200">
+                  <th className="px-1 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
+                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
+                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Statut</th>
+                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Affectation</th>
+                  <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>Actions</th>
                 </tr>
               </thead>
         
@@ -483,12 +484,40 @@ export default function ListMembers() {
                         </span>
                       )}
                     </td>
-                    <td className="px-1 py-1">{m.tel}</td>
-                    <td className="px-1 py-1">{m.statut}</td>
-                    <td className="px-1 py-1">{m.affectation}</td>
-                    <td className="px-1 py-1">{/* Actions ici */}</td>
+                    <td className="px-1 py-1 text-white">{m.tel}</td>
+                    <td className="px-1 py-1 text-white">{m.statut}</td>
+                    <td className="px-1 py-1 text-white">{m.affectation}</td>
+                    <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
+                      <button
+                        onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
+                        className="text-orange-500 underline text-sm"
+                      >
+                        {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                      </button>
+                      <button
+                        onClick={() => setEditMember(m)}
+                        className="text-blue-600 underline text-sm"
+                      >
+                        Modifier
+                      </button>
+                    </td>
                   </tr>
                 ))}
+        
+                {/* Texte Membres existants */}
+                <tr>
+                  <td colSpan={5} className="px-1 py-1 font-semibold text-lg text-white">
+                    <span
+                      style={{
+                        background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                        WebkitBackgroundClip: "text",
+                        color: "transparent",
+                      }}
+                    >
+                      Membres existants
+                    </span>
+                  </td>
+                </tr>
         
                 {/* Anciens Membres */}
                 {members
@@ -496,14 +525,14 @@ export default function ListMembers() {
                   .map((m) => (
                     <tr key={m.id} className="border-b border-gray-300">
                       <td
-                        className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 whitespace-nowrap"
+                        className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 text-white whitespace-nowrap"
                         style={{ borderLeftColor: getBorderColor(m) }}
                       >
                         {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                       </td>
-                      <td className="px-1 py-1 whitespace-nowrap">{m.telephone || "—"}</td>
-                      <td className="px-1 py-1 whitespace-nowrap">{m.statut || "—"}</td>
-                      <td className="px-1 py-1 whitespace-nowrap">
+                      <td className="px-1 py-1 text-white whitespace-nowrap">{m.telephone || "—"}</td>
+                      <td className="px-1 py-1 text-white whitespace-nowrap">{m.statut || "—"}</td>
+                      <td className="px-1 py-1 text-white whitespace-nowrap">
                         {m.cellule_id
                           ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
                           : m.conseiller_id
@@ -530,6 +559,7 @@ export default function ListMembers() {
             </table>
           </div>
         )}
+
 
 
       {popupMember && (

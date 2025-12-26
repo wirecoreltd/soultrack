@@ -50,7 +50,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         responsableTelephone = cible.telephone;
       }
 
-      // 🔹 Créer suivi avec nom complet de la cible
+      // 🔹 Créer suivi dans membres_complets
       const suiviData = {
         membre_id: membre.id,
         prenom: membre.prenom,
@@ -63,8 +63,9 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         is_whatsapp: true,
         cellule_id: type === "cellule" ? cible.id : null,
         conseiller_id: type === "conseiller" ? cible.id : null,
-        responsable: responsablePrenom,
-        cible_name: type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`,
+        suivi_responsable: responsablePrenom,
+        suivi_cellule_nom: type === "cellule" ? cible.cellule_full : null,
+        suivi_responsable_id: type === "conseiller" ? cible.id : null,
         created_at: new Date().toISOString(),
       };
 

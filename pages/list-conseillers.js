@@ -45,7 +45,7 @@ export default function ListConseillers() {
 
       // 3️⃣ Récupérer membres assignés
       const { data: membres } = await supabase
-        .from("v_membres_full")
+        .from("v_membres_complets")
         .select("id, conseiller_id")
         .in("conseiller_id", conseillersIds);
 

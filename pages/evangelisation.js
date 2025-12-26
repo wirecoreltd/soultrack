@@ -343,12 +343,15 @@ export default function Evangelisation() {
           }}
         />
       )}
-
+      
       {popupMember && (
         <DetailsEvangePopup
           member={popupMember}
           onClose={() => setPopupMember(null)}
-          onEdit={(m) => setEditMember(m)} // déclenche édition depuis le popup
+          onEdit={(m) => {
+            setPopupMember(null); // ✅ FERME le popup détails
+            setEditMember(m);     // ✅ OUVRE l’édition
+          }}
         />
       )}
     </div>

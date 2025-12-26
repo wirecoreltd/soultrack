@@ -70,8 +70,9 @@ export default function DetailsPopup({
 
           <p className="mt-2">🏙 Ville : {membre.ville || "—"}</p>
           <p>🕊 Statut : {membre.statut || "—"}</p>
-          <p>🏠 Cellule : {membre.cellule_nom ? `${membre.cellule_ville || "—"} - ${membre.cellule_nom}` : "—"}</p>
-          <p>👤 Conseiller : {membre.conseiller_prenom ? `${membre.conseiller_prenom} ${membre.conseiller_nom || ""}` : "—"}</p>
+          <p>🏠 Cellule : {membre.suivi_cellule_nom || "—"}</p>
+          <p>👤 Conseiller : {membre.suivi_responsable || "—"}</p>
+
 
           {/* Envoyer à */}
           <div className="mt-3 w-full">

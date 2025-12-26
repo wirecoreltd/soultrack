@@ -270,7 +270,7 @@ export default function ListMembers() {
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id); }}
-                  className="text-#2E3192 underline font-semibold text-center"
+                  className="text-orange-500 underline font-semibold text-center"
                 >
                   {m.telephone}
                 </button>
@@ -431,14 +431,7 @@ export default function ListMembers() {
 
           {anciensFiltres.length > 0 && (
             <>
-              <h2
-                className="w-full max-w-6xl font-bold mb-2 text-lg"
-                style={{
-                  background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                  WebkitBackgroundClip: "text",
-                  color: "transparent",
-                }}
-              >
+              <h2 className="w-full max-w-6xl font-bold mb-2 text-lg bg-gradient-to-r from-blue-500 to-gray-300 bg-clip-text text-transparent">
                 Membres existants
               </h2>
 

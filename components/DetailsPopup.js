@@ -3,11 +3,20 @@
 import { useEffect, useState, useRef } from "react";
 import BoutonEnvoyer from "./BoutonEnvoyer";
 
-export default function DetailsPopup({ membre, onClose, cellules = [], conseillers = [], session, handleAfterSend, showToast }) {
+export default function DetailsPopup({
+  membre,
+  onClose,
+  cellules = [],
+  conseillers = [],
+  session,
+  handleAfterSend,
+  showToast,
+}) {
   if (!membre || !membre.id) return null;
 
   const [selectedTargetType, setSelectedTargetType] = useState("");
   const [selectedTarget, setSelectedTarget] = useState(null);
+  const [cibleComplete, setCibleComplete] = useState(null);
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
   const phoneMenuRef = useRef(null);
 
@@ -21,14 +30,6 @@ export default function DetailsPopup({ membre, onClose, cellules = [], conseille
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // Récupérer la cible complète
-  const cibleComplete = (() => {
-    if (!selectedTargetType || !selectedTarget) return null;
-    if (selectedTargetType === "cellule") return cellules.find(c => c.id === selectedTarget);
-    if (selectedTargetType === "conseiller") return conseillers.find(c => c.id === selectedTarget);
-    return null;
-  })();
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
@@ -44,9 +45,7 @@ export default function DetailsPopup({ membre, onClose, cellules = [], conseille
 
         {/* ================= CENTRÉ ================= */}
         <div className="flex flex-col items-center text-center">
-          <h2 className="text-xl font-bold">
-            {membre.prenom} {membre.nom} {membre.star && "⭐"}
-          </h2>
+          <h2 className="text-xl font-bold">{membre.prenom} {membre.nom} {membre.star && "⭐"}</h2>
 
           {/* Téléphone */}
           {membre.telephone && (
@@ -69,10 +68,12 @@ export default function DetailsPopup({ membre, onClose, cellules = [], conseille
             </div>
           )}
 
-          <p className="mt-2">🏙️ Ville : {membre.ville || "—"}</p>
+          <p className="mt-2">🏙 Ville : {membre.ville || "—"}</p>
           <p>🕊 Statut : {membre.statut || "—"}</p>
+          <p>🏠 Cellule : {membre.cellule_nom ? `${membre.cellule_ville || "—"} - ${membre.cellule_nom}` : "—"}</p>
+          <p>👤 Conseiller : {membre.conseiller_prenom ? `${membre.conseiller_prenom} ${membre.conseiller_nom || ""}` : "—"}</p>
 
-          {/* Envoyer à centré sous statut */}
+          {/* Envoyer à */}
           <div className="mt-3 w-full">
             <label className="font-semibold text-sm">Envoyer à :</label>
             <select
@@ -80,6 +81,7 @@ export default function DetailsPopup({ membre, onClose, cellules = [], conseille
               onChange={(e) => {
                 setSelectedTargetType(e.target.value);
                 setSelectedTarget(null);
+                setCibleComplete(null);
               }}
               className="mt-1 w-full border rounded px-2 py-1 text-sm"
             >
@@ -91,20 +93,24 @@ export default function DetailsPopup({ membre, onClose, cellules = [], conseille
             {selectedTargetType && (
               <select
                 value={selectedTarget || ""}
-                onChange={(e) => setSelectedTarget(e.target.value)}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  setSelectedTarget(id);
+                  if (selectedTargetType === "cellule") setCibleComplete(cellules.find(c => c.id === id));
+                  else if (selectedTargetType === "conseiller") setCibleComplete(conseillers.find(c => c.id === id));
+                }}
                 className="mt-2 w-full border rounded px-2 py-1 text-sm"
               >
                 <option value="">-- Sélectionner --</option>
-                {selectedTargetType === "cellule" && cellules.map((c) => (
+                {selectedTargetType === "cellule" && cellules.map(c => (
                   <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>
                 ))}
-                {selectedTargetType === "conseiller" && conseillers.map((c) => (
+                {selectedTargetType === "conseiller" && conseillers.map(c => (
                   <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>
                 ))}
               </select>
             )}
 
-            {/* BoutonEnvoyer */}
             {cibleComplete && (
               <div className="mt-3">
                 <BoutonEnvoyer
@@ -121,17 +127,16 @@ export default function DetailsPopup({ membre, onClose, cellules = [], conseille
         </div>
 
         {/* ================= ALIGNÉ À GAUCHE ================= */}
-        <div className="mt-5 text-sm text-black space-y-1">
-          <p>🏠 Cellule : {membre.cellule_nom ? `${membre.cellule_ville || "—"} - ${membre.cellule_nom}` : "—"}</p>
-          <p>👤 Conseiller : {membre.conseiller_prenom ? `${membre.conseiller_prenom} ${membre.conseiller_nom || ""}` : "—"}</p>
+        <div className="mt-5 text-sm text-black space-y-1 text-left">
           <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
           <p>⚥ Sexe : {membre.sexe || "—"}</p>
           <p>❓ Besoin : {Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}</p>
           <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
           <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
-          <p>🧩 Statut initial : {membre.statut_initial || "—"}</p>
+          <p>🧩 Statut initial : {membre.statut_initial || "visiteur"}</p>
           <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
         </div>
+
       </div>
     </div>
   );

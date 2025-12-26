@@ -1,17 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import BoutonEnvoyer from "./BoutonEnvoyer";
 
-export default function DetailsPopup({
-  membre,
-  onClose,
-  cellules = [],
-  conseillers = [],
-  session,
-  handleAfterSend,
-  showToast,
-}) {
+export default function DetailsPopup({ membre, onClose, cellules = [], conseillers = [], session, handleAfterSend, showToast }) {
   if (!membre || !membre.id) return null;
 
   const [selectedTargetType, setSelectedTargetType] = useState("");
@@ -29,6 +21,14 @@ export default function DetailsPopup({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Récupérer la cible complète
+  const cibleComplete = (() => {
+    if (!selectedTargetType || !selectedTarget) return null;
+    if (selectedTargetType === "cellule") return cellules.find(c => c.id === selectedTarget);
+    if (selectedTargetType === "conseiller") return conseillers.find(c => c.id === selectedTarget);
+    return null;
+  })();
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
@@ -95,33 +95,28 @@ export default function DetailsPopup({
                 className="mt-2 w-full border rounded px-2 py-1 text-sm"
               >
                 <option value="">-- Sélectionner --</option>
-                {selectedTargetType === "cellule"
-                  ? cellules.map((c) => (
-                      <option key={c.id} value={c.id}>{c.cellule_full || c.cellule}</option>
-                    ))
-                  : conseillers.map((c) => (
-                      <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
-                    ))}
+                {selectedTargetType === "cellule" && cellules.map((c) => (
+                  <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>
+                ))}
+                {selectedTargetType === "conseiller" && conseillers.map((c) => (
+                  <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>
+                ))}
               </select>
             )}
 
             {/* BoutonEnvoyer */}
-            {selectedTarget && (() => {
-              const cibleId = selectedTarget; // juste l'id suffit
-
-              return (
-                <div className="mt-3">
-                  <BoutonEnvoyer
-                    membre={membre}
-                    type={selectedTargetType}
-                    cible={{ id: cibleId }}
-                    session={session}
-                    onEnvoyer={(data) => handleAfterSend && handleAfterSend(data, selectedTargetType)}
-                    showToast={showToast}
-                  />
-                </div>
-              );
-            })()}
+            {cibleComplete && (
+              <div className="mt-3">
+                <BoutonEnvoyer
+                  membre={membre}
+                  type={selectedTargetType}
+                  cible={cibleComplete}
+                  session={session}
+                  onEnvoyer={(data) => handleAfterSend && handleAfterSend(data, selectedTargetType, cibleComplete)}
+                  showToast={showToast}
+                />
+              </div>
+            )}
           </div>
         </div>
 

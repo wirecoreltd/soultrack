@@ -255,8 +255,15 @@ export default function Evangelisation() {
                 <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
                 <p>🏙 Type de conversion : {member.type_conversion || "—"}</p>
                 <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-                <p>📝 Info Supp. : {formatBesoin(member.infos_supplementaires)}</p>             
-              
+                <p>📝 Info Supp. : {formatBesoin(member.infos_supplementaires)}</p> 
+                  <div className="flex justify-center mt-4">
+                    <button
+                      onClick={() => setEditMember(member)}
+                      className="text-orange-400 text-sm underline"
+                    >
+                      ✏️ Modifier
+                    </button>
+                  </div>              
               </div>
             )}
           </div>

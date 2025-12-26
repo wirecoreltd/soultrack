@@ -42,14 +42,16 @@ export default function DetailsEvangePopup({ member, onClose, onEdit }) {
 
         {/* Bouton Modifier centré */}
         <div className="mt-4 flex justify-center">
-          <button
-            onClick={() => onEdit(member)}
-            className="text-blue-600 text-sm mt-2 w-full border border-blue-600 rounded py-1 hover:bg-blue-50"
-          >
-            ✏️ Modifier le contact
-          </button>
+          <button onClick={() => setEditEvangelisePopup(m)} className="text-blue-600 text-sm mt-2 w-full">
+                ✏️ Modifier le contact
+              </button>
         </div>
       </div>
     </div>
   );
 }
+
+
+<button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">
+                ✏️ Modifier le contact
+              </button>

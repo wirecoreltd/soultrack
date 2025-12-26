@@ -257,7 +257,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
           {/* Statut initial */}
           <div>
-            <label className="font-semibold text-black block mb-1">Statut initial</label>
+            <label className="font-semibold text-black block mb-1">Raison de la venue</label>
             <select name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="input">
               <option value="">-- Statut à l'arrivée --</option>
               <option value="veut rejoindre ICC">Veut rejoindre ICC</option>

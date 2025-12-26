@@ -50,36 +50,18 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         responsableTelephone = cible.telephone;
       }
 
-      // 🔹 Créer suivi dans membres_complets
-      const suiviData = {
-        membre_id: membre.id,
-        prenom: membre.prenom,
-        nom: membre.nom,
-        telephone: membre.telephone,
-        ville: membre.ville,
-        besoin: membre.besoin,
-        infos_supplementaires: membre.infos_supplementaires,
-        statut_suivis: statutIds.envoye,
-        is_whatsapp: true,
-        cellule_id: type === "cellule" ? cible.id : null,
-        conseiller_id: type === "conseiller" ? cible.id : null,
-        suivi_responsable: responsablePrenom,
-        suivi_cellule_nom: type === "cellule" ? cible.cellule_full : null,
-        suivi_responsable_id: type === "conseiller" ? cible.id : null,
-        created_at: new Date().toISOString(),
-      };
-
-      const { data: insertedSuivi, error: insertError } = await supabase
-        .from("suivis_membres")
-        .insert([suiviData])
-        .select()
-        .single();
-      if (insertError) throw insertError;
-
-      // 🔹 Mettre à jour le membre
+      // 🔹 Mettre à jour le membre dans membres_complets
       const { data: updatedMember, error: updateError } = await supabase
         .from("membres_complets")
-        .update({ statut: "actif", statut_suivis: statutIds.envoye })
+        .update({
+          statut: "actif",
+          statut_suivis: statutIds.envoye,
+          cellule_id: type === "cellule" ? cible.id : null,
+          conseiller_id: type === "conseiller" ? cible.id : null,
+          suivi_cellule_nom: type === "cellule" ? cible.cellule_full : null,
+          suivi_responsable: type === "conseiller" ? `${cible.prenom} ${cible.nom}` : responsablePrenom,
+          suivi_responsable_id: type === "conseiller" ? cible.id : null
+        })
         .eq("id", membre.id)
         .select()
         .single();
@@ -88,7 +70,10 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       // 🔹 Callback après envoi
       if (onEnvoyer) onEnvoyer(updatedMember);
 
-      if (showToast) showToast(`✅ ${membre.prenom} ${membre.nom} envoyé à ${responsablePrenom}`);
+      if (showToast) {
+        const cibleName = type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`;
+        showToast(`✅ ${membre.prenom} ${membre.nom} envoyé à ${cibleName}`);
+      }
 
       // 🔹 Message WhatsApp
       let message = `👋 Bonjour ${responsablePrenom}!\n\n`;

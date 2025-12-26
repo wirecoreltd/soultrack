@@ -145,7 +145,7 @@ export default function DetailsPopup({
           </p>
           <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
           <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
-          <p>🧩 Statut initial : {membre.statut_initial || "visiteur"}</p>
+          <p>🧩 Raison de la venue : {membre.statut_initial || "visiteur"}</p>
           <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
         </div>
 

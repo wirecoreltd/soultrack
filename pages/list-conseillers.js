@@ -56,17 +56,22 @@ export default function ListConseillers() {
         .in("conseiller_id", conseillersIds);
 
       // 5️⃣ Compter contacts uniques
-      const contactSetMap = {};
-      membres?.forEach((m) => {
-        if (!m.conseiller_id) return;
-        if (!contactSetMap[m.conseiller_id]) contactSetMap[m.conseiller_id] = new Set();
-        contactSetMap[m.conseiller_id].add(m.id);
-      });
-      suivis?.forEach((s) => {
-        if (!s.conseiller_id) return;
-        if (!contactSetMap[s.conseiller_id]) contactSetMap[s.conseiller_id] = new Set();
-        contactSetMap[s.conseiller_id].add(s.membre_id || s.id);
-      });
+      // 5️⃣ Compter contacts uniques
+        const contactSetMap = {};
+        membres?.forEach((m) => {
+          if (!m.conseiller_id) return;
+          if (!contactSetMap[m.conseiller_id]) contactSetMap[m.conseiller_id] = new Set();
+          contactSetMap[m.conseiller_id].add(m.id); // id unique du membre
+        });
+        
+        // si tu veux inclure les suivis uniquement s'ils ne sont pas déjà comptés
+        suivis?.forEach((s) => {
+          if (!s.conseiller_id) return;
+          if (!contactSetMap[s.conseiller_id]) contactSetMap[s.conseiller_id] = new Set();
+          if (!contactSetMap[s.conseiller_id].has(s.membre_id)) {
+            contactSetMap[s.conseiller_id].add(s.membre_id);
+          }
+        });
 
       // 6️⃣ Récupérer responsables
       const responsablesIds = profiles.map((p) => p.responsable_id).filter(Boolean);

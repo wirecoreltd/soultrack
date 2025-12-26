@@ -110,9 +110,9 @@ export default function Evangelisation() {
         message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
         message += `⚥ Sexe : ${m.sexe || "—"}\n`;
         message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
-        message += `☀️ Type : ${m.type || "—"}\n`;
+        message += `☀️ Type : ${m.type_conversion || "—"}\n`;
         message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
-        message += `❓ Infos supplementaires : ${formatBesoin(m.infos_supplementaires)}\n`;        
+        message += `📝 Infos supplementaires : ${formatBesoin(m.infos_supplementaires)}\n`;        
       });
 
       message +=
@@ -249,8 +249,14 @@ export default function Evangelisation() {
 
             {detailsOpen[member.id] && (
               <div className="text-sm mt-3 space-y-1">
-                <p>🏙 Ville : {member.ville || "—"}</p>
+                <p>🏙️ Ville : {member.ville || ""}</p>
+                <p>💬 Whatsapp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+                <p> ⚥ Sexe : {member.sexe || "—"}</p>
+                <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
+                <p>🏙 Type de conversion : {member.type_conversion || "—"}</p>
                 <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
+                <p>📝 Info Supp. : {formatBesoin(member.infos_supplementaires)}</p>             
+              
               </div>
             )}
           </div>

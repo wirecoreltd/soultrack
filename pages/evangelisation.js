@@ -18,10 +18,10 @@ export default function Evangelisation() {
   const [checkedContacts, setCheckedContacts] = useState({});
   const [detailsOpen, setDetailsOpen] = useState({});
   const [editMember, setEditMember] = useState(null);
+  const [popupMember, setPopupMember] = useState(null);
   const [loadingSend, setLoadingSend] = useState(false);
   const [view, setView] = useState("card"); // "card" ou "table"
 
-  /* ================= COULEUR BORDURE ================= */
   const getBorderColor = (member) => {
     if (member.is_whatsapp) return "#25D366";
     if (member.besoin) return "#FFB800";
@@ -74,7 +74,6 @@ export default function Evangelisation() {
   const selectedContacts = contacts.filter((c) => checkedContacts[c.id]);
   const hasSelectedContacts = selectedContacts.length > 0;
 
-  /* ================= ENVOI WHATSAPP ================= */
   const sendContacts = async () => {
     if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
     setLoadingSend(true);
@@ -90,13 +89,10 @@ export default function Evangelisation() {
 
       const isMultiple = selectedContacts.length > 1;
 
-      /* ================= MESSAGE ================= */
       let message = `🙏 Bonjour ${cible.responsable || cible.prenom},\n\n`;
-
       message += isMultiple
         ? "Nous te confions avec joie ces personnes rencontrées lors de l’évangélisation.\n"
         : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n";
-
       message += "Merci pour ton coeur et ton engagement dans l’accompagnement 🙏✨\n\n";
 
       selectedContacts.forEach((m, index) => {
@@ -115,8 +111,7 @@ export default function Evangelisation() {
         )}\n`;
       });
 
-      message +=
-        "\nQue le Seigneur te fortifie et t’utilise puissamment dans ce suivi 🙌\n";
+      message += "\nQue le Seigneur te fortifie et t’utilise puissamment dans ce suivi 🙌\n";
 
       const waLink = `https://wa.me/${cible.telephone.replace(
         /\D/g,
@@ -125,7 +120,6 @@ export default function Evangelisation() {
 
       window.open(waLink, "_blank");
 
-      /* ================= TRANSFERT DB ================= */
       const insertData = selectedContacts.map((c) => ({
         prenom: c.prenom,
         nom: c.nom,
@@ -141,7 +135,6 @@ export default function Evangelisation() {
       }));
 
       await supabase.from("suivis_des_evangelises").insert(insertData);
-
       const idsToDelete = selectedContacts.map((c) => c.id);
       await supabase.from("evangelises").delete().in("id", idsToDelete);
 
@@ -243,7 +236,6 @@ export default function Evangelisation() {
               </h2>
               <p className="text-center text-sm">📱 {member.telephone || "—"}</p>
 
-              {/* Case à cocher */}
               <label className="flex justify-center gap-2 mt-2">
                 <input
                   type="checkbox"
@@ -253,7 +245,6 @@ export default function Evangelisation() {
                 Sélectionner
               </label>
 
-              {/* Bouton détails */}
               <button
                 onClick={() =>
                   setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
@@ -263,26 +254,22 @@ export default function Evangelisation() {
                 {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
               </button>
 
-              {/* Bloc extensible détails */}
               {detailsOpen[member.id] && (
-                <div className="mt-3 p-3 border-t border-gray-300 text-sm space-y-1 bg-gray-50 rounded-b-lg">
-                  <p>🏙️ Ville : {member.ville || "—"}</p>
-                  <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+                <div className="text-sm mt-3 space-y-1">
+                  <p>🏙️ Ville : {member.ville || ""}</p>
+                  <p>💬 Whatsapp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                   <p>⚥ Sexe : {member.sexe || "—"}</p>
                   <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
-                  <p>☀️ Type de conversion : {member.type_conversion || "—"}</p>
+                  <p>🏙 Type de conversion : {member.type_conversion || "—"}</p>
                   <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-                  <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
+                  <p>📝 Info Supp. : {formatBesoin(member.infos_supplementaires)}</p>
 
-                  {/* Bouton Modifier centré */}
-                  <div className="flex justify-center mt-2">
-                    <button
-                      onClick={() => setEditMember(member)}
-                      className="text-blue-600 text-sm w-full max-w-xs"
-                    >
-                      ✏️ Modifier le contact
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setEditMember(member)}
+                    className="text-blue-600 text-sm mt-4 w-full text-center"
+                  >
+                    ✏️ Modifier le contact
+                  </button>
                 </div>
               )}
             </div>
@@ -305,6 +292,7 @@ export default function Evangelisation() {
                 <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>Actions</th>
               </tr>
             </thead>
+
             <tbody>
               {contacts.map((m) => (
                 <tr key={m.id} className="border-b border-gray-300">
@@ -321,11 +309,11 @@ export default function Evangelisation() {
                   <td className="px-1 py-1 flex items-center gap-2">
                     <button
                       onClick={() =>
-                        setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))
+                        setPopupMember(popupMember?.id === m.id ? null : m)
                       }
                       className="text-orange-500 underline text-sm"
                     >
-                      {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
+                      {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
                     </button>
                     <button
                       onClick={() => setEditMember(m)}
@@ -353,6 +341,13 @@ export default function Evangelisation() {
             );
             setEditMember(null);
           }}
+        />
+      )}
+
+      {popupMember && view === "table" && (
+        <DetailsEvangePopup
+          member={popupMember}
+          onClose={() => setPopupMember(null)}
         />
       )}
     </div>

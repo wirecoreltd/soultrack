@@ -150,7 +150,7 @@ export default function AddMember() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
           <input type="text" placeholder="Prénom" value={formData.prenom} onChange={(e) => setFormData({ ...formData, prenom: e.target.value })} className="input" required />
           <input type="text" placeholder="Nom" value={formData.nom} onChange={(e) => setFormData({ ...formData, nom: e.target.value })} className="input" required />
-          <input type="text" placeholder="Téléphone" value={formData.telephone} onChange={(e) => setFormData({ ...formData, telephone: e.target.value })} className="input" required />
+          <input type="text" placeholder="Téléphone" value={formData.telephone} onChange={(e) => setFormData({ ...formData, telephone: e.target.value })} className="input" />
 
           <label className="flex items-center gap-2 mt-1 text-sm sm:text-base">
             <input type="checkbox" checked={formData.is_whatsapp} onChange={(e) => setFormData({ ...formData, is_whatsapp: e.target.checked })} />
@@ -159,13 +159,13 @@ export default function AddMember() {
 
           <input type="text" placeholder="Ville" value={formData.ville} onChange={(e) => setFormData({ ...formData, ville: e.target.value })} className="input" />
 
-          <select value={formData.sexe} onChange={(e) => setFormData({ ...formData, sexe: e.target.value })} className="input">
+          <select value={formData.sexe} onChange={(e) => setFormData({ ...formData, sexe: e.target.value })} className="input" required>
             <option value="">-- Sexe --</option>
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
           </select>
 
-          <select value={formData.statut} onChange={(e) => setFormData({ ...formData, statut: e.target.value })} className="input">
+          <select value={formData.statut} onChange={(e) => setFormData({ ...formData, statut: e.target.value })} className="input" required>
             <option value="">-- Raison de la venue --</option>
             <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
             <option value="a déjà son église">A déjà son église</option>
@@ -173,7 +173,7 @@ export default function AddMember() {
             <option value="visiteur">Visiteur</option>
           </select>
 
-          <select value={formData.venu} onChange={(e) => setFormData({ ...formData, venu: e.target.value })} className="input">
+          <select value={formData.venu} onChange={(e) => setFormData({ ...formData, venu: e.target.value })} className="input" required>
             <option value="">-- Comment est-il venu ? --</option>
             <option value="invité">Invité</option>
             <option value="réseaux">Réseaux</option>

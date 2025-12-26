@@ -137,18 +137,7 @@ export default function DetailsPopup({
                 />
               </div>
             )}
-          </div>
-
-          {/* Bouton Modifier */}
-          <div className="mt-3">
-            <button
-              onClick={() => setEditMember(membre)}
-              className="bg-blue-500 text-white px-3 py-1 rounded font-semibold hover:bg-blue-600"
-            >
-              Modifier
-            </button>
-          </div>
-        </div>
+          </div>          
 
         {/* ================= ALIGNÉ À GAUCHE ================= */}
         <div className="mt-5 text-sm text-black space-y-1 text-left">
@@ -172,6 +161,16 @@ export default function DetailsPopup({
           <p>🧩 Raison de la venue : {membre.statut_initial || "visiteur"}</p>
           <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
         </div>
+          {/* ✏️ Modifier le contact */}
+            <div className="mt-2 flex justify-center">
+              <button
+                onClick={() => setEditMember(membre)}
+                className="bg-blue-500 text-white px-4 py-2 rounded font-semibold hover:bg-blue-600 flex items-center gap-2"
+              >
+                ✏️ Modifier le contact
+              </button>
+            </div>
+          </div>
 
         {/* ================= POPUP EDIT MEMBER ================= */}
         {editMember && (

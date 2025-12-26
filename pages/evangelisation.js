@@ -43,7 +43,7 @@ export default function Evangelisation() {
   const fetchCellules = async () => {
     const { data } = await supabase
       .from("cellules")
-      .select("id, cellule, responsable, telephone");
+      .select("id, cellule_full, responsable, telephone");
     setCellules(data || []);
   };
 
@@ -110,7 +110,7 @@ export default function Evangelisation() {
         message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
         message += `⚥ Sexe : ${m.sexe || "—"}\n`;
         message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
-        message += `☀️ Type : ${m.type_conversion || "—"}\n`;
+        message += `☀️ Type de conversion : ${m.type_conversion || "—"}\n`;
         message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
         message += `📝 Infos supplementaires : ${formatBesoin(m.infos_supplementaires)}\n`;        
       });
@@ -175,7 +175,7 @@ export default function Evangelisation() {
         Évangélisation
       </h1>
 
-      {/* SELECT */}
+      {/* SELECT DESTINATAIRE */}
       <div className="w-full max-w-md mb-6">
         <select
           value={selectedTargetType}
@@ -197,24 +197,24 @@ export default function Evangelisation() {
             className="w-full border rounded px-3 py-2 mb-3 text-center"
           >
             <option value="">-- Choisir --</option>
-            {(selectedTargetType === "cellule" ? cellules : conseillers).map(
-              (c) => (
-                <option key={c.id} value={c.id}>
-                  {c.cellule || `${c.prenom} ${c.nom}`}
-                </option>
-              )
-            )}
+            {(selectedTargetType === "cellule" ? cellules : conseillers).map((c) => (
+              <option key={c.id} value={c.id}>
+                {selectedTargetType === "cellule" ? c.cellule_full : `${c.prenom} ${c.nom}`}
+              </option>
+            ))}
           </select>
         )}
 
         {hasSelectedContacts && selectedTarget && (
-          <button
-            onClick={sendContacts}
-            disabled={loadingSend}
-            className="w-full bg-green-500 text-white font-bold px-4 py-2 rounded"
-          >
-            {loadingSend ? "Envoi..." : "📤 Envoyer WhatsApp"}
-          </button>
+          <div className="flex justify-center mt-2">
+            <button
+              onClick={sendContacts}
+              disabled={loadingSend}
+              className="w-2/3 bg-green-500 text-white font-bold px-4 py-2 rounded"
+            >
+              {loadingSend ? "Envoi..." : "📤 Envoyer WhatsApp"}
+            </button>
+          </div>
         )}
       </div>
 
@@ -242,7 +242,7 @@ export default function Evangelisation() {
 
             <button
               onClick={() => toggleDetails(member.id)}
-              className="text-orange-600 underline text-sm block mx-auto mt-2"
+              className="text-orange-500 underline text-sm block mx-auto mt-2"
             >
               {detailsOpen[member.id] ? "Fermer Détails" : "Détails"}
             </button>
@@ -253,17 +253,17 @@ export default function Evangelisation() {
                 <p>💬 Whatsapp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                 <p> ⚥ Sexe : {member.sexe || "—"}</p>
                 <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
-                <p>🏙 Type de conversion : {member.type_conversion || "—"}</p>
+                <p>☀️ Type de conversion : {member.type_conversion || "—"}</p>
                 <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-                <p>📝 Info Supp. : {formatBesoin(member.infos_supplementaires)}</p> 
-                  <div className="flex justify-center mt-4">
-                    <button
-                      onClick={() => setEditMember(member)}
-                      className="text-orange-600 text-sm underline"
-                    >
-                      ✏️ Modifier le contact
-                    </button>
-                  </div>              
+                <p>📝 Info Supp. : {formatBesoin(member.infos_supplementaires)}</p>   
+
+                {/* Lien pour modifier */}
+                <button
+                  onClick={() => setEditMember(member)}
+                  className="text-blue-600 underline text-sm block mx-auto mt-2"
+                >
+                  ✏️ Modifier le contact
+                </button>           
               </div>
             )}
           </div>

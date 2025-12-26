@@ -17,7 +17,9 @@ export default function Evangelisation() {
   const [checkedContacts, setCheckedContacts] = useState({});
   const [detailsOpen, setDetailsOpen] = useState({});
   const [editMember, setEditMember] = useState(null);
+  const [popupMember, setPopupMember] = useState(null);
   const [loadingSend, setLoadingSend] = useState(false);
+  const [view, setView] = useState("carte"); // toggle carte/table
 
   /* ================= COULEUR BORDURE ================= */
   const getBorderColor = (member) => {
@@ -99,9 +101,7 @@ export default function Evangelisation() {
         : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n";
 
       message +=
-        isMultiple
-          ? "Merci pour ton cœur et ton engagement à les accompagner 🙏❤️\n\n"
-          : "Merci pour ton cœur et ton engagement à l’accompagner 🙏❤️\n\n";
+        "Merci pour ton coeur et ton accompagnement 🙏✨\n\n";
 
       selectedContacts.forEach((m, index) => {
         message += "────────────────────\n";
@@ -114,10 +114,10 @@ export default function Evangelisation() {
         message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
         message += `☀️ Type : ${m.type_conversion || "—"}\n`;
         message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
-        message += `📝 Infos supplémentaires : ${formatBesoin(
-          m.infos_supplementaires
-        )}\n`;
+        message += `📝 Infos supplementaires : ${formatBesoin(m.infos_supplementaires)}\n`;        
       });
+
+      message += "\nMerci pour ton engagement ❤️";
 
       const waLink = `https://wa.me/${cible.telephone.replace(
         /\D/g,
@@ -163,6 +163,7 @@ export default function Evangelisation() {
       className="min-h-screen w-full flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
+      {/* HEADER */}
       <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
         <button onClick={() => router.back()} className="text-white">
           ← Retour
@@ -171,11 +172,25 @@ export default function Evangelisation() {
       </div>
 
       <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
-      <h1 className="text-4xl text-white text-center mb-6">
-        Évangélisation
-      </h1>
+      <h1 className="text-4xl text-white text-center mb-6">Évangélisation</h1>
 
-      {/* SELECT */}
+      {/* TOGGLE VUE */}
+      <div className="flex gap-3 mb-4">
+        <button
+          onClick={() => setView("carte")}
+          className={`px-4 py-2 rounded font-bold ${view === "carte" ? "bg-white text-purple-800" : "bg-gray-200 text-gray-700"}`}
+        >
+          Carte
+        </button>
+        <button
+          onClick={() => setView("table")}
+          className={`px-4 py-2 rounded font-bold ${view === "table" ? "bg-white text-purple-800" : "bg-gray-200 text-gray-700"}`}
+        >
+          Table
+        </button>
+      </div>
+
+      {/* SELECT ENVOYER À */}
       <div className="w-full max-w-md mb-6">
         <select
           value={selectedTargetType}
@@ -197,15 +212,11 @@ export default function Evangelisation() {
             className="w-full border rounded px-3 py-2 mb-3 text-center"
           >
             <option value="">-- Choisir --</option>
-            {(selectedTargetType === "cellule" ? cellules : conseillers).map(
-              (c) => (
-                <option key={c.id} value={c.id}>
-                  {selectedTargetType === "cellule"
-                    ? `${c.cellule_full} (${c.ville || "—"})`
-                    : `${c.prenom} ${c.nom}`}
-                </option>
-              )
-            )}
+            {(selectedTargetType === "cellule" ? cellules : conseillers).map((c) => (
+              <option key={c.id} value={c.id}>
+                {selectedTargetType === "cellule" ? `${c.cellule_full} - ${c.ville || "—"}` : `${c.prenom} ${c.nom}`}
+              </option>
+            ))}
           </select>
         )}
 
@@ -213,63 +224,107 @@ export default function Evangelisation() {
           <button
             onClick={sendContacts}
             disabled={loadingSend}
-            className="w-full bg-green-500 text-white font-bold px-4 py-2 rounded"
+            className="w-full bg-green-500 text-white font-bold px-4 py-2 rounded mb-4"
           >
             {loadingSend ? "Envoi..." : "📤 Envoyer WhatsApp"}
           </button>
         )}
       </div>
 
-      {/* CARTES */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
-        {contacts.map((member) => (
-          <div
-            key={member.id}
-            className="bg-white rounded-2xl shadow-xl p-4 border-l-4"
-            style={{ borderLeftColor: getBorderColor(member) }}
-          >
-            <h2 className="font-bold text-center">
-              {member.prenom} {member.nom}
-            </h2>
-            <p className="text-center text-sm">📱 {member.telephone || "—"}</p>
-
-            <label className="flex justify-center gap-2 mt-2">
-              <input
-                type="checkbox"
-                checked={checkedContacts[member.id] || false}
-                onChange={() => handleCheck(member.id)}
-              />
-              Sélectionner
-            </label>
-
-            <button
-              onClick={() => toggleDetails(member.id)}
-              className="text-orange-500 underline text-sm block mx-auto mt-2"
+      {/* ==================== VUE CARTE ==================== */}
+      {view === "carte" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
+          {contacts.map((member) => (
+            <div
+              key={member.id}
+              className="bg-white rounded-2xl shadow-xl p-4 border-l-4"
+              style={{ borderLeftColor: getBorderColor(member) }}
             >
-              {detailsOpen[member.id] ? "Fermer Détails" : "Détails"}
-            </button>
+              <h2 className="font-bold text-center">
+                {member.prenom} {member.nom}
+              </h2>
+              <p className="text-center text-sm">📱 {member.telephone || "—"}</p>
 
-            {detailsOpen[member.id] && (
-              <div className="text-sm mt-3 space-y-1">
-                <p>🏙️ Ville : {member.ville || ""}</p>
-                <p>💬 Whatsapp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-                <p> ⚥ Sexe : {member.sexe || "—"}</p>
-                <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
-                <p>☀️ Type de conversion : {member.type_conversion || "—"}</p>
-                <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-                <p>📝 Info Supp. : {formatBesoin(member.infos_supplementaires)}</p>
+              <label className="flex justify-center gap-2 mt-2">
+                <input
+                  type="checkbox"
+                  checked={checkedContacts[member.id] || false}
+                  onChange={() => handleCheck(member.id)}
+                />
+                Sélectionner
+              </label>
 
-                <button
-                  onClick={() => setEditMember(member)}
-                  className="text-blue-600 text-center text-sm mt-2 block mx-auto"
-                >
-                  ✏️ Modifier
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+              <button
+                onClick={() => toggleDetails(member.id)}
+                className="text-orange-500 underline text-sm block mx-auto mt-2"
+              >
+                {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+              </button>
+
+              {detailsOpen[member.id] && (
+                <div className="text-sm mt-3 space-y-1">
+                  <p>🏙️ Ville : {member.ville || ""}</p>
+                  <p>💬 Whatsapp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+                  <p>⚥ Sexe : {member.sexe || "—"}</p>
+                  <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
+                  <p>🏙 Type de conversion : {member.type_conversion || "—"}</p>
+                  <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
+                  <p>📝 Info Supp. : {formatBesoin(member.infos_supplementaires)}</p> 
+                  <button
+                    onClick={() => setEditMember(member)}
+                    className="text-blue-600 underline text-sm block mx-auto mt-2"
+                  >
+                    Modifier
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ==================== VUE TABLE ==================== */}
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+          <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto">
+            <thead className="text-sm uppercase">
+              <tr className="bg-gray-200">
+                <th className="px-1 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
+                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
+                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Statut</th>
+                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Affectation</th>
+                <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {contacts.map((m) => (
+                <tr key={m.id} className="border-b border-gray-300">
+                  <td className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 text-white whitespace-nowrap" style={{ borderLeftColor: getBorderColor(m) }}>
+                    {m.prenom} {m.nom}
+                  </td>
+                  <td className="px-1 py-1 text-white">{m.telephone}</td>
+                  <td className="px-1 py-1 text-white">{m.statut || "—"}</td>
+                  <td className="px-1 py-1 text-white">{m.cellule_full || "—"}</td>
+                  <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
+                    <button
+                      onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
+                      className="text-orange-500 underline text-sm"
+                    >
+                      {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                    </button>
+                    <button
+                      onClick={() => setEditMember(m)}
+                      className="text-blue-600 underline text-sm"
+                    >
+                      Modifier
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {editMember && (
         <EditEvangelisePopup
@@ -278,9 +333,7 @@ export default function Evangelisation() {
           conseillers={conseillers}
           onClose={() => setEditMember(null)}
           onUpdateMember={(data) => {
-            setContacts((prev) =>
-              prev.map((m) => (m.id === data.id ? data : m))
-            );
+            setContacts((prev) => prev.map((m) => (m.id === data.id ? data : m)));
             setEditMember(null);
           }}
         />

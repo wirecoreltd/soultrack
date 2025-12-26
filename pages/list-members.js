@@ -431,11 +431,25 @@ export default function ListMembers() {
                 <th className="px-1 py-1 rounded-tl-lg text-left">Nom complet</th>
                 <th className="px-1 py-1 text-left">Téléphone</th>
                 <th className="px-1 py-1 text-left">Statut</th>
-                <th className="px-1 py-1 text-left">Affectation</th>
+                <th className="px-1 py-1 text-left">Attribué à</th>
+                <th className="px-1 py-1 text-left">Envoyé à</th>
                 <th className="px-1 py-1 rounded-tr-lg text-left">Actions</th>
               </tr>
             </thead>
             <tbody>
+              {/* 💖 NOUVEAUX */}
+                {nouveauxFiltres.length > 0 && (
+                <SectionRow title={`💖 Bien aimé venu le ${dateDuJour}`} />
+              )}
+            
+              {nouveauxFiltres.map(m => (
+                <TableRow key={m.id} m={{ ...m, isNouveau: true }} />
+              ))}
+            
+              {/* MEMBRES EXISTANTS */}
+              {anciensFiltres.length > 0 && (
+                <SectionRow title="Membres existants" />
+              )}              
               {members.map((m) => (
                 <tr key={m.id} className="border-b border-gray-300">
                   <td className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 whitespace-nowrap" style={{ borderLeftColor: getBorderColor(m) }}>
@@ -448,6 +462,54 @@ export default function ListMembers() {
                     : m.conseiller_id ? `👤 ${conseillers.find(c => c.id === m.conseiller_id)?.prenom} ${conseillers.find(c => c.id === m.conseiller_id)?.nom}` 
                     : "—"}
                   </td>
+                    {/* ENVOYER À */}
+                      <td className="px-1 py-1 min-w-[180px]">
+                        <select
+                          value={selectedTargetType[m.id] || ""}
+                          onChange={e =>
+                            setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))
+                          }
+                          className="w-full border rounded px-1 py-0.5 text-xs"
+                        >
+                          <option value="">Choisir</option>
+                          <option value="cellule">Cellule</option>
+                          <option value="conseiller">Conseiller</option>
+                        </select>
+                  
+                        {(selectedTargetType[m.id]) && (
+                          <select
+                            value={selectedTargets[m.id] || ""}
+                            onChange={e =>
+                              setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))
+                            }
+                            className="w-full border rounded px-1 py-0.5 mt-1 text-xs"
+                          >
+                            <option value="">Sélectionner</option>
+                            {selectedTargetType[m.id] === "cellule" &&
+                              cellules.map(c => (
+                                <option key={c.id} value={c.id}>{c.cellule_full}</option>
+                              ))}
+                            {selectedTargetType[m.id] === "conseiller" &&
+                              conseillers.map(c => (
+                                <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
+                              ))}
+                          </select>
+                        )}
+                  
+                        {selectedTargetType[m.id] && selectedTargets[m.id] && (
+                          <BoutonEnvoyer
+                            membre={m}
+                            type={selectedTargetType[m.id]}
+                            cible={
+                              selectedTargetType[m.id] === "cellule"
+                                ? cellules.find(c => c.id === selectedTargets[m.id])
+                                : conseillers.find(c => c.id === selectedTargets[m.id])
+                            }
+                            session={session}
+                            showToast={showToast}
+                          />
+                        )}
+                      </td>        
                   <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
                     <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })} className="text-orange-500 underline text-sm">
                       {popupMember?.id === m.id ? "Fermer détails" : "Détails"}

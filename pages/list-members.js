@@ -253,8 +253,14 @@ export default function ListMembers() {
     return (
       <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4 relative">
         {m.star && <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>}
-        {m.isNouveau && <span className="absolute top-3 right-3 bg-#2E3192-400 text-white px-2 py-1 rounded text-xs font-semibold">Nouveau</span>}
-        
+        {m.isNouveau && (
+          <span
+            className="absolute top-3 left-3 text-white px-2 py-1 rounded text-xs font-semibold"
+            style={{ backgroundColor: "#2E3192" }}
+          >
+            Nouveau
+          </span>
+        )}        
         <div className="flex flex-col items-center">
           <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
           <div className="relative flex justify-center mt-1">

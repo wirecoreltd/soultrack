@@ -431,9 +431,17 @@ export default function ListMembers() {
 
           {anciensFiltres.length > 0 && (
             <>
-              <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">
+              <h2
+                className="w-full max-w-6xl font-bold mb-2 text-lg"
+                style={{
+                  background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                  WebkitBackgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
                 Membres existants
               </h2>
+
               <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                 {anciensFiltres.map(m => renderMemberCard(m))}
               </div>

@@ -43,37 +43,22 @@ export default function ListConseillers() {
 
       const conseillersIds = profiles.map((p) => p.id);
 
-      // 3️⃣ Récupérer membres assignés
-      const { data: membres } = await supabase
-        .from("v_membres_complets")
+      // 3️⃣ Récupérer membres attribués à chaque conseiller
+      const { data: membres, error: membresError } = await supabase
+        .from("membres_complets") // source de vérité
         .select("id, conseiller_id")
         .in("conseiller_id", conseillersIds);
+      if (membresError) throw membresError;
 
-      // 4️⃣ Récupérer suivis assignés
-      const { data: suivis } = await supabase
-        .from("suivis_membres")
-        .select("id, conseiller_id, membre_id") // utiliser membre_id pour unicité si dispo
-        .in("conseiller_id", conseillersIds);
+      // 4️⃣ Compter contacts attribués uniques par conseiller
+      const contactSetMap = {};
+      membres?.forEach((m) => {
+        if (!m.conseiller_id) return;
+        if (!contactSetMap[m.conseiller_id]) contactSetMap[m.conseiller_id] = new Set();
+        contactSetMap[m.conseiller_id].add(m.id);
+      });
 
-      // 5️⃣ Compter contacts uniques
-      // 5️⃣ Compter contacts uniques
-        const contactSetMap = {};
-        membres?.forEach((m) => {
-          if (!m.conseiller_id) return;
-          if (!contactSetMap[m.conseiller_id]) contactSetMap[m.conseiller_id] = new Set();
-          contactSetMap[m.conseiller_id].add(m.id); // id unique du membre
-        });
-        
-        // si tu veux inclure les suivis uniquement s'ils ne sont pas déjà comptés
-        suivis?.forEach((s) => {
-          if (!s.conseiller_id) return;
-          if (!contactSetMap[s.conseiller_id]) contactSetMap[s.conseiller_id] = new Set();
-          if (!contactSetMap[s.conseiller_id].has(s.membre_id)) {
-            contactSetMap[s.conseiller_id].add(s.membre_id);
-          }
-        });
-
-      // 6️⃣ Récupérer responsables
+      // 5️⃣ Récupérer responsables
       const responsablesIds = profiles.map((p) => p.responsable_id).filter(Boolean);
       let responsableMap = {};
       if (responsablesIds.length > 0) {
@@ -86,11 +71,11 @@ export default function ListConseillers() {
         });
       }
 
-      // 7️⃣ Fusionner infos
+      // 6️⃣ Fusionner infos pour affichage
       const list = profiles.map((p) => ({
         ...p,
         responsable_nom: p.responsable_id ? (responsableMap[p.responsable_id] || "Aucun") : "Aucun",
-        totalContacts: contactSetMap[p.id]?.size || 0,
+        totalContacts: contactSetMap[p.id]?.size || 0, // 🔔 Contacts attribués exacts
       }));
 
       setConseillers(list);

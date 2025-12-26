@@ -112,6 +112,7 @@ export default function Evangelisation() {
         message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
         message += `☀️ Type : ${m.type || "—"}\n`;
         message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
+        message += `❓ Infos supplementaires : ${formatBesoin(m.infos_supplementaires)}\n`;        
       });
 
       message +=

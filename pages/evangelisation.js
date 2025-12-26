@@ -242,9 +242,9 @@ export default function Evangelisation() {
 
             <button
               onClick={() => toggleDetails(member.id)}
-              className="text-orange-500 underline text-sm block mx-auto mt-2"
+              className="text-orange-600 underline text-sm block mx-auto mt-2"
             >
-              Détails
+              {detailsOpen[member.id] ? "Fermer Détails" : "Détails"}
             </button>
 
             {detailsOpen[member.id] && (
@@ -259,9 +259,9 @@ export default function Evangelisation() {
                   <div className="flex justify-center mt-4">
                     <button
                       onClick={() => setEditMember(member)}
-                      className="text-orange-400 text-sm underline"
+                      className="text-orange-600 text-sm underline"
                     >
-                      ✏️ Modifier
+                      ✏️ Modifier le contact
                     </button>
                   </div>              
               </div>

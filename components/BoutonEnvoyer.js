@@ -79,11 +79,23 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       let message = `👋 Bonjour ${responsablePrenom}!\n\n`;
       message += `✨ Un nouveau membre est placé sous tes soins.\n\n`;
       message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
-      message += `⚥ Sexe: ${membre.sexe || "—"}\n`;
       message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
+      message += `🏙️ Ville: ${membre.ville || "—"}\n`;
+      message += `🕊 Statut: ${membre.statut_initial || "—"}\n`;
       message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
-      message += `🏙 Ville: ${membre.ville || "—"}\n`;
-      message += `🙏 Besoin: ${Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}\n`;
+      message += `⚥ Sexe: ${membre.sexe || "—"}\n`; 
+      message += `❓Besoin: ${
+      membre.besoin
+        ? (() => {
+            try {
+              const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
+              return Array.isArray(besoins) ? besoins.join(", ") : besoins;
+            } catch (e) {
+              return membre.besoin; // au cas où ce n'est pas du JSON
+            }
+          })()
+        : "—"
+    }\n`;
       message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;
       message += "Merci pour ton accompagnement ❤️";
 

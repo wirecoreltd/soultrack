@@ -253,7 +253,7 @@ export default function ListMembers() {
     return (
       <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4 relative">
         {m.star && <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>}
-        {m.isNouveau && <span className="absolute top-3 left-3 bg-green-400 text-white px-2 py-1 rounded text-xs font-semibold">Nouveau</span>}
+        {m.isNouveau && <span className="absolute top-3 right-3 bg-#2E3192 text-white px-2 py-1 rounded text-xs font-semibold">Nouveau</span>}
         
         <div className="flex flex-col items-center">
           <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
@@ -364,7 +364,7 @@ export default function ListMembers() {
 
   // -------------------- Rendu --------------------
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#2E3192" }}>
       {/* Top Bar */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-2">
         <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black/20">← Retour</button>

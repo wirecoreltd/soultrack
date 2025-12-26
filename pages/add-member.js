@@ -15,7 +15,7 @@ export default function AddMember() {
     prenom: "",
     telephone: "",
     ville: "",
-    statut: "nouveau",
+    statut: "",
     venu: "",
     besoin: [],
     besoinLibre: "", // temporaire pour l'input libre

@@ -188,10 +188,8 @@ export default function ListMembers() {
 
   const filterBySearch = (list) => list.filter((m) => `${(m.prenom || "")} ${(m.nom || "")}`.toLowerCase().includes(search.toLowerCase()));
 
-  // -------------------- Initialisation sécurisée côté serveur --------------------
-  const membresActifs = members || [];
-  const nouveaux = membresActifs.filter((m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");
-  const anciens = membresActifs.filter((m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC");
+  const nouveaux = members.filter((m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");
+  const anciens = members.filter((m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC");
 
   const nouveauxFiltres = filterBySearch(
     filter ? nouveaux.filter(m => m.statut === filter || m.suivi_statut_libelle === filter) : nouveaux
@@ -351,21 +349,120 @@ export default function ListMembers() {
     );
   };
 
-  // -------------------- Rendu Table (modifiée) --------------------
+  // -------------------- Rendu --------------------
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-      {/* Top Bar, recherche, filtre, toggle Vue Carte/Table ... */}
-      {/* ... reprend exactement ce qui était avant ... */}
+      {/* Top Bar */}
+      <div className="w-full max-w-5xl flex justify-between items-center mb-2">
+        <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black/20">← Retour</button>
+        <LogoutLink className="bg-white/10 text-white px-3 py-1 rounded-lg hover:bg-white/20 text-sm" />
+      </div>
+      <div className="w-full max-w-5xl flex justify-end mb-2"><p className="text-orange-200 text-sm">👋 Bienvenue {prenom || "cher membre"}</p></div>
+      <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} className="mx-auto mb-2" />
+      <h1 className="text-2xl sm:text-3xl font-bold text-white text-center mb-2">Liste des Membres</h1>
+
+      {/* Barre de recherche */}
+      <div className="w-full max-w-4xl flex justify-center mb-2">
+        <input
+          type="text"
+          placeholder="Recherche..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-2/3 px-3 py-1 rounded-md border text-black"
+        />
+      </div>
+
+      {/* Filtre sous la barre de recherche */}
+      <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">
+        <select
+          value={filter}
+          onChange={e => setFilter(e.target.value)}
+          className="px-3 py-1 rounded-md border text-black text-sm"
+        >
+          <option value="">-- Tous les statuts --</option>
+          {statusOptions.map((s, idx) => <option key={idx} value={s}>{s}</option>)}
+        </select>
+        <span className="text-white text-sm ml-2">{members.filter(m => !filter || m.statut === filter).length} membres</span>
+      </div>
+
+      {/* Toggle Vue Carte / Vue Table */}
+      <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
+        <button
+          onClick={() => setView(view === "card" ? "table" : "card")}
+          className="text-sm font-semibold underline text-white"
+        >
+          {view === "card" ? "Vue Table" : "Vue Carte"}
+        </button>
+      </div>
+
+      {/* Vue Carte */}
+      {view === "card" && (
+        <>
+          {nouveauxFiltres.length > 0 && (
+            <>
+              <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">
+                💖 Bien aimé venu le {dateDuJour}
+              </h2>
+              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+                {nouveauxFiltres.map(m => renderMemberCard({ ...m, isNouveau: true }))}
+              </div>
+            </>
+          )}
+
+          {anciensFiltres.length > 0 && (
+            <>
+              <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">
+                Membres existants
+              </h2>
+              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                {anciensFiltres.map(m => renderMemberCard(m))}
+              </div>
+            </>
+          )}
+        </>
+      )}
 
       {/* Vue Table */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-          {/* TABLE CODE: Copie complète de la PARTIE 4 / Vue Table modifiée */}
-          {/* Comme dans mon dernier message */}
+          <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto">
+            <thead className="bg-gray-200 text-black-800 text-sm uppercase">
+              <tr>
+                <th className="px-1 py-1 rounded-tl-lg text-left">Nom complet</th>
+                <th className="px-1 py-1 text-left">Téléphone</th>
+                <th className="px-1 py-1 text-left">Statut</th>
+                <th className="px-1 py-1 text-left">Affectation</th>
+                <th className="px-1 py-1 rounded-tr-lg text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {members.map((m) => (
+                <tr key={m.id} className="border-b border-gray-300">
+                  <td className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 whitespace-nowrap" style={{ borderLeftColor: getBorderColor(m) }}>
+                    {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                  </td>
+                  <td className="px-1 py-1 whitespace-nowrap relative">{m.telephone || "—"}</td>
+                  <td className="px-1 py-1 whitespace-nowrap">{m.statut || "—"}</td>
+                  <td className="px-1 py-1 whitespace-nowrap">
+                    {m.cellule_id ? `🏠 ${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` 
+                    : m.conseiller_id ? `👤 ${conseillers.find(c => c.id === m.conseiller_id)?.prenom} ${conseillers.find(c => c.id === m.conseiller_id)?.nom}` 
+                    : "—"}
+                  </td>
+                  <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
+                    <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })} className="text-orange-500 underline text-sm">
+                      {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                    </button>
+                    <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">
+                      Modifier
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* Popups et Toast */}
       {popupMember && (
         <DetailsPopup
           membre={popupMember}
@@ -386,6 +483,7 @@ export default function ListMembers() {
         />
       )}
 
+      {/* Toast */}
       {showingToast && (
         <div className="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50">{toastMessage}</div>
       )}

@@ -130,7 +130,10 @@ export default function DetailsPopup({
         <div className="mt-5 text-sm text-black space-y-1 text-left">
           <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
           <p>⚥ Sexe : {membre.sexe || "—"}</p>
-          <p>❓ Besoin : {Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin || "—"}</p>
+          <p>❓ Besoin :{" "}
+            {Array.isArray(membre.besoin) && membre.besoin.length > 0
+              ? membre.besoin.join(", ")
+              : "—"} </p>
           <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
           <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
           <p>🧩 Statut initial : {membre.statut_initial || "visiteur"}</p>

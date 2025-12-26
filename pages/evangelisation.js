@@ -99,7 +99,9 @@ export default function Evangelisation() {
         : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n";
 
       message +=
-        "Merci de les accueillir avec amour, prière et bienveillance, afin de les accompagner dans leur cheminement avec le Seigneur 🙏✨\n\n";
+        isMultiple
+          ? "Merci pour ton cœur et ton engagement à les accompagner 🙏❤️\n\n"
+          : "Merci pour ton cœur et ton engagement à l’accompagner 🙏❤️\n\n";
 
       selectedContacts.forEach((m, index) => {
         message += "────────────────────\n";
@@ -110,14 +112,12 @@ export default function Evangelisation() {
         message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
         message += `⚥ Sexe : ${m.sexe || "—"}\n`;
         message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
-        message += `☀️ Type de conversion : ${m.type_conversion || "—"}\n`;
+        message += `☀️ Type : ${m.type_conversion || "—"}\n`;
         message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
-        message += `📝 Infos supplementaires : ${formatBesoin(m.infos_supplementaires)}\n`;        
+        message += `📝 Infos supplémentaires : ${formatBesoin(
+          m.infos_supplementaires
+        )}\n`;
       });
-
-      message +=
-        "\nQue le Seigneur te fortifie et t’utilise puissamment dans ce suivi 🙌\n";
-      message += "Merci pour ton engagement ❤️";
 
       const waLink = `https://wa.me/${cible.telephone.replace(
         /\D/g,
@@ -175,7 +175,7 @@ export default function Evangelisation() {
         Évangélisation
       </h1>
 
-      {/* SELECT DESTINATAIRE */}
+      {/* SELECT */}
       <div className="w-full max-w-md mb-6">
         <select
           value={selectedTargetType}
@@ -197,24 +197,26 @@ export default function Evangelisation() {
             className="w-full border rounded px-3 py-2 mb-3 text-center"
           >
             <option value="">-- Choisir --</option>
-            {(selectedTargetType === "cellule" ? cellules : conseillers).map((c) => (
-              <option key={c.id} value={c.id}>
-                {selectedTargetType === "cellule" ? c.cellule_full : `${c.prenom} ${c.nom}`}
-              </option>
-            ))}
+            {(selectedTargetType === "cellule" ? cellules : conseillers).map(
+              (c) => (
+                <option key={c.id} value={c.id}>
+                  {selectedTargetType === "cellule"
+                    ? `${c.cellule_full} (${c.ville || "—"})`
+                    : `${c.prenom} ${c.nom}`}
+                </option>
+              )
+            )}
           </select>
         )}
 
         {hasSelectedContacts && selectedTarget && (
-          <div className="flex justify-center mt-2">
-            <button
-              onClick={sendContacts}
-              disabled={loadingSend}
-              className="w-2/3 bg-green-500 text-white font-bold px-4 py-2 rounded"
-            >
-              {loadingSend ? "Envoi..." : "📤 Envoyer WhatsApp"}
-            </button>
-          </div>
+          <button
+            onClick={sendContacts}
+            disabled={loadingSend}
+            className="w-full bg-green-500 text-white font-bold px-4 py-2 rounded"
+          >
+            {loadingSend ? "Envoi..." : "📤 Envoyer WhatsApp"}
+          </button>
         )}
       </div>
 
@@ -255,15 +257,14 @@ export default function Evangelisation() {
                 <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
                 <p>☀️ Type de conversion : {member.type_conversion || "—"}</p>
                 <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-                <p>📝 Info Supp. : {formatBesoin(member.infos_supplementaires)}</p>   
+                <p>📝 Info Supp. : {formatBesoin(member.infos_supplementaires)}</p>
 
-                {/* Lien pour modifier */}
                 <button
                   onClick={() => setEditMember(member)}
-                  className="text-blue-600 underline text-sm block mx-auto mt-2"
+                  className="text-blue-600 text-center text-sm mt-2 block mx-auto"
                 >
-                  ✏️ Modifier le contact
-                </button>           
+                  ✏️ Modifier
+                </button>
               </div>
             )}
           </div>

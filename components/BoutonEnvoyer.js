@@ -25,13 +25,23 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
       // 🔹 Récupérer responsable selon type
       if (type === "cellule") {
-        const { data: cellule, error } = await supabase.from("cellules").select("id, responsable_id").eq("id", cible.id).single();
+        const { data: cellule, error } = await supabase
+          .from("cellules")
+          .select("id, responsable_id, cellule_full")
+          .eq("id", cible.id)
+          .single();
         if (error || !cellule?.responsable_id) throw new Error("Responsable de cellule introuvable");
 
-        const { data: resp, error: respError } = await supabase.from("profiles").select("prenom, telephone").eq("id", cellule.responsable_id).single();
+        const { data: resp, error: respError } = await supabase
+          .from("profiles")
+          .select("prenom, telephone")
+          .eq("id", cellule.responsable_id)
+          .single();
         if (respError || !resp?.telephone) throw new Error("Numéro WhatsApp invalide");
+
         responsablePrenom = resp.prenom;
         responsableTelephone = resp.telephone;
+        cible.cellule_full = cellule.cellule_full; // garantir que cellule_full est disponible
       }
 
       if (type === "conseiller") {
@@ -40,7 +50,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         responsableTelephone = cible.telephone;
       }
 
-      // 🔹 Créer suivi
+      // 🔹 Créer suivi avec nom de la cible
       const suiviData = {
         membre_id: membre.id,
         prenom: membre.prenom,
@@ -54,14 +64,20 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         cellule_id: type === "cellule" ? cible.id : null,
         conseiller_id: type === "conseiller" ? cible.id : null,
         responsable: responsablePrenom,
+        cible_name: type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`,
         created_at: new Date().toISOString(),
       };
 
-      const { data: insertedSuivi, error: insertError } = await supabase.from("suivis_membres").insert([suiviData]).select().single();
+      const { data: insertedSuivi, error: insertError } = await supabase
+        .from("suivis_membres")
+        .insert([suiviData])
+        .select()
+        .single();
       if (insertError) throw insertError;
 
       // 🔹 Mettre à jour le membre
-      const { data: updatedMember, error: updateError } = await supabase.from("membres_complets")
+      const { data: updatedMember, error: updateError } = await supabase
+        .from("membres_complets")
         .update({ statut: "actif", statut_suivis: statutIds.envoye })
         .eq("id", membre.id)
         .select()
@@ -99,7 +115,9 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
     <button
       onClick={sendToWhatsapp}
       disabled={loading}
-      className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"}`}
+      className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg ${
+        loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
+      }`}
     >
       {loading ? "Envoi..." : "📤 Envoyer par WhatsApp"}
     </button>

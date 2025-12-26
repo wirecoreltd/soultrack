@@ -478,12 +478,13 @@ export default function ListMembers() {
                       {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                       {["nouveau", "visiteur", "veut rejoindre ICC"].includes(m.statut) && (
                         <span
-                          className="text-#2E3192 text-xs px-1 rounded ml-1 font-semibold"
-                          style={{ backgroundColor: "white" }}
+                          className="text-xs px-1 rounded ml-1 font-semibold"
+                          style={{ backgroundColor: "#ffffff", color: "#2E3192" }}
                         >
                           Nouveau
                         </span>
                       )}
+
 
                     </td>
                     <td className="px-1 py-1 text-white">{m.tel}</td>

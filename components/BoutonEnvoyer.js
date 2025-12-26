@@ -50,7 +50,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         responsableTelephone = cible.telephone;
       }
 
-      // 🔹 Créer suivi avec nom de la cible
+      // 🔹 Créer suivi avec nom complet de la cible
       const suiviData = {
         membre_id: membre.id,
         prenom: membre.prenom,
@@ -84,6 +84,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         .single();
       if (updateError) throw updateError;
 
+      // 🔹 Callback après envoi
       if (onEnvoyer) onEnvoyer(updatedMember);
 
       if (showToast) showToast(`✅ ${membre.prenom} ${membre.nom} envoyé à ${responsablePrenom}`);

@@ -270,7 +270,7 @@ export default function ListMembers() {
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id); }}
-                  className="text-blue-600 underline font-semibold text-center"
+                  className="text-#2E3192 underline font-semibold text-center"
                 >
                   {m.telephone}
                 </button>
@@ -442,18 +442,52 @@ export default function ListMembers() {
         </>
       )}
 
-      {/* Vue Table */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-          <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto">
-            <thead className="bg-gray-200 text-black-800 text-sm uppercase">
-              <tr>
-                <th className="px-1 py-1 rounded-tl-lg text-left">Nom complet</th>
-                <th className="px-1 py-1 text-left">Téléphone</th>
-                <th className="px-1 py-1 text-left">Statut</th>
-                <th className="px-1 py-1 text-left">Affectation</th>
-                <th className="px-1 py-1 rounded-tr-lg text-left">Actions</th>
-              </tr>
+      {/* ==================== VUE TABLE ==================== */}
+{view === "table" && (
+  <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+    <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto">
+      <thead className="bg-gray-200 text-black-800 text-sm uppercase">
+        <tr>
+          <th className="px-1 py-1 rounded-tl-lg text-left">Nom complet</th>
+          <th className="px-1 py-1 text-left">Téléphone</th>
+          <th className="px-1 py-1 text-left">Statut</th>
+          <th className="px-1 py-1 text-left">Affectation</th>
+          <th className="px-1 py-1 rounded-tr-lg text-left">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {/* Nouveaux Membres */}
+        {nouveauxFiltres.length > 0 && (
+          <tr>
+            <td colSpan={5} className="px-1 py-1 text-white font-semibold bg-[#2E3192]">
+              💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+            </td>
+          </tr>
+        )}
+
+        {nouveauxFiltres.map((m) => (
+          <tr key={m.id} className="border-b border-gray-300">
+            <td
+              className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 text-white whitespace-nowrap"
+              style={{ borderLeftColor: getBorderColor(m) }}
+            >
+              {m.prenom} {m.nom}
+              {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+              {m.statut === "nouveau" && (
+                <span
+                  className="text-white text-xs px-1 rounded ml-1 font-semibold"
+                  style={{ backgroundColor: "#2E3192" }}
+                >
+                  Nouveau
+                </span>
+              )}
+            </td>
+            <td className="px-1 py-1">{m.tel}</td>
+            <td className="px-1 py-1">{m.statut}</td>
+            <td className="px-1 py-1">{m.affectation}</td>
+            <td className="px-1 py-1"> {/* Actions ici */} </td>
+          </tr>
             </thead>
             <tbody>
               {members.map((m) => (

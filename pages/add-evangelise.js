@@ -193,7 +193,7 @@ export default function AddEvangelise() {
             value={formData.nom} onChange={(e) => setFormData({ ...formData, nom: e.target.value })} required />
 
           <input className="input" type="text" placeholder="Téléphone"
-            value={formData.telephone} onChange={(e) => setFormData({ ...formData, telephone: e.target.value })} required />
+            value={formData.telephone} onChange={(e) => setFormData({ ...formData, telephone: e.target.value })} />
 
           <input className="input" type="text" placeholder="Ville"
             value={formData.ville} onChange={(e) => setFormData({ ...formData, ville: e.target.value })} />
@@ -219,7 +219,7 @@ export default function AddEvangelise() {
 
           {/* Prière du salut */}
           <select className="input" value={formData.priere_salut}
-            onChange={(e) => setFormData({ ...formData, priere_salut: e.target.value })}>
+            onChange={(e) => setFormData({ ...formData, priere_salut: e.target.value  })} required >
             <option value="Non">Prière du salut ?</option>
             <option value="Oui">Oui</option>
             <option value="Non">Non</option>

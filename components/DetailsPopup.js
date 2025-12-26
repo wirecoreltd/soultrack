@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import BoutonEnvoyer from "./BoutonEnvoyer";
+import EditMemberPopup from "./EditMemberPopup";
 
 export default function DetailsPopup({
   membre,
@@ -18,6 +19,7 @@ export default function DetailsPopup({
   const [selectedTarget, setSelectedTarget] = useState(null);
   const [cibleComplete, setCibleComplete] = useState(null);
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
+  const [editMember, setEditMember] = useState(null);
   const phoneMenuRef = useRef(null);
 
   // Fermer menu téléphone en cliquant dehors
@@ -35,7 +37,7 @@ export default function DetailsPopup({
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
 
-        {/* Fermer */}
+        {/* Fermer DetailsPopup */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
@@ -45,7 +47,9 @@ export default function DetailsPopup({
 
         {/* ================= CENTRÉ ================= */}
         <div className="flex flex-col items-center text-center">
-          <h2 className="text-xl font-bold">{membre.prenom} {membre.nom} {membre.star && "⭐"}</h2>
+          <h2 className="text-xl font-bold">
+            {membre.prenom} {membre.nom} {membre.star && "⭐"}
+          </h2>
 
           {/* Téléphone */}
           {membre.telephone && (
@@ -59,10 +63,10 @@ export default function DetailsPopup({
 
               {openPhoneMenu && (
                 <div className="absolute top-full mt-2 bg-white border rounded-lg shadow w-56 z-50">
-                  <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler par téléphone</a>
-                  <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">✉️ Envoyer SMS</a>
+                  <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler</a>
+                  <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">✉️ SMS</a>
                   <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 WhatsApp</a>
-                  <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Envoyer message WhatsApp</a>
+                  <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Message WhatsApp</a>
                 </div>
               )}
             </div>
@@ -78,7 +82,9 @@ export default function DetailsPopup({
           <p>👤 Conseiller : {
             membre.suivi_responsable
               ? membre.suivi_responsable
-              : (conseillers.find(c => c.id === membre.conseiller_id) ? `${conseillers.find(c => c.id === membre.conseiller_id).prenom} ${conseillers.find(c => c.id === membre.conseiller_id).nom}` : "—")
+              : (conseillers.find(c => c.id === membre.conseiller_id)
+                  ? `${conseillers.find(c => c.id === membre.conseiller_id).prenom} ${conseillers.find(c => c.id === membre.conseiller_id).nom}`
+                  : "—")
           }</p>
 
           {/* Envoyer à */}
@@ -132,6 +138,16 @@ export default function DetailsPopup({
               </div>
             )}
           </div>
+
+          {/* Bouton Modifier */}
+          <div className="mt-3">
+            <button
+              onClick={() => setEditMember(membre)}
+              className="bg-blue-500 text-white px-3 py-1 rounded font-semibold hover:bg-blue-600"
+            >
+              Modifier
+            </button>
+          </div>
         </div>
 
         {/* ================= ALIGNÉ À GAUCHE ================= */}
@@ -146,7 +162,7 @@ export default function DetailsPopup({
                     const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
                     return Array.isArray(besoins) ? besoins.join(", ") : besoins;
                   } catch (e) {
-                    return membre.besoin; // au cas où ce n'est pas du JSON
+                    return membre.besoin;
                   }
                 })()
               : "—"}
@@ -157,6 +173,20 @@ export default function DetailsPopup({
           <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
         </div>
 
+        {/* ================= POPUP EDIT MEMBER ================= */}
+        {editMember && (
+          <EditMemberPopup
+            member={editMember}
+            onClose={() => {
+              setEditMember(null);  // fermer EditMemberPopup
+              onClose();             // fermer DetailsPopup
+            }}
+            onUpdateMember={() => {
+              setEditMember(null);
+              onClose();
+            }}
+          />
+        )}
       </div>
     </div>
   );

@@ -69,7 +69,11 @@ export default function ListMembers() {
   const fetchMembers = async (profile = null) => {
     setLoading(true);
     try {
-      let query = supabase.from("membres_complets").select("*").order("created_at", { ascending: false });
+      let query = supabase
+        .from("membres_complets")
+        .select("*")
+        .order("created_at", { ascending: false });
+
       if (conseillerIdFromUrl) query = query.eq("conseiller_id", conseillerIdFromUrl);
       else if (profile?.role === "Conseiller") query = query.eq("conseiller_id", profile.id);
 
@@ -86,13 +90,18 @@ export default function ListMembers() {
   };
 
   const fetchCellules = async () => {
-    const { data, error } = await supabase.from("cellules").select("id, cellule_full");
-    if (error) console.error("Erreur:", error);
+    const { data, error } = await supabase
+      .from("cellules")
+      .select("id, cellule_full");
+    if (error) console.error(error);
     if (data) setCellules(data);
   };
 
   const fetchConseillers = async () => {
-    const { data } = await supabase.from("profiles").select("id, prenom, nom, telephone").eq("role", "Conseiller");
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom, telephone")
+      .eq("role", "Conseiller");
     if (data) setConseillers(data);
   };
 
@@ -100,7 +109,11 @@ export default function ListMembers() {
     const updatedWithActif = { ...updatedMember, statut: "actif" };
     updateMember(updatedWithActif);
 
-    const cibleName = type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`;
+    const cibleName =
+      type === "cellule"
+        ? cible.cellule_full
+        : `${cible.prenom} ${cible.nom}`;
+
     showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
   };
 
@@ -110,15 +123,16 @@ export default function ListMembers() {
       setSession(session);
 
       if (session?.user) {
-        const { data: profileData, error: profileError } = await supabase
+        const { data: profileData, error } = await supabase
           .from("profiles")
           .select("id, prenom, role")
           .eq("id", session.user.id)
           .single();
-        if (!profileError) {
+
+        if (!error) {
           setPrenom(profileData.prenom || "");
           await fetchMembers(profileData);
-        } else console.error(profileError);
+        }
       } else {
         await fetchMembers();
       }
@@ -130,105 +144,7 @@ export default function ListMembers() {
     fetchSessionAndProfile();
   }, []);
 
-  // -------------------- Realtime --------------------
-  useEffect(() => {
-    if (realtimeChannelRef.current) {
-      try { realtimeChannelRef.current.unsubscribe(); } catch (e) {}
-      realtimeChannelRef.current = null;
-    }
-
-    const channel = supabase.channel("realtime:membres_complets");
-
-    channel.on("postgres_changes", { event: "*", schema: "public", table: "membres_complets" }, () => fetchMembers());
-    channel.on("postgres_changes", { event: "*", schema: "public", table: "cellules" }, () => { fetchCellules(); fetchMembers(); });
-    channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { fetchConseillers(); fetchMembers(); });
-
-    try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
-
-    realtimeChannelRef.current = channel;
-    return () => {
-      try { if (realtimeChannelRef.current) { realtimeChannelRef.current.unsubscribe(); realtimeChannelRef.current = null; } } catch (e) {}
-    };
-  }, []);
-
-  // -------------------- Update après édition --------------------
-  const onUpdateMemberHandler = (updatedMember) => {
-    updateMember(updatedMember); // mise à jour instantanée
-    setEditMember(null);         // fermeture automatique du popup
-  };
-
-  // -------------------- Fermer menu téléphone en cliquant dehors --------------------
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest(".phone-menu")) {
-        setOpenPhoneMenuId(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const getBorderColor = (m) => {
-    const status = m.statut || "";
-    const suiviStatus = m.suivi_statut_libelle || "";
-
-    if (status === "refus" || suiviStatus === "refus") return "#f56f22";
-    if (status === "actif" || suiviStatus === "actif") return "#4285F4";
-    if (status === "a déjà son église" || suiviStatus === "a déjà son église") return "#f21705";
-    if (status === "ancien" || suiviStatus === "ancien") return "#999999";
-    if (status === "visiteur" || suiviStatus === "visiteur") return "#34A853";
-    if (status === "veut rejoindre ICC" || suiviStatus === "veut rejoindre ICC") return "#34A853";
-
-    return "#ccc";
-  };
-
-  const formatDate = (dateStr) => {
-    try { return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr }); } catch { return ""; }
-  };
-
-  const filterBySearch = (list) => list.filter((m) => `${(m.prenom || "")} ${(m.nom || "")}`.toLowerCase().includes(search.toLowerCase()));
-
-  const nouveaux = members.filter((m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");
-  const anciens = members.filter((m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC");
-
-  const nouveauxFiltres = filterBySearch(
-    filter ? nouveaux.filter(m => m.statut === filter || m.suivi_statut_libelle === filter) : nouveaux
-  );
-
-  const anciensFiltres = filterBySearch(
-    filter ? anciens.filter(m => m.statut === filter || m.suivi_statut_libelle === filter) : anciens
-  );
-
-  const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
-
-  const toggleStar = async (member) => {
-    try {
-      const { error } = await supabase
-        .from("membres_complets")
-        .update({ star: !member.star })
-        .eq("id", member.id);
-
-      if (error) throw error;
-
-      setAllMembers(prev =>
-        prev.map(m =>
-          m.id === member.id ? { ...m, star: !member.star } : m
-        )
-      );
-    } catch (err) {
-      console.error("Erreur toggleStar:", err);
-    }
-  };
-
-  const today = new Date();
-  const dateDuJour = today.toLocaleDateString("fr-FR", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-
-  // -------------------- Rendu Carte --------------------
+    // -------------------- Rendu Carte --------------------
   const renderMemberCard = (m) => {
     const isOpen = detailsOpen[m.id];
     const besoins = (() => {
@@ -349,7 +265,7 @@ export default function ListMembers() {
     );
   };
 
-  // -------------------- Rendu --------------------
+    // -------------------- Rendu --------------------
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
       {/* Top Bar */}
@@ -421,8 +337,7 @@ export default function ListMembers() {
           )}
         </>
       )}
-
-      {/* Vue Table */}
+            {/* Vue Table */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
           <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto">
@@ -431,71 +346,55 @@ export default function ListMembers() {
                 <th className="px-1 py-1 rounded-tl-lg text-left">Nom complet</th>
                 <th className="px-1 py-1 text-left">Téléphone</th>
                 <th className="px-1 py-1 text-left">Statut</th>
-                <th className="px-1 py-1 text-left">Attribué à</th>
-                <th className="px-1 py-1 text-left">Envoyé à</th>
+                <th className="px-1 py-1 text-left">Affectation</th>
+                <th className="px-1 py-1 text-left">Envoyer à</th>
                 <th className="px-1 py-1 rounded-tr-lg text-left">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {/* 💖 NOUVEAUX */}
-                {nouveauxFiltres.length > 0 && (
-                <SectionRow title={`💖 Bien aimé venu le ${dateDuJour}`} />
-              )}
-            
-              {nouveauxFiltres.map(m => (
-                <TableRow key={m.id} m={{ ...m, isNouveau: true }} />
-              ))}
-            
-              {/* MEMBRES EXISTANTS */}
-              {anciensFiltres.length > 0 && (
-                <SectionRow title="Membres existants" />
-              )}              
-              {members.map((m) => (
-                <tr key={m.id} className="border-b border-gray-300">
-                  <td className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 whitespace-nowrap" style={{ borderLeftColor: getBorderColor(m) }}>
-                    {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                  </td>
-                  <td className="px-1 py-1 whitespace-nowrap relative">{m.telephone || "—"}</td>
-                  <td className="px-1 py-1 whitespace-nowrap">{m.statut || "—"}</td>
-                  <td className="px-1 py-1 whitespace-nowrap">
-                    {m.cellule_id ? `🏠 ${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` 
-                    : m.conseiller_id ? `👤 ${conseillers.find(c => c.id === m.conseiller_id)?.prenom} ${conseillers.find(c => c.id === m.conseiller_id)?.nom}` 
-                    : "—"}
-                  </td>
-                    {/* ENVOYER À */}
-                      <td className="px-1 py-1 min-w-[180px]">
+              {/* Nouveaux membres */}
+              {nouveauxFiltres.length > 0 && (
+                <>
+                  <tr>
+                    <td colSpan={6} className="px-1 py-1 font-bold text-white bg-green-500">
+                      💖 Bien aimé venu le {dateDuJour}
+                    </td>
+                  </tr>
+                  {nouveauxFiltres.map((m) => (
+                    <tr key={m.id} className="border-b border-gray-300">
+                      <td className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 whitespace-nowrap" style={{ borderLeftColor: getBorderColor(m) }}>
+                        {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                      </td>
+                      <td className="px-1 py-1 whitespace-nowrap relative">{m.telephone || "—"}</td>
+                      <td className="px-1 py-1 whitespace-nowrap">{m.statut || "—"}</td>
+                      <td className="px-1 py-1 whitespace-nowrap">
+                        {m.cellule_id ? `🏠 ${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` 
+                        : m.conseiller_id ? `👤 ${conseillers.find(c => c.id === m.conseiller_id)?.prenom} ${conseillers.find(c => c.id === m.conseiller_id)?.nom}` 
+                        : "—"}
+                      </td>
+                      <td className="px-1 py-1 whitespace-nowrap">
                         <select
                           value={selectedTargetType[m.id] || ""}
-                          onChange={e =>
-                            setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))
-                          }
-                          className="w-full border rounded px-1 py-0.5 text-xs"
+                          onChange={e => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
+                          className="w-full border rounded px-1 py-1 text-sm"
                         >
-                          <option value="">Choisir</option>
+                          <option value="">-- Choisir --</option>
                           <option value="cellule">Cellule</option>
                           <option value="conseiller">Conseiller</option>
                         </select>
-                  
-                        {(selectedTargetType[m.id]) && (
+                        {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
                           <select
                             value={selectedTargets[m.id] || ""}
-                            onChange={e =>
-                              setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))
-                            }
-                            className="w-full border rounded px-1 py-0.5 mt-1 text-xs"
+                            onChange={e => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
+                            className="w-full border rounded px-1 py-1 text-sm mt-1"
                           >
-                            <option value="">Sélectionner</option>
-                            {selectedTargetType[m.id] === "cellule" &&
-                              cellules.map(c => (
-                                <option key={c.id} value={c.id}>{c.cellule_full}</option>
-                              ))}
-                            {selectedTargetType[m.id] === "conseiller" &&
-                              conseillers.map(c => (
-                                <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
-                              ))}
+                            <option value="">-- Choisir --</option>
+                            {selectedTargetType[m.id] === "cellule"
+                              ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)
+                              : conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)
+                            }
                           </select>
                         )}
-                  
                         {selectedTargetType[m.id] && selectedTargets[m.id] && (
                           <BoutonEnvoyer
                             membre={m}
@@ -505,26 +404,117 @@ export default function ListMembers() {
                                 ? cellules.find(c => c.id === selectedTargets[m.id])
                                 : conseillers.find(c => c.id === selectedTargets[m.id])
                             }
+                            onEnvoyer={id =>
+                              handleAfterSend(
+                                id,
+                                selectedTargetType[m.id],
+                                selectedTargetType[m.id] === "cellule"
+                                  ? cellules.find(c => c.id === selectedTargets[m.id])
+                                  : conseillers.find(c => c.id === selectedTargets[m.id])
+                              )
+                            }
                             session={session}
                             showToast={showToast}
                           />
                         )}
-                      </td>        
-                  <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
-                    <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })} className="text-orange-500 underline text-sm">
-                      {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                    </button>
-                    <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">
-                      Modifier
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                      </td>
+                      <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
+                        <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })} className="text-orange-500 underline text-sm">
+                          {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                        </button>
+                        <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">
+                          Modifier
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              )}
+
+              {/* Membres existants */}
+              {anciensFiltres.length > 0 && (
+                <>
+                  <tr>
+                    <td colSpan={6} className="px-1 py-1 font-bold text-white bg-gray-500">
+                      Membres existants
+                    </td>
+                  </tr>
+                  {anciensFiltres.map((m) => (
+                    <tr key={m.id} className="border-b border-gray-300">
+                      <td className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 whitespace-nowrap" style={{ borderLeftColor: getBorderColor(m) }}>
+                        {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                      </td>
+                      <td className="px-1 py-1 whitespace-nowrap relative">{m.telephone || "—"}</td>
+                      <td className="px-1 py-1 whitespace-nowrap">{m.statut || "—"}</td>
+                      <td className="px-1 py-1 whitespace-nowrap">
+                        {m.cellule_id ? `🏠 ${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` 
+                        : m.conseiller_id ? `👤 ${conseillers.find(c => c.id === m.conseiller_id)?.prenom} ${conseillers.find(c => c.id === m.conseiller_id)?.nom}` 
+                        : "—"}
+                      </td>
+                      <td className="px-1 py-1 whitespace-nowrap">
+                        <select
+                          value={selectedTargetType[m.id] || ""}
+                          onChange={e => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
+                          className="w-full border rounded px-1 py-1 text-sm"
+                        >
+                          <option value="">-- Choisir --</option>
+                          <option value="cellule">Cellule</option>
+                          <option value="conseiller">Conseiller</option>
+                        </select>
+                        {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
+                          <select
+                            value={selectedTargets[m.id] || ""}
+                            onChange={e => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
+                            className="w-full border rounded px-1 py-1 text-sm mt-1"
+                          >
+                            <option value="">-- Choisir --</option>
+                            {selectedTargetType[m.id] === "cellule"
+                              ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)
+                              : conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)
+                            }
+                          </select>
+                        )}
+                        {selectedTargetType[m.id] && selectedTargets[m.id] && (
+                          <BoutonEnvoyer
+                            membre={m}
+                            type={selectedTargetType[m.id]}
+                            cible={
+                              selectedTargetType[m.id] === "cellule"
+                                ? cellules.find(c => c.id === selectedTargets[m.id])
+                                : conseillers.find(c => c.id === selectedTargets[m.id])
+                            }
+                            onEnvoyer={id =>
+                              handleAfterSend(
+                                id,
+                                selectedTargetType[m.id],
+                                selectedTargetType[m.id] === "cellule"
+                                  ? cellules.find(c => c.id === selectedTargets[m.id])
+                                  : conseillers.find(c => c.id === selectedTargets[m.id])
+                              )
+                            }
+                            session={session}
+                            showToast={showToast}
+                          />
+                        )}
+                      </td>
+                      <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
+                        <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })} className="text-orange-500 underline text-sm">
+                          {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                        </button>
+                        <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">
+                          Modifier
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              )}
             </tbody>
           </table>
         </div>
       )}
 
+      {/* Popups */}
       {popupMember && (
         <DetailsPopup
           membre={popupMember}
@@ -552,3 +542,4 @@ export default function ListMembers() {
     </div>
   );
 }
+

@@ -344,10 +344,11 @@ export default function Evangelisation() {
         />
       )}
 
-      {popupMember && view === "table" && (
+      {popupMember && (
         <DetailsEvangePopup
           member={popupMember}
           onClose={() => setPopupMember(null)}
+          onEdit={(m) => setEditMember(m)} // déclenche édition depuis le popup
         />
       )}
     </div>

@@ -117,7 +117,7 @@ export default function Evangelisation() {
         is_whatsapp: c.is_whatsapp || false,
         cellule_id: selectedTargetType === "cellule" ? cible.id : null,
         responsable_cellule: selectedTargetType === "cellule" ? cible.responsable : null,
-        conseiller_id: selectedTargetType === "conseiller" ? cible.id : null, // <-- ID du conseiller
+        conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
         date_suivi: new Date().toISOString(),
       }));
 
@@ -245,13 +245,16 @@ export default function Evangelisation() {
                   <p>🏙️ Ville : {member.ville || "—"}</p>
                   <p>💬 Whatsapp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                   <p>⚥ Sexe : {member.sexe || "—"}</p>
-                  <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
+                  <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
                   <p>☀️ Type : {member.type_conversion || "—"}</p>
                   <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
                   <p>📝 Infos supplementaires : {formatBesoin(member.infos_supplementaires)}</p>
 
                   <button
-                    onClick={() => setEditMember(member)}
+                    onClick={() => {
+                      setEditMember(member);
+                      setPopupMember(null); // fermer le détail
+                    }}
                     className="text-blue-600 text-sm mt-4 w-full text-center"
                   >
                     ✏️ Modifier le contact
@@ -299,7 +302,10 @@ export default function Evangelisation() {
                       {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
                     </button>
                     <button
-                      onClick={() => setEditMember(m)}
+                      onClick={() => {
+                        setEditMember(m);
+                        setPopupMember(null); // fermer le détail
+                      }}
                       className="text-blue-600 underline text-sm"
                     >
                       Modifier
@@ -317,21 +323,26 @@ export default function Evangelisation() {
           member={editMember}
           cellules={cellules}
           conseillers={conseillers}
-          onClose={() => setEditMember(null)} // plus besoin de toucher popupMember ici
+          onClose={() => {
+            setEditMember(null);
+            setPopupMember(null);
+          }}
           onUpdateMember={(data) => {
             setContacts((prev) => prev.map((m) => (m.id === data.id ? data : m)));
-            setEditMember(null); // fermer le popup d'édition
-            // ❌ On ne touche pas à popupMember pour éviter que DetailsEvangePopup s'affiche
+            setPopupMember(data);
+            setEditMember(null);
           }}
         />
       )}
-
 
       {popupMember && (
         <DetailsEvangePopup
           member={popupMember}
           onClose={() => setPopupMember(null)}
-          onEdit={(m) => setEditMember(m)}
+          onEdit={(m) => {
+            setEditMember(m);
+            setPopupMember(null); // fermer le détail
+          }}
         />
       )}
     </div>

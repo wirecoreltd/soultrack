@@ -16,7 +16,7 @@ export default function AddEvangelise() {
     ville: "",
     statut: "evangelisé",
     sexe: "",
-    priere_salut: "", // ✅ valeur neutre
+    priere_salut: "",
     type_conversion: "",
     besoin: [],
     infos_supplementaires: "",
@@ -149,7 +149,7 @@ export default function AddEvangelise() {
         ville: "",
         statut: "evangelisé",
         sexe: "",
-        priere_salut: "", // ✅ reset propre
+        priere_salut: "",
         type_conversion: "",
         besoin: [],
         infos_supplementaires: "",
@@ -171,7 +171,7 @@ export default function AddEvangelise() {
       ville: "",
       statut: "evangelisé",
       sexe: "",
-      priere_salut: "", // ✅ reset propre
+      priere_salut: "",
       type_conversion: "",
       besoin: [],
       infos_supplementaires: "",
@@ -250,12 +250,11 @@ export default function AddEvangelise() {
               });
             }}
           >
-            <option value="" disabled hidden>
-              Prière du salut ?
-            </option>
+            <option value="">-- Prière du salut ? --</option>
             <option value="Oui">Oui</option>
             <option value="Non">Non</option>
           </select>
+
 
           {formData.priere_salut === "Oui" && (
             <select className="input" required

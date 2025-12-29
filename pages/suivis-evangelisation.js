@@ -137,10 +137,13 @@ export default function SuivisEvangelisation() {
                 {m.prenom} {m.nom}
               </h2>
               <p className="text-sm text-center">📱 {m.telephone || "—"}</p>
-              <p className="text-sm text-center">🏠 Cellule : {m.cellules?.cellule_full || "—"}</p>
+              <p className="text-sm text-center">🏠 Cellule : {m.cellules?.cellule_full || "—"}</p>              
               <p className="text-sm text-center">
-                👤 Conseiller : {conseillers.find(c => c.id === m.cellules?.responsable_id)?.prenom || "—"}
+                👤 Conseiller : {conseillers.find(c => c.id === m.responsable_cellule)
+                  ? `${conseillers.find(c => c.id === m.responsable_cellule).prenom} ${conseillers.find(c => c.id === m.responsable_cellule).nom}`
+                  : "—"}
               </p>
+
 
               <button
                 onClick={() =>
@@ -218,7 +221,11 @@ export default function SuivisEvangelisation() {
                   <td className="px-1 py-1">{m.prenom} {m.nom}</td>
                   <td className="px-1 py-1">{m.telephone || "—"}</td>
                   <td className="px-1 py-1">{m.cellules?.cellule_full || "—"}</td>
-                  <td className="px-1 py-1">{conseillers.find(c => c.id === m.cellules?.responsable)?.prenom || "—"}</td>
+                  <td className="px-1 py-1">
+                    {conseillers.find(c => c.id === m.responsable_cellule)
+                      ? `${conseillers.find(c => c.id === m.responsable_cellule).prenom} ${conseillers.find(c => c.id === m.responsable_cellule).nom}`
+                      : "—"}
+                  </td>
                   <td className="px-1 py-1 flex items-center gap-2">
                     <button
                       onClick={() => setDetailsSuivi(m)}

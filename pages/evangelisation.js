@@ -220,7 +220,8 @@ export default function Evangelisation() {
               style={{ borderLeftColor: getBorderColor(member) }}
             >
               <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
-              <p className="text-center text-sm">📱 {member.telephone || "—"}</p>              
+              <p className="text-center text-sm">📱 {member.telephone || "—"}</p>
+              <p className="text-center text-sm">🏙️ Ville : {member.ville || "—"}</p>  
 
               <label className="flex justify-center gap-2 mt-2">
                 <input
@@ -241,8 +242,7 @@ export default function Evangelisation() {
               </button>
 
               {detailsOpen[member.id] && (
-                <div className="text-sm mt-3 space-y-1">
-                  <p>🏙️ Ville : {member.ville || "—"}</p>
+                <div className="text-sm mt-3 space-y-1">                  
                   <p>💬 Whatsapp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                   <p>⚥ Sexe : {member.sexe || "—"}</p>
                   <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
@@ -267,56 +267,45 @@ export default function Evangelisation() {
       )}
 
       {/* VUE TABLE */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-          <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto">
-            <thead className="text-sm uppercase">
-              <tr className="bg-gray-200">
-                <th className="px-1 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
-                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
-                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Cellule</th>
-                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Conseiller</th>
-                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Sélectionner</th>
-                <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {contacts.map((m) => (
-                <tr key={m.id} className="border-b border-gray-300">
-                  <td className="px-1 py-1">{m.prenom} {m.nom}</td>
-                  <td className="px-1 py-1">{m.telephone || "—"}</td>
-                  <td className="px-1 py-1">{cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}</td>
-                  <td className="px-1 py-1">{conseillers.find(c => c.id === m.conseiller_id)?.prenom || "—"}</td>
-                  <td className="px-1 py-1">
-                    <input
-                      type="checkbox"
-                      checked={checkedContacts[m.id] || false}
-                      onChange={() => handleCheck(m.id)}
-                    />
-                  </td>
-                  <td className="px-1 py-1 flex items-center gap-2">
-                    <button
-                      onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
-                      className="text-orange-500 underline text-sm"
-                    >
-                      {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditMember(m);
-                        setPopupMember(null); // <- fermer détails
-                      }}
-                      className="text-blue-600 underline text-sm"
-                    >
-                      Modifier
-                    </button>
-                  </td>
+        {view === "table" && (
+          <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+            <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto">
+              <thead className="text-sm uppercase">
+                <tr className="bg-gray-200">
+                  <th className="px-1 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
+                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
+                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Ville</th>
+                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Sélectionner</th>
+                  <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {contacts.map((m) => (
+                  <tr key={m.id} className="border-b border-gray-300">
+                    <td className="px-1 py-1">{m.prenom} {m.nom}</td>
+                    <td className="px-1 py-1">{m.telephone || "—"}</td>
+                    <td className="px-1 py-1">{m.ville || "—"}</td>
+                    <td className="px-1 py-1">
+                      <input
+                        type="checkbox"
+                        checked={checkedContacts[m.id] || false}
+                        onChange={() => handleCheck(m.id)}
+                      />
+                    </td>
+                    <td className="px-1 py-1 flex items-center gap-2">
+                      <button
+                        onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
+                        className="text-orange-500 underline text-sm"
+                      >
+                        {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
       {/* POPUP MODIFICATION */}
       {editMember && (

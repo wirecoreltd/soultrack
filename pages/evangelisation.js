@@ -337,10 +337,17 @@ export default function Evangelisation() {
           cellules={cellules}
           conseillers={conseillers}
           onClose={() => setEditMember(null)}
-          onUpdateMember={(data) => {
+          onUpdateMember={(updated) => {
+            // 🔥 UPDATE LISTE PRINCIPALE
             setContacts((prev) =>
-              prev.map((m) => (m.id === data.id ? data : m))
+              prev.map((m) => (m.id === updated.id ? updated : m))
             );
+      
+            // 🔥 UPDATE POPUP DETAILS SI OUVERT
+            setPopupMember((prev) =>
+              prev && prev.id === updated.id ? updated : prev
+            );
+      
             setEditMember(null);
           }}
         />
@@ -351,8 +358,8 @@ export default function Evangelisation() {
           member={popupMember}
           onClose={() => setPopupMember(null)}
           onEdit={(m) => {
-            setPopupMember(null); // ✅ FERME le popup détails
-            setEditMember(m);     // ✅ OUVRE l’édition
+            setPopupMember(null);
+            setEditMember(m);
           }}
         />
       )}

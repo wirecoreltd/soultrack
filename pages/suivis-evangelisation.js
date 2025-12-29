@@ -129,7 +129,7 @@ export default function SuivisEvangelisation() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
           {suivis.map((m) => {
             const conseiller = conseillers.find(
-              (c) => c.id === m.responsable_cellule
+              (c) => c.id === m.conseiller_id || c.id === m.responsable_cellule
             );
             return (
               <div
@@ -220,7 +220,7 @@ export default function SuivisEvangelisation() {
             <tbody>
               {suivis.map((m) => {
                 const conseiller = conseillers.find(
-                  (c) => c.id === m.responsable_cellule
+                  (c) => c.id === m.conseiller_id || c.id === m.responsable_cellule
                 );
                 return (
                   <tr key={m.id} className="border-b border-gray-300">

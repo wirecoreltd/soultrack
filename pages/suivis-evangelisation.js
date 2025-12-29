@@ -169,63 +169,82 @@ export default function SuivisEvangelisation() {
         </div>
       )}
 
-      {/* ===================== VUE TABLE ===================== */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto">
-          <table className="w-full text-sm bg-white rounded-lg">
-            <thead className="bg-gray-200 uppercase">
-              <tr>
-                <th className="px-2 py-2">Nom</th>
-                <th className="px-2 py-2">Téléphone</th>
-                <th className="px-2 py-2">Attribué à</th>
-                <th className="px-2 py-2">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {suivis.map((m) => {
-                const conseiller = conseillers.find(
-                  (c) => c.id === m.conseiller_id
-                );
-
-                return (
-                  <tr key={m.id} className="border-b">
-                    <td className="px-2 py-2">
+      {/* VUE TABLE */}
+        {view === "table" && (
+          <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+            <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto bg-white rounded-lg shadow-md">
+              
+              <thead className="text-xs uppercase">
+                <tr className="bg-gray-100">
+                  <th className="px-3 py-2 rounded-tl-lg text-left font-semibold" style={{ color: "#2E3192" }}>
+                    Nom complet
+                  </th>
+                  <th className="px-3 py-2 text-left font-semibold" style={{ color: "#2E3192" }}>
+                    Téléphone
+                  </th>
+                  <th className="px-3 py-2 text-left font-semibold" style={{ color: "#2E3192" }}>
+                    Cellule
+                  </th>
+                  <th className="px-3 py-2 text-left font-semibold" style={{ color: "#2E3192" }}>
+                    Conseiller
+                  </th>
+                  <th className="px-3 py-2 text-left font-semibold" style={{ color: "#2E3192" }}>
+                    Sélectionner
+                  </th>
+                  <th className="px-3 py-2 rounded-tr-lg text-left font-semibold" style={{ color: "#2E3192" }}>
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+        
+              <tbody>
+                {contacts.map((m) => (
+                  <tr
+                    key={m.id}
+                    className="border-b border-gray-200 hover:bg-gray-50 transition"
+                  >
+                    <td className="px-3 py-2 whitespace-nowrap">
                       {m.prenom} {m.nom}
                     </td>
-
-                    <td className="px-2 py-2">{m.telephone || "—"}</td>
-
-                    <td className="px-2 py-2 whitespace-nowrap">
-                      {m.cellules
-                        ? `🏠 ${m.cellules.cellule_full}`
-                        : conseiller
-                        ? `👤 ${conseiller.prenom} ${conseiller.nom}`
-                        : "—"}
+        
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      {m.telephone || "—"}
                     </td>
-
-                    <td className="px-2 py-2 flex gap-3">
-                      <button
-                        onClick={() => setDetailsSuivi(m)}
-                        className="text-orange-500 underline"
-                      >
-                        Détails
-                      </button>
-
-                      <button
-                        onClick={() => setEditingContact(m)}
-                        className="text-blue-600 underline"
-                      >
-                        Modifier
-                      </button>
+        
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      {cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}
+                    </td>
+        
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      {conseillers.find(c => c.id === m.conseiller_id)?.prenom || "—"}
+                    </td>
+        
+                    <td className="px-3 py-2">
+                      <input
+                        type="checkbox"
+                        checked={checkedContacts[m.id] || false}
+                        onChange={() => handleCheck(m.id)}
+                        className="cursor-pointer"
+                      />
+                    </td>
+        
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
+                          className="text-orange-500 underline text-sm"
+                        >
+                          {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                        </button>                
+                      </div>
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
 
       {/* ===================== POPUP DÉTAILS ===================== */}
       {detailsSuivi && (

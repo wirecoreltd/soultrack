@@ -269,30 +269,30 @@ export default function Evangelisation() {
       {/* VUE TABLE */}
         {view === "table" && (
           <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-            <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto">
+            <table className="w-full text-sm text-left border-collapse table-auto">
               <thead className="text-sm uppercase">
                 <tr className="bg-gray-200">
-                  <th className="px-1 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
-                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
-                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Ville</th>
-                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Sélectionner</th>
-                  <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>Actions</th>
+                  <th className="px-2 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
+                  <th className="px-2 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
+                  <th className="px-2 py-1 text-left" style={{ color: "#2E3192" }}>Ville</th>
+                  <th className="px-2 py-1 text-center" style={{ color: "#2E3192" }}>Sélectionner</th>
+                  <th className="px-2 py-1 rounded-tr-lg text-center" style={{ color: "#2E3192" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {contacts.map((m) => (
                   <tr key={m.id} className="border-b border-gray-300">
-                    <td className="px-1 py-1">{m.prenom} {m.nom}</td>
-                    <td className="px-1 py-1">{m.telephone || "—"}</td>
-                    <td className="px-1 py-1">{m.ville || "—"}</td>
-                    <td className="px-1 py-1">
+                    <td className="px-2 py-1">{m.prenom} {m.nom}</td>
+                    <td className="px-2 py-1">{m.telephone || "—"}</td>
+                    <td className="px-2 py-1">{m.ville || "—"}</td>
+                    <td className="px-2 py-1 text-center">
                       <input
                         type="checkbox"
                         checked={checkedContacts[m.id] || false}
                         onChange={() => handleCheck(m.id)}
                       />
                     </td>
-                    <td className="px-1 py-1 flex items-center gap-2">
+                    <td className="px-2 py-1 text-center">
                       <button
                         onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
                         className="text-orange-500 underline text-sm"

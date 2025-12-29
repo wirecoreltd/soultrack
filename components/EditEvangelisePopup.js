@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import supabase from "../lib/supabaseClient"; // assure-toi que le chemin est correct
+import supabase from "../lib/supabaseClient";
 
 export default function EditEvangelisePopup({ member, onClose, onUpdateMember }) {
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
@@ -45,16 +45,20 @@ export default function EditEvangelisePopup({ member, onClose, onUpdateMember })
     setLoading(true);
 
     try {
+      // Conversion de l'ID en number si nécessaire
+      const idValue = isNaN(member.id) ? member.id : parseInt(member.id, 10);
+
       const { data, error } = await supabase
         .from("suivis_des_evangelises")
         .update({ ...formData, besoin: formData.besoin })
-        .eq("id", parseInt(member.id, 10)) // 🔥 conversion bigint
-        .select()
-        .single();
+        .eq("id", idValue); // ne pas utiliser .single()
 
       if (error) throw error;
 
-      if (onUpdateMember) onUpdateMember(data);
+      // Mettre à jour le parent avec la première ligne modifiée si data existe
+      if (onUpdateMember && data && data.length > 0) {
+        onUpdateMember(data[0]);
+      }
 
       setMessage("✅ Modifications enregistrées");
       setTimeout(() => onClose(), 1000);
@@ -80,6 +84,7 @@ export default function EditEvangelisePopup({ member, onClose, onUpdateMember })
         <h2 className="text-center font-bold text-lg mb-4">Modifier le suivi</h2>
 
         <div className="space-y-3 text-sm">
+          {/* Informations de base */}
           <input
             name="prenom"
             value={formData.prenom}
@@ -109,6 +114,7 @@ export default function EditEvangelisePopup({ member, onClose, onUpdateMember })
             placeholder="Ville"
           />
 
+          {/* Sexe */}
           <select
             name="sexe"
             value={formData.sexe}
@@ -120,23 +126,25 @@ export default function EditEvangelisePopup({ member, onClose, onUpdateMember })
             <option value="Femme">Femme</option>
           </select>
 
+          {/* Prière du salut */}
           <select
-            className="w-full border rounded px-2 py-1"
+            name="priere_salut"
             value={formData.priere_salut}
-            onChange={(e) => setFormData({ ...formData, priere_salut: e.target.value })}
-            required
+            onChange={handleChange}
+            className="w-full border rounded px-2 py-1"
           >
             <option value="Non">Prière du salut ?</option>
             <option value="Oui">Oui</option>
             <option value="Non">Non</option>
           </select>
 
+          {/* Type de conversion */}
           {formData.priere_salut === "Oui" && (
             <select
-              className="w-full border rounded px-2 py-1"
+              name="type_conversion"
               value={formData.type_conversion}
-              onChange={(e) => setFormData({ ...formData, type_conversion: e.target.value })}
-              required
+              onChange={handleChange}
+              className="w-full border rounded px-2 py-1"
             >
               <option value="">Type</option>
               <option value="Nouveau converti">Nouveau converti</option>
@@ -144,6 +152,7 @@ export default function EditEvangelisePopup({ member, onClose, onUpdateMember })
             </select>
           )}
 
+          {/* Besoins */}
           <div>
             <p className="font-semibold mb-1">Besoins</p>
             {besoinsOptions.map((b) => (
@@ -159,6 +168,7 @@ export default function EditEvangelisePopup({ member, onClose, onUpdateMember })
             ))}
           </div>
 
+          {/* Infos supplémentaires */}
           <textarea
             name="infos_supplementaires"
             value={formData.infos_supplementaires}
@@ -168,6 +178,7 @@ export default function EditEvangelisePopup({ member, onClose, onUpdateMember })
             placeholder="Infos supplémentaires"
           />
 
+          {/* Commentaire */}
           <textarea
             name="commentaire_evangelises"
             value={formData.commentaire_evangelises}
@@ -177,6 +188,7 @@ export default function EditEvangelisePopup({ member, onClose, onUpdateMember })
             placeholder="Commentaire suivi"
           />
 
+          {/* Statut */}
           <select
             name="status_suivis_evangelises"
             value={formData.status_suivis_evangelises}

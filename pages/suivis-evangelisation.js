@@ -9,11 +9,12 @@ import EditEvangelisePopup from "../components/EditEvangelisePopup";
 
 export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
+  const [cellules, setCellules] = useState([]);
+  const [conseillers, setConseillers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
   const [view, setView] = useState("card");
-  const [statusChanges, setStatusChanges] = useState({});
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
   const [detailsSuivi, setDetailsSuivi] = useState(null); // id (card) ou objet (table)
@@ -21,13 +22,29 @@ export default function SuivisEvangelisation() {
 
   useEffect(() => {
     fetchSuivis();
+    fetchCellules();
+    fetchConseillers();
   }, []);
+
+  const fetchCellules = async () => {
+    const { data } = await supabase
+      .from("cellules")
+      .select("id, cellule_full, responsable");
+    setCellules(data || []);
+  };
+
+  const fetchConseillers = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom")
+      .eq("role", "Conseiller");
+    setConseillers(data || []);
+  };
 
   const fetchSuivis = async () => {
     setLoading(true);
     try {
       const userEmail = localStorage.getItem("userEmail");
-      const userRole = JSON.parse(localStorage.getItem("userRole") || "[]");
       if (!userEmail) throw new Error("Utilisateur non connecté");
 
       const { data: profileData } = await supabase
@@ -38,12 +55,11 @@ export default function SuivisEvangelisation() {
 
       setPrenom(profileData?.prenom || "cher membre");
 
-      let query = supabase
+      const { data } = await supabase
         .from("suivis_des_evangelises")
-        .select(`*, cellules:cellule_id (id, cellule, responsable)`)
+        .select("*, cellules:cellule_id(id, cellule_full, responsable)")
         .order("date_suivi", { ascending: false });
 
-      const { data } = await query;
       setSuivis(data || []);
       if (!data || data.length === 0) setMessage("Aucun évangélisé à afficher.");
     } catch (err) {
@@ -132,19 +148,15 @@ export default function SuivisEvangelisation() {
               className="bg-white rounded-2xl shadow-lg p-4 border-l-4 transition-all"
               style={{ borderLeftColor: getBorderColor(m) }}
             >
-              <h2 className="font-bold text-center">
-                {m.prenom} {m.nom}
-              </h2>
-              <p className="text-sm text-center">📱 {m.telephone || "—"}</p>    
+              <h2 className="font-bold text-center">{m.prenom} {m.nom}</h2>
+              <p className="text-sm text-center">📱 {m.telephone || "—"}</p>
               <p className="text-sm text-center">🏠 Cellule : {m.cellules?.cellule_full || "—"}</p>
               <p className="text-sm text-center">
-                👤 Conseiller : {conseillers.find(c => c.id === m.cellules?.responsable_id)?.prenom || "—"}
-              </p>         
+                👤 Conseiller : {conseillers.find(c => c.id === m.cellules?.responsable)?.prenom || "—"}
+              </p>
 
               <button
-                onClick={() =>
-                  setDetailsSuivi(detailsSuivi === m.id ? null : m.id)
-                }
+                onClick={() => setDetailsSuivi(detailsSuivi === m.id ? null : m.id)}
                 className="text-orange-500 underline text-sm block mx-auto mt-2"
               >
                 {detailsSuivi === m.id ? "Fermer détails" : "Détails"}
@@ -157,7 +169,7 @@ export default function SuivisEvangelisation() {
                 }`}
               >
                 {detailsSuivi === m.id && (
-                  <div className="text-sm space-y-2">                    
+                  <div className="text-sm space-y-2">
                     <p>🏙️ Ville : {m.ville || "—"}</p>
                     <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>⚥ Sexe : {m.sexe || "—"}</p>
@@ -171,9 +183,7 @@ export default function SuivisEvangelisation() {
                       className="w-full border rounded px-2 py-1 mt-2"
                       placeholder="Ajouter un commentaire..."
                       value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
-                      onChange={(e) =>
-                        handleCommentChange(m.id, e.target.value)
-                      }
+                      onChange={(e) => handleCommentChange(m.id, e.target.value)}
                     />
 
                     <button
@@ -206,6 +216,7 @@ export default function SuivisEvangelisation() {
                 <th className="px-3 py-2">Nom</th>
                 <th className="px-3 py-2">Téléphone</th>
                 <th className="px-3 py-2">Cellule</th>
+                <th className="px-3 py-2">Conseiller</th>
                 <th className="px-3 py-2">Action</th>
               </tr>
             </thead>
@@ -214,45 +225,5 @@ export default function SuivisEvangelisation() {
                 <tr key={m.id} className="border-b">
                   <td className="px-3 py-2">{m.prenom} {m.nom}</td>
                   <td className="px-3 py-2">{m.telephone || "—"}</td>
-                  <td className="px-3 py-2">{m.cellules?.cellule || "—"}</td>
-                  <td className="px-3 py-2">
-                    <button
-                      onClick={() => setDetailsSuivi(m)}
-                      className="text-orange-500 underline"
-                    >
-                      Détails
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* POPUP DÉTAILS (VUE TABLE) */}
-      {detailsSuivi && typeof detailsSuivi === "object" && (
-        <SuiviDetailsEvanPopup
-          member={detailsSuivi}
-          onClose={() => setDetailsSuivi(null)}
-          onEdit={(m) => {
-            setDetailsSuivi(null);
-            setEditingContact(m);
-          }}
-        />
-      )}
-
-      {/* POPUP MODIFIER */}
-      {editingContact && (
-        <EditEvangelisePopup
-          member={editingContact}
-          onClose={() => setEditingContact(null)}
-          onUpdateMember={() => {
-            setEditingContact(null);
-            fetchSuivis();
-          }}
-        />
-      )}
-    </div>
-  );
-}
+                  <td className="px-3 py-2">{m.cellules?.cellule_full || "—"}</td>
+                  <td className="px-3 py-2">{conseillers.find(c => c.id === m.cellule

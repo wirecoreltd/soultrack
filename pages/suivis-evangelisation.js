@@ -205,29 +205,52 @@ export default function SuivisEvangelisation() {
       )}
 
       {/* VUE TABLE */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-          <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto bg-white rounded-lg">
-            <thead className="text-sm uppercase">
-              <tr className="bg-gray-200">
-                <th className="px-1 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
-                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
-                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Cellule</th>
-                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Conseiller</th>
-                <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {suivis.map((m) => {
-                const conseiller = conseillers.find(
-                  (c) => c.id === m.conseiller_id || c.id === m.responsable_cellule
-                );
-                return (
+        {view === "table" && (
+          <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+            <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto bg-white rounded-lg">
+              <thead className="text-sm uppercase">
+                <tr className="bg-gray-200">
+                  <th className="px-1 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>
+                    Nom complet
+                  </th>
+                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>
+                    Téléphone
+                  </th>
+                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>
+                    Attribué à
+                  </th>
+                  <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+        
+              <tbody>
+                {suivis.map((m) => (
                   <tr key={m.id} className="border-b border-gray-300">
-                    <td className="px-1 py-1">{m.prenom} {m.nom}</td>
-                    <td className="px-1 py-1">{m.telephone || "—"}</td>
-                    <td className="px-1 py-1">{m.cellules?.cellule_full || "—"}</td>
-                    <td className="px-1 py-1">{conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}</td>
+                    <td className="px-1 py-1">
+                      {m.prenom} {m.nom}
+                    </td>
+        
+                    <td className="px-1 py-1">
+                      {m.telephone || "—"}
+                    </td>
+        
+                    {/* 🔥 Cellule OU Conseiller */}
+                    <td className="px-1 py-1 whitespace-nowrap">
+                      {m.cellule_id
+                        ? `🏠 ${
+                            cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"
+                          }`
+                        : m.conseiller_id
+                        ? `👤 ${
+                            conseillers.find((c) => c.id === m.conseiller_id)?.prenom || ""
+                          } ${
+                            conseillers.find((c) => c.id === m.conseiller_id)?.nom || ""
+                          }`
+                        : "—"}
+                    </td>
+        
                     <td className="px-1 py-1 flex items-center gap-2">
                       <button
                         onClick={() => setDetailsSuivi(m)}
@@ -235,6 +258,7 @@ export default function SuivisEvangelisation() {
                       >
                         Détails
                       </button>
+        
                       <button
                         onClick={() => setEditingContact(m)}
                         className="text-blue-600 underline text-sm"
@@ -243,13 +267,11 @@ export default function SuivisEvangelisation() {
                       </button>
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
 
       {/* POPUP DÉTAILS */}

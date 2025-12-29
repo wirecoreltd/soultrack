@@ -220,11 +220,7 @@ export default function Evangelisation() {
               style={{ borderLeftColor: getBorderColor(member) }}
             >
               <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
-              <p className="text-center text-sm">📱 {member.telephone || "—"}</p>
-              <p className="text-center text-sm">🏠 Cellule : {cellules.find(c => c.id === member.cellule_id)?.cellule_full || "—"}</p>
-              <p className="text-center text-sm">
-                👤 Conseiller : {conseillers.find(c => c.id === member.conseiller_id)?.prenom || "—"}
-              </p>
+              <p className="text-center text-sm">📱 {member.telephone || "—"}</p>              
 
               <label className="flex justify-center gap-2 mt-2">
                 <input

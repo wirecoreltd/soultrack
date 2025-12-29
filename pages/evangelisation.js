@@ -89,7 +89,7 @@ export default function Evangelisation() {
         : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n";
       message += "Merci pour ton coeur et ton engagement dans l’accompagnement\n\n";
 
-      selectedContacts.forEach((m, index) => {        
+      selectedContacts.forEach((m, index) => {
         if (isMultiple) message += `👥 Personne ${index + 1}\n`;
         message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
         message += `📱 Téléphone : ${m.telephone || "—"}\n`;
@@ -253,7 +253,7 @@ export default function Evangelisation() {
                   <button
                     onClick={() => {
                       setEditMember(member);
-                      setPopupMember(null); // fermer le détail
+                      setPopupMember(null); // <- fermé dès que modification
                     }}
                     className="text-blue-600 text-sm mt-4 w-full text-center"
                   >
@@ -304,7 +304,7 @@ export default function Evangelisation() {
                     <button
                       onClick={() => {
                         setEditMember(m);
-                        setPopupMember(null); // fermer le détail
+                        setPopupMember(null); // <- fermer détails
                       }}
                       className="text-blue-600 underline text-sm"
                     >
@@ -318,6 +318,7 @@ export default function Evangelisation() {
         </div>
       )}
 
+      {/* POPUP MODIFICATION */}
       {editMember && (
         <EditEvangelisePopup
           member={editMember}
@@ -325,23 +326,24 @@ export default function Evangelisation() {
           conseillers={conseillers}
           onClose={() => {
             setEditMember(null);
-            setPopupMember(null);
+            setPopupMember(null); // <- fermer détails aussi
           }}
           onUpdateMember={(data) => {
             setContacts((prev) => prev.map((m) => (m.id === data.id ? data : m)));
-            setPopupMember(data);
             setEditMember(null);
+            setPopupMember(null); // <- fermer détails aussi
           }}
         />
       )}
 
+      {/* POPUP DETAILS */}
       {popupMember && (
         <DetailsEvangePopup
           member={popupMember}
           onClose={() => setPopupMember(null)}
           onEdit={(m) => {
             setEditMember(m);
-            setPopupMember(null); // fermer le détail
+            setPopupMember(null); // <- fermer détails dès qu'on édite
           }}
         />
       )}

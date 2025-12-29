@@ -23,7 +23,7 @@ export default function EditEvangelisePopup({
     besoin: initialBesoin,
     autreBesoin: "",
     infos_supplementaires: member.infos_supplementaires || "",
-    priere_salut: member.priere_salut || "",
+    priere_salut: member.priere_salut || false,
     type_conversion: member.type_conversion || "",
     is_whatsapp: member.is_whatsapp || false,
   });
@@ -90,6 +90,7 @@ export default function EditEvangelisePopup({
     if (error) {
       alert("❌ Erreur : " + error.message);
     } else {
+      // ⚡ Important : on ne touche PAS à popupMember ici
       if (onUpdateMember) onUpdateMember(data);
       setMessage("✅ Changement enregistré !");
       setTimeout(() => {
@@ -118,7 +119,6 @@ export default function EditEvangelisePopup({
         </h2>
 
         <div className="flex flex-col space-y-3 text-sm">
-          {/* Prénom / Nom / Ville / Téléphone */}
           <label className="font-semibold">Prénom</label>
           <input
             name="prenom"
@@ -151,7 +151,6 @@ export default function EditEvangelisePopup({
             className="border rounded px-2 py-1"
           />
 
-          {/* WhatsApp */}
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -162,42 +161,24 @@ export default function EditEvangelisePopup({
             WhatsApp
           </label>
 
-          {/* ✅ Prière du salut */}
-          <select
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="priere_salut"
+              checked={formData.priere_salut}
+              onChange={handleChange}
+            />
+            Prière du salut
+          </label>
+
+          <label className="font-semibold">Type de conversion</label>
+          <input
+            name="type_conversion"
+            value={formData.type_conversion}
+            onChange={handleChange}
             className="border rounded px-2 py-1"
-            value={formData.priere_salut}
-            required
-            onChange={(e) => {
-              const value = e.target.value;
-              setFormData({
-                ...formData,
-                priere_salut: value,
-                type_conversion: value === "Oui" ? formData.type_conversion : "",
-              });
-            }}
-          >
-            <option value="">-- Prière du salut ? --</option>
-            <option value="Oui">Oui</option>
-            <option value="Non">Non</option>
-          </select>
+          />
 
-          {/* Type de conversion */}
-          {formData.priere_salut === "Oui" && (
-            <select
-              className="border rounded px-2 py-1"
-              value={formData.type_conversion}
-              onChange={(e) =>
-                setFormData({ ...formData, type_conversion: e.target.value })
-              }
-              required
-            >
-              <option value="">Type</option>
-              <option value="Nouveau converti">Nouveau converti</option>
-              <option value="Réconciliation">Réconciliation</option>
-            </select>
-          )}
-
-          {/* Besoins */}
           <div className="mt-2">
             <p className="font-semibold mb-2">Besoins :</p>
             {besoinsOptions.map((item) => (
@@ -213,7 +194,6 @@ export default function EditEvangelisePopup({
               </label>
             ))}
 
-            {/* Autre */}
             <label className="flex items-center gap-3 mb-2">
               <input
                 type="checkbox"
@@ -237,7 +217,6 @@ export default function EditEvangelisePopup({
             )}
           </div>
 
-          {/* Infos supplémentaires */}
           <label className="font-semibold">Infos supplémentaires</label>
           <textarea
             name="infos_supplementaires"
@@ -251,7 +230,6 @@ export default function EditEvangelisePopup({
             <p className="text-green-600 text-center font-semibold">{message}</p>
           )}
 
-          {/* Boutons */}
           <div className="flex justify-between mt-4">
             <button
               onClick={onClose}

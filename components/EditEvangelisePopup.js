@@ -90,11 +90,11 @@ export default function EditEvangelisePopup({
     if (error) {
       alert("❌ Erreur : " + error.message);
     } else {
-      // ⚡ Important : on ne touche PAS à popupMember ici
       if (onUpdateMember) onUpdateMember(data);
       setMessage("✅ Changement enregistré !");
       setTimeout(() => {
         setMessage("");
+        // Fermer les deux popups
         onClose();
       }, 1200);
     }
@@ -108,7 +108,7 @@ export default function EditEvangelisePopup({
 
         {/* Croix fermer */}
         <button
-          onClick={onClose}
+          onClick={onClose} // Annuler => ferme les deux popups
           className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 font-bold text-lg"
         >
           ×
@@ -119,6 +119,7 @@ export default function EditEvangelisePopup({
         </h2>
 
         <div className="flex flex-col space-y-3 text-sm">
+          {/* Prénom / Nom */}
           <label className="font-semibold">Prénom</label>
           <input
             name="prenom"
@@ -151,6 +152,7 @@ export default function EditEvangelisePopup({
             className="border rounded px-2 py-1"
           />
 
+          {/* WhatsApp / Prière du salut */}
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -171,6 +173,7 @@ export default function EditEvangelisePopup({
             Prière du salut
           </label>
 
+          {/* Type de conversion */}
           <label className="font-semibold">Type de conversion</label>
           <input
             name="type_conversion"
@@ -179,6 +182,7 @@ export default function EditEvangelisePopup({
             className="border rounded px-2 py-1"
           />
 
+          {/* Besoins */}
           <div className="mt-2">
             <p className="font-semibold mb-2">Besoins :</p>
             {besoinsOptions.map((item) => (
@@ -194,6 +198,7 @@ export default function EditEvangelisePopup({
               </label>
             ))}
 
+            {/* Autre */}
             <label className="flex items-center gap-3 mb-2">
               <input
                 type="checkbox"
@@ -217,6 +222,7 @@ export default function EditEvangelisePopup({
             )}
           </div>
 
+          {/* Infos supplémentaires */}
           <label className="font-semibold">Infos supplémentaires</label>
           <textarea
             name="infos_supplementaires"
@@ -230,16 +236,17 @@ export default function EditEvangelisePopup({
             <p className="text-green-600 text-center font-semibold">{message}</p>
           )}
 
+          {/* Boutons */}
           <div className="flex justify-between mt-4">
             <button
-              onClick={onClose}
+              onClick={onClose} // Annuler
               className="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400"
             >
               Annuler
             </button>
 
             <button
-              onClick={handleSubmit}
+              onClick={handleSubmit} // Enregistrer
               disabled={loading}
               className={`px-4 py-2 rounded-md text-white font-bold ${
                 loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"

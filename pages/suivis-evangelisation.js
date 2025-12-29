@@ -205,55 +205,58 @@ export default function SuivisEvangelisation() {
       )}
 
       {/* VUE TABLE */}
-{view === "table" && (
-  <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-    <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto bg-white rounded-lg">
-      <thead className="text-sm uppercase">
-        <tr className="bg-gray-200">
-          <th className="px-1 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
-          <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
-          <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Cellule / Conseiller</th>
-          <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {suivis.map((m) => {
-          const cible = m.cellule_id
-            ? cellules.find((c) => c.id === m.cellule_id)
-            : conseillers.find((c) => c.id === m.conseiller_id);
+        {view === "table" && (
+          <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+            <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto bg-white rounded-lg">
+              <thead className="text-sm uppercase">
+                <tr className="bg-gray-200">
+                  <th className="px-1 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
+                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
+                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Attribué à</th>
+                  <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {suivis.map((m) => {
+                  // Déterminer si c'est une cellule ou un conseiller
+                  const cibleName = (() => {
+                    if (m.cellule_id) {
+                      const cell = cellules.find((c) => c.id === m.cellule_id);
+                      return cell ? cell.cellule_full : "—";
+                    } else if (m.conseiller_id) {
+                      const cons = conseillers.find((c) => c.id === m.conseiller_id);
+                      return cons ? `${cons.prenom} ${cons.nom}` : "—";
+                    }
+                    return "—";
+                  })();
+        
+                  return (
+                    <tr key={m.id} className="border-b border-gray-300">
+                      <td className="px-1 py-1">{m.prenom} {m.nom}</td>
+                      <td className="px-1 py-1">{m.telephone || "—"}</td>
+                      <td className="px-1 py-1">{cibleName}</td>
+                      <td className="px-1 py-1 flex items-center gap-2">
+                        <button
+                          onClick={() => setDetailsSuivi(m)}
+                          className="text-orange-500 underline text-sm"
+                        >
+                          Détails
+                        </button>
+                        <button
+                          onClick={() => setEditingContact(m)}
+                          className="text-blue-600 underline text-sm"
+                        >
+                          Modifier
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-          const cibleName = m.cellule_id
-            ? cible?.cellule_full || "—"
-            : cible
-            ? `${cible.prenom} ${cible.nom}`
-            : "—";
-
-          return (
-            <tr key={m.id} className="border-b border-gray-300">
-              <td className="px-1 py-1">{m.prenom} {m.nom}</td>
-              <td className="px-1 py-1">{m.telephone || "—"}</td>
-              <td className="px-1 py-1">{cibleName}</td>
-              <td className="px-1 py-1 flex items-center gap-2">
-                <button
-                  onClick={() => setDetailsSuivi(m)}
-                  className="text-orange-500 underline text-sm"
-                >
-                  Détails
-                </button>
-                <button
-                  onClick={() => setEditingContact(m)}
-                  className="text-blue-600 underline text-sm"
-                >
-                  Modifier
-                </button>
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
-  </div>
-)}
 
 
       {/* POPUP DÉTAILS */}

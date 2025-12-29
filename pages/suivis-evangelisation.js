@@ -146,8 +146,7 @@ export default function SuivisEvangelisation() {
                 </p>
                 <p className="text-sm text-center">
                   👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
-                </p>
-                <p className="text-sm text-center">💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                </p>                
 
                 <button
                   onClick={() =>
@@ -165,6 +164,7 @@ export default function SuivisEvangelisation() {
                 >
                   {detailsSuivi === m.id && (
                     <div className="text-sm space-y-2">
+                      <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                       <p>🏙️ Ville : {m.ville || "—"}</p>
                       <p>⚥ Sexe : {m.sexe || "—"}</p>
                       <p>🙏 Prière du salut : {m.priere_salut ? "Oui" : "Non"}</p>

@@ -24,7 +24,7 @@ export default function EditEvangelisePopup({
     besoin: initialBesoin,
     autreBesoin: "",
     infos_supplementaires: member.infos_supplementaires || "",
-    priere_salut: member.priere_salut || false,
+    priere_salut: member.priere_salut ? "Oui" : "Non",
     type_conversion: member.type_conversion || "",
     is_whatsapp: member.is_whatsapp || false,
   });
@@ -56,10 +56,11 @@ export default function EditEvangelisePopup({
   };
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
+      ...(name === "priere_salut" && value === "Non" ? { type_conversion: "" } : {}),
     }));
   };
 
@@ -77,8 +78,8 @@ export default function EditEvangelisePopup({
         formData.autreBesoin && showAutre
           ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
           : formData.besoin,
-      priere_salut: formData.priere_salut,
-      type_conversion: formData.priere_salut ? formData.type_conversion : null,
+      priere_salut: formData.priere_salut === "Oui",
+      type_conversion: formData.priere_salut === "Oui" ? formData.type_conversion : null,
       is_whatsapp: formData.is_whatsapp,
     };
 
@@ -96,7 +97,7 @@ export default function EditEvangelisePopup({
       setMessage("✅ Changement enregistré !");
       setTimeout(() => {
         setMessage("");
-        onClose(); // Ferme le popup Edit
+        onClose();
       }, 1200);
     }
 
@@ -165,26 +166,28 @@ export default function EditEvangelisePopup({
             <option value="Femme">Femme</option>
           </select>
 
-          {/* WhatsApp / Prière du salut */}
+          {/* WhatsApp */}
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
               name="is_whatsapp"
               checked={formData.is_whatsapp}
-              onChange={handleChange}
+              onChange={(e) => setFormData(prev => ({ ...prev, is_whatsapp: e.target.checked }))}
             />
             WhatsApp
           </label>
 
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="priere_salut"
-              checked={formData.priere_salut}
-              onChange={handleChange}
-            />
-            Prière du salut
-          </label>
+          {/* Prière du salut Oui/Non */}
+          <label className="font-semibold">Prière du salut</label>
+          <select
+            name="priere_salut"
+            value={formData.priere_salut}
+            onChange={handleChange}
+            className="border rounded px-2 py-1 w-full"
+          >
+            <option value="Oui">Oui</option>
+            <option value="Non">Non</option>
+          </select>
 
           {/* Type de conversion */}
           <label className="font-semibold">Type de conversion</label>
@@ -192,9 +195,9 @@ export default function EditEvangelisePopup({
             name="type_conversion"
             value={formData.type_conversion || ""}
             onChange={handleChange}
-            disabled={!formData.priere_salut}
+            disabled={formData.priere_salut !== "Oui"}
             className={`border rounded px-2 py-1 w-full ${
-              !formData.priere_salut ? "bg-gray-200 cursor-not-allowed" : ""
+              formData.priere_salut !== "Oui" ? "bg-gray-200 cursor-not-allowed" : ""
             }`}
           >
             <option value="">-- Sélectionner --</option>
@@ -218,7 +221,6 @@ export default function EditEvangelisePopup({
               </label>
             ))}
 
-            {/* Autre */}
             <label className="flex items-center gap-3 mb-2">
               <input
                 type="checkbox"

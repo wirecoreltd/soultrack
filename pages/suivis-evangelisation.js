@@ -135,7 +135,9 @@ export default function SuivisEvangelisation() {
               <h2 className="font-bold text-center">
                 {m.prenom} {m.nom}
               </h2>
-              <p className="text-sm text-center">📱 {m.telephone || "—"}</p>
+              <p className="text-sm text-center">📱 {m.telephone || "—"}</p>    
+              <p className="text-sm text-center">🏠 Cellule : {m.cellules?.cellule || "—"}</p>
+              <p className="text-sm text-center">👤 Conseiller : {m.responsable_cellule || "—"}</p>            
 
               <button
                 onClick={() =>
@@ -153,8 +155,7 @@ export default function SuivisEvangelisation() {
                 }`}
               >
                 {detailsSuivi === m.id && (
-                  <div className="text-sm space-y-2">
-                    <p>📱 Téléphone : {m.telephone || "—"}</p>
+                  <div className="text-sm space-y-2">                    
                     <p>🏙️ Ville : {m.ville || "—"}</p>
                     <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>⚥ Sexe : {m.sexe || "—"}</p>

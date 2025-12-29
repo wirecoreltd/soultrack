@@ -23,7 +23,7 @@ export default function EditEvangelisePopup({
     besoin: initialBesoin,
     autreBesoin: "",
     infos_supplementaires: member.infos_supplementaires || "",
-    priere_salut: member.priere_salut || false,
+    priere_salut: member.priere_salut || "",
     type_conversion: member.type_conversion || "",
     is_whatsapp: member.is_whatsapp || false,
   });
@@ -118,7 +118,7 @@ export default function EditEvangelisePopup({
         </h2>
 
         <div className="flex flex-col space-y-3 text-sm">
-          {/* Prénom / Nom */}
+          {/* Prénom / Nom / Ville / Téléphone */}
           <label className="font-semibold">Prénom</label>
           <input
             name="prenom"
@@ -151,7 +151,7 @@ export default function EditEvangelisePopup({
             className="border rounded px-2 py-1"
           />
 
-          {/* WhatsApp / Prière du salut */}
+          {/* WhatsApp */}
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -162,24 +162,40 @@ export default function EditEvangelisePopup({
             WhatsApp
           </label>
 
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="priere_salut"
-              checked={formData.priere_salut}
-              onChange={handleChange}
-            />
-            Prière du salut
-          </label>
+          {/* ✅ Prière du salut */}
+          <select
+            className="border rounded px-2 py-1"
+            value={formData.priere_salut}
+            required
+            onChange={(e) => {
+              const value = e.target.value;
+              setFormData({
+                ...formData,
+                priere_salut: value,
+                type_conversion: value === "Oui" ? formData.type_conversion : "",
+              });
+            }}
+          >
+            <option value="">-- Prière du salut ? --</option>
+            <option value="Oui">Oui</option>
+            <option value="Non">Non</option>
+          </select>
 
           {/* Type de conversion */}
-          <label className="font-semibold">Type de conversion</label>
-          <input
-            name="type_conversion"
-            value={formData.type_conversion}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          />
+          {formData.priere_salut === "Oui" && (
+            <select
+              className="border rounded px-2 py-1"
+              value={formData.type_conversion}
+              onChange={(e) =>
+                setFormData({ ...formData, type_conversion: e.target.value })
+              }
+              required
+            >
+              <option value="">Type</option>
+              <option value="Nouveau converti">Nouveau converti</option>
+              <option value="Réconciliation">Réconciliation</option>
+            </select>
+          )}
 
           {/* Besoins */}
           <div className="mt-2">

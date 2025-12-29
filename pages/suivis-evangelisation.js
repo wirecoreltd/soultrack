@@ -50,6 +50,8 @@ export default function SuivisEvangelisation() {
     }
   };
 
+  const conseiller = conseillers.find(c => c.id === m.conseiller_id);
+
   const getBorderColor = (m) => {
     if (m.status_suivis_evangelises === "En cours") return "#FFA500";
     if (m.status_suivis_evangelises === "Integrer") return "#34A853";
@@ -147,6 +149,7 @@ export default function SuivisEvangelisation() {
                 <p className="text-sm text-center">
                   👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
                 </p>
+
 
                 <button
                   onClick={() =>

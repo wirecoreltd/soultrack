@@ -147,8 +147,7 @@ export default function SuivisEvangelisation() {
                 <p className="text-sm text-center">
                   👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
                 </p>
-
-
+                <p className="text-sm text-center">💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
 
                 <button
                   onClick={() =>
@@ -167,7 +166,6 @@ export default function SuivisEvangelisation() {
                   {detailsSuivi === m.id && (
                     <div className="text-sm space-y-2">
                       <p>🏙️ Ville : {m.ville || "—"}</p>
-                      <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                       <p>⚥ Sexe : {m.sexe || "—"}</p>
                       <p>🙏 Prière du salut : {m.priere_salut ? "Oui" : "Non"}</p>
                       <p>☀️ Type : {m.type_conversion || "—"}</p>
@@ -207,51 +205,52 @@ export default function SuivisEvangelisation() {
       )}
 
       {/* VUE TABLE */}
-        {view === "table" && (
-          <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-            <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto bg-white rounded-lg">
-              <thead className="text-sm uppercase">
-                <tr className="bg-gray-200">
-                  <th className="px-1 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
-                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
-                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Cellule</th>
-                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Conseiller</th>
-                  <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {suivis.map((m) => {
-                  const conseiller = conseillers.find(c => c.id === m.responsable_cellule);
-                  return (
-                    <tr key={m.id} className="border-b border-gray-300">
-                      <td className="px-1 py-1">{m.prenom} {m.nom}</td>
-                      <td className="px-1 py-1">{m.telephone || "—"}</td>
-                      <td className="px-1 py-1">{m.cellules?.cellule_full || "—"}</td>
-                      <td className="px-1 py-1">{conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}</td>
-                      <td className="px-1 py-1 flex items-center gap-2">
-                        <button
-                          onClick={() => setDetailsSuivi(m)}
-                          className="text-orange-500 underline text-sm"
-                        >
-                          Détails
-                        </button>
-                        <button
-                          onClick={() => setEditingContact(m)}
-                          className="text-blue-600 underline text-sm"
-                        >
-                          Modifier
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+          <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto bg-white rounded-lg">
+            <thead className="text-sm uppercase">
+              <tr className="bg-gray-200">
+                <th className="px-1 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
+                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
+                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Cellule</th>
+                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Conseiller</th>
+                <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {suivis.map((m) => {
+                const conseiller = conseillers.find(
+                  (c) => c.id === m.responsable_cellule
+                );
+                return (
+                  <tr key={m.id} className="border-b border-gray-300">
+                    <td className="px-1 py-1">{m.prenom} {m.nom}</td>
+                    <td className="px-1 py-1">{m.telephone || "—"}</td>
+                    <td className="px-1 py-1">{m.cellules?.cellule_full || "—"}</td>
+                    <td className="px-1 py-1">{conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}</td>
+                    <td className="px-1 py-1 flex items-center gap-2">
+                      <button
+                        onClick={() => setDetailsSuivi(m)}
+                        className="text-orange-500 underline text-sm"
+                      >
+                        Détails
+                      </button>
+                      <button
+                        onClick={() => setEditingContact(m)}
+                        className="text-blue-600 underline text-sm"
+                      >
+                        Modifier
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-
-      {/* POPUP DÉTAILS (VUE TABLE) */}
+      {/* POPUP DÉTAILS */}
       {detailsSuivi && typeof detailsSuivi === "object" && (
         <DetailsEvangePopup
           member={detailsSuivi}

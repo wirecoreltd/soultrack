@@ -1,20 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import supabase from "../lib/supabaseClient";
+import { useState } from "react";
+import supabase from "../lib/supabaseClient"; // Assure-toi que ce chemin est correct
 
 export default function EditEvangelisePopup({
   member,
   onClose,
   onUpdateMember,
 }) {
-  if (!member) return null; // Sécurité si member est undefined
-
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
 
-  // Toujours transformer besoin en array
   const initialBesoin =
-    Array.isArray(member.besoin) ? member.besoin : JSON.parse(member.besoin || "[]");
+    typeof member.besoin === "string"
+      ? JSON.parse(member.besoin || "[]")
+      : member.besoin || [];
 
   const [formData, setFormData] = useState({
     prenom: member.prenom || "",
@@ -22,7 +21,7 @@ export default function EditEvangelisePopup({
     telephone: member.telephone || "",
     ville: member.ville || "",
     sexe: member.sexe || "",
-    priere_salut: member.priere_salut === "Oui" ? "Oui" : "Non",
+    priere_salut: member.priere_salut || "Non",
     type_conversion: member.type_conversion || "",
     besoin: initialBesoin,
     infos_supplementaires: member.infos_supplementaires || "",
@@ -50,10 +49,16 @@ export default function EditEvangelisePopup({
     setLoading(true);
 
     try {
+      // 🔹 Convertir besoin en JSON pour Supabase
+      const updateData = {
+        ...formData,
+        besoin: JSON.stringify(formData.besoin),
+      };
+
       const { data, error } = await supabase
         .from("suivis_des_evangelises")
-        .update({ ...formData, besoin: formData.besoin })
-        .eq("id", member.id)
+        .update(updateData)
+        .eq("id", member.id) // member.id doit être UUID si la table a un UUID
         .select()
         .single();
 
@@ -65,7 +70,7 @@ export default function EditEvangelisePopup({
       setTimeout(() => onClose(), 1000);
     } catch (err) {
       console.error(err);
-      alert("❌ Erreur lors de la modification");
+      alert("❌ Erreur lors de la modification : " + err.message);
     } finally {
       setLoading(false);
     }
@@ -74,7 +79,6 @@ export default function EditEvangelisePopup({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-xl w-96 max-h-[90vh] overflow-y-auto relative shadow-xl">
-        {/* CROIX */}
         <button
           onClick={onClose}
           className="absolute top-2 right-3 text-gray-500 font-bold"
@@ -85,7 +89,6 @@ export default function EditEvangelisePopup({
         <h2 className="text-center font-bold text-lg mb-4">Modifier le suivi</h2>
 
         <div className="space-y-3 text-sm">
-          {/* Infos de base */}
           <input
             name="prenom"
             value={formData.prenom}
@@ -115,7 +118,6 @@ export default function EditEvangelisePopup({
             placeholder="Ville"
           />
 
-          {/* Sexe */}
           <select
             name="sexe"
             value={formData.sexe}
@@ -127,27 +129,23 @@ export default function EditEvangelisePopup({
             <option value="Femme">Femme</option>
           </select>
 
-          {/* Prière du salut */}
           <select
-            name="priere_salut"
-            value={formData.priere_salut}
-            onChange={(e) =>
-              setFormData({ ...formData, priere_salut: e.target.value })
-            }
             className="w-full border rounded px-2 py-1"
+            value={formData.priere_salut}
+            onChange={(e) => setFormData({ ...formData, priere_salut: e.target.value })}
+            required
           >
             <option value="Non">Prière du salut ?</option>
             <option value="Oui">Oui</option>
             <option value="Non">Non</option>
           </select>
 
-          {/* Type de conversion */}
           {formData.priere_salut === "Oui" && (
             <select
-              name="type_conversion"
-              value={formData.type_conversion}
-              onChange={handleChange}
               className="w-full border rounded px-2 py-1"
+              value={formData.type_conversion}
+              onChange={(e) => setFormData({ ...formData, type_conversion: e.target.value })}
+              required
             >
               <option value="">Type</option>
               <option value="Nouveau converti">Nouveau converti</option>
@@ -155,7 +153,6 @@ export default function EditEvangelisePopup({
             </select>
           )}
 
-          {/* Besoins */}
           <div>
             <p className="font-semibold mb-1">Besoins</p>
             {besoinsOptions.map((b) => (
@@ -171,7 +168,6 @@ export default function EditEvangelisePopup({
             ))}
           </div>
 
-          {/* Infos supplémentaires */}
           <textarea
             name="infos_supplementaires"
             value={formData.infos_supplementaires}
@@ -181,7 +177,6 @@ export default function EditEvangelisePopup({
             placeholder="Infos supplémentaires"
           />
 
-          {/* Commentaire */}
           <textarea
             name="commentaire_evangelises"
             value={formData.commentaire_evangelises}
@@ -191,7 +186,6 @@ export default function EditEvangelisePopup({
             placeholder="Commentaire suivi"
           />
 
-          {/* Statut */}
           <select
             name="status_suivis_evangelises"
             value={formData.status_suivis_evangelises}

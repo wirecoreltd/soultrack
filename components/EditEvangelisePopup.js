@@ -10,7 +10,7 @@ export default function EditEvangelisePopup({
   onClose,
   onUpdateMember,
 }) {
-  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille", "Paix"];
 
   const initialBesoin =
     typeof member.besoin === "string" ? JSON.parse(member.besoin || "[]") : member.besoin || [];
@@ -23,9 +23,10 @@ export default function EditEvangelisePopup({
     besoin: initialBesoin,
     autreBesoin: "",
     infos_supplementaires: member.infos_supplementaires || "",
-    priere_salut: member.priere_salut || false,
-    type_conversion: member.type_conversion || "",
+    priere_salut: member.priere_salut ? "Oui" : "Non",
+    type_conversion: member.type_conversion || "Nouveau converti",
     is_whatsapp: member.is_whatsapp || false,
+    sexe: member.sexe || "Homme",
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -55,11 +56,8 @@ export default function EditEvangelisePopup({
   };
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async () => {
@@ -75,9 +73,10 @@ export default function EditEvangelisePopup({
         formData.autreBesoin && showAutre
           ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
           : formData.besoin,
-      priere_salut: formData.priere_salut,
+      priere_salut: formData.priere_salut === "Oui",
       type_conversion: formData.type_conversion,
       is_whatsapp: formData.is_whatsapp,
+      sexe: formData.sexe,
     };
 
     const { error, data } = await supabase
@@ -94,7 +93,6 @@ export default function EditEvangelisePopup({
       setMessage("✅ Changement enregistré !");
       setTimeout(() => {
         setMessage("");
-        // Fermer les deux popups
         onClose();
       }, 1200);
     }
@@ -108,7 +106,7 @@ export default function EditEvangelisePopup({
 
         {/* Croix fermer */}
         <button
-          onClick={onClose} // Annuler => ferme les deux popups
+          onClick={onClose}
           className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 font-bold text-lg"
         >
           ×
@@ -152,35 +150,52 @@ export default function EditEvangelisePopup({
             className="border rounded px-2 py-1"
           />
 
-          {/* WhatsApp / Prière du salut */}
+          {/* Sexe */}
+          <label className="font-semibold">Sexe</label>
+          <select
+            name="sexe"
+            value={formData.sexe}
+            onChange={handleChange}
+            className="border rounded px-2 py-1"
+          >
+            <option value="Homme">Homme</option>
+            <option value="Femme">Femme</option>
+          </select>
+
+          {/* WhatsApp */}
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
               name="is_whatsapp"
               checked={formData.is_whatsapp}
-              onChange={handleChange}
+              onChange={(e) => setFormData((prev) => ({ ...prev, is_whatsapp: e.target.checked }))}
             />
             WhatsApp
           </label>
 
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="priere_salut"
-              checked={formData.priere_salut}
-              onChange={handleChange}
-            />
-            Prière du salut
-          </label>
+          {/* Prière du salut */}
+          <label className="font-semibold">Prière du salut</label>
+          <select
+            name="priere_salut"
+            value={formData.priere_salut}
+            onChange={handleChange}
+            className="border rounded px-2 py-1"
+          >
+            <option value="Oui">Oui</option>
+            <option value="Non">Non</option>
+          </select>
 
           {/* Type de conversion */}
           <label className="font-semibold">Type de conversion</label>
-          <input
+          <select
             name="type_conversion"
             value={formData.type_conversion}
             onChange={handleChange}
             className="border rounded px-2 py-1"
-          />
+          >
+            <option value="Nouveau converti">Nouveau converti</option>
+            <option value="Réconciliation">Réconciliation</option>
+          </select>
 
           {/* Besoins */}
           <div className="mt-2">
@@ -239,14 +254,14 @@ export default function EditEvangelisePopup({
           {/* Boutons */}
           <div className="flex justify-between mt-4">
             <button
-              onClick={onClose} // Annuler
+              onClick={onClose}
               className="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400"
             >
               Annuler
             </button>
 
             <button
-              onClick={handleSubmit} // Enregistrer
+              onClick={handleSubmit}
               disabled={loading}
               className={`px-4 py-2 rounded-md text-white font-bold ${
                 loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"

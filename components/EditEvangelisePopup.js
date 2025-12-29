@@ -1,18 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function EditEvangelisePopup({
+export default function EditEvangelisSuivis({
   member,
-  cellules = [],
-  conseillers = [],
   onClose,
-  onUpdateMember,
+  onUpdate,
 }) {
-  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+  const besoinsOptions = [
+    "Finances",
+    "Santé",
+    "Travail",
+    "Les Enfants",
+    "La Famille",
+  ];
 
-  // Convertir la valeur JSON string en tableau si nécessaire
   const initialBesoin =
     typeof member.besoin === "string"
       ? JSON.parse(member.besoin || "[]")
@@ -23,76 +26,61 @@ export default function EditEvangelisePopup({
     nom: member.nom || "",
     telephone: member.telephone || "",
     ville: member.ville || "",
+    sexe: member.sexe || "",
+    type_conversion: member.type_conversion || "",
+    priere_salut: member.priere_salut || false,
     besoin: initialBesoin,
-    autreBesoin: "",
     infos_supplementaires: member.infos_supplementaires || "",
+    commentaire_evangelises: member.commentaire_evangelises || "",
+    status_suivis_evangelises: member.status_suivis_evangelises || "",
   });
 
-  const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const handleBesoinChange = (e) => {
-    const { value, checked } = e.target;
-
-    if (value === "Autre") {
-      setShowAutre(checked);
-      if (!checked) {
-        setFormData((prev) => ({
-          ...prev,
-          autreBesoin: "",
-          besoin: prev.besoin.filter((b) => b !== "Autre"),
-        }));
-      }
-    }
-
-    setFormData((prev) => {
-      const updated = checked
-        ? [...prev.besoin, value]
-        : prev.besoin.filter((b) => b !== value);
-      return { ...prev, besoin: updated };
-    });
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleBesoinChange = (e) => {
+    const { value, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      besoin: checked
+        ? [...prev.besoin, value]
+        : prev.besoin.filter((b) => b !== value),
+    }));
   };
 
   const handleSubmit = async () => {
     setLoading(true);
 
-    const cleanData = {
-      prenom: formData.prenom,
-      nom: formData.nom,
-      telephone: formData.telephone,
-      ville: formData.ville,
-      infos_supplementaires: formData.infos_supplementaires || null,
-      besoin:
-        formData.autreBesoin && showAutre
-          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
-          : formData.besoin,
-    };
-
     try {
       const { data, error } = await supabase
-        .from("evangelises")
-        .update(cleanData)
+        .from("suivis_des_evangelises")
+        .update({
+          ...formData,
+          besoin: formData.besoin,
+        })
         .eq("id", member.id)
         .select()
         .single();
 
       if (error) throw error;
 
-      if (onUpdateMember) onUpdateMember(data); // mise à jour instantanée
-      setMessage("✅ Changement enregistré !");
+      if (onUpdate) onUpdate(data);
+
+      setMessage("✅ Modifications enregistrées");
       setTimeout(() => {
-        setMessage("");
-        onClose(); // ferme la popup
-      }, 1200);
+        onClose();
+      }, 1000);
     } catch (err) {
-      console.error("Erreur modification :", err);
-      alert("❌ Une erreur est survenue : " + err.message);
+      console.error(err);
+      alert("❌ Erreur lors de la modification");
     } finally {
       setLoading(false);
     }
@@ -100,124 +88,97 @@ export default function EditEvangelisePopup({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto shadow-xl relative">
-        {/* Croix fermeture */}
+      <div className="bg-white p-6 rounded-xl w-96 max-h-[90vh] overflow-y-auto relative shadow-xl">
+        {/* CROIX */}
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 text-gray-500 font-bold hover:text-gray-700"
+          className="absolute top-2 right-3 text-gray-500 font-bold"
         >
           ✖
         </button>
 
-        <h2 className="text-lg font-bold text-gray-800 text-center mb-4">
-          Modifier {member.prenom} {member.nom}
+        <h2 className="text-center font-bold text-lg mb-4">
+          Modifier le suivi
         </h2>
 
-        <div className="flex flex-col space-y-3 text-sm">
-          <label className="font-semibold">Prénom</label>
-          <input
-            name="prenom"
-            value={formData.prenom}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          />
+        <div className="space-y-3 text-sm">
+          <input name="prenom" value={formData.prenom} onChange={handleChange} className="w-full border rounded px-2 py-1" placeholder="Prénom" />
+          <input name="nom" value={formData.nom} onChange={handleChange} className="w-full border rounded px-2 py-1" placeholder="Nom" />
+          <input name="telephone" value={formData.telephone} onChange={handleChange} className="w-full border rounded px-2 py-1" placeholder="Téléphone" />
+          <input name="ville" value={formData.ville} onChange={handleChange} className="w-full border rounded px-2 py-1" placeholder="Ville" />
 
-          <label className="font-semibold">Nom</label>
-          <input
-            name="nom"
-            value={formData.nom}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          />
+          <select name="sexe" value={formData.sexe} onChange={handleChange} className="w-full border rounded px-2 py-1">
+            <option value="">Sexe</option>
+            <option value="Homme">Homme</option>
+            <option value="Femme">Femme</option>
+          </select>
 
-          <label className="font-semibold">Ville</label>
-          <input
-            name="ville"
-            value={formData.ville}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          />
+          <select name="type_conversion" value={formData.type_conversion} onChange={handleChange} className="w-full border rounded px-2 py-1">
+            <option value="">Type de conversion</option>
+            <option value="Rue">Rue</option>
+            <option value="Invité">Invité</option>
+            <option value="Église">Église</option>
+          </select>
 
-          <label className="font-semibold">Téléphone</label>
-          <input
-            name="telephone"
-            value={formData.telephone}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          />
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="priere_salut" checked={formData.priere_salut} onChange={handleChange} />
+            Prière du salut
+          </label>
 
-          {/* Besoins */}
-          <div className="mt-2">
-            <p className="font-semibold mb-2">Besoins :</p>
-            {besoinsOptions.map((item) => (
-              <label key={item} className="flex items-center gap-3 mb-2">
+          <div>
+            <p className="font-semibold mb-1">Besoins</p>
+            {besoinsOptions.map((b) => (
+              <label key={b} className="flex items-center gap-2">
                 <input
                   type="checkbox"
-                  value={item}
-                  checked={formData.besoin.includes(item)}
+                  value={b}
+                  checked={formData.besoin.includes(b)}
                   onChange={handleBesoinChange}
-                  className="w-5 h-5 rounded border-gray-400 cursor-pointer"
                 />
-                {item}
+                {b}
               </label>
             ))}
-
-            {/* Autre */}
-            <label className="flex items-center gap-3 mb-2">
-              <input
-                type="checkbox"
-                value="Autre"
-                checked={showAutre}
-                onChange={handleBesoinChange}
-                className="w-5 h-5 rounded border-gray-400 cursor-pointer"
-              />
-              Autre
-            </label>
-
-            {showAutre && (
-              <input
-                type="text"
-                name="autreBesoin"
-                value={formData.autreBesoin}
-                onChange={handleChange}
-                placeholder="Précisez..."
-                className="border rounded px-2 py-1 w-full"
-              />
-            )}
           </div>
 
-          <label className="font-semibold">Infos supplémentaires</label>
           <textarea
             name="infos_supplementaires"
             value={formData.infos_supplementaires}
             onChange={handleChange}
-            className="border rounded px-2 py-1"
-            rows={3}
+            rows={2}
+            className="w-full border rounded px-2 py-1"
+            placeholder="Infos supplémentaires"
           />
 
-          {message && (
-            <p className="text-green-600 text-center font-semibold">{message}</p>
-          )}
+          <textarea
+            name="commentaire_evangelises"
+            value={formData.commentaire_evangelises}
+            onChange={handleChange}
+            rows={2}
+            className="w-full border rounded px-2 py-1"
+            placeholder="Commentaire suivi"
+          />
 
-          {/* Boutons Annuler + Enregistrer */}
-          <div className="flex justify-between mt-4">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400"
-            >
-              Annuler
-            </button>
+          <select
+            name="status_suivis_evangelises"
+            value={formData.status_suivis_evangelises}
+            onChange={handleChange}
+            className="w-full border rounded px-2 py-1"
+          >
+            <option value="">Statut</option>
+            <option value="En cours">En cours</option>
+            <option value="Venu à l’église">Venu à l’église</option>
+            <option value="Integrer">Intégré</option>
+          </select>
 
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              className={`px-4 py-2 rounded-md text-white font-bold ${
-                loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
-              }`}
-            >
-              {loading ? "Enregistrement..." : "Enregistrer"}
-            </button>
-          </div>
+          {message && <p className="text-green-600 text-center">{message}</p>}
+
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="w-full bg-blue-600 text-white rounded py-2 font-bold mt-2"
+          >
+            {loading ? "Enregistrement..." : "Enregistrer"}
+          </button>
         </div>
       </div>
     </div>

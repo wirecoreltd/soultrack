@@ -270,45 +270,59 @@ export default function Evangelisation() {
       )}
 
       {/* VUE TABLE */}
-        {view === "table" && (
-          <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-            <table className="w-full text-sm text-left border-collapse table-auto">
-              <thead className="text-sm uppercase">
-                <tr className="bg-gray-200">
-                  <th className="px-2 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
-                  <th className="px-2 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
-                  <th className="px-2 py-1 text-left" style={{ color: "#2E3192" }}>Ville</th>
-                  <th className="px-2 py-1 text-center" style={{ color: "#2E3192" }}>Sélectionner</th>
-                  <th className="px-2 py-1 rounded-tr-lg text-center" style={{ color: "#2E3192" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {contacts.map((m) => (
-                  <tr key={m.id} className="border-b border-gray-300">
-                    <td className="px-2 py-1">{m.prenom} {m.nom}</td>
-                    <td className="px-2 py-1">{m.telephone || "—"}</td>
-                    <td className="px-2 py-1">{m.ville || "—"}</td>
-                    <td className="px-2 py-1 text-center">
-                      <input
-                        type="checkbox"
-                        checked={checkedContacts[m.id] || false}
-                        onChange={() => handleCheck(m.id)}
-                      />
-                    </td>
-                    <td className="px-2 py-1 text-center">
-                      <button
-                        onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
-                        className="text-orange-500 underline text-sm"
-                      >
-                        {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+{view === "table" && (
+  <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+    <table className="w-full text-sm text-left border-collapse table-auto bg-white/80 rounded-lg shadow-md">
+      <thead className="text-sm uppercase">
+        <tr className="bg-gray-200/80">
+          <th className="px-2 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
+          <th className="px-2 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
+          <th className="px-2 py-1 text-left" style={{ color: "#2E3192" }}>Attribué à</th>
+          <th className="px-2 py-1 text-center" style={{ color: "#2E3192" }}>Sélectionner</th>
+          <th className="px-2 py-1 rounded-tr-lg text-center" style={{ color: "#2E3192" }}>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {contacts.map((m) => {
+          const conseiller = conseillers.find(
+            (c) => c.id === m.conseiller_id || c.id === m.responsable_cellule
+          );
+          const cellule = cellules.find(c => c.id === m.cellule_id);
+          const attribution = cellule
+            ? cellule.cellule_full
+            : conseiller
+            ? `${conseiller.prenom} ${conseiller.nom}`
+            : "—";
+
+          return (
+            <tr key={m.id} className="border-b border-gray-300 hover:bg-gray-100/50">
+              <td className="px-2 py-1">{m.prenom} {m.nom}</td>
+              <td className="px-2 py-1">{m.telephone || "—"}</td>
+              <td className="px-2 py-1">{attribution}</td>
+              <td className="px-2 py-1 text-center">
+                <input
+                  type="checkbox"
+                  checked={checkedContacts[m.id] || false}
+                  onChange={() => handleCheck(m.id)}
+                  className="mx-auto"
+                />
+              </td>
+              <td className="px-2 py-1 text-center">
+                <button
+                  onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
+                  className="text-orange-500 underline text-sm"
+                >
+                  {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                </button>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+)}
+
 
       {/* POPUP MODIFICATION */}
       {editMember && (

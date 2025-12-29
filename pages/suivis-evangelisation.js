@@ -139,7 +139,7 @@ export default function SuivisEvangelisation() {
               <p className="text-sm text-center">📱 {m.telephone || "—"}</p>
               <p className="text-sm text-center">🏠 Cellule : {m.cellules?.cellule_full || "—"}</p>
               <p className="text-sm text-center">
-                👤 Conseiller : {conseillers.find(c => c.id === m.cellules?.responsable)?.prenom || "—"}
+                👤 Conseiller : {conseillers.find(c => c.id === m.cellules?.responsable_id)?.prenom || "—"}
               </p>
 
               <button

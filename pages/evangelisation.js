@@ -317,17 +317,15 @@ export default function Evangelisation() {
           member={editMember}
           cellules={cellules}
           conseillers={conseillers}
-          onClose={() => {
-            setEditMember(null);
-            setPopupMember(null);
-          }}
+          onClose={() => setEditMember(null)} // plus besoin de toucher popupMember ici
           onUpdateMember={(data) => {
             setContacts((prev) => prev.map((m) => (m.id === data.id ? data : m)));
-            setPopupMember(data);
-            setEditMember(null);
+            setEditMember(null); // fermer le popup d'édition
+            // ❌ On ne touche pas à popupMember pour éviter que DetailsEvangePopup s'affiche
           }}
         />
       )}
+
 
       {popupMember && (
         <DetailsEvangePopup

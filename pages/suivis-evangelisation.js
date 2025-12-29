@@ -11,12 +11,11 @@ export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
   const [view, setView] = useState("card");
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
-  const [detailsSuivi, setDetailsSuivi] = useState(null);
+  const [detailsSuivi, setDetailsSuivi] = useState(null); // id (card/table)
   const [editingContact, setEditingContact] = useState(null);
 
   useEffect(() => {
@@ -25,51 +24,26 @@ export default function SuivisEvangelisation() {
   }, []);
 
   const fetchConseillers = async () => {
-    try {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom")
-        .eq("role", "Conseiller");
-      if (data) setConseillers(data);
-    } catch (err) {
-      console.error("Erreur fetchConseillers:", err);
-    }
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom")
+      .eq("role", "Conseiller");
+    if (data) setConseillers(data);
   };
 
   const fetchSuivis = async () => {
     setLoading(true);
     try {
-      const userEmail = localStorage.getItem("userEmail");
-      if (!userEmail) throw new Error("Utilisateur non connecté");
-
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("id, prenom, role")
-        .eq("email", userEmail)
-        .single();
-
-      setPrenom(profileData?.prenom || "cher membre");
-
       const { data } = await supabase
         .from("suivis_des_evangelises")
-        .select(`*, cellules:cellule_id(id, cellule_full, responsable_id)`)
+        .select(`*, cellules:cellule_id (id, cellule_full, responsable_id)`)
         .order("date_suivi", { ascending: false });
-
       setSuivis(data || []);
-      if (!data || data.length === 0) setMessage("Aucun évangélisé à afficher.");
     } catch (err) {
       console.error(err);
-      setMessage("Erreur lors de la récupération des suivis.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const getBorderColor = (m) => {
-    if (m.status_suivis_evangelises === "En cours") return "#FFA500";
-    if (m.status_suivis_evangelises === "Integrer") return "#34A853";
-    if (m.status_suivis_evangelises === "Venu à l’église") return "#3B82F6";
-    return "#ccc";
   };
 
   const handleCommentChange = (id, value) =>
@@ -80,7 +54,6 @@ export default function SuivisEvangelisation() {
     if (!newComment) return;
 
     setUpdating((prev) => ({ ...prev, [id]: true }));
-
     try {
       const { data } = await supabase
         .from("suivis_des_evangelises")
@@ -88,13 +61,19 @@ export default function SuivisEvangelisation() {
         .eq("id", id)
         .select()
         .single();
-
       setSuivis((prev) => prev.map((s) => (s.id === id ? data : s)));
     } catch (err) {
       console.error(err);
     } finally {
       setUpdating((prev) => ({ ...prev, [id]: false }));
     }
+  };
+
+  const getBorderColor = (m) => {
+    if (m.status_suivis_evangelises === "En cours") return "#FFA500";
+    if (m.status_suivis_evangelises === "Integrer") return "#34A853";
+    if (m.status_suivis_evangelises === "Venu à l’église") return "#3B82F6";
+    return "#ccc";
   };
 
   const formatBesoin = (b) => {
@@ -138,19 +117,21 @@ export default function SuivisEvangelisation() {
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
           {suivis.map((m) => {
-            const conseiller = conseillers.find(c => c.id === m.cellules?.responsable_id);
+            const conseiller = conseillers.find(
+              (c) => c.id === m.cellules?.responsable_id
+            );
             return (
               <div
                 key={m.id}
                 className="bg-white rounded-2xl shadow-lg p-4 border-l-4 transition-all"
                 style={{ borderLeftColor: getBorderColor(m) }}
               >
-                <h2 className="font-bold text-center">
-                  {m.prenom} {m.nom}
-                </h2>
-                <p className="text-sm text-center">📱 {m.telephone || "—"}</p>
+                <h2 className="font-bold text-center">{m.prenom} {m.nom}</h2>
+                <p className="text-sm text-center">📱 {m.telephone || "—"}</p>    
                 <p className="text-sm text-center">🏠 Cellule : {m.cellules?.cellule_full || "—"}</p>
-                <p className="text-sm text-center">👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}</p>
+                <p className="text-sm text-center">
+                  👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
+                </p>
 
                 <button
                   onClick={() =>
@@ -161,6 +142,7 @@ export default function SuivisEvangelisation() {
                   {detailsSuivi === m.id ? "Fermer détails" : "Détails"}
                 </button>
 
+                {/* CARRÉ GRANDISSANT */}
                 <div
                   className={`transition-all duration-500 overflow-hidden ${
                     detailsSuivi === m.id ? "max-h-[1000px] mt-3" : "max-h-0"
@@ -203,7 +185,7 @@ export default function SuivisEvangelisation() {
                   )}
                 </div>
               </div>
-            )
+            );
           })}
         </div>
       )}
@@ -224,7 +206,9 @@ export default function SuivisEvangelisation() {
 
             <tbody>
               {suivis.map((m) => {
-                const conseiller = conseillers.find(c => c.id === m.cellules?.responsable_id);
+                const conseiller = conseillers.find(
+                  (c) => c.id === m.cellules?.responsable_id
+                );
                 return (
                   <tr key={m.id} className="border-b border-gray-300">
                     <td className="px-1 py-1">{m.prenom} {m.nom}</td>
@@ -233,10 +217,10 @@ export default function SuivisEvangelisation() {
                     <td className="px-1 py-1">{conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}</td>
                     <td className="px-1 py-1 flex items-center gap-2">
                       <button
-                        onClick={() => setDetailsSuivi(detailsSuivi === m ? null : m)}
+                        onClick={() => setDetailsSuivi(detailsSuivi === m.id ? null : m.id)}
                         className="text-orange-500 underline text-sm"
                       >
-                        {detailsSuivi?.id === m.id ? "Fermer détails" : "Détails"}
+                        {detailsSuivi === m.id ? "Fermer détails" : "Détails"}
                       </button>
                       <button
                         onClick={() => setEditingContact(m)}
@@ -246,14 +230,14 @@ export default function SuivisEvangelisation() {
                       </button>
                     </td>
                   </tr>
-                )
+                );
               })}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* POPUP DÉTAILS (VUE TABLE) */}
+      {/* POPUP DÉTAILS */}
       {detailsSuivi && typeof detailsSuivi === "object" && (
         <SuiviDetailsEvanPopup
           member={detailsSuivi}

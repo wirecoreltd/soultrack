@@ -16,20 +16,24 @@ export default function SuivisEvangelisation() {
   const [view, setView] = useState("card");
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
-  const [detailsSuivi, setDetailsSuivi] = useState(null); // id (card) ou objet (table)
+  const [detailsSuivi, setDetailsSuivi] = useState(null); // id ou objet
   const [editingContact, setEditingContact] = useState(null);
 
   useEffect(() => {
-    fetchConseillers();
     fetchSuivis();
+    fetchConseillers();
   }, []);
 
   const fetchConseillers = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom")
-      .eq("role", "Conseiller");
-    setConseillers(data || []);
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom")
+        .eq("role", "Conseiller");
+      setConseillers(data || []);
+    } catch (err) {
+      console.error("Erreur fetch conseillers:", err);
+    }
   };
 
   const fetchSuivis = async () => {
@@ -62,7 +66,6 @@ export default function SuivisEvangelisation() {
   const updateSuivi = async (id) => {
     const newComment = commentChanges[id];
     if (!newComment) return;
-
     setUpdating((prev) => ({ ...prev, [id]: true }));
 
     try {
@@ -72,7 +75,6 @@ export default function SuivisEvangelisation() {
         .eq("id", id)
         .select()
         .single();
-
       setSuivis((prev) => prev.map((s) => (s.id === id ? data : s)));
     } catch (err) {
       console.error(err);
@@ -90,6 +92,12 @@ export default function SuivisEvangelisation() {
     } catch {
       return b;
     }
+  };
+
+  const getConseillerName = (responsableId) => {
+    if (!responsableId || conseillers.length === 0) return "—";
+    const c = conseillers.find((c) => c.id === responsableId);
+    return c ? c.prenom : "—";
   };
 
   return (
@@ -127,13 +135,11 @@ export default function SuivisEvangelisation() {
               className="bg-white rounded-2xl shadow-lg p-4 border-l-4 transition-all"
               style={{ borderLeftColor: getBorderColor(m) }}
             >
-              <h2 className="font-bold text-center">
-                {m.prenom} {m.nom}
-              </h2>
+              <h2 className="font-bold text-center">{m.prenom} {m.nom}</h2>
               <p className="text-sm text-center">📱 {m.telephone || "—"}</p>
               <p className="text-sm text-center">🏠 Cellule : {m.cellules?.cellule_full || "—"}</p>
               <p className="text-sm text-center">
-                👤 Conseiller : {conseillers.find(c => c.id === m.cellules?.responsable)?.prenom || "—"}
+                👤 Conseiller : {getConseillerName(m.cellules?.responsable)}
               </p>
 
               <button
@@ -145,6 +151,7 @@ export default function SuivisEvangelisation() {
                 {detailsSuivi === m.id ? "Fermer détails" : "Détails"}
               </button>
 
+              {/* CARRÉ GRANDISSANT */}
               <div
                 className={`transition-all duration-500 overflow-hidden ${
                   detailsSuivi === m.id ? "max-h-[1000px] mt-3" : "max-h-0"
@@ -211,9 +218,7 @@ export default function SuivisEvangelisation() {
                   <td className="px-1 py-1">{m.prenom} {m.nom}</td>
                   <td className="px-1 py-1">{m.telephone || "—"}</td>
                   <td className="px-1 py-1">{m.cellules?.cellule_full || "—"}</td>
-                  <td className="px-1 py-1">
-                    {conseillers.find(c => c.id === m.cellules?.responsable)?.prenom || "—"}
-                  </td>
+                  <td className="px-1 py-1">{getConseillerName(m.cellules?.responsable)}</td>
                   <td className="px-1 py-1">
                     <button
                       onClick={() => setDetailsSuivi(detailsSuivi?.id === m.id ? null : m)}
@@ -229,7 +234,7 @@ export default function SuivisEvangelisation() {
         </div>
       )}
 
-      {/* POPUP DÉTAILS (VUE TABLE) */}
+      {/* POPUP DÉTAILS */}
       {detailsSuivi && typeof detailsSuivi === "object" && (
         <SuiviDetailsEvanPopup
           member={detailsSuivi}

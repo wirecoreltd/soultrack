@@ -1,90 +1,64 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
-import SuiviDetailsEvanPopup from "../components/SuiviDetailsEvanPopup";
 import EditEvangelisePopup from "../components/EditEvangelisePopup";
+import DetailsEvangePopup from "../components/DetailsEvangePopup";
 
-export default function SuivisEvangelisation() {
-  const [suivis, setSuivis] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
-  const [prenom, setPrenom] = useState("");
-  const [view, setView] = useState("card");
-  const [statusChanges, setStatusChanges] = useState({});
-  const [commentChanges, setCommentChanges] = useState({});
-  const [updating, setUpdating] = useState({});
-  const [detailsSuivi, setDetailsSuivi] = useState(null); // id (card) ou objet (table)
-  const [editingContact, setEditingContact] = useState(null);
+export default function Evangelisation() {
+  const router = useRouter();
+  const [contacts, setContacts] = useState([]);
+  const [cellules, setCellules] = useState([]);
+  const [conseillers, setConseillers] = useState([]);
+  const [selectedTargetType, setSelectedTargetType] = useState("");
+  const [selectedTarget, setSelectedTarget] = useState("");
+  const [checkedContacts, setCheckedContacts] = useState({});
+  const [detailsOpen, setDetailsOpen] = useState({});
+  const [editMember, setEditMember] = useState(null);
+  const [popupMember, setPopupMember] = useState(null);
+  const [loadingSend, setLoadingSend] = useState(false);
+  const [view, setView] = useState("card"); // "card" ou "table"
+
+  const getBorderColor = (member) => {
+    if (member.is_whatsapp) return "#25D366";
+    if (member.besoin) return "#FFB800";
+    return "#888";
+  };
 
   useEffect(() => {
-    fetchSuivis();
+    fetchContacts();
+    fetchCellules();
+    fetchConseillers();
   }, []);
 
-  const fetchSuivis = async () => {
-    setLoading(true);
-    try {
-      const userEmail = localStorage.getItem("userEmail");
-      const userRole = JSON.parse(localStorage.getItem("userRole") || "[]");
-      if (!userEmail) throw new Error("Utilisateur non connecté");
-
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("id, prenom, role")
-        .eq("email", userEmail)
-        .single();
-
-      setPrenom(profileData?.prenom || "cher membre");
-
-      let query = supabase
-        .from("suivis_des_evangelises")
-        .select(`*, cellules:cellule_id (id, cellule, responsable)`)
-        .order("date_suivi", { ascending: false });
-
-      const { data } = await query;
-      setSuivis(data || []);
-      if (!data || data.length === 0) setMessage("Aucun évangélisé à afficher.");
-    } catch (err) {
-      console.error(err);
-      setMessage("Erreur lors de la récupération des suivis.");
-    } finally {
-      setLoading(false);
-    }
+  const fetchContacts = async () => {
+    const { data } = await supabase
+      .from("evangelises")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setContacts(data || []);
   };
 
-  const getBorderColor = (m) => {
-    if (m.status_suivis_evangelises === "En cours") return "#FFA500";
-    if (m.status_suivis_evangelises === "Integrer") return "#34A853";
-    if (m.status_suivis_evangelises === "Venu à l’église") return "#3B82F6";
-    return "#ccc";
+  const fetchCellules = async () => {
+    const { data } = await supabase
+      .from("cellules")
+      .select("id, cellule_full, responsable, telephone");
+    setCellules(data || []);
   };
 
-  const handleCommentChange = (id, value) =>
-    setCommentChanges((prev) => ({ ...prev, [id]: value }));
-
-  const updateSuivi = async (id) => {
-    const newComment = commentChanges[id];
-    if (!newComment) return;
-
-    setUpdating((prev) => ({ ...prev, [id]: true }));
-
-    try {
-      const { data } = await supabase
-        .from("suivis_des_evangelises")
-        .update({ commentaire_evangelises: newComment })
-        .eq("id", id)
-        .select()
-        .single();
-
-      setSuivis((prev) => prev.map((s) => (s.id === id ? data : s)));
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setUpdating((prev) => ({ ...prev, [id]: false }));
-    }
+  const fetchConseillers = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom, telephone")
+      .eq("role", "Conseiller");
+    setConseillers(data || []);
   };
+
+  const handleCheck = (id) =>
+    setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const formatBesoin = (b) => {
     if (!b) return "—";
@@ -97,97 +71,207 @@ export default function SuivisEvangelisation() {
     }
   };
 
+  const selectedContacts = contacts.filter((c) => checkedContacts[c.id]);
+  const hasSelectedContacts = selectedContacts.length > 0;
+
+  const sendContacts = async () => {
+    if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+    setLoadingSend(true);
+
+    try {
+      const cible =
+        selectedTargetType === "cellule"
+          ? cellules.find((c) => c.id == selectedTarget)
+          : conseillers.find((c) => c.id == selectedTarget);
+
+      if (!cible || !cible.telephone)
+        throw new Error("Numéro de la cible invalide");
+
+      const isMultiple = selectedContacts.length > 1;
+
+      let message = `🙏 Bonjour ${cible.responsable || cible.prenom},\n\n`;
+      message += isMultiple
+        ? "Nous te confions avec joie ces personnes rencontrées lors de l’évangélisation.\n"
+        : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n";
+      message += "Merci pour ton coeur et ton engagement dans l’accompagnement 🙏✨\n\n";
+
+      selectedContacts.forEach((m, index) => {
+        message += "────────────────────\n";
+        if (isMultiple) message += `👥 Personne ${index + 1}\n`;
+        message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
+        message += `📱 Téléphone : ${m.telephone || "—"}\n`;
+        message += `🏙️ Ville : ${m.ville || "—"}\n`;
+        message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
+        message += `⚥ Sexe : ${m.sexe || "—"}\n`;
+        message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
+        message += `☀️ Type : ${m.type_conversion || "—"}\n`;
+        message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
+        message += `📝 Infos supplementaires : ${formatBesoin(
+          m.infos_supplementaires
+        )}\n`;
+      });
+
+      message += "\nQue le Seigneur te fortifie et t’utilise puissamment dans ce suivi 🙌\n";
+
+      const waLink = `https://wa.me/${cible.telephone.replace(
+        /\D/g,
+        ""
+      )}?text=${encodeURIComponent(message)}`;
+
+      window.open(waLink, "_blank");
+
+      const insertData = selectedContacts.map((c) => ({
+        prenom: c.prenom,
+        nom: c.nom,
+        telephone: c.telephone,
+        ville: c.ville,
+        besoin: c.besoin,
+        infos_supplementaires: c.infos_supplementaires,
+        is_whatsapp: c.is_whatsapp || false,
+        cellule_id: selectedTargetType === "cellule" ? cible.id : null,
+        responsable_cellule:
+          selectedTargetType === "cellule" ? cible.responsable : null,
+        date_suivi: new Date().toISOString(),
+      }));
+
+      await supabase.from("suivis_des_evangelises").insert(insertData);
+      const idsToDelete = selectedContacts.map((c) => c.id);
+      await supabase.from("evangelises").delete().in("id", idsToDelete);
+
+      alert("✅ Contacts envoyés avec succès !");
+      setCheckedContacts({});
+      fetchContacts();
+    } catch (err) {
+      console.error("Erreur envoi contacts :", err);
+      alert("❌ Une erreur est survenue.");
+    } finally {
+      setLoadingSend(false);
+    }
+  };
+
   return (
     <div
-      className="min-h-screen flex flex-col items-center p-6"
+      className="min-h-screen w-full flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* HEADER */}
+      {/* Header */}
       <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
-        <button onClick={() => window.history.back()} className="text-white">
+        <button onClick={() => router.back()} className="text-white">
           ← Retour
         </button>
         <LogoutLink />
       </div>
 
-      <Image src="/logo.png" alt="Logo" width={80} height={80} />
-      <h1 className="text-3xl font-bold text-white mb-6">
-        📋 Suivis des Évangélisés
-      </h1>
+      <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
+      <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
 
-      {/* Toggle */}
-      <button
-        onClick={() => setView(view === "card" ? "table" : "card")}
-        className="text-white underline mb-4"
-      >
-        {view === "card" ? "Vue Table" : "Vue Carte"}
-      </button>
+      {/* Toggle Vue Carte / Vue Table */}
+      <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
+        <button
+          onClick={() => setView(view === "card" ? "table" : "card")}
+          className="text-sm font-semibold underline text-white"
+        >
+          {view === "card" ? "Vue Table" : "Vue Carte"}
+        </button>
+      </div>
+
+      {/* SELECT */}
+      <div className="w-full max-w-md mb-6">
+        <select
+          value={selectedTargetType}
+          onChange={(e) => {
+            setSelectedTargetType(e.target.value);
+            setSelectedTarget("");
+          }}
+          className="w-full border rounded px-3 py-2 mb-3 text-center"
+        >
+          <option value="">-- Envoyer à --</option>
+          <option value="cellule">Une Cellule</option>
+          <option value="conseiller">Un Conseiller</option>
+        </select>
+
+        {selectedTargetType && (
+          <select
+            value={selectedTarget}
+            onChange={(e) => setSelectedTarget(e.target.value)}
+            className="w-full border rounded px-3 py-2 mb-3 text-center"
+          >
+            <option value="">-- Choisir --</option>
+            {(selectedTargetType === "cellule" ? cellules : conseillers).map(
+              (c) => (
+                <option key={c.id} value={c.id}>
+                  {selectedTargetType === "cellule"
+                    ? `${c.cellule_full} (${c.responsable})`
+                    : `${c.prenom} ${c.nom}`}
+                </option>
+              )
+            )}
+          </select>
+        )}
+
+        {hasSelectedContacts && selectedTarget && (
+          <div className="flex justify-center mt-2">
+            <button
+              onClick={sendContacts}
+              disabled={loadingSend}
+              className="bg-green-500 text-white font-bold px-4 py-2 rounded"
+            >
+              {loadingSend ? "Envoi..." : "📤 Envoyer WhatsApp"}
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* VUE CARTE */}
       {view === "card" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
-          {suivis.map((m) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
+          {contacts.map((member) => (
             <div
-              key={m.id}
-              className="bg-white rounded-2xl shadow-lg p-4 border-l-4 transition-all"
-              style={{ borderLeftColor: getBorderColor(m) }}
+              key={member.id}
+              className="bg-white rounded-2xl shadow-xl p-4 border-l-4 transition-all duration-300"
+              style={{ borderLeftColor: getBorderColor(member) }}
             >
               <h2 className="font-bold text-center">
-                {m.prenom} {m.nom}
+                {member.prenom} {member.nom}
               </h2>
-              <p className="text-sm text-center">📱 {m.telephone || "—"}</p>       
-                
+              <p className="text-center text-sm">📱 {member.telephone || "—"}</p>
+
+              <label className="flex justify-center gap-2 mt-2">
+                <input
+                  type="checkbox"
+                  checked={checkedContacts[member.id] || false}
+                  onChange={() => handleCheck(member.id)}
+                />
+                Sélectionner
+              </label>
+
               <button
                 onClick={() =>
-                  setDetailsSuivi(detailsSuivi === m.id ? null : m.id)
+                  setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
                 }
                 className="text-orange-500 underline text-sm block mx-auto mt-2"
               >
-                {detailsSuivi === m.id ? "Fermer détails" : "Détails"}
+                {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
               </button>
 
-              {/* CARRÉ GRANDISSANT */}
-              <div
-                className={`transition-all duration-500 overflow-hidden ${
-                  detailsSuivi === m.id ? "max-h-[1000px] mt-3" : "max-h-0"
-                }`}
-              >
-                {detailsSuivi === m.id && (
-                  <div className="text-sm space-y-2">                    
-                    <p>🏙️ Ville : {m.ville || "—"}</p>
-                    <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p>⚥ Sexe : {m.sexe || "—"}</p>
-                    <p>🙏 Prière du salut : {m.priere_salut ? "Oui" : "Non"}</p>
-                    <p>☀️ Type : {m.type_conversion || "—"}</p>
-                    <p>❓ Besoin : {formatBesoin(m.besoin)}</p>
-                    <p>📝 Infos supplémentaires : {m.infos_supplementaires || "—"}</p>
+              {detailsOpen[member.id] && (
+                <div className="text-sm mt-3 space-y-1">
+                  <p>🏙️ Ville : {member.ville || ""}</p>
+                  <p>💬 Whatsapp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+                  <p>⚥ Sexe : {member.sexe || "—"}</p>
+                  <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
+                  <p>🏙 Type de conversion : {member.type_conversion || "—"}</p>
+                  <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
+                  <p>📝 Info Supp. : {formatBesoin(member.infos_supplementaires)}</p>
 
-                    <textarea
-                      rows={2}
-                      className="w-full border rounded px-2 py-1 mt-2"
-                      placeholder="Ajouter un commentaire..."
-                      value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
-                      onChange={(e) =>
-                        handleCommentChange(m.id, e.target.value)
-                      }
-                    />
-
-                    <button
-                      onClick={() => updateSuivi(m.id)}
-                      className="w-full bg-green-600 text-white rounded py-1 mt-2"
-                    >
-                      Mettre à jour
-                    </button>
-
-                    <button
-                      onClick={() => setEditingContact(m)}
-                      className="text-blue-600 text-sm text-center mt-3 w-full"
-                    >
-                      ✏️ Modifier le contact
-                    </button>
-                  </div>
-                )}
-              </div>
+                  <button
+                    onClick={() => setEditMember(member)}
+                    className="text-blue-600 text-sm mt-4 w-full text-center"
+                  >
+                    ✏️ Modifier le contact
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -195,28 +279,47 @@ export default function SuivisEvangelisation() {
 
       {/* VUE TABLE */}
       {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto">
-          <table className="w-full text-sm bg-white rounded-lg">
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="px-3 py-2">Nom</th>
-                <th className="px-3 py-2">Téléphone</th>
-                <th className="px-3 py-2">Cellule</th>
-                <th className="px-3 py-2">Action</th>
+        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+          <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto">
+            <thead className="text-sm uppercase">
+              <tr className="bg-gray-200">
+                <th className="px-1 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>
+                  Nom complet
+                </th>
+                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
+                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Ville</th>
+                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Sélectionner</th>
+                <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>Actions</th>
               </tr>
             </thead>
+
             <tbody>
-              {suivis.map((m) => (
-                <tr key={m.id} className="border-b">
-                  <td className="px-3 py-2">{m.prenom} {m.nom}</td>
-                  <td className="px-3 py-2">{m.telephone || "—"}</td>
-                  <td className="px-3 py-2">{m.cellules?.cellule || "—"}</td>
-                  <td className="px-3 py-2">
+              {contacts.map((m) => (
+                <tr key={m.id} className="border-b border-gray-300">
+                  <td className="px-1 py-1">{m.prenom} {m.nom}</td>
+                  <td className="px-1 py-1">{m.telephone || "—"}</td>
+                  <td className="px-1 py-1">{m.ville || "—"}</td>
+                  <td className="px-1 py-1">
+                    <input
+                      type="checkbox"
+                      checked={checkedContacts[m.id] || false}
+                      onChange={() => handleCheck(m.id)}
+                    />
+                  </td>
+                  <td className="px-1 py-1 flex items-center gap-2">
                     <button
-                      onClick={() => setDetailsSuivi(m)}
-                      className="text-orange-500 underline"
+                      onClick={() =>
+                        setPopupMember(popupMember?.id === m.id ? null : m)
+                      }
+                      className="text-orange-500 underline text-sm"
                     >
-                      Détails
+                      {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                    </button>
+                    <button
+                      onClick={() => setEditMember(m)}
+                      className="text-blue-600 underline text-sm"
+                    >
+                      Modifier
                     </button>
                   </td>
                 </tr>
@@ -226,29 +329,33 @@ export default function SuivisEvangelisation() {
         </div>
       )}
 
-      {/* POPUP DÉTAILS (VUE TABLE) */}
-      {detailsSuivi && typeof detailsSuivi === "object" && (
-        <SuiviDetailsEvanPopup
-          member={detailsSuivi}
-          onClose={() => setDetailsSuivi(null)}
-          onEdit={(m) => {
-            setDetailsSuivi(null);
-            setEditingContact(m);
+      {editMember && (
+        <EditEvangelisePopup
+          member={editMember}
+          cellules={cellules}
+          conseillers={conseillers}
+          onClose={() => {
+            setEditMember(null);
+            setPopupMember(null); // ferme aussi le popup de détails si ouvert
           }}
+          onUpdateMember={(data) => {
+            setContacts((prev) =>
+              prev.map((m) => (m.id === data.id ? data : m))
+            );
+            setPopupMember(data); // met à jour instantanément le détail dans le popup
+            setEditMember(null); // ferme l'édition
+          }}
+        />
+      )}
+      
+      {popupMember && (
+        <DetailsEvangePopup
+          member={popupMember}
+          onClose={() => setPopupMember(null)}
+          onEdit={(m) => setEditMember(m)} // déclenche édition depuis le popup
         />
       )}
 
-      {/* POPUP MODIFIER */}
-      {editingContact && (
-        <EditEvangelisePopup
-          member={editingContact}
-          onClose={() => setEditingContact(null)}
-          onUpdateMember={() => {
-            setEditingContact(null);
-            fetchSuivis();
-          }}
-        />
-      )}
     </div>
   );
 }

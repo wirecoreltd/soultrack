@@ -19,40 +19,35 @@ export default function SuivisEvangelisation() {
   const [detailsSuivi, setDetailsSuivi] = useState(null); // id (card) ou objet (table)
   const [editingContact, setEditingContact] = useState(null);
 
-  // Création d'une map pour accéder rapidement aux conseillers
-  const conseillersMap = Object.fromEntries(conseillers.map(c => [c.id, c]));
-
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        // Fetch conseillers
-        const { data: consData } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom, role")
-          .eq("role", "Conseiller");
-        setConseillers(consData || []);
-
-        // Fetch suivis
-        const { data: suivisData } = await supabase
-          .from("suivis_des_evangelises")
-          .select("*, cellules:cellule_id(id, cellule_full, responsable)")
-          .order("date_suivi", { ascending: false });
-        setSuivis(suivisData || []);
-
-        if (!suivisData || suivisData.length === 0) {
-          setMessage("Aucun évangélisé à afficher.");
-        }
-      } catch (err) {
-        console.error(err);
-        setMessage("Erreur lors de la récupération des suivis.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    fetchConseillers();
+    fetchSuivis();
   }, []);
+
+  const fetchConseillers = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom")
+      .eq("role", "Conseiller");
+    setConseillers(data || []);
+  };
+
+  const fetchSuivis = async () => {
+    setLoading(true);
+    try {
+      const { data } = await supabase
+        .from("suivis_des_evangelises")
+        .select(`*, cellules:cellule_id(id, cellule_full, responsable)`)
+        .order("date_suivi", { ascending: false });
+      setSuivis(data || []);
+      if (!data || data.length === 0) setMessage("Aucun évangélisé à afficher.");
+    } catch (err) {
+      console.error(err);
+      setMessage("Erreur lors de la récupération des suivis.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getBorderColor = (m) => {
     if (m.status_suivis_evangelises === "En cours") return "#FFA500";
@@ -138,7 +133,7 @@ export default function SuivisEvangelisation() {
               <p className="text-sm text-center">📱 {m.telephone || "—"}</p>
               <p className="text-sm text-center">🏠 Cellule : {m.cellules?.cellule_full || "—"}</p>
               <p className="text-sm text-center">
-                👤 Conseiller : {conseillersMap[m.cellules?.responsable]?.prenom || "—"}
+                👤 Conseiller : {conseillers.find(c => c.id === m.cellules?.responsable)?.prenom || "—"}
               </p>
 
               <button
@@ -150,7 +145,6 @@ export default function SuivisEvangelisation() {
                 {detailsSuivi === m.id ? "Fermer détails" : "Détails"}
               </button>
 
-              {/* CARRÉ GRANDISSANT */}
               <div
                 className={`transition-all duration-500 overflow-hidden ${
                   detailsSuivi === m.id ? "max-h-[1000px] mt-3" : "max-h-0"
@@ -171,9 +165,7 @@ export default function SuivisEvangelisation() {
                       className="w-full border rounded px-2 py-1 mt-2"
                       placeholder="Ajouter un commentaire..."
                       value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
-                      onChange={(e) =>
-                        handleCommentChange(m.id, e.target.value)
-                      }
+                      onChange={(e) => handleCommentChange(m.id, e.target.value)}
                     />
 
                     <button
@@ -219,13 +211,15 @@ export default function SuivisEvangelisation() {
                   <td className="px-1 py-1">{m.prenom} {m.nom}</td>
                   <td className="px-1 py-1">{m.telephone || "—"}</td>
                   <td className="px-1 py-1">{m.cellules?.cellule_full || "—"}</td>
-                  <td className="px-1 py-1">{conseillersMap[m.cellules?.responsable]?.prenom || "—"}</td>
+                  <td className="px-1 py-1">
+                    {conseillers.find(c => c.id === m.cellules?.responsable)?.prenom || "—"}
+                  </td>
                   <td className="px-1 py-1">
                     <button
-                      onClick={() => setDetailsSuivi(m)}
+                      onClick={() => setDetailsSuivi(detailsSuivi?.id === m.id ? null : m)}
                       className="text-orange-500 underline text-sm"
                     >
-                      Détails
+                      {detailsSuivi?.id === m.id ? "Fermer détails" : "Détails"}
                     </button>
                   </td>
                 </tr>
@@ -254,8 +248,7 @@ export default function SuivisEvangelisation() {
           onClose={() => setEditingContact(null)}
           onUpdateMember={() => {
             setEditingContact(null);
-            // Re-fetch pour mettre à jour la vue
-            fetchData();
+            fetchSuivis();
           }}
         />
       )}

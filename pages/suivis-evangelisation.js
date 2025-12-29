@@ -205,74 +205,80 @@ export default function SuivisEvangelisation() {
       )}
 
       {/* VUE TABLE */}
-        {view === "table" && (
+        {view === "table" && Array.isArray(suivis) && (
           <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
             <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto bg-white rounded-lg">
               <thead className="text-sm uppercase">
                 <tr className="bg-gray-200">
-                  <th className="px-1 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>
+                  <th className="px-2 py-2 rounded-tl-lg" style={{ color: "#2E3192" }}>
                     Nom complet
                   </th>
-                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>
+                  <th className="px-2 py-2" style={{ color: "#2E3192" }}>
                     Téléphone
                   </th>
-                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>
+                  <th className="px-2 py-2" style={{ color: "#2E3192" }}>
                     Attribué à
                   </th>
-                  <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>
+                  <th className="px-2 py-2 rounded-tr-lg" style={{ color: "#2E3192" }}>
                     Actions
                   </th>
                 </tr>
               </thead>
         
               <tbody>
-                {suivis.map((m) => (
-                  <tr key={m.id} className="border-b border-gray-300">
-                    <td className="px-1 py-1">
-                      {m.prenom} {m.nom}
-                    </td>
-        
-                    <td className="px-1 py-1">
-                      {m.telephone || "—"}
-                    </td>
-        
-                    {/* 🔥 Cellule OU Conseiller */}
-                    <td className="px-1 py-1 whitespace-nowrap">
-                      {m.cellule_id
-                        ? `🏠 ${
-                            cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"
-                          }`
-                        : m.conseiller_id
-                        ? `👤 ${
-                            conseillers.find((c) => c.id === m.conseiller_id)?.prenom || ""
-                          } ${
-                            conseillers.find((c) => c.id === m.conseiller_id)?.nom || ""
-                          }`
-                        : "—"}
-                    </td>
-        
-                    <td className="px-1 py-1 flex items-center gap-2">
-                      <button
-                        onClick={() => setDetailsSuivi(m)}
-                        className="text-orange-500 underline text-sm"
-                      >
-                        Détails
-                      </button>
-        
-                      <button
-                        onClick={() => setEditingContact(m)}
-                        className="text-blue-600 underline text-sm"
-                      >
-                        Modifier
-                      </button>
+                {suivis.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="text-center py-4 text-gray-500">
+                      Aucun suivi trouvé
                     </td>
                   </tr>
-                ))}
+                )}
+        
+                {suivis.map((m) => {
+                  const cellule = cellules?.find((c) => c.id === m.cellule_id);
+                  const conseiller = conseillers?.find((c) => c.id === m.conseiller_id);
+        
+                  return (
+                    <tr key={m.id} className="border-b border-gray-300">
+                      <td className="px-2 py-2">
+                        {m.prenom} {m.nom}
+                      </td>
+        
+                      <td className="px-2 py-2">
+                        {m.telephone || "—"}
+                      </td>
+        
+                      {/* ✅ Cellule OU Conseiller */}
+                      <td className="px-2 py-2 whitespace-nowrap">
+                        {cellule
+                          ? `🏠 ${cellule.cellule_full}`
+                          : conseiller
+                          ? `👤 ${conseiller.prenom} ${conseiller.nom}`
+                          : "—"}
+                      </td>
+        
+                      <td className="px-2 py-2 flex items-center gap-3">
+                        <button
+                          onClick={() => setDetailsSuivi(m)}
+                          className="text-orange-500 underline text-sm"
+                        >
+                          Détails
+                        </button>
+        
+                        <button
+                          onClick={() => setEditingContact(m)}
+                          className="text-blue-600 underline text-sm"
+                        >
+                          Modifier
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
-
 
       {/* POPUP DÉTAILS */}
       {detailsSuivi && typeof detailsSuivi === "object" && (

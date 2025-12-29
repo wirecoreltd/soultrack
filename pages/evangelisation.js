@@ -89,14 +89,13 @@ export default function Evangelisation() {
 
       const isMultiple = selectedContacts.length > 1;
 
-      let message = `🙏 Bonjour ${cible.responsable || cible.prenom},\n\n`;
+      let message = `👋 Bonjour ${cible.responsable || cible.prenom},\n\n`;
       message += isMultiple
         ? "Nous te confions avec joie ces personnes rencontrées lors de l’évangélisation.\n"
         : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n";
-      message += "Merci pour ton coeur et ton engagement dans l’accompagnement 🙏✨\n\n";
+      message += "Merci pour ton coeur et ton engagement dans l’accompagnement\n\n";
 
-      selectedContacts.forEach((m, index) => {
-        message += "────────────────────\n";
+      selectedContacts.forEach((m, index) => {        
         if (isMultiple) message += `👥 Personne ${index + 1}\n`;
         message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
         message += `📱 Téléphone : ${m.telephone || "—"}\n`;
@@ -131,6 +130,7 @@ export default function Evangelisation() {
         cellule_id: selectedTargetType === "cellule" ? cible.id : null,
         responsable_cellule:
           selectedTargetType === "cellule" ? cible.responsable : null,
+        conseiller_id: selectedTargetType === "conseiller" ? cible.id : null, 
         date_suivi: new Date().toISOString(),
       }));
 

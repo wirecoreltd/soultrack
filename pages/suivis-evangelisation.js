@@ -17,6 +17,7 @@ export default function SuivisEvangelisation() {
   const [checkedContacts, setCheckedContacts] = useState({});
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
+  const conseiller = conseillers.find(c => c.id === m.responsable_cellule);
 
   useEffect(() => {
     fetchSuivis();
@@ -138,12 +139,7 @@ export default function SuivisEvangelisation() {
               </h2>
               <p className="text-sm text-center">📱 {m.telephone || "—"}</p>
               <p className="text-sm text-center">🏠 Cellule : {m.cellules?.cellule_full || "—"}</p>              
-              <p className="text-sm text-center">
-                👤 Conseiller : {conseillers.find(c => c.id === m.responsable_cellule)
-                  ? `${conseillers.find(c => c.id === m.responsable_cellule).prenom} ${conseillers.find(c => c.id === m.responsable_cellule).nom}`
-                  : "—"}
-              </p>
-
+              <p>👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}</p>
 
               <button
                 onClick={() =>

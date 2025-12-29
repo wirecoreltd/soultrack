@@ -1,13 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import supabase from "../lib/supabaseClient"; // Assure-toi que ce chemin est correct
+import supabase from "../lib/supabaseClient"; // assure-toi que le chemin est correct
 
-export default function EditEvangelisePopup({
-  member,
-  onClose,
-  onUpdateMember,
-}) {
+export default function EditEvangelisePopup({ member, onClose, onUpdateMember }) {
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
 
   const initialBesoin =
@@ -49,16 +45,10 @@ export default function EditEvangelisePopup({
     setLoading(true);
 
     try {
-      // 🔹 Convertir besoin en JSON pour Supabase
-      const updateData = {
-        ...formData,
-        besoin: JSON.stringify(formData.besoin),
-      };
-
       const { data, error } = await supabase
         .from("suivis_des_evangelises")
-        .update(updateData)
-        .eq("id", member.id) // member.id doit être UUID si la table a un UUID
+        .update({ ...formData, besoin: formData.besoin })
+        .eq("id", parseInt(member.id, 10)) // 🔥 conversion bigint
         .select()
         .single();
 
@@ -70,7 +60,7 @@ export default function EditEvangelisePopup({
       setTimeout(() => onClose(), 1000);
     } catch (err) {
       console.error(err);
-      alert("❌ Erreur lors de la modification : " + err.message);
+      alert("❌ Erreur lors de la modification");
     } finally {
       setLoading(false);
     }
@@ -79,6 +69,7 @@ export default function EditEvangelisePopup({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-xl w-96 max-h-[90vh] overflow-y-auto relative shadow-xl">
+        {/* CROIX */}
         <button
           onClick={onClose}
           className="absolute top-2 right-3 text-gray-500 font-bold"

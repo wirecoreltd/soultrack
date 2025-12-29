@@ -5,7 +5,6 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditEvangelisePopup from "../components/EditEvangelisePopup";
-import DetailsEvangePopup from "../components/DetailsEvangePopup";
 
 export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
@@ -29,7 +28,6 @@ export default function SuivisEvangelisation() {
         .from("suivis_des_evangelises")
         .select("*, cellules:cellule_id (id, cellule_full)")
         .order("date_suivi", { ascending: false });
-
       setSuivis(data || []);
     } catch (err) {
       console.error(err);
@@ -44,7 +42,6 @@ export default function SuivisEvangelisation() {
         .from("profiles")
         .select("id, prenom, nom")
         .eq("role", "Conseiller");
-
       setConseillers(data || []);
     } catch (err) {
       console.error(err);
@@ -127,42 +124,67 @@ export default function SuivisEvangelisation() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
           {suivis.map((m) => {
             const conseiller = conseillers.find(
-              (c) => c.id === m.conseiller_id
+              (c) => c.id === m.conseiller_id || c.id === m.responsable_cellule
             );
 
             return (
               <div
                 key={m.id}
-                className="bg-white rounded-2xl shadow-lg p-4 border-l-4"
+                className="bg-white rounded-2xl shadow-lg p-4 border-l-4 transition-all"
                 style={{ borderLeftColor: getBorderColor(m) }}
               >
                 <h2 className="font-bold text-center">
                   {m.prenom} {m.nom}
                 </h2>
-
                 <p className="text-sm text-center">📱 {m.telephone || "—"}</p>
-
+                <p className="text-sm text-center">🏠 Cellule : {m.cellules?.cellule_full || "—"}</p>
                 <p className="text-sm text-center">
-                  {m.cellules
-                    ? `🏠 ${m.cellules.cellule_full}`
-                    : conseiller
-                    ? `👤 ${conseiller.prenom} ${conseiller.nom}`
-                    : "—"}
+                  👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
                 </p>
+                <p className="text-sm text-center">💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
 
                 <button
-                  onClick={() => setDetailsSuivi(m)}
+                  onClick={() => setDetailsSuivi(detailsSuivi === m.id ? null : m.id)}
                   className="text-orange-500 underline text-sm block mx-auto mt-2"
                 >
-                  Détails
+                  {detailsSuivi === m.id ? "Fermer détails" : "Détails"}
                 </button>
 
-                <button
-                  onClick={() => setEditingContact(m)}
-                  className="text-blue-600 underline text-sm block mx-auto mt-1"
+                <div
+                  className={`transition-all duration-500 overflow-hidden ${
+                    detailsSuivi === m.id ? "max-h-[1000px] mt-3" : "max-h-0"
+                  }`}
                 >
-                  ✏️ Modifier
-                </button>
+                  {detailsSuivi === m.id && (
+                    <div className="text-sm space-y-2">
+                      <p>🏙️ Ville : {m.ville || "—"}</p>
+                      <p>⚥ Sexe : {m.sexe || "—"}</p>
+                      <p>🙏 Prière du salut : {m.priere_salut ? "Oui" : "Non"}</p>
+                      <p>☀️ Type : {m.type_conversion || "—"}</p>
+                      <p>❓ Besoin : {formatBesoin(m.besoin)}</p>
+                      <p>📝 Infos supplémentaires : {m.infos_supplementaires || "—"}</p>
+                      <textarea
+                        rows={2}
+                        className="w-full border rounded px-2 py-1 mt-2"
+                        placeholder="Ajouter un commentaire..."
+                        value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
+                        onChange={(e) => handleCommentChange(m.id, e.target.value)}
+                      />
+                      <button
+                        onClick={() => updateSuivi(m.id)}
+                        className="w-full bg-green-600 text-white rounded py-1 mt-2"
+                      >
+                        Mettre à jour
+                      </button>
+                      <button
+                        onClick={() => setEditingContact(m)}
+                        className="text-blue-600 text-sm text-center mt-3 w-full"
+                      >
+                        ✏️ Modifier le contact
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -190,28 +212,19 @@ export default function SuivisEvangelisation() {
 
                 return (
                   <tr key={m.id} className="border-b">
-                    <td className="px-2 py-2">
-                      {m.prenom} {m.nom}
-                    </td>
-
+                    <td className="px-2 py-2">{m.prenom} {m.nom}</td>
                     <td className="px-2 py-2">{m.telephone || "—"}</td>
-
                     <td className="px-2 py-2 whitespace-nowrap">
-                      {m.cellules
-                        ? `🏠 ${m.cellules.cellule_full}`
-                        : conseiller
-                        ? `👤 ${conseiller.prenom} ${conseiller.nom}`
-                        : "—"}
+                      {m.cellules ? `🏠 ${m.cellules.cellule_full}` :
+                        conseiller ? `👤 ${conseiller.prenom} ${conseiller.nom}` : "—"}
                     </td>
-
                     <td className="px-2 py-2 flex gap-3">
                       <button
-                        onClick={() => setDetailsSuivi(m)}
+                        onClick={() => setDetailsSuivi(detailsSuivi === m.id ? null : m.id)}
                         className="text-orange-500 underline"
                       >
-                        Détails
+                        {detailsSuivi === m.id ? "Fermer détails" : "Détails"}
                       </button>
-
                       <button
                         onClick={() => setEditingContact(m)}
                         className="text-blue-600 underline"
@@ -225,18 +238,6 @@ export default function SuivisEvangelisation() {
             </tbody>
           </table>
         </div>
-      )}
-
-      {/* ===================== POPUP DÉTAILS ===================== */}
-      {detailsSuivi && (
-        <DetailsEvangePopup
-          member={detailsSuivi}
-          onClose={() => setDetailsSuivi(null)}
-          onEdit={(m) => {
-            setDetailsSuivi(null);
-            setEditingContact(m);
-          }}
-        />
       )}
 
       {/* ===================== POPUP MODIFIER ===================== */}

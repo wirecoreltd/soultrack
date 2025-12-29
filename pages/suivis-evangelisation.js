@@ -205,44 +205,50 @@ export default function SuivisEvangelisation() {
       )}
 
       {/* VUE TABLE */}
-        {view === "table" && (
-          <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-            <table className="w-full text-sm border-collapse table-auto bg-white/80 rounded-lg shadow-md">
-              <thead className="text-sm uppercase">
-                <tr className="bg-gray-200/80">
-                  <th className="px-2 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
-                  <th className="px-2 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
-                  <th className="px-2 py-1 text-left" style={{ color: "#2E3192" }}>Attribué à</th>
-                  <th className="px-2 py-1 rounded-tr-lg text-center" style={{ color: "#2E3192" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {suivis.map((m) => {
-                  const conseiller = conseillers.find(
-                    (c) => c.id === m.conseiller_id || c.id === m.responsable_cellule
-                  );
-                  const attribution = m.cellule?.cellule_full || (conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—");
-        
-                  return (
-                    <tr key={m.id} className="border-b border-gray-300 hover:bg-gray-100/50">
-                      <td className="px-2 py-1">{m.prenom} {m.nom}</td>
-                      <td className="px-2 py-1">{m.telephone || "—"}</td>
-                      <td className="px-2 py-1">{attribution}</td>
-                      <td className="px-2 py-1 text-center">
-                        <button
-                          onClick={() => setDetailsSuivi(m)}
-                          className="text-orange-500 underline text-sm"
-                        >
-                          Détails
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+{view === "table" && (
+  <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+    <table className="w-full text-sm border-collapse table-auto bg-white/80 rounded-lg shadow-md">
+      <thead className="text-sm uppercase">
+        <tr className="bg-gray-200/80">
+          <th className="px-2 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
+          <th className="px-2 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
+          <th className="px-2 py-1 text-left" style={{ color: "#2E3192" }}>Attribué à</th>
+          <th className="px-2 py-1 rounded-tr-lg text-center" style={{ color: "#2E3192" }}>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {suivis.map((m) => {
+          const conseiller = conseillers.find(
+            (c) => c.id === m.conseiller_id || c.id === m.responsable_cellule
+          );
+          const cellule = cellules.find(c => c.id === m.cellule_id);
+          const attribution = cellule
+            ? cellule.cellule_full
+            : conseiller
+            ? `${conseiller.prenom} ${conseiller.nom}`
+            : "—";
+
+          return (
+            <tr key={m.id} className="border-b border-gray-300 hover:bg-gray-100/50">
+              <td className="px-2 py-1">{m.prenom} {m.nom}</td>
+              <td className="px-2 py-1">{m.telephone || "—"}</td>
+              <td className="px-2 py-1">{attribution}</td>
+              <td className="px-2 py-1 text-center">
+                <button
+                  onClick={() => setDetailsSuivi(m)}
+                  className="text-orange-500 underline text-sm"
+                >
+                  Détails
+                </button>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+)}
+
 
 
       {/* POPUP DÉTAILS */}

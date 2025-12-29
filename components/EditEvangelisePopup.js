@@ -3,7 +3,7 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function EditEvangelisSuivis({
+export default function EditEvangelisePopup({
   member,
   onClose,
   onUpdate,

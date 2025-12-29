@@ -3,11 +3,7 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function EditEvangelisSuivis({
-  member,
-  onClose,
-  onUpdate,
-}) {
+export default function EditEvangelisSuivis({ member, onClose, onUpdate }) {
   const besoinsOptions = [
     "Finances",
     "Santé",
@@ -27,8 +23,8 @@ export default function EditEvangelisSuivis({
     telephone: member.telephone || "",
     ville: member.ville || "",
     sexe: member.sexe || "",
+    priere_salut: member.priere_salut ? "Oui" : "Non",
     type_conversion: member.type_conversion || "",
-    priere_salut: member.priere_salut || false,
     besoin: initialBesoin,
     infos_supplementaires: member.infos_supplementaires || "",
     commentaire_evangelises: member.commentaire_evangelises || "",
@@ -39,11 +35,8 @@ export default function EditEvangelisSuivis({
   const [message, setMessage] = useState("");
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleBesoinChange = (e) => {
@@ -60,24 +53,28 @@ export default function EditEvangelisSuivis({
     setLoading(true);
 
     try {
+      const payload = {
+        ...formData,
+        priere_salut: formData.priere_salut === "Oui",
+        type_conversion:
+          formData.priere_salut === "Oui" ? formData.type_conversion : null,
+        besoin: formData.besoin,
+      };
+
       const { data, error } = await supabase
         .from("suivis_des_evangelises")
-        .update({
-          ...formData,
-          besoin: formData.besoin,
-        })
+        .update(payload)
         .eq("id", member.id)
         .select()
         .single();
 
       if (error) throw error;
 
+      // 🔥 MISE À JOUR INSTANTANÉE
       if (onUpdate) onUpdate(data);
 
       setMessage("✅ Modifications enregistrées");
-      setTimeout(() => {
-        onClose();
-      }, 1000);
+      setTimeout(onClose, 800);
     } catch (err) {
       console.error(err);
       alert("❌ Erreur lors de la modification");
@@ -102,29 +99,88 @@ export default function EditEvangelisSuivis({
         </h2>
 
         <div className="space-y-3 text-sm">
-          <input name="prenom" value={formData.prenom} onChange={handleChange} className="w-full border rounded px-2 py-1" placeholder="Prénom" />
-          <input name="nom" value={formData.nom} onChange={handleChange} className="w-full border rounded px-2 py-1" placeholder="Nom" />
-          <input name="telephone" value={formData.telephone} onChange={handleChange} className="w-full border rounded px-2 py-1" placeholder="Téléphone" />
-          <input name="ville" value={formData.ville} onChange={handleChange} className="w-full border rounded px-2 py-1" placeholder="Ville" />
+          <input
+            name="prenom"
+            value={formData.prenom}
+            onChange={handleChange}
+            className="w-full border rounded px-2 py-1"
+            placeholder="Prénom"
+          />
 
-          <select name="sexe" value={formData.sexe} onChange={handleChange} className="w-full border rounded px-2 py-1">
+          <input
+            name="nom"
+            value={formData.nom}
+            onChange={handleChange}
+            className="w-full border rounded px-2 py-1"
+            placeholder="Nom"
+          />
+
+          <input
+            name="telephone"
+            value={formData.telephone}
+            onChange={handleChange}
+            className="w-full border rounded px-2 py-1"
+            placeholder="Téléphone"
+          />
+
+          <input
+            name="ville"
+            value={formData.ville}
+            onChange={handleChange}
+            className="w-full border rounded px-2 py-1"
+            placeholder="Ville"
+          />
+
+          <select
+            name="sexe"
+            value={formData.sexe}
+            onChange={handleChange}
+            className="w-full border rounded px-2 py-1"
+          >
             <option value="">Sexe</option>
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
           </select>
 
-          <select name="type_conversion" value={formData.type_conversion} onChange={handleChange} className="w-full border rounded px-2 py-1">
-            <option value="">Type de conversion</option>
-            <option value="Rue">Rue</option>
-            <option value="Invité">Invité</option>
-            <option value="Église">Église</option>
+          {/* Prière du salut */}
+          <select
+            className="w-full border rounded px-2 py-1"
+            value={formData.priere_salut}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                priere_salut: e.target.value,
+                type_conversion:
+                  e.target.value === "Oui" ? formData.type_conversion : "",
+              })
+            }
+            required
+          >
+            <option value="Non">Prière du salut ?</option>
+            <option value="Oui">Oui</option>
+            <option value="Non">Non</option>
           </select>
 
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="priere_salut" checked={formData.priere_salut} onChange={handleChange} />
-            Prière du salut
-          </label>
+          {/* Type de conversion */}
+          {formData.priere_salut === "Oui" && (
+            <select
+              className="w-full border rounded px-2 py-1"
+              value={formData.type_conversion}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  type_conversion: e.target.value,
+                })
+              }
+              required
+            >
+              <option value="">Type</option>
+              <option value="Nouveau converti">Nouveau converti</option>
+              <option value="Réconciliation">Réconciliation</option>
+            </select>
+          )}
 
+          {/* Besoins */}
           <div>
             <p className="font-semibold mb-1">Besoins</p>
             {besoinsOptions.map((b) => (
@@ -170,7 +226,9 @@ export default function EditEvangelisSuivis({
             <option value="Integrer">Intégré</option>
           </select>
 
-          {message && <p className="text-green-600 text-center">{message}</p>}
+          {message && (
+            <p className="text-green-600 text-center">{message}</p>
+          )}
 
           <button
             onClick={handleSubmit}
@@ -181,4 +239,6 @@ export default function EditEvangelisSuivis({
           </button>
         </div>
       </div>
-    </d
+    </div>
+  );
+}

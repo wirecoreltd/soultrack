@@ -191,54 +191,89 @@ export default function SuivisEvangelisation() {
         </div>
       )}
 
-      {/* ===================== VUE TABLE ===================== */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto">
-          <table className="w-full text-sm bg-white rounded-lg">
-            <thead className="bg-gray-200 uppercase">
-              <tr>
-                <th className="px-2 py-2">Nom</th>
-                <th className="px-2 py-2">Téléphone</th>
-                <th className="px-2 py-2">Attribué à</th>
-                <th className="px-2 py-2">Actions</th>
-              </tr>
-            </thead>
+     {/* ===================== VUE TABLE ===================== */}
+{view === "table" && (
+  <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+    <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto
+                      bg-white/80 backdrop-blur-md rounded-xl shadow-lg">
+      
+      <thead className="text-sm uppercase">
+        <tr className="bg-white/60">
+          <th
+            className="px-2 py-2 rounded-tl-xl text-left font-semibold"
+            style={{ color: "#2E3192" }}
+          >
+            Nom complet
+          </th>
+          <th
+            className="px-2 py-2 text-left font-semibold"
+            style={{ color: "#2E3192" }}
+          >
+            Téléphone
+          </th>
+          <th
+            className="px-2 py-2 text-left font-semibold"
+            style={{ color: "#2E3192" }}
+          >
+            Cellule
+          </th>
+          <th
+            className="px-2 py-2 text-left font-semibold"
+            style={{ color: "#2E3192" }}
+          >
+            Conseiller
+          </th>
+          <th
+            className="px-2 py-2 rounded-tr-xl text-left font-semibold"
+            style={{ color: "#2E3192" }}
+          >
+            Actions
+          </th>
+        </tr>
+      </thead>
 
-            <tbody>
-              {suivis.map((m) => {
-                const conseiller = conseillers.find(
-                  (c) => c.id === m.conseiller_id
-                );
+      <tbody>
+        {suivis.map((m) => (
+          <tr
+            key={m.id}
+            className="border-b border-gray-300/40
+                       hover:bg-white/60 transition"
+          >
+            <td className="px-2 py-2">
+              {m.prenom} {m.nom}
+            </td>
 
-                return (
-                  <tr key={m.id} className="border-b">
-                    <td className="px-2 py-2">{m.prenom} {m.nom}</td>
-                    <td className="px-2 py-2">{m.telephone || "—"}</td>
-                    <td className="px-2 py-2 whitespace-nowrap">
-                      {m.cellules ? `🏠 ${m.cellules.cellule_full}` :
-                        conseiller ? `👤 ${conseiller.prenom} ${conseiller.nom}` : "—"}
-                    </td>
-                    <td className="px-2 py-2 flex gap-3">
-                      <button
-                        onClick={() => setDetailsSuivi(detailsSuivi === m.id ? null : m.id)}
-                        className="text-orange-500 underline"
-                      >
-                        {detailsSuivi === m.id ? "Fermer détails" : "Détails"}
-                      </button>
-                      <button
-                        onClick={() => setEditingContact(m)}
-                        className="text-blue-600 underline"
-                      >
-                        Modifier
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+            <td className="px-2 py-2">
+              {m.telephone || "—"}
+            </td>
+
+            <td className="px-2 py-2">
+              {m.cellules ? `🏠 ${m.cellules.cellule_full}` : "—"}
+            </td>
+
+            <td className="px-2 py-2">
+              {conseillers.find(c => c.id === m.conseiller_id)
+                ? `👤 ${
+                    conseillers.find(c => c.id === m.conseiller_id)?.prenom
+                  }`
+                : "—"}
+            </td>
+
+            <td className="px-2 py-2 flex items-center gap-3">
+              <button className="text-orange-500 underline text-sm">
+                Détails
+              </button>
+              <button className="text-blue-600 underline text-sm">
+                Modifier
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
+
 
 
       {/* ===================== POPUP MODIFIER ===================== */}

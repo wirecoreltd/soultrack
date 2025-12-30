@@ -220,11 +220,14 @@ export default function SuivisEvangelisation() {
                     </td>
                     <td className="px-2 py-2 flex gap-3">
                       <button
-                        onClick={() => setDetailsSuivi(detailsSuivi === m.id ? null : m.id)}
-                        className="text-orange-500 underline"
-                      >
-                        {detailsSuivi === m.id ? "Fermer détails" : "Détails"}
-                      </button>
+  onClick={() =>
+    setDetailsSuivi(detailsSuivi?.id === m.id ? null : m)
+  }
+  className="text-orange-500 underline"
+>
+  {detailsSuivi?.id === m.id ? "Fermer détails" : "Détails"}
+</button>
+
                       <button
                         onClick={() => setEditingContact(m)}
                         className="text-blue-600 underline"

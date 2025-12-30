@@ -191,15 +191,14 @@ export default function SuivisEvangelisation() {
         </div>
       )}
 
-    {/* ===================== VUE TABLE ===================== */}
+     {/* ===================== VUE TABLE ===================== */}
 {view === "table" && (
-  <div className="w-full max-w-6xl overflow-x-auto">
-    <table
-      className="w-full text-sm text-left border-separate border-spacing-0 table-auto
-                 bg-transparent rounded-xl overflow-hidden"
-    >
-      <thead>
-        <tr className="bg-white/70">
+  <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+    <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto
+                      bg-white/80 backdrop-blur-md rounded-xl shadow-lg">
+      
+      <thead className="text-sm uppercase">
+        <tr className="bg-white/60">
           <th
             className="px-2 py-2 rounded-tl-xl text-left font-semibold"
             style={{ color: "#2E3192" }}
@@ -237,7 +236,8 @@ export default function SuivisEvangelisation() {
         {suivis.map((m) => (
           <tr
             key={m.id}
-            className="border-b border-white/40 hover:bg-white/30 transition"
+            className="border-b border-gray-300/40
+                       hover:bg-white/60 transition"
           >
             <td className="px-2 py-2">
               {m.prenom} {m.nom}
@@ -259,7 +259,7 @@ export default function SuivisEvangelisation() {
                 : "—"}
             </td>
 
-            <td className="px-2 py-2 flex gap-3">
+            <td className="px-2 py-2 flex items-center gap-3">
               <button className="text-orange-500 underline text-sm">
                 Détails
               </button>
@@ -273,7 +273,6 @@ export default function SuivisEvangelisation() {
     </table>
   </div>
 )}
-
 
 
 

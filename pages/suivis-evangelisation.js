@@ -194,73 +194,130 @@ export default function SuivisEvangelisation() {
         </div>
       )}
 
-      {/* ===================== VUE TABLE (SANS <table>) ===================== */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl space-y-2">
-          <div className="grid grid-cols-4 px-4 py-3 bg-white/20 backdrop-blur rounded-xl font-semibold">
-            <div>Nom</div>
-            <div>Téléphone</div>
-            <div>Attribué à</div>
-            <div>Actions</div>
-          </div>
+    {/* ===================== VUE TABLE ===================== */}
+{view === "table" && (
+  <div className="w-full max-w-6xl overflow-x-auto">
+    {/* scroll horizontal mobile */}
+    <div className="min-w-[720px]">
+      <table className="w-full text-sm bg-transparent border-separate border-spacing-y-2">
+        <thead className="uppercase text-gray-600">
+          <tr>
+            <th className="px-3 py-2 text-left">Nom</th>
+            <th className="px-3 py-2 text-left">Téléphone</th>
+            <th className="px-3 py-2 text-left">Attribué à</th>
+            <th className="px-3 py-2 text-left">Actions</th>
+          </tr>
+        </thead>
 
+        <tbody>
           {suivis.map((m) => {
             const conseiller = conseillers.find(
               (c) => c.id === m.conseiller_id
             );
-            const ouvert = detailsSuivi?.id === m.id;
+
+            const isOpen = detailsSuivi?.id === m.id;
 
             return (
-              <div key={m.id}>
-                <div className="grid grid-cols-4 px-4 py-3 bg-white/10 rounded-xl">
-                  <div>{m.prenom} {m.nom}</div>
-                  <div>{m.telephone || "—"}</div>
-                  <div>
+              <React.Fragment key={m.id}>
+                {/* ===== LIGNE ===== */}
+                <tr className="bg-white/70 backdrop-blur rounded-lg shadow-sm">
+                  <td className="px-3 py-3 rounded-l-lg">
+                    {m.prenom} {m.nom}
+                  </td>
+
+                  <td className="px-3 py-3 whitespace-nowrap">
+                    {m.telephone || "—"}
+                  </td>
+
+                  <td className="px-3 py-3 whitespace-nowrap">
                     {m.cellules
                       ? `🏠 ${m.cellules.cellule_full}`
                       : conseiller
                       ? `👤 ${conseiller.prenom} ${conseiller.nom}`
                       : "—"}
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setDetailsSuivi(ouvert ? null : m)}
-                      className="text-orange-400 underline text-sm"
-                    >
-                      {ouvert ? "Fermer" : "Détails"}
-                    </button>
-                    <button
-                      onClick={() => setEditingContact(m)}
-                      className="text-blue-400 underline text-sm"
-                    >
-                      Modifier
-                    </button>
-                  </div>
-                </div>
+                  </td>
 
-                {/* DÉTAILS */}
-                <div
-                  className={`overflow-hidden transition-all duration-500 ${
-                    ouvert ? "max-h-[500px] mt-2" : "max-h-0"
-                  }`}
-                >
-                  {ouvert && (
-                    <div className="bg-white rounded-xl p-4 text-sm grid grid-cols-2 gap-3">
-                      <p>🏙️ {m.ville || "—"}</p>
-                      <p>⚥ {m.sexe || "—"}</p>
-                      <p>🙏 {m.priere_salut ? "Oui" : "Non"}</p>
-                      <p>☀️ {m.type_conversion || "—"}</p>
-                      <p className="col-span-2">
-                        ❓ {formatBesoin(m.besoin)}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
+                  <td className="px-3 py-3 rounded-r-lg">
+                    <button
+                      onClick={() =>
+                        setDetailsSuivi(isOpen ? null : m)
+                      }
+                      className="text-orange-500 underline text-sm"
+                    >
+                      {isOpen ? "Fermer" : "Détails"}
+                    </button>
+                  </td>
+                </tr>
+
+                {/* ===== DETAILS (CARTE GRANDISSANTE) ===== */}
+                {isOpen && (
+                  <tr>
+                    <td colSpan={4} className="pt-2">
+                      <div className="bg-white rounded-xl shadow-md p-4 animate-[scaleIn_0.2s_ease-out]">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+
+                          <div>
+                            <p className="font-semibold text-gray-600">
+                              Nom complet
+                            </p>
+                            <p>{m.prenom} {m.nom}</p>
+                          </div>
+
+                          <div>
+                            <p className="font-semibold text-gray-600">
+                              Téléphone
+                            </p>
+                            <p>{m.telephone || "—"}</p>
+                          </div>
+
+                          <div>
+                            <p className="font-semibold text-gray-600">
+                              Cellule
+                            </p>
+                            <p>{m.cellules?.cellule_full || "—"}</p>
+                          </div>
+
+                          <div>
+                            <p className="font-semibold text-gray-600">
+                              Conseiller
+                            </p>
+                            <p>
+                              {conseiller
+                                ? `${conseiller.prenom} ${conseiller.nom}`
+                                : "—"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* ACTIONS DANS DETAILS */}
+                        <div className="mt-4 flex gap-4">
+                          <button
+                            onClick={() => setEditingContact(m)}
+                            className="text-blue-600 underline text-sm"
+                          >
+                            Modifier
+                          </button>
+
+                          <button
+                            onClick={() => setDetailsSuivi(null)}
+                            className="text-gray-500 underline text-sm"
+                          >
+                            Fermer
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             );
           })}
-        </div>
-      )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+
 
       {/* ===================== POPUP MODIFIER ===================== */}
       {editingContact && (

@@ -194,10 +194,10 @@ export default function SuivisEvangelisation() {
         </div>
       )}
 
-    {/* ===================== VUE TABLE ===================== */}
+   {/* ===================== VUE TABLE ===================== */}
 {view === "table" && (
   <div className="w-full max-w-6xl overflow-x-auto">
-    {/* Scroll horizontal pour mobile portrait */}
+    {/* scroll horizontal mobile portrait */}
     <div className="min-w-[720px]">
       <table className="w-full text-sm bg-transparent border-separate border-spacing-y-2">
         <thead className="uppercase text-gray-600">
@@ -215,65 +215,36 @@ export default function SuivisEvangelisation() {
               (c) => c.id === m.conseiller_id
             );
 
-            const isOpen = detailsSuivi?.id === m.id;
-
             return (
-              <>
-                {/* ===== LIGNE PRINCIPALE ===== */}
-                <tr
-                  key={m.id}
-                  className="bg-white/70 backdrop-blur rounded-lg shadow-sm"
-                >
-                  <td className="px-3 py-3 rounded-l-lg">
-                    {m.prenom} {m.nom}
-                  </td>
+              <tr
+                key={m.id}
+                className="bg-white/70 backdrop-blur rounded-lg shadow-sm"
+              >
+                <td className="px-3 py-3 rounded-l-lg">
+                  {m.prenom} {m.nom}
+                </td>
 
-                  <td className="px-3 py-3 whitespace-nowrap">
-                    {m.telephone || "—"}
-                  </td>
+                <td className="px-3 py-3 whitespace-nowrap">
+                  {m.telephone || "—"}
+                </td>
 
-                  <td className="px-3 py-3 whitespace-nowrap">
-                    {m.cellules
-                      ? `🏠 ${m.cellules.cellule_full}`
-                      : conseiller
-                      ? `👤 ${conseiller.prenom} ${conseiller.nom}`
-                      : "—"}
-                  </td>
+                <td className="px-3 py-3 whitespace-nowrap">
+                  {m.cellules
+                    ? `🏠 ${m.cellules.cellule_full}`
+                    : conseiller
+                    ? `👤 ${conseiller.prenom} ${conseiller.nom}`
+                    : "—"}
+                </td>
 
-                  <td className="px-3 py-3 rounded-r-lg">
-                    <button
-                      onClick={() =>
-                        setDetailsSuivi(isOpen ? null : m)
-                      }
-                      className="text-orange-500 underline text-sm"
-                    >
-                      {isOpen ? "Fermer" : "Détails"}
-                    </button>
-                  </td>
-                </tr>
-
-                {/* ===== DETAILS EN CARTE (DANS TABLE) ===== */}
-                {isOpen && (
-                  <tr>
-                    <td colSpan={4} className="pt-2">
-                      <div className="bg-white rounded-xl shadow-md p-4 space-y-2">
-                        <p>🏙️ Ville : {m.ville || "—"}</p>
-                        <p>⚥ Sexe : {m.sexe || "—"}</p>
-                        <p>🙏 Prière du salut : {m.priere_salut ? "Oui" : "Non"}</p>
-                        <p>❓ Besoin : {formatBesoin(m.besoin)}</p>
-
-                        {/* bouton modifier DANS les détails */}
-                        <button
-                          onClick={() => setEditingContact(m)}
-                          className="text-blue-600 underline text-sm mt-2"
-                        >
-                          Modifier
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </>
+                <td className="px-3 py-3 rounded-r-lg">
+                  <button
+                    onClick={() => setDetailsSuivi(m)}
+                    className="text-orange-500 underline text-sm"
+                  >
+                    Détails
+                  </button>
+                </td>
+              </tr>
             );
           })}
         </tbody>

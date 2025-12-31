@@ -250,8 +250,21 @@ export default function SuivisEvangelisation() {
         </tbody>
       </table>
     </div>
+
+    {/* ===== DETAILS POPUP ===== */}
+    {detailsSuivi && (
+      <DetailsEvangePopup
+        member={detailsSuivi}
+        onClose={() => setDetailsSuivi(null)}
+        onEdit={(m) => {
+          setDetailsSuivi(null);
+          setEditingContact(m);
+        }}
+      />
+    )}
   </div>
 )}
+
 
 
 

@@ -5,6 +5,7 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditEvangelisePopup from "../components/EditEvangelisePopup";
+import DetailsEvangePopup from "../components/DetailsEvangePopup";
 
 export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);

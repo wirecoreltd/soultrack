@@ -259,29 +259,46 @@ export default function SuivisEvangelisation() {
           </div>
 
           {/* ===== DETAILS POPUP ===== */}
-          {detailsSuivi && (
-            <DetailsEvangePopup
-              member={detailsSuivi}
-              onClose={() => setDetailsSuivi(null)}
-              onEdit={(suivi) => {
-                if (!suivi.evangelises?.id) return;
-                setDetailsSuivi(null);
-                setEditingContact(suivi.evangelises);
-              }}
-            />
-          )}
+{detailsSuivi && (
+  <DetailsEvangePopup
+    member={detailsSuivi}
+    onClose={() => setDetailsSuivi(null)}
+    onEdit={(suivi) => {
+      if (!suivi.evangelises?.id) {
+        alert("❌ Cette évangélisé n'existe pas encore dans la table evangelises.");
+        return;
+      }
 
-          {/* ===== POPUP MODIFIER ===== */}
-          {editingContact && (
-            <EditEvangelisePopup
-              member={editingContact}
-              onClose={() => setEditingContact(null)}
-              onUpdateMember={() => {
-                setEditingContact(null);
-                fetchSuivis();
-              }}
-            />
-          )}
+      // On passe uniquement l'objet evangelises avec son UUID correct
+      setEditingContact(suivi.evangelises);
+      setDetailsSuivi(null);
+    }}
+  />
+)}
+
+{/* ===== POPUP MODIFIER ===== */}
+{editingContact && (
+  <EditEvangelisePopup
+    member={editingContact}
+    onClose={() => setEditingContact(null)}
+    onUpdateMember={(updatedEvangelise) => {
+      setEditingContact(null);
+
+      // 🔥 Mettre à jour la vue dans le state local
+      setSuivis((prev) =>
+        prev.map((s) =>
+          s.evangelise_id === updatedEvangelise.id
+            ? { ...s, evangelises: updatedEvangelise }
+            : s
+        )
+      );
+
+      // ⚡ Refetch optionnel si tu veux tout synchroniser avec la base
+      // fetchSuivis();
+    }}
+  />
+)
+
         </div>
       )}
     </div>

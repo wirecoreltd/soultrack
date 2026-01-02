@@ -86,7 +86,7 @@ export default function EditEvangelisePopup({
     const { error, data } = await supabase
       .from("evangelises")
       .update(cleanData)
-      .eq("id", member.evangelise_id)
+      .eq("id", member.id)
       .select()
       .single();
 

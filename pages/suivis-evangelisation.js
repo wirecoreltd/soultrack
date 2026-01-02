@@ -255,34 +255,31 @@ export default function SuivisEvangelisation() {
     </div>
 
     {/* ===== DETAILS POPUP ===== */}
-{detailsSuivi && (
-  <DetailsEvangePopup
-    member={detailsSuivi}
-    onClose={() => setDetailsSuivi(null)}
-    onEdit={(suivi) => {
-      setDetailsSuivi(null);
+    {detailsSuivi && (
+      <DetailsEvangePopup
+        member={detailsSuivi}
+        onClose={() => setDetailsSuivi(null)}
+        onEdit={(suivi) => {
+          setDetailsSuivi(null);
+          setEditingContact({
+            ...suivi.evangelises,
+            evangelise_id: suivi.evangelise_id,
+          });
+        }}
+      />
+    )}
 
-      // 🔥 ON PASSE UNIQUEMENT L’EVANGELISÉ
-      setEditingContact({
-        ...suivi.evangelises,
-        evangelise_id: suivi.evangelise_id,
-      });
-    }}
-  />
-)}
+    {/* ===== POPUP MODIFIER ===== */}
+    {editingContact && (
+      <EditEvangelisePopup
+        member={editingContact}
+        onClose={() => setEditingContact(null)}
+        onUpdateMember={() => {
+          setEditingContact(null);
+          fetchSuivis();
+        }}
+      />
+    )}
 
-{/* ===== POPUP MODIFIER ===== */}
-{editingContact && (
-  <EditEvangelisePopup
-    member={editingContact}
-    onClose={() => setEditingContact(null)}
-    onUpdateMember={() => {
-      setEditingContact(null);
-      fetchSuivis();
-    }}
-  />
-)}
-
-    </div>
-  );
-}
+  </div>
+);

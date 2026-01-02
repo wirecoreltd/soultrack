@@ -197,90 +197,90 @@ export default function SuivisEvangelisation() {
         </div>
       )}
 
-   {/* ===================== VUE TABLE ===================== */}
-{view === "table" && (
-  <div className="w-full max-w-6xl overflow-x-auto">
-    {/* scroll horizontal mobile portrait */}
-    <div className="min-w-[720px]">
-      <table className="w-full text-sm bg-transparent border-separate border-spacing-y-2">
-        <thead className="uppercase text-gray-600">
-          <tr>
-            <th className="px-3 py-2 text-left">Nom</th>
-            <th className="px-3 py-2 text-left">Téléphone</th>
-            <th className="px-3 py-2 text-left">Attribué à</th>
-            <th className="px-3 py-2 text-left">Actions</th>
-          </tr>
-        </thead>
+        {/* ===================== VUE TABLE ===================== */}
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto">
+          <div className="min-w-[720px]">
+            <table className="w-full text-sm bg-transparent border-separate border-spacing-y-2">
+              <thead className="uppercase text-gray-600">
+                <tr>
+                  <th className="px-3 py-2 text-left">Nom</th>
+                  <th className="px-3 py-2 text-left">Téléphone</th>
+                  <th className="px-3 py-2 text-left">Attribué à</th>
+                  <th className="px-3 py-2 text-left">Actions</th>
+                </tr>
+              </thead>
 
-        <tbody>
-          {suivis.map((m) => {
-            const conseiller = conseillers.find(
-              (c) => c.id === m.conseiller_id
-            );
+              <tbody>
+                {suivis.map((m) => {
+                  const conseiller = conseillers.find(
+                    (c) => c.id === m.conseiller_id
+                  );
 
-            return (
-              <tr
-                key={m.id}
-                className="bg-white/70 backdrop-blur rounded-lg shadow-sm"
-              >
-                <td className="px-3 py-3 rounded-l-lg">
-                  {m.prenom} {m.nom}
-                </td>
+                  return (
+                    <tr
+                      key={m.id}
+                      className="bg-white/70 backdrop-blur rounded-lg shadow-sm"
+                    >
+                      <td className="px-3 py-3 rounded-l-lg">
+                        {m.prenom} {m.nom}
+                      </td>
 
-                <td className="px-3 py-3 whitespace-nowrap">
-                  {m.telephone || "—"}
-                </td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        {m.telephone || "—"}
+                      </td>
 
-                <td className="px-3 py-3 whitespace-nowrap">
-                  {m.cellules
-                    ? `🏠 ${m.cellules.cellule_full}`
-                    : conseiller
-                    ? `👤 ${conseiller.prenom} ${conseiller.nom}`
-                    : "—"}
-                </td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        {m.cellules
+                          ? `🏠 ${m.cellules.cellule_full}`
+                          : conseiller
+                          ? `👤 ${conseiller.prenom} ${conseiller.nom}`
+                          : "—"}
+                      </td>
 
-                <td className="px-3 py-3 rounded-r-lg">
-                  <button
-                    onClick={() => setDetailsSuivi(m)}
-                    className="text-orange-500 underline text-sm"
-                  >
-                    Détails
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                      <td className="px-3 py-3 rounded-r-lg">
+                        <button
+                          onClick={() => setDetailsSuivi(m)}
+                          className="text-orange-500 underline text-sm"
+                        >
+                          Détails
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ===== DETAILS POPUP ===== */}
+      {detailsSuivi && (
+        <DetailsEvangePopup
+          member={detailsSuivi}
+          onClose={() => setDetailsSuivi(null)}
+          onEdit={(suivi) => {
+            setDetailsSuivi(null);
+            setEditingContact({
+              ...suivi.evangelises,
+              evangelise_id: suivi.evangelise_id,
+            });
+          }}
+        />
+      )}
+
+      {/* ===== POPUP MODIFIER ===== */}
+      {editingContact && (
+        <EditEvangelisePopup
+          member={editingContact}
+          onClose={() => setEditingContact(null)}
+          onUpdateMember={() => {
+            setEditingContact(null);
+            fetchSuivis();
+          }}
+        />
+      )}
     </div>
-
-    {/* ===== DETAILS POPUP ===== */}
-    {detailsSuivi && (
-      <DetailsEvangePopup
-        member={detailsSuivi}
-        onClose={() => setDetailsSuivi(null)}
-        onEdit={(suivi) => {
-          setDetailsSuivi(null);
-          setEditingContact({
-            ...suivi.evangelises,
-            evangelise_id: suivi.evangelise_id,
-          });
-        }}
-      />
-    )}
-
-    {/* ===== POPUP MODIFIER ===== */}
-    {editingContact && (
-      <EditEvangelisePopup
-        member={editingContact}
-        onClose={() => setEditingContact(null)}
-        onUpdateMember={() => {
-          setEditingContact(null);
-          fetchSuivis();
-        }}
-      />
-    )}
-
-  </div>
-);
+  );
 }

@@ -26,15 +26,17 @@ export default function SuivisEvangelisation() {
   /* ================= FETCH ================= */
 
   const fetchSuivis = async () => {
-    setLoading(true);
-    const { data } = await supabase
-      .from("suivis_des_evangelises")
-      .select("*, cellules:cellule_id (id, cellule_full)")
-      .order("date_suivi", { ascending: false });
+  const { data, error } = await supabase
+    .from("suivis_des_evangelises")
+    .select(`
+      *,
+      evangelises (*)
+    `)
+    .order("id", { ascending: false });
 
-    setSuivis(data || []);
-    setLoading(false);
-  };
+  if (!error) setSuivis(data);
+};
+
 
   const fetchConseillers = async () => {
     const { data } = await supabase
@@ -253,33 +255,34 @@ export default function SuivisEvangelisation() {
     </div>
 
     {/* ===== DETAILS POPUP ===== */}
-    {detailsSuivi && (
-      <DetailsEvangePopup
-        member={detailsSuivi}
-        onClose={() => setDetailsSuivi(null)}
-        onEdit={(m) => {
-          setDetailsSuivi(null);
-          setEditingContact(m);
-        }}
-      />
-    )}
-  </div>
+{detailsSuivi && (
+  <DetailsEvangePopup
+    member={detailsSuivi}
+    onClose={() => setDetailsSuivi(null)}
+    onEdit={(suivi) => {
+      setDetailsSuivi(null);
+
+      // 🔥 ON PASSE UNIQUEMENT L’EVANGELISÉ
+      setEditingContact({
+        ...suivi.evangelises,
+        evangelise_id: suivi.evangelise_id,
+      });
+    }}
+  />
 )}
 
+{/* ===== POPUP MODIFIER ===== */}
+{editingContact && (
+  <EditEvangelisePopup
+    member={editingContact}
+    onClose={() => setEditingContact(null)}
+    onUpdateMember={() => {
+      setEditingContact(null);
+      fetchSuivis();
+    }}
+  />
+)}
 
-
-
-      {/* ===================== POPUP MODIFIER ===================== */}
-      {editingContact && (
-        <EditEvangelisePopup
-          member={editingContact}
-          onClose={() => setEditingContact(null)}
-          onUpdateMember={() => {
-            setEditingContact(null);
-            fetchSuivis();
-          }}
-        />
-      )}
     </div>
   );
 }

@@ -35,7 +35,6 @@ export default function SuivisEvangelisation() {
       .order("id", { ascending: false });
 
     if (!error) setSuivis(data);
-    setLoading(false);
   };
 
   const fetchConseillers = async () => {
@@ -165,8 +164,12 @@ export default function SuivisEvangelisation() {
                         rows={2}
                         className="w-full border rounded px-2 py-1"
                         placeholder="Ajouter un commentaire..."
-                        value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
-                        onChange={(e) => handleCommentChange(m.id, e.target.value)}
+                        value={
+                          commentChanges[m.id] ?? m.commentaire_evangelises ?? ""
+                        }
+                        onChange={(e) =>
+                          handleCommentChange(m.id, e.target.value)
+                        }
                       />
 
                       <button
@@ -177,10 +180,11 @@ export default function SuivisEvangelisation() {
                       </button>
 
                       <button
-                        onClick={() => {
-                          if (!m.evangelises?.id) return;
-                          setEditingContact(m.evangelises);
-                        }}
+                        onClick={() =>
+                          setEditingContact(
+                            m.evangelises && m.evangelises.id ? m.evangelises : null
+                          )
+                        }
                         className="text-blue-600 text-sm underline w-full"
                       >
                         ✏️ Modifier
@@ -210,7 +214,9 @@ export default function SuivisEvangelisation() {
 
               <tbody>
                 {suivis.map((m) => {
-                  const conseiller = conseillers.find((c) => c.id === m.conseiller_id);
+                  const conseiller = conseillers.find(
+                    (c) => c.id === m.conseiller_id
+                  );
 
                   return (
                     <tr
@@ -240,16 +246,6 @@ export default function SuivisEvangelisation() {
                         >
                           Détails
                         </button>
-
-                        <button
-                          onClick={() => {
-                            if (!m.evangelises?.id) return;
-                            setEditingContact(m.evangelises);
-                          }}
-                          className="text-blue-600 underline text-sm ml-2"
-                        >
-                          Modifier
-                        </button>
                       </td>
                     </tr>
                   );
@@ -259,46 +255,40 @@ export default function SuivisEvangelisation() {
           </div>
 
           {/* ===== DETAILS POPUP ===== */}
-{detailsSuivi && (
-  <DetailsEvangePopup
-    member={detailsSuivi}
-    onClose={() => setDetailsSuivi(null)}
-    onEdit={(suivi) => {
-      if (!suivi.evangelises?.id) {
-        alert("❌ Cette évangélisé n'existe pas encore dans la table evangelises.");
-        return;
-      }
+          {detailsSuivi && (
+            <DetailsEvangePopup
+              member={detailsSuivi}
+              onClose={() => setDetailsSuivi(null)}
+              onEdit={(suivi) => {
+                if (!suivi.evangelises?.id) {
+                  alert(
+                    "❌ Cette évangélisé n'existe pas encore dans la table evangelises."
+                  );
+                  return;
+                }
+                setEditingContact(suivi.evangelises);
+                setDetailsSuivi(null);
+              }}
+            />
+          )}
 
-      // On passe uniquement l'objet evangelises avec son UUID correct
-      setEditingContact(suivi.evangelises);
-      setDetailsSuivi(null);
-    }}
-  />
-)}
-
-{/* ===== POPUP MODIFIER ===== */}
-{editingContact && (
-  <EditEvangelisePopup
-    member={editingContact}
-    onClose={() => setEditingContact(null)}
-    onUpdateMember={(updatedEvangelise) => {
-      setEditingContact(null);
-
-      // 🔥 Mettre à jour la vue dans le state local
-      setSuivis((prev) =>
-        prev.map((s) =>
-          s.evangelise_id === updatedEvangelise.id
-            ? { ...s, evangelises: updatedEvangelise }
-            : s
-        )
-      );
-
-      // ⚡ Refetch optionnel si tu veux tout synchroniser avec la base
-      // fetchSuivis();
-    }}
-  />
-)
-
+          {/* ===== POPUP MODIFIER ===== */}
+          {editingContact && (
+            <EditEvangelisePopup
+              member={editingContact}
+              onClose={() => setEditingContact(null)}
+              onUpdateMember={(updatedEvangelise) => {
+                setEditingContact(null);
+                setSuivis((prev) =>
+                  prev.map((s) =>
+                    s.evangelise_id === updatedEvangelise.id
+                      ? { ...s, evangelises: updatedEvangelise }
+                      : s
+                  )
+                );
+              }}
+            />
+          )}
         </div>
       )}
     </div>

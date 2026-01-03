@@ -181,30 +181,105 @@ export default function SuivisEvangelisation() {
         </div>
       )}
 
-      {/* ===================== VUE TABLE ===================== */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto">
-          <table className="w-full bg-white/80 rounded-lg">
-            <tbody>
-              {suivis.map((m) => (
-                <tr key={m.id}>
-                  <td className="px-4 py-3">
-                    {m.evangelises?.prenom} {m.evangelises?.nom}
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => setDetailsSuivi(m)}
-                      className="text-orange-600 underline"
-                    >
-                      Détails
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+     {/* ===================== VUE TABLE ===================== */}
+{view === "table" && (
+  <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+    {/* scroll horizontal mobile */}
+    <div className="min-w-[900px]">
+      <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto bg-white rounded-lg shadow">
+        <thead className="text-sm uppercase">
+          <tr className="bg-gray-200">
+            <th
+              className="px-3 py-2 rounded-tl-lg text-left"
+              style={{ color: "#2E3192" }}
+            >
+              Nom complet
+            </th>
+            <th
+              className="px-3 py-2 text-left"
+              style={{ color: "#2E3192" }}
+            >
+              Téléphone
+            </th>
+            <th
+              className="px-3 py-2 text-left"
+              style={{ color: "#2E3192" }}
+            >
+              Cellule
+            </th>
+            <th
+              className="px-3 py-2 text-left"
+              style={{ color: "#2E3192" }}
+            >
+              Conseiller
+            </th>
+            <th
+              className="px-3 py-2 rounded-tr-lg text-left"
+              style={{ color: "#2E3192" }}
+            >
+              Actions
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {suivis.map((m) => {
+            const conseiller = conseillers.find(
+              (c) =>
+                c.id === m.conseiller_id ||
+                c.id === m.cellules?.responsable
+            );
+
+            return (
+              <tr
+                key={m.id}
+                className="border-b border-gray-300 hover:bg-gray-50"
+              >
+                <td className="px-3 py-2">
+                  {m.evangelises?.prenom} {m.evangelises?.nom}
+                </td>
+
+                <td className="px-3 py-2 whitespace-nowrap">
+                  {m.evangelises?.telephone || "—"}
+                </td>
+
+                <td className="px-3 py-2">
+                  {m.cellules?.cellule_full || "—"}
+                </td>
+
+                <td className="px-3 py-2">
+                  {conseiller
+                    ? `${conseiller.prenom} ${conseiller.nom}`
+                    : "—"}
+                </td>
+
+                <td className="px-3 py-2 flex items-center gap-3">
+                  <button
+                    onClick={() => setDetailsSuivi(m)}
+                    className="text-orange-500 underline text-sm"
+                  >
+                    Détails
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      m.evangelises?.id &&
+                      setEditingContact(m.evangelises)
+                    }
+                    className="text-blue-600 underline text-sm"
+                  >
+                    Modifier
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+
 
       {/* ================= POPUPS (TABLE UNIQUEMENT) ================= */}
       {view === "table" && detailsSuivi && (

@@ -195,6 +195,7 @@ export default function SuivisEvangelisation() {
 
 
 
+
       {/* ===================== VUE TABLE ===================== */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto">

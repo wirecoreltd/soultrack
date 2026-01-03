@@ -8,6 +8,7 @@ import EditEvangelisePopup from "../components/EditEvangelisePopup";
 import DetailsEvangePopup from "../components/DetailsEvangePopup";
 
 export default function SuivisEvangelisation() {
+  const [currentUser, setCurrentUser] = useState(null);
   const [suivis, setSuivis] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,16 +21,30 @@ export default function SuivisEvangelisation() {
   const [commentChanges, setCommentChanges] = useState({});
 
   useEffect(() => {
-    fetchSuivis();
-    fetchConseillers();
+    const getUser = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (user) setCurrentUser(user);
+    };
+    getUser();
   }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchSuivis();
+      fetchConseillers();
+    }
+  }, [currentUser]);
 
   /* ================= FETCH ================= */
   const fetchSuivis = async () => {
+    setLoading(true);
+
     const { data } = await supabase
       .from("suivis_des_evangelises")
       .select(`*, evangelises (*), cellules (*)`)
-      .order("id", { ascending: false });
+      .order("id", { ascending: false })
+      // Filtre pour ne voir que les contacts attribués à l'utilisateur connecté
+      .or(`conseiller_id.eq.${currentUser.id},cellules.responsable.eq.${currentUser.id}`);
 
     setSuivis(data || []);
     setLoading(false);
@@ -83,6 +98,8 @@ export default function SuivisEvangelisation() {
     setDetailsTable(null);
     setEditingContact(null);
   };
+
+  if (loading) return <p className="text-center mt-10 text-white">Chargement...</p>;
 
   /* ================= RENDER ================= */
   return (
@@ -233,12 +250,12 @@ export default function SuivisEvangelisation() {
                         {m.evangelises?.telephone || "—"}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">
-  {m.cellules?.cellule_full
-    ? `🏠 ${m.cellules.cellule_full}`
-    : conseiller
-    ? `👤 ${conseiller.prenom} ${conseiller.nom}`
-    : "—"}
-</td>
+                        {m.cellules?.cellule_full
+                          ? `🏠 ${m.cellules.cellule_full}`
+                          : conseiller
+                          ? `👤 ${conseiller.prenom} ${conseiller.nom}`
+                          : "—"}
+                      </td>
 
                       <td className="px-3 py-2 flex gap-3">
                         <button

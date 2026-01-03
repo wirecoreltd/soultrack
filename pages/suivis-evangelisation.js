@@ -1,303 +1,248 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
-import Image from "next/image";
+import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
+import Image from "next/image";
+import LogoutLink from "../components/LogoutLink";
+import EditEvangelisePopup from "../components/EditEvangelisePopup";
+import DetailsEvangePopup from "../components/DetailsEvangePopup";
 
-export default function AddEvangelise() {
-  const router = useRouter();
-  const { token } = router.query;
+export default function SuivisEvangelisation() {
+  const [suivis, setSuivis] = useState([]);
+  const [conseillers, setConseillers] = useState([]);
+  const [view, setView] = useState("card");
 
-  const [formData, setFormData] = useState({
-    nom: "",
-    prenom: "",
-    telephone: "",
-    ville: "",
-    statut: "evangelisé",
-    sexe: "",
-    priere_salut: "", // ✅ valeur neutre
-    type_conversion: "",
-    besoin: [],
-    infos_supplementaires: "",
-    is_whatsapp: false,
-  });
+  const [detailsSuivi, setDetailsSuivi] = useState(null);
+  const [editingEvangelise, setEditingEvangelise] = useState(null);
 
-  const [showOtherField, setShowOtherField] = useState(false);
-  const [otherBesoin, setOtherBesoin] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState("");
-
-  const besoinsList = [
-    "Finances",
-    "Santé",
-    "Travail",
-    "Les Enfants",
-    "La Famille",
-    "Paix",
-  ];
-
-  // 🔐 Vérification du token
   useEffect(() => {
-    if (!token) return;
+    fetchSuivis();
+    fetchConseillers();
+  }, []);
 
-    const verifyToken = async () => {
-      setLoading(true);
+  /* ================= FETCH ================= */
 
-      const { data, error } = await supabase
-        .from("access_tokens")
-        .select("*")
-        .eq("token", token)
-        .gte("expires_at", new Date().toISOString())
-        .single();
+  const fetchSuivis = async () => {
+    const { data, error } = await supabase
+      .from("suivis_des_evangelises")
+      .select(`
+        *,
+        evangelises (*),
+        cellules (cellule_full)
+      `)
+      .order("id", { ascending: false });
 
-      if (error || !data) {
-        setErrorMsg("Lien invalide ou expiré.");
-      }
-      setLoading(false);
-    };
-
-    verifyToken();
-  }, [token]);
-
-  const handleBesoinChange = (value) => {
-    let updated = [...formData.besoin];
-    if (updated.includes(value)) {
-      updated = updated.filter((b) => b !== value);
-    } else {
-      updated.push(value);
-    }
-    setFormData({ ...formData, besoin: updated });
+    if (!error) setSuivis(data || []);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const fetchConseillers = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom")
+      .eq("role", "Conseiller");
 
-    const finalBesoins = [...formData.besoin];
-    if (showOtherField && otherBesoin.trim()) {
-      finalBesoins.push(otherBesoin.trim());
-    }
+    setConseillers(data || []);
+  };
 
-    const finalData = {
-      ...formData,
-      besoin: finalBesoins,
-      priere_salut: formData.priere_salut === "Oui", // BOOLEAN en DB
-    };
+  /* ================= HELPERS ================= */
 
+  const getBorderColor = (m) => {
+    if (m.status_suivis_evangelises === "En cours") return "#FFA500";
+    if (m.status_suivis_evangelises === "Integrer") return "#34A853";
+    if (m.status_suivis_evangelises === "Venu à l’église") return "#3B82F6";
+    return "#ccc";
+  };
+
+  const formatBesoin = (b) => {
+    if (!b) return "—";
     try {
-      // 1️⃣ Insert évangélisé
-      const { error: insertError } = await supabase
-        .from("evangelises")
-        .insert([finalData]);
-
-      if (insertError) throw insertError;
-
-      // 2️⃣ Rapport du jour
-      const today = new Date().toISOString().slice(0, 10);
-
-      const hommes = formData.sexe === "Homme" ? 1 : 0;
-      const femmes = formData.sexe === "Femme" ? 1 : 0;
-      const priere = formData.priere_salut === "Oui" ? 1 : 0;
-      const nouveau_converti =
-        formData.type_conversion === "Nouveau converti" ? 1 : 0;
-      const reconciliation =
-        formData.type_conversion === "Réconciliation" ? 1 : 0;
-
-      const { data: existingReport, error: fetchError } = await supabase
-        .from("rapport_evangelisation")
-        .select("*")
-        .eq("date", today)
-        .single();
-
-      if (fetchError && fetchError.code !== "PGRST116") throw fetchError;
-
-      if (existingReport) {
-        await supabase
-          .from("rapport_evangelisation")
-          .update({
-            hommes: existingReport.hommes + hommes,
-            femmes: existingReport.femmes + femmes,
-            priere: existingReport.priere + priere,
-            nouveau_converti:
-              existingReport.nouveau_converti + nouveau_converti,
-            reconciliation:
-              existingReport.reconciliation + reconciliation,
-          })
-          .eq("date", today);
-      } else {
-        await supabase.from("rapport_evangelisation").insert([
-          {
-            date: today,
-            hommes,
-            femmes,
-            priere,
-            nouveau_converti,
-            reconciliation,
-          },
-        ]);
-      }
-
-      // ✅ Reset form
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-
-      setFormData({
-        nom: "",
-        prenom: "",
-        telephone: "",
-        ville: "",
-        statut: "evangelisé",
-        sexe: "",
-        priere_salut: "", // ✅ reset propre
-        type_conversion: "",
-        besoin: [],
-        infos_supplementaires: "",
-        is_whatsapp: false,
-      });
-
-      setShowOtherField(false);
-      setOtherBesoin("");
-    } catch (err) {
-      alert(err.message);
+      const arr = JSON.parse(b);
+      return Array.isArray(arr) ? arr.join(", ") : b;
+    } catch {
+      return b;
     }
   };
 
-  const handleCancel = () => {
-    setFormData({
-      nom: "",
-      prenom: "",
-      telephone: "",
-      ville: "",
-      statut: "evangelisé",
-      sexe: "",
-      priere_salut: "", // ✅ reset propre
-      type_conversion: "",
-      besoin: [],
-      infos_supplementaires: "",
-      is_whatsapp: false,
-    });
-
-    setShowOtherField(false);
-    setOtherBesoin("");
+  const openEditFromSuivi = (suivi) => {
+    if (!suivi.evangelises?.id) {
+      alert("❌ Aucun évangélisé lié à ce suivi");
+      return;
+    }
+    setEditingEvangelise(suivi.evangelises);
   };
 
-  if (loading)
-    return <p className="text-center mt-10">Vérification du lien...</p>;
-  if (errorMsg)
-    return <p className="text-center mt-10 text-red-600">{errorMsg}</p>;
+  /* ================= RENDER ================= */
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg">
-
-        <div className="flex justify-center mb-6">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
-        </div>
-
-        <h1 className="text-3xl font-bold text-center mb-2">
-          Ajouter une personne évangélisée
-        </h1>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-
-          <input className="input" placeholder="Prénom" required
-            value={formData.prenom}
-            onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
-          />
-
-          <input className="input" placeholder="Nom" required
-            value={formData.nom}
-            onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-          />
-
-          <input className="input" placeholder="Téléphone"
-            value={formData.telephone}
-            onChange={(e) =>
-              setFormData({ ...formData, telephone: e.target.value })
-            }
-          />
-
-          <input className="input" placeholder="Ville"
-            value={formData.ville}
-            onChange={(e) =>
-              setFormData({ ...formData, ville: e.target.value })
-            }
-          />
-
-          <select className="input" required
-            value={formData.sexe}
-            onChange={(e) =>
-              setFormData({ ...formData, sexe: e.target.value })
-            }
-          >
-            <option value="">Sexe</option>
-            <option value="Homme">Homme</option>
-            <option value="Femme">Femme</option>
-          </select>
-
-          {/* ✅ PRIER DU SALUT */}
-          <select
-            className="input"
-            value={formData.priere_salut}
-            required
-            onChange={(e) => {
-              const value = e.target.value;
-              setFormData({
-                ...formData,
-                priere_salut: value,
-                type_conversion: value === "Oui" ? formData.type_conversion : "",
-              });
-            }}
-          >
-            <option value="" disabled hidden>
-              Prière du salut ?
-            </option>
-            <option value="Oui">Oui</option>
-            <option value="Non">Non</option>
-          </select>
-
-          {formData.priere_salut === "Oui" && (
-            <select className="input" required
-              value={formData.type_conversion}
-              onChange={(e) =>
-                setFormData({ ...formData, type_conversion: e.target.value })
-              }
-            >
-              <option value="">Type</option>
-              <option value="Nouveau converti">Nouveau converti</option>
-              <option value="Réconciliation">Réconciliation</option>
-            </select>
-          )}
-
-          <div className="flex gap-4">
-            <button type="button" onClick={handleCancel}
-              className="flex-1 bg-gray-400 text-white py-3 rounded-2xl">
-              Annuler
-            </button>
-
-            <button type="submit"
-              className="flex-1 bg-indigo-600 text-white py-3 rounded-2xl">
-              Ajouter
-            </button>
-          </div>
-        </form>
-
-        {success && (
-          <p className="text-green-600 text-center mt-3">
-            ✅ Ajout réussi !
-          </p>
-        )}
-
-        <style jsx>{`
-          .input {
-            width: 100%;
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid #ccc;
-          }
-        `}</style>
+    <div
+      className="min-h-screen p-6"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+    >
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-6">
+        <button onClick={() => history.back()} className="text-white">
+          ← Retour
+        </button>
+        <LogoutLink />
       </div>
+
+      <div className="text-center mb-6">
+        <Image src="/logo.png" alt="Logo" width={80} height={80} />
+        <h1 className="text-3xl font-bold text-white mt-4">
+          📋 Suivis des Évangélisés
+        </h1>
+      </div>
+
+      {/* TOGGLE */}
+      <div className="text-center mb-6">
+        <button
+          onClick={() => setView(view === "card" ? "table" : "card")}
+          className="text-white underline"
+        >
+          {view === "card" ? "Vue Table" : "Vue Carte"}
+        </button>
+      </div>
+
+      {/* ===================== VUE CARTE ===================== */}
+      {view === "card" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {suivis.map((m) => {
+            const ouvert = detailsSuivi?.id === m.id;
+
+            return (
+              <div
+                key={m.id}
+                className="bg-white rounded-2xl shadow-lg p-4 border-l-4"
+                style={{ borderLeftColor: getBorderColor(m) }}
+              >
+                <h2 className="font-bold text-center">
+                  {m.evangelises?.prenom} {m.evangelises?.nom}
+                </h2>
+
+                <p className="text-sm text-center">
+                  📱 {m.evangelises?.telephone || "—"}
+                </p>
+
+                <p className="text-sm text-center">
+                  🏠 {m.cellules?.cellule_full || "—"}
+                </p>
+
+                <button
+                  onClick={() => setDetailsSuivi(ouvert ? null : m)}
+                  className="text-orange-500 underline text-sm block mx-auto mt-2"
+                >
+                  {ouvert ? "Fermer détails" : "Détails"}
+                </button>
+
+                {/* DÉTAILS – CARTE GRANDISSANTE */}
+                <div
+                  className={`overflow-hidden transition-all duration-500 ${
+                    ouvert ? "max-h-[700px] mt-3" : "max-h-0"
+                  }`}
+                >
+                  {ouvert && (
+                    <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
+                      <p>🏙️ Ville : {m.evangelises?.ville || "—"}</p>
+                      <p>⚥ Sexe : {m.evangelises?.sexe || "—"}</p>
+                      <p>
+                        🙏 Prière salut :{" "}
+                        {m.evangelises?.priere_salut ? "Oui" : "Non"}
+                      </p>
+                      <p>
+                        ☀️ Type : {m.evangelises?.type_conversion || "—"}
+                      </p>
+                      <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>
+
+                      <button
+                        onClick={() => openEditFromSuivi(m)}
+                        className="w-full text-blue-600 underline text-sm"
+                      >
+                        ✏️ Modifier
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ===================== VUE TABLE ===================== */}
+      {view === "table" && (
+        <div className="overflow-x-auto bg-white/20 rounded-xl p-4">
+          <table className="min-w-[720px] w-full text-sm">
+            <thead className="text-white uppercase">
+              <tr>
+                <th className="p-2 text-left">Nom</th>
+                <th className="p-2 text-left">Téléphone</th>
+                <th className="p-2 text-left">Cellule</th>
+                <th className="p-2 text-left">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {suivis.map((s) => (
+                <tr key={s.id} className="bg-white/80 rounded">
+                  <td className="p-2">
+                    {s.evangelises?.prenom} {s.evangelises?.nom}
+                  </td>
+                  <td className="p-2">
+                    {s.evangelises?.telephone || "—"}
+                  </td>
+                  <td className="p-2">
+                    {s.cellules?.cellule_full || "—"}
+                  </td>
+                  <td className="p-2 space-x-2">
+                    <button
+                      onClick={() => setDetailsSuivi(s)}
+                      className="text-orange-600 underline"
+                    >
+                      Détails
+                    </button>
+                    <button
+                      onClick={() => openEditFromSuivi(s)}
+                      className="text-blue-600 underline"
+                    >
+                      Modifier
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ===================== POPUP DETAILS ===================== */}
+      {detailsSuivi && (
+        <DetailsEvangePopup
+          member={detailsSuivi.evangelises}
+          onClose={() => setDetailsSuivi(null)}
+          onEdit={() => {
+            openEditFromSuivi(detailsSuivi);
+            setDetailsSuivi(null);
+          }}
+        />
+      )}
+
+      {/* ===================== POPUP MODIFIER ===================== */}
+      {editingEvangelise && (
+        <EditEvangelisePopup
+          member={editingEvangelise}
+          onClose={() => setEditingEvangelise(null)}
+          onUpdateMember={(updated) => {
+            setEditingEvangelise(null);
+            setSuivis((prev) =>
+              prev.map((s) =>
+                s.evangelise_id === updated.id
+                  ? { ...s, evangelises: updated }
+                  : s
+              )
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

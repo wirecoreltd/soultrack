@@ -16,7 +16,6 @@ export default function SuivisEvangelisation() {
   const [detailsSuivi, setDetailsSuivi] = useState(null);
   const [editingContact, setEditingContact] = useState(null);
   const [commentChanges, setCommentChanges] = useState({});
-  const [updating, setUpdating] = useState({});
 
   useEffect(() => {
     fetchSuivis();
@@ -25,12 +24,12 @@ export default function SuivisEvangelisation() {
 
   /* ================= FETCH ================= */
   const fetchSuivis = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("suivis_des_evangelises")
       .select(`*, evangelises (*)`)
       .order("id", { ascending: false });
 
-    if (!error) setSuivis(data);
+    setSuivis(data || []);
     setLoading(false);
   };
 
@@ -52,27 +51,18 @@ export default function SuivisEvangelisation() {
   };
 
   const handleCommentChange = (id, value) =>
-    setCommentChanges((prev) => ({ ...prev, [id]: value }));
+    setCommentChanges((p) => ({ ...p, [id]: value }));
 
   const updateSuivi = async (id) => {
     const newComment = commentChanges[id];
     if (!newComment) return;
 
-    setUpdating((p) => ({ ...p, [id]: true }));
-
-    const { data, error } = await supabase
+    await supabase
       .from("suivis_des_evangelises")
       .update({ commentaire_evangelises: newComment })
-      .eq("id", id)
-      .select()
-      .single();
+      .eq("id", id);
 
-    if (!error) {
-      setSuivis((prev) => prev.map((s) => (s.id === id ? data : s)));
-      setCommentChanges((p) => ({ ...p, [id]: "" }));
-    }
-
-    setUpdating((p) => ({ ...p, [id]: false }));
+    fetchSuivis();
   };
 
   const formatBesoin = (b) => {
@@ -83,6 +73,13 @@ export default function SuivisEvangelisation() {
     } catch {
       return b;
     }
+  };
+
+  /* ================= VIEW SWITCH ================= */
+  const switchView = () => {
+    setView(view === "card" ? "table" : "card");
+    setDetailsSuivi(null);
+    setEditingContact(null);
   };
 
   /* ================= RENDER ================= */
@@ -97,14 +94,13 @@ export default function SuivisEvangelisation() {
       </div>
 
       <Image src="/logo.png" alt="Logo" width={80} height={80} />
-
       <h1 className="text-3xl font-bold text-white mb-6">
         📋 Suivis des Évangélisés
       </h1>
 
       {/* TOGGLE */}
       <button
-        onClick={() => setView(view === "card" ? "table" : "card")}
+        onClick={switchView}
         className="text-white underline mb-6"
       >
         {view === "card" ? "Vue Table" : "Vue Carte"}
@@ -147,22 +143,14 @@ export default function SuivisEvangelisation() {
                     <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
                       <p>🏙️ Ville : {m.evangelises?.ville || "—"}</p>
                       <p>⚥ Sexe : {m.evangelises?.sexe || "—"}</p>
-                      <p>
-                        🙏 Prière salut :{" "}
-                        {m.evangelises?.priere_salut ? "Oui" : "Non"}
-                      </p>
+                      <p>🙏 Salut : {m.evangelises?.priere_salut ? "Oui" : "Non"}</p>
                       <p>☀️ Type : {m.evangelises?.type_conversion || "—"}</p>
                       <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>
 
                       <textarea
                         rows={2}
                         className="w-full border rounded px-2 py-1"
-                        placeholder="Ajouter un commentaire..."
-                        value={
-                          commentChanges[m.id] ??
-                          m.commentaire_evangelises ??
-                          ""
-                        }
+                        value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
                         onChange={(e) =>
                           handleCommentChange(m.id, e.target.value)
                         }
@@ -196,17 +184,17 @@ export default function SuivisEvangelisation() {
       {/* ===================== VUE TABLE ===================== */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto">
-          <table className="w-full text-sm bg-transparent border-separate border-spacing-y-2">
+          <table className="w-full bg-white/80 rounded-lg">
             <tbody>
               {suivis.map((m) => (
-                <tr key={m.id} className="bg-white/70 rounded-lg">
-                  <td className="px-3 py-3">
+                <tr key={m.id}>
+                  <td className="px-4 py-3">
                     {m.evangelises?.prenom} {m.evangelises?.nom}
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="px-4 py-3">
                     <button
                       onClick={() => setDetailsSuivi(m)}
-                      className="text-orange-500 underline"
+                      className="text-orange-600 underline"
                     >
                       Détails
                     </button>
@@ -218,15 +206,14 @@ export default function SuivisEvangelisation() {
         </div>
       )}
 
-      {/* ================= POPUPS ================= */}
+      {/* ================= POPUPS (TABLE UNIQUEMENT) ================= */}
       {view === "table" && detailsSuivi && (
         <DetailsEvangePopup
           member={detailsSuivi}
           onClose={() => setDetailsSuivi(null)}
-          onEdit={(suivi) => {
+          onEdit={(s) => {
             setDetailsSuivi(null);
-            suivi.evangelises?.id &&
-              setEditingContact(suivi.evangelises);
+            s.evangelises?.id && setEditingContact(s.evangelises);
           }}
         />
       )}

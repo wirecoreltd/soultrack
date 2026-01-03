@@ -8,7 +8,6 @@ import EditEvangelisePopup from "../components/EditEvangelisePopup";
 
 export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
-  const [conseillers, setConseillers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("card");
 
@@ -16,11 +15,6 @@ export default function SuivisEvangelisation() {
   const [editingContact, setEditingContact] = useState(null);
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
-
-  useEffect(() => {
-    fetchSuivis();
-    fetchConseillers();
-  }, []);
 
   /* ================= FETCH ================= */
   const fetchSuivis = async () => {
@@ -33,20 +27,27 @@ export default function SuivisEvangelisation() {
         evangelises:evangelise_id (*),
         conseiller:conseiller_id (id, prenom, nom)
       `)
-      .order("created_at", { ascending: false });
+      .order("id", { ascending: false });
 
-    if (!error) setSuivis(data || []);
-    else console.error(error);
+    if (error) {
+      console.error("Erreur fetch suivis:", error);
+      setSuivis([]);
+    } else {
+      // s'assurer que chaque suivi a bien un objet evangelises et conseiller
+      const mapped = (data || []).map((s) => ({
+        ...s,
+        evangelises: s.evangelises || {},
+        conseiller: s.conseiller || null,
+      }));
+      setSuivis(mapped);
+    }
+
     setLoading(false);
   };
 
-  const fetchConseillers = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom")
-      .eq("role", "Conseiller");
-    setConseillers(data || []);
-  };
+  useEffect(() => {
+    fetchSuivis();
+  }, []);
 
   /* ================= HELPERS ================= */
   const getBorderColor = (m) => {
@@ -87,6 +88,8 @@ export default function SuivisEvangelisation() {
   };
 
   /* ================= RENDER ================= */
+  if (loading) return <div className="text-white">Chargement...</div>;
+
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
@@ -184,64 +187,6 @@ export default function SuivisEvangelisation() {
             );
           })}
         </div>
-      )}
-
-      {/* ===================== VUE TABLE ===================== */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto">
-          <div className="min-w-[720px]">
-            <table className="w-full text-sm bg-transparent border-separate border-spacing-y-2">
-              <thead className="uppercase text-gray-600">
-                <tr>
-                  <th className="px-3 py-2 text-left">Nom</th>
-                  <th className="px-3 py-2 text-left">Téléphone</th>
-                  <th className="px-3 py-2 text-left">Conseiller</th>
-                  <th className="px-3 py-2 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {suivis.map((m) => {
-                  return (
-                    <tr
-                      key={m.id}
-                      className="bg-white/70 backdrop-blur rounded-lg shadow-sm"
-                    >
-                      <td className="px-3 py-3 rounded-l-lg">
-                        {m.evangelises?.prenom || m.prenom} {m.evangelises?.nom || m.nom}
-                      </td>
-                      <td className="px-3 py-3 whitespace-nowrap">
-                        {m.evangelises?.telephone || m.telephone || "—"}
-                      </td>
-                      <td className="px-3 py-3 whitespace-nowrap">
-                        {m.conseiller ? `${m.conseiller.prenom} ${m.conseiller.nom}` : "—"}
-                      </td>
-                      <td className="px-3 py-3 rounded-r-lg">
-                        <button
-                          onClick={() => setDetailsSuivi(m)}
-                          className="text-orange-500 underline text-sm"
-                        >
-                          Détails
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* POPUP MODAL EDIT */}
-      {editingContact && (
-        <EditEvangelisePopup
-          member={editingContact}
-          onClose={() => setEditingContact(null)}
-          onUpdateMember={() => {
-            setEditingContact(null);
-            fetchSuivis();
-          }}
-        />
       )}
     </div>
   );

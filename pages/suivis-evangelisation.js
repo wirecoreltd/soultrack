@@ -2,244 +2,195 @@
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
-import LogoutLink from "../components/LogoutLink";
 import EditEvangelisePopup from "../components/EditEvangelisePopup";
-import DetailsEvangePopup from "../components/DetailsEvangePopup";
 
 export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
-  const [conseillers, setConseillers] = useState([]);
-  const [view, setView] = useState("card");
-
-  const [detailsSuivi, setDetailsSuivi] = useState(null);
-  const [editingEvangelise, setEditingEvangelise] = useState(null);
-
-  useEffect(() => {
-    fetchSuivis();
-    fetchConseillers();
-  }, []);
+  const [loading, setLoading] = useState(true);
+  const [editingContact, setEditingContact] = useState(null);
+  const [openCard, setOpenCard] = useState(null);
+  const [commentChanges, setCommentChanges] = useState({});
 
   /* ================= FETCH ================= */
-
   const fetchSuivis = async () => {
+    setLoading(true);
+
     const { data, error } = await supabase
       .from("suivis_des_evangelises")
       .select(`
         *,
-        evangelises (*),
-        cellules (cellule_full)
+        conseiller:conseillers(id, nom),
+        evangelises (*)
       `)
-      .order("id", { ascending: false });
+      .order("created_at", { ascending: false });
 
     if (!error) setSuivis(data || []);
+    setLoading(false);
   };
 
-  const fetchConseillers = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom")
-      .eq("role", "Conseiller");
-
-    setConseillers(data || []);
-  };
+  useEffect(() => {
+    fetchSuivis();
+  }, []);
 
   /* ================= HELPERS ================= */
-
-  const getBorderColor = (m) => {
-    if (m.status_suivis_evangelises === "En cours") return "#FFA500";
-    if (m.status_suivis_evangelises === "Integrer") return "#34A853";
-    if (m.status_suivis_evangelises === "Venu à l’église") return "#3B82F6";
-    return "#ccc";
+  const formatBesoin = (besoin) => {
+    if (!besoin) return "—";
+    if (Array.isArray(besoin)) return besoin.join(", ");
+    return besoin;
   };
 
-  const formatBesoin = (b) => {
-    if (!b) return "—";
-    try {
-      const arr = JSON.parse(b);
-      return Array.isArray(arr) ? arr.join(", ") : b;
-    } catch {
-      return b;
-    }
+  const handleCommentChange = (id, value) => {
+    setCommentChanges((prev) => ({ ...prev, [id]: value }));
   };
 
-  const openEditFromSuivi = (suivi) => {
-    if (!suivi.evangelises?.id) {
-      alert("❌ Aucun évangélisé lié à ce suivi");
-      return;
-    }
-    setEditingEvangelise(suivi.evangelises);
+  const updateSuivi = async (id) => {
+    const commentaire = commentChanges[id];
+    if (commentaire === undefined) return;
+
+    await supabase
+      .from("suivis_des_evangelises")
+      .update({ commentaire_evangelises: commentaire })
+      .eq("id", id);
+
+    fetchSuivis();
   };
 
   /* ================= RENDER ================= */
+  if (loading) return <p className="p-4">Chargement...</p>;
 
   return (
-    <div
-      className="min-h-screen p-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-6">
-        <button onClick={() => history.back()} className="text-white">
-          ← Retour
-        </button>
-        <LogoutLink />
-      </div>
+    <div className="p-4 space-y-6">
 
-      <div className="text-center mb-6">
-        <Image src="/logo.png" alt="Logo" width={80} height={80} />
-        <h1 className="text-3xl font-bold text-white mt-4">
-          📋 Suivis des Évangélisés
-        </h1>
-      </div>
+      {/* ================= VUE CARTE ================= */}
+      <div className="grid md:grid-cols-2 gap-4">
+        {suivis.map((m) => {
+          const ouvert = openCard === m.id;
 
-      {/* TOGGLE */}
-      <div className="text-center mb-6">
-        <button
-          onClick={() => setView(view === "card" ? "table" : "card")}
-          className="text-white underline"
-        >
-          {view === "card" ? "Vue Table" : "Vue Carte"}
-        </button>
-      </div>
-
-      {/* ===================== VUE CARTE ===================== */}
-      {view === "card" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {suivis.map((m) => {
-            const ouvert = detailsSuivi?.id === m.id;
-
-            return (
+          return (
+            <div
+              key={m.id}
+              className="border rounded-xl p-4 shadow-sm bg-white"
+            >
               <div
-                key={m.id}
-                className="bg-white rounded-2xl shadow-lg p-4 border-l-4"
-                style={{ borderLeftColor: getBorderColor(m) }}
+                className="cursor-pointer"
+                onClick={() => setOpenCard(ouvert ? null : m.id)}
               >
-                <h2 className="font-bold text-center">
+                <h3 className="font-semibold text-lg">
                   {m.evangelises?.prenom} {m.evangelises?.nom}
-                </h2>
+                </h3>
 
-                <p className="text-sm text-center">
-                  📱 {m.evangelises?.telephone || "—"}
+                <p className="text-sm text-gray-600">
+                  📞 {m.evangelises?.telephone || "—"}
                 </p>
 
-                <p className="text-sm text-center">
-                  🏠 {m.cellules?.cellule_full || "—"}
+                <p className="text-xs text-gray-500">
+                  👤 Conseiller : {m.conseiller?.nom || "—"}
                 </p>
-
-                <button
-                  onClick={() => setDetailsSuivi(ouvert ? null : m)}
-                  className="text-orange-500 underline text-sm block mx-auto mt-2"
-                >
-                  {ouvert ? "Fermer détails" : "Détails"}
-                </button>
-
-                {/* DÉTAILS – CARTE GRANDISSANTE */}
-                <div
-                  className={`overflow-hidden transition-all duration-500 ${
-                    ouvert ? "max-h-[700px] mt-3" : "max-h-0"
-                  }`}
-                >
-                  {ouvert && (
-                    <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
-                      <p>🏙️ Ville : {m.evangelises?.ville || "—"}</p>
-                      <p>⚥ Sexe : {m.evangelises?.sexe || "—"}</p>
-                      <p>
-                        🙏 Prière salut :{" "}
-                        {m.evangelises?.priere_salut ? "Oui" : "Non"}
-                      </p>
-                      <p>
-                        ☀️ Type : {m.evangelises?.type_conversion || "—"}
-                      </p>
-                      <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>
-
-                      <button
-                        onClick={() => openEditFromSuivi(m)}
-                        className="w-full text-blue-600 underline text-sm"
-                      >
-                        ✏️ Modifier
-                      </button>
-                    </div>
-                  )}
-                </div>
               </div>
-            );
-          })}
-        </div>
-      )}
 
-      {/* ===================== VUE TABLE ===================== */}
-      {view === "table" && (
-        <div className="overflow-x-auto bg-white/20 rounded-xl p-4">
-          <table className="min-w-[720px] w-full text-sm">
-            <thead className="text-white uppercase">
-              <tr>
-                <th className="p-2 text-left">Nom</th>
-                <th className="p-2 text-left">Téléphone</th>
-                <th className="p-2 text-left">Cellule</th>
-                <th className="p-2 text-left">Actions</th>
+              {/* ===== DÉTAILS – CARRÉ GRANDISSANT ===== */}
+              <div
+                className={`overflow-hidden transition-all duration-500 ${
+                  ouvert ? "max-h-[800px] mt-3" : "max-h-0"
+                }`}
+              >
+                {ouvert && (
+                  <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
+                    <p>🏙️ Ville : {m.evangelises?.ville || "—"}</p>
+                    <p>⚥ Sexe : {m.evangelises?.sexe || "—"}</p>
+                    <p>🙏 Prière salut : {m.evangelises?.priere_salut ? "Oui" : "Non"}</p>
+                    <p>☀️ Type : {m.evangelises?.type_conversion || "—"}</p>
+                    <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>
+
+                    <textarea
+                      rows={2}
+                      className="w-full border rounded px-2 py-1"
+                      placeholder="Ajouter un commentaire..."
+                      value={
+                        commentChanges[m.id] ??
+                        m.commentaire_evangelises ??
+                        ""
+                      }
+                      onChange={(e) =>
+                        handleCommentChange(m.id, e.target.value)
+                      }
+                    />
+
+                    <button
+                      onClick={() => updateSuivi(m.id)}
+                      className="w-full bg-green-600 text-white rounded py-1"
+                    >
+                      Mettre à jour
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (!m.evangelises?.id) {
+                          alert("❌ Aucun évangélisé lié");
+                          return;
+                        }
+                        setEditingContact(m.evangelises);
+                      }}
+                      className="text-blue-600 text-sm underline w-full"
+                    >
+                      ✏️ Modifier
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ================= VUE TABLE ================= */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full border text-sm">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border px-2 py-1">Nom</th>
+              <th className="border px-2 py-1">Téléphone</th>
+              <th className="border px-2 py-1">Conseiller</th>
+              <th className="border px-2 py-1">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {suivis.map((m) => (
+              <tr key={m.id}>
+                <td className="border px-2 py-1">
+                  {m.evangelises?.prenom} {m.evangelises?.nom}
+                </td>
+                <td className="border px-2 py-1">
+                  {m.evangelises?.telephone || "—"}
+                </td>
+                <td className="border px-2 py-1">
+                  {m.conseiller?.nom || "—"}
+                </td>
+                <td className="border px-2 py-1 text-center">
+                  <button
+                    onClick={() => {
+                      if (!m.evangelises?.id) return;
+                      setEditingContact(m.evangelises);
+                    }}
+                    className="text-blue-600 underline"
+                  >
+                    Modifier
+                  </button>
+                </td>
               </tr>
-            </thead>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-            <tbody>
-              {suivis.map((s) => (
-                <tr key={s.id} className="bg-white/80 rounded">
-                  <td className="p-2">
-                    {s.evangelises?.prenom} {s.evangelises?.nom}
-                  </td>
-                  <td className="p-2">
-                    {s.evangelises?.telephone || "—"}
-                  </td>
-                  <td className="p-2">
-                    {s.cellules?.cellule_full || "—"}
-                  </td>
-                  <td className="p-2 space-x-2">
-                    <button
-                      onClick={() => setDetailsSuivi(s)}
-                      className="text-orange-600 underline"
-                    >
-                      Détails
-                    </button>
-                    <button
-                      onClick={() => openEditFromSuivi(s)}
-                      className="text-blue-600 underline"
-                    >
-                      Modifier
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* ===================== POPUP DETAILS ===================== */}
-      {detailsSuivi && (
-        <DetailsEvangePopup
-          member={detailsSuivi.evangelises}
-          onClose={() => setDetailsSuivi(null)}
-          onEdit={() => {
-            openEditFromSuivi(detailsSuivi);
-            setDetailsSuivi(null);
-          }}
-        />
-      )}
-
-      {/* ===================== POPUP MODIFIER ===================== */}
-      {editingEvangelise && (
+      {/* ================= POPUP MODIFIER ================= */}
+      {editingContact && (
         <EditEvangelisePopup
-          member={editingEvangelise}
-          onClose={() => setEditingEvangelise(null)}
-          onUpdateMember={(updated) => {
-            setEditingEvangelise(null);
-            setSuivis((prev) =>
-              prev.map((s) =>
-                s.evangelise_id === updated.id
-                  ? { ...s, evangelises: updated }
-                  : s
-              )
-            );
+          member={editingContact}
+          onClose={() => setEditingContact(null)}
+          onUpdateMember={() => {
+            setEditingContact(null);
+            fetchSuivis();
           }}
         />
       )}

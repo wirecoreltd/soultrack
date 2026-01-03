@@ -134,32 +134,55 @@ export default function SuivisEvangelisation() {
                   {ouvert ? "Fermer détails" : "Détails"}
                 </button>
 
-                {/* DÉTAILS – CARTE GRANDISSANTE */}
-                <div
-                  className={`overflow-hidden transition-all duration-500 ${
-                    ouvert ? "max-h-[700px] mt-3" : "max-h-0"
-                  }`}
-                >
-                  {ouvert && (
-                    <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
-                      <p>🏙️ Ville : {m.evangelises?.ville || "—"}</p>
-                      <p>⚥ Sexe : {m.evangelises?.sexe || "—"}</p>
-                      <p>
-                        🙏 Prière salut :{" "}
-                        {m.evangelises?.priere_salut ? "Oui" : "Non"}
-                      </p>
-                      <p>
-                        ☀️ Type : {m.evangelises?.type_conversion || "—"}
-                      </p>
-                      <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>
+                {/* DÉTAILS – CARRÉ GRANDISSANT */}
+<div
+  className={`overflow-hidden transition-all duration-500 ${
+    ouvert ? "max-h-[800px] mt-3" : "max-h-0"
+  }`}
+>
+  {ouvert && (
+    <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
+      <p>🏙️ Ville : {m.evangelises?.ville || "—"}</p>
+      <p>⚥ Sexe : {m.evangelises?.sexe || "—"}</p>
+      <p>🙏 Prière salut : {m.evangelises?.priere_salut ? "Oui" : "Non"}</p>
+      <p>☀️ Type : {m.evangelises?.type_conversion || "—"}</p>
+      <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>
 
-                      <button
-                        onClick={() => openEditFromSuivi(m)}
-                        className="w-full text-blue-600 underline text-sm"
-                      >
-                        ✏️ Modifier
-                      </button>
-                    </div>
+      <textarea
+        rows={2}
+        className="w-full border rounded px-2 py-1"
+        placeholder="Ajouter un commentaire..."
+        value={
+          commentChanges[m.id] ??
+          m.commentaire_evangelises ??
+          ""
+        }
+        onChange={(e) =>
+          handleCommentChange(m.id, e.target.value)
+        }
+      />
+
+      <button
+        onClick={() => updateSuivi(m.id)}
+        className="w-full bg-green-600 text-white rounded py-1"
+      >
+        Mettre à jour
+      </button>
+
+      <button
+        onClick={() => {
+          if (m.evangelises?.id) {
+            setEditingContact(m.evangelises);
+          }
+        }}
+        className="text-blue-600 text-sm underline w-full"
+      >
+        ✏️ Modifier
+      </button>
+    </div>
+  )}
+</div>
+
                   )}
                 </div>
               </div>

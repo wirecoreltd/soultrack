@@ -202,64 +202,69 @@ export default function SuivisEvangelisation() {
         </div>
       )}
 
-      {/* ===================== VUE TABLE VISUEL UNIQUEMENT ===================== */}
-<div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-  <div className="min-w-[720px]">
-    <table className="w-full text-sm text-left border-separate border-spacing-y-2">
-      <thead className="uppercase text-gray-600">
-        <tr>
-          <th className="px-3 py-2 text-left">Nom</th>
-          <th className="px-3 py-2 text-left">Téléphone</th>
-          <th className="px-3 py-2 text-left">Attribué à</th>
-          <th className="px-3 py-2 text-left">Actions</th>
-        </tr>
-      </thead>
+      {/* ===================== VUE TABLE ===================== */}
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto">
+          <div className="min-w-[900px]">
+            <table className="w-full text-sm bg-white rounded-lg shadow">
+              <thead className="bg-gray-200 uppercase">
+                <tr>
+                  <th className="px-3 py-2">Nom complet</th>
+                  <th className="px-3 py-2">Téléphone</th>
+                  <th className="px-3 py-2">Attribué à</th>
+                  <th className="px-3 py-2">Actions</th>
+                </tr>
+              </thead>
 
-      <tbody>
-        {suivis.map((m) => {
-          const conseiller = conseillers.find(
-            (c) => c.id === m.conseiller_id
-          );
+              <tbody>
+                {suivis.map((m) => {
+                  const conseiller = conseillers.find(
+                    (c) =>
+                      c.id === m.conseiller_id ||
+                      c.id === m.cellules?.responsable
+                  );
 
-          const isOpen = detailsSuivi?.id === m.id;
+                  return (
+                    <tr key={m.id} className="border-b">
+                      <td className="px-3 py-2">
+                        {m.evangelises?.prenom} {m.evangelises?.nom}
+                      </td>
+                      <td className="px-3 py-2">
+                        {m.evangelises?.telephone || "—"}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap">
+  {m.cellules?.cellule_full
+    ? `🏠 ${m.cellules.cellule_full}`
+    : conseiller
+    ? `👤 ${conseiller.prenom} ${conseiller.nom}`
+    : "—"}
+</td>
 
-          return (
-            <>
-              {/* ===== LIGNE PRINCIPALE ===== */}
-              <tr className="bg-white/30 backdrop-blur rounded-lg shadow-sm hover:bg-white/50">
-                <td className="px-3 py-3 rounded-l-lg">
-                  {m.evangelises?.prenom} {m.evangelises?.nom}
-                </td>
-
-                <td className="px-3 py-3 whitespace-nowrap">
-                  {m.evangelises?.telephone || "—"}
-                </td>
-
-                <td className="px-3 py-3 whitespace-nowrap">
-                  {m.cellules
-                    ? `🏠 ${m.cellules.cellule_full}`
-                    : conseiller
-                    ? `👤 ${conseiller.prenom} ${conseiller.nom}`
-                    : "—"}
-                </td>
-
-                <td className="px-3 py-3 rounded-r-lg flex gap-3">
-                  <button className="text-orange-500 underline text-sm">
-                    Détails
-                  </button>
-                  <button className="text-blue-600 underline text-sm">
-                    Modifier
-                  </button>
-                </td>
-              </tr>
-            </>
-          );
-        })}
-      </tbody>
-    </table>
-  </div>
-</div>
-
+                      <td className="px-3 py-2 flex gap-3">
+                        <button
+                          onClick={() => setDetailsTable(m)}
+                          className="text-orange-500 underline"
+                        >
+                          Détails
+                        </button>
+                        <button
+                          onClick={() =>
+                            m.evangelises?.id &&
+                            setEditingContact(m.evangelises)
+                          }
+                          className="text-blue-600 underline"
+                        >
+                          Modifier
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* ================= POPUP TABLE UNIQUEMENT ================= */}
       {view === "table" && detailsTable && (

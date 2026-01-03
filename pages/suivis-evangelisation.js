@@ -10,6 +10,7 @@ import DetailsEvangePopup from "../components/DetailsEvangePopup";
 export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
   const [conseillers, setConseillers] = useState([]);
+  const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("card");
 
@@ -23,6 +24,7 @@ export default function SuivisEvangelisation() {
   useEffect(() => {
     fetchUser();
     fetchConseillers();
+    fetchCellules();
   }, []);
 
   /* ================= FETCH USER ================= */
@@ -51,31 +53,6 @@ export default function SuivisEvangelisation() {
     }
   };
 
-  /* ================= FETCH ================= */
-  const fetchSuivis = async (role, userId) => {
-    let query = supabase
-      .from("suivis_des_evangelises")
-      .select(`*, evangelises (*), cellules (*)`)
-      .order("id", { ascending: false });
-
-    if (role !== "Administrateur") {
-      // Inclure les suivis attribués au conseiller OU dont la cellule est sous sa responsabilité
-      query = query.or(
-        `conseiller_id.eq.${userId},cellules.responsable.eq.${userId}`
-      );
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error("Erreur fetch suivis:", error);
-      setSuivis([]);
-    } else {
-      setSuivis(data || []);
-    }
-    setLoading(false);
-  };
-
   const fetchConseillers = async () => {
     const { data } = await supabase
       .from("profiles")
@@ -83,6 +60,51 @@ export default function SuivisEvangelisation() {
       .eq("role", "Conseiller");
 
     setConseillers(data || []);
+  };
+
+  const fetchCellules = async () => {
+    const { data } = await supabase
+      .from("cellules")
+      .select("id, cellule_full, responsable_id");
+
+    setCellules(data || []);
+  };
+
+  /* ================= FETCH ================= */
+  const fetchSuivis = async (role, userId) => {
+    let query = supabase
+      .from("suivis_des_evangelises")
+      .select(`*, evangelises (*), cellules (*)`)
+      .order("id", { ascending: false });
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Erreur fetch suivis:", error);
+      setSuivis([]);
+    } else {
+      // 🔹 FILTRAGE PAR RÔLE
+      let filtered = data || [];
+      if (role !== "Administrateur") {
+        filtered = filtered.filter((m) => {
+          // Conseiller : voir seulement ses membres
+          if (role === "Conseiller") return m.conseiller_id === userId;
+
+          // ResponsableCellule : voir seulement membres de ses cellules
+          if (role === "ResponsableCellule") {
+            const mesCellulesIds = cellules
+              .filter((c) => c.responsable_id === userId)
+              .map((c) => c.id);
+            return mesCellulesIds.includes(m.cellule_id);
+          }
+
+          return false;
+        });
+      }
+
+      setSuivis(filtered);
+    }
+    setLoading(false);
   };
 
   /* ================= HELPERS ================= */
@@ -127,7 +149,10 @@ export default function SuivisEvangelisation() {
 
   /* ================= RENDER ================= */
   if (loading) return <p className="text-center mt-10">Chargement...</p>;
-  if (!user) return <p className="text-center mt-10 text-red-600">Utilisateur non connecté.</p>;
+  if (!user)
+    return (
+      <p className="text-center mt-10 text-red-600">Utilisateur non connecté.</p>
+    );
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
@@ -154,9 +179,7 @@ export default function SuivisEvangelisation() {
           {suivis.map((m) => {
             const ouvert = detailsCarteId === m.id;
             const conseiller = conseillers.find(
-              (c) =>
-                c.id === m.conseiller_id ||
-                c.id === m.cellules?.responsable
+              (c) => c.id === m.conseiller_id || c.id === m.cellules?.responsable
             );
 
             return (
@@ -263,9 +286,7 @@ export default function SuivisEvangelisation() {
               <tbody>
                 {suivis.map((m) => {
                   const conseiller = conseillers.find(
-                    (c) =>
-                      c.id === m.conseiller_id ||
-                      c.id === m.cellules?.responsable
+                    (c) => c.id === m.conseiller_id || c.id === m.cellules?.responsable
                   );
 
                   return (

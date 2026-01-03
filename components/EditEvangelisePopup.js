@@ -10,24 +10,20 @@ export default function EditEvangelisePopup({
   onClose,
   onUpdateMember,
 }) {
-  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille", "Autre"];
+  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
 
-  // Préparer le tableau besoin si c'est JSON ou déjà un array
   const initialBesoin =
-    typeof member.besoin === "string"
-      ? JSON.parse(member.besoin || "[]")
-      : member.besoin || [];
+    typeof member.besoin === "string" ? JSON.parse(member.besoin || "[]") : member.besoin || [];
 
   const [formData, setFormData] = useState({
     prenom: member.prenom || "",
     nom: member.nom || "",
     telephone: member.telephone || "",
     ville: member.ville || "",
-    sexe: member.sexe || "",
     besoin: initialBesoin,
-    autreBesoin: initialBesoin.includes("Autre") ? initialBesoin.find(b => b !== "Autre") || "" : "",
+    autreBesoin: "",
     infos_supplementaires: member.infos_supplementaires || "",
-    priere_salut: member.priere_salut ? "Oui" : "Non",
+    priere_salut: member.priere_salut || false,
     type_conversion: member.type_conversion || "",
     is_whatsapp: member.is_whatsapp || false,
   });
@@ -36,221 +32,229 @@ export default function EditEvangelisePopup({
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  /* ===== HANDLERS ===== */
-
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
 
-    setFormData(prev => {
-      let newBesoin = checked
-        ? [...prev.besoin, value]
-        : prev.besoin.filter(b => b !== value);
-
-      if (value === "Autre" && !checked) {
-        newBesoin = newBesoin.filter(b => b !== "Autre");
-        return { ...prev, besoin: newBesoin, autreBesoin: "" };
+    if (value === "Autre") {
+      setShowAutre(checked);
+      if (!checked) {
+        setFormData((prev) => ({
+          ...prev,
+          autreBesoin: "",
+          besoin: prev.besoin.filter((b) => b !== "Autre"),
+        }));
       }
+    }
 
-      return { ...prev, besoin: newBesoin };
+    setFormData((prev) => {
+      const updated = checked
+        ? [...prev.besoin, value]
+        : prev.besoin.filter((b) => b !== value);
+      return { ...prev, besoin: updated };
     });
-
-    if (value === "Autre") setShowAutre(checked);
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
-      ...(name === "priere_salut" && value === "Non" ? { type_conversion: "" } : {})
     }));
   };
 
   const handleSubmit = async () => {
     setLoading(true);
 
-    const finalBesoin =
-      showAutre && formData.autreBesoin
-        ? [...formData.besoin.filter(b => b !== "Autre"), formData.autreBesoin]
-        : formData.besoin;
-
     const cleanData = {
       prenom: formData.prenom,
       nom: formData.nom,
       telephone: formData.telephone,
       ville: formData.ville,
-      sexe: formData.sexe,
       infos_supplementaires: formData.infos_supplementaires || null,
-      besoin: finalBesoin,
-      priere_salut: formData.priere_salut === "Oui",
-      type_conversion: formData.priere_salut === "Oui" ? formData.type_conversion : null,
+      besoin:
+        formData.autreBesoin && showAutre
+          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
+          : formData.besoin,
+      priere_salut: formData.priere_salut,
+      type_conversion: formData.type_conversion,
       is_whatsapp: formData.is_whatsapp,
     };
 
-    try {
-      // Si member.id existe, update, sinon insert (nouveau evangelisé)
-      if (!member.id) throw new Error("Evangelisé invalide");
+    const { error, data } = await supabase
+      .from("evangelises")
+      .update(cleanData)
+      .eq("id", member.id)
+      .select()
+      .single();
 
-      const { data, error } = await supabase
-        .from("evangelises")
-        .update(cleanData)
-        .eq("id", member.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
+    if (error) {
+      alert("❌ Erreur : " + error.message);
+    } else {
       if (onUpdateMember) onUpdateMember(data);
-
       setMessage("✅ Changement enregistré !");
       setTimeout(() => {
         setMessage("");
+        // Fermer les deux popups
         onClose();
       }, 1200);
-    } catch (err) {
-      alert("❌ Erreur : " + err.message);
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
-  /* ===== RENDER ===== */
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative">
-        <h2 className="text-xl font-bold mb-4">Modifier l'évangélisé</h2>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto shadow-xl relative">
 
-        <div className="space-y-2">
+        {/* Croix fermer */}
+        <button
+          onClick={onClose} // Annuler => ferme les deux popups
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 font-bold text-lg"
+        >
+          ×
+        </button>
+
+        <h2 className="text-lg font-bold text-gray-800 text-center mb-4">
+          Modifier {member.prenom} {member.nom}
+        </h2>
+
+        <div className="flex flex-col space-y-3 text-sm">
+          {/* Prénom / Nom */}
+          <label className="font-semibold">Prénom</label>
           <input
-            type="text"
             name="prenom"
             value={formData.prenom}
             onChange={handleChange}
-            placeholder="Prénom"
-            className="w-full border px-2 py-1 rounded"
+            className="border rounded px-2 py-1"
           />
+
+          <label className="font-semibold">Nom</label>
           <input
-            type="text"
             name="nom"
             value={formData.nom}
             onChange={handleChange}
-            placeholder="Nom"
-            className="w-full border px-2 py-1 rounded"
+            className="border rounded px-2 py-1"
           />
+
+          <label className="font-semibold">Ville</label>
           <input
-            type="text"
-            name="telephone"
-            value={formData.telephone}
-            onChange={handleChange}
-            placeholder="Téléphone"
-            className="w-full border px-2 py-1 rounded"
-          />
-          <input
-            type="text"
             name="ville"
             value={formData.ville}
             onChange={handleChange}
-            placeholder="Ville"
-            className="w-full border px-2 py-1 rounded"
-          />
-          <select
-            name="sexe"
-            value={formData.sexe}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
-          >
-            <option value="">-- Sexe --</option>
-            <option value="Homme">Homme</option>
-            <option value="Femme">Femme</option>
-          </select>
-
-          {/* Besoin */}
-          <div className="flex flex-wrap gap-2">
-            {besoinsOptions.map(b => (
-              <label key={b} className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  value={b}
-                  checked={formData.besoin.includes(b)}
-                  onChange={handleBesoinChange}
-                />
-                {b}
-              </label>
-            ))}
-          </div>
-
-          {showAutre && (
-            <input
-              type="text"
-              name="autreBesoin"
-              value={formData.autreBesoin}
-              onChange={handleChange}
-              placeholder="Autre besoin"
-              className="w-full border px-2 py-1 rounded"
-            />
-          )}
-
-          <textarea
-            rows={3}
-            name="infos_supplementaires"
-            value={formData.infos_supplementaires}
-            onChange={handleChange}
-            placeholder="Infos supplémentaires"
-            className="w-full border px-2 py-1 rounded"
+            className="border rounded px-2 py-1"
           />
 
-          <div className="flex items-center gap-2">
-            <label>🙏 Prière salut :</label>
-            <select
-              name="priere_salut"
-              value={formData.priere_salut}
-              onChange={handleChange}
-              className="border px-2 py-1 rounded"
-            >
-              <option value="Oui">Oui</option>
-              <option value="Non">Non</option>
-            </select>
-          </div>
+          <label className="font-semibold">Téléphone</label>
+          <input
+            name="telephone"
+            value={formData.telephone}
+            onChange={handleChange}
+            className="border rounded px-2 py-1"
+          />
 
-          {formData.priere_salut === "Oui" && (
-            <input
-              type="text"
-              name="type_conversion"
-              value={formData.type_conversion}
-              onChange={handleChange}
-              placeholder="Type de conversion"
-              className="w-full border px-2 py-1 rounded"
-            />
-          )}
-
-          <div className="flex items-center gap-2">
+          {/* WhatsApp / Prière du salut */}
+          <label className="flex items-center gap-2">
             <input
               type="checkbox"
               name="is_whatsapp"
               checked={formData.is_whatsapp}
               onChange={handleChange}
             />
-            <span>Est WhatsApp</span>
+            WhatsApp
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="priere_salut"
+              checked={formData.priere_salut}
+              onChange={handleChange}
+            />
+            Prière du salut
+          </label>
+
+          {/* Type de conversion */}
+          <label className="font-semibold">Type de conversion</label>
+          <input
+            name="type_conversion"
+            value={formData.type_conversion}
+            onChange={handleChange}
+            className="border rounded px-2 py-1"
+          />
+
+          {/* Besoins */}
+          <div className="mt-2">
+            <p className="font-semibold mb-2">Besoins :</p>
+            {besoinsOptions.map((item) => (
+              <label key={item} className="flex items-center gap-3 mb-2">
+                <input
+                  type="checkbox"
+                  value={item}
+                  checked={formData.besoin.includes(item)}
+                  onChange={handleBesoinChange}
+                  className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+                />
+                {item}
+              </label>
+            ))}
+
+            {/* Autre */}
+            <label className="flex items-center gap-3 mb-2">
+              <input
+                type="checkbox"
+                value="Autre"
+                checked={showAutre}
+                onChange={handleBesoinChange}
+                className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+              />
+              Autre
+            </label>
+
+            {showAutre && (
+              <input
+                type="text"
+                name="autreBesoin"
+                value={formData.autreBesoin}
+                onChange={handleChange}
+                placeholder="Précisez..."
+                className="border rounded px-2 py-1 w-full"
+              />
+            )}
           </div>
 
-          {message && <p className="text-green-600">{message}</p>}
-        </div>
+          {/* Infos supplémentaires */}
+          <label className="font-semibold">Infos supplémentaires</label>
+          <textarea
+            name="infos_supplementaires"
+            value={formData.infos_supplementaires}
+            onChange={handleChange}
+            className="border rounded px-2 py-1"
+            rows={3}
+          />
 
-        <div className="mt-4 flex justify-between items-center">
-          <button
-            onClick={onClose}
-            className="bg-gray-300 rounded px-4 py-2"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="bg-blue-600 text-white rounded px-4 py-2"
-          >
-            {loading ? "Enregistrement..." : "Enregistrer"}
-          </button>
+          {message && (
+            <p className="text-green-600 text-center font-semibold">{message}</p>
+          )}
+
+          {/* Boutons */}
+          <div className="flex justify-between mt-4">
+            <button
+              onClick={onClose} // Annuler
+              className="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400"
+            >
+              Annuler
+            </button>
+
+            <button
+              onClick={handleSubmit} // Enregistrer
+              disabled={loading}
+              className={`px-4 py-2 rounded-md text-white font-bold ${
+                loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+              }`}
+            >
+              {loading ? "Enregistrement..." : "Enregistrer"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

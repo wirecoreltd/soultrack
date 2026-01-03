@@ -8,45 +8,76 @@ import EditEvangelisePopup from "../components/EditEvangelisePopup";
 import DetailsEvangePopup from "../components/DetailsEvangePopup";
 
 export default function SuivisEvangelisation() {
-  const [currentUser, setCurrentUser] = useState(null);
   const [suivis, setSuivis] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("card");
 
-  // 🔒 états séparés
   const [detailsCarteId, setDetailsCarteId] = useState(null);
   const [detailsTable, setDetailsTable] = useState(null);
   const [editingContact, setEditingContact] = useState(null);
   const [commentChanges, setCommentChanges] = useState({});
 
+  const [userId, setUserId] = useState(null);
+  const [role, setRole] = useState(null);
+
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (user) setCurrentUser(user);
-    };
-    getUser();
+    initUser();
   }, []);
 
-  useEffect(() => {
-    if (currentUser) {
-      fetchSuivis();
-      fetchConseillers();
-    }
-  }, [currentUser]);
-
-  /* ================= FETCH ================= */
-  const fetchSuivis = async () => {
+  // ===================== INIT USER =====================
+  const initUser = async () => {
     setLoading(true);
 
-    const { data } = await supabase
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user) {
+      console.error("Impossible de récupérer l'utilisateur", userError);
+      setLoading(false);
+      return;
+    }
+
+    const currentUserId = userData.user.id;
+    setUserId(currentUserId);
+
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", currentUserId)
+      .single();
+
+    if (profileError || !profileData) {
+      console.error("Impossible de récupérer le profil", profileError);
+      setLoading(false);
+      return;
+    }
+
+    setRole(profileData.role);
+
+    // Ensuite, on récupère les données
+    fetchSuivis(profileData.role, currentUserId);
+    fetchConseillers();
+  };
+
+  // ===================== FETCH =====================
+  const fetchSuivis = async (role, userId) => {
+    let query = supabase
       .from("suivis_des_evangelises")
       .select(`*, evangelises (*), cellules (*)`)
-      .order("id", { ascending: false })
-      // Filtre pour ne voir que les contacts attribués à l'utilisateur connecté
-      .or(`conseiller_id.eq.${currentUser.id},cellules.responsable.eq.${currentUser.id}`);
+      .order("id", { ascending: false });
 
-    setSuivis(data || []);
+    // Si ce n'est pas un admin, filtrer seulement les suivis attribués à ce conseiller
+    if (role !== "Administrateur") {
+      query = query.eq("conseiller_id", userId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Erreur fetch suivis:", error);
+      setSuivis([]);
+    } else {
+      setSuivis(data || []);
+    }
     setLoading(false);
   };
 
@@ -59,7 +90,7 @@ export default function SuivisEvangelisation() {
     setConseillers(data || []);
   };
 
-  /* ================= HELPERS ================= */
+  // ===================== HELPERS =====================
   const getBorderColor = (m) => {
     if (m.status_suivis_evangelises === "En cours") return "#FFA500";
     if (m.status_suivis_evangelises === "Integrer") return "#34A853";
@@ -78,7 +109,7 @@ export default function SuivisEvangelisation() {
       .update({ commentaire_evangelises: commentChanges[id] })
       .eq("id", id);
 
-    fetchSuivis();
+    fetchSuivis(role, userId);
   };
 
   const formatBesoin = (b) => {
@@ -91,7 +122,6 @@ export default function SuivisEvangelisation() {
     }
   };
 
-  /* ================= VIEW SWITCH ================= */
   const switchView = () => {
     setView(view === "card" ? "table" : "card");
     setDetailsCarteId(null);
@@ -101,7 +131,7 @@ export default function SuivisEvangelisation() {
 
   if (loading) return <p className="text-center mt-10 text-white">Chargement...</p>;
 
-  /* ================= RENDER ================= */
+  // ===================== RENDER =====================
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
       {/* HEADER */}
@@ -156,15 +186,12 @@ export default function SuivisEvangelisation() {
                 </p>
 
                 <button
-                  onClick={() =>
-                    setDetailsCarteId(ouvert ? null : m.id)
-                  }
+                  onClick={() => setDetailsCarteId(ouvert ? null : m.id)}
                   className="text-orange-500 underline text-sm block mx-auto mt-2"
                 >
                   {ouvert ? "Fermer détails" : "Détails"}
                 </button>
 
-                {/* CARRÉ GRANDISSANT */}
                 <div
                   className={`overflow-hidden transition-all duration-500 ${
                     ouvert ? "max-h-[1000px] mt-3" : "max-h-0"
@@ -283,7 +310,6 @@ export default function SuivisEvangelisation() {
         </div>
       )}
 
-      {/* ================= POPUP TABLE UNIQUEMENT ================= */}
       {view === "table" && detailsTable && (
         <DetailsEvangePopup
           member={detailsTable}
@@ -301,7 +327,7 @@ export default function SuivisEvangelisation() {
           onClose={() => setEditingContact(null)}
           onUpdateMember={() => {
             setEditingContact(null);
-            fetchSuivis();
+            fetchSuivis(role, userId);
           }}
         />
       )}

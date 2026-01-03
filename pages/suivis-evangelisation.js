@@ -202,68 +202,83 @@ export default function SuivisEvangelisation() {
         </div>
       )}
 
-      {/* ===================== VUE TABLE ===================== */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto">
-          <div className="min-w-[900px]">
-            <table className="w-full text-sm bg-white rounded-lg shadow">
-              <thead className="bg-gray-200 uppercase">
-                <tr>
-                  <th className="px-3 py-2">Nom complet</th>
-                  <th className="px-3 py-2">Téléphone</th>
-                  <th className="px-3 py-2">Cellule</th>
-                  <th className="px-3 py-2">Conseiller</th>
-                  <th className="px-3 py-2">Actions</th>
-                </tr>
-              </thead>
+     {/* ===================== VUE TABLE ===================== */}
+{view === "table" && (
+  <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+    <table className="w-full text-sm border-collapse table-auto bg-white/80 rounded-lg shadow-md">
+      <thead className="text-sm uppercase">
+        <tr className="bg-gray-200/80">
+          <th
+            className="px-2 py-1 rounded-tl-lg text-left"
+            style={{ color: "#2E3192" }}
+          >
+            Nom complet
+          </th>
+          <th
+            className="px-2 py-1 text-left"
+            style={{ color: "#2E3192" }}
+          >
+            Téléphone
+          </th>
+          <th
+            className="px-2 py-1 text-left"
+            style={{ color: "#2E3192" }}
+          >
+            Attribué à
+          </th>
+          <th
+            className="px-2 py-1 rounded-tr-lg text-center"
+            style={{ color: "#2E3192" }}
+          >
+            Actions
+          </th>
+        </tr>
+      </thead>
 
-              <tbody>
-                {suivis.map((m) => {
-                  const conseiller = conseillers.find(
-                    (c) =>
-                      c.id === m.conseiller_id ||
-                      c.id === m.cellules?.responsable
-                  );
+      <tbody>
+        {suivis.map((m) => {
+          const conseiller = conseillers.find(
+            (c) => c.id === m.conseiller_id || c.id === m.responsable_cellule
+          );
+          const cellule = m.cellules; // ton objet cellule déjà lié dans le fetch
+          const attribution = cellule?.cellule_full
+            ? `🏠 ${cellule.cellule_full}`
+            : conseiller
+            ? `👤 ${conseiller.prenom} ${conseiller.nom}`
+            : "—";
 
-                  return (
-                    <tr key={m.id} className="border-b">
-                      <td className="px-3 py-2">
-                        {m.evangelises?.prenom} {m.evangelises?.nom}
-                      </td>
-                      <td className="px-3 py-2">
-                        {m.evangelises?.telephone || "—"}
-                      </td>
-                      <td className="px-3 py-2">
-                        {m.cellules?.cellule_full || "—"}
-                      </td>
-                      <td className="px-3 py-2">
-                        {conseiller
-                          ? `${conseiller.prenom} ${conseiller.nom}`
-                          : "—"}
-                      </td>
-                      <td className="px-3 py-2 flex gap-3">
-                        <button
-                          onClick={() => setDetailsTable(m)}
-                          className="text-orange-500 underline"
-                        >
-                          Détails
-                        </button>
-                        <button
-                          onClick={() =>
-                            m.evangelises?.id &&
-                            setEditingContact(m.evangelises)
-                          }
-                          className="text-blue-600 underline"
-                        >
-                          Modifier
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          return (
+            <tr
+              key={m.id}
+              className="border-b border-gray-300 hover:bg-gray-100/50"
+            >
+              <td className="px-2 py-1">{m.evangelises?.prenom} {m.evangelises?.nom}</td>
+              <td className="px-2 py-1">{m.evangelises?.telephone || "—"}</td>
+              <td className="px-2 py-1">{attribution}</td>
+              <td className="px-2 py-1 text-center flex justify-center gap-2">
+                <button
+                  onClick={() => setDetailsSuivi(m)}
+                  className="text-orange-500 underline text-sm"
+                >
+                  Détails
+                </button>
+
+                <button
+                  onClick={() =>
+                    m.evangelises?.id &&
+                    setEditingContact(m.evangelises)
+                  }
+                  className="text-blue-600 underline text-sm"
+                >
+                  Modifier
+                </button>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+
         </div>
       )}
 

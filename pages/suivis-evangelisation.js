@@ -5,6 +5,7 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditEvangelisePopup from "../components/EditEvangelisePopup";
+import DetailsEvangePopup from "../components/DetailsEvangePopup";
 
 export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
@@ -23,23 +24,16 @@ export default function SuivisEvangelisation() {
   }, []);
 
   /* ================= FETCH ================= */
-
   const fetchSuivis = async () => {
     const { data, error } = await supabase
       .from("suivis_des_evangelises")
       .select(`
         *,
-        evangelises (
-          id, prenom, nom, telephone, ville, sexe, besoin, infos_supplementaires,
-          priere_salut, type_conversion, is_whatsapp
-        ),
-        cellules (
-          id, cellule_full
-        )
+        evangelises (*)
       `)
       .order("id", { ascending: false });
 
-    if (!error) setSuivis(data || []);
+    if (!error) setSuivis(data);
     setLoading(false);
   };
 
@@ -48,12 +42,10 @@ export default function SuivisEvangelisation() {
       .from("profiles")
       .select("id, prenom, nom")
       .eq("role", "Conseiller");
-
     setConseillers(data || []);
   };
 
   /* ================= HELPERS ================= */
-
   const getBorderColor = (m) => {
     if (m.status_suivis_evangelises === "En cours") return "#FFA500";
     if (m.status_suivis_evangelises === "Integrer") return "#34A853";
@@ -92,6 +84,12 @@ export default function SuivisEvangelisation() {
   };
 
   /* ================= RENDER ================= */
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Chargement...
+      </div>
+    );
 
   return (
     <div
@@ -146,6 +144,13 @@ export default function SuivisEvangelisation() {
                 </p>
 
                 {/* DÉTAILS – CARRÉ GRANDISSANT */}
+                <button
+                  onClick={() => setDetailsSuivi(ouvert ? null : m)}
+                  className="text-orange-500 underline text-sm block mx-auto mt-2"
+                >
+                  {ouvert ? "Fermer détails" : "Détails"}
+                </button>
+
                 <div
                   className={`overflow-hidden transition-all duration-500 ${
                     ouvert ? "max-h-[800px] mt-3" : "max-h-0"
@@ -180,23 +185,10 @@ export default function SuivisEvangelisation() {
 
                       <button
                         onClick={() =>
-                          setEditingContact(
-                            m.evangelises && m.evangelises.id
-                              ? m.evangelises
-                              : {
-                                  id: null,
-                                  prenom: m.prenom,
-                                  nom: m.nom,
-                                  telephone: m.telephone,
-                                  ville: m.ville,
-                                  sexe: m.sexe,
-                                  besoin: m.besoin,
-                                  infos_supplementaires: m.infos_supplementaires,
-                                  priere_salut: m.priere_salut,
-                                  type_conversion: m.type_conversion,
-                                  is_whatsapp: m.is_whatsapp,
-                                }
-                          )
+                          setEditingContact({
+                            suivi: m,
+                            evangelise: m.evangelises || {},
+                          })
                         }
                         className="text-blue-600 text-sm underline w-full"
                       >
@@ -205,13 +197,6 @@ export default function SuivisEvangelisation() {
                     </div>
                   )}
                 </div>
-
-                <button
-                  onClick={() => setDetailsSuivi(ouvert ? null : m)}
-                  className="text-orange-500 underline text-sm block mx-auto mt-2"
-                >
-                  {ouvert ? "Fermer détails" : "Détails"}
-                </button>
               </div>
             );
           })}
@@ -227,14 +212,15 @@ export default function SuivisEvangelisation() {
                 <tr>
                   <th className="px-3 py-2 text-left">Nom</th>
                   <th className="px-3 py-2 text-left">Téléphone</th>
-                  <th className="px-3 py-2 text-left">Conseiller / Cellule</th>
+                  <th className="px-3 py-2 text-left">Conseiller</th>
                   <th className="px-3 py-2 text-left">Actions</th>
                 </tr>
               </thead>
+
               <tbody>
                 {suivis.map((m) => {
                   const conseiller = conseillers.find(
-                    (c) => c.id === m.conseiller_id
+                    (c) => c.id === m.conseiller_id || c.id === m.responsable_cellule
                   );
 
                   return (
@@ -245,22 +231,29 @@ export default function SuivisEvangelisation() {
                       <td className="px-3 py-3 rounded-l-lg">
                         {m.prenom} {m.nom}
                       </td>
+                      <td className="px-3 py-3 whitespace-nowrap">{m.telephone || "—"}</td>
                       <td className="px-3 py-3 whitespace-nowrap">
-                        {m.telephone || "—"}
-                      </td>
-                      <td className="px-3 py-3 whitespace-nowrap">
-                        {m.cellules
-                          ? `🏠 ${m.cellules.cellule_full}`
-                          : conseiller
-                          ? `👤 ${conseiller.prenom} ${conseiller.nom}`
-                          : "—"}
+                        {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
                       </td>
                       <td className="px-3 py-3 rounded-r-lg">
                         <button
-                          onClick={() => setDetailsSuivi(m)}
+                          onClick={() =>
+                            setDetailsSuivi(m)
+                          }
                           className="text-orange-500 underline text-sm"
                         >
                           Détails
+                        </button>
+                        <button
+                          onClick={() =>
+                            setEditingContact({
+                              suivi: m,
+                              evangelise: m.evangelises || {},
+                            })
+                          }
+                          className="text-blue-600 text-sm underline ml-2"
+                        >
+                          ✏️ Modifier
                         </button>
                       </td>
                     </tr>
@@ -269,35 +262,34 @@ export default function SuivisEvangelisation() {
               </tbody>
             </table>
           </div>
-
-          {/* POPUP EDIT / DETAILS TABLE */}
-          {detailsSuivi && (
-            <EditEvangelisePopup
-              member={
-                detailsSuivi.evangelises
-                  ? detailsSuivi.evangelises
-                  : {
-                      id: null,
-                      prenom: detailsSuivi.prenom,
-                      nom: detailsSuivi.nom,
-                      telephone: detailsSuivi.telephone,
-                      ville: detailsSuivi.ville,
-                      sexe: detailsSuivi.sexe,
-                      besoin: detailsSuivi.besoin,
-                      infos_supplementaires: detailsSuivi.infos_supplementaires,
-                      priere_salut: detailsSuivi.priere_salut,
-                      type_conversion: detailsSuivi.type_conversion,
-                      is_whatsapp: detailsSuivi.is_whatsapp,
-                    }
-              }
-              onClose={() => setDetailsSuivi(null)}
-              onUpdateMember={() => {
-                setDetailsSuivi(null);
-                fetchSuivis();
-              }}
-            />
-          )}
         </div>
+      )}
+
+      {/* ===== POPUP MODIFIER ===== */}
+      {editingContact && (
+        <EditEvangelisePopup
+          member={editingContact}
+          onClose={() => setEditingContact(null)}
+          onUpdateMember={(updated) => {
+            // MAJ local pour carte + table
+            setSuivis((prev) =>
+              prev.map((s) =>
+                s.id === editingContact.suivi.id
+                  ? { ...s, evangelises: updated }
+                  : s
+              )
+            );
+            setEditingContact(null);
+          }}
+        />
+      )}
+
+      {/* ===== DETAILS POPUP TABLE (si table) ===== */}
+      {detailsSuivi && view === "table" && (
+        <DetailsEvangePopup
+          member={detailsSuivi}
+          onClose={() => setDetailsSuivi(null)}
+        />
       )}
     </div>
   );

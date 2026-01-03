@@ -211,8 +211,7 @@ export default function SuivisEvangelisation() {
                 <tr>
                   <th className="px-3 py-2">Nom complet</th>
                   <th className="px-3 py-2">Téléphone</th>
-                  <th className="px-3 py-2">Cellule</th>
-                  <th className="px-3 py-2">Conseiller</th>
+                  <th className="px-3 py-2">Attribué à</th>                  
                   <th className="px-3 py-2">Actions</th>
                 </tr>
               </thead>
@@ -233,14 +232,14 @@ export default function SuivisEvangelisation() {
                       <td className="px-3 py-2">
                         {m.evangelises?.telephone || "—"}
                       </td>
-                      <td className="px-3 py-2">
-                        {m.cellules?.cellule_full || "—"}
-                      </td>
-                      <td className="px-3 py-2">
-                        {conseiller
-                          ? `${conseiller.prenom} ${conseiller.nom}`
-                          : "—"}
-                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap">
+  {m.cellules?.cellule_full
+    ? `🏠 ${m.cellules.cellule_full}`
+    : conseiller
+    ? `👤 ${conseiller.prenom} ${conseiller.nom}`
+    : "—"}
+</td>
+
                       <td className="px-3 py-2 flex gap-3">
                         <button
                           onClick={() => setDetailsTable(m)}

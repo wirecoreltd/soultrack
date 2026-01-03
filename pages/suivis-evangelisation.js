@@ -11,6 +11,7 @@ export default function SuivisEvangelisation() {
   const [conseillers, setConseillers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("card");
+
   const [detailsSuivi, setDetailsSuivi] = useState(null);
   const [editingContact, setEditingContact] = useState(null);
   const [commentChanges, setCommentChanges] = useState({});
@@ -21,16 +22,24 @@ export default function SuivisEvangelisation() {
     fetchConseillers();
   }, []);
 
+  /* ================= FETCH ================= */
+
   const fetchSuivis = async () => {
     setLoading(true);
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("suivis_des_evangelises")
-        .select("*, cellules:cellule_id (id, cellule_full)")
+        .select(`
+          *,
+          cellules:cellule_id (id, cellule_full),
+          evangelises:evangelise_id (*)
+        `)
         .order("date_suivi", { ascending: false });
+
+      if (error) throw error;
       setSuivis(data || []);
     } catch (err) {
-      console.error(err);
+      console.error("fetchSuivis:", err);
     } finally {
       setLoading(false);
     }
@@ -38,15 +47,19 @@ export default function SuivisEvangelisation() {
 
   const fetchConseillers = async () => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("id, prenom, nom")
         .eq("role", "Conseiller");
+
+      if (error) throw error;
       setConseillers(data || []);
     } catch (err) {
-      console.error(err);
+      console.error("fetchConseillers:", err);
     }
   };
+
+  /* ================= HELPERS ================= */
 
   const getBorderColor = (m) => {
     if (m.status_suivis_evangelises === "En cours") return "#FFA500";
@@ -65,16 +78,20 @@ export default function SuivisEvangelisation() {
     setUpdating((prev) => ({ ...prev, [id]: true }));
 
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("suivis_des_evangelises")
         .update({ commentaire_evangelises: newComment })
         .eq("id", id)
         .select()
         .single();
 
-      setSuivis((prev) => prev.map((s) => (s.id === id ? data : s)));
+      if (error) throw error;
+
+      setSuivis((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, ...data } : s))
+      );
     } catch (err) {
-      console.error(err);
+      console.error("updateSuivi:", err);
     } finally {
       setUpdating((prev) => ({ ...prev, [id]: false }));
     }
@@ -90,6 +107,8 @@ export default function SuivisEvangelisation() {
       return b;
     }
   };
+
+  /* ================= RENDER ================= */
 
   return (
     <div
@@ -109,7 +128,7 @@ export default function SuivisEvangelisation() {
         📋 Suivis des Évangélisés
       </h1>
 
-      {/* Toggle Vue */}
+      {/* TOGGLE */}
       <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
@@ -127,6 +146,8 @@ export default function SuivisEvangelisation() {
               (c) => c.id === m.conseiller_id || c.id === m.responsable_cellule
             );
 
+            const ouvert = detailsSuivi === m.id;
+
             return (
               <div
                 key={m.id}
@@ -136,48 +157,74 @@ export default function SuivisEvangelisation() {
                 <h2 className="font-bold text-center">
                   {m.prenom} {m.nom}
                 </h2>
+
                 <p className="text-sm text-center">📱 {m.telephone || "—"}</p>
-                <p className="text-sm text-center">🏠 Cellule : {m.cellules?.cellule_full || "—"}</p>
                 <p className="text-sm text-center">
-                  👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
+                  🏠 Cellule : {m.cellules?.cellule_full || "—"}
                 </p>
-                <p className="text-sm text-center">💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                <p className="text-sm text-center">
+                  👤 Conseiller :{" "}
+                  {conseiller
+                    ? `${conseiller.prenom} ${conseiller.nom}`
+                    : "—"}
+                </p>
+                <p className="text-sm text-center">
+                  💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}
+                </p>
 
                 <button
-                  onClick={() => setDetailsSuivi(detailsSuivi === m.id ? null : m.id)}
+                  onClick={() => setDetailsSuivi(ouvert ? null : m.id)}
                   className="text-orange-500 underline text-sm block mx-auto mt-2"
                 >
-                  {detailsSuivi === m.id ? "Fermer détails" : "Détails"}
+                  {ouvert ? "Fermer détails" : "Détails"}
                 </button>
 
                 <div
                   className={`transition-all duration-500 overflow-hidden ${
-                    detailsSuivi === m.id ? "max-h-[1000px] mt-3" : "max-h-0"
+                    ouvert ? "max-h-[1000px] mt-3" : "max-h-0"
                   }`}
                 >
-                  {detailsSuivi === m.id && (
+                  {ouvert && (
                     <div className="text-sm space-y-2">
                       <p>🏙️ Ville : {m.ville || "—"}</p>
                       <p>⚥ Sexe : {m.sexe || "—"}</p>
                       <p>🙏 Prière du salut : {m.priere_salut ? "Oui" : "Non"}</p>
                       <p>☀️ Type : {m.type_conversion || "—"}</p>
                       <p>❓ Besoin : {formatBesoin(m.besoin)}</p>
-                      <p>📝 Infos supplémentaires : {m.infos_supplementaires || "—"}</p>
+                      <p>
+                        📝 Infos supplémentaires :{" "}
+                        {m.infos_supplementaires || "—"}
+                      </p>
+
                       <textarea
                         rows={2}
                         className="w-full border rounded px-2 py-1 mt-2"
                         placeholder="Ajouter un commentaire..."
-                        value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
-                        onChange={(e) => handleCommentChange(m.id, e.target.value)}
+                        value={
+                          commentChanges[m.id] ??
+                          m.commentaire_evangelises ??
+                          ""
+                        }
+                        onChange={(e) =>
+                          handleCommentChange(m.id, e.target.value)
+                        }
                       />
+
                       <button
                         onClick={() => updateSuivi(m.id)}
                         className="w-full bg-green-600 text-white rounded py-1 mt-2"
                       >
                         Mettre à jour
                       </button>
+
                       <button
-                        onClick={() => setEditingContact(m)}
+                        onClick={() => {
+                          if (!m.evangelises) {
+                            alert("❌ Aucun évangélisé lié");
+                            return;
+                          }
+                          setEditingContact(m.evangelises);
+                        }}
                         className="text-blue-600 text-sm text-center mt-3 w-full"
                       >
                         ✏️ Modifier le contact
@@ -191,82 +238,75 @@ export default function SuivisEvangelisation() {
         </div>
       )}
 
-    {/* ===================== VUE TABLE ===================== */}
-{view === "table" && (
-  <div className="w-full max-w-6xl mx-auto">
-
-    {/* ===== EN-TÊTE ===== */}
-    <div
-      className="grid grid-cols-4 gap-3 px-4 py-3
-                 text-sm font-semibold uppercase
-                 bg-white/20 backdrop-blur
-                 rounded-t-xl"
-      style={{ color: "#2E3192" }}
-    >
-      <div>Nom</div>
-      <div>Téléphone</div>
-      <div>Attribué à</div>
-      <div>Actions</div>
-    </div>
-
-    {/* ===== LIGNES ===== */}
-    <div className="flex flex-col gap-2 mt-2">
-      {suivis.map((m) => {
-        const conseiller = conseillers.find(
-          (c) => c.id === m.conseiller_id
-        );
-
-        return (
+      {/* ===================== VUE TABLE ===================== */}
+      {view === "table" && (
+        <div className="w-full max-w-6xl mx-auto">
           <div
-            key={m.id}
-            className="grid grid-cols-4 gap-3 px-4 py-3 items-center
-                       bg-white/10 backdrop-blur
-                       rounded-xl
-                       border border-white/20
-                       hover:bg-white/20 transition"
+            className="grid grid-cols-4 gap-3 px-4 py-3 text-sm font-semibold uppercase
+                       bg-white/20 backdrop-blur rounded-t-xl"
+            style={{ color: "#2E3192" }}
           >
-            {/* Nom */}
-            <div>{m.prenom} {m.nom}</div>
-
-            {/* Téléphone */}
-            <div>{m.telephone || "—"}</div>
-
-            {/* Attribution */}
-            <div className="whitespace-nowrap">
-              {m.cellules
-                ? `🏠 ${m.cellules.cellule_full}`
-                : conseiller
-                ? `👤 ${conseiller.prenom} ${conseiller.nom}`
-                : "—"}
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-4">
-              <button
-                onClick={() =>
-                  setDetailsSuivi(detailsSuivi?.id === m.id ? null : m)
-                }
-                className="text-orange-400 underline text-sm"
-              >
-                {detailsSuivi?.id === m.id ? "Fermer détails" : "Détails"}
-              </button>
-
-              <button
-                onClick={() => setEditingContact(m)}
-                className="text-blue-400 underline text-sm"
-              >
-                Modifier
-              </button>
-            </div>
+            <div>Nom</div>
+            <div>Téléphone</div>
+            <div>Attribué à</div>
+            <div>Actions</div>
           </div>
-        );
-      })}
-    </div>
-  </div>
-)}
 
+          <div className="flex flex-col gap-2 mt-2">
+            {suivis.map((m) => {
+              const conseiller = conseillers.find(
+                (c) => c.id === m.conseiller_id
+              );
 
+              return (
+                <div
+                  key={m.id}
+                  className="grid grid-cols-4 gap-3 px-4 py-3 items-center
+                             bg-white/10 backdrop-blur rounded-xl
+                             border border-white/20 hover:bg-white/20 transition"
+                >
+                  <div>{m.prenom} {m.nom}</div>
+                  <div>{m.telephone || "—"}</div>
 
+                  <div className="whitespace-nowrap">
+                    {m.cellules
+                      ? `🏠 ${m.cellules.cellule_full}`
+                      : conseiller
+                      ? `👤 ${conseiller.prenom} ${conseiller.nom}`
+                      : "—"}
+                  </div>
+
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() =>
+                        setDetailsSuivi(detailsSuivi === m.id ? null : m.id)
+                      }
+                      className="text-orange-400 underline text-sm"
+                    >
+                      {detailsSuivi === m.id
+                        ? "Fermer détails"
+                        : "Détails"}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (!m.evangelises) {
+                          alert("❌ Aucun évangélisé lié");
+                          return;
+                        }
+                        setEditingContact(m.evangelises);
+                      }}
+                      className="text-blue-400 underline text-sm"
+                    >
+                      Modifier
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ===================== POPUP MODIFIER ===================== */}
       {editingContact && (

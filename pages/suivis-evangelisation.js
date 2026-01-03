@@ -224,7 +224,7 @@ export default function SuivisEvangelisation() {
           const isOpen = detailsSuivi?.id === m.id;
 
           return (
-            <React.Fragment key={m.id}>
+            <>
               {/* ===== LIGNE PRINCIPALE ===== */}
               <tr className="bg-white/30 backdrop-blur rounded-lg shadow-sm hover:bg-white/50">
                 <td className="px-3 py-3 rounded-l-lg">
@@ -252,7 +252,7 @@ export default function SuivisEvangelisation() {
                   </button>
                 </td>
               </tr>
-            </React.Fragment>
+            </>
           );
         })}
       </tbody>
@@ -260,7 +260,6 @@ export default function SuivisEvangelisation() {
   </div>
 </div>
 
-      )}
 
       {/* ================= POPUP TABLE UNIQUEMENT ================= */}
       {view === "table" && detailsTable && (

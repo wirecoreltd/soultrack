@@ -122,7 +122,7 @@ export default function SuivisEvangelisation() {
           className="bg-white rounded-2xl shadow-lg p-4 border-l-4"
           style={{ borderLeftColor: getBorderColor(m) }}
         >
-          {/* ===== Infos principales ===== */}
+          {/* Infos principales */}
           <h2 className="font-bold text-center">
             {m.evangelises?.prenom} {m.evangelises?.nom}
           </h2>
@@ -139,7 +139,7 @@ export default function SuivisEvangelisation() {
             👤 {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
           </p>
 
-          {/* ===== Bouton détails ===== */}
+          {/* Bouton détails */}
           <button
             onClick={() => setDetailsSuivi(ouvert ? null : m)}
             className="text-orange-500 underline text-sm block mx-auto mt-2"
@@ -147,7 +147,7 @@ export default function SuivisEvangelisation() {
             {ouvert ? "Fermer détails" : "Détails"}
           </button>
 
-          {/* ===== Carré grandissant des détails ===== */}
+          {/* Carré grandissant pour les détails */}
           <div
             className={`overflow-hidden transition-all duration-500 ${
               ouvert ? "max-h-[800px] mt-3" : "max-h-0"
@@ -192,6 +192,7 @@ export default function SuivisEvangelisation() {
     })}
   </div>
 )}
+
 
 
       {/* ===================== VUE TABLE ===================== */}

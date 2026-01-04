@@ -1,4 +1,3 @@
-// pages/membres-cellule.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -10,6 +9,8 @@ import MemberDetailsPopup from "../components/MemberDetailsPopup";
 
 export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
+  const [cellules, setCellules] = useState([]);
+  const [selectedCellule, setSelectedCellule] = useState("");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
@@ -27,12 +28,12 @@ export default function MembresCellule() {
 
         if (!userEmail) throw new Error("Utilisateur non connecté");
 
-        // Récupération du profil actuel
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("id, prenom, nom")
           .eq("email", userEmail)
           .single();
+
         if (profileError) throw profileError;
 
         setPrenom(profileData?.prenom || "cher membre");
@@ -45,26 +46,27 @@ export default function MembresCellule() {
             .from("v_membres_full")
             .select("*")
             .or("cellule_nom.not.is.null,suivi_cellule_nom.not.is.null");
+
           if (error) throw error;
           membresData = data;
         } else if (userRole.includes("ResponsableCellule")) {
-          const { data: allMembres, error } = await supabase
+          const { data, error } = await supabase
             .from("v_membres_full")
             .select("*")
             .or(
-              `responsable_id.eq.${responsableId},` +
-              `suivi_responsable_id.eq.${responsableId}`
+              `responsable_id.eq.${responsableId},suivi_responsable_id.eq.${responsableId}`
             );
 
           if (error) throw error;
-          membresData = allMembres;
-
-          if (!membresData || membresData.length === 0) {
-            setMessage("Aucun membre assigné à vos cellules.");
-          }
+          membresData = data;
         }
 
-        setMembres(membresData || []);
+        // 🔒 AFFICHER UNIQUEMENT LES MEMBRES AVEC CELLULE
+        membresData = (membresData || []).filter(
+          (m) => m.cellule_nom || m.suivi_cellule_nom
+        );
+
+        setMembres(membresData);
       } catch (err) {
         console.error("❌ Erreur:", err.message || err);
         setMessage("Erreur lors de la récupération des membres.");
@@ -74,7 +76,16 @@ export default function MembresCellule() {
       }
     };
 
+    const fetchCellules = async () => {
+      const { data, error } = await supabase
+        .from("cellules")
+        .select("cellule_full");
+
+      if (!error) setCellules(data || []);
+    };
+
     fetchMembres();
+    fetchCellules();
   }, []);
 
   const getCellule = (m) => m.cellule_nom || m.suivi_cellule_nom || "—";
@@ -86,13 +97,23 @@ export default function MembresCellule() {
   };
 
   const handleUpdateMember = (updated) => {
-    setMembres(prev =>
-      prev.map(m => (m.id === updated.id ? updated : m))
+    setMembres((prev) =>
+      prev.map((m) => (m.id === updated.id ? updated : m))
     );
   };
 
-  if (loading) return <p className="text-center mt-10 text-white">Chargement...</p>;
-  if (message) return <p className="text-center mt-10 text-white">{message}</p>;
+  const membresFiltres = membres.filter((m) => {
+    if (!selectedCellule) return true;
+    return (
+      m.cellule_nom === selectedCellule ||
+      m.suivi_cellule_nom === selectedCellule
+    );
+  });
+
+  if (loading)
+    return <p className="text-center mt-10 text-white">Chargement...</p>;
+  if (message)
+    return <p className="text-center mt-10 text-white">{message}</p>;
 
   return (
     <div
@@ -101,126 +122,116 @@ export default function MembresCellule() {
     >
       {/* HEADER */}
       <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
-        <button onClick={() => window.history.back()} className="text-white hover:text-gray-200 transition">← Retour</button>
-        <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
-      </div>
-
-      <div className="mb-4">
-        <Image src="/logo.png" alt="Logo" className="w-20 h-20 mx-auto" width={80} height={80} />
-      </div>
-
-      <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">👥 Membres de ma/mes cellule(s)</h1>
-        <p className="text-white text-lg max-w-xl mx-auto italic">Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️</p>
-      </div>
-
-      {/* Toggle Carte/Table */}
-      <div className="mb-4 flex justify-between w-full max-w-6xl">
         <button
-          onClick={() => setView(view === "card" ? "table" : "card")}
-          className="text-white text-sm underline hover:text-gray-200"
+          onClick={() => window.history.back()}
+          className="text-white hover:text-gray-200 transition"
         >
-          {view === "card" ? "Vue Table" : "Vue Carte"}
+          ← Retour
         </button>
+        <LogoutLink />
       </div>
 
-      {/* Vue Carte */}
-      {view === "card" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">        
-          {membres.map(m => (
+      <Image src="/logo.png" alt="Logo" width={80} height={80} />
+
+      <h1 className="text-3xl font-bold text-white mb-4">
+        👥 Membres de ma/mes cellule(s)
+      </h1>
+
+      {/* FILTRE CELLULE */}
+      <div className="mb-4 w-full max-w-6xl flex justify-end">
+        <select
+          value={selectedCellule}
+          onChange={(e) => setSelectedCellule(e.target.value)}
+          className="px-3 py-2 rounded-lg text-sm"
+        >
+          <option value="">Toutes les cellules</option>
+          {cellules.map((c) => (
+            <option key={c.cellule_full} value={c.cellule_full}>
+              {c.cellule_full}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* SWITCH VIEW */}
+      <button
+        onClick={() => setView(view === "card" ? "table" : "card")}
+        className="text-white underline mb-6"
+      >
+        {view === "card" ? "Vue Table" : "Vue Carte"}
+      </button>
+
+      {/* VUE CARTE */}
+      {view === "card" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
+          {membresFiltres.map((m) => (
             <div
               key={m.id}
-              className="bg-white p-4 rounded-xl shadow-md border-l-4 w-full transition hover:shadow-lg"
+              className="bg-white p-4 rounded-xl shadow-md border-l-4"
               style={{ borderLeftColor: getBorderColor(m) }}
             >
-              <div className="flex flex-col items-center">
-                <h2 className="font-bold text-black text-base text-center mb-1">
-                  {m.prenom} {m.nom}
-                </h2>
-                <p className="text-sm text-gray-700 mb-1">📞 {m.telephone || "—"}</p>
-                <p className="text-sm text-gray-700 mb-1">📌 Cellule : {getCellule(m)}</p>
+              <h2 className="font-bold text-center">
+                {m.prenom} {m.nom}
+              </h2>
+              <p className="text-sm text-center">📞 {m.telephone || "—"}</p>
+              <p className="text-sm text-center">
+                📌 Cellule : {getCellule(m)}
+              </p>
 
-                {/* Bouton détails */}
-                <button
-                  onClick={() => setSelectedMembre(selectedMembre === m.id ? null : m.id)}
-                  className="text-orange-500 text-sm mt-1"
-                >
-                  {selectedMembre === m.id ? "Fermer détails" : "Détails"}
-                </button>
+              <button
+                onClick={() =>
+                  setSelectedMembre(selectedMembre === m.id ? null : m.id)
+                }
+                className="text-orange-500 text-sm block mx-auto mt-2"
+              >
+                {selectedMembre === m.id ? "Fermer détails" : "Détails"}
+              </button>
 
-                {/* Détails */}
-                {selectedMembre === m.id && (
-                  <div className="mt-3 w-full bg-gray-50 p-4 rounded-lg text-left space-y-2">
-                    <p><strong>Ville :</strong> {m.ville || "—"}</p>
-                    <p><strong>WhatsApp :</strong> {m.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p>
-                      <strong>Besoin :</strong>{" "}
-                      {(() => {
-                        if (!m.besoin) return "—";
-                        if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-                        try {
-                          const arr = JSON.parse(m.besoin);
-                          return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                        } catch {
-                          return m.besoin;
-                        }
-                      })()}
-                    </p>
-                    <p><strong>Infos :</strong> {m.infos_supplementaires || "—"}</p>
-
-                    {/* Bouton modifier centré */}
-                    <div className="flex justify-center pt-2">
-                      <button
-                        onClick={() => setEditingMember(m)}
-                        className="text-orange-500 text-sm mt-1"
-                      >
-                        ✏️ Modifier le contact
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              {selectedMembre === m.id && (
+                <div className="mt-3 bg-gray-50 p-3 rounded-lg text-sm space-y-2">
+                  <p><strong>Ville :</strong> {m.ville || "—"}</p>
+                  <p><strong>WhatsApp :</strong> {m.is_whatsapp ? "Oui" : "Non"}</p>
+                  <p><strong>Besoin :</strong> {m.besoin || "—"}</p>
+                  <button
+                    onClick={() => setEditingMember(m)}
+                    className="text-orange-500 underline text-sm w-full"
+                  >
+                    ✏️ Modifier
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
-      ) : (
-        // Vue Table
-        <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
-          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-md">
+      )}
+
+      {/* VUE TABLE */}
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto">
+          <table className="w-full bg-white text-sm rounded-lg shadow">
+            <thead className="bg-gray-200">
               <tr>
-                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-                <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Ville</th>
-                <th className="px-4 py-2">Cellule</th>
-                <th className="px-4 py-2 rounded-tr-lg">Action</th>
+                <th className="px-3 py-2">Nom</th>
+                <th className="px-3 py-2">Téléphone</th>
+                <th className="px-3 py-2">Cellule</th>
+                <th className="px-3 py-2">Action</th>
               </tr>
             </thead>
             <tbody>
-              {membres.length === 0 ? (
-                <tr><td colSpan={5} className="px-4 py-2 text-white text-center">Aucun membre</td></tr>
-              ) : membres.map(m => (
-                <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                  <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
-                  <td className="px-4 py-2">{m.telephone || "—"}</td>
-                  <td className="px-4 py-2">{m.ville || "—"}</td>
-                  <td className="px-4 py-2">{getCellule(m)}</td>
-                  <td className="px-4 py-2">
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => setDetailsMember(m)}
-                        className="text-orange-500 underline text-sm"
-                      >
-                        Détails
-                      </button>
-
-                      <button
-                        onClick={() => setEditingMember(m)}
-                        className="text-blue-600 underline text-sm"
-                      >
-                        Modifier
-                      </button>
-                    </div>
+              {membresFiltres.map((m) => (
+                <tr key={m.id} className="border-b">
+                  <td className="px-3 py-2">
+                    {m.prenom} {m.nom}
+                  </td>
+                  <td className="px-3 py-2">{m.telephone || "—"}</td>
+                  <td className="px-3 py-2">{getCellule(m)}</td>
+                  <td className="px-3 py-2">
+                    <button
+                      onClick={() => setEditingMember(m)}
+                      className="text-blue-600 underline"
+                    >
+                      Modifier
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -229,7 +240,6 @@ export default function MembresCellule() {
         </div>
       )}
 
-      {/* POPUP MODIFIER */}
       {editingMember && (
         <EditMemberCellulePopup
           member={editingMember}
@@ -238,7 +248,6 @@ export default function MembresCellule() {
         />
       )}
 
-      {/* POPUP DETAILS */}
       {detailsMember && (
         <MemberDetailsPopup
           member={detailsMember}

@@ -233,11 +233,11 @@ export default function MembresCellule() {
       )}
 
       {/* POPUP MODIFIER */}
-      {editingMember && (
-        <EditMemberCellulePopup
-          member={editingMember}
-          onClose={() => setEditingMember(null)}
-          onUpdateMember={handleUpdateMember}
+      {editMember && (
+        <EditMemberPopup
+          member={editMember}
+          onClose={() => setEditMember(null)}
+          onUpdateMember={onUpdateMemberHandler}
         />
       )}
 

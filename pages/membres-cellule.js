@@ -38,7 +38,7 @@ export default function MembresCellule() {
         setPrenom(profileData?.prenom || "");
 
         let query = supabase
-          .from("v_membres_full")
+          .from("membres_complets")
           .select("*")
           .not("cellule_id", "is", null) // Seulement membres assignés à une cellule
           .order("created_at", { ascending: false });
@@ -77,7 +77,7 @@ export default function MembresCellule() {
   }, []);
 
   // -------------------- HELPERS --------------------
-  const getCellule = (m) => m.cellule_full || "—";
+  const getCellule = (m) => m.cellule_full || m.suivi_cellule_nom || "—";
 
   const getBorderColor = (m) => {
     if (m.statut === "actif") return "#34A853";

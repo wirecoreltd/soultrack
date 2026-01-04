@@ -14,45 +14,45 @@ export default function SuivisEvangelisation() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("card");
 
-  // 🔒 états séparés
   const [detailsCarteId, setDetailsCarteId] = useState(null);
   const [detailsTable, setDetailsTable] = useState(null);
   const [editingContact, setEditingContact] = useState(null);
   const [commentChanges, setCommentChanges] = useState({});
   const [user, setUser] = useState(null);
 
+  /* ================= INIT ================= */
   useEffect(() => {
-    fetchUser();
-    fetchConseillers();
-    fetchCellules();
+    init();
   }, []);
 
-  /* ================= FETCH USER ================= */
-  const fetchUser = async () => {
-    const { data: session } = await supabase.auth.getSession();
-    if (!session || !session.session?.user) {
-      setUser(null);
-      setLoading(false);
-      return;
+  const init = async () => {
+    const userData = await fetchUser();
+    await fetchConseillers();
+    const cellulesData = await fetchCellules();
+
+    if (userData) {
+      await fetchSuivis(userData, cellulesData);
     }
 
-    const userId = session.session.user.id;
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
-
-    if (error || !data) {
-      setUser(null);
-      setLoading(false);
-    } else {
-      setUser(data);
-      fetchSuivis(data.role, data.id);
-    }
+    setLoading(false);
   };
 
+  /* ================= USER ================= */
+  const fetchUser = async () => {
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session?.user) return null;
+
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", session.session.user.id)
+      .single();
+
+    setUser(data);
+    return data;
+  };
+
+  /* ================= CONSEILLERS ================= */
   const fetchConseillers = async () => {
     const { data } = await supabase
       .from("profiles")
@@ -62,49 +62,48 @@ export default function SuivisEvangelisation() {
     setConseillers(data || []);
   };
 
+  /* ================= CELLULES ================= */
   const fetchCellules = async () => {
     const { data } = await supabase
       .from("cellules")
       .select("id, cellule_full, responsable_id");
 
     setCellules(data || []);
+    return data || [];
   };
 
-  /* ================= FETCH ================= */
-  const fetchSuivis = async (role, userId) => {
-    let query = supabase
+  /* ================= SUIVIS + FILTRAGE ================= */
+  const fetchSuivis = async (userData, cellulesData) => {
+    const { data, error } = await supabase
       .from("suivis_des_evangelises")
       .select(`*, evangelises (*), cellules (*)`)
       .order("id", { ascending: false });
 
-    const { data, error } = await query;
-
     if (error) {
-      console.error("Erreur fetch suivis:", error);
+      console.error(error);
       setSuivis([]);
-    } else {
-      // 🔹 FILTRAGE PAR RÔLE
-      let filtered = data || [];
-      if (role !== "Administrateur") {
-        filtered = filtered.filter((m) => {
-          // Conseiller : voir seulement ses membres
-          if (role === "Conseiller") return m.conseiller_id === userId;
-
-          // ResponsableCellule : voir seulement membres de ses cellules
-          if (role === "ResponsableCellule") {
-            const mesCellulesIds = cellules
-              .filter((c) => c.responsable_id === userId)
-              .map((c) => c.id);
-            return mesCellulesIds.includes(m.cellule_id);
-          }
-
-          return false;
-        });
-      }
-
-      setSuivis(filtered);
+      return;
     }
-    setLoading(false);
+
+    let filtered = data || [];
+
+    if (userData.role === "Conseiller") {
+      filtered = filtered.filter(
+        (m) => m.conseiller_id === userData.id
+      );
+    }
+
+    if (userData.role === "ResponsableCellule") {
+      const mesCellulesIds = cellulesData
+        .filter((c) => c.responsable_id === userData.id)
+        .map((c) => c.id);
+
+      filtered = filtered.filter((m) =>
+        mesCellulesIds.includes(m.cellule_id)
+      );
+    }
+
+    setSuivis(filtered);
   };
 
   /* ================= HELPERS ================= */
@@ -126,7 +125,7 @@ export default function SuivisEvangelisation() {
       .update({ commentaire_evangelises: commentChanges[id] })
       .eq("id", id);
 
-    fetchSuivis(user?.role, user?.id);
+    fetchSuivis(user, cellules);
   };
 
   const formatBesoin = (b) => {
@@ -139,7 +138,6 @@ export default function SuivisEvangelisation() {
     }
   };
 
-  /* ================= VIEW SWITCH ================= */
   const switchView = () => {
     setView(view === "card" ? "table" : "card");
     setDetailsCarteId(null);
@@ -150,14 +148,12 @@ export default function SuivisEvangelisation() {
   /* ================= RENDER ================= */
   if (loading) return <p className="text-center mt-10">Chargement...</p>;
   if (!user)
-    return (
-      <p className="text-center mt-10 text-red-600">Utilisateur non connecté.</p>
-    );
+    return <p className="text-center mt-10 text-red-600">Non connecté</p>;
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
-      {/* HEADER */}
-      <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
+
+      <div className="w-full max-w-5xl mb-6 flex justify-between">
         <button onClick={() => window.history.back()} className="text-white">
           ← Retour
         </button>
@@ -173,19 +169,19 @@ export default function SuivisEvangelisation() {
         {view === "card" ? "Vue Table" : "Vue Carte"}
       </button>
 
-      {/* ===================== VUE CARTE ===================== */}
+      {/* ================= VUE CARTE ================= */}
       {view === "card" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-6xl">
           {suivis.map((m) => {
             const ouvert = detailsCarteId === m.id;
             const conseiller = conseillers.find(
-              (c) => c.id === m.conseiller_id || c.id === m.cellules?.responsable
+              (c) => c.id === m.conseiller_id
             );
 
             return (
               <div
                 key={m.id}
-                className="bg-white rounded-2xl shadow-lg p-4 border-l-4"
+                className="bg-white rounded-2xl shadow p-4 border-l-4"
                 style={{ borderLeftColor: getBorderColor(m) }}
               >
                 <h2 className="font-bold text-center">
@@ -196,13 +192,10 @@ export default function SuivisEvangelisation() {
                   📱 {m.evangelises?.telephone || "—"}
                 </p>
                 <p className="text-sm text-center">
-                  🏠 Cellule : {m.cellules?.cellule_full || "—"}
+                  🏠 {m.cellules?.cellule_full || "—"}
                 </p>
                 <p className="text-sm text-center">
-                  👤 Conseiller :{" "}
-                  {conseiller
-                    ? `${conseiller.prenom} ${conseiller.nom}`
-                    : "—"}
+                  👤 {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
                 </p>
 
                 <button
@@ -214,7 +207,7 @@ export default function SuivisEvangelisation() {
                   {ouvert ? "Fermer détails" : "Détails"}
                 </button>
 
-                {/* CARRÉ GRANDISSANT */}
+                {/* ================= CARRÉ GRANDISSANT ================= */}
                 <div
                   className={`overflow-hidden transition-all duration-500 ${
                     ouvert ? "max-h-[1000px] mt-3" : "max-h-0"
@@ -269,69 +262,54 @@ export default function SuivisEvangelisation() {
         </div>
       )}
 
-      {/* ===================== VUE TABLE ===================== */}
+      {/* ================= VUE TABLE ================= */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto">
-          <div className="min-w-[900px]">
-            <table className="w-full text-sm bg-white rounded-lg shadow">
-              <thead className="bg-gray-200 uppercase">
-                <tr>
-                  <th className="px-3 py-2">Nom complet</th>
-                  <th className="px-3 py-2">Téléphone</th>
-                  <th className="px-3 py-2">Attribué à</th>
-                  <th className="px-3 py-2">Actions</th>
+          <table className="w-full bg-white rounded shadow">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="p-2">Nom</th>
+                <th className="p-2">Téléphone</th>
+                <th className="p-2">Attribué</th>
+                <th className="p-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {suivis.map((m) => (
+                <tr key={m.id} className="border-t">
+                  <td className="p-2">
+                    {m.evangelises?.prenom} {m.evangelises?.nom}
+                  </td>
+                  <td className="p-2">
+                    {m.evangelises?.telephone || "—"}
+                  </td>
+                  <td className="p-2">
+                    {m.cellules?.cellule_full || "—"}
+                  </td>
+                  <td className="p-2">
+                    <button
+                      onClick={() => setDetailsTable(m)}
+                      className="text-orange-500 underline mr-3"
+                    >
+                      Détails
+                    </button>
+                    <button
+                      onClick={() =>
+                        m.evangelises?.id &&
+                        setEditingContact(m.evangelises)
+                      }
+                      className="text-blue-600 underline"
+                    >
+                      Modifier
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-
-              <tbody>
-                {suivis.map((m) => {
-                  const conseiller = conseillers.find(
-                    (c) => c.id === m.conseiller_id || c.id === m.cellules?.responsable
-                  );
-
-                  return (
-                    <tr key={m.id} className="border-b">
-                      <td className="px-3 py-2">
-                        {m.evangelises?.prenom} {m.evangelises?.nom}
-                      </td>
-                      <td className="px-3 py-2">
-                        {m.evangelises?.telephone || "—"}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap">
-                        {m.cellules?.cellule_full
-                          ? `🏠 ${m.cellules.cellule_full}`
-                          : conseiller
-                          ? `👤 ${conseiller.prenom} ${conseiller.nom}`
-                          : "—"}
-                      </td>
-
-                      <td className="px-3 py-2 flex gap-3">
-                        <button
-                          onClick={() => setDetailsTable(m)}
-                          className="text-orange-500 underline"
-                        >
-                          Détails
-                        </button>
-                        <button
-                          onClick={() =>
-                            m.evangelises?.id &&
-                            setEditingContact(m.evangelises)
-                          }
-                          className="text-blue-600 underline"
-                        >
-                          Modifier
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* ================= POPUP TABLE UNIQUEMENT ================= */}
       {view === "table" && detailsTable && (
         <DetailsEvangePopup
           member={detailsTable}
@@ -349,7 +327,7 @@ export default function SuivisEvangelisation() {
           onClose={() => setEditingContact(null)}
           onUpdateMember={() => {
             setEditingContact(null);
-            fetchSuivis(user?.role, user?.id);
+            fetchSuivis(user, cellules);
           }}
         />
       )}

@@ -5,79 +5,58 @@ import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
-import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
-import MemberDetailsPopup from "../components/MemberDetailsPopup";
+import EditMemberPopup from "../components/EditMemberPopup";
 
 export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
-  const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
   const [selectedMembre, setSelectedMembre] = useState(null);
   const [view, setView] = useState("card");
-  const [editingMember, setEditingMember] = useState(null);
-  const [detailsMember, setDetailsMember] = useState(null);
+  const [editMember, setEditMember] = useState(null);
+  const [cellules, setCellules] = useState([]);
+  const [filterCellule, setFilterCellule] = useState("");
 
-  // -------------------- FETCH --------------------
+  // -------------------- FETCH MEMBRES --------------------
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchMembres = async () => {
       setLoading(true);
       try {
-        // Récupérer la session utilisateur
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) throw new Error("Utilisateur non connecté");
+        const { data: sessionData } = await supabase.auth.getSession();
+        const user = sessionData?.session?.user;
+        if (!user) throw new Error("Utilisateur non connecté");
 
-        const userEmail = session.user.email;
-
-        // Récupérer le profil de l'utilisateur
+        // Profil de l'utilisateur connecté
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("id, prenom, role")
-          .eq("email", userEmail)
+          .eq("id", user.id)
           .single();
         if (profileError) throw profileError;
 
-        setPrenom(profileData.prenom || "cher membre");
-        const responsableId = profileData.id;
+        setPrenom(profileData?.prenom || "");
 
-        // Récupérer toutes les cellules
-        const { data: cellulesData, error: cellulesError } = await supabase
-          .from("cellules")
-          .select("id, cellule_full, responsable_id");
-        if (cellulesError) throw cellulesError;
-        setCellules(cellulesData || []);
-
-        // Récupérer tous les membres ayant une cellule assignée
-        let { data: membresData, error: membresError } = await supabase
-          .from("membres_complets")
+        let query = supabase
+          .from("v_membres_full")
           .select("*")
-          .not("cellule_id", "is", null)
+          .not("cellule_id", "is", null) // Seulement membres assignés à une cellule
           .order("created_at", { ascending: false });
-        if (membresError) throw membresError;
 
-        // 🔹 Filtrage selon rôle
-        if (profileData.role === "ResponsableCellule") {
-          // garder seulement les membres de ses cellules
-          const mesCellulesIds = cellulesData
-            .filter(c => c.responsable_id === responsableId)
-            .map(c => c.id);
-          membresData = membresData.filter(m => mesCellulesIds.includes(m.cellule_id));
-        } else if (profileData.role === "Conseiller") {
-          membresData = membresData.filter(m => m.conseiller_id === responsableId);
+        // Filtrage selon rôle
+        if (profileData.role === "Conseiller") {
+          query = query.eq("conseiller_id", profileData.id);
+        } else if (profileData.role === "ResponsableCellule") {
+          query = query.or(`responsable_id.eq.${profileData.id},suivi_responsable_id.eq.${profileData.id}`);
         }
 
-        // Ajouter cellule_full à chaque membre
-        const membresAvecCelluleFull = membresData.map(m => {
-          const cellule = cellulesData.find(c => c.id === m.cellule_id);
-          return { ...m, cellule_full: cellule?.cellule_full || "—" };
-        });
+        const { data, error } = await query;
+        if (error) throw error;
 
-        setMembres(membresAvecCelluleFull);
-
-        if (!membresAvecCelluleFull.length) setMessage("Aucun membre assigné à vos cellules.");
+        setMembres(data || []);
+        if (!data || data.length === 0) setMessage("Aucun membre assigné à vos cellules.");
       } catch (err) {
-        console.error("❌ Erreur:", err.message || err);
+        console.error("Erreur fetchMembres:", err.message || err);
         setMessage("Erreur lors de la récupération des membres.");
         setMembres([]);
       } finally {
@@ -85,7 +64,16 @@ export default function MembresCellule() {
       }
     };
 
-    fetchData();
+    const fetchCellules = async () => {
+      const { data, error } = await supabase
+        .from("cellules")
+        .select("id, cellule_full");
+      if (error) console.error("Erreur fetchCellules:", error);
+      if (data) setCellules(data);
+    };
+
+    fetchCellules();
+    fetchMembres();
   }, []);
 
   // -------------------- HELPERS --------------------
@@ -103,10 +91,14 @@ export default function MembresCellule() {
     );
   };
 
-  // -------------------- RENDER --------------------
+  const filteredMembres = filterCellule
+    ? membres.filter(m => m.cellule_id === filterCellule)
+    : membres;
+
   if (loading) return <p className="text-center mt-10 text-white">Chargement...</p>;
   if (message) return <p className="text-center mt-10 text-white">{message}</p>;
 
+  // -------------------- RENDER --------------------
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
@@ -114,17 +106,31 @@ export default function MembresCellule() {
     >
       {/* HEADER */}
       <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
-        <button onClick={() => window.history.back()} className="text-white hover:text-gray-200 transition">← Retour</button>
+        <button
+          onClick={() => window.history.back()}
+          className="text-white hover:text-gray-200 transition"
+        >
+          ← Retour
+        </button>
         <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
       </div>
 
-      <div className="mb-4">
-        <Image src="/logo.png" alt="Logo" className="w-20 h-20 mx-auto" width={80} height={80} />
-      </div>
+      <Image src="/logo.png" alt="Logo" className="w-20 h-20 mb-4" width={80} height={80} />
 
-      <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">👥 Membres de ma/mes cellule(s)</h1>
-        <p className="text-white text-lg max-w-xl mx-auto italic">Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️</p>
+      <h1 className="text-3xl font-bold text-white mb-4">👥 Membres de ma/mes cellule(s)</h1>
+
+      {/* Filtre par cellule */}
+      <div className="mb-4 w-full max-w-6xl">
+        <select
+          value={filterCellule}
+          onChange={(e) => setFilterCellule(e.target.value)}
+          className="w-full max-w-xs px-3 py-2 rounded"
+        >
+          <option value="">Toutes les cellules</option>
+          {cellules.map(c => (
+            <option key={c.id} value={c.id}>{c.cellule_full}</option>
+          ))}
+        </select>
       </div>
 
       {/* Toggle Carte/Table */}
@@ -139,8 +145,8 @@ export default function MembresCellule() {
 
       {/* Vue Carte */}
       {view === "card" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">        
-          {membres.map(m => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
+          {filteredMembres.map(m => (
             <div
               key={m.id}
               className="bg-white p-4 rounded-xl shadow-md border-l-4 w-full transition hover:shadow-lg"
@@ -161,21 +167,20 @@ export default function MembresCellule() {
                   {selectedMembre === m.id ? "Fermer détails" : "Détails"}
                 </button>
 
-                {/* Détails */}
+                {/* Détails de la carte */}
                 {selectedMembre === m.id && (
-                  <div className="mt-3 w-full bg-gray-50 p-4 rounded-lg text-left space-y-2">
-                    <p><strong>Ville :</strong> {m.ville || "—"}</p>
-                    <p><strong>WhatsApp :</strong> {m.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p>
-                      <strong>Besoin :</strong>{" "}
-                      {Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin || "—"}
-                    </p>
-                    <p><strong>Infos :</strong> {m.infos_supplementaires || "—"}</p>
-
-                    <div className="flex justify-center pt-2">
+                  <div className="mt-3 w-full bg-gray-50 p-4 rounded-lg text-left">
+                    <div className="text-black text-sm mt-2 w-full space-y-1">
+                      <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                      <p>⚥ Sexe : {m.sexe || "—"}</p>
+                      <p>❓ Besoin : {Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin || "—"}</p>
+                      <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                      <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+                      <p>🧩 Raison de la venue : {m.statut_initial || "—"}</p>
+                      <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
                       <button
-                        onClick={() => setEditingMember(m)}
-                        className="text-orange-500 text-sm mt-1"
+                        onClick={() => setEditMember(m)}
+                        className="text-blue-600 text-sm mt-2 w-full"
                       >
                         ✏️ Modifier le contact
                       </button>
@@ -200,9 +205,11 @@ export default function MembresCellule() {
               </tr>
             </thead>
             <tbody>
-              {membres.length === 0 ? (
-                <tr><td colSpan={5} className="px-4 py-2 text-white text-center">Aucun membre</td></tr>
-              ) : membres.map(m => (
+              {filteredMembres.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-2 text-white text-center">Aucun membre</td>
+                </tr>
+              ) : filteredMembres.map(m => (
                 <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
                   <td className="px-4 py-2 border-l-4 rounded-l-md" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
@@ -211,14 +218,13 @@ export default function MembresCellule() {
                   <td className="px-4 py-2">
                     <div className="flex gap-3">
                       <button
-                        onClick={() => setDetailsMember(m)}
+                        onClick={() => setSelectedMembre(m)}
                         className="text-orange-500 underline text-sm"
                       >
                         Détails
                       </button>
-
                       <button
-                        onClick={() => setEditingMember(m)}
+                        onClick={() => setEditMember(m)}
                         className="text-blue-600 underline text-sm"
                       >
                         Modifier
@@ -232,20 +238,12 @@ export default function MembresCellule() {
         </div>
       )}
 
-      {/* POPUP MODIFIER */}
+      {/* POPUP EDIT */}
       {editMember && (
         <EditMemberPopup
           member={editMember}
           onClose={() => setEditMember(null)}
-          onUpdateMember={onUpdateMemberHandler}
-        />
-      )}
-
-      {/* POPUP DETAILS */}
-      {detailsMember && (
-        <MemberDetailsPopup
-          member={detailsMember}
-          onClose={() => setDetailsMember(null)}
+          onUpdateMember={handleUpdateMember}
         />
       )}
     </div>

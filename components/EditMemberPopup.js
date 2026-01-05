@@ -327,7 +327,12 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </button>
         </div>
 
-        {message && <p className="text-[#25297e] font-semibold text-center mt-3">{message}</p>}
+        {/* Message succès ou erreur sous les boutons */}
+          {message && (
+            <p className="text-[#25297e] font-semibold text-center mt-3">
+              {message.includes("❌") ? message : "✅ Enregistrement / Modification réussie"}
+            </p>
+          )}
 
         <style jsx>{`
           .input {

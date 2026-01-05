@@ -231,7 +231,7 @@ export default function SuivisMembres() {
             className="text-orange-500 underline font-semibold mb-1 cursor-pointer"
             onClick={() => setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id)}
           >
-            📞 {m.telephone || "—"}
+            {m.telephone || "—"}
           </p>
 
           {/* Menu actions téléphoniques / WhatsApp */}

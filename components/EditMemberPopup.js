@@ -338,20 +338,26 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             border-radius: 14px;
             padding: 12px;
             background: rgba(255,255,255,0.1);
-            color: white; /* texte affiché dans le select */
+            color: white; /* texte par défaut du select */
+            font-weight: 600; /* semi-bold pour labels et input text */
           }
         
-          /* Options déroulantes en noir */
+          /* Options du menu déroulant */
           select.input option {
-            color: black;
+            color: black; /* texte noir dans le menu */
+            background: white; /* fond blanc pour les options */
           }
         
-          /* Forcer le texte du select à noir quand il affiche une option choisie */
-          select.input {
-            color: black;
+          /* Placeholder / option par défaut du select */
+          select.input:invalid {
+            color: white; /* texte blanc avant sélection */
+          }
+        
+          label {
+            font-weight: 600; /* semi-bold pour tous les labels */
+            color: white; /* labels blancs */
           }
         `}</style>
-
       </div>
     </div>
   );

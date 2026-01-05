@@ -108,10 +108,16 @@
             fetchCellulesConseillers();
           }, [setAllMembers]);
         
-          const handleStatusChange = (id, value) =>
-            setStatusChanges(prev => ({ ...prev, [id]: parseInt(value, 10) }));
-          const handleCommentChange = (id, value) =>
-            setCommentChanges(prev => ({ ...prev, [id]: value }));
+          const handleCommentChange = (id, value) => {
+                  // Mettre à jour l'état local
+                  setCommentChanges(prev => ({ ...prev, [id]: value }));
+                
+                  // Mettre à jour le membre dans le contexte pour que l'UI reflète immédiatement
+                  const member = members.find(m => m.id === id);
+                  if (member) {
+                    updateMember(id, { ...member, commentaire_suivis: value });
+                  }
+                };
         
           const getBorderColor = (m) => {
             if (!m) return "#ccc";
@@ -297,13 +303,14 @@
                             <option value={4}>Refus</option>
                           </select>
         
-                          <label className="text-sm text-blue-700 mb-1 mt-2 text-center font-semibold">Commentaire Suivis</label>
-                          <textarea
-                            value={(commentChanges[m.id] ?? m.commentaire_suivis) || ""}
-                            onChange={(e) => handleCommentChange(m.id, e.target.value)}
-                            className="w-full border rounded-lg p-2"
-                            rows={2}
-                          />
+                          <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Commentaire Suivis</label>
+                                        <textarea
+                                          value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
+                                          onChange={(e) => handleCommentChange(m.id, e.target.value)}
+                                          className="w-full border rounded-lg p-2"
+                                          rows={2}
+                                        />
+
         
                           <button
                             onClick={() => updateSuivi(m.id)}

@@ -154,8 +154,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   };
 
   return (
-  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-    <div className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-xl overflow-y-auto max-h-[90vh]">
+  <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div className="bg-white/95 p-8 rounded-3xl shadow-2xl w-full max-w-xl overflow-y-auto max-h-[90vh] border border-white/20">
+    
       
       {/* ✕ Close */}
       <button
@@ -367,15 +368,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             ✔️ Modifié !
           </p>
         )}
-
         </div>
-
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-  <div className="bg-white/95 p-8 rounded-3xl shadow-2xl w-full max-w-xl overflow-y-auto max-h-[90vh] border border-white/20">
-    {/* ton contenu du popup reste inchangé */}
-  </div>
-</div>
-
 <style jsx>{`
   .input {
     background-color: white;

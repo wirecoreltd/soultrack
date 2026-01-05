@@ -332,30 +332,32 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         )}
 
         <style jsx>{`
+          label {
+            font-weight: 600; /* semi-bold */
+            color: white;
+          }
+        
           .input {
             width: 100%;
             border: 1px solid #a0c4ff;
             border-radius: 14px;
             padding: 12px;
             background: rgba(255,255,255,0.1);
-            color: white; /* texte par défaut du select */
-            font-weight: 600; /* semi-bold pour labels et input text */
+            color: white;
+            font-weight: 400; /* NORMAL pour les valeurs */
           }
         
-          /* Options du menu déroulant */
+          /* Texte affiché dans le select (avant ouverture) */
+          select.input {
+            font-weight: 400;
+            color: white;
+          }
+        
+          /* Options du menu déroulant (quand ouvert) */
           select.input option {
-            color: black; /* texte noir dans le menu */
-            background: white; /* fond blanc pour les options */
-          }
-        
-          /* Placeholder / option par défaut du select */
-          select.input:invalid {
-            color: white; /* texte blanc avant sélection */
-          }
-        
-          label {
-            font-weight: 600; /* semi-bold pour tous les labels */
-            color: white; /* labels blancs */
+            background: white;
+            color: black;
+            font-weight: 400;
           }
         `}</style>
       </div>

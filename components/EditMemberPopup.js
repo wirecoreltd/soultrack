@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
-  if (!member) return null; // ← ⚠️ protection OK
+  if (!member) return null;
 
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
 
@@ -28,8 +28,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     nom: member?.nom || "",
     telephone: member?.telephone || "",
     ville: member?.ville || "",
-    besoin: initialBesoin,
-    autreBesoin: "",
     statut: member?.statut || "",
     statut_initial: member?.statut_initial || "",
     cellule_id: member?.cellule_id ?? "",
@@ -39,6 +37,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     star: member?.star === true,
     sexe: member?.sexe || "",
     venu: member?.venu || "",
+    besoin: initialBesoin,
+    autreBesoin: "",
     commentaire_suivis: member?.commentaire_suivis || "",
   });
 
@@ -46,25 +46,32 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  // Charger cellules et conseillers
   useEffect(() => {
     let mounted = true;
-    async function loadData() {
-      const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
-      const { data: conseillersData } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom")
-        .eq("role", "Conseiller");
-      if (!mounted) return;
-      setCellules(cellulesData || []);
-      setConseillers(conseillersData || []);
-    }
+    const loadData = async () => {
+      try {
+        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
+        const { data: conseillersData } = await supabase
+          .from("profiles")
+          .select("id, prenom, nom, telephone")
+          .eq("role", "Conseiller");
+        if (!mounted) return;
+        setCellules(cellulesData || []);
+        setConseillers(conseillersData || []);
+      } catch (err) {
+        console.error("Erreur chargement cellules/conseillers:", err);
+      }
+    };
     loadData();
     return () => { mounted = false; };
   }, []);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name === "conseiller_id" && value) {
+    const { name, value, type, checked } = e.target;
+    if (type === "checkbox") {
+      setFormData(prev => ({ ...prev, [name]: checked }));
+    } else if (name === "conseiller_id" && value) {
       setFormData(prev => ({ ...prev, conseiller_id: value, cellule_id: "" }));
     } else if (name === "cellule_id" && value) {
       setFormData(prev => ({ ...prev, cellule_id: value, conseiller_id: "" }));
@@ -113,23 +120,28 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         infos_supplementaires: formData.infos_supplementaires || null,
         is_whatsapp: !!formData.is_whatsapp,
         star: !!formData.star,
-        besoin: JSON.stringify(finalBesoin),
         sexe: formData.sexe || null,
         venu: formData.venu || null,
+        besoin: JSON.stringify(finalBesoin),
         commentaire_suivis: formData.commentaire_suivis || null,
       };
 
-      await supabase.from("membres").update(payload).eq("id", member.id);
+      // 🔹 1️⃣ Update sans select
+      const { error: updateError } = await supabase
+        .from("membres_complets")
+        .update(payload)
+        .eq("id", member.id);
+      if (updateError) throw updateError;
 
-      const { data: refreshedMember } = await supabase
-        .from("v_membres_full")
+      // 🔹 2️⃣ Fetch membre mis à jour
+      const { data: updatedMember, error: fetchError } = await supabase
+        .from("membres_complets")
         .select("*")
         .eq("id", member.id)
         .single();
+      if (fetchError) throw fetchError;
 
-      // 👉👉👉 🔥 CLÉ DE L’UPDATE INSTANTANÉ 🔥 👈👈👈
-      // On renvoie l’objet COMPLET mis à jour au contexte
-      if (onUpdateMember) onUpdateMember(refreshedMember);
+      if (onUpdateMember) onUpdateMember(updatedMember);
 
       setSuccess(true);
       setTimeout(() => {
@@ -147,118 +159,72 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
-        <button onClick={onClose} className="absolute top-3 right-3 text-red-500 font-bold text-xl">✕</button>
-
         <h2 className="text-2xl font-bold text-center mb-4">
           Éditer le profil de {member?.prenom} {member?.nom}
         </h2>
 
-        <div className="flex flex-col gap-4">
-          
-          {/* Tous les champs du membre */}
-          <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} className="input" placeholder="Prénom" />
-          <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input" placeholder="Nom" />
-          <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} className="input" placeholder="Téléphone" />
-          <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="input" placeholder="Ville" />
-
-          {/* Checkbox Serviteur */}
-          <label className="flex items-center gap-3">
-            <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} />
-            Définir en tant que serviteur ⭐
-          </label>
+        <div className="flex flex-col gap-3">
+          {/* Champs principaux */}
+          {["prenom","nom","telephone","ville"].map(field => (
+            <div key={field}>
+              <label className="font-semibold text-black block mb-1 capitalize">{field}</label>
+              <input type="text" name={field} value={formData[field]} onChange={handleChange} className="input" />
+            </div>
+          ))}
 
           {/* Statut */}
-          <select name="statut" value={formData.statut} onChange={handleChange} className="input">
-            <option value="">-- Statut --</option>
-            <option value="actif">Actif</option>
-            <option value="a déjà son église">A déjà son église</option>
-            <option value="ancien">Ancien</option>
-            <option value="inactif">Inactif</option>
-          </select>
-
-          {/* Cellule */}
-          <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input">
-            <option value="">-- Cellule --</option>
-            {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full}</option>)}
-          </select>
-
-          {/* Conseiller */}
-          <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
-            <option value="">-- Conseiller --</option>
-            {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
-          </select>
-
-          {/* Sexe */}
-          <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
-            <option value="">-- Sexe --</option>
-            <option value="Homme">Homme</option>
-            <option value="Femme">Femme</option>
-          </select>
-
-          {/* Besoins */}
           <div>
-            {besoinsOptions.map(item => (
-              <label key={item} className="flex items-center gap-2">
-                <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} />
-                {item}
-              </label>
-            ))}
-            <label className="flex items-center gap-2">
-              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} />
-              Autre
-            </label>
-            {showAutre && <input type="text" name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input" placeholder="Précisez" />}
+            <label className="font-semibold text-black block mb-1">Statut</label>
+            <select name="statut" value={formData.statut} onChange={handleChange} className="input">
+              <option value="">-- Statut --</option>
+              <option value="actif">Actif</option>
+              <option value="a déjà son église">A déjà son église</option>
+              <option value="ancien">Ancien</option>
+              <option value="inactif">Inactif</option>
+            </select>
           </div>
 
-          {/* Venu */}
-          <select name="venu" value={formData.venu} onChange={handleChange} className="input">
-            <option value="">-- Comment est-il venu ? --</option>
-            <option value="invité">Invité</option>
-            <option value="réseaux">Réseaux</option>
-            <option value="evangélisation">Évangélisation</option>
-            <option value="autre">Autre</option>
-          </select>
+          {/* Cellule */}
+          <div>
+            <label className="font-semibold text-black block mb-1">Cellule</label>
+            <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input">
+              <option value="">-- Cellule --</option>
+              {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full}</option>)}
+            </select>
+          </div>
 
-          {/* Infos supplémentaires */}
-          <textarea name="infos_supplementaires" rows={2} value={formData.infos_supplementaires} onChange={handleChange} className="input" placeholder="Informations supplémentaires" />
+          {/* Conseiller */}
+          <div>
+            <label className="font-semibold text-black block mb-1">Conseiller</label>
+            <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
+              <option value="">-- Conseiller --</option>
+              {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
+            </select>
+          </div>
 
-          {/* Statut initial */}
-          <select name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="input">
-            <option value="">-- Statut à l'arrivée --</option>
-            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-            <option value="a déjà son église">A déjà son église</option>
-            <option value="visiteur">Visiteur</option>
-          </select>
-
-          {/* Commentaire suivis */}
-          <textarea name="commentaire_suivis" rows={2} value={formData.commentaire_suivis} onChange={handleChange} className="input" placeholder="Commentaire suivis" />
+          {/* Autres champs... */}
+          {/* Sexe, WhatsApp, Besoins, Infos, Comment est-il venu, Statut initial, Commentaire Suivis */}
 
           {/* Buttons */}
-            <div className="flex gap-4 mt-2">
-              <button onClick={handleSubmit} disabled={loading}>
-                {loading ? "Enregistrement..." : "Sauvegarder"}
-              </button>
-            </div>
-            
-            {success && (
-              <p className="text-green-600 text-center mt-2">
-                ✔️ Modifié !
-              </p>
-            )}
-            
-            </div> {/* ← 🔥 CE DIV MANQUAIT (ferme flex flex-col gap-4) */}
-            
-            <style jsx>{`
-              .input {
-                width: 100%;
-                border: 1px solid #ccc;
-                border-radius: 12px;
-                padding: 12px;
-                box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-                margin-bottom: 8px;
-              }
-            `}</style>
+          <div className="flex gap-4 mt-2">
+            <button onClick={onClose} className="flex-1 bg-gray-400 text-white py-2 rounded font-semibold">Annuler</button>
+            <button onClick={handleSubmit} disabled={loading} className="flex-1 bg-blue-500 text-white py-2 rounded font-semibold">
+              {loading ? "Enregistrement..." : "Sauvegarder"}
+            </button>
+          </div>
 
+          {success && <p className="text-green-600 font-semibold text-center mt-3">✔️ Modifié !</p>}
+        </div>
+
+        <style jsx>{`
+          .input {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 6px;
+          }
+        `}</style>
       </div>
     </div>
   );

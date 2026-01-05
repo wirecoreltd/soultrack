@@ -171,12 +171,12 @@ export default function SuivisMembres() {
     return (
       <div className="text-black text-sm space-y-2 w-full">
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-        <p>🏙 Ville : {m.ville || "—"}</p>
-        <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-        <p>⚥ Sexe : {m.sexe || "—"}</p>
-        <p>📋 Statut initial : {m.statut_initial ?? m.statut ?? "—"}</p>
-        <p>❓Besoin : {!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin}</p>
-        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>       
+        <p>🏙 Ville : {m.ville || ""}</p>
+        <p>🧩 Comment est-il venu : {m.venu || ""}</p>
+        <p>⚥ Sexe : {m.sexe || ""}</p>
+        <p>📋 Statut initial : {m.statut_initial ?? m.statut ?? ""}</p>
+        <p>❓Besoin : {!m.besoin ? "" : Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin}</p>
+        <p>📝 Infos : {m.infos_supplementaires || ""}</p>       
 
         <div className="mt-4 flex justify-center">
           <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-4">✏️ Modifier le contact</button>

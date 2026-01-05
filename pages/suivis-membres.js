@@ -33,6 +33,7 @@ export default function SuivisMembres() {
 
   const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
   const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
+  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
 
   // 🔹 Fetch membres_complets
   useEffect(() => {
@@ -214,52 +215,84 @@ export default function SuivisMembres() {
       {message && <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{message.text}</div>}
 
       {view === "card" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-          {uniqueMembers.map(m => (
-            <div key={m.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
-              <div className="flex flex-col items-center">
-                <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
-                <p className="text-sm text-black-700 mb-1">📞 {m.telephone || "—"}</p>
-                {/* Menu actions téléphoniques / WhatsApp */}
-                <div className="relative w-full mb-2"> <div
-                    className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-52"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <a href={m.telephone ? `tel:${m.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
-                    >📞 Appeler</a>
-                    <a href={m.telephone ? `sms:${m.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
-                    >✉️ SMS </a>
-                    <a href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}?call` : "#"}target="_blank" rel="noopener noreferrer"
-                      className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
-                    > 📱 Appel WhatsApp</a>
-                    <a href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}` : "#"} target="_blank"
-                      rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
-                    >💬 Message WhatsApp</a>
-                  </div>
-                </div>  
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
+    {uniqueMembers.map(m => (
+      <div
+        key={m.id}
+        className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
+        style={{ borderLeftColor: getBorderColor(m) }}
+      >
+        <div className="flex flex-col items-center">
+          <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
+          
+          {/* Numéro cliquable pour ouvrir le menu */}
+          <p
+            className="text-sm text-blue-600 underline mb-1 cursor-pointer"
+            onClick={() => setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id)}
+          >
+            📞 {m.telephone || "—"}
+          </p>
 
-                <p className="text-sm text-black-700 mb-1">🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}</p>
-                <p className="text-sm text-black-700 mb-1">👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
-      
-                <div className="flex flex-col w-full mt-2">
-                  <label className="font-semibold text-black mb-1 text-center">Statut Intégration</label>
-                  <select
-                    value={statusChanges[m.id] ?? m.statut_suivis ?? m.suivi_statut}
-                    onChange={(e) => handleStatusChange(m.id, e.target.value)}
-                    className="w-full border rounded-lg p-2"
-                  >
-                    <option value={2}>En attente</option>
-                    <option value={3}>Intégrer</option>
-                    <option value={4}>Refus</option>
-                  </select>
-      
-                  <label className="font-semibold text-black mb-1 mt-2 text-center">Commentaire Suivis</label>
-                  <textarea
-  value={(commentChanges[m.id] ?? m.commentaire_suivis) || ""}
-  onChange={(e) => handleCommentChange(m.id, e.target.value)}
-  className="w-full border rounded-lg p-2"
-  rows={2}
-/>
+          {/* Menu actions téléphoniques / WhatsApp */}
+          {openPhoneMenuId === m.id && (
+            <div
+              className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <a
+                href={m.telephone ? `tel:${m.telephone}` : "#"}
+                className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
+              >
+                📞 Appeler
+              </a>
+              <a
+                href={m.telephone ? `sms:${m.telephone}` : "#"}
+                className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
+              >
+                ✉️ SMS
+              </a>
+              <a
+                href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}?call` : "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
+              >
+                📱 Appel WhatsApp
+              </a>
+              <a
+                href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}` : "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
+              >
+                💬 Message WhatsApp
+              </a>
+            </div>
+          )}
+          
+          <p className="text-sm text-black-700 mb-1">🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}</p>
+          <p className="text-sm text-black-700 mb-1">👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
+
+          {/* Statut Intégration */}
+          <div className="flex flex-col w-full mt-2">
+            <label className="font-semibold text-black mb-1 text-center">Statut Intégration</label>
+            <select
+              value={statusChanges[m.id] ?? m.statut_suivis ?? m.suivi_statut}
+              onChange={(e) => handleStatusChange(m.id, e.target.value)}
+              className="w-full blue-500 border rounded-lg p-2"
+            >
+              <option value={2}>En attente</option>
+              <option value={3}>Intégrer</option>
+              <option value={4}>Refus</option>
+            </select>
+
+            <label className="font-semibold text-black mb-1 mt-2 text-center">Commentaire Suivis</label>
+            <textarea
+              value={(commentChanges[m.id] ?? m.commentaire_suivis) || ""}
+              onChange={(e) => handleCommentChange(m.id, e.target.value)}
+              className="w-full border rounded-lg p-2"
+              rows={2}
+            />
 
                   <button
                     onClick={() => updateSuivi(m.id)}

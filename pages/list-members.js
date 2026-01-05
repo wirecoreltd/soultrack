@@ -190,28 +190,22 @@ export default function ListMembers() {
 
   const filterBySearch = (list) => list.filter((m) => `${(m.prenom || "")} ${(m.nom || "")}`.toLowerCase().includes(search.toLowerCase()));
 
-  const nouveaux = members.filter(
-    (m) =>
-      m.statut === "visiteur" ||
-      m.statut === "veut rejoindre ICC" ||
-      m.statut === "nouveau"
-  );
-  
-  const anciens = members.filter(
-    (m) =>
-      m.statut !== "visiteur" &&
-      m.statut !== "veut rejoindre ICC" &&
-      m.statut !== "nouveau"
+  // -------------------- FILTRAGE CENTRALISE --------------------
+  const filteredMembers = filterBySearch(
+    filter
+      ? members.filter(m => m.statut === filter || m.suivi_statut_libelle === filter)
+      : members
   );
 
-  const nouveauxFiltres = filterBySearch(
-    filter ? nouveaux.filter(m => m.statut === filter || m.suivi_statut_libelle === filter) : nouveaux
+  const filteredNouveaux = filteredMembers.filter(
+    m => ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
   );
 
-  const anciensFiltres = filterBySearch(
-    filter ? anciens.filter(m => m.statut === filter || m.suivi_statut_libelle === filter) : anciens
+  const filteredAnciens = filteredMembers.filter(
+    m => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
   );
 
+  // -------------------- TOGGLE DETAILS --------------------
   const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
 
   const toggleStar = async (member) => {
@@ -319,7 +313,7 @@ export default function ListMembers() {
                   : null}
               </select>
             )}
-          
+
             {selectedTargetType[m.id] && selectedTargets[m.id] && (
               <div className="pt-2">
                 <BoutonEnvoyer
@@ -402,7 +396,7 @@ export default function ListMembers() {
           <option value="">-- Tous les statuts --</option>
           {statusOptions.map((s, idx) => <option key={idx} value={s}>{s}</option>)}
         </select>
-        <span className="text-white text-sm ml-2">{members.filter(m => !filter || m.statut === filter).length} membres</span>
+        <span className="text-white text-sm ml-2">{filteredMembers.length} membres</span>
       </div>
 
       {/* Toggle Vue Carte / Vue Table */}
@@ -415,28 +409,27 @@ export default function ListMembers() {
         </button>
       </div>
 
-      {/* Vue Carte */}
+      {/* ==================== VUE CARTE ==================== */}
       {view === "card" && (
         <>
-          {nouveauxFiltres.length > 0 && (
+          {filteredNouveaux.length > 0 && (
             <>
               <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">
                 💖 Bien aimé venu le {dateDuJour}
               </h2>
               <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-                {nouveauxFiltres.map(m => renderMemberCard({ ...m, isNouveau: true }))}
+                {filteredNouveaux.map(m => renderMemberCard({ ...m, isNouveau: true }))}
               </div>
             </>
           )}
 
-          {anciensFiltres.length > 0 && (
+          {filteredAnciens.length > 0 && (
             <>
               <h2 className="w-full max-w-6xl font-bold mb-2 text-lg bg-gradient-to-r from-blue-500 to-gray-300 bg-clip-text text-transparent">
                 Membres existants
               </h2>
-
               <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                {anciensFiltres.map(m => renderMemberCard(m))}
+                {filteredAnciens.map(m => renderMemberCard(m))}
               </div>
             </>
           )}
@@ -444,126 +437,93 @@ export default function ListMembers() {
       )}
 
       {/* ==================== VUE TABLE ==================== */}
-        {view === "table" && (
-          <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-            <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto">
-              {/* Header */}
-              <thead className="text-sm uppercase">
-                <tr className="bg-gray-200">
-                  <th className="px-1 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
-                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
-                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Statut</th>
-                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Affectation</th>
-                  <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>Actions</th>
-                </tr>
-              </thead>
-        
-              <tbody>
-                {/* Nouveaux Membres */}
-                {nouveauxFiltres.length > 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-1 py-1 text-white font-semibold bg-[#2E3192]">
-                      💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
-                    </td>
-                  </tr>
-                )}
-        
-                {nouveauxFiltres.map((m) => (
-                  <tr key={m.id} className="border-b border-gray-300">
-                    <td
-                      className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 text-white whitespace-nowrap"
-                      style={{ borderLeftColor: getBorderColor(m) }}
-                    >
-                      {m.prenom} {m.nom}
-                      {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                      {["nouveau", "visiteur", "veut rejoindre ICC"].includes(m.statut) && (
-                        <span
-                          className="text-xs px-1 rounded ml-1 font-semibold"
-                          style={{ backgroundColor: "#ffffff", color: "#2E3192" }}
-                        >
-                          Nouveau
-                        </span>
-                      )}
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+          <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto">
+            {/* Header */}
+            <thead className="text-sm uppercase">
+              <tr className="bg-gray-200">
+                <th className="px-1 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
+                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
+                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Statut</th>
+                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Affectation</th>
+                <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>Actions</th>
+              </tr>
+            </thead>
 
-
-                    </td>
-                    <td className="px-1 py-1 text-white">{m.tel}</td>
-                    <td className="px-1 py-1 text-white">{m.statut}</td>
-                    <td className="px-1 py-1 text-white">{m.affectation}</td>
-                    <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
-                      <button
-                        onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
-                        className="text-orange-500 underline text-sm"
-                      >
-                        {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                      </button>
-                      <button
-                        onClick={() => setEditMember(m)}
-                        className="text-blue-600 underline text-sm"
-                      >
-                        Modifier
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-        
-                {/* Texte Membres existants */}
+            <tbody>
+              {/* Nouveaux Membres */}
+              {filteredNouveaux.length > 0 && (
                 <tr>
-                  <td colSpan={5} className="px-1 py-1 font-semibold text-lg text-white">
-                    <span
-                      style={{
-                        background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
-                        WebkitBackgroundClip: "text",
-                        color: "transparent",
-                      }}
-                    >
+                  <td colSpan={5} className="px-1 py-1 text-white font-semibold bg-[#2E3192]">
+                    💖 Bien aimé venu le {formatDate(filteredNouveaux[0].created_at)}
+                  </td>
+                </tr>
+              )}
+
+              {filteredNouveaux.map((m) => (
+                <tr key={m.id} className="border-b border-gray-300">
+                  <td className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 text-white whitespace-nowrap" style={{ borderLeftColor: getBorderColor(m) }}>
+                    {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                    {["nouveau", "visiteur", "veut rejoindre ICC"].includes(m.statut) && (
+                      <span className="text-xs px-1 rounded ml-1 font-semibold" style={{ backgroundColor: "#ffffff", color: "#2E3192" }}>
+                        Nouveau
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-1 py-1 text-white">{m.tel}</td>
+                  <td className="px-1 py-1 text-white">{m.statut}</td>
+                  <td className="px-1 py-1 text-white">{m.affectation}</td>
+                  <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
+                    <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })} className="text-orange-500 underline text-sm">
+                      {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                    </button>
+                    <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">
+                      Modifier
+                    </button>
+                  </td>
+                </tr>
+              ))}
+
+              {/* Membres existants */}
+              {filteredAnciens.length > 0 && (
+                <tr>
+                  <td colSpan={5} className="px-1 py-1 font-semibold text-lg">
+                    <span style={{ background: "linear-gradient(to right, #3B82F6, #D1D5DB)", WebkitBackgroundClip: "text", color: "transparent" }}>
                       Membres existants
                     </span>
                   </td>
                 </tr>
-        
-                {/* Anciens Membres */}
-                {members
-                  .filter((m) => !nouveauxFiltres.includes(m))
-                  .map((m) => (
-                    <tr key={m.id} className="border-b border-gray-300">
-                      <td
-                        className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 text-white whitespace-nowrap"
-                        style={{ borderLeftColor: getBorderColor(m) }}
-                      >
-                        {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                      </td>
-                      <td className="px-1 py-1 text-white whitespace-nowrap">{m.telephone || "—"}</td>
-                      <td className="px-1 py-1 text-white whitespace-nowrap">{m.statut || "—"}</td>
-                      <td className="px-1 py-1 text-white whitespace-nowrap">
-                        {m.cellule_id
-                          ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
-                          : m.conseiller_id
-                          ? `👤 ${conseillers.find((c) => c.id === m.conseiller_id)?.prenom} ${conseillers.find((c) => c.id === m.conseiller_id)?.nom}`
-                          : "—"}
-                      </td>
-                      <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
-                        <button
-                          onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
-                          className="text-orange-500 underline text-sm"
-                        >
-                          {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                        </button>
-                        <button
-                          onClick={() => setEditMember(m)}
-                          className="text-blue-600 underline text-sm"
-                        >
-                          Modifier
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              )}
 
-
+              {filteredAnciens.map((m) => (
+                <tr key={m.id} className="border-b border-gray-300">
+                  <td className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 text-white whitespace-nowrap" style={{ borderLeftColor: getBorderColor(m) }}>
+                    {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                  </td>
+                  <td className="px-1 py-1 text-white whitespace-nowrap">{m.telephone || "—"}</td>
+                  <td className="px-1 py-1 text-white whitespace-nowrap">{m.statut || "—"}</td>
+                  <td className="px-1 py-1 text-white whitespace-nowrap">
+                    {m.cellule_id
+                      ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
+                      : m.conseiller_id
+                      ? `👤 ${conseillers.find((c) => c.id === m.conseiller_id)?.prenom} ${conseillers.find((c) => c.id === m.conseiller_id)?.nom}`
+                      : "—"}
+                  </td>
+                  <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
+                    <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })} className="text-orange-500 underline text-sm">
+                      {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                    </button>
+                    <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">
+                      Modifier
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {popupMember && (
         <DetailsPopup

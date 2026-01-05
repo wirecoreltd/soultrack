@@ -196,6 +196,16 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             </label>
           </div>
 
+          {/* Sexe */}
+                    <div className="flex flex-col">
+                      <label className="font-medium">Sexe</label>
+                      <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
+                        <option value="">-- Sexe --</option>
+                        <option value="Homme">Homme</option>
+                        <option value="Femme">Femme</option>
+                      </select>
+                    </div>
+
           {/* Statut */}
           <div>
             <label className="font-semibold text-black block mb-1">Statut</label>
@@ -248,6 +258,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               ))}
             </select>
           </div>
+
 
 
           {/* Besoins */}

@@ -184,7 +184,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
         <button onClick={onClose} className="absolute top-4 right-4 text-red-600 font-bold text-xl">✕</button>
 
-        <h2 className="text-2xl font-bold text-center mb-6 text-blue-900">
+        <h2 className="text-2xl font-bold text-center mb-6 text-white">
           Modifier le profil
         </h2>
 
@@ -192,7 +192,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
           {["prenom", "nom", "telephone", "ville"].map((field) => (
             <div key={field} className="flex flex-col">
-              <label className="font-medium text-white-900 capitalize">{field}</label>
+              <label className="font-medium text-white capitalize">{field}</label>
               <input
                 name={field}
                 value={formData[field]}
@@ -202,7 +202,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             </div>
           ))}
 
-          <label className="flex items-center gap-3 text-blue-900">
+          <label className="flex items-center gap-3 text-white">
             <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} />
             Définir en tant que serviteur ⭐
           </label>
@@ -242,7 +242,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           {/* BESOINS */}
           <div>
             {besoinsOptions.map((b) => (
-              <label key={b} className="flex items-center gap-2 text-blue-900">
+              <label key={b} className="flex items-center gap-2 text-white">
                 <input
                   type="checkbox"
                   value={b}
@@ -253,7 +253,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               </label>
             ))}
 
-            <label className="flex items-center gap-2 text-blue-900">
+            <label className="flex items-center gap-2 text-white">
               <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} />
               Autre
             </label>

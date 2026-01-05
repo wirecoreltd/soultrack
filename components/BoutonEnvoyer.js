@@ -77,7 +77,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
       // 🔹 Message WhatsApp
       let message = `👋 Bonjour ${responsablePrenom}!\n\n`;
-      message += `✨ Un nouveau membre est placé sous tes soins.\n\n`;
+      message += `Une personne précieuse t’est confiée pour l’accompagnement.\n\n`;
       message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
       message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
       message += `🏙️ Ville: ${membre.ville || "—"}\n`;

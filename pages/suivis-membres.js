@@ -285,18 +285,19 @@
         
                         {/* Statut Intégration */}
                         <div className="flex flex-col w-full mt-2">
-                          <label className="font-semibold text-blue-500 mb-1 text-center">Statut Intégration</label>
+                          <label className="text-sm text-black-700 mb-1 text-center">Statut Intégration</label>
                           <select
                             value={statusChanges[m.id] ?? m.statut_suivis ?? m.suivi_statut}
                             onChange={(e) => handleStatusChange(m.id, e.target.value)}
                             className="w-full border rounded-lg p-2"
                           >
+                            <option value={1}>--Statut Intégration--</option>        
                             <option value={2}>En attente</option>
                             <option value={3}>Intégrer</option>
                             <option value={4}>Refus</option>
                           </select>
         
-                          <label className="font-semibold text-blue-500 mb-1 mt-2 text-center">Commentaire Suivis</label>
+                          <label className="text-sm text-black-700 mb-1 mt-2 text-center">Commentaire Suivis</label>
                           <textarea
                             value={(commentChanges[m.id] ?? m.commentaire_suivis) || ""}
                             onChange={(e) => handleCommentChange(m.id, e.target.value)}
@@ -326,43 +327,43 @@
               )}  
               
 
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
-          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-            <thead className="bg-gray-200 text-black-800 text-sm uppercase rounded-t-md">
-              <tr>
-                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-                <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Statut Suivis</th>
-                <th className="px-4 py-2">Cellule</th>
-                <th className="px-4 py-2">Conseiller</th>
-                <th className="px-4 py-2 rounded-tr-lg">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {uniqueMembers.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
-                </tr>
-              ) : (
-                uniqueMembers.map(m => (
-                  <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                    <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
-                    <td className="px-4 py-2">{m.telephone || "—"}</td>
-                    <td className="px-4 py-2">{statutLabels[m.statut_suivis ?? m.suivi_statut] || "—"}</td>
-                    <td className="px-4 py-2">{m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}</td>
-                    <td className="px-4 py-2">{m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</td>
-                    <td className="px-4 py-2 flex items-center gap-2">
-                      <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>
-                      <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
-                    </td>
-                  </tr>
-                ))
+              {view === "table" && (
+                <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
+                  <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+                    <thead className="bg-gray-200 text-black-800 text-sm uppercase rounded-t-md">
+                      <tr>
+                        <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+                        <th className="px-4 py-2">Téléphone</th>
+                        <th className="px-4 py-2">Statut Suivis</th>
+                        <th className="px-4 py-2">Cellule</th>
+                        <th className="px-4 py-2">Conseiller</th>
+                        <th className="px-4 py-2 rounded-tr-lg">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {uniqueMembers.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
+                        </tr>
+                      ) : (
+                        uniqueMembers.map(m => (
+                          <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
+                            <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
+                            <td className="px-4 py-2">{m.telephone || "—"}</td>
+                            <td className="px-4 py-2">{statutLabels[m.statut_suivis ?? m.suivi_statut] || "—"}</td>
+                            <td className="px-4 py-2">{m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}</td>
+                            <td className="px-4 py-2">{m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</td>
+                            <td className="px-4 py-2 flex items-center gap-2">
+                              <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>
+                              <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               )}
-            </tbody>
-          </table>
-        </div>
-      )}
 
       {detailsModalMember && (
         <DetailsModal

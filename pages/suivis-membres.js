@@ -227,7 +227,8 @@ export default function SuivisMembres() {
           
           {/* Numéro cliquable pour ouvrir le menu */}
           <p
-            className="text-sm text-blue-600 underline mb-1 cursor-pointer"
+            
+            className="text-orange-500 underline font-semibold mb-1 cursor-pointer"
             onClick={() => setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id)}
           >
             📞 {m.telephone || "—"}

@@ -23,6 +23,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
+
   const [formData, setFormData] = useState({
     prenom: member?.prenom || "",
     nom: member?.nom || "",
@@ -59,8 +61,10 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         if (!mounted) return;
         setCellules(cellulesData || []);
         setConseillers(conseillersData || []);
+        setLoadingData(false);
       } catch (err) {
         console.error("Erreur chargement cellules/conseillers:", err);
+        setLoadingData(false);
       }
     };
     loadData();
@@ -197,14 +201,14 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </div>
 
           {/* Sexe */}
-                    <div className="flex flex-col">
-                      <label className="font-medium">Sexe</label>
-                      <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
-                        <option value="">-- Sexe --</option>
-                        <option value="Homme">Homme</option>
-                        <option value="Femme">Femme</option>
-                      </select>
-                    </div>
+          <div className="flex flex-col">
+            <label className="font-medium">Sexe</label>
+            <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
+              <option value="">-- Sexe --</option>
+              <option value="Homme">Homme</option>
+              <option value="Femme">Femme</option>
+            </select>
+          </div>
 
           {/* Statut */}
           <div>
@@ -222,7 +226,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="inactif">Inactif</option>
             </select>
           </div>
-          
+
           {/* Cellule */}
           <div>
             <label className="font-semibold text-black block mb-1">Cellule</label>
@@ -231,16 +235,15 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               value={formData.cellule_id ?? ""}
               onChange={handleChange}
               className="input"
+              disabled={loadingData}
             >
               <option value="">-- Cellule --</option>
               {cellules.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.cellule_full}
-                </option>
+                <option key={c.id} value={c.id}>{c.cellule_full}</option>
               ))}
             </select>
           </div>
-          
+
           {/* Conseiller */}
           <div>
             <label className="font-semibold text-black block mb-1">Conseiller</label>
@@ -249,17 +252,14 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               value={formData.conseiller_id ?? ""}
               onChange={handleChange}
               className="input"
+              disabled={loadingData}
             >
               <option value="">-- Conseiller --</option>
               {conseillers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.prenom} {c.nom}
-                </option>
+                <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
               ))}
             </select>
           </div>
-
-
 
           {/* Besoins */}
           <div className="flex flex-col">

@@ -50,15 +50,11 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     let mounted = true;
     const loadData = async () => {
       try {
-        const { data: cellulesData } = await supabase
-          .from("cellules")
-          .select("id, cellule_full");
-
+        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
         const { data: conseillersData } = await supabase
           .from("profiles")
           .select("id, prenom, nom, telephone")
           .eq("role", "Conseiller");
-
         if (!mounted) return;
         setCellules(cellulesData || []);
         setConseillers(conseillersData || []);
@@ -89,19 +85,14 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       setShowAutre(checked);
       setFormData(prev => ({
         ...prev,
-        besoin: checked
-          ? [...prev.besoin, "Autre"]
-          : prev.besoin.filter(b => b !== "Autre"),
+        besoin: checked ? [...prev.besoin, "Autre"] : prev.besoin.filter(b => b !== "Autre"),
         autreBesoin: checked ? prev.autreBesoin : ""
       }));
       return;
     }
-
     setFormData(prev => ({
       ...prev,
-      besoin: checked
-        ? [...prev.besoin, value]
-        : prev.besoin.filter(b => b !== value)
+      besoin: checked ? [...prev.besoin, value] : prev.besoin.filter(b => b !== value)
     }));
   };
 
@@ -134,18 +125,18 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         commentaire_suivis: formData.commentaire_suivis || null,
       };
 
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from("membres_complets")
         .update(payload)
         .eq("id", member.id);
+      if (updateError) throw updateError;
 
-      if (error) throw error;
-
-      const { data: updatedMember } = await supabase
+      const { data: updatedMember, error: fetchError } = await supabase
         .from("membres_complets")
         .select("*")
         .eq("id", member.id)
         .single();
+      if (fetchError) throw fetchError;
 
       if (onUpdateMember) onUpdateMember(updatedMember);
 
@@ -164,129 +155,136 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
+      <div className="bg-white p-6 rounded-3xl shadow-xl w-full max-w-lg relative overflow-y-auto max-h-[90vh]">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-red-500 font-bold text-xl"
+        >
+          ✕
+        </button>
 
-        <h2 className="text-2xl font-bold text-center mb-4">
+        <h2 className="text-2xl font-bold text-center mb-6">
           Éditer le profil de {member?.prenom} {member?.nom}
         </h2>
 
-        <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-1 gap-4">
+          {/* Champs avec labels au-dessus */}
+          {["prenom","nom","telephone","ville"].map(field => (
+            <div key={field} className="flex flex-col">
+              <label className="text-gray-700 font-medium mb-1 capitalize">{field}</label>
+              <input type="text" name={field} value={formData[field]} onChange={handleChange} className="input" />
+            </div>
+          ))}
 
-          {/* Tous les champs du membre */}
-          <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} className="input" placeholder="Prénom" />
-          <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input" placeholder="Nom" />
-          <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} className="input" placeholder="Téléphone" />
-          <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="input" placeholder="Ville" />
-
+          {/* Checkbox Serviteur */}
           <label className="flex items-center gap-3">
             <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} />
             Définir en tant que serviteur ⭐
           </label>
 
-          <select name="statut" value={formData.statut} onChange={handleChange} className="input">
-            <option value="">-- Statut --</option>
-            <option value="actif">Actif</option>
-            <option value="a déjà son église">A déjà son église</option>
-            <option value="ancien">Ancien</option>
-            <option value="inactif">Inactif</option>
-          </select>
+          {/* Statut */}
+          <div className="flex flex-col">
+            <label className="text-gray-700 font-medium mb-1">Statut</label>
+            <select name="statut" value={formData.statut} onChange={handleChange} className="input">
+              <option value="">-- Statut --</option>
+              <option value="actif">Actif</option>
+              <option value="a déjà son église">A déjà son église</option>
+              <option value="ancien">Ancien</option>
+              <option value="inactif">Inactif</option>
+            </select>
+          </div>
 
-          <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input">
-            <option value="">-- Cellule --</option>
-            {cellules.map(c => (
-              <option key={c.id} value={c.id}>{c.cellule_full}</option>
-            ))}
-          </select>
+          {/* Cellule */}
+          <div className="flex flex-col">
+            <label className="text-gray-700 font-medium mb-1">Cellule</label>
+            <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input">
+              <option value="">-- Cellule --</option>
+              {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full}</option>)}
+            </select>
+          </div>
 
-          <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
-            <option value="">-- Conseiller --</option>
-            {conseillers.map(c => (
-              <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
-            ))}
-          </select>
+          {/* Conseiller */}
+          <div className="flex flex-col">
+            <label className="text-gray-700 font-medium mb-1">Conseiller</label>
+            <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
+              <option value="">-- Conseiller --</option>
+              {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
+            </select>
+          </div>
 
-          <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
-            <option value="">-- Sexe --</option>
-            <option value="Homme">Homme</option>
-            <option value="Femme">Femme</option>
-          </select>
+          {/* Sexe */}
+          <div className="flex flex-col">
+            <label className="text-gray-700 font-medium mb-1">Sexe</label>
+            <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
+              <option value="">-- Sexe --</option>
+              <option value="Homme">Homme</option>
+              <option value="Femme">Femme</option>
+            </select>
+          </div>
 
-          <div>
+          {/* Besoins */}
+          <div className="flex flex-col">
+            <label className="text-gray-700 font-medium mb-1">Besoins</label>
             {besoinsOptions.map(item => (
               <label key={item} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  value={item}
-                  checked={formData.besoin.includes(item)}
-                  onChange={handleBesoinChange}
-                />
+                <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} />
                 {item}
               </label>
             ))}
-
             <label className="flex items-center gap-2">
               <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} />
               Autre
             </label>
-
-            {showAutre && (
-              <input
-                type="text"
-                name="autreBesoin"
-                value={formData.autreBesoin}
-                onChange={handleChange}
-                className="input"
-                placeholder="Précisez"
-              />
-            )}
+            {showAutre && <input type="text" name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input mt-1" placeholder="Précisez" />}
           </div>
 
-          <select name="venu" value={formData.venu} onChange={handleChange} className="input">
-            <option value="">-- Comment est-il venu ? --</option>
-            <option value="invité">Invité</option>
-            <option value="réseaux">Réseaux</option>
-            <option value="evangélisation">Évangélisation</option>
-            <option value="autre">Autre</option>
-          </select>
+          {/* Venu */}
+          <div className="flex flex-col">
+            <label className="text-gray-700 font-medium mb-1">Comment est-il venu ?</label>
+            <select name="venu" value={formData.venu} onChange={handleChange} className="input">
+              <option value="">-- Sélectionnez --</option>
+              <option value="invité">Invité</option>
+              <option value="réseaux">Réseaux</option>
+              <option value="evangélisation">Évangélisation</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
 
-          <textarea
-            name="infos_supplementaires"
-            rows={2}
-            value={formData.infos_supplementaires}
-            onChange={handleChange}
-            className="input"
-            placeholder="Informations supplémentaires"
-          />
+          {/* Infos supplémentaires */}
+          <div className="flex flex-col">
+            <label className="text-gray-700 font-medium mb-1">Informations supplémentaires</label>
+            <textarea name="infos_supplementaires" rows={2} value={formData.infos_supplementaires} onChange={handleChange} className="input" />
+          </div>
 
-          <select name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="input">
-            <option value="">-- Statut à l'arrivée --</option>
-            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-            <option value="a déjà son église">A déjà son église</option>
-            <option value="visiteur">Visiteur</option>
-          </select>
+          {/* Statut initial */}
+          <div className="flex flex-col">
+            <label className="text-gray-700 font-medium mb-1">Statut à l'arrivée</label>
+            <select name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="input">
+              <option value="">-- Sélectionnez --</option>
+              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+              <option value="a déjà son église">A déjà son église</option>
+              <option value="visiteur">Visiteur</option>
+            </select>
+          </div>
 
-          <textarea
-            name="commentaire_suivis"
-            rows={2}
-            value={formData.commentaire_suivis}
-            onChange={handleChange}
-            className="input"
-            placeholder="Commentaire suivis"
-          />
+          {/* Commentaire suivis */}
+          <div className="flex flex-col">
+            <label className="text-gray-700 font-medium mb-1">Commentaire suivis</label>
+            <textarea name="commentaire_suivis" rows={2} value={formData.commentaire_suivis} onChange={handleChange} className="input" />
+          </div>
 
-          <div className="flex gap-4 mt-2">
-            <button onClick={onClose} className="flex-1 bg-gray-400 text-white py-2 rounded">
+          {/* Buttons */}
+          <div className="flex gap-4 mt-4">
+            <button onClick={onClose} className="flex-1 py-2 rounded bg-gray-300 hover:bg-gray-400 text-white font-semibold transition">
               Annuler
             </button>
-            <button onClick={handleSubmit} disabled={loading} className="flex-1 bg-blue-500 text-white py-2 rounded">
+            <button onClick={handleSubmit} disabled={loading} className="flex-1 py-2 rounded bg-blue-500 hover:bg-blue-600 text-white font-semibold transition">
               {loading ? "Enregistrement..." : "Sauvegarder"}
             </button>
           </div>
 
           {success && (
-            <p className="text-green-600 text-center mt-2">
-              ✔️ Modifié !
-            </p>
+            <p className="text-green-600 font-semibold text-center mt-2">✔️ Modifié !</p>
           )}
 
         </div>
@@ -297,10 +295,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             border: 1px solid #ccc;
             border-radius: 12px;
             padding: 12px;
-            margin-bottom: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
           }
         `}</style>
-
       </div>
     </div>
   );

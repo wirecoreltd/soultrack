@@ -461,7 +461,7 @@ export default function ListMembers() {
               className="flex flex-row items-center px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 gap-2 border-l-4"
               style={{ borderLeftColor: getBorderColor(m) }}
             >
-              <div className="flex-[2] text-white font-semibold flex items-center gap-1">
+              <div className="flex-[2] text-white flex items-center gap-1">
                 {m.prenom} {m.nom}
                 {["nouveau", "visiteur", "veut rejoindre ICC"].includes(m.statut) && (
                   <span className="text-xs px-1 rounded bg-white text-[#2E3192]">Nouveau</span>

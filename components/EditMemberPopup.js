@@ -338,12 +338,20 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             border-radius: 14px;
             padding: 12px;
             background: rgba(255,255,255,0.1);
-            color: white;
+            color: white; /* texte affiché dans le select */
           }
+        
+          /* Options déroulantes en noir */
           select.input option {
-    color: black;
-  }
+            color: black;
+          }
+        
+          /* Forcer le texte du select à noir quand il affiche une option choisie */
+          select.input {
+            color: black;
+          }
         `}</style>
+
       </div>
     </div>
   );

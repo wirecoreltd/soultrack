@@ -237,11 +237,12 @@ export default function SuivisMembres() {
       
                   <label className="font-semibold text-black mb-1 mt-2 text-center">Commentaire Suivis</label>
                   <textarea
-                    value={commentChanges[m.id] ?? m.commentaire_suivis || ""}
-                    onChange={(e) => handleCommentChange(m.id, e.target.value)}
-                    className="w-full border rounded-lg p-2"
-                    rows={2}
-                  />
+  value={(commentChanges[m.id] ?? m.commentaire_suivis) || ""}
+  onChange={(e) => handleCommentChange(m.id, e.target.value)}
+  className="w-full border rounded-lg p-2"
+  rows={2}
+/>
+
                   <button
                     onClick={() => updateSuivi(m.id)}
                     className="mt-2 bg-blue-500 text-white py-1 rounded w-full"

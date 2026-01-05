@@ -174,7 +174,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   /* ===================== UI ===================== */
   return (
-    <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-md backdrop-saturate-150 flex items-center justify-center z-50 p-4">
       <div
         className="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl overflow-y-auto max-h-[90vh]"
         style={{

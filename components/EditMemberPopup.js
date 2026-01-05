@@ -154,232 +154,157 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   };
 
   return (
-  <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-  <div className="bg-white/95 p-8 rounded-3xl shadow-2xl w-full max-w-xl overflow-y-auto max-h-[90vh] border border-white/20">
-    
-      
-      {/* ✕ Close */}
-      <button
-        onClick={onClose}
-        className="absolute top-5 right-6 text-gray-500 hover:text-red-500 text-2xl font-bold transition"
-      >
-        ✕
-      </button>
-      
-      {/* Titre */}
-      <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-        Éditer le profil de {member?.prenom} {member?.nom}
-      </h2>
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="popup-bg relative w-full max-w-xl p-8 overflow-y-auto max-h-[90vh]">
 
-      <div className="grid grid-cols-1 gap-5">
+        {/* ✕ Close */}
+        <button
+          onClick={onClose}
+          className="absolute top-5 right-6 text-gray-500 hover:text-red-500 text-2xl font-bold transition"
+        >
+          ✕
+        </button>
 
-        {/* Prénom */}
-        <div className="flex flex-col">
-          <label className="text-gray-600 font-semibold">Prénom</label>
-          <input
-            type="text"
-            name="prenom"
-            value={formData.prenom}
-            onChange={handleChange}
-            className="input-modern"
-          />
-        </div>
+        {/* Titre */}
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+          Éditer le profil de {member?.prenom} {member?.nom}
+        </h2>
 
-        {/* Nom */}
-        <div className="flex flex-col">
-          <label className="text-gray-600 font-semibold">Nom</label>
-          <input
-            type="text"
-            name="nom"
-            value={formData.nom}
-            onChange={handleChange}
-            className="input-modern"
-          />
-        </div>
+        <div className="grid grid-cols-1 gap-4">
 
-        {/* Téléphone */}
-        <div className="flex flex-col">
-          <label className="text-gray-600 font-semibold">Téléphone</label>
-          <input
-            type="text"
-            name="telephone"
-            value={formData.telephone}
-            onChange={handleChange}
-            className="input-modern"
-          />
-        </div>
+          {/* Prénom */}
+          <div className="flex flex-col">
+            <label className="text-gray-600 font-semibold text-sm">Prénom</label>
+            <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} className="input-modern"/>
+          </div>
 
-        {/* Ville */}
-        <div className="flex flex-col">
-          <label className="text-gray-600 font-semibold">Ville</label>
-          <input
-            type="text"
-            name="ville"
-            value={formData.ville}
-            onChange={handleChange}
-            className="input-modern"
-          />
-        </div>
+          {/* Nom */}
+          <div className="flex flex-col">
+            <label className="text-gray-600 font-semibold text-sm">Nom</label>
+            <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input-modern"/>
+          </div>
 
-        {/* ⭐ Serviteur */}
-        <label className="flex items-center gap-2 text-gray-700">
-          <input
-            type="checkbox"
-            name="star"
-            checked={formData.star}
-            onChange={handleChange}
-            className="accent-blue-500"
-          />
-          Définir en tant que serviteur
-        </label>
+          {/* Téléphone */}
+          <div className="flex flex-col">
+            <label className="text-gray-600 font-semibold text-sm">Téléphone</label>
+            <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} className="input-modern"/>
+          </div>
 
-        {/* Statut */}
-        <div className="flex flex-col">
-          <label className="text-gray-600 font-semibold">Statut</label>
-          <select
-            name="statut"
-            value={formData.statut}
-            onChange={handleChange}
-            className="input-modern"
-          >
-            <option value="">-- Statut --</option>
-            <option value="actif">Actif</option>
-            <option value="a déjà son église">A déjà son église</option>
-            <option value="ancien">Ancien</option>
-            <option value="inactif">Inactif</option>
-          </select>
-        </div>
+          {/* Ville */}
+          <div className="flex flex-col">
+            <label className="text-gray-600 font-semibold text-sm">Ville</label>
+            <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="input-modern"/>
+          </div>
 
-        {/* Cellule */}
-        <div className="flex flex-col">
-          <label className="text-gray-600 font-semibold">Cellule</label>
-          <select
-            name="cellule_id"
-            value={formData.cellule_id ?? ""}
-            onChange={handleChange}
-            className="input-modern"
-          >
-            <option value="">-- Cellule --</option>
-            {cellules.map(c => (
-              <option key={c.id} value={c.id}>{c.cellule_full}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Conseiller */}
-        <div className="flex flex-col">
-          <label className="text-gray-600 font-semibold">Conseiller</label>
-          <select
-            name="conseiller_id"
-            value={formData.conseiller_id ?? ""}
-            onChange={handleChange}
-            className="input-modern"
-          >
-            <option value="">-- Conseiller --</option>
-            {conseillers.map(c => (
-              <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Sexe */}
-        <div className="flex flex-col">
-          <label className="text-gray-600 font-semibold">Sexe</label>
-          <select
-            name="sexe"
-            value={formData.sexe}
-            onChange={handleChange}
-            className="input-modern"
-          >
-            <option value="">-- Sexe --</option>
-            <option value="Homme">Homme</option>
-            <option value="Femme">Femme</option>
-          </select>
-        </div>
-
-        {/* Besoins */}
-        <div className="flex flex-col">
-          <label className="text-gray-600 font-semibold">Besoins</label>
-          {besoinsOptions.map(item => (
-            <label key={item} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                value={item}
-                checked={formData.besoin.includes(item)}
-                onChange={handleBesoinChange}
-                className="accent-blue-500"
-              />
-              {item}
-            </label>
-          ))}
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              value="Autre"
-              checked={showAutre}
-              onChange={handleBesoinChange}
-              className="accent-blue-500"
-            />
-            Autre
+          {/* ⭐ Serviteur */}
+          <label className="flex items-center gap-2 text-gray-700">
+            <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} className="accent-blue-500"/>
+            Définir en tant que serviteur
           </label>
-          {showAutre && (
-            <input
-              type="text"
-              name="autreBesoin"
-              value={formData.autreBesoin}
-              onChange={handleChange}
-              className="input-modern mt-1"
-              placeholder="Précisez"
-            />
-          )}
+
+          {/* Statut */}
+          <div className="flex flex-col">
+            <label className="text-gray-600 font-semibold text-sm">Statut</label>
+            <select name="statut" value={formData.statut} onChange={handleChange} className="input-modern">
+              <option value="">-- Statut --</option>
+              <option value="actif">Actif</option>
+              <option value="a déjà son église">A déjà son église</option>
+              <option value="ancien">Ancien</option>
+              <option value="inactif">Inactif</option>
+            </select>
+          </div>
+
+          {/* Cellule */}
+          <div className="flex flex-col">
+            <label className="text-gray-600 font-semibold text-sm">Cellule</label>
+            <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input-modern">
+              <option value="">-- Cellule --</option>
+              {cellules.map(c => (
+                <option key={c.id} value={c.id}>{c.cellule_full}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Conseiller */}
+          <div className="flex flex-col">
+            <label className="text-gray-600 font-semibold text-sm">Conseiller</label>
+            <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input-modern">
+              <option value="">-- Conseiller --</option>
+              {conseillers.map(c => (
+                <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Sexe */}
+          <div className="flex flex-col">
+            <label className="text-gray-600 font-semibold text-sm">Sexe</label>
+            <select name="sexe" value={formData.sexe} onChange={handleChange} className="input-modern">
+              <option value="">-- Sexe --</option>
+              <option value="Homme">Homme</option>
+              <option value="Femme">Femme</option>
+            </select>
+          </div>
+
+          {/* Besoins */}
+          <div className="flex flex-col">
+            <label className="text-gray-600 font-semibold text-sm">Besoins</label>
+            {besoinsOptions.map(item => (
+              <label key={item} className="flex items-center gap-2">
+                <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} className="accent-blue-500"/>
+                {item}
+              </label>
+            ))}
+            <label className="flex items-center gap-2">
+              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} className="accent-blue-500"/>
+              Autre
+            </label>
+            {showAutre && <input type="text" name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input-modern mt-1" placeholder="Précisez"/>}
+          </div>
+
+          {/* Commentaire Suivis */}
+          <div className="flex flex-col">
+            <label className="text-gray-600 font-semibold text-sm">Commentaire suivis</label>
+            <textarea name="commentaire_suivis" rows={2} value={formData.commentaire_suivis} onChange={handleChange} className="input-modern"/>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-4 mt-6">
+            <button onClick={onClose} className="flex-1 py-2 bg-gray-300 hover:bg-gray-400 text-white rounded-xl font-semibold transition">
+              Annuler
+            </button>
+            <button onClick={handleSubmit} disabled={loading} className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition">
+              {loading ? "Enregistrement..." : "Sauvegarder"}
+            </button>
+          </div>
+
+          {success && <p className="text-green-600 text-center font-semibold mt-3">✔️ Modifié !</p>}
         </div>
 
-        {/* Commentaire Suivis */}
-        <div className="flex flex-col">
-          <label className="text-gray-600 font-semibold">Commentaire suivis</label>
-          <textarea
-            name="commentaire_suivis"
-            rows={2}
-            value={formData.commentaire_suivis}
-            onChange={handleChange}
-            className="input-modern"
-          />
-        </div>
-
-        {/* Buttons */}
-        <div className="flex gap-4 mt-6">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2 bg-gray-300 hover:bg-gray-400 text-white rounded-xl font-semibold transition"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition"
-          >
-            {loading ? "Enregistrement..." : "Sauvegarder"}
-          </button>
-        </div>
-
-        {success && (
-          <p className="text-green-600 text-center font-semibold mt-3">
-            ✔️ Modifié !
-          </p>
-        )}
-        </div>
-<style jsx>{`
-  .input {
-    background-color: white;
-    border-radius: 12px;
-    padding: 12px;
-    border: 1px solid #ccc;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    width: 100%;
-    margin-bottom: 8px;
-  }
-`}</style>
+        <style jsx>{`
+          .input-modern {
+            background: rgba(255,255,255,0.6);
+            backdrop-filter: blur(8px);
+            border-radius: 12px;
+            padding: 10px 14px;
+            border: 1px solid rgba(255,255,255,0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            width: 100%;
+            transition: all 0.2s ease-in-out;
+          }
+          .input-modern:focus {
+            outline: none;
+            border-color: rgba(59,130,246,0.8);
+            box-shadow: 0 4px 20px rgba(59,130,246,0.3);
+          }
+          .popup-bg {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(12px);
+            border-radius: 2rem;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.3);
+          }
+        `}</style>
       </div>
     </div>
   );

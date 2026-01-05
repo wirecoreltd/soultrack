@@ -46,25 +46,20 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Charger cellules et conseillers
   useEffect(() => {
     let mounted = true;
     const loadData = async () => {
-      try {
-        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
-        const { data: conseillersData } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom, telephone")
-          .eq("role", "Conseiller");
-        if (!mounted) return;
-        setCellules(cellulesData || []);
-        setConseillers(conseillersData || []);
-      } catch (err) {
-        console.error("Erreur chargement cellules/conseillers:", err);
-      }
+      const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
+      const { data: conseillersData } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom")
+        .eq("role", "Conseiller");
+      if (!mounted) return;
+      setCellules(cellulesData || []);
+      setConseillers(conseillersData || []);
     };
     loadData();
-    return () => { mounted = false; };
+    return () => (mounted = false);
   }, []);
 
   const handleChange = (e) => {
@@ -115,8 +110,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         ville: formData.ville || null,
         statut: formData.statut || null,
         statut_initial: formData.statut_initial || null,
-        cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
-        conseiller_id: formData.conseiller_id === "" ? null : formData.conseiller_id,
+        cellule_id: formData.cellule_id || null,
+        conseiller_id: formData.conseiller_id || null,
         infos_supplementaires: formData.infos_supplementaires || null,
         is_whatsapp: !!formData.is_whatsapp,
         star: !!formData.star,
@@ -126,22 +121,15 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         commentaire_suivis: formData.commentaire_suivis || null,
       };
 
-      // 🔹 1️⃣ Update sans select
-      const { error: updateError } = await supabase
-        .from("membres_complets")
-        .update(payload)
-        .eq("id", member.id);
-      if (updateError) throw updateError;
+      await supabase.from("membres_complets").update(payload).eq("id", member.id);
 
-      // 🔹 2️⃣ Fetch membre mis à jour
-      const { data: updatedMember, error: fetchError } = await supabase
+      const { data: updatedMember } = await supabase
         .from("membres_complets")
         .select("*")
         .eq("id", member.id)
         .single();
-      if (fetchError) throw fetchError;
 
-      if (onUpdateMember) onUpdateMember(updatedMember);
+      onUpdateMember?.(updatedMember);
 
       setSuccess(true);
       setTimeout(() => {
@@ -149,8 +137,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         onClose();
       }, 300);
     } catch (err) {
-      console.error("Erreur EditMemberPopup:", err);
-      alert("❌ Une erreur est survenue.");
+      console.error(err);
+      alert("❌ Une erreur est survenue");
     } finally {
       setLoading(false);
     }
@@ -158,73 +146,48 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
-        <h2 className="text-2xl font-bold text-center mb-4">
-          Éditer le profil de {member?.prenom} {member?.nom}
+      <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl overflow-y-auto max-h-[95vh]">
+        <h2 className="text-xl font-bold text-center mb-4">
+          Éditer {member.prenom} {member.nom}
         </h2>
 
         <div className="flex flex-col gap-3">
-          {/* Champs principaux */}
-          {["prenom","nom","telephone","ville"].map(field => (
-            <div key={field}>
-              <label className="font-semibold text-black block mb-1 capitalize">{field}</label>
-              <input type="text" name={field} value={formData[field]} onChange={handleChange} className="input" />
-            </div>
+          {["prenom","nom","telephone","ville"].map(f => (
+            <input key={f} name={f} value={formData[f]} onChange={handleChange} className="input" placeholder={f} />
           ))}
 
-          {/* Statut */}
-          <div>
-            <label className="font-semibold text-black block mb-1">Statut</label>
-            <select name="statut" value={formData.statut} onChange={handleChange} className="input">
-              <option value="">-- Statut --</option>
-              <option value="actif">Actif</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="ancien">Ancien</option>
-              <option value="inactif">Inactif</option>
-            </select>
-          </div>
+          <label><input type="checkbox" name="star" checked={formData.star} onChange={handleChange} /> Serviteur ⭐</label>
+          <label><input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} /> WhatsApp</label>
 
-          {/* Cellule */}
-          <div>
-            <label className="font-semibold text-black block mb-1">Cellule</label>
-            <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input">
-              <option value="">-- Cellule --</option>
-              {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full}</option>)}
-            </select>
-          </div>
+          <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
+            <option value="">-- Sexe --</option>
+            <option value="Homme">Homme</option>
+            <option value="Femme">Femme</option>
+          </select>
 
-          {/* Conseiller */}
-          <div>
-            <label className="font-semibold text-black block mb-1">Conseiller</label>
-            <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
-              <option value="">-- Conseiller --</option>
-              {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
-            </select>
-          </div>
+          {besoinsOptions.map(b => (
+            <label key={b}>
+              <input type="checkbox" value={b} checked={formData.besoin.includes(b)} onChange={handleBesoinChange} /> {b}
+            </label>
+          ))}
 
-          {/* Autres champs... */}
-          {/* Sexe, WhatsApp, Besoins, Infos, Comment est-il venu, Statut initial, Commentaire Suivis */}
+          <label>
+            <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} /> Autre
+          </label>
 
-          {/* Buttons */}
-          <div className="flex gap-4 mt-2">
-            <button onClick={onClose} className="flex-1 bg-gray-400 text-white py-2 rounded font-semibold">Annuler</button>
-            <button onClick={handleSubmit} disabled={loading} className="flex-1 bg-blue-500 text-white py-2 rounded font-semibold">
-              {loading ? "Enregistrement..." : "Sauvegarder"}
-            </button>
-          </div>
+          {showAutre && (
+            <input name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input" placeholder="Précisez" />
+          )}
 
-          {success && <p className="text-green-600 font-semibold text-center mt-3">✔️ Modifié !</p>}
+          <textarea name="infos_supplementaires" value={formData.infos_supplementaires} onChange={handleChange} className="input" placeholder="Infos supplémentaires" />
+          <textarea name="commentaire_suivis" value={formData.commentaire_suivis} onChange={handleChange} className="input" placeholder="Commentaire suivis" />
+
+          <button onClick={handleSubmit} disabled={loading} className="bg-blue-500 text-white py-2 rounded">
+            {loading ? "Enregistrement..." : "Sauvegarder"}
+          </button>
+
+          {success && <p className="text-green-600 text-center">✔️ Modifié</p>}
         </div>
-
-        <style jsx>{`
-          .input {
-            width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            padding: 10px;
-            margin-bottom: 6px;
-          }
-        `}</style>
       </div>
     </div>
   );

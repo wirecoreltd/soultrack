@@ -32,14 +32,14 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     statut_initial: member?.statut_initial || "",
     cellule_id: member?.cellule_id ?? "",
     conseiller_id: member?.conseiller_id ?? "",
-    infos_supplementaires: member?.infos_supplementaires || "",
-    is_whatsapp: !!member?.is_whatsapp,
-    star: member?.star === true,
-    sexe: member?.sexe || "",
-    venu: member?.venu || "",
+    infos_supplementaires: member?.infos_supplementaires || "", // ➕ AJOUT
+    is_whatsapp: !!member?.is_whatsapp,                       // ➕ AJOUT
+    star: member?.star === true,                               // ➕ AJOUT
+    sexe: member?.sexe || "",                                  // ➕ AJOUT
+    venu: member?.venu || "",                                  // ➕ AJOUT
     besoin: initialBesoin,
     autreBesoin: "",
-    commentaire_suivis: member?.commentaire_suivis || "",
+    commentaire_suivis: member?.commentaire_suivis || "",     // ➕ AJOUT
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -52,14 +52,14 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
       const { data: conseillersData } = await supabase
         .from("profiles")
-        .select("id, prenom, nom")
+        .select("id, prenom, nom, telephone")
         .eq("role", "Conseiller");
       if (!mounted) return;
       setCellules(cellulesData || []);
       setConseillers(conseillersData || []);
     };
     loadData();
-    return () => (mounted = false);
+    return () => { mounted = false; };
   }, []);
 
   const handleChange = (e) => {
@@ -110,15 +110,15 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         ville: formData.ville || null,
         statut: formData.statut || null,
         statut_initial: formData.statut_initial || null,
-        cellule_id: formData.cellule_id || null,
-        conseiller_id: formData.conseiller_id || null,
-        infos_supplementaires: formData.infos_supplementaires || null,
-        is_whatsapp: !!formData.is_whatsapp,
-        star: !!formData.star,
-        sexe: formData.sexe || null,
-        venu: formData.venu || null,
+        cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
+        conseiller_id: formData.conseiller_id === "" ? null : formData.conseiller_id,
+        infos_supplementaires: formData.infos_supplementaires || null, // ➕ AJOUT
+        is_whatsapp: !!formData.is_whatsapp,                           // ➕ AJOUT
+        star: !!formData.star,                                         // ➕ AJOUT
+        sexe: formData.sexe || null,                                   // ➕ AJOUT
+        venu: formData.venu || null,                                   // ➕ AJOUT
         besoin: JSON.stringify(finalBesoin),
-        commentaire_suivis: formData.commentaire_suivis || null,
+        commentaire_suivis: formData.commentaire_suivis || null,       // ➕ AJOUT
       };
 
       await supabase.from("membres_complets").update(payload).eq("id", member.id);
@@ -129,16 +129,13 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         .eq("id", member.id)
         .single();
 
-      onUpdateMember?.(updatedMember);
+      if (onUpdateMember) onUpdateMember(updatedMember);
 
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
         onClose();
       }, 300);
-    } catch (err) {
-      console.error(err);
-      alert("❌ Une erreur est survenue");
     } finally {
       setLoading(false);
     }
@@ -146,18 +143,30 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl overflow-y-auto max-h-[95vh]">
-        <h2 className="text-xl font-bold text-center mb-4">
-          Éditer {member.prenom} {member.nom}
+      <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl relative overflow-y-auto max-h-[95vh]">
+
+        <h2 className="text-2xl font-bold text-center mb-4">
+          Éditer le profil de {member?.prenom} {member?.nom}
         </h2>
 
         <div className="flex flex-col gap-3">
-          {["prenom","nom","telephone","ville"].map(f => (
-            <input key={f} name={f} value={formData[f]} onChange={handleChange} className="input" placeholder={f} />
+          {["prenom","nom","telephone","ville"].map(field => (
+            <div key={field}>
+              <label className="font-semibold block mb-1 capitalize">{field}</label>
+              <input name={field} value={formData[field]} onChange={handleChange} className="input" />
+            </div>
           ))}
 
-          <label><input type="checkbox" name="star" checked={formData.star} onChange={handleChange} /> Serviteur ⭐</label>
-          <label><input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} /> WhatsApp</label>
+          {/* ➕ AJOUT DES CHAMPS MANQUANTS */}
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} />
+            Serviteur ⭐
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} />
+            WhatsApp
+          </label>
 
           <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
             <option value="">-- Sexe --</option>
@@ -165,28 +174,38 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             <option value="Femme">Femme</option>
           </select>
 
-          {besoinsOptions.map(b => (
-            <label key={b}>
-              <input type="checkbox" value={b} checked={formData.besoin.includes(b)} onChange={handleBesoinChange} /> {b}
-            </label>
-          ))}
+          <select name="venu" value={formData.venu} onChange={handleChange} className="input">
+            <option value="">-- Comment est-il venu ? --</option>
+            <option value="invité">Invité</option>
+            <option value="réseaux">Réseaux</option>
+            <option value="evangélisation">Évangélisation</option>
+            <option value="autre">Autre</option>
+          </select>
 
-          <label>
-            <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} /> Autre
-          </label>
+          <textarea
+            name="infos_supplementaires"
+            value={formData.infos_supplementaires}
+            onChange={handleChange}
+            className="input"
+            placeholder="Informations supplémentaires"
+          />
 
-          {showAutre && (
-            <input name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input" placeholder="Précisez" />
-          )}
+          <textarea
+            name="commentaire_suivis"
+            value={formData.commentaire_suivis}
+            onChange={handleChange}
+            className="input"
+            placeholder="Commentaire de suivi"
+          />
 
-          <textarea name="infos_supplementaires" value={formData.infos_supplementaires} onChange={handleChange} className="input" placeholder="Infos supplémentaires" />
-          <textarea name="commentaire_suivis" value={formData.commentaire_suivis} onChange={handleChange} className="input" placeholder="Commentaire suivis" />
+          <div className="flex gap-4">
+            <button onClick={onClose} className="flex-1 bg-gray-400 text-white py-2 rounded">Annuler</button>
+            <button onClick={handleSubmit} className="flex-1 bg-blue-500 text-white py-2 rounded">
+              Sauvegarder
+            </button>
+          </div>
 
-          <button onClick={handleSubmit} disabled={loading} className="bg-blue-500 text-white py-2 rounded">
-            {loading ? "Enregistrement..." : "Sauvegarder"}
-          </button>
-
-          {success && <p className="text-green-600 text-center">✔️ Modifié</p>}
+          {success && <p className="text-green-600 text-center">✔️ Modifié !</p>}
         </div>
       </div>
     </div>

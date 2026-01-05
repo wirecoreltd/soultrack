@@ -192,7 +192,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
           {["prenom", "nom", "telephone", "ville"].map((field) => (
             <div key={field} className="flex flex-col">
-              <label className="font-medium text-blue-900 capitalize">{field}</label>
+              <label className="font-medium text-white-900 capitalize">{field}</label>
               <input
                 name={field}
                 value={formData[field]}

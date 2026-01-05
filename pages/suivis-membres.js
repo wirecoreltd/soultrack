@@ -285,11 +285,11 @@
         
                         {/* Statut Intégration */}
                         <div className="flex flex-col w-full mt-2">
-                          <label className="text-sm text-black-700 mb-1 text-center">Statut Intégration</label>
+                          <label className="text-sm font-semibold text-bleu-700 mb-1 text-center">Statut Intégration</label>
                           <select
                             value={statusChanges[m.id] ?? m.statut_suivis ?? m.suivi_statut}
                             onChange={(e) => handleStatusChange(m.id, e.target.value)}
-                            className="w-full border rounded-lg p-2"
+                            className="w-full border rounded-lg p-2 text-sm"
                           >
                             <option value={1}>--Statut Intégration--</option>        
                             <option value={2}>En attente</option>
@@ -297,7 +297,7 @@
                             <option value={4}>Refus</option>
                           </select>
         
-                          <label className="text-sm text-black-700 mb-1 mt-2 text-center">Commentaire Suivis</label>
+                          <label className="text-sm text-bleu-700 mb-1 mt-2 text-center font-semibold">Commentaire Suivis</label>
                           <textarea
                             value={(commentChanges[m.id] ?? m.commentaire_suivis) || ""}
                             onChange={(e) => handleCommentChange(m.id, e.target.value)}

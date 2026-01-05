@@ -440,7 +440,7 @@ export default function ListMembers() {
       <div className="w-full max-w-6xl overflow-x-auto py-2">
         <div className="min-w-[700px] space-y-2"> {/* Largeur minimum pour scroll horizontal */}
           {/* Header */}
-          <div className="hidden sm:flex text-sm uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+          <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
             <div className="flex-[2]">Nom complet</div>
             <div className="flex-[1]">Téléphone</div>
             <div className="flex-[1]">Statut</div>

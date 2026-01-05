@@ -340,6 +340,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             background: rgba(255,255,255,0.1);
             color: white;
           }
+          select.input option {
+    color: black;
+  }
         `}</style>
       </div>
     </div>

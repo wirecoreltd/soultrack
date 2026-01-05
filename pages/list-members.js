@@ -450,7 +450,7 @@ export default function ListMembers() {
     
           {/* Nouveaux Membres */}
           {filteredNouveaux.length > 0 && (
-            <div className="px-2 py-1 text-white font-semibold bg-[#2E3192] rounded">
+            <div className="px-2 py-1 text-white bg-[#2E3192] rounded">
               💖 Bien aimé venu le {formatDate(filteredNouveaux[0].created_at)}
             </div>
           )}

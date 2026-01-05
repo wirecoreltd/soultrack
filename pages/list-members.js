@@ -443,137 +443,126 @@ export default function ListMembers() {
         </>
       )}
 
-      {viewMode === "table" && (
-  <div className="overflow-x-auto rounded-lg border border-gray-700">
-    <table className="min-w-full text-sm text-left bg-gray-900">
-      <thead className="bg-gray-800 text-gray-200 sticky top-0 z-10">
-        <tr>
-          <th className="px-2 py-2">Nom</th>
-          <th className="px-2 py-2">Téléphone</th>
-          <th className="px-2 py-2">Statut</th>
-          <th className="px-2 py-2">Affectation</th>
-          <th className="px-2 py-2 text-right">Actions</th>
-        </tr>
-      </thead>
+      {/* ==================== VUE TABLE ==================== */}
+        {view === "table" && (
+          <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
+            <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto">
+              {/* Header */}
+              <thead className="text-sm uppercase">
+                <tr className="bg-gray-200">
+                  <th className="px-1 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
+                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
+                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Statut</th>
+                  <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Affectation</th>
+                  <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>Actions</th>
+                </tr>
+              </thead>
+        
+              <tbody>
+                {/* Nouveaux Membres */}
+                {nouveauxFiltres.length > 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-1 py-1 text-white font-semibold bg-[#2E3192]">
+                      💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+                    </td>
+                  </tr>
+                )}
+        
+                {nouveauxFiltres.map((m) => (
+                  <tr key={m.id} className="border-b border-gray-300">
+                    <td
+                      className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 text-white whitespace-nowrap"
+                      style={{ borderLeftColor: getBorderColor(m) }}
+                    >
+                      {m.prenom} {m.nom}
+                      {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                      {["nouveau", "visiteur", "veut rejoindre ICC"].includes(m.statut) && (
+                        <span
+                          className="text-xs px-1 rounded ml-1 font-semibold"
+                          style={{ backgroundColor: "#ffffff", color: "#2E3192" }}
+                        >
+                          Nouveau
+                        </span>
+                      )}
 
-      <tbody>
-        {/* 🔹 NOUVEAUX MEMBRES */}
-        {nouveauxMembres.length > 0 && (
-          <>
-            <tr>
-              <td colSpan={5} className="px-2 py-2 bg-gray-800 text-orange-400 font-semibold">
-                🆕 Nouveaux membres
-              </td>
-            </tr>
 
-            {nouveauxMembres.map((m) => (
-              <tr key={m.id} className="border-b border-gray-700 hover:bg-gray-800/60">
-                <td
-                  className="px-2 py-2 border-l-4 rounded-l-md flex items-center gap-1 text-white whitespace-nowrap"
-                  style={{ borderLeftColor: getBorderColor(m) }}
-                >
-                  {m.prenom} {m.nom}
-                  {m.star && <span className="text-yellow-400">⭐</span>}
-                </td>
-
-                <td className="px-2 py-2 text-white whitespace-nowrap">
-                  {m.telephone || "—"}
-                </td>
-
-                <td className="px-2 py-2 text-white whitespace-nowrap">
-                  {m.statut || "—"}
-                </td>
-
-                <td className="px-2 py-2 text-white whitespace-nowrap">
-                  {m.cellule_id
-                    ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
-                    : m.conseiller_id
-                    ? `👤 ${conseillers.find((c) => c.id === m.conseiller_id)?.prenom} ${conseillers.find((c) => c.id === m.conseiller_id)?.nom}`
-                    : "—"}
-                </td>
-
-                <td className="px-2 py-2 text-right whitespace-nowrap flex justify-end gap-2">
-                  <button
-                    onClick={() =>
-                      setPopupMember(popupMember?.id === m.id ? null : { ...m })
-                    }
-                    className="text-orange-400 underline text-sm"
-                  >
-                    {popupMember?.id === m.id ? "Fermer" : "Détails"}
-                  </button>
-
-                  <button
-                    onClick={() => setEditMember(m)}
-                    className="text-blue-400 underline text-sm"
-                  >
-                    Modifier
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </>
+                    </td>
+                    <td className="px-1 py-1 text-white">{m.tel}</td>
+                    <td className="px-1 py-1 text-white">{m.statut}</td>
+                    <td className="px-1 py-1 text-white">{m.affectation}</td>
+                    <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
+                      <button
+                        onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
+                        className="text-orange-500 underline text-sm"
+                      >
+                        {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                      </button>
+                      <button
+                        onClick={() => setEditMember(m)}
+                        className="text-blue-600 underline text-sm"
+                      >
+                        Modifier
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+        
+                {/* Texte Membres existants */}
+                <tr>
+                  <td colSpan={5} className="px-1 py-1 font-semibold text-lg text-white">
+                    <span
+                      style={{
+                        background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                        WebkitBackgroundClip: "text",
+                        color: "transparent",
+                      }}
+                    >
+                      Membres existants
+                    </span>
+                  </td>
+                </tr>
+        
+                {/* Anciens Membres */}
+                {members
+                  .filter((m) => !nouveauxFiltres.includes(m))
+                  .map((m) => (
+                    <tr key={m.id} className="border-b border-gray-300">
+                      <td
+                        className="px-1 py-1 border-l-4 rounded-l-md flex items-center gap-1 text-white whitespace-nowrap"
+                        style={{ borderLeftColor: getBorderColor(m) }}
+                      >
+                        {m.prenom} {m.nom} {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                      </td>
+                      <td className="px-1 py-1 text-white whitespace-nowrap">{m.telephone || "—"}</td>
+                      <td className="px-1 py-1 text-white whitespace-nowrap">{m.statut || "—"}</td>
+                      <td className="px-1 py-1 text-white whitespace-nowrap">
+                        {m.cellule_id
+                          ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
+                          : m.conseiller_id
+                          ? `👤 ${conseillers.find((c) => c.id === m.conseiller_id)?.prenom} ${conseillers.find((c) => c.id === m.conseiller_id)?.nom}`
+                          : "—"}
+                      </td>
+                      <td className="px-1 py-1 flex items-center gap-2 whitespace-nowrap">
+                        <button
+                          onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
+                          className="text-orange-500 underline text-sm"
+                        >
+                          {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                        </button>
+                        <button
+                          onClick={() => setEditMember(m)}
+                          className="text-blue-600 underline text-sm"
+                        >
+                          Modifier
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
-        {/* 🔹 MEMBRES EXISTANTS */}
-        {anciensMembres.length > 0 && (
-          <>
-            <tr>
-              <td colSpan={5} className="px-2 py-2 bg-gray-800 text-gray-300 font-semibold">
-                👥 Membres existants
-              </td>
-            </tr>
-
-            {anciensMembres.map((m) => (
-              <tr key={m.id} className="border-b border-gray-700 hover:bg-gray-800/60">
-                <td
-                  className="px-2 py-2 border-l-4 rounded-l-md flex items-center gap-1 text-white whitespace-nowrap"
-                  style={{ borderLeftColor: getBorderColor(m) }}
-                >
-                  {m.prenom} {m.nom}
-                  {m.star && <span className="text-yellow-400">⭐</span>}
-                </td>
-
-                <td className="px-2 py-2 text-white whitespace-nowrap">
-                  {m.telephone || "—"}
-                </td>
-
-                <td className="px-2 py-2 text-white whitespace-nowrap">
-                  {m.statut || "—"}
-                </td>
-
-                <td className="px-2 py-2 text-white whitespace-nowrap">
-                  {m.cellule_id
-                    ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
-                    : m.conseiller_id
-                    ? `👤 ${conseillers.find((c) => c.id === m.conseiller_id)?.prenom} ${conseillers.find((c) => c.id === m.conseiller_id)?.nom}`
-                    : "—"}
-                </td>
-
-                <td className="px-2 py-2 text-right whitespace-nowrap flex justify-end gap-2">
-                  <button
-                    onClick={() =>
-                      setPopupMember(popupMember?.id === m.id ? null : { ...m })
-                    }
-                    className="text-orange-400 underline text-sm"
-                  >
-                    {popupMember?.id === m.id ? "Fermer" : "Détails"}
-                  </button>
-
-                  <button
-                    onClick={() => setEditMember(m)}
-                    className="text-blue-400 underline text-sm"
-                  >
-                    Modifier
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </>
-        )}
-      </tbody>
-    </table>
-  </div>
-)}
 
 
       {popupMember && (

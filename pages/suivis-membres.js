@@ -323,39 +323,8 @@
                     </div>
                   ))}
                 </div>
-              )}
-        
-              {view === "table" && (
-                /* ... table inchangée ... */
-              )}
-        
-              {detailsModalMember && (
-                <DetailsModal
-                  m={detailsModalMember}
-                  onClose={() => setDetailsModalMember(null)}
-                  handleStatusChange={handleStatusChange}
-                  handleCommentChange={handleCommentChange}
-                  statusChanges={statusChanges}
-                  commentChanges={commentChanges}
-                  updating={updating}
-                  updateSuivi={updateSuivi}
-                />
-              )}
-        
-              {editMember && (
-                <EditMemberSuivisPopup
-                  member={editMember}
-                  cellules={cellules}
-                  conseillers={conseillers}
-                  onClose={() => setEditMember(null)}
-                  onUpdateMember={updateMember}
-                />
-              )}
-            </div>
-          );
-        }
-
-
+              )}  
+              
 
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto flex justify-center">

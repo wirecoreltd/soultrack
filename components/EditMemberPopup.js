@@ -23,6 +23,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
+
   const [formData, setFormData] = useState({
     prenom: member?.prenom || "",
     nom: member?.nom || "",
@@ -34,7 +35,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     conseiller_id: member?.conseiller_id ?? "",
     infos_supplementaires: member?.infos_supplementaires || "",
     is_whatsapp: !!member?.is_whatsapp,
-    star: member?.star === true,
+    star: !!member?.star,
     sexe: member?.sexe || "",
     venu: member?.venu || "",
     besoin: initialBesoin,
@@ -44,78 +45,96 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
+  /* ===================== LOAD DATA ===================== */
   useEffect(() => {
     let mounted = true;
+
     const loadData = async () => {
-      try {
-        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
-        const { data: conseillersData } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom, telephone")
-          .eq("role", "Conseiller");
-        if (!mounted) return;
-        setCellules(cellulesData || []);
-        setConseillers(conseillersData || []);
-      } catch (err) {
-        console.error("Erreur chargement cellules/conseillers:", err);
-      }
+      const { data: cellulesData } = await supabase
+        .from("cellules")
+        .select("id, cellule_full");
+
+      const { data: conseillersData } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom")
+        .eq("role", "Conseiller");
+
+      if (!mounted) return;
+      setCellules(cellulesData || []);
+      setConseillers(conseillersData || []);
     };
+
     loadData();
-    return () => { mounted = false; };
+    return () => (mounted = false);
   }, []);
 
+  /* ===================== HANDLERS ===================== */
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+
     if (type === "checkbox") {
-      setFormData(prev => ({ ...prev, [name]: checked }));
-    } else if (name === "conseiller_id" && value) {
-      setFormData(prev => ({ ...prev, conseiller_id: value, cellule_id: "" }));
+      setFormData((p) => ({ ...p, [name]: checked }));
     } else if (name === "cellule_id" && value) {
-      setFormData(prev => ({ ...prev, cellule_id: value, conseiller_id: "" }));
+      setFormData((p) => ({ ...p, cellule_id: value, conseiller_id: "" }));
+    } else if (name === "conseiller_id" && value) {
+      setFormData((p) => ({ ...p, conseiller_id: value, cellule_id: "" }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((p) => ({ ...p, [name]: value }));
     }
   };
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
+
     if (value === "Autre") {
       setShowAutre(checked);
-      setFormData(prev => ({
-        ...prev,
-        besoin: checked ? [...prev.besoin, "Autre"] : prev.besoin.filter(b => b !== "Autre"),
-        autreBesoin: checked ? prev.autreBesoin : ""
+      setFormData((p) => ({
+        ...p,
+        besoin: checked ? [...p.besoin, "Autre"] : p.besoin.filter((b) => b !== "Autre"),
+        autreBesoin: "",
       }));
       return;
     }
-    setFormData(prev => ({
-      ...prev,
-      besoin: checked ? [...prev.besoin, value] : prev.besoin.filter(b => b !== value)
+
+    setFormData((p) => ({
+      ...p,
+      besoin: checked ? [...p.besoin, value] : p.besoin.filter((b) => b !== value),
     }));
   };
 
+  /* ===================== SUBMIT ===================== */
   const handleSubmit = async () => {
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    if (!formData.prenom.trim())
+      return setErrorMessage("❌ Le prénom est obligatoire.");
+    if (!formData.nom.trim())
+      return setErrorMessage("❌ Le nom est obligatoire.");
+
     setLoading(true);
+
     try {
       let finalBesoin = [...formData.besoin];
       if (showAutre && formData.autreBesoin.trim()) {
-        finalBesoin = finalBesoin.filter(b => b !== "Autre");
+        finalBesoin = finalBesoin.filter((b) => b !== "Autre");
         finalBesoin.push(formData.autreBesoin.trim());
       } else {
-        finalBesoin = finalBesoin.filter(b => b !== "Autre");
+        finalBesoin = finalBesoin.filter((b) => b !== "Autre");
       }
 
       const payload = {
-        prenom: formData.prenom || null,
-        nom: formData.nom || null,
+        prenom: formData.prenom,
+        nom: formData.nom,
         telephone: formData.telephone || null,
         ville: formData.ville || null,
         statut: formData.statut || null,
         statut_initial: formData.statut_initial || null,
-        cellule_id: formData.cellule_id === "" ? null : formData.cellule_id,
-        conseiller_id: formData.conseiller_id === "" ? null : formData.conseiller_id,
+        cellule_id: formData.cellule_id || null,
+        conseiller_id: formData.conseiller_id || null,
         infos_supplementaires: formData.infos_supplementaires || null,
         is_whatsapp: !!formData.is_whatsapp,
         star: !!formData.star,
@@ -125,184 +144,198 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         commentaire_suivis: formData.commentaire_suivis || null,
       };
 
-      const { error: updateError } = await supabase
+      const { error } = await supabase
         .from("membres_complets")
         .update(payload)
         .eq("id", member.id);
-      if (updateError) throw updateError;
 
-      const { data: updatedMember, error: fetchError } = await supabase
+      if (error) throw error;
+
+      const { data } = await supabase
         .from("membres_complets")
         .select("*")
         .eq("id", member.id)
         .single();
-      if (fetchError) throw fetchError;
 
-      if (onUpdateMember) onUpdateMember(updatedMember);
+      onUpdateMember?.(data);
 
-      setSuccess(true);
+      setSuccessMessage("✅ Modification réussie");
+
       setTimeout(() => {
-        setSuccess(false);
         onClose();
-      }, 300);
+      }, 900);
     } catch (err) {
-      console.error("Erreur EditMemberPopup:", err);
-      alert("❌ Une erreur est survenue.");
+      console.error(err);
+      setErrorMessage("❌ Une erreur est survenue lors de l’enregistrement.");
     } finally {
       setLoading(false);
     }
   };
 
+  /* ===================== UI ===================== */
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="popup-bg relative w-full max-w-xl p-8 overflow-y-auto max-h-[90vh]">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl bg-gradient-to-b from-blue-100 to-blue-300 overflow-y-auto max-h-[90vh]">
+        <button onClick={onClose} className="absolute top-4 right-4 text-red-600 font-bold text-xl">✕</button>
 
-        {/* ✕ Close */}
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-6 text-gray-500 hover:text-red-500 text-2xl font-bold transition"
-        >
-          ✕
-        </button>
-
-        {/* Titre */}
-        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-          Éditer le profil de {member?.prenom} {member?.nom}
+        <h2 className="text-2xl font-bold text-center mb-6 text-blue-900">
+          Modifier le profil
         </h2>
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="flex flex-col gap-4">
 
-          {/* Prénom */}
-          <div className="flex flex-col">
-            <label className="text-gray-600 font-semibold text-sm">Prénom</label>
-            <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} className="input-modern"/>
-          </div>
+          {["prenom", "nom", "telephone", "ville"].map((field) => (
+            <div key={field} className="flex flex-col">
+              <label className="font-medium text-blue-900 capitalize">{field}</label>
+              <input
+                name={field}
+                value={formData[field]}
+                onChange={handleChange}
+                className="input"
+              />
+            </div>
+          ))}
 
-          {/* Nom */}
-          <div className="flex flex-col">
-            <label className="text-gray-600 font-semibold text-sm">Nom</label>
-            <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="input-modern"/>
-          </div>
-
-          {/* Téléphone */}
-          <div className="flex flex-col">
-            <label className="text-gray-600 font-semibold text-sm">Téléphone</label>
-            <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} className="input-modern"/>
-          </div>
-
-          {/* Ville */}
-          <div className="flex flex-col">
-            <label className="text-gray-600 font-semibold text-sm">Ville</label>
-            <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="input-modern"/>
-          </div>
-
-          {/* ⭐ Serviteur */}
-          <label className="flex items-center gap-2 text-gray-700">
-            <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} className="accent-blue-500"/>
-            Définir en tant que serviteur
+          <label className="flex items-center gap-3 text-blue-900">
+            <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} />
+            Définir en tant que serviteur ⭐
           </label>
 
-          {/* Statut */}
-          <div className="flex flex-col">
-            <label className="text-gray-600 font-semibold text-sm">Statut</label>
-            <select name="statut" value={formData.statut} onChange={handleChange} className="input-modern">
-              <option value="">-- Statut --</option>
-              <option value="actif">Actif</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="ancien">Ancien</option>
-              <option value="inactif">Inactif</option>
-            </select>
-          </div>
+          {/* STATUT */}
+          <select name="statut" value={formData.statut} onChange={handleChange} className="input">
+            <option value="">-- Statut --</option>
+            <option value="actif">Actif</option>
+            <option value="ancien">Ancien</option>
+            <option value="inactif">Inactif</option>
+            <option value="a déjà son église">A déjà son église</option>
+          </select>
 
-          {/* Cellule */}
-          <div className="flex flex-col">
-            <label className="text-gray-600 font-semibold text-sm">Cellule</label>
-            <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input-modern">
-              <option value="">-- Cellule --</option>
-              {cellules.map(c => (
-                <option key={c.id} value={c.id}>{c.cellule_full}</option>
-              ))}
-            </select>
-          </div>
+          {/* CELLULE */}
+          <select name="cellule_id" value={formData.cellule_id} onChange={handleChange} className="input">
+            <option value="">-- Cellule --</option>
+            {cellules.map((c) => (
+              <option key={c.id} value={c.id}>{c.cellule_full}</option>
+            ))}
+          </select>
 
-          {/* Conseiller */}
-          <div className="flex flex-col">
-            <label className="text-gray-600 font-semibold text-sm">Conseiller</label>
-            <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input-modern">
-              <option value="">-- Conseiller --</option>
-              {conseillers.map(c => (
-                <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
-              ))}
-            </select>
-          </div>
+          {/* CONSEILLER */}
+          <select name="conseiller_id" value={formData.conseiller_id} onChange={handleChange} className="input">
+            <option value="">-- Conseiller --</option>
+            {conseillers.map((c) => (
+              <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
+            ))}
+          </select>
 
-          {/* Sexe */}
-          <div className="flex flex-col">
-            <label className="text-gray-600 font-semibold text-sm">Sexe</label>
-            <select name="sexe" value={formData.sexe} onChange={handleChange} className="input-modern">
-              <option value="">-- Sexe --</option>
-              <option value="Homme">Homme</option>
-              <option value="Femme">Femme</option>
-            </select>
-          </div>
+          {/* SEXE */}
+          <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
+            <option value="">-- Sexe --</option>
+            <option value="Homme">Homme</option>
+            <option value="Femme">Femme</option>
+          </select>
 
-          {/* Besoins */}
-          <div className="flex flex-col">
-            <label className="text-gray-600 font-semibold text-sm">Besoins</label>
-            {besoinsOptions.map(item => (
-              <label key={item} className="flex items-center gap-2">
-                <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} className="accent-blue-500"/>
-                {item}
+          {/* BESOINS */}
+          <div>
+            {besoinsOptions.map((b) => (
+              <label key={b} className="flex items-center gap-2 text-blue-900">
+                <input
+                  type="checkbox"
+                  value={b}
+                  checked={formData.besoin.includes(b)}
+                  onChange={handleBesoinChange}
+                />
+                {b}
               </label>
             ))}
-            <label className="flex items-center gap-2">
-              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} className="accent-blue-500"/>
+
+            <label className="flex items-center gap-2 text-blue-900">
+              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} />
               Autre
             </label>
-            {showAutre && <input type="text" name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input-modern mt-1" placeholder="Précisez"/>}
+
+            {showAutre && (
+              <input
+                name="autreBesoin"
+                value={formData.autreBesoin}
+                onChange={handleChange}
+                className="input mt-2"
+                placeholder="Précisez"
+              />
+            )}
           </div>
 
-          {/* Commentaire Suivis */}
-          <div className="flex flex-col">
-            <label className="text-gray-600 font-semibold text-sm">Commentaire suivis</label>
-            <textarea name="commentaire_suivis" rows={2} value={formData.commentaire_suivis} onChange={handleChange} className="input-modern"/>
-          </div>
+          {/* VENU */}
+          <select name="venu" value={formData.venu} onChange={handleChange} className="input">
+            <option value="">-- Comment est-il venu ? --</option>
+            <option value="invité">Invité</option>
+            <option value="réseaux">Réseaux</option>
+            <option value="evangélisation">Évangélisation</option>
+            <option value="autre">Autre</option>
+          </select>
 
-          {/* Buttons */}
-          <div className="flex gap-4 mt-6">
-            <button onClick={onClose} className="flex-1 py-2 bg-gray-300 hover:bg-gray-400 text-white rounded-xl font-semibold transition">
+          <textarea
+            name="infos_supplementaires"
+            value={formData.infos_supplementaires}
+            onChange={handleChange}
+            className="input"
+            rows={2}
+            placeholder="Informations supplémentaires"
+          />
+
+          <select
+            name="statut_initial"
+            value={formData.statut_initial}
+            onChange={handleChange}
+            className="input"
+          >
+            <option value="">-- Statut à l'arrivée --</option>
+            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+            <option value="a déjà son église">A déjà son église</option>
+            <option value="visiteur">Visiteur</option>
+          </select>
+
+          <textarea
+            name="commentaire_suivis"
+            value={formData.commentaire_suivis}
+            onChange={handleChange}
+            className="input"
+            rows={2}
+            placeholder="Commentaire suivis"
+          />
+
+          {/* BUTTONS */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            >
               Annuler
             </button>
-            <button onClick={handleSubmit} disabled={loading} className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition">
+
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue-400 to-indigo-500
+                         hover:from-blue-500 hover:to-indigo-600
+                         disabled:opacity-60 disabled:cursor-not-allowed
+                         text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            >
               {loading ? "Enregistrement..." : "Sauvegarder"}
             </button>
           </div>
 
-          {success && <p className="text-green-600 text-center font-semibold mt-3">✔️ Modifié !</p>}
+          {errorMessage && <p className="text-red-600 font-semibold text-center">{errorMessage}</p>}
+          {successMessage && <p className="text-green-600 font-semibold text-center">{successMessage}</p>}
+
         </div>
 
         <style jsx>{`
-          .input-modern {
-            background: rgba(255,255,255,0.6);
-            backdrop-filter: blur(8px);
-            border-radius: 12px;
-            padding: 10px 14px;
-            border: 1px solid rgba(255,255,255,0.3);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+          .input {
             width: 100%;
-            transition: all 0.2s ease-in-out;
-          }
-          .input-modern:focus {
-            outline: none;
-            border-color: rgba(59,130,246,0.8);
-            box-shadow: 0 4px 20px rgba(59,130,246,0.3);
-          }
-          .popup-bg {
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(12px);
-            border-radius: 2rem;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid #a0c4ff;
+            border-radius: 14px;
+            padding: 12px;
           }
         `}</style>
       </div>

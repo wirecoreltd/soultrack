@@ -220,14 +220,41 @@ export default function SuivisMembres() {
               <div className="flex flex-col items-center">
                 <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
                 <p className="text-sm text-black-700 mb-1">📞 {m.telephone || "—"}</p>
-                <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[m.statut_suivis ?? m.suivi_statut] || "—"}</p>
                 <p className="text-sm text-black-700 mb-1">🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}</p>
                 <p className="text-sm text-black-700 mb-1">👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
-
-                <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-1">
+      
+                <div className="flex flex-col w-full mt-2">
+                  <label className="font-semibold text-black mb-1 text-center">Statut Intégration</label>
+                  <select
+                    value={statusChanges[m.id] ?? m.statut_suivis ?? m.suivi_statut}
+                    onChange={(e) => handleStatusChange(m.id, e.target.value)}
+                    className="w-full border rounded-lg p-2"
+                  >
+                    <option value={2}>En attente</option>
+                    <option value={3}>Intégrer</option>
+                    <option value={4}>Refus</option>
+                  </select>
+      
+                  <label className="font-semibold text-black mb-1 mt-2 text-center">Commentaire Suivis</label>
+                  <textarea
+                    value={commentChanges[m.id] ?? m.commentaire_suivis || ""}
+                    onChange={(e) => handleCommentChange(m.id, e.target.value)}
+                    className="w-full border rounded-lg p-2"
+                    rows={2}
+                  />
+                  <button
+                    onClick={() => updateSuivi(m.id)}
+                    className="mt-2 bg-blue-500 text-white py-1 rounded w-full"
+                  >
+                    Sauvegarder
+                  </button>
+                </div>
+      
+                <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">
                   {detailsOpen === m.id ? "Fermer détails" : "Détails"}
                 </button>
               </div>
+      
               <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === m.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
                 {detailsOpen === m.id && <div className="pt-2"><DetailsPopup m={m} /></div>}
               </div>
@@ -235,6 +262,7 @@ export default function SuivisMembres() {
           ))}
         </div>
       )}
+
 
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto flex justify-center">

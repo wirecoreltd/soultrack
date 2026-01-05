@@ -154,137 +154,219 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl bg-gradient-to-b from-blue-100 to-blue-300 overflow-y-auto max-h-[90vh]">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-red-600 font-bold text-xl"
-        >
-          ✕
-        </button>
+  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-xl overflow-y-auto max-h-[90vh]">
+      
+      {/* ✕ Close */}
+      <button
+        onClick={onClose}
+        className="absolute top-5 right-6 text-gray-500 hover:text-red-500 text-2xl font-bold transition"
+      >
+        ✕
+      </button>
+      
+      {/* Titre */}
+      <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+        Éditer le profil de {member?.prenom} {member?.nom}
+      </h2>
 
-        <h2 className="text-2xl font-bold text-center mb-6 text-blue-900">
-          Éditer le profil de {member?.prenom} {member?.nom}
-        </h2>
+      <div className="grid grid-cols-1 gap-5">
 
-        <div className="flex flex-col gap-4">
-          {/* Champs avec labels */}
-          {["prenom","nom","telephone","ville"].map(field => (
-            <div key={field} className="flex flex-col">
-              <label className="text-blue-900 font-medium mb-1 capitalize">{field}</label>
-              <input type="text" name={field} value={formData[field]} onChange={handleChange} className="input" />
-            </div>
-          ))}
+        {/* Prénom */}
+        <div className="flex flex-col">
+          <label className="text-gray-600 font-semibold">Prénom</label>
+          <input
+            type="text"
+            name="prenom"
+            value={formData.prenom}
+            onChange={handleChange}
+            className="input-modern"
+          />
+        </div>
 
-          <label className="flex items-center gap-3 text-blue-900">
-            <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} />
-            Définir en tant que serviteur ⭐
-          </label>
+        {/* Nom */}
+        <div className="flex flex-col">
+          <label className="text-gray-600 font-semibold">Nom</label>
+          <input
+            type="text"
+            name="nom"
+            value={formData.nom}
+            onChange={handleChange}
+            className="input-modern"
+          />
+        </div>
 
-          {/* Statut */}
-          <div className="flex flex-col">
-            <label className="text-blue-900 font-medium mb-1">Statut</label>
-            <select name="statut" value={formData.statut} onChange={handleChange} className="input">
-              <option value="">-- Statut --</option>
-              <option value="actif">Actif</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="ancien">Ancien</option>
-              <option value="inactif">Inactif</option>
-            </select>
-          </div>
+        {/* Téléphone */}
+        <div className="flex flex-col">
+          <label className="text-gray-600 font-semibold">Téléphone</label>
+          <input
+            type="text"
+            name="telephone"
+            value={formData.telephone}
+            onChange={handleChange}
+            className="input-modern"
+          />
+        </div>
 
-          {/* Cellule */}
-          <div className="flex flex-col">
-            <label className="text-blue-900 font-medium mb-1">Cellule</label>
-            <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input">
-              <option value="">-- Cellule --</option>
-              {cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full}</option>)}
-            </select>
-          </div>
+        {/* Ville */}
+        <div className="flex flex-col">
+          <label className="text-gray-600 font-semibold">Ville</label>
+          <input
+            type="text"
+            name="ville"
+            value={formData.ville}
+            onChange={handleChange}
+            className="input-modern"
+          />
+        </div>
 
-          {/* Conseiller */}
-          <div className="flex flex-col">
-            <label className="text-blue-900 font-medium mb-1">Conseiller</label>
-            <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
-              <option value="">-- Conseiller --</option>
-              {conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
-            </select>
-          </div>
+        {/* ⭐ Serviteur */}
+        <label className="flex items-center gap-2 text-gray-700">
+          <input
+            type="checkbox"
+            name="star"
+            checked={formData.star}
+            onChange={handleChange}
+            className="accent-blue-500"
+          />
+          Définir en tant que serviteur
+        </label>
 
-          {/* Sexe */}
-          <div className="flex flex-col">
-            <label className="text-blue-900 font-medium mb-1">Sexe</label>
-            <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
-              <option value="">-- Sexe --</option>
-              <option value="Homme">Homme</option>
-              <option value="Femme">Femme</option>
-            </select>
-          </div>
+        {/* Statut */}
+        <div className="flex flex-col">
+          <label className="text-gray-600 font-semibold">Statut</label>
+          <select
+            name="statut"
+            value={formData.statut}
+            onChange={handleChange}
+            className="input-modern"
+          >
+            <option value="">-- Statut --</option>
+            <option value="actif">Actif</option>
+            <option value="a déjà son église">A déjà son église</option>
+            <option value="ancien">Ancien</option>
+            <option value="inactif">Inactif</option>
+          </select>
+        </div>
 
-          {/* Besoins */}
-          <div className="flex flex-col">
-            <label className="text-blue-900 font-medium mb-1">Besoins</label>
-            {besoinsOptions.map(item => (
-              <label key={item} className="flex items-center gap-2 text-blue-900">
-                <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} />
-                {item}
-              </label>
+        {/* Cellule */}
+        <div className="flex flex-col">
+          <label className="text-gray-600 font-semibold">Cellule</label>
+          <select
+            name="cellule_id"
+            value={formData.cellule_id ?? ""}
+            onChange={handleChange}
+            className="input-modern"
+          >
+            <option value="">-- Cellule --</option>
+            {cellules.map(c => (
+              <option key={c.id} value={c.id}>{c.cellule_full}</option>
             ))}
-            <label className="flex items-center gap-2 text-blue-900">
-              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} />
-              Autre
+          </select>
+        </div>
+
+        {/* Conseiller */}
+        <div className="flex flex-col">
+          <label className="text-gray-600 font-semibold">Conseiller</label>
+          <select
+            name="conseiller_id"
+            value={formData.conseiller_id ?? ""}
+            onChange={handleChange}
+            className="input-modern"
+          >
+            <option value="">-- Conseiller --</option>
+            {conseillers.map(c => (
+              <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Sexe */}
+        <div className="flex flex-col">
+          <label className="text-gray-600 font-semibold">Sexe</label>
+          <select
+            name="sexe"
+            value={formData.sexe}
+            onChange={handleChange}
+            className="input-modern"
+          >
+            <option value="">-- Sexe --</option>
+            <option value="Homme">Homme</option>
+            <option value="Femme">Femme</option>
+          </select>
+        </div>
+
+        {/* Besoins */}
+        <div className="flex flex-col">
+          <label className="text-gray-600 font-semibold">Besoins</label>
+          {besoinsOptions.map(item => (
+            <label key={item} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                value={item}
+                checked={formData.besoin.includes(item)}
+                onChange={handleBesoinChange}
+                className="accent-blue-500"
+              />
+              {item}
             </label>
-            {showAutre && <input type="text" name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input mt-1" placeholder="Précisez" />}
-          </div>
-
-          {/* Venu */}
-          <div className="flex flex-col">
-            <label className="text-blue-900 font-medium mb-1">Comment est-il venu ?</label>
-            <select name="venu" value={formData.venu} onChange={handleChange} className="input">
-              <option value="">-- Sélectionnez --</option>
-              <option value="invité">Invité</option>
-              <option value="réseaux">Réseaux</option>
-              <option value="evangélisation">Évangélisation</option>
-              <option value="autre">Autre</option>
-            </select>
-          </div>
-
-          {/* Infos supplémentaires */}
-          <div className="flex flex-col">
-            <label className="text-blue-900 font-medium mb-1">Informations supplémentaires</label>
-            <textarea name="infos_supplementaires" rows={2} value={formData.infos_supplementaires} onChange={handleChange} className="input" />
-          </div>
-
-          {/* Statut initial */}
-          <div className="flex flex-col">
-            <label className="text-blue-900 font-medium mb-1">Statut à l'arrivée</label>
-            <select name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="input">
-              <option value="">-- Sélectionnez --</option>
-              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="visiteur">Visiteur</option>
-            </select>
-          </div>
-
-          {/* Commentaire suivis */}
-          <div className="flex flex-col">
-            <label className="text-blue-900 font-medium mb-1">Commentaire suivis</label>
-            <textarea name="commentaire_suivis" rows={2} value={formData.commentaire_suivis} onChange={handleChange} className="input" />
-          </div>
-
-          {/* Buttons */}
-          <div className="flex gap-4 mt-4">
-            <button onClick={onClose} className="flex-1 py-2 rounded bg-blue-200 hover:bg-blue-300 text-blue-900 font-semibold transition">
-              Annuler
-            </button>
-            <button onClick={handleSubmit} disabled={loading} className="flex-1 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold transition">
-              {loading ? "Enregistrement..." : "Sauvegarder"}
-            </button>
-          </div>
-
-          {success && (
-            <p className="text-green-600 font-semibold text-center mt-2">✔️ Modifié !</p>
+          ))}
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              value="Autre"
+              checked={showAutre}
+              onChange={handleBesoinChange}
+              className="accent-blue-500"
+            />
+            Autre
+          </label>
+          {showAutre && (
+            <input
+              type="text"
+              name="autreBesoin"
+              value={formData.autreBesoin}
+              onChange={handleChange}
+              className="input-modern mt-1"
+              placeholder="Précisez"
+            />
           )}
+        </div>
+
+        {/* Commentaire Suivis */}
+        <div className="flex flex-col">
+          <label className="text-gray-600 font-semibold">Commentaire suivis</label>
+          <textarea
+            name="commentaire_suivis"
+            rows={2}
+            value={formData.commentaire_suivis}
+            onChange={handleChange}
+            className="input-modern"
+          />
+        </div>
+
+        {/* Buttons */}
+        <div className="flex gap-4 mt-6">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2 bg-gray-300 hover:bg-gray-400 text-white rounded-xl font-semibold transition"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition"
+          >
+            {loading ? "Enregistrement..." : "Sauvegarder"}
+          </button>
+        </div>
+
+        {success && (
+          <p className="text-green-600 text-center font-semibold mt-3">
+            ✔️ Modifié !
+          </p>
+        )}
 
         </div>
 

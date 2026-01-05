@@ -175,7 +175,13 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   /* ===================== UI ===================== */
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl bg-gradient-to-b from-blue-100 to-blue-300 overflow-y-auto max-h-[90vh]">
+      <div
+        className="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl overflow-y-auto max-h-[90vh]"
+        style={{
+          background: "linear-gradient(180deg, rgba(46,49,146,0.12), rgba(46,49,146,0.25))",
+        }}
+      >
+
         <button onClick={onClose} className="absolute top-4 right-4 text-red-600 font-bold text-xl">✕</button>
 
         <h2 className="text-2xl font-bold text-center mb-6 text-blue-900">

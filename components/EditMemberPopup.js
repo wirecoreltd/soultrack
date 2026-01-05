@@ -179,20 +179,19 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         className="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl overflow-y-auto max-h-[90vh]"
         style={{
           background: "linear-gradient(180deg, rgba(46,49,146,0.16), rgba(46,49,146,0.40))",
+          backdropFilter: "blur(8px)",
         }}
       >
 
         <button onClick={onClose} className="absolute top-4 right-4 text-red-600 font-bold text-xl">✕</button>
 
-        <h2 className="text-2xl font-bold text-center mb-6 text-white">
-          Modifier le profil
-        </h2>
+        <h2 className="text-2xl font-bold text-center mb-6 text-white">Modifier le profil</h2>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 text-white">
 
           {["prenom", "nom", "telephone", "ville"].map((field) => (
             <div key={field} className="flex flex-col">
-              <label className="font-medium text-white capitalize">{field}</label>
+              <label className="font-medium capitalize">{field}</label>
               <input
                 name={field}
                 value={formData[field]}
@@ -202,7 +201,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             </div>
           ))}
 
-          <label className="flex items-center gap-3 text-white">
+          <label className="flex items-center gap-3">
             <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} />
             Définir en tant que serviteur ⭐
           </label>
@@ -242,7 +241,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           {/* BESOINS */}
           <div>
             {besoinsOptions.map((b) => (
-              <label key={b} className="flex items-center gap-2 text-white">
+              <label key={b} className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   value={b}
@@ -252,12 +251,10 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
                 {b}
               </label>
             ))}
-
-            <label className="flex items-center gap-2 text-white">
+            <label className="flex items-center gap-2">
               <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} />
               Autre
             </label>
-
             {showAutre && (
               <input
                 name="autreBesoin"
@@ -342,6 +339,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             border: 1px solid #a0c4ff;
             border-radius: 14px;
             padding: 12px;
+            background: rgba(255,255,255,0.1);
+            color: white;
           }
         `}</style>
       </div>

@@ -178,7 +178,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       <div
         className="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl overflow-y-auto max-h-[90vh]"
         style={{
-          background: "linear-gradient(180deg, rgba(46,49,146,0.12), rgba(46,49,146,0.25))",
+          background: "linear-gradient(180deg, rgba(46,49,146,0.16), rgba(46,49,146,0.40))",
         }}
       >
 

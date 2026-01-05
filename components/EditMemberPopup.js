@@ -185,7 +185,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
         <button onClick={onClose} className="absolute top-4 right-4 text-red-600 font-bold text-xl">✕</button>
 
-        <h2 className="text-2xl font-bold text-center mb-6 text-white">Modifier le profil</h2>
+        <h2 className="text-2xl font-bold text-center mb-6 text-white">Modifier le profil {member.prenom} {member.nom}</h2>
 
         <div className="flex flex-col gap-4 text-white">
 

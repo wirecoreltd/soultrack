@@ -196,24 +196,69 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             </label>
           </div>
 
-          {/* Statut, Cellule, Conseiller, Sexe */}
-          {[
-            {label:"Statut", name:"statut", options:["actif","ancien","inactif","a déjà son église"]},
-            {label:"Cellule", name:"cellule_id", options:cellules.map(c=>({label:c.cellule_full,value:c.id}))},
-            {label:"Conseiller", name:"conseiller_id", options:conseillers.map(c=>({label:c.prenom+" "+c.nom,value:c.id}))},
-            {label:"Sexe", name:"sexe", options:["Homme","Femme"]}
-          ].map(f=>(
-            <div key={f.name} className="flex flex-col">
-              <label className="font-medium">{f.label}</label>
-              <select name={f.name} value={formData[f.name]} onChange={handleChange} className="input">
-                <option value="">-- Sélectionner --</option>
-                {f.options.map(o => typeof o==="string" 
-                  ? <option key={o} value={o}>{o}</option>
-                  : <option key={o.value} value={o.value}>{o.label}</option>
-                )}
+          {/* Statut */}
+            <div className="flex flex-col">
+              <label className="font-medium">Statut</label>
+              <select
+                name="statut"
+                value={formData.statut}
+                onChange={handleChange}
+                className="input"
+              >
+                <option value="">-- Statut --</option>
+                <option value="actif">Actif</option>
+                <option value="ancien">Ancien</option>
+                <option value="inactif">Inactif</option>
+                <option value="a déjà son église">A déjà son église</option>
               </select>
             </div>
-          ))}
+          
+            {/* Cellule */}
+            <div className="flex flex-col">
+              <label className="font-medium">Cellule</label>
+              <select
+                name="cellule_id"
+                value={formData.cellule_id}
+                onChange={handleChange}
+                className="input"
+              >
+                <option value="">-- Cellule --</option>
+                {cellules.map((c) => (
+                  <option key={c.id} value={c.id}>{c.cellule_full}</option>
+                ))}
+              </select>
+            </div>
+          
+            {/* Conseiller */}
+            <div className="flex flex-col">
+              <label className="font-medium">Conseiller</label>
+              <select
+                name="conseiller_id"
+                value={formData.conseiller_id}
+                onChange={handleChange}
+                className="input"
+              >
+                <option value="">-- Conseiller --</option>
+                {conseillers.map((c) => (
+                  <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
+                ))}
+              </select>
+            </div>
+          
+            {/* Sexe */}
+            <div className="flex flex-col">
+              <label className="font-medium">Sexe</label>
+              <select
+                name="sexe"
+                value={formData.sexe}
+                onChange={handleChange}
+                className="input"
+              >
+                <option value="">-- Sexe --</option>
+                <option value="Homme">Homme</option>
+                <option value="Femme">Femme</option>
+              </select>
+            </div>
 
           {/* Besoins */}
           <div className="flex flex-col">

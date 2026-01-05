@@ -370,15 +370,23 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
         </div>
 
-        <style jsx>{`
-          .input {
-            width: 100%;
-            border: 1px solid #a0c4ff;
-            border-radius: 12px;
-            padding: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-          }
-        `}</style>
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div className="bg-white/95 p-8 rounded-3xl shadow-2xl w-full max-w-xl overflow-y-auto max-h-[90vh] border border-white/20">
+    {/* ton contenu du popup reste inchangé */}
+  </div>
+</div>
+
+<style jsx>{`
+  .input {
+    background-color: white;
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    width: 100%;
+    margin-bottom: 8px;
+  }
+`}</style>
       </div>
     </div>
   );

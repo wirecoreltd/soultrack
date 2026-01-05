@@ -202,7 +202,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           ))}
 
           <label className="flex items-center gap-3">
-            <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} />
+            <input type="checkbox" name="star" checked={formData.star} onChange={handleChange}  className="accent-[#2e3192]" />
             Définir en tant que serviteur ⭐
           </label>
 
@@ -247,12 +247,13 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
                   value={b}
                   checked={formData.besoin.includes(b)}
                   onChange={handleBesoinChange}
+                  className="accent-[#2e3192]"  
                 />
                 {b}
               </label>
             ))}
             <label className="flex items-center gap-2">
-              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} />
+              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange}  className="accent-[#2e3192]"/>
               Autre
             </label>
             {showAutre && (

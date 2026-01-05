@@ -269,11 +269,22 @@ export default function ListMembers() {
                   {m.telephone}
                 </button>
                 {openPhoneMenuId === m.id && (
-                  <div className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-44" onClick={(e) => e.stopPropagation()}>
-                    <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
-                    <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
-                    <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 WhatsApp</a>
-                  </div>
+                  <div 
+  className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-52" 
+  onClick={(e) => e.stopPropagation()}
+>
+  {/* Appel téléphonique */}
+  <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
+  {/* SMS */}
+  <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
+  {/* Appel WhatsApp */}
+  <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer"className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+  >📱 Appel WhatsApp</a>
+  {/* Message WhatsApp */}
+  <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+  >💬 Message WhatsApp</a>
+</div>
+
                 )}
               </>
             ) : <span className="text-gray-400">—</span>}

@@ -11,7 +11,6 @@ export default function EditEvangelisePopup({
   onUpdateMember,
 }) {
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
-
   const initialBesoin =
     typeof member.besoin === "string" ? JSON.parse(member.besoin || "[]") : member.besoin || [];
 
@@ -94,7 +93,6 @@ export default function EditEvangelisePopup({
       setMessage("✅ Changement enregistré !");
       setTimeout(() => {
         setMessage("");
-        // Fermer les deux popups
         onClose();
       }, 1200);
     }
@@ -103,54 +101,38 @@ export default function EditEvangelisePopup({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto shadow-xl relative">
-
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div
+        className="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl overflow-y-auto max-h-[90vh]"
+        style={{
+          background: "linear-gradient(180deg, rgba(46,49,146,0.16), rgba(46,49,146,0.40))",
+        }}
+      >
         {/* Croix fermer */}
         <button
-          onClick={onClose} // Annuler => ferme les deux popups
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 font-bold text-lg"
+          onClick={onClose}
+          className="absolute top-4 right-4 text-red-600 font-bold text-xl"
         >
-          ×
+          ✕
         </button>
 
-        <h2 className="text-lg font-bold text-gray-800 text-center mb-4">
+        <h2 className="text-2xl font-bold text-center mb-6 text-white">
           Modifier {member.prenom} {member.nom}
         </h2>
 
-        <div className="flex flex-col space-y-3 text-sm">
-          {/* Prénom / Nom */}
-          <label className="font-semibold">Prénom</label>
-          <input
-            name="prenom"
-            value={formData.prenom}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          />
-
-          <label className="font-semibold">Nom</label>
-          <input
-            name="nom"
-            value={formData.nom}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          />
-
-          <label className="font-semibold">Ville</label>
-          <input
-            name="ville"
-            value={formData.ville}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          />
-
-          <label className="font-semibold">Téléphone</label>
-          <input
-            name="telephone"
-            value={formData.telephone}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          />
+        <div className="flex flex-col gap-4 text-white">
+          {/* Prénom / Nom / Ville / Téléphone */}
+          {["prenom", "nom", "ville", "telephone"].map((f) => (
+            <div key={f} className="flex flex-col">
+              <label className="font-semibold capitalize">{f}</label>
+              <input
+                name={f}
+                value={formData[f]}
+                onChange={handleChange}
+                className="input"
+              />
+            </div>
+          ))}
 
           {/* WhatsApp / Prière du salut */}
           <label className="flex items-center gap-2">
@@ -159,6 +141,7 @@ export default function EditEvangelisePopup({
               name="is_whatsapp"
               checked={formData.is_whatsapp}
               onChange={handleChange}
+              className="accent-[#25297e]"
             />
             WhatsApp
           </label>
@@ -169,6 +152,7 @@ export default function EditEvangelisePopup({
               name="priere_salut"
               checked={formData.priere_salut}
               onChange={handleChange}
+              className="accent-[#25297e]"
             />
             Prière du salut
           </label>
@@ -179,45 +163,42 @@ export default function EditEvangelisePopup({
             name="type_conversion"
             value={formData.type_conversion}
             onChange={handleChange}
-            className="border rounded px-2 py-1"
+            className="input"
           />
 
           {/* Besoins */}
-          <div className="mt-2">
-            <p className="font-semibold mb-2">Besoins :</p>
+          <div className="flex flex-col">
+            <label className="font-semibold">Besoins</label>
             {besoinsOptions.map((item) => (
-              <label key={item} className="flex items-center gap-3 mb-2">
+              <label key={item} className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   value={item}
                   checked={formData.besoin.includes(item)}
                   onChange={handleBesoinChange}
-                  className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+                  className="accent-[#25297e]"
                 />
                 {item}
               </label>
             ))}
-
-            {/* Autre */}
-            <label className="flex items-center gap-3 mb-2">
+            <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 value="Autre"
                 checked={showAutre}
                 onChange={handleBesoinChange}
-                className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+                className="accent-[#25297e]"
               />
               Autre
             </label>
-
             {showAutre && (
               <input
                 type="text"
                 name="autreBesoin"
                 value={formData.autreBesoin}
                 onChange={handleChange}
-                placeholder="Précisez..."
-                className="border rounded px-2 py-1 w-full"
+                className="input mt-2"
+                placeholder="Précisez"
               />
             )}
           </div>
@@ -228,34 +209,48 @@ export default function EditEvangelisePopup({
             name="infos_supplementaires"
             value={formData.infos_supplementaires}
             onChange={handleChange}
-            className="border rounded px-2 py-1"
+            className="input"
             rows={3}
           />
 
-          {message && (
-            <p className="text-green-600 text-center font-semibold">{message}</p>
-          )}
-
-          {/* Boutons */}
-          <div className="flex justify-between mt-4">
-            <button
-              onClick={onClose} // Annuler
-              className="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400"
-            >
-              Annuler
-            </button>
-
-            <button
-              onClick={handleSubmit} // Enregistrer
-              disabled={loading}
-              className={`px-4 py-2 rounded-md text-white font-bold ${
-                loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
-              }`}
-            >
-              {loading ? "Enregistrement..." : "Enregistrer"}
-            </button>
-          </div>
         </div>
+
+        {/* Boutons */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
+          <button
+            onClick={onClose}
+            className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 disabled:opacity-60 text-white font-bold py-3 rounded-2xl shadow-md"
+          >
+            {loading ? "Enregistrement..." : "Sauvegarder"}
+          </button>
+        </div>
+
+        {message && (
+          <p className="text-[#25297e] font-semibold text-center mt-3">{message}</p>
+        )}
+
+        <style jsx>{`
+          label {
+            font-weight: 600;
+            color: white;
+          }
+          .input {
+            width: 100%;
+            border: 1px solid #a0c4ff;
+            border-radius: 14px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-weight: 400;
+          }
+        `}</style>
       </div>
     </div>
   );

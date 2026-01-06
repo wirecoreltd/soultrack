@@ -182,11 +182,29 @@ export default function ListMembers() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // -------------------- Filtrage --------------------
-  const filterBySearch = (list) => list.filter((m) => `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase()));
-  const filteredMembers = filterBySearch(filter ? members.filter(m => m.statut === filter || m.suivi_statut_libelle === filter) : members);
-  const filteredNouveaux = filteredMembers.filter(m => ["visiteur","veut rejoindre ICC","nouveau"].includes(m.statut));
-  const filteredAnciens = filteredMembers.filter(m => !["visiteur","veut rejoindre ICC","nouveau"].includes(m.statut));
+// -------------------- FILTRAGE CENTRALISE --------------------
+const filterBySearch = (list) =>
+  list.filter(
+    (m) =>
+      `${(m.prenom || "")} ${(m.nom || "")}`.toLowerCase().includes(search.toLowerCase())
+  );
+
+const filteredMembers = filterBySearch(
+  filter
+    ? members.filter(
+        (m) => m.statut === filter || m.suivi_statut_libelle === filter
+      )
+    : members
+);
+
+const filteredNouveaux = filteredMembers.filter((m) =>
+  ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+);
+
+const filteredAnciens = filteredMembers.filter(
+  (m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+);
+
 
   const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
 

@@ -1,25 +1,28 @@
-//pages/ajouter-membre-cellule.js
+// pages/ajouter-membre-cellule.js
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
+import { useMembers } from "../context/MembersContext"; // pour mise à jour instantanée
 
 export default function AjouterMembreCellule() {
   const router = useRouter();
+  const { setAllMembers } = useMembers(); // context pour mettre à jour la liste
   const [cellules, setCellules] = useState([]);
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
     telephone: "",
     ville: "",
-    statut: "nouveau",
+    statut: "integrer", // ✅ statut integrer par défaut
     venu: "",
-    besoin: "",
+    besoin: [],
     cellule_id: "",
     infos_supplementaires: "",
     is_whatsapp: false,
+    autreBesoin: "",
   });
 
   const [success, setSuccess] = useState(false);
@@ -55,22 +58,41 @@ export default function AjouterMembreCellule() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { error } = await supabase.from("membres").insert([formData]);
+      // ✅ Préparer les données avec statut integrer et besoin en tableau
+      const newMemberData = {
+        ...formData,
+        statut: "integrer",
+        statut_suivis: 3, // 3 = Intégrer
+      };
+
+      // Insertion dans Supabase et récupération du membre inséré
+      const { data: newMember, error } = await supabase
+        .from("membres")
+        .insert([newMemberData])
+        .select()
+        .single();
+
       if (error) throw error;
+
+      // ✅ Mise à jour instantanée du contexte pour affichage immédiat
+      setAllMembers((prev) => [...prev, newMember]);
+
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
+      // Réinitialiser le formulaire
       setFormData({
         nom: "",
         prenom: "",
         telephone: "",
         ville: "",
-        statut: "nouveau",
+        statut: "integrer",
         venu: "",
-        besoin: "",
+        besoin: [],
         cellule_id: cellules[0]?.id || "",
         infos_supplementaires: "",
         is_whatsapp: false,
+        autreBesoin: "",
       });
     } catch (err) {
       alert("❌ Impossible d’ajouter le membre : " + err.message);
@@ -83,12 +105,13 @@ export default function AjouterMembreCellule() {
       prenom: "",
       telephone: "",
       ville: "",
-      statut: "nouveau",
+      statut: "integrer",
       venu: "",
-      besoin: "",
+      besoin: [],
       cellule_id: cellules[0]?.id || "",
       infos_supplementaires: "",
       is_whatsapp: false,
+      autreBesoin: "",
     });
   };
 
@@ -175,74 +198,66 @@ export default function AjouterMembreCellule() {
             <option value="evangélisation">Evangélisation</option>
             <option value="autre">Autre</option>
           </select>
+
           {/* ✅ Besoins avec checkboxes */}
-            <div className="text-left">
-              <p className="font-semibold mb-2">Besoin :</p>
-            
-              {[
-                "Finances",
-                "Santé",
-                "Travail",
-                "Les Enfants",
-                "La Famille"
-              ].map((item) => (
-                <label key={item} className="flex items-center gap-3 mb-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    value={item}
-                    checked={Array.isArray(formData.besoin) && formData.besoin.includes(item)}
-                    onChange={(e) => {
-                      const { checked } = e.target;
-                      setFormData((prev) => ({
-                        ...prev,
-                        besoin: checked
-                          ? [...prev.besoin, item]
-                          : prev.besoin.filter((b) => b !== item),
-                      }));
-                    }}
-                    className="w-5 h-5 accent-indigo-600 rounded cursor-pointer"
-                  />
-                  {item}
-                </label>
-              ))}
-            
-              {/* ✅ Checkbox AUTRE */}
-              <label className="flex items-center gap-3 mb-2 cursor-pointer">
+          <div className="text-left">
+            <p className="font-semibold mb-2">Besoin :</p>
+            {["Finances", "Santé", "Travail", "Les Enfants", "La Famille"].map((item) => (
+              <label key={item} className="flex items-center gap-3 mb-2 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={formData.besoin.includes("Autre")}
+                  value={item}
+                  checked={formData.besoin.includes(item)}
                   onChange={(e) => {
-                    const checked = e.target.checked;
+                    const { checked } = e.target;
                     setFormData((prev) => ({
                       ...prev,
                       besoin: checked
-                        ? [...prev.besoin, "Autre"]
-                        : prev.besoin.filter((b) => b !== "Autre"),
+                        ? [...prev.besoin, item]
+                        : prev.besoin.filter((b) => b !== item),
                     }));
                   }}
                   className="w-5 h-5 accent-indigo-600 rounded cursor-pointer"
                 />
-                Autre
+                {item}
               </label>
-            
-              {/* ✅ Champ texte visible si Autre sélectionné */}
-              {formData.besoin.includes("Autre") && (
-                <input
-                  type="text"
-                  placeholder="Précisez..."
-                  value={formData.autreBesoin || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      autreBesoin: e.target.value,
-                    })
-                  }
-                  className="input mt-1"
-                />
-              )}
-</div>
+            ))}
 
-          
+            {/* ✅ Checkbox AUTRE */}
+            <label className="flex items-center gap-3 mb-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.besoin.includes("Autre")}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setFormData((prev) => ({
+                    ...prev,
+                    besoin: checked
+                      ? [...prev.besoin, "Autre"]
+                      : prev.besoin.filter((b) => b !== "Autre"),
+                  }));
+                }}
+                className="w-5 h-5 accent-indigo-600 rounded cursor-pointer"
+              />
+              Autre
+            </label>
+
+            {/* ✅ Champ texte visible si Autre sélectionné */}
+            {formData.besoin.includes("Autre") && (
+              <input
+                type="text"
+                placeholder="Précisez..."
+                value={formData.autreBesoin || ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    autreBesoin: e.target.value,
+                  })
+                }
+                className="input mt-1"
+              />
+            )}
+          </div>
 
           <textarea
             name="infos_supplementaires"

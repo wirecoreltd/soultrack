@@ -20,7 +20,7 @@ export default function Evangelisation() {
   const [editMember, setEditMember] = useState(null);
   const [popupMember, setPopupMember] = useState(null);
   const [loadingSend, setLoadingSend] = useState(false);
-  const [view, setView] = useState("card"); // "card" ou "table"
+  const [view, setView] = useState("card");
 
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
@@ -45,7 +45,8 @@ export default function Evangelisation() {
     const { data } = await supabase
       .from("evangelises")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(1000); // 🔹 affichage complet
     setContacts(data || []);
   };
 
@@ -89,10 +90,16 @@ export default function Evangelisation() {
     try {
       const cible =
         selectedTargetType === "cellule"
-          ? cellules.find((c) => c.id == selectedTarget)
-          : conseillers.find((c) => c.id == selectedTarget);
+          ? cellules.find((c) => c.id === selectedTarget)
+          : conseillers.find((c) => c.id === selectedTarget);
 
-      if (!cible || !cible.telephone) throw new Error("Numéro de la cible invalide");
+      if (!cible) throw new Error("Cible introuvable");
+
+      // 🔹 Récupération ID du responsable si cellule
+      let responsableId = null;
+      if (selectedTargetType === "cellule" && cible.responsable) {
+        responsableId = cible.responsable; // Assure-toi que c'est UUID, sinon fetch le profile
+      }
 
       const insertData = selectedContacts.map((c) => ({
         prenom: c.prenom,
@@ -106,17 +113,22 @@ export default function Evangelisation() {
         infos_supplementaires: c.infos_supplementaires,
         is_whatsapp: c.is_whatsapp || false,
         cellule_id: selectedTargetType === "cellule" ? cible.id : null,
-        responsable_cellule: selectedTargetType === "cellule" ? cible.responsable : null,
+        responsable_cellule: responsableId,
         conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
         date_suivi: new Date().toISOString(),
         evangelise_id: c.id,
       }));
 
-      const { error } = await supabase.from("suivis_des_evangelises").insert(insertData);
+      const { error } = await supabase
+        .from("suivis_des_evangelises")
+        .insert(insertData);
       if (error) throw error;
 
       const idsToDelete = selectedContacts.map((c) => c.id);
-      const { error: delError } = await supabase.from("evangelises").delete().in("id", idsToDelete);
+      const { error: delError } = await supabase
+        .from("evangelises")
+        .delete()
+        .in("id", idsToDelete);
       if (delError) console.warn("Contacts envoyés mais non supprimés", delError);
 
       alert("✅ Contacts envoyés avec succès !");
@@ -137,10 +149,8 @@ export default function Evangelisation() {
   };
 
   return (
-    <div
-      className="min-h-screen w-full flex flex-col items-center p-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
+    <div className="min-h-screen w-full flex flex-col items-center p-6"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
       <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
         <button onClick={() => router.back()} className="text-white">← Retour</button>
         <LogoutLink />
@@ -181,7 +191,7 @@ export default function Evangelisation() {
             <option value="">-- Choisir --</option>
             {(selectedTargetType === "cellule" ? cellules : conseillers).map((c) => (
               <option key={c.id} value={c.id}>
-                {selectedTargetType === "cellule" ? `${c.cellule_full} (${c.responsable})` : `${c.prenom} ${c.nom}`}
+                {selectedTargetType === "cellule" ? `${c.cellule_full}` : `${c.prenom} ${c.nom}`}
               </option>
             ))}
           </select>
@@ -210,8 +220,6 @@ export default function Evangelisation() {
               style={{ borderLeftColor: getBorderColor(member) }}
             >
               <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
-
-              {/* Téléphone avec style orange semi-underline */}
               <p
                 className="text-center text-sm text-orange-500 underline decoration-orange-400 cursor-pointer font-semibold"
                 onClick={() => setOpenPhoneMenuId(member.id)}
@@ -219,63 +227,25 @@ export default function Evangelisation() {
                 {member.telephone || "—"}
               </p>
 
-              {/* Menu actions téléphoniques / WhatsApp */}
               {openPhoneMenuId === member.id && (
-                <div
-                  ref={phoneMenuRef}
-                  className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <a
-                    href={member.telephone ? `tel:${member.telephone}` : "#"}
-                    className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
-                  >
-                    📞 Appeler
-                  </a>
-                  <a
-                    href={member.telephone ? `sms:${member.telephone}` : "#"}
-                    className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
-                  >
-                    ✉️ SMS
-                  </a>
-                  <a
-                    href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}?call` : "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
-                  >
-                    📱 Appel WhatsApp
-                  </a>
-                  <a
-                    href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}` : "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
-                  >
-                    💬 Message WhatsApp
-                  </a>
+                <div ref={phoneMenuRef} className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
+                  onClick={(e) => e.stopPropagation()}>
+                  <a href={member.telephone ? `tel:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📞 Appeler</a>
+                  <a href={member.telephone ? `sms:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>✉️ SMS</a>
+                  <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}?call` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📱 Appel WhatsApp</a>
+                  <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>💬 Message WhatsApp</a>
                 </div>
               )}
 
               <p className="text-center text-sm">🏙️ Ville : {member.ville || "—"}</p>
 
-              {/* Checkbox sélectionner */}
               <label className="flex justify-center gap-2 mt-2">
-                <input
-                  type="checkbox"
-                  checked={checkedContacts[member.id] || false}
-                  onChange={() => handleCheck(member.id)}
-                />
+                <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} />
                 Sélectionner
               </label>
 
-              {/* Détails supplémentaires */}
-              <button
-                onClick={() =>
-                  setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
-                }
-                className="text-orange-500 underline text-sm block mx-auto mt-2"
-              >
+              <button onClick={() => setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))}
+                className="text-orange-500 underline text-sm block mx-auto mt-2">
                 {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
               </button>
 
@@ -287,16 +257,7 @@ export default function Evangelisation() {
                   <p>☀️ Type : {member.type_conversion || "—"}</p>
                   <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
                   <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
-
-                  <button
-                    onClick={() => {
-                      setEditMember(member);
-                      setPopupMember(null); // ferme popup si actif
-                    }}
-                    className="text-blue-600 text-sm mt-4 w-full text-center"
-                  >
-                    ✏️ Modifier le contact
-                  </button>
+                  <button onClick={() => { setEditMember(member); setPopupMember(null); }} className="text-blue-600 text-sm mt-4 w-full text-center">✏️ Modifier le contact</button>
                 </div>
               )}
             </div>
@@ -304,93 +265,55 @@ export default function Evangelisation() {
         </div>
       )}
 
-    {/* VUE TABLE */}
-{view === "table" && (
-  <div className="w-full max-w-6xl overflow-x-auto py-2">
-    <div className="min-w-[700px] space-y-2"> {/* Largeur minimum pour scroll horizontal */}
+      {/* VUE TABLE */}
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto py-2">
+          <div className="min-w-[700px] space-y-2">
+            <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+              <div className="flex-[2]">Nom complet</div>
+              <div className="flex-[1]">Téléphone</div>
+              <div className="flex-[1]">Ville</div>
+              <div className="flex-[1]">Sélectionner</div>
+              <div className="flex-[1]">Actions</div>
+            </div>
 
-      {/* Header */}
-      <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
-        <div className="flex-[2]">Nom complet</div>
-        <div className="flex-[1]">Téléphone</div>
-        <div className="flex-[1]">Ville</div>
-        <div className="flex-[1]">Sélectionner</div>
-        <div className="flex-[1]">Actions</div>
-      </div>
+            {contacts.length === 0 && (
+              <div className="px-2 py-2 text-white text-center bg-gray-600 rounded">
+                Aucun membre en suivi
+              </div>
+            )}
 
-      {contacts.length === 0 && (
-        <div className="px-2 py-2 text-white text-center bg-gray-600 rounded">
-          Aucun membre en suivi
+            {contacts.map((m) => (
+              <div key={m.id} className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
+                <div className="flex-[2] text-white flex items-center gap-1">{m.prenom} {m.nom}</div>
+                <div className="flex-[1] text-white">📱 {m.telephone || "—"}</div>
+                <div className="flex-[1] text-white">{m.ville || "—"}</div>
+                <div className="flex-[1]"><input type="checkbox" checked={checkedContacts[m.id] || false} onChange={() => handleCheck(m.id)} /></div>
+                <div className="flex-[1]">
+                  <button onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)} className="text-orange-500 underline text-sm whitespace-nowrap">{popupMember?.id === m.id ? "Fermer détails" : "Détails"}</button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      {contacts.map((m) => (
-        <div
-          key={m.id}
-          className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
-          style={{ borderLeftColor: getBorderColor(m) }}
-        >
-          <div className="flex-[2] text-white flex items-center gap-1">
-            {m.prenom} {m.nom}
-          </div>
-
-          <div className="flex-[1] text-white">📱 {m.telephone || "—"}</div>
-
-          <div className="flex-[1] text-white">{m.ville || "—"}</div>
-
-          <div className="flex-[1]">
-            <input
-              type="checkbox"
-              checked={checkedContacts[m.id] || false}
-              onChange={() => handleCheck(m.id)}
-            />
-          </div>
-
-          <div className="flex-[1]">
-            <button
-              onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
-              className="text-orange-500 underline text-sm whitespace-nowrap"
-            >
-              {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
-
-
-
-
-
-      {/* POPUP MODIFICATION */}
+      {/* POPUPS */}
       {editMember && (
         <EditEvangelisePopup
           member={editMember}
           cellules={cellules}
           conseillers={conseillers}
-          onClose={() => {
-            setEditMember(null);
-            setPopupMember(null);
-          }}
-          onUpdateMember={(data) => {
-            setContacts((prev) => prev.map((m) => (m.id === data.id ? data : m)));
-            setEditMember(null);
-            setPopupMember(null);
-          }}
+          onClose={() => { setEditMember(null); setPopupMember(null); }}
+          onUpdateMember={(data) => { setContacts((prev) => prev.map((m) => (m.id === data.id ? data : m))); setEditMember(null); setPopupMember(null); }}
         />
       )}
 
-      {/* POPUP DETAILS */}
       {popupMember && (
         <DetailsEvangePopup
           member={popupMember}
           onClose={() => setPopupMember(null)}
-          onEdit={(m) => {
-            setEditMember(m);
-            setPopupMember(null);
-          }}
+          onEdit={(m) => { setEditMember(m); setPopupMember(null); }}
         />
       )}
     </div>

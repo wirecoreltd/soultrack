@@ -418,7 +418,6 @@ export default function SuivisMembres() {
 )}
 
       {detailsModalMember && (
-        {detailsModalMember && (
         <DetailsModal
           m={detailsModalMember}
           onClose={() => setDetailsModalMember(null)}

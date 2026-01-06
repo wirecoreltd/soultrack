@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react"; // <-- ajouté useRef
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -22,10 +22,27 @@ export default function Evangelisation() {
   const [loadingSend, setLoadingSend] = useState(false);
   const [view, setView] = useState("card"); // "card" ou "table"
 
+  // ✅ État pour le menu téléphone
+  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
+  const phoneMenuRef = useRef(null);
+
   useEffect(() => {
     fetchContacts();
     fetchCellules();
     fetchConseillers();
+  }, []);
+
+  // ✅ Fermer le menu téléphone si clic à l'extérieur
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(event.target)) {
+        setOpenPhoneMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   const fetchContacts = async () => {
@@ -214,108 +231,112 @@ export default function Evangelisation() {
       </div>
 
       {/* VUE CARTE */}
-{view === "card" && (
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
-    {contacts.map((member) => (
-      <div
-        key={member.id}
-        className="bg-white rounded-2xl shadow-xl p-4 border-l-4 transition-all duration-300 relative"
-        style={{ borderLeftColor: getBorderColor(member) }}
-      >
-        <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
-
-        {/* Téléphone avec style orange semi-underline */}
-        <p
-          className="text-center text-sm text-orange-500 underline decoration-orange-400 cursor-pointer"
-          onClick={() => setOpenPhoneMenuId(member.id)}
-        >
-          📱 {member.telephone || "—"}
-        </p>
-
-        {/* Menu actions téléphoniques / WhatsApp */}
-        {openPhoneMenuId === member.id && (
-          <div
-            ref={phoneMenuRef}
-            className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <a
-              href={member.telephone ? `tel:${member.telephone}` : "#"}
-              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
+      {view === "card" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
+          {contacts.map((member) => (
+            <div
+              key={member.id}
+              className="bg-white rounded-2xl shadow-xl p-4 border-l-4 transition-all duration-300 relative"
+              style={{ borderLeftColor: getBorderColor(member) }}
             >
-              📞 Appeler
-            </a>
-            <a
-              href={member.telephone ? `sms:${member.telephone}` : "#"}
-              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
-            >
-              ✉️ SMS
-            </a>
-            <a
-              href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}?call` : "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
-            >
-              📱 Appel WhatsApp
-            </a>
-            <a
-              href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}` : "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
-            >
-              💬 Message WhatsApp
-            </a>
-          </div>
-        )}
+              <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
 
-        <p className="text-center text-sm">🏙️ Ville : {member.ville || "—"}</p>
+              {/* Téléphone avec style orange semi-underline */}
+              <p
+                className="text-center text-sm text-orange-500 underline decoration-orange-400 cursor-pointer"
+                onClick={() => setOpenPhoneMenuId(member.id)}
+              >
+                📱 {member.telephone || "—"}
+              </p>
 
-        {/* Checkbox sélectionner */}
-        <label className="flex justify-center gap-2 mt-2">
-          <input
-            type="checkbox"
-            checked={checkedContacts[member.id] || false}
-            onChange={() => handleCheck(member.id)}
-          />
-          Sélectionner
-        </label>
+              {/* Menu actions téléphoniques / WhatsApp */}
+              {openPhoneMenuId === member.id && (
+                <div
+                  ref={phoneMenuRef}
+                  className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <a
+                    href={member.telephone ? `tel:${member.telephone}` : "#"}
+                    className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
+                  >
+                    📞 Appeler
+                  </a>
+                  <a
+                    href={member.telephone ? `sms:${member.telephone}` : "#"}
+                    className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
+                  >
+                    ✉️ SMS
+                  </a>
+                  <a
+                    href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}?call` : "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
+                  >
+                    📱 Appel WhatsApp
+                  </a>
+                  <a
+                    href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}` : "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
+                  >
+                    💬 Message WhatsApp
+                  </a>
+                </div>
+              )}
 
-        {/* Détails supplémentaires */}
-        <button
-          onClick={() =>
-            setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
-          }
-          className="text-orange-500 underline text-sm block mx-auto mt-2"
-        >
-          {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-        </button>
+              <p className="text-center text-sm">🏙️ Ville : {member.ville || "—"}</p>
 
-        {detailsOpen[member.id] && (
-          <div className="text-sm mt-3 space-y-1">
-            <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-            <p>⚥ Sexe : {member.sexe || "—"}</p>
-            <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
-            <p>☀️ Type : {member.type_conversion || "—"}</p>
-            <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-            <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
+              {/* Checkbox sélectionner */}
+              <label className="flex justify-center gap-2 mt-2">
+                <input
+                  type="checkbox"
+                  checked={checkedContacts[member.id] || false}
+                  onChange={() => handleCheck(member.id)}
+                />
+                Sélectionner
+              </label>
 
-            <button
-              onClick={() => {
-                setEditMember(member);
-                setPopupMember(null); // ferme popup si actif
-              }}
-              className="text-blue-600 text-sm mt-4 w-full text-center"
-            >
-              ✏️ Modifier le contact
-            </button>
-          </div>
-        )}
-      </div>
-    ))}
-  </div>
-)}
+              {/* Détails supplémentaires */}
+              <button
+                onClick={() =>
+                  setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
+                }
+                className="text-orange-500 underline text-sm block mx-auto mt-2"
+              >
+                {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+              </button>
+
+              {detailsOpen[member.id] && (
+                <div className="text-sm mt-3 space-y-1">
+                  <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+                  <p>⚥ Sexe : {member.sexe || "—"}</p>
+                  <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
+                  <p>☀️ Type : {member.type_conversion || "—"}</p>
+                  <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
+                  <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
+
+                  <button
+                    onClick={() => {
+                      setEditMember(member);
+                      setPopupMember(null); // ferme popup si actif
+                    }}
+                    className="text-blue-600 text-sm mt-4 w-full text-center"
+                  >
+                    ✏️ Modifier le contact
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 
       {/* VUE TABLE */}

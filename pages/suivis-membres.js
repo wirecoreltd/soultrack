@@ -174,10 +174,17 @@ export default function SuivisMembres() {
 
 
   const filteredMembers = members.filter(m => {
-    const status = m.statut_suivis ?? 0;
-    if (status === 3 || status === 4) return false; // intégrés ou refusés
-    return status === 1 || status === 2; // envoyés ou en attente
-  });
+  const status = m.statut_suivis ?? 0;
+
+  if (showRefus) {
+    // Si toggle "Voir les refus", ne montre que les refus
+    return status === statutIds.refus;
+  } else {
+    // Sinon, montre tout sauf intégrés et refus
+    return status === statutIds.envoye || status === statutIds["en attente"];
+  }
+});
+
 
   const uniqueMembers = Array.from(new Map(filteredMembers.map(item => [item.id, item])).values());
 
@@ -324,10 +331,11 @@ export default function SuivisMembres() {
                           }
                           className="w-full border rounded-lg p-2 mb-2"
                         >
-                          <option value="">-- Sélectionner un statut --</option>
-                          <option value="3">Intégrer</option>
-                        </select>
-     
+                           <option value="">-- Sélectionner un statut --</option>
+                                  <option value="2">En attente</option>
+                                  <option value="3">Intégrer</option>
+                                  <option value="4">Refus</option>
+                                </select>     
 
                   <button
                           onClick={() => updateSuivi(m.id)}

@@ -84,62 +84,108 @@ export default function Evangelisation() {
   const hasSelectedContacts = selectedContacts.length > 0;
 
   const sendContacts = async () => {
-    if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
-    setLoadingSend(true);
-    try {
-      const cible =
-        selectedTargetType === "cellule"
-          ? cellules.find((c) => c.id == selectedTarget)
-          : conseillers.find((c) => c.id == selectedTarget);
+  if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
 
-      if (!cible || !cible.telephone)
-        throw new Error("Numéro de la cible invalide");
+  setLoadingSend(true);
 
-      const isMultiple = selectedContacts.length > 1;
+  try {
+    // 🔹 Récupérer la cible
+    const cible =
+      selectedTargetType === "cellule"
+        ? cellules.find((c) => c.id == selectedTarget)
+        : conseillers.find((c) => c.id == selectedTarget);
 
-      let message = `👋 Bonjour ${
-        selectedTargetType === "cellule" ? cible.responsable : cible.prenom
-      },\n\n`;
-      message += isMultiple
-        ? "Nous te confions avec joie ces personnes rencontrées lors de l’évangélisation.\n"
-        : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n";
-      message += "Merci pour ton coeur et ton engagement dans l’accompagnement\n\n";
+    if (!cible || !cible.telephone)
+      throw new Error("Numéro de la cible invalide");
 
-      selectedContacts.forEach((m, index) => {
-        if (isMultiple) message += `\n———— Personne ${index + 1} ————\n`; 
-        message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
-        message += `📱 Téléphone : ${m.telephone || "—"}\n`;
-        message += `🏙️ Ville : ${m.ville || "—"}\n`;
-        message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
-        message += `⚥ Sexe : ${m.sexe || "—"}\n`;
-        message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
-        message += `☀️ Type : ${m.type_conversion || "—"}\n`;
-        message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
-        message += `📝 Infos supplementaires : ${formatBesoin(m.infos_supplementaires)}\n`;
-      });
+    const isMultiple = selectedContacts.length > 1;
 
-      message += "\nQue le Seigneur te fortifie et t’utilise puissamment dans ce suivi 🙌\n";
+    // 🔹 Préparer le message WhatsApp
+    let message = `👋 Bonjour ${
+      selectedTargetType === "cellule" ? cible.responsable : cible.prenom
+    },\n\n`;
 
-      const waLink = `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
-      window.open(waLink, "_blank");
+    message += isMultiple
+      ? "Nous te confions avec joie ces personnes rencontrées lors de l’évangélisation.\n"
+      : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n";
 
-      const insertData = selectedContacts.map((c) => ({
-        prenom: c.prenom,
-        nom: c.nom,
-        telephone: c.telephone,
-        ville: c.ville,
-        sexe: c.sexe,
-        besoin: c.besoin,
-        priere_salut: c.priere_salut,
-        type_conversion: c.type_conversion,        
-        infos_supplementaires: c.infos_supplementaires,
-        is_whatsapp: c.is_whatsapp || false,
-        cellule_id: selectedTargetType === "cellule" ? cible.id : null,
-        responsable_cellule: selectedTargetType === "cellule" ? cible.responsable : null,
-        conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
-        date_suivi: new Date().toISOString(),
-        evangelise_id: c.id,
-      }));
+    message += "Merci pour ton coeur et ton engagement dans l’accompagnement\n\n";
+
+    selectedContacts.forEach((m, index) => {
+      if (isMultiple) message += `\n———— Personne ${index + 1} ————\n`; 
+      message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
+      message += `📱 Téléphone : ${m.telephone || "—"}\n`;
+      message += `🏙️ Ville : ${m.ville || "—"}\n`;
+      message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
+      message += `⚥ Sexe : ${m.sexe || "—"}\n`;
+      message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
+      message += `☀️ Type : ${m.type_conversion || "—"}\n`;
+      message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
+      message += `📝 Infos supplementaires : ${formatBesoin(m.infos_supplementaires)}\n`;
+    });
+
+    message += "\nQue le Seigneur te fortifie et t’utilise puissamment dans ce suivi 🙌\n";
+
+    const waLink = `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
+    window.open(waLink, "_blank");
+
+    // 🔹 Préparer les données pour l'insertion
+    const insertData = selectedContacts.map((c) => ({
+      prenom: c.prenom,
+      nom: c.nom,
+      telephone: c.telephone,
+      ville: c.ville,
+      sexe: c.sexe,
+      besoin: c.besoin,
+      priere_salut: c.priere_salut,
+      type_conversion: c.type_conversion,        
+      infos_supplementaires: c.infos_supplementaires,
+      is_whatsapp: c.is_whatsapp || false,
+      cellule_id: selectedTargetType === "cellule" ? cible.id : null,
+      responsable_cellule: selectedTargetType === "cellule" ? cible.responsable : null,
+      conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
+      date_suivi: new Date().toISOString(),
+      evangelise_id: c.id, // ✅ Indispensable pour relier
+    }));
+
+    console.log("Données à insérer dans suivis_des_evangelises :", insertData);
+
+    // 🔹 Insertion dans Supabase
+    const { error } = await supabase
+      .from("suivis_des_evangelises")
+      .insert(insertData);
+
+    if (error) {
+      console.error("Erreur insertion suivis :", error);
+      alert("❌ Une erreur s'est produite lors de l'envoi.");
+      return;
+    }
+
+    // 🔹 Suppression des contacts de la table evangelises seulement après insertion
+    const idsToDelete = selectedContacts.map((c) => c.id);
+    const { error: delError } = await supabase
+      .from("evangelises")
+      .delete()
+      .in("id", idsToDelete);
+
+    if (delError) {
+      console.error("Erreur suppression evangelises :", delError);
+      alert("⚠️ Contacts envoyés mais impossible de supprimer de la table evangelises.");
+    } else {
+      alert("✅ Contacts envoyés et supprimés avec succès !");
+    }
+
+    setCheckedContacts({});
+    fetchContacts(); // 🔹 rafraîchit la liste
+
+  } catch (err) {
+    console.error("Erreur envoi contacts :", err);
+    alert("❌ Une erreur est survenue.");
+  } finally {
+    setLoadingSend(false);
+  }
+};
+
 
       await supabase.from("suivis_des_evangelises").insert(insertData);
       const idsToDelete = selectedContacts.map((c) => c.id);

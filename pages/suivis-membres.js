@@ -130,9 +130,11 @@ export default function SuivisMembres() {
     return "#ccc";
   };
 
-  const updateSuivi = async (id) => {
+     const updateSuivi = async (id) => {
   const newComment = commentChanges[id];
-  const newStatus = statusChanges[id];  
+  const newStatus = statusChanges[id];
+
+  if (!newComment && !newStatus) return;
 
   setUpdating(prev => ({ ...prev, [id]: true }));
 
@@ -158,7 +160,15 @@ export default function SuivisMembres() {
 
     if (error) throw error;
 
-    updateMember(updatedMember.id, updatedMember);    
+    updateMember(updatedMember.id, updatedMember);
+
+  } catch (err) {
+    console.error("Erreur updateSuivi :", err);
+  } finally {
+    setUpdating(prev => ({ ...prev, [id]: false }));
+  }
+};
+
 
   const filteredMembers = members.filter(m => {
     const status = m.statut_suivis ?? 0;

@@ -10,7 +10,7 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import BoutonEnvoyer from "../components/BoutonEnvoyer";
 import LogoutLink from "../components/LogoutLink";
-import DetailsPopup from "../components/DetailsMemberPopup";
+import DetailsMemberPopup from "../components/DetailsMemberPopup";
 import EditMemberPopup from "../components/EditMemberPopup";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";

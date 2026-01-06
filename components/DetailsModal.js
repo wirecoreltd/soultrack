@@ -17,7 +17,6 @@ export default function DetailsModal({
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
   const phoneMenuRef = useRef(null);
 
-  // Fermer menu téléphone en cliquant dehors
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
@@ -41,14 +40,12 @@ export default function DetailsModal({
         </button>
 
         {/* ================= CENTRÉ ================= */}
-        <div className="flex flex-col items-center text-center">
-          <h2 className="text-xl font-bold">
-            {m.prenom} {m.nom} {m.star && "⭐"}
-          </h2>
+        <div className="flex flex-col items-center text-center space-y-2">
+          <h2 className="text-xl font-bold">{m.prenom} {m.nom} {m.star && "⭐"}</h2>
 
           {/* Téléphone */}
           {m.telephone && (
-            <div className="relative mt-1" ref={phoneMenuRef}>
+            <div className="relative" ref={phoneMenuRef}>
               <button
                 onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
                 className="text-orange-500 underline font-semibold"
@@ -58,49 +55,27 @@ export default function DetailsModal({
 
               {openPhoneMenu && (
                 <div className="absolute top-full mt-2 bg-white border rounded-lg shadow w-56 z-50">
-                  <a
-                    href={`tel:${m.telephone}`}
-                    className="block px-4 py-2 hover:bg-gray-100 text-black"
-                  >
-                    📞 Appeler par téléphone
-                  </a>
-                  <a
-                    href={`sms:${m.telephone}`}
-                    className="block px-4 py-2 hover:bg-gray-100 text-black"
-                  >
-                    ✉️ Envoyer SMS
-                  </a>
-                  <a
-                    href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
-                    target="_blank"
-                    className="block px-4 py-2 hover:bg-gray-100 text-black"
-                  >
-                    💬 WhatsApp
-                  </a>
-                  <a
-                    href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?text=Bonjour`}
-                    target="_blank"
-                    className="block px-4 py-2 hover:bg-gray-100 text-black"
-                  >
-                    📱 Envoyer message WhatsApp
-                  </a>
+                  <a href={`tel:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler</a>
+                  <a href={`sms:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">✉️ SMS</a>
+                  <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 WhatsApp</a>
+                  <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}?text=Bonjour`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Envoyer WhatsApp</a>
                 </div>
               )}
             </div>
           )}
 
-          <p className="mt-2">🏙️ Ville : {m.ville || "—"}</p>
-          <p>🕊 Statut : {m.statut || "—"}</p>
+          <p className="text-white font-semibold">
+            🏠 {m.cellule_full || m.responsable || "—"}
+          </p>
+          <p className="text-white font-semibold">📝 {m.commentaire_suivis || "—"}</p>
+          <p className="text-white font-semibold">📋 Statut Intégration : {m.statut_suivis || "—"}</p>
 
-          {/* Envoyer */}
-          <div className="mt-3 w-full">
+          {/* Bouton Sauvegarder / Envoyer */}
+          <div className="w-full mt-3">
             <label className="font-semibold text-sm">Envoyer à :</label>
             <select
               value={selectedTargetType}
-              onChange={(e) => {
-                setSelectedTargetType(e.target.value);
-                setSelectedTarget(null);
-              }}
+              onChange={(e) => { setSelectedTargetType(e.target.value); setSelectedTarget(null); }}
               className="mt-1 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Choisir --</option>
@@ -115,18 +90,8 @@ export default function DetailsModal({
                 className="mt-2 w-full border rounded px-2 py-1 text-sm"
               >
                 <option value="">-- Sélectionner --</option>
-
-                {selectedTargetType === "cellule" && m.cellule_id && (
-                  <option value={m.cellule_id}>
-                    {m.cellule_full}
-                  </option>
-                )}
-
-                {selectedTargetType === "conseiller" && m.conseiller_id && (
-                  <option value={m.conseiller_id}>
-                    {m.responsable}
-                  </option>
-                )}
+                {selectedTargetType === "cellule" && m.cellule_id && <option value={m.cellule_id}>{m.cellule_full}</option>}
+                {selectedTargetType === "conseiller" && m.conseiller_id && <option value={m.conseiller_id}>{m.responsable}</option>}
               </select>
             )}
 
@@ -137,9 +102,7 @@ export default function DetailsModal({
                   type={selectedTargetType}
                   cible={{ id: selectedTarget }}
                   session={session}
-                  onEnvoyer={(data) =>
-                    handleAfterSend && handleAfterSend(data, selectedTargetType)
-                  }
+                  onEnvoyer={(data) => handleAfterSend && handleAfterSend(data, selectedTargetType)}
                   showToast={showToast}
                 />
               </div>
@@ -147,25 +110,27 @@ export default function DetailsModal({
           </div>
         </div>
 
-        {/* ================= DÉTAILS (IDENTIQUE À SUIVIS MEMBRES) ================= */}
-        <div className="mt-5 text-sm text-black space-y-1">
-          <p>🏠 Cellule : {m.cellule_full || "—"}</p>
-          <p>👤 Conseiller : {m.responsable || "—"}</p>
+        {/* ================= ALIGNÉ À GAUCHE ================= */}
+        <div className="mt-5 text-sm text-black space-y-1 text-left">
           <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-          <p>⚥ Sexe : {m.sexe || "—"}</p>
-          <p>
-            ❓ Besoin :{" "}
-            {!m.besoin
-              ? "—"
-              : Array.isArray(m.besoin)
-              ? m.besoin.join(", ")
-              : m.besoin}
-          </p>
-          <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+          <p>🏙 Ville : {m.ville || "—"}</p>
           <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+          <p>⚥ Sexe : {m.sexe || "—"}</p>
           <p>📋 Statut initial : {(m.statut_initial ?? m.statut) || "—"}</p>
-          <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
+          <p>❓ Besoin : {!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin}</p>
+          <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
         </div>
+
+        {/* ================= CENTRÉ ================= */}
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={() => console.log("Modifier contact")}
+            className="text-blue-600 underline text-sm"
+          >
+            ✏️ Modifier le contact
+          </button>
+        </div>
+
       </div>
     </div>
   );

@@ -72,9 +72,9 @@ export default function MembresCellule() {
         const { data: membresData, error } = await membresQuery;
         if (error) throw error;
 
-        // ✅ Filtrer seulement ceux qui sont attribués à une cellule ET ont le statut "Intégrer"
+        // ===== FILTRE : uniquement ceux qui ont cellule_id ET statut_suivis === 3 =====
         const membresIntegrer = (membresData || []).filter(
-          m => m.cellule_id && m.statut_integrer === 3
+          m => m.cellule_id && m.statut_suivis === 3
         );
 
         setMembres(membresIntegrer);

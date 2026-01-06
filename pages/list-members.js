@@ -65,23 +65,21 @@ export default function ListMembers() {
     setTimeout(() => setShowingToast(false), 3500);
   };
 
-  // -------------------- Fonctions manquantes --------------------
   const handleCommentChange = (id, value) => {
-    setCommentChanges(prev => ({ ...prev, [id]: value }));
+    setCommentChanges((prev) => ({ ...prev, [id]: value }));
   };
 
   const updateSuivi = async (id) => {
-    setUpdating(prev => ({ ...prev, [id]: true }));
+    setUpdating((prev) => ({ ...prev, [id]: true }));
     try {
-      // Ici tu peux remplacer avec ton update Supabase réel
       console.log("Update suivi pour:", id, commentChanges[id], statusChanges[id]);
       setTimeout(() => {
-        setUpdating(prev => ({ ...prev, [id]: false }));
+        setUpdating((prev) => ({ ...prev, [id]: false }));
         showToast("✅ Suivi enregistré !");
       }, 1000);
     } catch (err) {
       console.error("Erreur update suivi:", err);
-      setUpdating(prev => ({ ...prev, [id]: false }));
+      setUpdating((prev) => ({ ...prev, [id]: false }));
     }
   };
 
@@ -182,51 +180,32 @@ export default function ListMembers() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
- import { useMemo } from "react";
+  // -------------------- FILTRAGE CENTRALISE OPTIMISE --------------------
+  const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
+    const baseFiltered = filter
+      ? members.filter((m) => m.statut === filter || m.suivi_statut_libelle === filter)
+      : members;
 
-    // -------------------- FILTRAGE CENTRALISE OPTIMISE --------------------
-    const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
-      const baseFiltered = filter
-        ? members.filter(
-            (m) => m.statut === filter || m.suivi_statut_libelle === filter
-          )
-        : members;
-    
-      const searchFiltered = baseFiltered.filter((m) =>
-        `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
-      );
-    
-      const nouveaux = searchFiltered.filter((m) =>
-        ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-      );
-    
-      const anciens = searchFiltered.filter(
-        (m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-      );
-    
-      return {
-        filteredMembers: searchFiltered,
-        filteredNouveaux: nouveaux,
-        filteredAnciens: anciens,
-      };
-    }, [members, filter, search]);
+    const searchFiltered = baseFiltered.filter((m) =>
+      `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
+    );
 
+    const nouveaux = searchFiltered.filter((m) =>
+      ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+    );
 
-const filteredNouveaux = useMemo(
-  () => filteredMembers.filter((m) =>
-    ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-  ),
-  [filteredMembers]
-);
+    const anciens = searchFiltered.filter(
+      (m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+    );
 
-const filteredAnciens = useMemo(
-  () => filteredMembers.filter((m) =>
-    !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-  ),
-  [filteredMembers]
-);
+    return {
+      filteredMembers: searchFiltered,
+      filteredNouveaux: nouveaux,
+      filteredAnciens: anciens,
+    };
+  }, [members, filter, search]);
 
-  const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const getBorderColor = (m) => {
     const s = m.statut || m.suivi_statut_libelle || "";
@@ -244,23 +223,6 @@ const filteredAnciens = useMemo(
     try { return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr }); } catch { return ""; }
   };
 
-  const filterBySearch = (list) => list.filter((m) => `${(m.prenom || "")} ${(m.nom || "")}`.toLowerCase().includes(search.toLowerCase()));
-
-  // -------------------- FILTRAGE CENTRALISE --------------------
-  const filteredMembers = filterBySearch(
-    filter
-      ? members.filter(m => m.statut === filter || m.suivi_statut_libelle === filter)
-      : members
-  );
-
-  const filteredNouveaux = filteredMembers.filter(
-    m => ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-  );
-
-  const filteredAnciens = filteredMembers.filter(
-    m => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-  );
-
   const toggleStar = async (member) => {
     try {
       const { error } = await supabase
@@ -270,10 +232,8 @@ const filteredAnciens = useMemo(
 
       if (error) throw error;
 
-      setAllMembers(prev =>
-        prev.map(m =>
-          m.id === member.id ? { ...m, star: !member.star } : m
-        )
+      setAllMembers((prev) =>
+        prev.map((m) => (m.id === member.id ? { ...m, star: !member.star } : m))
       );
     } catch (err) {
       console.error("Erreur toggleStar:", err);

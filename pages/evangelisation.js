@@ -214,17 +214,68 @@ export default function Evangelisation() {
       </div>
 
       {/* VUE CARTE */}
-      {view === "card" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
-          {contacts.map((member) => (
-            <div
-              key={member.id}
-              className="bg-white rounded-2xl shadow-xl p-4 border-l-4 transition-all duration-300"
-              style={{ borderLeftColor: getBorderColor(member) }}
-            >
-              <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
-              <p className="text-center text-sm">📱 {member.telephone || "—"}</p>
-              <p className="text-center text-sm">🏙️ Ville : {member.ville || "—"}</p>  
+        {view === "card" && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
+            {contacts.map((m) => (
+              <div
+                key={m.id}
+                className="bg-white rounded-2xl shadow-xl p-4 border-l-4 transition-all duration-300 relative"
+                style={{ borderLeftColor: getBorderColor(m) }}
+              >
+                <h2 className="font-bold text-center">{m.prenom} {m.nom}</h2>
+                
+                {/* Téléphone avec style orange semi-underline */}
+                <p
+                  className="text-center text-sm text-orange-500 underline decoration-orange-400 cursor-pointer"
+                  onClick={() => setOpenPhoneMenuId(m.id)}
+                >
+                  📱 {m.telephone || "—"}
+                </p>
+        
+                {/* Menu actions téléphoniques / WhatsApp */}
+                {openPhoneMenuId === m.id && (
+                  <div
+                    ref={phoneMenuRef}
+                    className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <a
+                      href={m.telephone ? `tel:${m.telephone}` : "#"}
+                      className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
+                    >
+                      📞 Appeler
+                    </a>
+                    <a
+                      href={m.telephone ? `sms:${m.telephone}` : "#"}
+                      className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
+                    >
+                      ✉️ SMS
+                    </a>
+                    <a
+                      href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}?call` : "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
+                    >
+                      📱 Appel WhatsApp
+                    </a>
+                    <a
+                      href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}` : "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
+                    >
+                      💬 Message WhatsApp
+                    </a>
+                  </div>
+                )}
+        
+                <p className="text-center text-sm">🏙️ Ville : {m.ville || "—"}</p>
+              </div>
+            ))}
+          </div>
+        )}  
+ 
 
               <label className="flex justify-center gap-2 mt-2">
                 <input

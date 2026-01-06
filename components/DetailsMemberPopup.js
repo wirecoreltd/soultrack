@@ -131,46 +131,6 @@ export default function DetailsMemberPopup({
             )}
           </div>
 
-          {/* ================= Commentaire Suivis + Statut Intégration ================= */}
-          <div className="flex flex-col w-full mt-4">
-            <label className="font-semibold text-blue-700 mb-1 text-center">Commentaire Suivis</label>
-            <textarea
-              value={commentChanges[membre.id] ?? membre.commentaire_suivis ?? ""}
-              onChange={(e) => handleCommentChange(membre.id, e.target.value)}
-              className="w-full border rounded-lg p-2"
-              rows={2}
-            />
-
-            <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Statut Intégration</label>
-            <select
-              value={statusChanges[membre.id] ?? ""}
-              onChange={(e) =>
-                setStatusChanges(prev => ({
-                  ...prev,
-                  [membre.id]: e.target.value
-                }))
-              }
-              className="w-full border rounded-lg p-2 mb-2"
-            >
-              <option value="">-- Sélectionner un statut --</option>
-              <option value="2">En attente</option>
-              <option value="3">Intégrer</option>
-              <option value="4">Refus</option>
-            </select>
-
-            <button
-              onClick={() => updateSuivi(membre.id)}
-              disabled={updating[membre.id]}
-              className={`mt-2 w-full font-bold py-2 rounded-lg shadow-md transition-all
-                ${updating[membre.id]
-                  ? "bg-blue-300 cursor-not-allowed"
-                  : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white"
-                }`}
-            >
-              {updating[membre.id] ? "Enregistrement..." : "Sauvegarder"}
-            </button>
-          </div>
-
           {/* ================= ALIGNÉ À GAUCHE ================= */}
           <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
             <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>

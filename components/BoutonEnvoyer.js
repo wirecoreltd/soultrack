@@ -83,7 +83,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       message += `🏙️ Ville: ${membre.ville || "—"}\n`;
       message += `🕊 Statut: ${membre.statut_initial || "—"}\n`;
       message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
-      message += `⚥ Sexe: ${membre.sexe || "—"}\n`; 
+      message += `🎗️ Sexe: ${membre.sexe || "—"}\n`; 
       message += `❓Besoin: ${
       membre.besoin
         ? (() => {

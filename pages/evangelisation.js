@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react"; // <-- ajouté useRef
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -22,9 +22,10 @@ export default function Evangelisation() {
   const [loadingSend, setLoadingSend] = useState(false);
   const [view, setView] = useState("card"); // "card" ou "table"
 
-  // ✅ État pour le menu téléphone
+  // ✅ Ajouts pour le menu téléphone
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
+
 
   useEffect(() => {
     fetchContacts();

@@ -169,6 +169,8 @@ export default function Evangelisation() {
       </div>
 
       <div className="w-full max-w-md mb-6">
+        {/* SELECT */}
+      <div className="w-full max-w-md mb-6">
         <select
           value={selectedTargetType}
           onChange={(e) => {
@@ -189,24 +191,26 @@ export default function Evangelisation() {
             className="w-full border rounded px-3 py-2 mb-3 text-center"
           >
             <option value="">-- Choisir --</option>
-            {(selectedTargetType === "cellule" ? cellules : conseillers).map((c) => (
-              <option key={c.id} value={c.id}>
-                {selectedTargetType === "cellule" ? `${c.cellule_full}` : `${c.prenom} ${c.nom}`}
-              </option>
-            ))}
+            {(selectedTargetType === "cellule" ? cellules : conseillers).map(
+              (c) => (
+                <option key={c.id} value={c.id}>
+                  {selectedTargetType === "cellule"
+                    ? `${c.cellule_full} (${c.ville || "—"})`
+                    : `${c.prenom} ${c.nom}`}
+                </option>
+              )
+            )}
           </select>
         )}
 
         {hasSelectedContacts && selectedTarget && (
-          <div className="flex justify-center mt-2">
-            <button
-              onClick={sendContacts}
-              disabled={loadingSend}
-              className="bg-green-500 text-white font-bold px-4 py-2 rounded"
-            >
-              {loadingSend ? "Envoi..." : "📤 Envoyer WhatsApp"}
-            </button>
-          </div>
+          <button
+            onClick={sendContacts}
+            disabled={loadingSend}
+            className="w-full bg-green-500 text-white font-bold px-4 py-2 rounded"
+          >
+            {loadingSend ? "Envoi..." : "📤 Envoyer WhatsApp"}
+          </button>
         )}
       </div>
 

@@ -184,21 +184,33 @@ export default function ListMembers() {
 
  import { useMemo } from "react";
 
-// -------------------- FILTRAGE CENTRALISE OPTIMISE --------------------
-const filteredMembers = useMemo(() => {
-  const lowerSearch = search.toLowerCase();
-  return members
-    .filter(
-      (m) =>
-        !filter ||
-        m.statut === filter ||
-        m.suivi_statut_libelle === filter
-    )
-    .filter(
-      (m) =>
-        `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(lowerSearch)
-    );
-}, [members, search, filter]);
+    // -------------------- FILTRAGE CENTRALISE OPTIMISE --------------------
+    const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
+      const baseFiltered = filter
+        ? members.filter(
+            (m) => m.statut === filter || m.suivi_statut_libelle === filter
+          )
+        : members;
+    
+      const searchFiltered = baseFiltered.filter((m) =>
+        `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
+      );
+    
+      const nouveaux = searchFiltered.filter((m) =>
+        ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+      );
+    
+      const anciens = searchFiltered.filter(
+        (m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+      );
+    
+      return {
+        filteredMembers: searchFiltered,
+        filteredNouveaux: nouveaux,
+        filteredAnciens: anciens,
+      };
+    }, [members, filter, search]);
+
 
 const filteredNouveaux = useMemo(
   () => filteredMembers.filter((m) =>

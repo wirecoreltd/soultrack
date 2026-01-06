@@ -77,20 +77,21 @@ export default function DetailsMemberPopup({
 
           <p className="mt-2">🏙 Ville : {membre.ville || "—"}</p>
           <p>
-          🏠 Cellule :{" "}
-          {membre.cellule_full ||
-           membre.cellule?.cellule_full ||
-           membre.cellule ||
-           "—"}
-        </p>
-        
-        <p>
-          👤 Conseiller :{" "}
-          {membre.responsable ||
-           (membre.conseiller
-             ? `${membre.conseiller.prenom || ""} ${membre.conseiller.nom || ""}`
-             : "—")}
-        </p>
+            🏠 Cellule :{" "}
+            {membre.cellule_id
+              ? cellules.find(c => c.id === membre.cellule_id)?.cellule_full || "—"
+              : "—"}
+          </p>
+          
+          <p>
+            👤 Conseiller :{" "}
+            {membre.conseiller_id
+              ? `${conseillers.find(c => c.id === membre.conseiller_id)?.prenom || ""} ${
+                  conseillers.find(c => c.id === membre.conseiller_id)?.nom || ""
+                }`.trim() || "—"
+              : "—"}
+          </p>
+
 
 
           {/* ================= Envoyer à ================= */}

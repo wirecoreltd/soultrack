@@ -169,9 +169,6 @@ export default function SuivisMembres() {
     setUpdating(prev => ({ ...prev, [id]: false }));
   }, 800);
 }
-};
-
-
   const filteredMembers = members.filter(m => {
     const status = m.statut_suivis ?? 0;
     if (status === 3 || status === 4) return false; // intégrés ou refusés

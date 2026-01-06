@@ -1,26 +1,25 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import BoutonEnvoyer from "./BoutonEnvoyer";
+import EditMemberPopup from "./EditMemberPopup";
 
 export default function DetailsModal({
   m,
   onClose,
-  session,
-  handleAfterSend,
-  showToast,
-  statusChanges,
-  commentChanges,
-  updating,
-  updateSuivi,
+  cellules = [],
+  conseillers = [],
+  handleCommentChange,
+  handleStatusChange,
+  statusChanges = {},
+  commentChanges = {},
+  updating = {},
+  updateSuivi
 }) {
   if (!m || !m.id) return null;
 
+  const [editMember, setEditMember] = useState(null);
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
   const phoneMenuRef = useRef(null);
-
-  const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
-  const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
 
   // Fermer menu téléphone en cliquant dehors
   useEffect(() => {
@@ -46,12 +45,12 @@ export default function DetailsModal({
         </button>
 
         {/* ================= CENTRÉ ================= */}
-        <div className="flex flex-col items-center text-center space-y-2">
+        <div className="flex flex-col items-center text-center">
           <h2 className="text-xl font-bold">{m.prenom} {m.nom} {m.star && "⭐"}</h2>
 
           {/* Téléphone */}
           {m.telephone && (
-            <div className="relative" ref={phoneMenuRef}>
+            <div className="relative mt-1" ref={phoneMenuRef}>
               <button
                 onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
                 className="text-orange-500 underline font-semibold"
@@ -63,48 +62,42 @@ export default function DetailsModal({
                   <a href={`tel:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler</a>
                   <a href={`sms:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">✉️ SMS</a>
                   <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 WhatsApp</a>
+                  <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Message WhatsApp</a>
                 </div>
               )}
             </div>
           )}
 
-          {/* Cellule / Conseiller */}
-          <p className="text-black font-medium">
-            {m.conseiller_id ? `👤 ${m.responsable}` : m.cellule_id ? `🏠 ${m.cellule_full}` : "—"}
-          </p>
+          <p className="mt-2">🏠 Cellule : {m.cellule_full || "—"}</p>
+          <p>👤 Conseiller : {m.responsable || "—"}</p>
 
-          {/* Commentaire Suivis (textarea) */}
-          <textarea
-            value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
-            onChange={(e) =>
-              commentChanges && (commentChanges[m.id] = e.target.value)
-            }
-            placeholder="Commentaire Suivis"
-            className="w-full mt-2 border rounded px-2 py-1 text-sm resize-none"
-          />
+          {/* ================= COMMENTAIRE SUIVIS ET STATUT ================= */}
+          <div className="flex flex-col w-full mt-2">
+            <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Commentaire Suivis</label>
+            <textarea
+              value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
+              onChange={(e) => handleCommentChange(m.id, e.target.value)}
+              className="w-full border rounded-lg p-2"
+              rows={2}
+            />
 
-          {/* Statut Intégration (menu déroulant) */}
-          <select
-            value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
-            onChange={(e) =>
-              statusChanges && (statusChanges[m.id] = e.target.value)
-            }
-            className="w-full mt-2 border rounded px-2 py-1 text-sm"
-          >
-            <option value="">-- Sélectionner statut --</option>
-            {Object.entries(statutIds).map(([label, value]) => (
-              <option key={value} value={value}>
-                {label.charAt(0).toUpperCase() + label.slice(1)}
-              </option>
-            ))}
-          </select>
+            <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Statut Intégration</label>
+            <select
+              value={statusChanges[m.id] ?? ""}
+              onChange={(e) => handleStatusChange(m.id, e.target.value)}
+              className="w-full border rounded-lg p-2 mb-2"
+            >
+              <option value="">-- Sélectionner un statut --</option>
+              <option value="1">Envoyé</option>
+              <option value="2">En attente</option>
+              <option value="3">Intégré</option>
+              <option value="4">Refus</option>
+            </select>
 
-          {/* Bouton Sauvegarder */}
-          <div className="mt-2 w-full flex justify-center">
             <button
               onClick={() => updateSuivi(m.id)}
               disabled={updating[m.id]}
-              className={`font-bold py-2 px-4 rounded shadow-md transition-all
+              className={`mt-2 w-full font-bold py-2 rounded-lg shadow-md transition-all
                 ${updating[m.id]
                   ? "bg-blue-300 cursor-not-allowed"
                   : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white"
@@ -113,28 +106,42 @@ export default function DetailsModal({
               {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
             </button>
           </div>
+
+          {/* Modifier le contact */}
+          <div className="mt-2 flex justify-center w-full">
+            <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm w-full">
+              ✏️ Modifier le contact
+            </button>
+          </div>
         </div>
 
         {/* ================= ALIGNÉ À GAUCHE ================= */}
-        <div className="mt-5 text-sm text-black space-y-1 text-left">
+        <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
           <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-          <p>🏙️ Ville : {m.ville || "—"}</p>
-          <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+          <p>🏙 Ville : {m.ville || "—"}</p>
+          <p>🧩 Comment est-il venu : {m.comment_est_il_venu || "—"}</p>
           <p>⚥ Sexe : {m.sexe || "—"}</p>
           <p>📋 Statut initial : {(m.statut_initial ?? m.statut) || "—"}</p>
-          <p>❓ Besoin : {!m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin}</p>
+          <p>
+            ❓ Besoin :{" "}
+            {!m.besoin
+              ? "—"
+              : Array.isArray(m.besoin)
+              ? m.besoin.join(", ")
+              : m.besoin
+            }
+          </p>
           <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
         </div>
 
-        {/* ================= CENTRÉ MODIFIER ================= */}
-        <div className="mt-4 flex justify-center">
-          <button
-            onClick={() => console.log("Modifier le contact")}
-            className="text-blue-600 underline font-semibold"
-          >
-            ✏️ Modifier le contact
-          </button>
-        </div>
+        {/* ================= POPUP EDIT MEMBER ================= */}
+        {editMember && (
+          <EditMemberPopup
+            member={editMember}
+            onClose={() => setEditMember(null)}
+            onUpdateMember={() => setEditMember(null)}
+          />
+        )}
       </div>
     </div>
   );

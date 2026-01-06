@@ -12,6 +12,12 @@ export default function DetailsMemberPopup({
   session,
   handleAfterSend,
   showToast,
+  commentChanges = {},
+  handleCommentChange = () => {},
+  statusChanges = {},
+  setStatusChanges = () => {},
+  updateSuivi = () => {},
+  updating = {},
 }) {
   if (!membre || !membre.id) return null;
 
@@ -37,7 +43,7 @@ export default function DetailsMemberPopup({
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
 
-        {/* Fermer DetailsMemberPopup */}
+        {/* Fermer */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
@@ -46,10 +52,8 @@ export default function DetailsMemberPopup({
         </button>
 
         {/* ================= CENTRÉ ================= */}
-        <div className="flex flex-col items-center text-center">
-          <h2 className="text-xl font-bold">
-            {membre.prenom} {membre.nom} {membre.star && "⭐"}
-          </h2>
+        <div className="flex flex-col items-center text-center w-full">
+          <h2 className="text-xl font-bold">{membre.prenom} {membre.nom} {membre.star && "⭐"}</h2>
 
           {/* Téléphone */}
           {membre.telephone && (
@@ -60,7 +64,6 @@ export default function DetailsMemberPopup({
               >
                 {membre.telephone}
               </button>
-
               {openPhoneMenu && (
                 <div className="absolute top-full mt-2 bg-white border rounded-lg shadow w-56 z-50">
                   <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler</a>
@@ -73,21 +76,10 @@ export default function DetailsMemberPopup({
           )}
 
           <p className="mt-2">🏙 Ville : {membre.ville || "—"}</p>
-          <p>🕊 Statut : {membre.statut || "—"}</p>
-          <p>🏠 Cellule : {
-            membre.suivi_cellule_nom
-              ? `${membre.suivi_cellule_nom}`
-              : (cellules.find(c => c.id === membre.cellule_id)?.cellule_full || "—")
-          }</p>
-          <p>👤 Conseiller : {
-            membre.suivi_responsable
-              ? membre.suivi_responsable
-              : (conseillers.find(c => c.id === membre.conseiller_id)
-                  ? `${conseillers.find(c => c.id === membre.conseiller_id).prenom} ${conseillers.find(c => c.id === membre.conseiller_id).nom}`
-                  : "—")
-          }</p>
+          <p>🏠 Cellule : {membre.cellule_full || "—"}</p>
+          <p>👤 Conseiller : {membre.responsable || "—"}</p>
 
-          {/* Envoyer à */}
+          {/* ================= Envoyer à ================= */}
           <div className="mt-3 w-full">
             <label className="font-semibold text-sm">Envoyer à :</label>
             <select
@@ -137,46 +129,73 @@ export default function DetailsMemberPopup({
                 />
               </div>
             )}
-          </div>          
+          </div>
 
-        {/* ================= ALIGNÉ À GAUCHE ================= */}
+          {/* ================= Commentaire Suivis + Statut Intégration ================= */}
+          <div className="flex flex-col w-full mt-4">
+            <label className="font-semibold text-blue-700 mb-1 text-center">Commentaire Suivis</label>
+            <textarea
+              value={commentChanges[membre.id] ?? membre.commentaire_suivis ?? ""}
+              onChange={(e) => handleCommentChange(membre.id, e.target.value)}
+              className="w-full border rounded-lg p-2"
+              rows={2}
+            />
+
+            <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Statut Intégration</label>
+            <select
+              value={statusChanges[membre.id] ?? ""}
+              onChange={(e) =>
+                setStatusChanges(prev => ({
+                  ...prev,
+                  [membre.id]: e.target.value
+                }))
+              }
+              className="w-full border rounded-lg p-2 mb-2"
+            >
+              <option value="">-- Sélectionner un statut --</option>
+              <option value="2">En attente</option>
+              <option value="3">Intégrer</option>
+              <option value="4">Refus</option>
+            </select>
+
+            <button
+              onClick={() => updateSuivi(membre.id)}
+              disabled={updating[membre.id]}
+              className={`mt-2 w-full font-bold py-2 rounded-lg shadow-md transition-all
+                ${updating[membre.id]
+                  ? "bg-blue-300 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white"
+                }`}
+            >
+              {updating[membre.id] ? "Enregistrement..." : "Sauvegarder"}
+            </button>
+          </div>
+
+          {/* ================= ALIGNÉ À GAUCHE ================= */}
           <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
             <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
-            <p>⚥ Sexe : {membre.sexe || "—"}</p>
-            <p>
-              ❓ Besoin :{" "}
-              {membre.besoin
-                ? (() => {
-                    try {
-                      const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
-                      return Array.isArray(besoins) ? besoins.join(", ") : besoins;
-                    } catch (e) {
-                      return membre.besoin;
-                    }
-                  })()
-                : "—"}
-            </p>
+            <p> ⚥ Sexe : {membre.sexe || "—"}</p>
+            <p>❓ Besoin : {membre.besoin ? (Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin) : "—"}</p>
             <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
             <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
-            <p>🧩 Raison de la venue : {membre.statut_initial || "visiteur"}</p>
-            <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
+            <p>🧩 Statut initial : {membre.statut_initial || "visiteur"}</p>
           </div>
 
           {/* ✏️ Modifier le contact */}
-            <div className="mt-2 flex justify-center">
-              <button onClick={() => setEditMember(membre)} className="text-blue-600 text-sm mt-2 w-full">
-                ✏️ Modifier le contact
-              </button>
-            </div>
+          <div className="mt-4 flex justify-center w-full">
+            <button onClick={() => setEditMember(membre)} className="text-blue-600 text-sm w-full">
+              ✏️ Modifier le contact
+            </button>
           </div>
+        </div>
 
         {/* ================= POPUP EDIT MEMBER ================= */}
         {editMember && (
           <EditMemberPopup
             member={editMember}
             onClose={() => {
-              setEditMember(null);  // fermer EditMemberPopup
-              onClose();             // fermer DetailsMemberPopup
+              setEditMember(null);
+              onClose();
             }}
             onUpdateMember={() => {
               setEditMember(null);
@@ -187,3 +206,4 @@ export default function DetailsMemberPopup({
       </div>
     </div>
   );
+}

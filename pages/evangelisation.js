@@ -106,7 +106,7 @@ export default function Evangelisation() {
       message += "Merci pour ton coeur et ton engagement dans l’accompagnement\n\n";
 
       selectedContacts.forEach((m, index) => {
-        if (isMultiple) message += `👥 Personne ${index + 1}\n`;
+        if (isMultiple) message += `\n———— Personne ${index + 1} ————\n`; 
         message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
         message += `📱 Téléphone : ${m.telephone || "—"}\n`;
         message += `🏙️ Ville : ${m.ville || "—"}\n`;

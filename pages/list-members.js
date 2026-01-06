@@ -541,21 +541,22 @@ export default function ListMembers() {
     )}
 
       {/* =================== DETAILS MEMBER POPUP =================== */}
-      {selectedMember && (
-        <DetailsMemberPopup
-          membre={selectedMember}
-          onClose={() => setSelectedMember(null)}
-          cellules={cellules}
-          conseillers={conseillers}
-          session={session}
-          commentChanges={commentChanges}
-          handleCommentChange={handleCommentChange}
-          statusChanges={statusChanges}
-          setStatusChanges={setStatusChanges}
-          updateSuivi={updateSuivi}
-          updating={updating}
-        />
-      )}
+        {popupMember && (
+          <DetailsMemberPopup
+            membre={popupMember}
+            onClose={() => setPopupMember(null)}
+            cellules={cellules}
+            conseillers={conseillers}
+            session={session}
+            commentChanges={commentChanges}
+            handleCommentChange={handleCommentChange}
+            statusChanges={statusChanges}
+            setStatusChanges={setStatusChanges}
+            updateSuivi={updateSuivi}
+            updating={updating}
+          />
+        )}
+
 
       {editMember && (
         <EditMemberPopup

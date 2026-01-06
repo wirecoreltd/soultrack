@@ -332,7 +332,7 @@ export default function Evangelisation() {
         </div>
       )}
 
-     {/* VUE TABLE */}
+    {/* VUE TABLE */}
 {view === "table" && (
   <div className="w-full max-w-6xl overflow-x-auto py-2">
     <div className="min-w-[700px] space-y-2"> {/* Largeur minimum pour scroll horizontal */}
@@ -341,8 +341,8 @@ export default function Evangelisation() {
       <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
         <div className="flex-[2]">Nom complet</div>
         <div className="flex-[1]">Téléphone</div>
-        <div className="flex-[1]">Statut suivis</div>
-        <div className="flex-[2]">Attribué à</div>
+        <div className="flex-[1]">Ville</div>
+        <div className="flex-[1]">Sélectionner</div>
         <div className="flex-[1]">Actions</div>
       </div>
 
@@ -352,43 +352,42 @@ export default function Evangelisation() {
         </div>
       )}
 
-      {contacts.map((m) => {
-        const attribue = m.conseiller_id
-          ? `👤 ${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim()
-          : m.cellule_id
-          ? `🏠 ${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}`
-          : "—";
-
-        return (
-          <div
-            key={m.id}
-            className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
-            style={{ borderLeftColor: getBorderColor(m) }}
-          >
-            <div className="flex-[2] text-white flex items-center gap-1">
-              {m.prenom} {m.nom}
-            </div>
-
-            <div className="flex-[1] text-white">📱 {m.telephone || "—"}</div>
-
-            <div className="flex-[1] text-white">{m.statut_suivis || m.suivi_statut || "—"}</div>
-
-            <div className="flex-[2] text-white">{attribue}</div>
-
-            <div className="flex-[1]">
-              <button
-                onClick={() => setDetailsModalMember(m)}
-                className="text-orange-500 underline text-sm whitespace-nowrap"
-              >
-                Détails
-              </button>
-            </div>
+      {contacts.map((m) => (
+        <div
+          key={m.id}
+          className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
+          style={{ borderLeftColor: getBorderColor(m) }}
+        >
+          <div className="flex-[2] text-white flex items-center gap-1">
+            {m.prenom} {m.nom}
           </div>
-        );
-      })}
+
+          <div className="flex-[1] text-white">📱 {m.telephone || "—"}</div>
+
+          <div className="flex-[1] text-white">{m.ville || "—"}</div>
+
+          <div className="flex-[1]">
+            <input
+              type="checkbox"
+              checked={checkedContacts[m.id] || false}
+              onChange={() => handleCheck(m.id)}
+            />
+          </div>
+
+          <div className="flex-[1]">
+            <button
+              onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
+              className="text-orange-500 underline text-sm whitespace-nowrap"
+            >
+              {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   </div>
 )}
+
 
 
 

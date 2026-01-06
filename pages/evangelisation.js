@@ -138,6 +138,7 @@ export default function Evangelisation() {
         responsable_cellule: selectedTargetType === "cellule" ? cible.responsable : null,
         conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
         date_suivi: new Date().toISOString(),
+        evangelise_id: c.id,
       }));
 
       await supabase.from("suivis_des_evangelises").insert(insertData);

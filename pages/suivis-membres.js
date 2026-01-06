@@ -418,13 +418,18 @@ export default function SuivisMembres() {
 )}
 
       {detailsModalMember && (
-        <DetailsModal
-          m={detailsModalMember}
-          onClose={() => setDetailsModalMember(null)}
-          handleAfterSend={(data) => console.log("Envoyé :", data)}
-          showToast={(msg) => console.log("Toast :", msg)}
-        />
-      )}
+  <DetailsModal
+    m={detailsModalMember}
+    onClose={() => setDetailsModalMember(null)}
+    commentChanges={commentChanges}
+    statusChanges={statusChanges}
+    handleCommentChange={handleCommentChange}
+    handleStatusChange={(id, value) => setStatusChanges(prev => ({ ...prev, [id]: value }))}
+    updating={updating}
+    updateSuivi={updateSuivi}
+  />
+)}
+
 
       {editMember && (
         <EditMemberSuivisPopup

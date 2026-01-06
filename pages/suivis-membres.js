@@ -129,19 +129,10 @@ export default function SuivisMembres() {
     if (status === statutIds["envoye"]) return "#3B82F6";
     return "#ccc";
   };
-const [cardMessages, setCardMessages] = useState({});
 
   const updateSuivi = async (id) => {
   const newComment = commentChanges[id];
-  const newStatus = statusChanges[id];
-
-  if (!newComment && !newStatus) {
-    setCardMessages(prev => ({
-      ...prev,
-      [id]: { type: "info", text: "Aucun changement détecté." }
-    }));
-    return;
-  }
+  const newStatus = statusChanges[id];  
 
   setUpdating(prev => ({ ...prev, [id]: true }));
 
@@ -167,23 +158,7 @@ const [cardMessages, setCardMessages] = useState({});
 
     if (error) throw error;
 
-    updateMember(updatedMember.id, updatedMember);
-
-    // ✅ Message local à la carte
-    setCardMessages(prev => ({
-      ...prev,
-      [id]: { type: "success", text: "Mise à jour effectuée." }
-    }));
-
-  } catch (err) {
-    setCardMessages(prev => ({
-      ...prev,
-      [id]: { type: "error", text: "Erreur lors de la mise à jour." }
-    }));
-  } finally {
-    setUpdating(prev => ({ ...prev, [id]: false }));
-  }
-};
+    updateMember(updatedMember.id, updatedMember);    
 
   const filteredMembers = members.filter(m => {
     const status = m.statut_suivis ?? 0;
@@ -342,11 +317,17 @@ const [cardMessages, setCardMessages] = useState({});
      
 
                   <button
-                    onClick={() => updateSuivi(m.id)}
-                    className="mt-2 bg-blue-500 text-white py-1 rounded w-full"
-                  >
-                    Sauvegarder
-                  </button>
+                          onClick={() => updateSuivi(m.id)}
+                          disabled={updating[m.id]}
+                          className={`mt-2 w-full font-bold py-2 rounded-lg shadow-md transition-all
+                            ${updating[m.id]
+                              ? "bg-blue-300 cursor-not-allowed"
+                              : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white"
+                            }`}
+                        >
+                          {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
+                </button>
+
                 </div>
 
                 <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">

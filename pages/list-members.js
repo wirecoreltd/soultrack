@@ -182,29 +182,37 @@ export default function ListMembers() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-// -------------------- FILTRAGE CENTRALISE --------------------
-const filterBySearch = (list) =>
-  list.filter(
-    (m) =>
-      `${(m.prenom || "")} ${(m.nom || "")}`.toLowerCase().includes(search.toLowerCase())
-  );
+ import { useMemo } from "react";
 
-const filteredMembers = filterBySearch(
-  filter
-    ? members.filter(
-        (m) => m.statut === filter || m.suivi_statut_libelle === filter
-      )
-    : members
+// -------------------- FILTRAGE CENTRALISE OPTIMISE --------------------
+const filteredMembers = useMemo(() => {
+  const lowerSearch = search.toLowerCase();
+  return members
+    .filter(
+      (m) =>
+        !filter ||
+        m.statut === filter ||
+        m.suivi_statut_libelle === filter
+    )
+    .filter(
+      (m) =>
+        `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(lowerSearch)
+    );
+}, [members, search, filter]);
+
+const filteredNouveaux = useMemo(
+  () => filteredMembers.filter((m) =>
+    ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+  ),
+  [filteredMembers]
 );
 
-const filteredNouveaux = filteredMembers.filter((m) =>
-  ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+const filteredAnciens = useMemo(
+  () => filteredMembers.filter((m) =>
+    !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+  ),
+  [filteredMembers]
 );
-
-const filteredAnciens = filteredMembers.filter(
-  (m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-);
-
 
   const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
 

@@ -263,15 +263,7 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
               <option value="a déjà son église">A déjà son église</option>
               <option value="visiteur">Visiteur</option>
             </select>
-          </div>
-
-          {/* Commentaire suivis */}
-          <div className="flex flex-col">
-            <label className="font-medium">Commentaire suivis</label>
-            <textarea name="commentaire_suivis" value={formData.commentaire_suivis} onChange={handleChange} className="input" rows={2} />
-          </div>
-
-        </div>
+          </div>          
 
         {/* Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">

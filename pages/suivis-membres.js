@@ -366,42 +366,51 @@ export default function SuivisMembres() {
 
 
               {view === "table" && (
-                <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
-                  <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-                    <thead className="bg-gray-200 text-black-800 text-sm uppercase rounded-t-md">
-                      <tr>
-                        <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-                        <th className="px-4 py-2">Téléphone</th>
-                        <th className="px-4 py-2">Statut Suivis</th>
-                        <th className="px-4 py-2">Cellule</th>
-                        <th className="px-4 py-2">Conseiller</th>
-                        <th className="px-4 py-2 rounded-tr-lg">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {uniqueMembers.length === 0 ? (
-                        <tr>
-                          <td colSpan={6} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
-                        </tr>
-                      ) : (
-                        uniqueMembers.map(m => (
-                          <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                            <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
-                            <td className="px-4 py-2">{m.telephone || "—"}</td>
-                            <td className="px-4 py-2">{statutLabels[m.statut_suivis ?? m.suivi_statut] || "—"}</td>
-                            <td className="px-4 py-2">{m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}</td>
-                            <td className="px-4 py-2">{m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</td>
-                            <td className="px-4 py-2 flex items-center gap-2">
-                              <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>
-                              <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+  <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
+    <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+      <thead className="bg-gray-200 text-black-800 text-sm uppercase rounded-t-md">
+        <tr>
+          <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
+          <th className="px-4 py-2">Téléphone</th>
+          <th className="px-4 py-2">Statut Suivis</th>
+          <th className="px-4 py-2">Attribué à</th>
+          <th className="px-4 py-2 rounded-tr-lg">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {uniqueMembers.length === 0 ? (
+          <tr>
+            <td colSpan={5} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
+          </tr>
+        ) : (
+          uniqueMembers.map(m => {
+            const attribue = m.conseiller_id
+              ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim()
+              : m.cellule_id
+              ? cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"
+              : "—";
+
+            return (
+              <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
+                <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>
+                  {m.prenom} {m.nom}
+                </td>
+                <td className="px-4 py-2">{m.telephone || "—"}</td>
+                <td className="px-4 py-2">{statutLabels[m.statut_suivis ?? m.suivi_statut] || "—"}</td>
+                <td className="px-4 py-2">{attribue}</td>
+                <td className="px-4 py-2 flex items-center gap-2">
+                  <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>
+                  <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
+                </td>
+              </tr>
+            );
+          })
+        )}
+      </tbody>
+    </table>
+  </div>
+)}
+
 
       {detailsModalMember && (
         <DetailsModal

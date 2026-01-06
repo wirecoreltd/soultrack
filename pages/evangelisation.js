@@ -346,13 +346,13 @@ export default function Evangelisation() {
         <div className="flex-[1]">Actions</div>
       </div>
 
-      {uniqueMembers.length === 0 && (
+      {contacts.length === 0 && (
         <div className="px-2 py-2 text-white text-center bg-gray-600 rounded">
           Aucun membre en suivi
         </div>
       )}
 
-      {uniqueMembers.map((m) => {
+      {contacts.map((m) => {
         const attribue = m.conseiller_id
           ? `👤 ${conseillers.find((c) => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find((c) => c.id === m.conseiller_id)?.nom || ""}`.trim()
           : m.cellule_id
@@ -398,6 +398,7 @@ export default function Evangelisation() {
     </div>
   </div>
 )}
+
 
 
       {/* POPUP MODIFICATION */}

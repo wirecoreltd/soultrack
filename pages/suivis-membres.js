@@ -129,35 +129,61 @@ export default function SuivisMembres() {
     if (status === statutIds["envoye"]) return "#3B82F6";
     return "#ccc";
   };
+const [cardMessages, setCardMessages] = useState({});
 
   const updateSuivi = async (id) => {
-    const newComment = commentChanges[id];
-    if (!newComment) {
-      setMessage({ type: "info", text: "Aucun changement détecté." });
-      return;
+  const newComment = commentChanges[id];
+  const newStatus = statusChanges[id];
+
+  if (!newComment && !newStatus) {
+    setCardMessages(prev => ({
+      ...prev,
+      [id]: { type: "info", text: "Aucun changement détecté." }
+    }));
+    return;
+  }
+
+  setUpdating(prev => ({ ...prev, [id]: true }));
+
+  try {
+    const payload = {
+      updated_at: new Date(),
+    };
+
+    if (newComment !== undefined) {
+      payload.commentaire_suivis = newComment;
     }
-    setUpdating(prev => ({ ...prev, [id]: true }));
-    try {
-      const payload = { updated_at: new Date(), commentaire_suivis: newComment };
 
-      const { data: updatedMember, error: updateError } = await supabase
-        .from("membres_complets")
-        .update(payload)
-        .eq("id", id)
-        .select()
-        .single();
-      if (updateError) throw updateError;
-
-      updateMember(updatedMember.id, updatedMember);
-
-      setMessage({ type: "success", text: "Mise à jour effectuée." });
-    } catch (err) {
-      console.error("Exception updateSuivi:", err);
-      setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
-    } finally {
-      setUpdating(prev => ({ ...prev, [id]: false }));
+    if (newStatus) {
+      payload.statut_suivis = Number(newStatus);
     }
-  };
+
+    const { data: updatedMember, error } = await supabase
+      .from("membres_complets")
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    updateMember(updatedMember.id, updatedMember);
+
+    // ✅ Message local à la carte
+    setCardMessages(prev => ({
+      ...prev,
+      [id]: { type: "success", text: "Mise à jour effectuée." }
+    }));
+
+  } catch (err) {
+    setCardMessages(prev => ({
+      ...prev,
+      [id]: { type: "error", text: "Erreur lors de la mise à jour." }
+    }));
+  } finally {
+    setUpdating(prev => ({ ...prev, [id]: false }));
+  }
+};
 
   const filteredMembers = members.filter(m => {
     const status = m.statut_suivis ?? 0;
@@ -296,6 +322,24 @@ export default function SuivisMembres() {
                     className="w-full border rounded-lg p-2"
                     rows={2}
                   />
+                   <label className="font-semibold text-blue-700 mb-1 text-center">
+                          Statut Intégration
+                        </label>
+                        
+                        <select
+                          value={statusChanges[m.id] ?? ""}
+                          onChange={(e) =>
+                            setStatusChanges(prev => ({
+                              ...prev,
+                              [m.id]: e.target.value
+                            }))
+                          }
+                          className="w-full border rounded-lg p-2 mb-2"
+                        >
+                          <option value="">-- Sélectionner un statut --</option>
+                          <option value="3">Intégrer</option>
+                        </select>
+     
 
                   <button
                     onClick={() => updateSuivi(m.id)}

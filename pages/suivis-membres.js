@@ -424,11 +424,14 @@ export default function SuivisMembres() {
     commentChanges={commentChanges}
     statusChanges={statusChanges}
     handleCommentChange={handleCommentChange}
-    handleStatusChange={(id, value) => setStatusChanges(prev => ({ ...prev, [id]: value }))}
+    handleStatusChange={(id, value) =>
+      setStatusChanges(prev => ({ ...prev, [id]: value }))
+    }
     updating={updating}
     updateSuivi={updateSuivi}
   />
 )}
+
 
 
       {editMember && (

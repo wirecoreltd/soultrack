@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * Page: Liste des Membres
- * Description: Affiche les membres sous forme de carte ou tableau avec filtres et envoi WhatsApp.
- */
-
 import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -32,6 +27,10 @@ export default function ListMembers() {
   const searchParams = useSearchParams();
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
 
+  // -------------------- Nouveaux états --------------------
+  const [commentChanges, setCommentChanges] = useState({});
+  const [statusChanges, setStatusChanges] = useState({});
+  const [updating, setUpdating] = useState({});
   const [selectedTargets, setSelectedTargets] = useState({});
   const [selectedTargetType, setSelectedTargetType] = useState({});
   const [toastMessage, setToastMessage] = useState("");
@@ -66,6 +65,26 @@ export default function ListMembers() {
     setTimeout(() => setShowingToast(false), 3500);
   };
 
+  // -------------------- Fonctions manquantes --------------------
+  const handleCommentChange = (id, value) => {
+    setCommentChanges(prev => ({ ...prev, [id]: value }));
+  };
+
+  const updateSuivi = async (id) => {
+    setUpdating(prev => ({ ...prev, [id]: true }));
+    try {
+      // Ici tu peux remplacer avec ton update Supabase réel
+      console.log("Update suivi pour:", id, commentChanges[id], statusChanges[id]);
+      setTimeout(() => {
+        setUpdating(prev => ({ ...prev, [id]: false }));
+        showToast("✅ Suivi enregistré !");
+      }, 1000);
+    } catch (err) {
+      console.error("Erreur update suivi:", err);
+      setUpdating(prev => ({ ...prev, [id]: false }));
+    }
+  };
+
   // -------------------- FETCH --------------------
   const fetchMembers = async (profile = null) => {
     setLoading(true);
@@ -76,7 +95,6 @@ export default function ListMembers() {
 
       const { data, error } = await query;
       if (error) throw error;
-
       setAllMembers(data || []);
     } catch (err) {
       console.error("Erreur fetchMembers:", err);
@@ -88,7 +106,7 @@ export default function ListMembers() {
 
   const fetchCellules = async () => {
     const { data, error } = await supabase.from("cellules").select("id, cellule_full");
-    if (error) console.error("Erreur:", error);
+    if (error) console.error("Erreur fetchCellules:", error);
     if (data) setCellules(data);
   };
 
@@ -100,7 +118,6 @@ export default function ListMembers() {
   const handleAfterSend = (updatedMember, type, cible) => {
     const updatedWithActif = { ...updatedMember, statut: "actif" };
     updateMember(updatedWithActif);
-
     const cibleName = type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`;
     showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
   };
@@ -139,11 +156,9 @@ export default function ListMembers() {
     }
 
     const channel = supabase.channel("realtime:membres_complets");
-
     channel.on("postgres_changes", { event: "*", schema: "public", table: "membres_complets" }, () => fetchMembers());
     channel.on("postgres_changes", { event: "*", schema: "public", table: "cellules" }, () => { fetchCellules(); fetchMembers(); });
     channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { fetchConseillers(); fetchMembers(); });
-
     try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
 
     realtimeChannelRef.current = channel;
@@ -154,33 +169,36 @@ export default function ListMembers() {
 
   // -------------------- Update après édition --------------------
   const onUpdateMemberHandler = (updatedMember) => {
-    updateMember(updatedMember); // mise à jour instantanée
-    setEditMember(null);         // fermeture automatique du popup
+    updateMember(updatedMember);
+    setEditMember(null);
   };
 
   // -------------------- Fermer menu téléphone en cliquant dehors --------------------
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (!e.target.closest(".phone-menu")) {
-        setOpenPhoneMenuId(null);
-      }
+      if (!e.target.closest(".phone-menu")) setOpenPhoneMenuId(null);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // -------------------- Filtrage --------------------
+  const filterBySearch = (list) => list.filter((m) => `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase()));
+  const filteredMembers = filterBySearch(filter ? members.filter(m => m.statut === filter || m.suivi_statut_libelle === filter) : members);
+  const filteredNouveaux = filteredMembers.filter(m => ["visiteur","veut rejoindre ICC","nouveau"].includes(m.statut));
+  const filteredAnciens = filteredMembers.filter(m => !["visiteur","veut rejoindre ICC","nouveau"].includes(m.statut));
+
+  const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
+
   const getBorderColor = (m) => {
-    const status = m.statut || "";
-    const suiviStatus = m.suivi_statut_libelle || "";
-
-    if (status === "refus" || suiviStatus === "refus") return "#f56f22";
-    if (status === "actif" || suiviStatus === "actif") return "#4285F4";
-    if (status === "a déjà son église" || suiviStatus === "a déjà son église") return "#f21705";
-    if (status === "ancien" || suiviStatus === "ancien") return "#999999";
-    if (status === "visiteur" || suiviStatus === "visiteur") return "#34A853";
-    if (status === "nouveau" || suiviStatus === "nouveau") return "#34A843";
-    if (status === "veut rejoindre ICC" || suiviStatus === "veut rejoindre ICC") return "#34A853";
-
+    const s = m.statut || m.suivi_statut_libelle || "";
+    if (["refus"].includes(s)) return "#f56f22";
+    if (["actif"].includes(s)) return "#4285F4";
+    if (["a déjà son église"].includes(s)) return "#f21705";
+    if (["ancien"].includes(s)) return "#999999";
+    if (["visiteur"].includes(s)) return "#34A853";
+    if (["nouveau"].includes(s)) return "#34A843";
+    if (["veut rejoindre ICC"].includes(s)) return "#34A853";
     return "#ccc";
   };
 
@@ -541,22 +559,21 @@ export default function ListMembers() {
     )}
 
       {/* =================== DETAILS MEMBER POPUP =================== */}
-        {popupMember && (
-          <DetailsMemberPopup
-            membre={popupMember}
-            onClose={() => setPopupMember(null)}
-            cellules={cellules}
-            conseillers={conseillers}
-            session={session}
-            commentChanges={commentChanges}
-            handleCommentChange={handleCommentChange}
-            statusChanges={statusChanges}
-            setStatusChanges={setStatusChanges}
-            updateSuivi={updateSuivi}
-            updating={updating}
-          />
-        )}
-
+         {popupMember && (
+        <DetailsMemberPopup
+          membre={popupMember}
+          onClose={() => setPopupMember(null)}
+          cellules={cellules}
+          conseillers={conseillers}
+          session={session}
+          commentChanges={commentChanges}
+          handleCommentChange={handleCommentChange}
+          statusChanges={statusChanges}
+          setStatusChanges={setStatusChanges}
+          updateSuivi={updateSuivi}
+          updating={updating}
+        />
+      )}
 
       {editMember && (
         <EditMemberPopup

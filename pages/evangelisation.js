@@ -335,13 +335,13 @@ export default function Evangelisation() {
      {/* VUE TABLE */}
 {view === "table" && (
   <div className="w-full max-w-6xl overflow-x-auto py-2">
-    <div className="min-w-[700px] space-y-2">
+    <div className="min-w-[700px] space-y-2"> {/* Largeur minimum pour scroll horizontal */}
 
       {/* Header */}
       <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
         <div className="flex-[2]">Nom complet</div>
         <div className="flex-[1]">Téléphone</div>
-        <div className="flex-[1]">Statut Suivis</div>
+        <div className="flex-[1]">Statut suivis</div>
         <div className="flex-[2]">Attribué à</div>
         <div className="flex-[1]">Actions</div>
       </div>
@@ -354,9 +354,9 @@ export default function Evangelisation() {
 
       {contacts.map((m) => {
         const attribue = m.conseiller_id
-          ? `👤 ${conseillers.find((c) => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find((c) => c.id === m.conseiller_id)?.nom || ""}`.trim()
+          ? `👤 ${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim()
           : m.cellule_id
-          ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
+          ? `🏠 ${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}`
           : "—";
 
         return (
@@ -365,26 +365,17 @@ export default function Evangelisation() {
             className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
             style={{ borderLeftColor: getBorderColor(m) }}
           >
-            {/* Nom complet */}
-            <div className="flex-[2] text-white font-semibold flex items-center gap-1">
+            <div className="flex-[2] text-white flex items-center gap-1">
               {m.prenom} {m.nom}
             </div>
 
-            {/* Téléphone */}
-            <div className="flex-[1] text-orange-500 underline decoration-orange-400 cursor-pointer">
-              {m.telephone || "—"}
-            </div>
+            <div className="flex-[1] text-white">📱 {m.telephone || "—"}</div>
 
-            {/* Statut Suivis */}
-            <div className="flex-[1] text-white">
-              {statutLabels[m.statut_suivis ?? m.suivi_statut] || "—"}
-            </div>
+            <div className="flex-[1] text-white">{m.statut_suivis || m.suivi_statut || "—"}</div>
 
-            {/* Attribué à */}
             <div className="flex-[2] text-white">{attribue}</div>
 
-            {/* Actions */}
-            <div className="flex-[1] flex justify-start">
+            <div className="flex-[1]">
               <button
                 onClick={() => setDetailsModalMember(m)}
                 className="text-orange-500 underline text-sm whitespace-nowrap"
@@ -398,6 +389,7 @@ export default function Evangelisation() {
     </div>
   </div>
 )}
+
 
 
 

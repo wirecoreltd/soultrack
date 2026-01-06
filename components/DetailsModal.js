@@ -1,19 +1,17 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import EditMemberPopup from "./EditMemberPopup";
+import EditMemberSuivisPopup from "./EditMemberSuivisPopup";
 
 export default function DetailsModal({
   m,
   onClose,
-  cellules = [],
-  conseillers = [],
+  commentChanges,
+  statusChanges,
   handleCommentChange,
   handleStatusChange,
-  statusChanges = {},
-  commentChanges = {},
-  updating = {},
-  updateSuivi
+  updating,
+  updateSuivi,
 }) {
   if (!m || !m.id) return null;
 
@@ -21,7 +19,7 @@ export default function DetailsModal({
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
   const phoneMenuRef = useRef(null);
 
-  // Fermer menu téléphone en cliquant dehors
+  // Fermer menu téléphone si clic en dehors
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
@@ -46,7 +44,9 @@ export default function DetailsModal({
 
         {/* ================= CENTRÉ ================= */}
         <div className="flex flex-col items-center text-center">
-          <h2 className="text-xl font-bold">{m.prenom} {m.nom} {m.star && "⭐"}</h2>
+          <h2 className="text-xl font-bold">
+            {m.prenom} {m.nom} {m.star && "⭐"}
+          </h2>
 
           {/* Téléphone */}
           {m.telephone && (
@@ -57,23 +57,26 @@ export default function DetailsModal({
               >
                 {m.telephone}
               </button>
+
               {openPhoneMenu && (
                 <div className="absolute top-full mt-2 bg-white border rounded-lg shadow w-56 z-50">
                   <a href={`tel:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler</a>
                   <a href={`sms:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">✉️ SMS</a>
-                  <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 WhatsApp</a>
-                  <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Message WhatsApp</a>
+                  <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 WhatsApp</a>
+                  <a href={`https://wa.me/${m.telephone.replace(/\D/g,"")}?text=Bonjour`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Message WhatsApp</a>
                 </div>
               )}
             </div>
           )}
 
-          <p className="mt-2">🏠 Cellule : {m.cellule_full || "—"}</p>
+          <p className="mt-2">🏙 Ville : {m.ville || "—"}</p>
+          <p>🏠 Cellule : {m.cellule_full || "—"}</p>
           <p>👤 Conseiller : {m.responsable || "—"}</p>
 
-          {/* ================= COMMENTAIRE SUIVIS ET STATUT ================= */}
-          <div className="flex flex-col w-full mt-2">
-            <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Commentaire Suivis</label>
+          {/* ================= COMMENTAIRE SUIVIS & STATUT INTEGRATION ================= */}
+          <div className="flex flex-col w-full mt-4">
+            {/* Commentaire Suivis */}
+            <label className="font-semibold text-blue-700 mb-1 text-center">Commentaire Suivis</label>
             <textarea
               value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
               onChange={(e) => handleCommentChange(m.id, e.target.value)}
@@ -81,6 +84,7 @@ export default function DetailsModal({
               rows={2}
             />
 
+            {/* Statut Intégration */}
             <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Statut Intégration</label>
             <select
               value={statusChanges[m.id] ?? ""}
@@ -88,58 +92,57 @@ export default function DetailsModal({
               className="w-full border rounded-lg p-2 mb-2"
             >
               <option value="">-- Sélectionner un statut --</option>
-              <option value="1">Envoyé</option>
               <option value="2">En attente</option>
-              <option value="3">Intégré</option>
+              <option value="3">Intégrer</option>
               <option value="4">Refus</option>
             </select>
 
             <button
               onClick={() => updateSuivi(m.id)}
               disabled={updating[m.id]}
-              className={`mt-2 w-full font-bold py-2 rounded-lg shadow-md transition-all
-                ${updating[m.id]
+              className={`mt-2 w-full font-bold py-2 rounded-lg shadow-md transition-all ${
+                updating[m.id]
                   ? "bg-blue-300 cursor-not-allowed"
                   : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white"
-                }`}
+              }`}
             >
               {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
             </button>
           </div>
 
-          {/* Modifier le contact */}
-          <div className="mt-2 flex justify-center w-full">
-            <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm w-full">
+          {/* ================= ALIGNÉ À GAUCHE ================= */}
+          <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
+            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+            <p>⚥ Sexe : {m.sexe || "—"}</p>
+            <p>❓ Besoin : {m.besoin ? (Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin) : "—"}</p>
+            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+            <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+            <p>📋 Statut initial : {m.statut_initial || "—"}</p>
+          </div>
+
+          {/* ✏️ Modifier le contact */}
+          <div className="mt-4 flex justify-center w-full">
+            <button
+              onClick={() => setEditMember(m)}
+              className="text-blue-600 text-sm w-full"
+            >
               ✏️ Modifier le contact
             </button>
           </div>
         </div>
 
-        {/* ================= ALIGNÉ À GAUCHE ================= */}
-        <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
-          <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-          <p>🏙 Ville : {m.ville || "—"}</p>
-          <p>🧩 Comment est-il venu : {m.comment_est_il_venu || "—"}</p>
-          <p>⚥ Sexe : {m.sexe || "—"}</p>
-          <p>📋 Statut initial : {(m.statut_initial ?? m.statut) || "—"}</p>
-          <p>
-            ❓ Besoin :{" "}
-            {!m.besoin
-              ? "—"
-              : Array.isArray(m.besoin)
-              ? m.besoin.join(", ")
-              : m.besoin
-            }
-          </p>
-          <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-        </div>
-
         {/* ================= POPUP EDIT MEMBER ================= */}
         {editMember && (
-          <EditMemberPopup
+          <EditMemberSuivisPopup
             member={editMember}
-            onClose={() => setEditMember(null)}
-            onUpdateMember={() => setEditMember(null)}
+            onClose={() => {
+              setEditMember(null);
+              onClose();
+            }}
+            onUpdateMember={() => {
+              setEditMember(null);
+              onClose();
+            }}
           />
         )}
       </div>

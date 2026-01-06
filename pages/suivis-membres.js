@@ -151,24 +151,27 @@ export default function SuivisMembres() {
       payload.statut_suivis = Number(newStatus);
     }
 
-    const { data: updatedMember, error } = await supabase
-      .from("membres_complets")
-      .update(payload)
-      .eq("id", id)
-      .select()
-      .single();
+    try {
+  const { data: updatedMember, error } = await supabase
+    .from("membres_complets")
+    .update(payload)
+    .eq("id", id)
+    .select()
+    .single();
 
-    if (error) throw error;
+  if (error) throw error;
 
-    updateMember(updatedMember.id, updatedMember);
+  updateMember(updatedMember.id, updatedMember);
 
-  } catch (err) {
-    console.error("Erreur updateSuivi :", err);
-  finally {
+} catch (err) {
+  console.error("Erreur updateSuivi :", err);
+
+} finally {
   setTimeout(() => {
     setUpdating(prev => ({ ...prev, [id]: false }));
   }, 800);
 }
+
   const filteredMembers = members.filter(m => {
     const status = m.statut_suivis ?? 0;
     if (status === 3 || status === 4) return false; // intégrés ou refusés

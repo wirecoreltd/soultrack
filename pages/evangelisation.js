@@ -22,7 +22,7 @@ export default function Evangelisation() {
   const [loadingSend, setLoadingSend] = useState(false);
   const [view, setView] = useState("card"); // "card" ou "table"
 
-  // ✅ Pour le menu téléphone
+  // ✅ Pour menu téléphone
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
 
@@ -30,6 +30,17 @@ export default function Evangelisation() {
     fetchContacts();
     fetchCellules();
     fetchConseillers();
+  }, []);
+
+  // ✅ Fermeture menu si clic en dehors
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(event.target)) {
+        setOpenPhoneMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const fetchContacts = async () => {
@@ -75,7 +86,6 @@ export default function Evangelisation() {
   const sendContacts = async () => {
     if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
     setLoadingSend(true);
-
     try {
       const cible =
         selectedTargetType === "cellule"
@@ -87,7 +97,9 @@ export default function Evangelisation() {
 
       const isMultiple = selectedContacts.length > 1;
 
-      let message = `👋 Bonjour ${selectedTargetType === "cellule" ? cible.responsable : cible.prenom},\n\n`;
+      let message = `👋 Bonjour ${
+        selectedTargetType === "cellule" ? cible.responsable : cible.prenom
+      },\n\n`;
       message += isMultiple
         ? "Nous te confions avec joie ces personnes rencontrées lors de l’évangélisation.\n"
         : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n";
@@ -129,7 +141,6 @@ export default function Evangelisation() {
       }));
 
       await supabase.from("suivis_des_evangelises").insert(insertData);
-
       const idsToDelete = selectedContacts.map((c) => c.id);
       await supabase.from("evangelises").delete().in("id", idsToDelete);
 
@@ -228,15 +239,15 @@ export default function Evangelisation() {
             >
               <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
 
-              {/* Téléphone */}
+              {/* Téléphone avec style orange semi-underline */}
               <p
-                className="text-center text-sm text-orange-500 underline decoration-orange-400 cursor-pointer"
+                className="text-center text-sm text-orange-500 underline decoration-orange-400 cursor-pointer font-semibold"
                 onClick={() => setOpenPhoneMenuId(member.id)}
               >
-                📱 {member.telephone || "—"}
+                {member.telephone || "—"}
               </p>
 
-              {/* Menu actions téléphone / WhatsApp */}
+              {/* Menu actions téléphoniques / WhatsApp */}
               {openPhoneMenuId === member.id && (
                 <div
                   ref={phoneMenuRef}
@@ -276,7 +287,7 @@ export default function Evangelisation() {
 
               <p className="text-center text-sm">🏙️ Ville : {member.ville || "—"}</p>
 
-              {/* Checkbox */}
+              {/* Checkbox sélectionner */}
               <label className="flex justify-center gap-2 mt-2">
                 <input
                   type="checkbox"
@@ -286,7 +297,7 @@ export default function Evangelisation() {
                 Sélectionner
               </label>
 
-              {/* Détails */}
+              {/* Détails supplémentaires */}
               <button
                 onClick={() =>
                   setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
@@ -308,7 +319,7 @@ export default function Evangelisation() {
                   <button
                     onClick={() => {
                       setEditMember(member);
-                      setPopupMember(null);
+                      setPopupMember(null); // ferme popup si actif
                     }}
                     className="text-blue-600 text-sm mt-4 w-full text-center"
                   >
@@ -359,7 +370,7 @@ export default function Evangelisation() {
                     <button
                       onClick={() => {
                         setEditMember(m);
-                        setPopupMember(null);
+                        setPopupMember(null); // <- fermer détails
                       }}
                       className="text-blue-600 underline text-sm"
                     >

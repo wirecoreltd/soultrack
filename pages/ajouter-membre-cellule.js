@@ -16,7 +16,7 @@ export default function AjouterMembreCellule() {
     prenom: "",
     telephone: "",
     ville: "",
-    statut: "integrer", // ✅ statut integrer par défaut
+    statut: "", // ✅ MODIF : NE PLUS envoyer "integrer" (enum invalide)
     venu: "",
     besoin: [],
     cellule_id: "",
@@ -58,14 +58,13 @@ export default function AjouterMembreCellule() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // ✅ Préparer les données avec statut integrer et besoin en tableau
+      // ✅ MODIF : on force UNIQUEMENT statut_suivis = 3
       const newMemberData = {
         ...formData,
-        statut: "integrer",
-        statut_suivis: 3, // 3 = Intégrer
+        statut: null,        // ✅ MODIF : valeur neutre (enum OK)
+        statut_suivis: 3,    // ✅ MODIF : 3 = Intégré
       };
 
-      // Insertion dans Supabase et récupération du membre inséré
       const { data: newMember, error } = await supabase
         .from("membres")
         .insert([newMemberData])
@@ -74,19 +73,18 @@ export default function AjouterMembreCellule() {
 
       if (error) throw error;
 
-      // ✅ Mise à jour instantanée du contexte pour affichage immédiat
+      // ✅ affichage immédiat dans membres cellule
       setAllMembers((prev) => [...prev, newMember]);
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
-      // Réinitialiser le formulaire
       setFormData({
         nom: "",
         prenom: "",
         telephone: "",
         ville: "",
-        statut: "integrer",
+        statut: "", // ✅ MODIF
         venu: "",
         besoin: [],
         cellule_id: cellules[0]?.id || "",
@@ -105,7 +103,7 @@ export default function AjouterMembreCellule() {
       prenom: "",
       telephone: "",
       ville: "",
-      statut: "integrer",
+      statut: "", // ✅ MODIF
       venu: "",
       besoin: [],
       cellule_id: cellules[0]?.id || "",
@@ -132,7 +130,10 @@ export default function AjouterMembreCellule() {
           <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
         </div>
 
-        <h1 className="text-3xl font-bold text-center mb-2">Ajouter un membre à ma cellule</h1>
+        <h1 className="text-3xl font-bold text-center mb-2">
+          Ajouter un membre à ma cellule
+        </h1>
+
         <p className="text-center text-gray-500 italic mb-6">
           « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
         </p>

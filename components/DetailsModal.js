@@ -98,16 +98,20 @@ export default function DetailsModal({
             </select>
 
             <button
-              onClick={() => updateSuivi(m.id)}
-              disabled={updating[m.id]}
-              className={`mt-2 w-full font-bold py-2 rounded-lg shadow-md transition-all ${
-                updating[m.id]
-                  ? "bg-blue-300 cursor-not-allowed"
-                  : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white"
-              }`}
-            >
-              {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
-            </button>
+            onClick={async () => {
+              await updateSuivi(m.id);
+              onClose(); // fermer le modal après sauvegarde
+            }}
+            disabled={updating[m.id]}
+            className={`mt-2 w-full font-bold py-2 rounded-lg shadow-md transition-all ${
+              updating[m.id]
+                ? "bg-blue-300 cursor-not-allowed"
+                : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white"
+            }`}
+          >
+            {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
+          </button>`
+
           </div>
 
           {/* ================= ALIGNÉ À GAUCHE ================= */}

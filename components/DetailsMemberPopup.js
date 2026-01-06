@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import BoutonEnvoyer from "./BoutonEnvoyer";
-import EditMemberPopup from "./EditMemberPopup"; // tu peux remplacer par EditMemberSuivisPopup si besoin
+import EditMemberPopup from "./EditMemberPopup";
 
 export default function DetailsMemberPopup({
   membre,
@@ -40,7 +40,7 @@ export default function DetailsMemberPopup({
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
 
-        {/* Fermer Popup */}
+        {/* Fermer DetailsMemberPopup */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
@@ -48,11 +48,14 @@ export default function DetailsMemberPopup({
           ✖
         </button>
 
+        {/* ================= CENTRÉ ================= */}
         <div className="flex flex-col items-center text-center">
+
           <h2 className="text-xl font-bold">
             {membre.prenom} {membre.nom} {membre.star && "⭐"}
           </h2>
 
+          {/* Téléphone */}
           {membre.telephone && (
             <div className="relative mt-1" ref={phoneMenuRef}>
               <button
@@ -73,12 +76,23 @@ export default function DetailsMemberPopup({
             </div>
           )}
 
-          {/* Infos du membre */}
           <p className="mt-2">🏙 Ville : {membre.ville || "—"}</p>
-          <p>🏠 Cellule : {membre.suivi_cellule_nom ?? cellules.find(c => c.id === membre.cellule_id)?.cellule_full ?? "—"}</p>
-          <p>👤 Conseiller : {membre.suivi_responsable ?? (conseillers.find(c => c.id === membre.conseiller_id) ? `${conseillers.find(c => c.id === membre.conseiller_id).prenom} ${conseillers.find(c => c.id === membre.conseiller_id).nom}` : "—")}</p>
 
-          {/* Commentaire et statut */}
+          <p>🏠 Cellule : {
+            membre.suivi_cellule_nom
+              ? `${membre.suivi_cellule_nom}`
+              : (cellules.find(c => c.id === membre.cellule_id)?.cellule_full || "—")
+          }</p>
+
+          <p>👤 Conseiller : {
+            membre.suivi_responsable
+              ? membre.suivi_responsable
+              : (conseillers.find(c => c.id === membre.conseiller_id)
+                  ? `${conseillers.find(c => c.id === membre.conseiller_id).prenom} ${conseillers.find(c => c.id === membre.conseiller_id).nom}`
+                  : "—")
+          }</p>
+
+          {/* ================= COMMENTAIRE ET STATUT ================= */}
           <div className="flex flex-col w-full mt-4 items-center">
             <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Commentaire Suivis</label>
             <textarea
@@ -93,7 +107,10 @@ export default function DetailsMemberPopup({
             <select
               value={statusChanges[membre.id] ?? membre.statut_suivis ?? ""}
               onChange={(e) =>
-                setStatusChanges(prev => ({ ...prev, [membre.id]: e.target.value }))
+                setStatusChanges(prev => ({
+                  ...prev,
+                  [membre.id]: e.target.value
+                }))
               }
               className="w-full border rounded-lg p-2 mb-2 text-sm"
             >
@@ -107,24 +124,41 @@ export default function DetailsMemberPopup({
               onClick={() => updateSuivi(membre.id)}
               disabled={updating[membre.id]}
               className={`mt-2 w-full font-bold py-2 rounded-lg shadow-md transition-all
-                ${updating[membre.id] ? "bg-blue-300 cursor-not-allowed" : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white"}`}
+                ${updating[membre.id]
+                  ? "bg-blue-300 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white"
+                }`}
             >
               {updating[membre.id] ? "Enregistrement..." : "Sauvegarder"}
             </button>
           </div>
+
         </div>
 
-        {/* Infos à gauche */}
+        {/* ================= ALIGNÉ À GAUCHE ================= */}
         <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
           <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
           <p> ⚥ Sexe : {membre.sexe || "—"}</p>
-          <p>❓ Besoin : {membre.besoin ? (() => { try { const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin; return Array.isArray(besoins) ? besoins.join(", ") : besoins; } catch (e) { return membre.besoin; } })() : "—"}</p>
+          <p>
+            ❓ Besoin :{" "}
+            {membre.besoin
+              ? (() => {
+                  try {
+                    const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
+                    return Array.isArray(besoins) ? besoins.join(", ") : besoins;
+                  } catch (e) {
+                    return membre.besoin;
+                  }
+                })()
+              : "—"
+            }
+          </p>
           <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
           <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
           <p>📋 Statut initial : {(membre.statut_initial ?? membre.statut) || "—"}</p>
         </div>
 
-        {/* Modifier le contact */}
+        {/* ✏️ Modifier le contact */}
         <div className="mt-4 flex justify-center">
           <button
             onClick={() => setEditMember(membre)}
@@ -134,12 +168,18 @@ export default function DetailsMemberPopup({
           </button>
         </div>
 
-        {/* Popup Edit Member */}
+        {/* ================= POPUP EDIT MEMBER ================= */}
         {editMember && (
           <EditMemberPopup
             member={editMember}
-            onClose={() => { setEditMember(null); onClose(); }}
-            onUpdateMember={() => { setEditMember(null); onClose(); }}
+            onClose={() => {
+              setEditMember(null);
+              onClose();
+            }}
+            onUpdateMember={() => {
+              setEditMember(null);
+              onClose();
+            }}
           />
         )}
 

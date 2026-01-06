@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import BoutonEnvoyer from "../components/BoutonEnvoyer";

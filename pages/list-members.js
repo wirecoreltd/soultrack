@@ -223,9 +223,6 @@ export default function ListMembers() {
     m => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
   );
 
-  // -------------------- TOGGLE DETAILS --------------------
-  const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
-
   const toggleStar = async (member) => {
     try {
       const { error } = await supabase

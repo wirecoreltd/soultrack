@@ -164,9 +164,11 @@ export default function SuivisMembres() {
 
   } catch (err) {
     console.error("Erreur updateSuivi :", err);
-  } finally {
+  finally {
+  setTimeout(() => {
     setUpdating(prev => ({ ...prev, [id]: false }));
-  }
+  }, 800);
+}
 };
 
 

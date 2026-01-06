@@ -332,57 +332,73 @@ export default function Evangelisation() {
         </div>
       )}
 
-      {/* VUE TABLE */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto transition duration-200">
-          <table className="w-full text-sm text-left border-separate border-spacing-0 table-auto">
-            <thead className="text-sm uppercase">
-              <tr className="bg-gray-200">
-                <th className="px-1 py-1 rounded-tl-lg text-left" style={{ color: "#2E3192" }}>Nom complet</th>
-                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Téléphone</th>
-                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Cellule</th>
-                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Conseiller</th>
-                <th className="px-1 py-1 text-left" style={{ color: "#2E3192" }}>Sélectionner</th>
-                <th className="px-1 py-1 rounded-tr-lg text-left" style={{ color: "#2E3192" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {contacts.map((m) => (
-                <tr key={m.id} className="border-b border-gray-300">
-                  <td className="px-1 py-1">{m.prenom} {m.nom}</td>
-                  <td className="px-1 py-1">{m.telephone || "—"}</td>
-                  <td className="px-1 py-1">{cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}</td>
-                  <td className="px-1 py-1">{conseillers.find(c => c.id === m.conseiller_id)?.prenom || "—"}</td>
-                  <td className="px-1 py-1">
-                    <input
-                      type="checkbox"
-                      checked={checkedContacts[m.id] || false}
-                      onChange={() => handleCheck(m.id)}
-                    />
-                  </td>
-                  <td className="px-1 py-1 flex items-center gap-2">
-                    <button
-                      onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
-                      className="text-orange-500 underline text-sm"
-                    >
-                      {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditMember(m);
-                        setPopupMember(null); // <- fermer détails
-                      }}
-                      className="text-blue-600 underline text-sm"
-                    >
-                      Modifier
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+     {/* VUE TABLE */}
+{view === "table" && (
+  <div className="w-full max-w-6xl overflow-x-auto py-2">
+    <div className="min-w-[700px] space-y-2">
+
+      {/* Header */}
+      <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+        <div className="flex-[2]">Nom complet</div>
+        <div className="flex-[1]">Téléphone</div>
+        <div className="flex-[1]">Statut Suivis</div>
+        <div className="flex-[2]">Attribué à</div>
+        <div className="flex-[1]">Actions</div>
+      </div>
+
+      {uniqueMembers.length === 0 && (
+        <div className="px-2 py-2 text-white text-center bg-gray-600 rounded">
+          Aucun membre en suivi
         </div>
       )}
+
+      {uniqueMembers.map((m) => {
+        const attribue = m.conseiller_id
+          ? `👤 ${conseillers.find((c) => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find((c) => c.id === m.conseiller_id)?.nom || ""}`.trim()
+          : m.cellule_id
+          ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
+          : "—";
+
+        return (
+          <div
+            key={m.id}
+            className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
+            style={{ borderLeftColor: getBorderColor(m) }}
+          >
+            {/* Nom complet */}
+            <div className="flex-[2] text-white font-semibold flex items-center gap-1">
+              {m.prenom} {m.nom}
+            </div>
+
+            {/* Téléphone */}
+            <div className="flex-[1] text-orange-500 underline decoration-orange-400 cursor-pointer">
+              {m.telephone || "—"}
+            </div>
+
+            {/* Statut Suivis */}
+            <div className="flex-[1] text-white">
+              {statutLabels[m.statut_suivis ?? m.suivi_statut] || "—"}
+            </div>
+
+            {/* Attribué à */}
+            <div className="flex-[2] text-white">{attribue}</div>
+
+            {/* Actions */}
+            <div className="flex-[1] flex justify-start">
+              <button
+                onClick={() => setDetailsModalMember(m)}
+                className="text-orange-500 underline text-sm whitespace-nowrap"
+              >
+                Détails
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+)}
+
 
       {/* POPUP MODIFICATION */}
       {editMember && (

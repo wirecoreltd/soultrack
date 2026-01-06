@@ -16,7 +16,6 @@ export default function AjouterMembreCellule() {
     prenom: "",
     telephone: "",
     ville: "",
-    statut: "", // ✅ MODIF : NE PLUS envoyer "integrer" (enum invalide)
     venu: "",
     besoin: [],
     cellule_id: "",
@@ -58,33 +57,42 @@ export default function AjouterMembreCellule() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // ✅ MODIF : on force UNIQUEMENT statut_suivis = 3
+      // ✅ Préparer les données avec les colonnes correctes
       const newMemberData = {
-        ...formData,
-        statut: null,        // ✅ MODIF : valeur neutre (enum OK)
-        statut_suivis: 3,    // ✅ MODIF : 3 = Intégré
+        nom: formData.nom,
+        prenom: formData.prenom,
+        telephone: formData.telephone,
+        ville: formData.ville,
+        venu: formData.venu,
+        cellule_id: formData.cellule_id,
+        statut_suivis: 3, // Intégrer
+        is_whatsapp: formData.is_whatsapp,
+        infos_supplementaires: formData.infos_supplementaires,
+        besoin: formData.besoin.join(", "), // convertir tableau en string
+        autrebesoin: formData.autreBesoin || null,
       };
 
+      // Insertion dans Supabase et récupération du membre inséré
       const { data: newMember, error } = await supabase
-        .from("membres")
+        .from("membres_complets")
         .insert([newMemberData])
         .select()
         .single();
 
       if (error) throw error;
 
-      // ✅ affichage immédiat dans membres cellule
+      // ✅ Mise à jour instantanée du contexte
       setAllMembers((prev) => [...prev, newMember]);
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
+      // Réinitialiser le formulaire
       setFormData({
         nom: "",
         prenom: "",
         telephone: "",
         ville: "",
-        statut: "", // ✅ MODIF
         venu: "",
         besoin: [],
         cellule_id: cellules[0]?.id || "",
@@ -103,7 +111,6 @@ export default function AjouterMembreCellule() {
       prenom: "",
       telephone: "",
       ville: "",
-      statut: "", // ✅ MODIF
       venu: "",
       besoin: [],
       cellule_id: cellules[0]?.id || "",
@@ -130,10 +137,7 @@ export default function AjouterMembreCellule() {
           <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
         </div>
 
-        <h1 className="text-3xl font-bold text-center mb-2">
-          Ajouter un membre à ma cellule
-        </h1>
-
+        <h1 className="text-3xl font-bold text-center mb-2">Ajouter un membre à ma cellule</h1>
         <p className="text-center text-gray-500 italic mb-6">
           « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
         </p>
@@ -200,7 +204,6 @@ export default function AjouterMembreCellule() {
             <option value="autre">Autre</option>
           </select>
 
-          {/* ✅ Besoins avec checkboxes */}
           <div className="text-left">
             <p className="font-semibold mb-2">Besoin :</p>
             {["Finances", "Santé", "Travail", "Les Enfants", "La Famille"].map((item) => (
@@ -224,7 +227,6 @@ export default function AjouterMembreCellule() {
               </label>
             ))}
 
-            {/* ✅ Checkbox AUTRE */}
             <label className="flex items-center gap-3 mb-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -243,7 +245,6 @@ export default function AjouterMembreCellule() {
               Autre
             </label>
 
-            {/* ✅ Champ texte visible si Autre sélectionné */}
             {formData.besoin.includes("Autre") && (
               <input
                 type="text"
@@ -269,7 +270,6 @@ export default function AjouterMembreCellule() {
             className="input"
           />
 
-          {/* Boutons */}
           <div className="flex gap-4 mt-4">
             <button
               type="button"

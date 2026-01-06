@@ -63,6 +63,7 @@ export default function MembresCellule() {
           .from("membres_complets")
           .select("*")
           .in("cellule_id", celluleIds)
+          .eq("statut_integrer", 3) // ✅ uniquement les intégrés
           .order("created_at", { ascending: false });
 
         if (profile.role === "Conseiller") {

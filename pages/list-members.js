@@ -10,7 +10,7 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import BoutonEnvoyer from "../components/BoutonEnvoyer";
 import LogoutLink from "../components/LogoutLink";
-import DetailsPopup from "../components/DetailsPopup";
+import DetailsPopup from "../components/DetailsMemberPopup";
 import EditMemberPopup from "../components/EditMemberPopup";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -540,15 +540,20 @@ export default function ListMembers() {
       </div>
     )}
 
-      {popupMember && (
-        <DetailsPopup
-          membre={popupMember}
-          onClose={() => setPopupMember(null)}
+      {/* =================== DETAILS MEMBER POPUP =================== */}
+      {selectedMember && (
+        <DetailsMemberPopup
+          membre={selectedMember}
+          onClose={() => setSelectedMember(null)}
           cellules={cellules}
           conseillers={conseillers}
-          handleAfterSend={handleAfterSend}
           session={session}
-          showToast={showToast}
+          commentChanges={commentChanges}
+          handleCommentChange={handleCommentChange}
+          statusChanges={statusChanges}
+          setStatusChanges={setStatusChanges}
+          updateSuivi={updateSuivi}
+          updating={updating}
         />
       )}
 

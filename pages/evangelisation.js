@@ -168,7 +168,6 @@ export default function Evangelisation() {
         </button>
       </div>
 
-      <div className="w-full max-w-md mb-6">
         {/* SELECT */}
       <div className="w-full max-w-md mb-6">
         <select

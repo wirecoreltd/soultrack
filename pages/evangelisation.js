@@ -43,7 +43,7 @@ export default function Evangelisation() {
   const fetchCellules = async () => {
     const { data } = await supabase
       .from("cellules")
-      .select("id, cellule_full, responsable, telephone");
+      .select("id, cellule_full, responsable, ville, telephone");
     setCellules(data || []);
   };
 
@@ -92,16 +92,20 @@ export default function Evangelisation() {
       const isMultiple = selectedContacts.length > 1;
 
       /* ================= MESSAGE ================= */
-      let message = `🙏 Bonjour ${cible.responsable || cible.prenom},\n\n`;
+      const destinataire =
+        selectedTargetType === "cellule"
+          ? cible.responsable || "Responsable"
+          : `${cible.prenom || ""} ${cible.nom || ""}`;
+
+      let message = `🙏 Bonjour ${destinataire},\n\n`;
 
       message += isMultiple
         ? "Nous te confions avec joie ces personnes rencontrées lors de l’évangélisation.\n"
         : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n";
 
-      message +=
-        isMultiple
-          ? "Merci pour ton cœur et ton engagement à les accompagner 🙏❤️\n\n"
-          : "Merci pour ton cœur et ton engagement à l’accompagner 🙏❤️\n\n";
+      message += isMultiple
+        ? "Merci pour ton cœur et ton engagement à les accompagner 🙏❤️\n\n"
+        : "Merci pour ton cœur et ton engagement à l’accompagner 🙏❤️\n\n";
 
       selectedContacts.forEach((m, index) => {
         message += "────────────────────\n";
@@ -123,7 +127,6 @@ export default function Evangelisation() {
         /\D/g,
         ""
       )}?text=${encodeURIComponent(message)}`;
-
       window.open(waLink, "_blank");
 
       /* ================= TRANSFERT DB ================= */
@@ -138,6 +141,7 @@ export default function Evangelisation() {
         cellule_id: selectedTargetType === "cellule" ? cible.id : null,
         responsable_cellule:
           selectedTargetType === "cellule" ? cible.responsable : null,
+        conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
         date_suivi: new Date().toISOString(),
       }));
 
@@ -171,9 +175,7 @@ export default function Evangelisation() {
       </div>
 
       <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
-      <h1 className="text-4xl text-white text-center mb-6">
-        Évangélisation
-      </h1>
+      <h1 className="text-4xl text-white text-center mb-6">Évangélisation</h1>
 
       {/* SELECT */}
       <div className="w-full max-w-md mb-6">
@@ -253,11 +255,11 @@ export default function Evangelisation() {
               <div className="text-sm mt-3 space-y-1">
                 <p>🏙️ Ville : {member.ville || ""}</p>
                 <p>💬 Whatsapp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-                <p> ⚥ Sexe : {member.sexe || "—"}</p>
+                <p>⚥ Sexe : {member.sexe || "—"}</p>
                 <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
                 <p>☀️ Type de conversion : {member.type_conversion || "—"}</p>
                 <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-                <p>📝 Info Supp. : {formatBesoin(member.infos_supplementaires)}</p>
+                <p>📝 Info Suppl. : {formatBesoin(member.infos_supplementaires)}</p>
 
                 <button
                   onClick={() => setEditMember(member)}

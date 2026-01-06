@@ -22,7 +22,6 @@ export default function Evangelisation() {
   const [loadingSend, setLoadingSend] = useState(false);
   const [view, setView] = useState("card"); // "card" ou "table"
 
-  // ✅ Pour menu téléphone
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
 
@@ -32,7 +31,6 @@ export default function Evangelisation() {
     fetchConseillers();
   }, []);
 
-  // ✅ Fermeture menu si clic en dehors
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (phoneMenuRef.current && !phoneMenuRef.current.contains(event.target)) {
@@ -84,63 +82,48 @@ export default function Evangelisation() {
   const hasSelectedContacts = selectedContacts.length > 0;
 
   const sendContacts = async () => {
-  if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+    if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
 
-  setLoadingSend(true);
+    setLoadingSend(true);
 
-  try {
-    const cible =
-      selectedTargetType === "cellule"
-        ? cellules.find((c) => c.id == selectedTarget)
-        : conseillers.find((c) => c.id == selectedTarget);
+    try {
+      const cible =
+        selectedTargetType === "cellule"
+          ? cellules.find((c) => c.id == selectedTarget)
+          : conseillers.find((c) => c.id == selectedTarget);
 
-    if (!cible || !cible.telephone) throw new Error("Numéro de la cible invalide");
+      if (!cible || !cible.telephone) throw new Error("Numéro de la cible invalide");
 
-    const insertData = selectedContacts.map((c) => ({
-      prenom: c.prenom,
-      nom: c.nom,
-      telephone: c.telephone,
-      ville: c.ville,
-      sexe: c.sexe,
-      besoin: c.besoin,
-      priere_salut: c.priere_salut,
-      type_conversion: c.type_conversion,
-      infos_supplementaires: c.infos_supplementaires,
-      is_whatsapp: c.is_whatsapp || false,
-      cellule_id: selectedTargetType === "cellule" ? cible.id : null,
-      responsable_cellule: selectedTargetType === "cellule" ? cible.responsable : null,
-      conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
-      date_suivi: new Date().toISOString(),
-      evangelise_id: c.id,
-    }));
+      const insertData = selectedContacts.map((c) => ({
+        prenom: c.prenom,
+        nom: c.nom,
+        telephone: c.telephone,
+        ville: c.ville,
+        sexe: c.sexe,
+        besoin: c.besoin,
+        priere_salut: c.priere_salut,
+        type_conversion: c.type_conversion,
+        infos_supplementaires: c.infos_supplementaires,
+        is_whatsapp: c.is_whatsapp || false,
+        cellule_id: selectedTargetType === "cellule" ? cible.id : null,
+        responsable_cellule: selectedTargetType === "cellule" ? cible.responsable : null,
+        conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
+        date_suivi: new Date().toISOString(),
+        evangelise_id: c.id,
+      }));
 
-    const { error } = await supabase.from("suivis_des_evangelises").insert(insertData);
-    if (error) throw error;
+      const { error } = await supabase.from("suivis_des_evangelises").insert(insertData);
+      if (error) throw error;
 
-    const idsToDelete = selectedContacts.map((c) => c.id);
-    const { error: delError } = await supabase.from("evangelises").delete().in("id", idsToDelete);
-    if (delError) console.warn("Contacts envoyés mais non supprimés", delError);
-
-    alert("✅ Contacts envoyés avec succès !");
-    setCheckedContacts({});
-    fetchContacts();
-  } catch (err) {
-    console.error(err);
-    alert("❌ Une erreur est survenue.");
-  } finally {
-    setLoadingSend(false);
-  }
-};
-
-      await supabase.from("suivis_des_evangelises").insert(insertData);
       const idsToDelete = selectedContacts.map((c) => c.id);
-      await supabase.from("evangelises").delete().in("id", idsToDelete);
+      const { error: delError } = await supabase.from("evangelises").delete().in("id", idsToDelete);
+      if (delError) console.warn("Contacts envoyés mais non supprimés", delError);
 
       alert("✅ Contacts envoyés avec succès !");
       setCheckedContacts({});
       fetchContacts();
     } catch (err) {
-      console.error("Erreur envoi contacts :", err);
+      console.error(err);
       alert("❌ Une erreur est survenue.");
     } finally {
       setLoadingSend(false);
@@ -158,7 +141,6 @@ export default function Evangelisation() {
       className="min-h-screen w-full flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* Header */}
       <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
         <button onClick={() => router.back()} className="text-white">← Retour</button>
         <LogoutLink />
@@ -167,7 +149,6 @@ export default function Evangelisation() {
       <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
       <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
 
-      {/* Toggle Vue Carte / Vue Table */}
       <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
@@ -177,7 +158,6 @@ export default function Evangelisation() {
         </button>
       </div>
 
-      {/* Select Cellule / Conseiller */}
       <div className="w-full max-w-md mb-6">
         <select
           value={selectedTargetType}

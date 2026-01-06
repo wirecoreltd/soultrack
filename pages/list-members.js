@@ -372,6 +372,8 @@ export default function ListMembers() {
             <div className="text-black text-sm mt-2 w-full space-y-1">
               <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
               <p>⚥ Sexe : {m.sexe || "—"}</p>
+              <p>💧 Bapteme Eau: {m.bapteme_eau || ""}</p>
+              <p>🔥 Bapteme de feu: {m.bapteme_esprit || ""}</p>            
               <p>❓ Besoin : {besoins}</p>
               <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>

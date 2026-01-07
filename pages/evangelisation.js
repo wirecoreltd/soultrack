@@ -265,33 +265,20 @@ message += "Que Dieu te bénisse abondamment ✨";
         )}
       </div>
 
-      {/* ================= AFFICHAGE CONTACTS ================= */}
       <div className="w-full max-w-6xl flex flex-col items-center">
-        {contacts === null ? (
-          <div className="px-2 py-2 text-white text-center bg-gray-600 rounded">
-            Chargement des membres...
-          </div>
-        ) : contacts.length === 0 ? (
-          <div className="px-2 py-2 text-white text-center bg-gray-600 rounded">
-            Aucun membre en suivi
-          </div>
-        ) : (
-          <>
-            {/* TOGGLE VUE */}
-            <div className="flex gap-4 mb-4">
-              <button
-                onClick={() => setView("card")}
-                className={`px-4 py-2 rounded ${view === "card" ? "bg-blue-600 text-white" : "bg-white text-black"}`}
-              >
-                Carte
-              </button>
-              <button
-                onClick={() => setView("table")}
-                className={`px-4 py-2 rounded ${view === "table" ? "bg-blue-600 text-white" : "bg-white text-black"}`}
-              >
-                Table
-              </button>
-            </div>
+  {/* Toggle Vue Carte / Vue Table */}
+  <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
+    <button
+      onClick={() => setView(view === "card" ? "table" : "card")}
+      className="text-sm font-semibold underline text-white"
+    >
+      {view === "card" ? "Vue Table" : "Vue Carte"}
+    </button>
+  </div>
+
+  {/* ================= AFFICHAGE CONTACTS ================= */}
+  {contacts && (
+    <>  
 
             {/* VUE CARTE */}
             {view === "card" && (

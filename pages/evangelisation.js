@@ -166,7 +166,7 @@ const nomCible =
 
 const isMultiple = selectedContacts.length > 1;
 
-let message = `🙏 Bonjour ${nomCible},\n\n`;
+let message = `👋 Bonjour ${nomCible},\n\n`;
 
 message += isMultiple
   ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
@@ -187,7 +187,7 @@ selectedContacts.forEach((m, index) => {
 });
 
 message +=
-  "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner 🙏❤️\n\n";
+  "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner\n\n";
 message += "Que Dieu te bénisse abondamment ✨";
 
 
@@ -243,11 +243,13 @@ message += "Que Dieu te bénisse abondamment ✨";
           >
             <option value="">-- Choisir --</option>
             {(selectedTargetType === "cellule" ? cellules : conseillers).map((c) => (
-              <option key={c.id} value={c.id}>
-                {selectedTargetType === "cellule"
-                  ? `${c.cellule_full} (${c.ville || ""})`
-                  : `${c.prenom} ${c.nom}`}
-              </option>
+  <option key={c.id} value={c.id}>
+    {selectedTargetType === "cellule"
+      ? c.ville
+        ? `${c.cellule_full} - ${c.ville}`
+        : c.cellule_full
+      : `${c.prenom} ${c.nom}`}
+  </option>
             ))}
           </select>
         )}

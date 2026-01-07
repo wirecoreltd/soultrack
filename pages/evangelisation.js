@@ -358,62 +358,7 @@ message += "Que Dieu te bénisse abondamment ✨";
                   {contacts.map((m) => (
                     <div key={m.id} className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
                       <div className="flex-[2] text-white flex items-center gap-1">{m.prenom} {m.nom}</div>
-                      {/* Téléphone + popup */}
-                      <div className="flex-[1] flex justify-center items-center relative">
-                        <p
-                          onClick={() =>
-                            setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id)
-                          }
-                          className="text-orange-500 font-semibold underline text-center cursor-pointer bg-gray-200 px-2 py-1 rounded"
-                        >
-                          {m.telephone || "—"}
-                        </p>
-                      
-                        {openPhoneMenuId === m.id && (
-                          <div
-                            ref={phoneMenuRef}
-                            className="phone-menu absolute z-50 mt-2 rounded-lg shadow-lg border w-52 left-1/2 -translate-x-1/2"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <a
-                              href={m.telephone ? `tel:${m.telephone}` : "#"}
-                              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
-                                !m.telephone ? "opacity-50 pointer-events-none" : ""
-                              }`}
-                            >
-                              📞 Appeler
-                            </a>
-                            <a
-                              href={m.telephone ? `sms:${m.telephone}` : "#"}
-                              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
-                                !m.telephone ? "opacity-50 pointer-events-none" : ""
-                              }`}
-                            >
-                              ✉️ SMS
-                            </a>
-                            <a
-                              href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}?call` : "#"}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
-                                !m.telephone ? "opacity-50 pointer-events-none" : ""
-                              }`}
-                            >
-                              📱 Appel WhatsApp
-                            </a>
-                            <a
-                              href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}` : "#"}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
-                                !m.telephone ? "opacity-50 pointer-events-none" : ""
-                              }`}
-                            >
-                              💬 Message WhatsApp
-                            </a>
-                          </div>
-                        )}
-                      </div>
+                      <div className="flex-[1] text-white">{m.telephone || "—"}</div>
                       <div className="flex-[1] text-white">{m.ville || "—"}</div>
                       <div className="flex-[1] flex justify-center items-center"><input type="checkbox" checked={checkedContacts[m.id] || false} onChange={() => handleCheck(m.id)} /></div>
                       <div className="flex-[1]"><button onClick={() => setPopupMember(m)} className="text-orange-500 underline text-sm">Détails</button></div>

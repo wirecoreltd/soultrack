@@ -43,23 +43,51 @@ export default function Evangelisation() {
   }, []);
 
   const fetchContacts = async () => {
-  const { data, error } = await supabase
-    .from("evangelises")
-    .select("*")
-    .eq("statut", "evangelisé")
-    .eq("status_suivi", "Non envoyé")
-    .order("created_at", { ascending: false })
-    .limit(1000);
+  try {
+    // 1️⃣ Récupérer tous les contacts “Non envoyé”
+    const { data: contactsData, error: contactsError } = await supabase
+      .from("evangelises")
+      .select("*")
+      .eq("statut", "evangelisé")
+      .eq("status_suivi", "Non envoyé")
+      .order("created_at", { ascending: false })
+      .limit(1000);
 
-  if (error) {
-    console.error("Erreur fetchContacts:", error);
+    if (contactsError) {
+      console.error("Erreur fetchContacts:", contactsError);
+      setContacts([]);
+      return;
+    }
+
+    // 2️⃣ Récupérer tous les suivis existants
+    const { data: suivisData, error: suivisError } = await supabase
+      .from("suivis_des_evangelises")
+      .select("evangelise_id, evangelises (telephone)");
+
+    if (suivisError) {
+      console.error("Erreur fetchSuivis:", suivisError);
+    }
+
+    // 3️⃣ Créer un Set des téléphones déjà suivis
+    const suivisPhones = new Set(
+      (suivisData || [])
+        .map((s) => s.evangelises?.telephone)
+        .filter(Boolean)
+    );
+
+    // 4️⃣ Filtrer les contacts pour enlever les doublons
+    const filteredContacts = (contactsData || []).filter(
+      (c) => !suivisPhones.has(c.telephone)
+    );
+
+    setContacts(filteredContacts);
+    console.log("Contacts filtrés (pas dans les suivis) :", filteredContacts);
+  } catch (err) {
+    console.error("Erreur inattendue fetchContacts:", err);
     setContacts([]);
-    return;
   }
-
-  console.log("Contacts chargés :", data);
-  setContacts(data || []);
 };
+
 
 
   const fetchCellules = async () => {

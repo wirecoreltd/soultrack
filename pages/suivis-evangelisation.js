@@ -169,72 +169,77 @@ export default function SuivisEvangelisation() {
         {view === "card" ? "Vue Table" : "Vue Carte"}
       </button>
 
-      {/* ================= VUE CARTE ================= */}
-      {view === "card" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-6xl">
-          {suivis.map((m) => {
-            const ouvert = detailsCarteId === m.id;
-            const conseiller = conseillers.find(
-              (c) => c.id === m.conseiller_id
-            );
+     {/* ================= VUE CARTE ================= */}
+{view === "card" && (
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-6xl">
+    {suivis.map((m) => {
+      const ouvert = detailsCarteId === m.id;
+      const conseiller = conseillers.find(
+        (c) => c.id === m.conseiller_id
+      );
 
-            return (
-              <div
-                key={m.id}
-                className="bg-white rounded-2xl shadow p-4 border-l-4"
-                style={{ borderLeftColor: getBorderColor(m) }}
-              >
-                <h2 className="font-bold text-center">
-                  {m.evangelises?.prenom} {m.evangelises?.nom}
-                </h2>
+      return (
+        <div
+          key={m.id}
+          className="bg-white rounded-2xl shadow p-4 border-l-4"
+          style={{ borderLeftColor: getBorderColor(m) }}
+        >
+          <h2 className="font-bold text-center">
+            {m.evangelises?.prenom} {m.evangelises?.nom}
+          </h2>
 
-                <p className="text-sm text-center">
-                  📱 {m.evangelises?.telephone || "—"}
-                </p>
-                <p className="text-sm text-center">
-                  🏠 {m.cellules?.cellule_full || "—"}
-                </p>
-                <p className="text-sm text-center">
-                  👤 {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
-                </p>
-                   <label className="block text-center text-sm font-semibold text-slate-700 mb-1">
-    Commentaire suivis
-  </label>
-  <textarea
-    rows={2}
-    placeholder="Ajouter un commentaire…"
-    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-  />
-      {/* Statut suivis */}
-  <label className="block text-center text-sm font-semibold text-slate-700 mt-3 mb-1">
-    Statut du suivis
-  </label>
-  <select
-    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
-  >
-    <option value="">-- Sélectionner un statut --</option>
-    <option>En attente</option>
-    <option>En cours</option>
-    <option>Intégré</option>
-    <option>Refus</option>
-  </select>
+          <p className="text-sm text-center">
+            📱 {m.evangelises?.telephone || "—"}
+          </p>
+          <p className="text-sm text-center">
+            🏠 {m.cellules?.cellule_full || "—"}
+          </p>
+          <p className="text-sm text-center">
+            👤 {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
+          </p>
 
-  {/* Bouton désactivé (visuel) */}
-  <button
-    disabled
-    className="mt-3 w-full rounded-lg bg-slate-300 text-slate-600 font-semibold py-2 cursor-not-allowed"
-  >
-    Sauvegarder
-  </button>
-</div>
+          {/* ================= COMMENTAIRE + STATUT (VISUEL) ================= */}
+          <div className="w-full mt-4 bg-slate-50 rounded-xl p-3">
+            <label className="block text-center text-sm font-semibold text-slate-700 mb-1">
+              Commentaire suivis
+            </label>
 
-                <button
-                  onClick={() =>
-                    setDetailsCarteId(ouvert ? null : m.id)
-                  }
-                  className="text-orange-500 underline text-sm block mx-auto mt-2"
-                >
-                  {ouvert ? "Fermer détails" : "Détails"}
+            <textarea
+              rows={2}
+              placeholder="Ajouter un commentaire…"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+            />
+
+            <label className="block text-center text-sm font-semibold text-slate-700 mt-3 mb-1">
+              Statut du suivis
+            </label>
+
+            <select
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
+            >
+              <option value="">-- Sélectionner un statut --</option>
+              <option>En attente</option>
+              <option>En cours</option>
+              <option>Intégré</option>
+              <option>Refus</option>
+            </select>
+
+            <button
+              disabled
+              className="mt-3 w-full rounded-lg bg-slate-300 text-slate-600 font-semibold py-2 cursor-not-allowed"
+            >
+              Sauvegarder
+            </button>
+          </div>
+
+          {/* Bouton détails */}
+          <button
+            onClick={() =>
+              setDetailsCarteId(ouvert ? null : m.id)
+            }
+            className="text-orange-500 underline text-sm block mx-auto mt-3"
+          >
+            {ouvert ? "Fermer détails" : "Détails"}
                 </button>
 
                 {/* ================= CARRÉ GRANDISSANT ================= */}

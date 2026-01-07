@@ -372,7 +372,7 @@ message += "Que Dieu te bénisse abondamment ✨";
                         {openPhoneMenuId === m.id && (
                           <div
                             ref={phoneMenuRef}
-                            className="phone-menu absolute z-50 mt-2 bg-white rounded-lg shadow-lg border w-52 left-1/2 -translate-x-1/2"
+                            className="phone-menu absolute z-50 mt-2 rounded-lg shadow-lg border w-52 left-1/2 -translate-x-1/2"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <a

@@ -141,12 +141,13 @@ const sendContacts = async () => {
     if (!cible || !cible.telephone)
       throw new Error("Numéro de la cible invalide");
 
-    // 🔹 Vérifier si un des contacts est déjà dans les suivis
+    // 🔹 Vérifier si un des contacts est déjà marqué "Envoyé"
     const phonesToCheck = selectedContacts.map((c) => c.telephone).filter(Boolean);
     const { data: existing, error: checkError } = await supabase
-      .from("suivis_des_evangelises")
-      .select("evangelise_id, evangelises (telephone)")
-      .in("evangelises.telephone", phonesToCheck);
+      .from("evangelises")
+      .select("id, prenom, nom, telephone, status_suivi")
+      .in("telephone", phonesToCheck)
+      .eq("status_suivi", "Envoyé");
 
     if (checkError) {
       console.error("Erreur vérification doublons:", checkError);
@@ -156,10 +157,10 @@ const sendContacts = async () => {
     }
 
     if ((existing || []).length > 0) {
-      const existingPhones = existing.map((e) => e.evangelises?.telephone).filter(Boolean);
-      alert(`❌ Contact(s) déjà présent(s) dans les suivis : ${existingPhones.join(", ")}`);
+      const existingPhones = existing.map((e) => e.telephone).filter(Boolean);
+      alert(`❌ Contact(s) déjà envoyé(s) : ${existingPhones.join(", ")}`);
       setLoadingSend(false);
-      return; // Stop l'envoi
+      return; // Stop l'envoi si déjà envoyé
     }
 
     /* ================= INSERT SUIVIS ================= */
@@ -190,7 +191,6 @@ const sendContacts = async () => {
 
     /* ================= UPDATE EVANGELISES ================= */
     const ids = selectedContacts.map((c) => c.id);
-
     const { error: updateError } = await supabase
       .from("evangelises")
       .update({ status_suivi: "Envoyé" })
@@ -251,6 +251,7 @@ const sendContacts = async () => {
     setLoadingSend(false);
   }
 };
+
 
   /* ================= UI ================= */
   

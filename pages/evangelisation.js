@@ -107,9 +107,37 @@ const fetchContacts = async () => {
     return "#888";
   };
 
-  /* ================= ENVOI WHATSAPP + SUIVI ================= */
+ /* ================= ENVOI WHATSAPP + SUIVI ================= */
+const sendContacts = async () => {
+  if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
 
- const insertData = selectedContacts.map((c) => ({
+  setLoadingSend(true);
+
+  try {
+    // 🔹 Trouver la cible
+    const cible =
+      selectedTargetType === "cellule"
+        ? cellules.find((c) => c.id === selectedTarget)
+        : conseillers.find((c) => c.id === selectedTarget);
+
+    if (!cible) throw new Error("Cible introuvable");
+
+    // 🔹 Message WhatsApp (simplifié ici)
+    let message = `🙏 Bonjour ${
+      selectedTargetType === "cellule" ? cible.prenom : cible.prenom
+    },\n\n`;
+
+    selectedContacts.forEach((m) => {
+      message += `👤 ${m.prenom} ${m.nom}\n📱 ${m.telephone}\n\n`;
+    });
+
+    if (cible.telephone) {
+      const waLink = `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
+      window.open(waLink, "_blank");
+    }
+
+    // 🔹 Préparer insert
+    const insertData = selectedContacts.map((c) => ({
       prenom: c.prenom,
       nom: c.nom,
       telephone: c.telephone,
@@ -117,37 +145,36 @@ const fetchContacts = async () => {
       besoin: c.besoin,
       infos_supplementaires: c.infos_supplementaires,
       is_whatsapp: c.is_whatsapp || false,
-
       sexe: c.sexe,
       type_conversion: c.type_conversion,
       priere_salut: c.priere_salut,
-
       cellule_id: selectedTargetType === "cellule" ? cible.id : null,
       responsable_cellule: selectedTargetType === "cellule" ? cible.responsable_id : null,
       conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
-
       evangelise_id: c.id,
-      status_suivi: "Envoyé", // ⚡ colonne correcte
+      status_suivi: "Envoyé",
       date_suivi: new Date().toISOString(),
     }));
 
     console.log("Insert data:", insertData);
 
+    // 🔹 Insert dans suivis
     const { error: insertError } = await supabase
       .from("suivis_des_evangelises")
       .insert(insertData);
     if (insertError) throw insertError;
 
-    /* ===== METTRE A JOUR LE STATUS DANS EVANGELISES ===== */
+    // 🔹 Mettre à jour le status dans evangelises
     const { error: updateError } = await supabase
       .from("evangelises")
-      .update({ status_suivi: "Envoyé" }) // ⚡ colonne correcte
+      .update({ status_suivi: "Envoyé" })
       .in("id", selectedContacts.map((c) => c.id));
     if (updateError) throw updateError;
 
     alert("✅ Contacts envoyés et suivis créés !");
     setCheckedContacts({});
-    fetchContacts(); // 🔄 rafraîchit la liste, les envoyés disparaissent
+    fetchContacts(); // rafraîchit la liste
+
   } catch (err) {
     console.error("ERREUR ENVOI", err);
     alert("❌ Une erreur est survenue.");

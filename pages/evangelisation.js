@@ -352,6 +352,7 @@ message += "Que Dieu te bénisse abondamment ✨";
                     <div className="flex-[1]">Téléphone</div>
                     <div className="flex-[1]">Ville</div>
                     <div className="flex-[1]">Sélectionner</div>
+                    <div className="flex-[1]">Action</div>
                   </div>
 
                   {contacts.map((m) => (
@@ -360,6 +361,7 @@ message += "Que Dieu te bénisse abondamment ✨";
                       <div className="flex-[1] text-white">📱 {m.telephone || "—"}</div>
                       <div className="flex-[1] text-white">{m.ville || "—"}</div>
                       <div className="flex-[1]"><input type="checkbox" checked={checkedContacts[m.id] || false} onChange={() => handleCheck(m.id)} /></div>
+                      <div className="flex-[1]"><button onClick={() => setPopupMember(m)} className="text-orange-500 underline text-sm">Détails</button></div>
                     </div>
                   ))}
                 </div>

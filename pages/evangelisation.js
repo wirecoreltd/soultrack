@@ -46,8 +46,9 @@ export default function Evangelisation() {
     const { data, error } = await supabase
       .from("evangelises")
       .select("*")
-      .eq("status_suivi", "Non envoyé") // ✅ CORRECTION CLÉ
-      .order("created_at", { ascending: false })
+      .eq("statut", "evangelisé")
+      .eq("status_suivi", "Non envoyé")
+      .order("created_at", { ascending: false });
       .limit(1000);
 
     if (error) {

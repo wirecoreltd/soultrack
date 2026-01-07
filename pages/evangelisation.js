@@ -358,9 +358,60 @@ message += "Que Dieu te bénisse abondamment ✨";
                   {contacts.map((m) => (
                     <div key={m.id} className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
                       <div className="flex-[2] text-white flex items-center gap-1">{m.prenom} {m.nom}</div>
-                      <div className="flex-[1] text-white">📱 {m.telephone || "—"}</div>
+                      {/* Téléphone + options */}
+  <div className="flex-[1] text-white flex flex-col items-center relative">
+    <button
+      onClick={() =>
+        setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id)
+      }
+      className="px-2 py-1 bg-gray-700 rounded text-sm w-full text-center"
+    >
+      {m.telephone || "—"}
+    </button>
+
+    {openPhoneMenuId === m.id && (
+      <div className="mt-2 bg-white rounded-lg shadow-lg border z-50 w-full flex flex-col text-black text-sm">
+        <a
+          href={m.telephone ? `tel:${m.telephone}` : "#"}
+          className={`px-4 py-2 hover:bg-gray-100 ${
+            !m.telephone ? "opacity-50 pointer-events-none" : ""
+          }`}
+        >
+          📞 Appeler
+        </a>
+        <a
+          href={m.telephone ? `sms:${m.telephone}` : "#"}
+          className={`px-4 py-2 hover:bg-gray-100 ${
+            !m.telephone ? "opacity-50 pointer-events-none" : ""
+          }`}
+        >
+          ✉️ SMS
+        </a>
+        <a
+          href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}?call` : "#"}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`px-4 py-2 hover:bg-gray-100 ${
+            !m.telephone ? "opacity-50 pointer-events-none" : ""
+          }`}
+        >
+          📱 Appel WhatsApp
+        </a>
+        <a
+          href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}` : "#"}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`px-4 py-2 hover:bg-gray-100 ${
+            !m.telephone ? "opacity-50 pointer-events-none" : ""
+          }`}
+        >
+          💬 Message WhatsApp
+        </a>
+      </div>
+    )}
+  </div>
                       <div className="flex-[1] text-white">{m.ville || "—"}</div>
-                      <div className="flex-[1]"><input type="checkbox" checked={checkedContacts[m.id] || false} onChange={() => handleCheck(m.id)} /></div>
+                      <div className="flex-[1] flex justify-center items-center"><input type="checkbox" checked={checkedContacts[m.id] || false} onChange={() => handleCheck(m.id)} /></div>
                       <div className="flex-[1]"><button onClick={() => setPopupMember(m)} className="text-orange-500 underline text-sm">Détails</button></div>
                     </div>
                   ))}

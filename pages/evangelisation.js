@@ -292,9 +292,9 @@ export default function Evangelisation() {
 
         {/* ================= DOUBLONS ================= */}
 {doublons.length > 0 && (
-  <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4 w-full max-w-6xl rounded shadow">
-    <p className="font-bold text-yellow-800 mb-2">⚠️ Contact déjà en suivi !</p>
-    <p className="text-sm text-yellow-700 mb-2">
+  <div className="bg-blue-100/30 border-l-4 border-blue-500/70 p-4 mb-4 w-full max-w-6xl rounded shadow">
+    <p className="font-bold text-blue-800 mb-2">⚠️ Contact déjà en suivi !</p>
+    <p className="text-sm text-blue-700 mb-2">
       Ces contacts sont déjà enregistrés dans les suivis. Vous pouvez les garder sur la page ou les retirer temporairement. (Ils restent dans les suivis jusqu’à la prochaine étape)
     </p>
     {doublons.map((c) => (
@@ -308,7 +308,7 @@ export default function Evangelisation() {
             Garder
           </button>
           <button
-            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
+            className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 transition"
             onClick={() => {
               setDoublons((prev) => prev.filter((d) => d.id !== c.id));
               setContacts((prev) => prev.filter((d) => d.id !== c.id));

@@ -43,50 +43,24 @@ export default function Evangelisation() {
   }, []);
 
   const fetchContacts = async () => {
-  try {
-    // 1️⃣ Récupérer tous les contacts “Non envoyé”
-    const { data: contactsData, error: contactsError } = await supabase
-      .from("evangelises")
-      .select("*")
-      .eq("statut", "evangelisé")
-      .eq("status_suivi", "Non envoyé")
-      .order("created_at", { ascending: false })
-      .limit(1000);
+  const { data, error } = await supabase
+    .from("evangelises")
+    .select("*")
+    .eq("statut", "evangelisé")
+    .eq("status_suivi", "Non envoyé")
+    .order("created_at", { ascending: false })
+    .limit(1000);
 
-    if (contactsError) {
-      console.error("Erreur fetchContacts:", contactsError);
-      setContacts([]);
-      return;
-    }
-
-    // 2️⃣ Récupérer tous les suivis existants
-    const { data: suivisData, error: suivisError } = await supabase
-      .from("suivis_des_evangelises")
-      .select("evangelise_id, evangelises (telephone)");
-
-    if (suivisError) {
-      console.error("Erreur fetchSuivis:", suivisError);
-    }
-
-    // 3️⃣ Créer un Set des téléphones déjà suivis
-    const suivisPhones = new Set(
-      (suivisData || [])
-        .map((s) => s.evangelises?.telephone)
-        .filter(Boolean)
-    );
-
-    // 4️⃣ Filtrer les contacts pour enlever les doublons
-    const filteredContacts = (contactsData || []).filter(
-      (c) => !suivisPhones.has(c.telephone)
-    );
-
-    setContacts(filteredContacts);
-    console.log("Contacts filtrés (pas dans les suivis) :", filteredContacts);
-  } catch (err) {
-    console.error("Erreur inattendue fetchContacts:", err);
+  if (error) {
+    console.error("Erreur fetchContacts:", error);
     setContacts([]);
+    return;
   }
+
+  console.log("Contacts chargés :", data);
+  setContacts(data || []);
 };
+
 
   const fetchCellules = async () => {
     const { data } = await supabase
@@ -127,41 +101,20 @@ export default function Evangelisation() {
     return "#888";
   };
 
+
   /* ================= ENVOI WHATSAPP ================= */
-const sendContacts = async () => {
+  const sendContacts = async () => {
   if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+
   setLoadingSend(true);
 
   try {
     const cible =
       selectedTargetType === "cellule"
-        ? cellules.find((c) => c.id == selectedTarget)
-        : conseillers.find((c) => c.id == selectedTarget);
+        ? cellules.find((c) => c.id === selectedTarget)
+        : conseillers.find((c) => c.id === selectedTarget);
 
-    if (!cible || !cible.telephone)
-      throw new Error("Numéro de la cible invalide");
-
-    // 🔹 Vérifier si un des contacts est déjà marqué "Envoyé"
-    const phonesToCheck = selectedContacts.map((c) => c.telephone).filter(Boolean);
-    const { data: existing, error: checkError } = await supabase
-      .from("evangelises")
-      .select("id, prenom, nom, telephone, status_suivi")
-      .in("telephone", phonesToCheck)
-      .eq("status_suivi", "Envoyé");
-
-    if (checkError) {
-      console.error("Erreur vérification doublons:", checkError);
-      alert("❌ Impossible de vérifier les doublons, réessayez.");
-      setLoadingSend(false);
-      return;
-    }
-
-    if ((existing || []).length > 0) {
-      const existingPhones = existing.map((e) => e.telephone).filter(Boolean);
-      alert(`❌ Contact(s) déjà envoyé(s) : ${existingPhones.join(", ")}`);
-      setLoadingSend(false);
-      return; // Stop l'envoi si déjà envoyé
-    }
+    if (!cible) throw new Error("Cible introuvable");
 
     /* ================= INSERT SUIVIS ================= */
     const inserts = selectedContacts.map((m) => ({
@@ -191,6 +144,7 @@ const sendContacts = async () => {
 
     /* ================= UPDATE EVANGELISES ================= */
     const ids = selectedContacts.map((c) => c.id);
+
     const { error: updateError } = await supabase
       .from("evangelises")
       .update({ status_suivi: "Envoyé" })
@@ -199,40 +153,43 @@ const sendContacts = async () => {
     if (updateError) throw updateError;
 
     /* ================= UI IMMÉDIATE ================= */
-    setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
+    setContacts((prev) =>
+      prev.filter((c) => !ids.includes(c.id))
+    );
     setCheckedContacts({});
 
     /* ================= MESSAGE WHATSAPP ================= */
-    const nomCible =
-      selectedTargetType === "cellule"
-        ? cible.cellule_full || "Responsable de cellule"
-        : `${cible.prenom}`;
+const nomCible =
+  selectedTargetType === "cellule"
+    ? cible.cellule_full || "Responsable de cellule"
+    : `${cible.prenom}`;
 
-    const isMultiple = selectedContacts.length > 1;
+const isMultiple = selectedContacts.length > 1;
 
-    let message = `🙏 Bonjour ${nomCible},\n\n`;
+let message = `🙏 Bonjour ${nomCible},\n\n`;
 
-    message += isMultiple
-      ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
-      : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
+message += isMultiple
+  ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
+  : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
 
-    selectedContacts.forEach((m, index) => {
-      message += "────────────────────\n";
-      if (isMultiple) message += `👥 Personne ${index + 1}\n`;
-      message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
-      message += `📱 Téléphone : ${m.telephone || "—"}\n`;
-      message += `🏙️ Ville : ${m.ville || "—"}\n`;
-      message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
-      message += `🎗️ Sexe : ${m.sexe || "—"}\n`;
-      message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n`;
-      message += `☀️ Type de conversion : ${m.type_conversion || "—"}\n`;
-      message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
-      message += `📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
-    });
+selectedContacts.forEach((m, index) => {
+  message += "────────────────────\n";
+  if (isMultiple) message += `👥 Personne ${index + 1}\n`;
+  message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
+  message += `📱 Téléphone : ${m.telephone || "—"}\n`;
+  message += `🏙️ Ville : ${m.ville || "—"}\n`;
+  message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
+  message += `🎗️ Sexe : ${m.sexe || "—"}\n`;
+  message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n`;
+  message += `☀️ Type de conversion : ${m.type_conversion || "—"}\n`;
+  message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
+  message += `📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
+});
 
-    message +=
-      "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner 🙏❤️\n\n";
-    message += "Que Dieu te bénisse abondamment ✨";
+message +=
+  "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner 🙏❤️\n\n";
+message += "Que Dieu te bénisse abondamment ✨";
+
 
     if (cible.telephone) {
       window.open(
@@ -252,250 +209,183 @@ const sendContacts = async () => {
   }
 };
 
-
   /* ================= UI ================= */
-  
-return (
-  <div
-    className="min-h-screen w-full flex flex-col items-center p-6"
-    style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-  >
-    {/* Header */}
-    <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
-      <button onClick={() => router.back()} className="text-white">
-        ← Retour
-      </button>
-      <LogoutLink />
-    </div>
-
-    <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
-    <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
-
-    {/* Sélection cible */}
-    <div className="w-full max-w-md mb-6">
-      <select
-        value={selectedTargetType}
-        onChange={(e) => {
-          setSelectedTargetType(e.target.value);
-          setSelectedTarget("");
-        }}
-        className="w-full border rounded px-3 py-2 mb-3 text-center"
-      >
-        <option value="">-- Envoyer à --</option>
-        <option value="cellule">Une Cellule</option>
-        <option value="conseiller">Un Conseiller</option>
-      </select>
-
-      {selectedTargetType && (
-        <select
-          value={selectedTarget}
-          onChange={(e) => setSelectedTarget(e.target.value)}
-          className="w-full border rounded px-3 py-2 mb-3 text-center"
-        >
-          <option value="">-- Choisir --</option>
-          {(selectedTargetType === "cellule" ? cellules : conseillers).map((c) => (
-            <option key={c.id} value={c.id}>
-              {selectedTargetType === "cellule"
-                ? c.ville
-                  ? `${c.cellule_full} - ${c.ville}`
-                  : c.cellule_full
-                : `${c.prenom} ${c.nom}`}
-            </option>
-          ))}
-        </select>
-      )}
-
-      {hasSelectedContacts && selectedTarget && (
-        <button
-          onClick={sendContacts}
-          disabled={loadingSend}
-          className="w-full bg-green-500 text-white font-bold px-4 py-2 rounded"
-        >
-          {loadingSend ? "Envoi..." : "📤 Envoyer WhatsApp"}
-        </button>
-      )}
-    </div>
-
-    {/* ================= AFFICHAGE CONTACTS ================= */}
-    <div className="w-full max-w-6xl flex flex-col items-center">
-
-      {/* Toggle Vue Carte / Vue Table */}
-      <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
-        <button
-          onClick={() => setView(view === "card" ? "table" : "card")}
-          className="text-sm font-semibold underline text-white"
-        >
-          {view === "card" ? "Vue Table" : "Vue Carte"}
-        </button>
+  return (
+    <div className="min-h-screen w-full flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+      <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
+        <button onClick={() => router.back()} className="text-white">← Retour</button>
+        <LogoutLink />
       </div>
 
-      {/* VUE CARTE */}
-      {contacts && contacts.length > 0 && view === "card" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
-          {contacts.map((member) => (
-            <div
-              key={member.id}
-              className="bg-white rounded-2xl shadow-xl p-4 border-l-4 relative"
-              style={{ borderLeftColor: getBorderColor(member) }}
-            >
-              <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
-              <p
-                className="text-center text-sm text-orange-500 underline decoration-orange-400 cursor-pointer font-semibold"
-                onClick={() => setOpenPhoneMenuId(member.id)}
-              >
-                {member.telephone || "—"}
-              </p>
+      <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
+      <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
 
-              {openPhoneMenuId === member.id && (
-                <div
-                  ref={phoneMenuRef}
-                  className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <a
-                    href={member.telephone ? `tel:${member.telephone}` : "#"}
-                    className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
-                      !member.telephone ? "opacity-50 pointer-events-none" : ""
-                    }`}
-                  >
-                    📞 Appeler
-                  </a>
-                  <a
-                    href={member.telephone ? `sms:${member.telephone}` : "#"}
-                    className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
-                      !member.telephone ? "opacity-50 pointer-events-none" : ""
-                    }`}
-                  >
-                    ✉️ SMS
-                  </a>
-                  <a
-                    href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}?call` : "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
-                      !member.telephone ? "opacity-50 pointer-events-none" : ""
-                    }`}
-                  >
-                    📱 Appel WhatsApp
-                  </a>
-                  <a
-                    href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}` : "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
-                      !member.telephone ? "opacity-50 pointer-events-none" : ""
-                    }`}
-                  >
-                    💬 Message WhatsApp
-                  </a>
-                </div>
-              )}
+      {/* Sélection cible */}
+      <div className="w-full max-w-md mb-6">
+        <select
+          value={selectedTargetType}
+          onChange={(e) => {
+            setSelectedTargetType(e.target.value);
+            setSelectedTarget("");
+          }}
+          className="w-full border rounded px-3 py-2 mb-3 text-center"
+        >
+          <option value="">-- Envoyer à --</option>
+          <option value="cellule">Une Cellule</option>
+          <option value="conseiller">Un Conseiller</option>
+        </select>
 
-              <p className="text-center text-sm">🏙️ Ville : {member.ville || "—"}</p>
-              <label className="flex justify-center gap-2 mt-2">
-                <input
-                  type="checkbox"
-                  checked={checkedContacts[member.id] || false}
-                  onChange={() => handleCheck(member.id)}
-                />{" "}
-                Sélectionner
-              </label>
+        {selectedTargetType && (
+          <select
+            value={selectedTarget}
+            onChange={(e) => setSelectedTarget(e.target.value)}
+            className="w-full border rounded px-3 py-2 mb-3 text-center"
+          >
+            <option value="">-- Choisir --</option>
+            {(selectedTargetType === "cellule" ? cellules : conseillers).map((c) => (
+              <option key={c.id} value={c.id}>
+                {selectedTargetType === "cellule"
+                  ? `${c.cellule_full} (${c.ville || ""})`
+                  : `${c.prenom} ${c.nom}`}
+              </option>
+            ))}
+          </select>
+        )}
 
+        {hasSelectedContacts && selectedTarget && (
+          <button
+            onClick={sendContacts}
+            disabled={loadingSend}
+            className="w-full bg-green-500 text-white font-bold px-4 py-2 rounded"
+          >
+            {loadingSend ? "Envoi..." : "📤 Envoyer WhatsApp"}
+          </button>
+        )}
+      </div>
+
+      {/* ================= AFFICHAGE CONTACTS ================= */}
+      <div className="w-full max-w-6xl flex flex-col items-center">
+        {contacts === null ? (
+          <div className="px-2 py-2 text-white text-center bg-gray-600 rounded">
+            Chargement des membres...
+          </div>
+        ) : contacts.length === 0 ? (
+          <div className="px-2 py-2 text-white text-center bg-gray-600 rounded">
+            Aucun membre en suivi
+          </div>
+        ) : (
+          <>
+            {/* TOGGLE VUE */}
+            <div className="flex gap-4 mb-4">
               <button
-                onClick={() =>
-                  setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
-                }
-                className="text-orange-500 underline text-sm block mx-auto mt-2"
+                onClick={() => setView("card")}
+                className={`px-4 py-2 rounded ${view === "card" ? "bg-blue-600 text-white" : "bg-white text-black"}`}
               >
-                {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+                Carte
               </button>
-
-              {detailsOpen[member.id] && (
-                <div className="text-sm mt-3 space-y-1">
-                  <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-                  <p>🎗️ Sexe : {member.sexe || "—"}</p>
-                  <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
-                  <p>☀️ Type : {member.type_conversion || "—"}</p>
-                  <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-                  <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
-                  <button
-                    onClick={() => {
-                      setEditMember(member);
-                      setPopupMember(null);
-                    }}
-                    className="text-blue-600 text-sm mt-4 w-full text-center"
-                  >
-                    ✏️ Modifier le contact
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* VUE TABLE */}
-      {contacts && contacts.length > 0 && view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto py-2">
-          <div className="min-w-[700px] space-y-2">
-            <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
-              <div className="flex-[2]">Nom complet</div>
-              <div className="flex-[1]">Téléphone</div>
-              <div className="flex-[1]">Ville</div>
-              <div className="flex-[1]">Sélectionner</div>
-            </div>
-
-            {contacts.map((m) => (
-              <div
-                key={m.id}
-                className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
-                style={{ borderLeftColor: getBorderColor(m) }}
+              <button
+                onClick={() => setView("table")}
+                className={`px-4 py-2 rounded ${view === "table" ? "bg-blue-600 text-white" : "bg-white text-black"}`}
               >
-                <div className="flex-[2] text-white flex items-center gap-1">
-                  {m.prenom} {m.nom}
-                </div>
-                <div className="flex-[1] text-white">📱 {m.telephone || "—"}</div>
-                <div className="flex-[1] text-white">{m.ville || "—"}</div>
-                <div className="flex-[1]">
-                  <input
-                    type="checkbox"
-                    checked={checkedContacts[m.id] || false}
-                    onChange={() => handleCheck(m.id)}
-                  />
+                Table
+              </button>
+            </div>
+
+            {/* VUE CARTE */}
+            {view === "card" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
+                {contacts.map((member) => (
+                  <div key={member.id} className="bg-white rounded-2xl shadow-xl p-4 border-l-4 relative" style={{ borderLeftColor: getBorderColor(member) }}>
+                    <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
+                    <p className="text-center text-sm text-orange-500 underline decoration-orange-400 cursor-pointer font-semibold" onClick={() => setOpenPhoneMenuId(member.id)}>
+                      {member.telephone || "—"}
+                    </p>
+
+                    {openPhoneMenuId === member.id && (
+                      <div ref={phoneMenuRef} className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2" onClick={(e) => e.stopPropagation()}>
+                        <a href={member.telephone ? `tel:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📞 Appeler</a>
+                        <a href={member.telephone ? `sms:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>✉️ SMS</a>
+                        <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}?call` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📱 Appel WhatsApp</a>
+                        <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>💬 Message WhatsApp</a>
+                      </div>
+                    )}
+
+                    <p className="text-center text-sm">🏙️ Ville : {member.ville || "—"}</p>
+                    <label className="flex justify-center gap-2 mt-2">
+                      <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} /> Sélectionner
+                    </label>
+
+                    <button onClick={() => setDetailsOpen(prev => ({ ...prev, [member.id]: !prev[member.id] }))} className="text-orange-500 underline text-sm block mx-auto mt-2">
+                      {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+                    </button>
+
+                    {detailsOpen[member.id] && (
+                      <div className="text-sm mt-3 space-y-1">
+                        <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+                        <p>🎗️ Sexe : {member.sexe || "—"}</p>
+                        <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
+                        <p>☀️ Type : {member.type_conversion || "—"}</p>
+                        <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
+                        <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
+                        <button onClick={() => { setEditMember(member); setPopupMember(null); }} className="text-blue-600 text-sm mt-4 w-full text-center">✏️ Modifier le contact</button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* VUE TABLE */}
+            {view === "table" && (
+              <div className="w-full max-w-6xl overflow-x-auto py-2">
+                <div className="min-w-[700px] space-y-2">
+                  <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+                    <div className="flex-[2]">Nom complet</div>
+                    <div className="flex-[1]">Téléphone</div>
+                    <div className="flex-[1]">Ville</div>
+                    <div className="flex-[1]">Sélectionner</div>
+                  </div>
+
+                  {contacts.map((m) => (
+                    <div key={m.id} className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
+                      <div className="flex-[2] text-white flex items-center gap-1">{m.prenom} {m.nom}</div>
+                      <div className="flex-[1] text-white">📱 {m.telephone || "—"}</div>
+                      <div className="flex-[1] text-white">{m.ville || "—"}</div>
+                      <div className="flex-[1]"><input type="checkbox" checked={checkedContacts[m.id] || false} onChange={() => handleCheck(m.id)} /></div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* POPUPS */}
+      {editMember && (
+  <EditEvangelisePopup
+    member={editMember}
+    cellules={cellules}
+    conseillers={conseillers}
+    onClose={() => setEditMember(null)}
+    onUpdateMember={(updatedMember) => {
+      // 1. Mettre à jour instantanément la liste des contacts
+      setContacts((prev) =>
+        prev.map((c) => (c.id === updatedMember.id ? updatedMember : c))
+      );
+      setEditMember(null); // fermer le popup
+    }}
+  />
+)}
+
+
+      {popupMember && (
+        <DetailsEvangePopup
+          member={popupMember}
+          onClose={() => setPopupMember(null)}
+          onEdit={(m) => { setEditMember(m); setPopupMember(null); }}
+        />
       )}
     </div>
-
-    {/* POPUPS */}
-    {editMember && (
-      <EditEvangelisePopup
-        member={editMember}
-        cellules={cellules}
-        conseillers={conseillers}
-        onClose={() => setEditMember(null)}
-        onUpdateMember={(updatedMember) => {
-          setContacts((prev) =>
-            prev.map((c) => (c.id === updatedMember.id ? updatedMember : c))
-          );
-          setEditMember(null);
-        }}
-      />
-    )}
-
-    {popupMember && (
-      <DetailsEvangePopup
-        member={popupMember}
-        onClose={() => setPopupMember(null)}
-        onEdit={(m) => {
-          setEditMember(m);
-          setPopupMember(null);
-        }}
-      />
-    )}
-  </div>
-);
+  );
 }

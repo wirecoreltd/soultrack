@@ -42,17 +42,8 @@ export default function Evangelisation() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const fetchContacts = async () => {
-    const { data, error } = await supabase
-      .from("evangelises")
-      .select("*")
-      .or("status_suivis_evangelises.eq.Null,status_suivis_evangelises.neq.Envoyé")
-      .order("created_at", { ascending: false })
-      .limit(1000);
-
-    if (error) {
-      console.error("Erreur fetchContacts:", error);
-      setContacts([]);
+  
+  
       return;
     }
     setContacts(data || []);
@@ -65,12 +56,22 @@ export default function Evangelisation() {
     setCellules(data || []);
   };
 
-  const fetchConseillers = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom, telephone")
-      .eq("role", "Conseiller");
-    setConseillers(data || []);
+  const fetchContacts = async () => {
+  const { data, error } = await supabase
+    .from("evangelises")
+    .select("*")
+    .or("status_suivi.is.null,status_suivi.neq.Non envoyé") // ⚡ colonne correcte
+    .order("created_at", { ascending: false })
+    .limit(1000);
+
+  if (error) {
+    console.error("Erreur fetchContacts:", error);
+    setContacts([]);
+    return;
+  }
+
+  console.log("Contacts chargés :", data);
+  setContacts(data || []);
   };
 
   /* ================= UTILS ================= */
@@ -159,7 +160,7 @@ export default function Evangelisation() {
         responsable_cellule: selectedTargetType === "cellule" ? cible.responsable || null : null,
         conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
         evangelise_id: c.id,
-        status_suivis_evangelises: "Envoyé",
+        status_suivi: "Envoyé",
         date_suivi: new Date().toISOString(),
       }));
 
@@ -174,7 +175,7 @@ export default function Evangelisation() {
       /* ===== METTRE A JOUR LE STATUS DANS EVANGELISES ===== */
       const { error: updateError } = await supabase
         .from("evangelises")
-        .update({ status_suivis_evangelises: "Envoyé" })
+        .update({ status_suivi: "Envoyé" })
         .in("id", selectedContacts.map((c) => c.id));
       if (updateError) throw updateError;
 

@@ -88,8 +88,6 @@ export default function Evangelisation() {
   }
 };
 
-
-
   const fetchCellules = async () => {
     const { data } = await supabase
       .from("cellules")
@@ -132,7 +130,6 @@ export default function Evangelisation() {
   /* ================= ENVOI WHATSAPP ================= */
 const sendContacts = async () => {
   if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
-
   setLoadingSend(true);
 
   try {
@@ -141,28 +138,28 @@ const sendContacts = async () => {
         ? cellules.find((c) => c.id == selectedTarget)
         : conseillers.find((c) => c.id == selectedTarget);
 
-    if (!cible) throw new Error("Cible introuvable");
+    if (!cible || !cible.telephone)
+      throw new Error("Numéro de la cible invalide");
 
-    // 1️⃣ Vérifier les doublons dans les suivis existants
-    const { data: existingSuivis } = await supabase
+    // 🔹 Vérifier si un des contacts est déjà dans les suivis
+    const phonesToCheck = selectedContacts.map((c) => c.telephone).filter(Boolean);
+    const { data: existing, error: checkError } = await supabase
       .from("suivis_des_evangelises")
-      .select("evangelises(telephone)");
+      .select("evangelise_id, evangelises (telephone)")
+      .in("evangelises.telephone", phonesToCheck);
 
-    const existingPhones = new Set(
-      (existingSuivis || [])
-        .map((s) => s.evangelises?.telephone)
-        .filter(Boolean)
-    );
-
-    const alreadySent = selectedContacts.filter((c) =>
-      existingPhones.has(c.telephone)
-    );
-
-    if (alreadySent.length > 0) {
-      const noms = alreadySent.map((c) => `${c.prenom} ${c.nom}`).join(", ");
-      alert(`❌ Ces contacts existent déjà en suivi : ${noms}`);
+    if (checkError) {
+      console.error("Erreur vérification doublons:", checkError);
+      alert("❌ Impossible de vérifier les doublons, réessayez.");
       setLoadingSend(false);
-      return; // Stop l'envoi pour éviter doublon
+      return;
+    }
+
+    if ((existing || []).length > 0) {
+      const existingPhones = existing.map((e) => e.evangelises?.telephone).filter(Boolean);
+      alert(`❌ Contact(s) déjà présent(s) dans les suivis : ${existingPhones.join(", ")}`);
+      setLoadingSend(false);
+      return; // Stop l'envoi
     }
 
     /* ================= INSERT SUIVIS ================= */

@@ -113,80 +113,76 @@ export default function Evangelisation() {
       if (!cible) throw new Error("Cible introuvable");
 
       /* ===== MESSAGE WHATSAPP ===== */
-
       let message = `🙏 Bonjour ${
-  selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom
-},\n\n`;
+        selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom
+      },\n\n`;
 
-// Gestion du texte d'introduction avec le nombre de personnes
-if (selectedContacts.length > 1) {
-  message += `Nous te confions avec joie ${selectedContacts.length} personnes rencontrées lors de l’évangélisation.\n\n`;
-} else {
-  message += "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n\n";
-}
+      if (selectedContacts.length > 1) {
+        message += `Nous te confions avec joie ${selectedContacts.length} personnes rencontrées lors de l’évangélisation.\n\n`;
+      } else {
+        message +=
+          "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n";
+      }
 
-// Boucle sur les contacts
-selectedContacts.forEach((m) => {
-  message += "────────────────────\n";
-  // Nom en gras
-  message += `👤 Nom : *${m.prenom} ${m.nom}*\n`;
-  message += `📱 Téléphone : ${m.telephone || "—"}\n`;
-  message += `🏙️ Ville : ${m.ville || "—"}\n`;
-  message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
-  message += `⚥ Sexe : ${m.sexe || "—"}\n`;
-  message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
-  message += `☀️ Type : ${m.type_conversion || "—"}\n`;
-  message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
-  message += `📝 Infos supplémentaires : ${formatBesoin(m.infos_supplementaires)}\n\n`;
-});
+      selectedContacts.forEach((m, index) => {
+        message += "────────────────────\n";
+        if (selectedContacts.length > 1) message += `👥 Personne ${index + 1}\n`;
+        message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
+        message += `📱 Téléphone : ${m.telephone || "—"}\n`;
+        message += `🏙️ Ville : ${m.ville || "—"}\n`;
+        message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
+        message += `⚥ Sexe : ${m.sexe || "—"}\n`;
+        message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
+        message += `☀️ Type : ${m.type_conversion || "—"}\n`;
+        message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
+        message += `📝 Infos supplémentaires : ${formatBesoin(
+          m.infos_supplementaires
+        )}\n\n`;
+      });
 
-// Phrase de conclusion adaptée au nombre de contacts
-message += `Que le Seigneur te fortifie et t’utilise puissamment dans ${
-  selectedContacts.length > 1 ? "ces suivis" : "ce suivi"
-} 🙌\n`;
+      message += `Que le Seigneur te fortifie et t’utilise puissamment dans ${
+        selectedContacts.length > 1 ? "ces suivis" : "ce suivi"
+      } 🙌\n`;
 
-
-      /* ===== WHATSAPP (OPTIONNEL) ===== */
-
+      /* ===== OUVERTURE WHATSAPP ===== */
       if (cible.telephone) {
         const waLink = `https://wa.me/${cible.telephone.replace(
           /\D/g,
           ""
         )}?text=${encodeURIComponent(message)}`;
-
         window.open(waLink, "_blank");
       }
 
       /* ===== INSERT SUIVI ===== */
-const insertData = selectedContacts.map((c) => ({
-  prenom: c.prenom,
-  nom: c.nom,
-  telephone: c.telephone,
-  ville: c.ville,
-  besoin: c.besoin,
-  infos_supplementaires: c.infos_supplementaires,
-  is_whatsapp: c.is_whatsapp || false,
+      const insertData = selectedContacts.map((c) => ({
+        prenom: c.prenom,
+        nom: c.nom,
+        telephone: c.telephone,
+        ville: c.ville,
+        besoin: c.besoin,
+        infos_supplementaires: c.infos_supplementaires,
+        is_whatsapp: c.is_whatsapp || false,
 
-  sexe: c.sexe,
-  type_conversion: c.type_conversion,
-  priere_salut: c.priere_salut,
+        sexe: c.sexe,
+        type_conversion: c.type_conversion,
+        priere_salut: c.priere_salut,
 
-  cellule_id: selectedTargetType === "cellule" ? cible.id : null,
-  responsable_cellule: selectedTargetType === "cellule" ? cible.responsable : null,
-  conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
+        cellule_id: selectedTargetType === "cellule" ? cible.id : null,
+        responsable_cellule: selectedTargetType === "cellule" ? cible.responsable : null,
+        conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
 
-  evangelise_id: c.id,   // FK vers evangelises
-  status_suivis_evangelises: "Envoyé",
-  date_suivi: new Date().toISOString(),
-}));
+        evangelise_id: c.id, // FK vers evangelises
+        status_suivis_evangelises: "Envoyé",
+        date_suivi: new Date().toISOString(),
+      }));
 
-const { error } = await supabase
-  .from("suivis_des_evangelises")
-  .insert(insertData);
+      const { error } = await supabase
+        .from("suivis_des_evangelises")
+        .insert(insertData);
 
-if (error) throw error;
+      if (error) throw error;
 
-
+      // ❌ LES CONTACTS RESTENT DANS evangelises
 
       alert("✅ Contacts envoyés et suivis créés !");
       setCheckedContacts({});
@@ -206,6 +202,7 @@ if (error) throw error;
       className="min-h-screen w-full flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
+      
       <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
         <button onClick={() => router.back()} className="text-white">
           ← Retour

@@ -117,17 +117,19 @@ export default function Evangelisation() {
       selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom
     },\n\n`;
 
-    message += selectedContacts.length > 1
-      ? `Nous te confions avec joie ${selectedContacts.length} personnes rencontrées lors de l’évangélisation.\n\n`
-      : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n\n";
+    if (selectedContacts.length > 1) {
+      message += `Nous te confions avec joie ${selectedContacts.length} personnes rencontrées lors de l’évangélisation.\n\n`;
+    } else {
+      message += "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n\n";
+    }
 
-    selectedContacts.forEach((m) => {
+    selectedContacts.forEach((m, index) => {
       message += "────────────────────\n";
       message += `👤 Nom : *${m.prenom} ${m.nom}*\n`;
       message += `📱 Téléphone : ${m.telephone || "—"}\n`;
       message += `🏙️ Ville : ${m.ville || "—"}\n`;
       message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
-      message += `🎗️ Sexe : ${m.sexe || "—"}\n`;
+      message += `⚥ Sexe : ${m.sexe || "—"}\n`;
       message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
       message += `☀️ Type : ${m.type_conversion || "—"}\n`;
       message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
@@ -138,13 +140,12 @@ export default function Evangelisation() {
       selectedContacts.length > 1 ? "ces suivis" : "ce suivi"
     } 🙌\n`;
 
-    // Ouvre le lien WhatsApp si téléphone disponible
     if (cible.telephone) {
       const waLink = `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
       window.open(waLink, "_blank");
     }
 
-    /* ===== INSERT DANS SUIVIS ===== */
+    /* ===== PREPARER INSERT ===== */
     const insertData = selectedContacts.map((c) => ({
       prenom: c.prenom,
       nom: c.nom,
@@ -153,18 +154,21 @@ export default function Evangelisation() {
       besoin: c.besoin,
       infos_supplementaires: c.infos_supplementaires,
       is_whatsapp: c.is_whatsapp || false,
+
       sexe: c.sexe,
       type_conversion: c.type_conversion,
       priere_salut: c.priere_salut,
+
       cellule_id: selectedTargetType === "cellule" ? cible.id : null,
       responsable_cellule: selectedTargetType === "cellule" ? cible.responsable : null,
       conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
+
       evangelise_id: c.id,   // FK vers evangelises
       status_suivis_evangelises: "Envoyé",
       date_suivi: new Date().toISOString(),
     }));
 
-    console.log("Insert data:", insertData);
+    console.log("Insert data:", insertData); // ✅ Pour debug avant l'INSERT
 
     const { error } = await supabase
       .from("suivis_des_evangelises")
@@ -172,17 +176,9 @@ export default function Evangelisation() {
 
     if (error) throw error;
 
-    /* ===== UPDATE STATUS DANS EVANGELISES ===== */
-    const { error: updateError } = await supabase
-      .from("evangelises")
-      .update({ status_suivis_evangelises: "Envoyé" })
-      .in("id", selectedContacts.map(c => c.id));
-
-    if (updateError) console.error("Erreur update status:", updateError);
-
     alert("✅ Contacts envoyés et suivis créés !");
     setCheckedContacts({});
-    fetchContacts(); // Les contacts envoyés ne seront plus affichés
+    fetchContacts(); // Les contacts restent dans evangelises, donc ils seront toujours visibles
   } catch (err) {
     console.error("ERREUR ENVOI", err);
     alert("❌ Une erreur est survenue.");

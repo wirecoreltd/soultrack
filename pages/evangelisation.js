@@ -105,16 +105,35 @@ export default function Evangelisation() {
   /* ================= ENVOI WHATSAPP ================= */
   const sendContacts = async () => {
   if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
-
   setLoadingSend(true);
 
   try {
     const cible =
       selectedTargetType === "cellule"
-        ? cellules.find((c) => c.id === selectedTarget)
-        : conseillers.find((c) => c.id === selectedTarget);
+        ? cellules.find((c) => c.id == selectedTarget)
+        : conseillers.find((c) => c.id == selectedTarget);
 
-    if (!cible) throw new Error("Cible introuvable");
+    if (!cible || !cible.telephone)
+      throw new Error("Numéro de la cible invalide");
+
+    // ================= VERIFICATION CONTACTS =================
+    const { data: suivisExisting } = await supabase
+      .from("suivis_des_evangelises")
+      .select("evangelise_id, evangelises (telephone)");
+
+    const existingPhones = suivisExisting.map(
+      (s) => s.evangelises?.telephone
+    );
+
+    const alreadyInSuivi = selectedContacts.some((c) =>
+      existingPhones.includes(c.telephone)
+    );
+
+    if (alreadyInSuivi) {
+      alert("⚠️ Un ou plusieurs contacts sont déjà en suivi !");
+      setLoadingSend(false);
+      return;
+    }
 
     /* ================= INSERT SUIVIS ================= */
     const inserts = selectedContacts.map((m) => ({

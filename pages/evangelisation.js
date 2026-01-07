@@ -291,33 +291,37 @@ export default function Evangelisation() {
       <div className="w-full max-w-6xl flex flex-col items-center">
 
         {/* ================= DOUBLONS ================= */}
-        {doublons.length > 0 && (
-          <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4 w-full max-w-6xl">
-            <p className="font-bold text-yellow-800">⚠️ Un ou plusieurs contacts sont déjà en suivi !</p>
-            {doublons.map((c) => (
-              <div key={c.id} className="flex justify-between items-center mt-2 bg-white p-2 rounded shadow">
-                <span>{c.prenom} {c.nom} ({c.telephone})</span>
-                <div className="flex gap-2">
-                  <button
-                    className="bg-blue-500 text-white px-2 py-1 rounded"
-                    onClick={() => setDoublons((prev) => prev.filter((d) => d.id !== c.id))}
-                  >
-                    Garder
-                  </button>
-                  <button
-                    className="bg-red-500 text-white px-2 py-1 rounded"
-                    onClick={() => {
-                      setDoublons((prev) => prev.filter((d) => d.id !== c.id));
-                      setContacts((prev) => prev.filter((d) => d.id !== c.id));
-                    }}
-                  >
-                    Supprimer
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+{doublons.length > 0 && (
+  <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4 w-full max-w-6xl rounded shadow">
+    <p className="font-bold text-yellow-800 mb-2">⚠️ Contact déjà en suivi !</p>
+    <p className="text-sm text-yellow-700 mb-2">
+      Ces contacts sont déjà enregistrés dans les suivis. Vous pouvez les garder sur la page ou les retirer temporairement. (Ils restent dans les suivis jusqu’à la prochaine étape)
+    </p>
+    {doublons.map((c) => (
+      <div key={c.id} className="flex justify-between items-center mt-2 bg-white p-2 rounded shadow-sm">
+        <span className="font-medium">{c.prenom} {c.nom} ({c.telephone})</span>
+        <div className="flex gap-2">
+          <button
+            className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+            onClick={() => setDoublons((prev) => prev.filter((d) => d.id !== c.id))}
+          >
+            Garder
+          </button>
+          <button
+            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
+            onClick={() => {
+              setDoublons((prev) => prev.filter((d) => d.id !== c.id));
+              setContacts((prev) => prev.filter((d) => d.id !== c.id));
+            }}
+          >
+            Supprimer
+          </button>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
 
         {/* Toggle Vue Carte / Vue Table */}
         <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">

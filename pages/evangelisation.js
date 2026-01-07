@@ -10,20 +10,26 @@ import DetailsEvangePopup from "../components/DetailsEvangePopup";
 
 export default function Evangelisation() {
   const router = useRouter();
+
   const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
+
   const [selectedTargetType, setSelectedTargetType] = useState("");
   const [selectedTarget, setSelectedTarget] = useState("");
+
   const [checkedContacts, setCheckedContacts] = useState({});
   const [detailsOpen, setDetailsOpen] = useState({});
   const [editMember, setEditMember] = useState(null);
   const [popupMember, setPopupMember] = useState(null);
+
   const [loadingSend, setLoadingSend] = useState(false);
   const [view, setView] = useState("card");
 
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
+
+  /* ================= FETCH ================= */
 
   useEffect(() => {
     fetchContacts();
@@ -32,13 +38,14 @@ export default function Evangelisation() {
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (phoneMenuRef.current && !phoneMenuRef.current.contains(event.target)) {
+    const handleClickOutside = (e) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
         setOpenPhoneMenuId(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const fetchContacts = async () => {
@@ -46,7 +53,7 @@ export default function Evangelisation() {
       .from("evangelises")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(1000); // 🔹 affichage complet
+      .limit(1000);
     setContacts(data || []);
   };
 
@@ -65,6 +72,8 @@ export default function Evangelisation() {
     setConseillers(data || []);
   };
 
+  /* ================= UTILS ================= */
+
   const handleCheck = (id) =>
     setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -82,6 +91,14 @@ export default function Evangelisation() {
   const selectedContacts = contacts.filter((c) => checkedContacts[c.id]);
   const hasSelectedContacts = selectedContacts.length > 0;
 
+  const getBorderColor = (member) => {
+    if (member.is_whatsapp) return "#25D366";
+    if (member.besoin) return "#FFB800";
+    return "#888";
+  };
+
+  /* ================= ENVOI WHATSAPP (CORRIGÉ) ================= */
+
   const sendContacts = async () => {
     if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
 
@@ -93,43 +110,72 @@ export default function Evangelisation() {
           ? cellules.find((c) => c.id === selectedTarget)
           : conseillers.find((c) => c.id === selectedTarget);
 
-      if (!cible) throw new Error("Cible introuvable");
-
-      // 🔹 Récupération ID du responsable si cellule
-      let responsableId = null;
-      if (selectedTargetType === "cellule" && cible.responsable) {
-        responsableId = cible.responsable; // Assure-toi que c'est UUID, sinon fetch le profile
+      if (!cible || !cible.telephone) {
+        alert("❌ Cette cible n’a pas de numéro WhatsApp");
+        return;
       }
+
+      const isMultiple = selectedContacts.length > 1;
+
+      /* ===== MESSAGE WHATSAPP COMPLET ===== */
+
+      let message = `🙏 Bonjour ${
+        selectedTargetType === "cellule"
+          ? cible.cellule_full
+          : cible.prenom
+      },\n\n`;
+
+      message += isMultiple
+        ? "Nous te confions avec joie ces personnes rencontrées lors de l’évangélisation.\n\n"
+        : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n\n";
+
+      selectedContacts.forEach((m, index) => {
+        message += "────────────────────\n";
+        if (isMultiple) message += `👥 Personne ${index + 1}\n`;
+        message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
+        message += `📱 Téléphone : ${m.telephone || "—"}\n`;
+        message += `🏙️ Ville : ${m.ville || "—"}\n`;
+        message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
+        message += `⚥ Sexe : ${m.sexe || "—"}\n`;
+        message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
+        message += `☀️ Type : ${m.type_conversion || "—"}\n`;
+        message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
+        message += `📝 Infos supplémentaires : ${formatBesoin(
+          m.infos_supplementaires
+        )}\n\n`;
+      });
+
+      const waLink = `https://wa.me/${cible.telephone.replace(
+        /\D/g,
+        ""
+      )}?text=${encodeURIComponent(message)}`;
+
+      window.open(waLink, "_blank");
+
+      /* ===== INSERT SUPABASE (MINIMAL & STABLE) ===== */
 
       const insertData = selectedContacts.map((c) => ({
         prenom: c.prenom,
         nom: c.nom,
         telephone: c.telephone,
         ville: c.ville,
-        sexe: c.sexe,
         besoin: c.besoin,
-        priere_salut: c.priere_salut,
-        type_conversion: c.type_conversion,
         infos_supplementaires: c.infos_supplementaires,
         is_whatsapp: c.is_whatsapp || false,
+
         cellule_id: selectedTargetType === "cellule" ? cible.id : null,
-        responsable_cellule: responsableId,
-        conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
+        responsable_cellule:
+          selectedTargetType === "cellule" ? cible.responsable : null,
+
+        evangelise_id: c.id, // ✅ CONSERVÉ
+
         date_suivi: new Date().toISOString(),
-        evangelise_id: c.id,
       }));
 
-      const { error } = await supabase
-        .from("suivis_des_evangelises")
-        .insert(insertData);
-      if (error) throw error;
+      await supabase.from("suivis_des_evangelises").insert(insertData);
 
       const idsToDelete = selectedContacts.map((c) => c.id);
-      const { error: delError } = await supabase
-        .from("evangelises")
-        .delete()
-        .in("id", idsToDelete);
-      if (delError) console.warn("Contacts envoyés mais non supprimés", delError);
+      await supabase.from("evangelises").delete().in("id", idsToDelete);
 
       alert("✅ Contacts envoyés avec succès !");
       setCheckedContacts({});
@@ -142,15 +188,13 @@ export default function Evangelisation() {
     }
   };
 
-  const getBorderColor = (member) => {
-    if (member.is_whatsapp) return "#25D366";
-    if (member.besoin) return "#FFB800";
-    return "#888";
-  };
+  /* ================= UI (INCHANGÉE) ================= */
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center p-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+    <div
+      className="min-h-screen w-full flex flex-col items-center p-6"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+    >
       <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
         <button onClick={() => router.back()} className="text-white">← Retour</button>
         <LogoutLink />

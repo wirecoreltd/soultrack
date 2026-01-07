@@ -179,7 +179,7 @@ selectedContacts.forEach((m, index) => {
   message += `📱 Téléphone : ${m.telephone || "—"}\n`;
   message += `🏙️ Ville : ${m.ville || "—"}\n`;
   message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
-  message += `⚥ Sexe : ${m.sexe || "—"}\n`;
+  message += `🎗️ Sexe : ${m.sexe || "—"}\n`;
   message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n`;
   message += `☀️ Type de conversion : ${m.type_conversion || "—"}\n`;
   message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
@@ -208,8 +208,6 @@ message += "Que Dieu te bénisse abondamment ✨";
     setLoadingSend(false);
   }
 };
-
-
 
   /* ================= UI ================= */
   return (
@@ -247,7 +245,7 @@ message += "Que Dieu te bénisse abondamment ✨";
             {(selectedTargetType === "cellule" ? cellules : conseillers).map((c) => (
               <option key={c.id} value={c.id}>
                 {selectedTargetType === "cellule"
-                  ? `${c.cellule_full} (${c.ville || "—"})`
+                  ? `${c.cellule_full} (${c.ville || ""})`
                   : `${c.prenom} ${c.nom}`}
               </option>
             ))}
@@ -324,7 +322,7 @@ message += "Que Dieu te bénisse abondamment ✨";
                     {detailsOpen[member.id] && (
                       <div className="text-sm mt-3 space-y-1">
                         <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-                        <p>⚥ Sexe : {member.sexe || "—"}</p>
+                        <p>🎗️ Sexe : {member.sexe || "—"}</p>
                         <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
                         <p>☀️ Type : {member.type_conversion || "—"}</p>
                         <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
@@ -365,13 +363,21 @@ message += "Que Dieu te bénisse abondamment ✨";
 
       {/* POPUPS */}
       {editMember && (
-        <EditEvangelisePopup
-          member={editMember}
-          cellules={cellules}
-          conseillers={conseillers}
-          onClose={() => setEditMember(null)}
-        />
-      )}
+  <EditEvangelisePopup
+    member={editMember}
+    cellules={cellules}
+    conseillers={conseillers}
+    onClose={() => setEditMember(null)}
+    onUpdateMember={(updatedMember) => {
+      // 1. Mettre à jour instantanément la liste des contacts
+      setContacts((prev) =>
+        prev.map((c) => (c.id === updatedMember.id ? updatedMember : c))
+      );
+      setEditMember(null); // fermer le popup
+    }}
+  />
+)}
+
 
       {popupMember && (
         <DetailsEvangePopup

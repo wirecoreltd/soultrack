@@ -97,7 +97,7 @@ export default function Evangelisation() {
     return "#888";
   };
 
-  /* ================= ENVOI WHATSAPP (CORRIGÉ) ================= */
+  /* ================= ENVOI WHATSAPP + SUIVI ================= */
 
   const sendContacts = async () => {
     if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
@@ -110,14 +110,9 @@ export default function Evangelisation() {
           ? cellules.find((c) => c.id === selectedTarget)
           : conseillers.find((c) => c.id === selectedTarget);
 
-      if (!cible || !cible.telephone) {
-        alert("❌ Cette cible n’a pas de numéro WhatsApp");
-        return;
-      }
+      if (!cible) throw new Error("Cible introuvable");
 
-      const isMultiple = selectedContacts.length > 1;
-
-      /* ===== MESSAGE WHATSAPP COMPLET ===== */
+      /* ===== MESSAGE WHATSAPP ===== */
 
       let message = `🙏 Bonjour ${
         selectedTargetType === "cellule"
@@ -125,13 +120,15 @@ export default function Evangelisation() {
           : cible.prenom
       },\n\n`;
 
-      message += isMultiple
-        ? "Nous te confions avec joie ces personnes rencontrées lors de l’évangélisation.\n\n"
-        : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n\n";
+      message +=
+        selectedContacts.length > 1
+          ? "Nous te confions avec joie ces personnes rencontrées lors de l’évangélisation.\n\n"
+          : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n\n";
 
       selectedContacts.forEach((m, index) => {
         message += "────────────────────\n";
-        if (isMultiple) message += `👥 Personne ${index + 1}\n`;
+        if (selectedContacts.length > 1)
+          message += `👥 Personne ${index + 1}\n`;
         message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
         message += `📱 Téléphone : ${m.telephone || "—"}\n`;
         message += `🏙️ Ville : ${m.ville || "—"}\n`;
@@ -145,14 +142,18 @@ export default function Evangelisation() {
         )}\n\n`;
       });
 
-      const waLink = `https://wa.me/${cible.telephone.replace(
-        /\D/g,
-        ""
-      )}?text=${encodeURIComponent(message)}`;
+      /* ===== WHATSAPP (OPTIONNEL) ===== */
 
-      window.open(waLink, "_blank");
+      if (cible.telephone) {
+        const waLink = `https://wa.me/${cible.telephone.replace(
+          /\D/g,
+          ""
+        )}?text=${encodeURIComponent(message)}`;
 
-      /* ===== INSERT SUPABASE (MINIMAL & STABLE) ===== */
+        window.open(waLink, "_blank");
+      }
+
+      /* ===== INSERT SUIVI ===== */
 
       const insertData = selectedContacts.map((c) => ({
         prenom: c.prenom,
@@ -163,25 +164,35 @@ export default function Evangelisation() {
         infos_supplementaires: c.infos_supplementaires,
         is_whatsapp: c.is_whatsapp || false,
 
+        sexe: c.sexe,
+        type_conversion: c.type_conversion,
+        priere_salut: c.priere_salut,
+
         cellule_id: selectedTargetType === "cellule" ? cible.id : null,
         responsable_cellule:
           selectedTargetType === "cellule" ? cible.responsable : null,
+        conseiller_id:
+          selectedTargetType === "conseiller" ? cible.id : null,
 
-        evangelise_id: c.id, // ✅ CONSERVÉ
-
+        evangelise_id: c.id,
+        status_suivis_evangelises: "Envoyé",
         date_suivi: new Date().toISOString(),
       }));
 
-      await supabase.from("suivis_des_evangelises").insert(insertData);
+      const { error } = await supabase
+        .from("suivis_des_evangelises")
+        .insert(insertData);
+
+      if (error) throw error;
 
       const idsToDelete = selectedContacts.map((c) => c.id);
       await supabase.from("evangelises").delete().in("id", idsToDelete);
 
-      alert("✅ Contacts envoyés avec succès !");
+      alert("✅ Contacts envoyés et suivis créés !");
       setCheckedContacts({});
       fetchContacts();
     } catch (err) {
-      console.error(err);
+      console.error("ERREUR ENVOI", err);
       alert("❌ Une erreur est survenue.");
     } finally {
       setLoadingSend(false);
@@ -194,7 +205,8 @@ export default function Evangelisation() {
     <div
       className="min-h-screen w-full flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
+    >    
+
       <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
         <button onClick={() => router.back()} className="text-white">← Retour</button>
         <LogoutLink />

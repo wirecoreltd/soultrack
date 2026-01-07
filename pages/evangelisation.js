@@ -239,6 +239,8 @@ export default function Evangelisation() {
         <div className="px-2 py-2 text-white text-center bg-gray-600 rounded">
           Chargement des membres...
         </div>
+       ) : (
+         
       {/* VUE CARTE */}
 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
   {contacts?.length === 0 && (

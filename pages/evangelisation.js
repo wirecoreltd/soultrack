@@ -116,14 +116,13 @@ export default function Evangelisation() {
 
     /* ===== MESSAGE WHATSAPP ===== */
     let message = `🙏 Bonjour ${cible.prenom},\n\n`;
-      selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom},\n\n`;
-
+    
     if (selectedContacts.length > 1) {
-  message += `Nous te confions avec joie ${selectedContacts.length} personnes rencontrées lors de l’évangélisation.\n\n`;
-} else {
-  message += "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n\n";
-}
-
+      message += `Nous te confions avec joie ${selectedContacts.length} personnes rencontrées lors de l’évangélisation.\n\n`;
+    } else {
+      message += "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n\n";
+    }
+    
     selectedContacts.forEach((m) => {
       message += "────────────────────\n";
       message += `👤 Nom : *${m.prenom} ${m.nom}*\n`;
@@ -136,15 +135,16 @@ export default function Evangelisation() {
       message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
       message += `📝 Infos supplémentaires : ${formatBesoin(m.infos_supplementaires)}\n\n`;
     });
-
+    
     message += `Que le Seigneur te fortifie et t’utilise puissamment dans ${
       selectedContacts.length > 1 ? "ces suivis" : "ce suivi"
     } 🙌\n`;
-
+    
     if (cible.telephone) {
       const waLink = `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
       window.open(waLink, "_blank");
     }
+
 
     /* ===== PREPARER INSERT SUIVI ===== */
     const insertData = selectedContacts.map((c) => ({

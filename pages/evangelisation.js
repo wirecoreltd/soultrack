@@ -159,36 +159,17 @@ export default function Evangelisation() {
     setCheckedContacts({});
 
     /* ================= WHATSAPP ================= */
-    let message = `🙏 Bonjour ${cible.responsable || cible.prenom},\n\n`;
+    let message = `🙏 Bonjour ${
+      selectedTargetType === "cellule"
+        ? cible.cellule_full
+        : cible.prenom
+    },\n\n`;
 
-      message += isMultiple
-        ? "Nous te confions avec joie ces personnes rencontrées lors de l’évangélisation.\n"
-        : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n";
-
-      message +=
-        isMultiple
-          ? "Merci pour ton cœur et ton engagement à les accompagner 🙏❤️\n\n"
-          : "Merci pour ton cœur et ton engagement à l’accompagner 🙏❤️\n\n";
-
-      selectedContacts.forEach((m, index) => {
-        message += "────────────────────\n";
-        if (isMultiple) message += `👥 Personne ${index + 1}\n`;
-        message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
-        message += `📱 Téléphone : ${m.telephone || "—"}\n`;
-        message += `🏙️ Ville : ${m.ville || "—"}\n`;
-        message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
-        message += `⚥ Sexe : ${m.sexe || "—"}\n`;
-        message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
-        message += `☀️ Type : ${m.type_conversion || "—"}\n`;
-        message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
-        message += `📝 Infos supplémentaires : ${formatBesoin(
-          m.infos_supplementaires
-        )}\n`;
-      });
-        message += `Que le Seigneur te fortifie et t’utilise puissamment dans ${
-        selectedContacts.length > 1 ? "ces suivis" : "ce suivi"
-        } 🙌\n`;
-
+    selectedContacts.forEach((m) => {
+      message += `👤 ${m.prenom} ${m.nom}\n📱 ${m.telephone || "—"}\n🏙️ ${
+        m.ville || "—"
+      }\n\n`;
+    });
 
     if (cible.telephone) {
       window.open(

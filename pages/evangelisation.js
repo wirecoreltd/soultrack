@@ -312,29 +312,21 @@ const sendContacts = async () => {
         )}
       </div>
 
-      {/* ================= AFFICHAGE CONTACTS ================= */}
+     {/* ================= AFFICHAGE CONTACTS ================= */}
 <div className="w-full max-w-6xl flex flex-col items-center">
-  {contacts === null ? (
-    <>
-      <div className="px-2 py-2 text-white text-center bg-gray-600 rounded">
-        Chargement des membres...
-      </div>
 
-      {/* Toggle Vue Carte / Vue Table */}
-      <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
-        <button
-          onClick={() => setView(view === "card" ? "table" : "card")}
-          className="text-sm font-semibold underline text-white"
-        >
-          {view === "card" ? "Vue Table" : "Vue Carte"}
-        </button>
-      </div>
-    </>
-  ) : (
-    <>
+  {/* Toggle Vue Carte / Vue Table */}
+  <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
+    <button
+      onClick={() => setView(view === "card" ? "table" : "card")}
+      className="text-sm font-semibold underline text-white"
+    >
+      {view === "card" ? "Vue Table" : "Vue Carte"}
+    </button>
+  </div>
 
             {/* VUE CARTE */}
-            {view === "card" && (
+             {contacts && contacts.length > 0 && view === "card" && (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
                 {contacts.map((member) => (
                   <div key={member.id} className="bg-white rounded-2xl shadow-xl p-4 border-l-4 relative" style={{ borderLeftColor: getBorderColor(member) }}>

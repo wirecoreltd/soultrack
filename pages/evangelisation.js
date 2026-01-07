@@ -387,11 +387,8 @@ const sendContacts = async () => {
                   ))}
                 </div>
               </div>
-            )}
-          </>
-        )}
-      </div>
-
+            )}    
+     
       {/* POPUPS */}
       {editMember && (
   <EditEvangelisePopup

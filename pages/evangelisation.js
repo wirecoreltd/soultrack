@@ -115,32 +115,36 @@ export default function Evangelisation() {
       /* ===== MESSAGE WHATSAPP ===== */
 
       let message = `🙏 Bonjour ${
-        selectedTargetType === "cellule"
-          ? cible.cellule_full
-          : cible.prenom
-      },\n\n`;
+  selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom
+},\n\n`;
 
-      message +=
-        selectedContacts.length > 1
-          ? "Nous te confions avec joie ces personnes rencontrées lors de l’évangélisation.\n\n"
-          : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n\n";
+// Gestion du texte d'introduction avec le nombre de personnes
+if (selectedContacts.length > 1) {
+  message += `Nous te confions avec joie ${selectedContacts.length} personnes rencontrées lors de l’évangélisation.\n\n`;
+} else {
+  message += "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n\n";
+}
 
-      selectedContacts.forEach((m, index) => {
-        message += "────────────────────\n";
-        if (selectedContacts.length > 1)
-          message += `👥 Personne ${index + 1}\n`;
-        message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
-        message += `📱 Téléphone : ${m.telephone || "—"}\n`;
-        message += `🏙️ Ville : ${m.ville || "—"}\n`;
-        message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
-        message += `⚥ Sexe : ${m.sexe || "—"}\n`;
-        message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
-        message += `☀️ Type : ${m.type_conversion || "—"}\n`;
-        message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
-        message += `📝 Infos supplémentaires : ${formatBesoin(
-          m.infos_supplementaires
-        )}\n\n`;
-      });
+// Boucle sur les contacts
+selectedContacts.forEach((m) => {
+  message += "────────────────────\n";
+  // Nom en gras
+  message += `👤 Nom : *${m.prenom} ${m.nom}*\n`;
+  message += `📱 Téléphone : ${m.telephone || "—"}\n`;
+  message += `🏙️ Ville : ${m.ville || "—"}\n`;
+  message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
+  message += `⚥ Sexe : ${m.sexe || "—"}\n`;
+  message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
+  message += `☀️ Type : ${m.type_conversion || "—"}\n`;
+  message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
+  message += `📝 Infos supplémentaires : ${formatBesoin(m.infos_supplementaires)}\n\n`;
+});
+
+// Phrase de conclusion adaptée au nombre de contacts
+message += `Que le Seigneur te fortifie et t’utilise puissamment dans ${
+  selectedContacts.length > 1 ? "ces suivis" : "ce suivi"
+} 🙌\n`;
+
 
       /* ===== WHATSAPP (OPTIONNEL) ===== */
 
@@ -181,9 +185,11 @@ export default function Evangelisation() {
 
       const { error } = await supabase
         .from("suivis_des_evangelises")
-        .insert(insertData);
+        .insert(insertData, { returning: "minimal" }); // éviter les problèmes de RLS / performance
 
       if (error) throw error;
+
+      /* ===== SUPPRESSION DES CONTACTS ORIGINAUX ===== */
 
       const idsToDelete = selectedContacts.map((c) => c.id);
       await supabase.from("evangelises").delete().in("id", idsToDelete);
@@ -199,16 +205,17 @@ export default function Evangelisation() {
     }
   };
 
-  /* ================= UI (INCHANGÉE) ================= */
+  /* ================= UI ================= */
 
   return (
     <div
       className="min-h-screen w-full flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >    
-
+    >
       <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
-        <button onClick={() => router.back()} className="text-white">← Retour</button>
+        <button onClick={() => router.back()} className="text-white">
+          ← Retour
+        </button>
         <LogoutLink />
       </div>
 
@@ -224,7 +231,7 @@ export default function Evangelisation() {
         </button>
       </div>
 
-        {/* SELECT */}
+      {/* SELECT */}
       <div className="w-full max-w-md mb-6">
         <select
           value={selectedTargetType}
@@ -270,59 +277,55 @@ export default function Evangelisation() {
       </div>
 
       {/* VUE CARTE */}
-      {view === "card" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
-          {contacts.map((member) => (
-            <div
-              key={member.id}
-              className="bg-white rounded-2xl shadow-xl p-4 border-l-4 transition-all duration-300 relative"
-              style={{ borderLeftColor: getBorderColor(member) }}
-            >
-              <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
-              <p
-                className="text-center text-sm text-orange-500 underline decoration-orange-400 cursor-pointer font-semibold"
-                onClick={() => setOpenPhoneMenuId(member.id)}
-              >
-                {member.telephone || "—"}
-              </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
+        {contacts.map((member) => (
+          <div
+            key={member.id}
+            className="bg-white rounded-2xl shadow-xl p-4 border-l-4 relative"
+            style={{ borderLeftColor: getBorderColor(member) }}
+          >
+            <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
+            <p className="text-center text-sm text-orange-500 underline decoration-orange-400 cursor-pointer font-semibold"
+              onClick={() => setOpenPhoneMenuId(member.id)}>
+              {member.telephone || "—"}
+            </p>
 
-              {openPhoneMenuId === member.id && (
-                <div ref={phoneMenuRef} className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
-                  onClick={(e) => e.stopPropagation()}>
-                  <a href={member.telephone ? `tel:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📞 Appeler</a>
-                  <a href={member.telephone ? `sms:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>✉️ SMS</a>
-                  <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}?call` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📱 Appel WhatsApp</a>
-                  <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>💬 Message WhatsApp</a>
-                </div>
-              )}
+            {openPhoneMenuId === member.id && (
+              <div ref={phoneMenuRef} className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
+                onClick={(e) => e.stopPropagation()}>
+                <a href={member.telephone ? `tel:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📞 Appeler</a>
+                <a href={member.telephone ? `sms:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>✉️ SMS</a>
+                <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}?call` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📱 Appel WhatsApp</a>
+                <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>💬 Message WhatsApp</a>
+              </div>
+            )}
 
-              <p className="text-center text-sm">🏙️ Ville : {member.ville || "—"}</p>
+            <p className="text-center text-sm">🏙️ Ville : {member.ville || "—"}</p>
 
-              <label className="flex justify-center gap-2 mt-2">
-                <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} />
-                Sélectionner
-              </label>
+            <label className="flex justify-center gap-2 mt-2">
+              <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} />
+              Sélectionner
+            </label>
 
-              <button onClick={() => setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))}
-                className="text-orange-500 underline text-sm block mx-auto mt-2">
-                {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-              </button>
+            <button onClick={() => setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))}
+              className="text-orange-500 underline text-sm block mx-auto mt-2">
+              {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+            </button>
 
-              {detailsOpen[member.id] && (
-                <div className="text-sm mt-3 space-y-1">
-                  <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-                  <p>⚥ Sexe : {member.sexe || "—"}</p>
-                  <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
-                  <p>☀️ Type : {member.type_conversion || "—"}</p>
-                  <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-                  <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
-                  <button onClick={() => { setEditMember(member); setPopupMember(null); }} className="text-blue-600 text-sm mt-4 w-full text-center">✏️ Modifier le contact</button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+            {detailsOpen[member.id] && (
+              <div className="text-sm mt-3 space-y-1">
+                <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+                <p>⚥ Sexe : {member.sexe || "—"}</p>
+                <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
+                <p>☀️ Type : {member.type_conversion || "—"}</p>
+                <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
+                <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
+                <button onClick={() => { setEditMember(member); setPopupMember(null); }} className="text-blue-600 text-sm mt-4 w-full text-center">✏️ Modifier le contact</button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
 
       {/* VUE TABLE */}
       {view === "table" && (

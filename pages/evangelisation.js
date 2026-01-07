@@ -17,11 +17,10 @@ export default function Evangelisation() {
   const [selectedTargetType, setSelectedTargetType] = useState("");
   const [selectedTarget, setSelectedTarget] = useState("");
   const [checkedContacts, setCheckedContacts] = useState({});
-  const [detailsOpen, setDetailsOpen] = useState({});
   const [editMember, setEditMember] = useState(null);
   const [popupMember, setPopupMember] = useState(null);
   const [loadingSend, setLoadingSend] = useState(false);
-  const [view, setView] = useState("card");
+  const [view, setView] = useState("card"); // carte ou table
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
 
@@ -43,23 +42,21 @@ export default function Evangelisation() {
   }, []);
 
   const fetchContacts = async () => {
-  const { data, error } = await supabase
-    .from("evangelises")
-    .select("*")
-    .neq("status_suivi", "Envoyé")
-    .order("created_at", { ascending: false })
-    .limit(1000);
+    const { data, error } = await supabase
+      .from("evangelises")
+      .select("*")
+      .neq("status_suivi", "Envoyé")
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Erreur fetchContacts:", error);
-    setContacts([]);
-    return;
-  }
+    if (error) {
+      console.error("Erreur fetchContacts:", error);
+      setContacts([]);
+      return;
+    }
 
-  console.log("Contacts chargés :", data); // IMPORTANT: vérifier ici
-  setContacts(data || []);
-};
-
+    console.log("Contacts chargés :", data);
+    setContacts(data || []);
+  };
 
   const fetchCellules = async () => {
     const { data } = await supabase
@@ -107,15 +104,14 @@ export default function Evangelisation() {
     setLoadingSend(true);
 
     try {
-      // Récupérer la cible (cellule ou conseiller)
       const cible =
         selectedTargetType === "cellule"
-          ? cellules.find((c) => c.id === selectedTarget)
-          : conseillers.find((c) => c.id === selectedTarget);
+          ? cellules.find((c) => String(c.id) === String(selectedTarget))
+          : conseillers.find((c) => String(c.id) === String(selectedTarget));
 
       if (!cible) throw new Error("Cible introuvable");
 
-      /* ===== MESSAGE WHATSAPP ===== */
+      // Construction message
       let message = `🙏 Bonjour ${
         selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom
       },\n\n`;
@@ -148,7 +144,7 @@ export default function Evangelisation() {
         window.open(waLink, "_blank");
       }
 
-      /* ===== PREPARER INSERT SUIVI ===== */
+      // Insert suivi
       const insertData = selectedContacts.map((c) => ({
         prenom: c.prenom,
         nom: c.nom,
@@ -168,15 +164,11 @@ export default function Evangelisation() {
         date_suivi: new Date().toISOString(),
       }));
 
-      console.log("Insert data:", insertData);
-
-      /* ===== INSERT DANS SUIVIS ===== */
       const { error: insertError } = await supabase
         .from("suivis_des_evangelises")
         .insert(insertData);
       if (insertError) throw insertError;
 
-      /* ===== METTRE A JOUR LE STATUS DANS EVANGELISES ===== */
       const { error: updateError } = await supabase
         .from("evangelises")
         .update({ status_suivi: "Envoyé" })
@@ -196,28 +188,38 @@ export default function Evangelisation() {
 
   /* ================= UI ================= */
   return (
-    <div
-      className="min-h-screen w-full flex flex-col items-center p-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
+    <div className="min-h-screen w-full flex flex-col items-center p-6"
+         style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+
       <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
-        <button onClick={() => router.back()} className="text-white">
-          ← Retour
-        </button>
+        <button onClick={() => router.back()} className="text-white">← Retour</button>
         <LogoutLink />
       </div>
 
       <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
       <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
 
+      {/* Toggle carte / table */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setView("card")}
+          className={`px-4 py-2 rounded font-bold ${view === "card" ? "bg-white text-purple-800" : "bg-purple-600 text-white"}`}
+        >
+          Carte
+        </button>
+        <button
+          onClick={() => setView("table")}
+          className={`px-4 py-2 rounded font-bold ${view === "table" ? "bg-white text-purple-800" : "bg-purple-600 text-white"}`}
+        >
+          Table
+        </button>
+      </div>
+
       {/* Sélection cible */}
       <div className="w-full max-w-md mb-6">
         <select
           value={selectedTargetType}
-          onChange={(e) => {
-            setSelectedTargetType(e.target.value);
-            setSelectedTarget("");
-          }}
+          onChange={(e) => { setSelectedTargetType(e.target.value); setSelectedTarget(""); }}
           className="w-full border rounded px-3 py-2 mb-3 text-center"
         >
           <option value="">-- Envoyer à --</option>
@@ -232,7 +234,7 @@ export default function Evangelisation() {
             className="w-full border rounded px-3 py-2 mb-3 text-center"
           >
             <option value="">-- Choisir --</option>
-            {(selectedTargetType === "cellule" ? cellules : conseillers).map((c) => (
+            {(selectedTargetType === "cellule" ? cellules : conseillers).map(c => (
               <option key={c.id} value={c.id}>
                 {selectedTargetType === "cellule"
                   ? `${c.cellule_full} (${c.ville || "—"})`
@@ -253,7 +255,44 @@ export default function Evangelisation() {
         )}
       </div>
 
-      {/* VUE TABLE */}
+      {/* ================= VUE CARTE ================= */}
+      {view === "card" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
+          {contacts.length === 0 && (
+            <div className="px-2 py-2 text-white text-center bg-gray-600 rounded">
+              Aucun membre en suivi
+            </div>
+          )}
+
+          {contacts.map(member => (
+            <div key={member.id} className="bg-white rounded-2xl shadow-xl p-4 border-l-4 relative"
+                 style={{ borderLeftColor: getBorderColor(member) }}>
+              <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
+              <p className="text-center text-sm text-orange-500 underline decoration-orange-400 cursor-pointer font-semibold"
+                 onClick={() => setOpenPhoneMenuId(member.id)}>
+                {member.telephone || "—"}
+              </p>
+
+              {openPhoneMenuId === member.id && (
+                <div ref={phoneMenuRef} className="absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
+                     onClick={(e) => e.stopPropagation()}>
+                  <a href={member.telephone ? `tel:${member.telephone}` : "#"} className="block px-4 py-2 text-sm hover:bg-gray-100">📞 Appeler</a>
+                  <a href={member.telephone ? `sms:${member.telephone}` : "#"} className="block px-4 py-2 text-sm hover:bg-gray-100">✉️ SMS</a>
+                  <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}?call` : "#"} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm hover:bg-gray-100">📱 Appel WhatsApp</a>
+                  <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}` : "#"} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm hover:bg-gray-100">💬 Message WhatsApp</a>
+                </div>
+              )}
+
+              <label className="flex justify-center gap-2 mt-2">
+                <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} />
+                Sélectionner
+              </label>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ================= VUE TABLE ================= */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto py-2">
           <div className="min-w-[700px] space-y-2">

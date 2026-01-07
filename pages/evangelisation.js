@@ -129,9 +129,8 @@ export default function Evangelisation() {
     return "#888";
   };
 
-
   /* ================= ENVOI WHATSAPP ================= */
-  const sendContacts = async () => {
+const sendContacts = async () => {
   if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
 
   setLoadingSend(true);
@@ -139,10 +138,32 @@ export default function Evangelisation() {
   try {
     const cible =
       selectedTargetType === "cellule"
-        ? cellules.find((c) => c.id === selectedTarget)
-        : conseillers.find((c) => c.id === selectedTarget);
+        ? cellules.find((c) => c.id == selectedTarget)
+        : conseillers.find((c) => c.id == selectedTarget);
 
     if (!cible) throw new Error("Cible introuvable");
+
+    // 1️⃣ Vérifier les doublons dans les suivis existants
+    const { data: existingSuivis } = await supabase
+      .from("suivis_des_evangelises")
+      .select("evangelises(telephone)");
+
+    const existingPhones = new Set(
+      (existingSuivis || [])
+        .map((s) => s.evangelises?.telephone)
+        .filter(Boolean)
+    );
+
+    const alreadySent = selectedContacts.filter((c) =>
+      existingPhones.has(c.telephone)
+    );
+
+    if (alreadySent.length > 0) {
+      const noms = alreadySent.map((c) => `${c.prenom} ${c.nom}`).join(", ");
+      alert(`❌ Ces contacts existent déjà en suivi : ${noms}`);
+      setLoadingSend(false);
+      return; // Stop l'envoi pour éviter doublon
+    }
 
     /* ================= INSERT SUIVIS ================= */
     const inserts = selectedContacts.map((m) => ({
@@ -181,43 +202,40 @@ export default function Evangelisation() {
     if (updateError) throw updateError;
 
     /* ================= UI IMMÉDIATE ================= */
-    setContacts((prev) =>
-      prev.filter((c) => !ids.includes(c.id))
-    );
+    setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
     setCheckedContacts({});
 
     /* ================= MESSAGE WHATSAPP ================= */
-const nomCible =
-  selectedTargetType === "cellule"
-    ? cible.cellule_full || "Responsable de cellule"
-    : `${cible.prenom}`;
+    const nomCible =
+      selectedTargetType === "cellule"
+        ? cible.cellule_full || "Responsable de cellule"
+        : `${cible.prenom}`;
 
-const isMultiple = selectedContacts.length > 1;
+    const isMultiple = selectedContacts.length > 1;
 
-let message = `🙏 Bonjour ${nomCible},\n\n`;
+    let message = `🙏 Bonjour ${nomCible},\n\n`;
 
-message += isMultiple
-  ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
-  : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
+    message += isMultiple
+      ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
+      : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
 
-selectedContacts.forEach((m, index) => {
-  message += "────────────────────\n";
-  if (isMultiple) message += `👥 Personne ${index + 1}\n`;
-  message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
-  message += `📱 Téléphone : ${m.telephone || "—"}\n`;
-  message += `🏙️ Ville : ${m.ville || "—"}\n`;
-  message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
-  message += `🎗️ Sexe : ${m.sexe || "—"}\n`;
-  message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n`;
-  message += `☀️ Type de conversion : ${m.type_conversion || "—"}\n`;
-  message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
-  message += `📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
-});
+    selectedContacts.forEach((m, index) => {
+      message += "────────────────────\n";
+      if (isMultiple) message += `👥 Personne ${index + 1}\n`;
+      message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
+      message += `📱 Téléphone : ${m.telephone || "—"}\n`;
+      message += `🏙️ Ville : ${m.ville || "—"}\n`;
+      message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
+      message += `🎗️ Sexe : ${m.sexe || "—"}\n`;
+      message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n`;
+      message += `☀️ Type de conversion : ${m.type_conversion || "—"}\n`;
+      message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
+      message += `📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
+    });
 
-message +=
-  "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner 🙏❤️\n\n";
-message += "Que Dieu te bénisse abondamment ✨";
-
+    message +=
+      "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner 🙏❤️\n\n";
+    message += "Que Dieu te bénisse abondamment ✨";
 
     if (cible.telephone) {
       window.open(
@@ -299,13 +317,7 @@ message += "Que Dieu te bénisse abondamment ✨";
         {contacts === null ? (
           <div className="px-2 py-2 text-white text-center bg-gray-600 rounded">
             Chargement des membres...
-          </div>
-        ) : contacts.length === 0 ? (
-          <div className="px-2 py-2 text-white text-center bg-gray-600 rounded">
-            Aucun membre en suivi
-          </div>
-        ) : (
-          <>
+          </div>        
             {/* Toggle Vue Carte / Vue Table */}
             <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
               <button

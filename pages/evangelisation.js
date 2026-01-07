@@ -46,7 +46,7 @@ export default function Evangelisation() {
     const { data, error } = await supabase
       .from("evangelises")
       .select("*")
-      .neq("status_suivi", "Envoyé")
+      .eq("status_suivi", "Non envoyé") // ✅ CORRECTION CLÉ
       .order("created_at", { ascending: false })
       .limit(1000);
 
@@ -98,6 +98,7 @@ export default function Evangelisation() {
     if (member.besoin) return "#FFB800";
     return "#888";
   };
+
 
   /* ================= ENVOI WHATSAPP ================= */
   const sendContacts = async () => {

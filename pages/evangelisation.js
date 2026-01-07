@@ -166,13 +166,16 @@ const insertData = selectedContacts.map((c) => ({
   besoin: c.besoin,
   infos_supplementaires: c.infos_supplementaires,
   is_whatsapp: c.is_whatsapp || false,
+
   sexe: c.sexe,
   type_conversion: c.type_conversion,
   priere_salut: c.priere_salut,
+
   cellule_id: selectedTargetType === "cellule" ? cible.id : null,
   responsable_cellule: selectedTargetType === "cellule" ? cible.responsable : null,
   conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
-  evangelise_id: c.id,   // ⚠️ FK doit exister dans evangelises
+
+  evangelise_id: c.id,   // FK vers evangelises
   status_suivis_evangelises: "Envoyé",
   date_suivi: new Date().toISOString(),
 }));
@@ -183,9 +186,6 @@ const { error } = await supabase
 
 if (error) throw error;
 
-/* ===== SUPPRIMER APRÈS INSERT ===== */
-const idsToDelete = selectedContacts.map((c) => c.id);
-await supabase.from("evangelises").delete().in("id", idsToDelete);
 
 
       alert("✅ Contacts envoyés et suivis créés !");

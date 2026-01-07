@@ -110,11 +110,10 @@ const fetchContacts = async () => {
  /* ================= ENVOI WHATSAPP + SUIVI ================= */
 const sendContacts = async () => {
   if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
-
   setLoadingSend(true);
 
   try {
-    // 🔹 Trouver la cible
+    // Trouver la cible
     const cible =
       selectedTargetType === "cellule"
         ? cellules.find((c) => c.id === selectedTarget)
@@ -123,9 +122,7 @@ const sendContacts = async () => {
     if (!cible) throw new Error("Cible introuvable");
 
     /* ===== MESSAGE WHATSAPP ===== */
-    let message = `🙏 Bonjour ${
-      cible.prenom
-    },\n\n`;
+    let message = `🙏 Bonjour ${cible.prenom},\n\n`;
 
     message += selectedContacts.length > 1
       ? `Nous te confions avec joie ${selectedContacts.length} personnes rencontrées lors de l’évangélisation.\n\n`
@@ -162,48 +159,45 @@ const sendContacts = async () => {
       besoin: c.besoin,
       infos_supplementaires: c.infos_supplementaires,
       is_whatsapp: c.is_whatsapp || false,
-
       sexe: c.sexe,
       type_conversion: c.type_conversion,
       priere_salut: c.priere_salut,
 
+      // ⚡ UUID correct ou null
       cellule_id: selectedTargetType === "cellule" ? cible.id : null,
-      responsable_cellule: selectedTargetType === "cellule" ? cible.responsable_id : null,
+      responsable_cellule: selectedTargetType === "cellule" ? cible.responsable || null : null,
       conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
 
       evangelise_id: c.id,
-      status_suivis_evangelises: "Envoyé", // ⚡ NOM CORRECT
+      status_suivis_evangelises: "Envoyé",
       date_suivi: new Date().toISOString(),
     }));
 
     console.log("Insert data:", insertData);
 
-    /* ===== INSERT DANS SUIVIS ===== */
     const { error: insertError } = await supabase
       .from("suivis_des_evangelises")
       .insert(insertData);
     if (insertError) throw insertError;
 
-    /* ===== METTRE A JOUR LE STATUS DANS EVANGELISES ===== */
+    // Mettre à jour le statut dans evangelises
     const { error: updateError } = await supabase
       .from("evangelises")
-      .update({ status_suivis_evangelises: "Envoyé" }) // ⚡ NOM CORRECT
+      .update({ status_suivis_evangelises: "Envoyé" })
       .in("id", selectedContacts.map((c) => c.id));
     if (updateError) throw updateError;
 
     alert("✅ Contacts envoyés et suivis créés !");
     setCheckedContacts({});
-    fetchContacts(); // rafraîchit la liste
+    fetchContacts();
 
   } catch (err) {
     console.error("ERREUR ENVOI", err);
-    alert("❌ Une erreur est survenue.");
+    alert("❌ Une erreur est survenue. Vérifie console pour details.");
   } finally {
     setLoadingSend(false);
   }
 };
-
-
   /* ================= UI ================= */
 
   return (

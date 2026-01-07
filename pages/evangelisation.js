@@ -50,11 +50,11 @@ export default function Evangelisation() {
 
   const fetchContacts = async () => {
   const { data } = await supabase
-    .from("evangelises")
-    .select("*")
-    .neq("status_suivis_evangelises", "Envoyé") // NE PAS afficher les envoyés
-    .order("created_at", { ascending: false })
-    .limit(1000);
+  .from("evangelises")
+  .select("*")
+  .or("status_suivis_evangelises.eq.Null,status_suivis_evangelises.neq.Envoyé")
+  .order("created_at", { ascending: false })
+  .limit(1000);
   setContacts(data || []);
 };
 
@@ -194,8 +194,6 @@ export default function Evangelisation() {
     setLoadingSend(false);
   }
 };
-
-
 
   /* ================= UI ================= */
 

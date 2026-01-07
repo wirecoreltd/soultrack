@@ -313,20 +313,25 @@ const sendContacts = async () => {
       </div>
 
       {/* ================= AFFICHAGE CONTACTS ================= */}
-      <div className="w-full max-w-6xl flex flex-col items-center">
-        {contacts === null ? (
-          <div className="px-2 py-2 text-white text-center bg-gray-600 rounded">
-            Chargement des membres...
-          </div>        
-            {/* Toggle Vue Carte / Vue Table */}
-            <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
-              <button
-                onClick={() => setView(view === "card" ? "table" : "card")}
-                className="text-sm font-semibold underline text-white"
-              >
-                {view === "card" ? "Vue Table" : "Vue Carte"}
-              </button>
-            </div>
+<div className="w-full max-w-6xl flex flex-col items-center">
+  {contacts === null ? (
+    <>
+      <div className="px-2 py-2 text-white text-center bg-gray-600 rounded">
+        Chargement des membres...
+      </div>
+
+      {/* Toggle Vue Carte / Vue Table */}
+      <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
+        <button
+          onClick={() => setView(view === "card" ? "table" : "card")}
+          className="text-sm font-semibold underline text-white"
+        >
+          {view === "card" ? "Vue Table" : "Vue Carte"}
+        </button>
+      </div>
+    </>
+  ) : (
+    <>
 
             {/* VUE CARTE */}
             {view === "card" && (

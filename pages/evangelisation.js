@@ -200,6 +200,17 @@ export default function Evangelisation() {
       <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
       <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
 
+{/* === TEST CHARGEMENT CONTACTS === */}
+<div className="bg-white p-4 rounded w-full max-w-md mb-6">
+  <h2 className="font-bold mb-2">Contacts chargés :</h2>
+  {contacts.length === 0 && <p>Aucun contact chargé</p>}
+  {contacts.map(c => (
+    <div key={c.id} className="border-b py-1">
+      {c.prenom} {c.nom} - {c.telephone || "—"}
+    </div>
+  ))}
+</div>
+
       {/* Sélection cible */}
       <div className="w-full max-w-md mb-6">
         <select

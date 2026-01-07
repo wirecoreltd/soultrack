@@ -245,10 +245,13 @@ message += "Que Dieu te bénisse abondamment ✨";
             {(selectedTargetType === "cellule" ? cellules : conseillers).map((c) => (
               <option key={c.id} value={c.id}>
                 {selectedTargetType === "cellule"
-                  ? `${c.cellule_full} (${c.ville || ""})`
+                  ? c.ville
+                    ? `${c.cellule_full} - ${c.ville}`
+                    : c.cellule_full
                   : `${c.prenom} ${c.nom}`}
               </option>
             ))}
+
           </select>
         )}
 
@@ -275,19 +278,13 @@ message += "Que Dieu te bénisse abondamment ✨";
           </div>
         ) : (
           <>
-            {/* TOGGLE VUE */}
-            <div className="flex gap-4 mb-4">
+            {/* Toggle Vue Carte / Vue Table */}
+            <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
               <button
-                onClick={() => setView("card")}
-                className={`px-4 py-2 rounded ${view === "card" ? "bg-blue-600 text-white" : "bg-white text-black"}`}
+                onClick={() => setView(view === "card" ? "table" : "card")}
+                className="text-sm font-semibold underline text-white"
               >
-                Carte
-              </button>
-              <button
-                onClick={() => setView("table")}
-                className={`px-4 py-2 rounded ${view === "table" ? "bg-blue-600 text-white" : "bg-white text-black"}`}
-              >
-                Table
+                {view === "card" ? "Vue Table" : "Vue Carte"}
               </button>
             </div>
 

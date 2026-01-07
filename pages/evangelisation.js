@@ -42,10 +42,21 @@ export default function Evangelisation() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  
-  
+  const fetchContacts = async () => {
+    const { data, error } = await supabase
+      .from("evangelises")
+      .select("*")
+      .or("status_suivi.is.null,status_suivi.neq.Non envoyé")
+      .order("created_at", { ascending: false })
+      .limit(1000);
+
+    if (error) {
+      console.error("Erreur fetchContacts:", error);
+      setContacts([]);
       return;
     }
+
+    console.log("Contacts chargés :", data);
     setContacts(data || []);
   };
 
@@ -56,22 +67,12 @@ export default function Evangelisation() {
     setCellules(data || []);
   };
 
-  const fetchContacts = async () => {
-  const { data, error } = await supabase
-    .from("evangelises")
-    .select("*")
-    .or("status_suivi.is.null,status_suivi.neq.Non envoyé") // ⚡ colonne correcte
-    .order("created_at", { ascending: false })
-    .limit(1000);
-
-  if (error) {
-    console.error("Erreur fetchContacts:", error);
-    setContacts([]);
-    return;
-  }
-
-  console.log("Contacts chargés :", data);
-  setContacts(data || []);
+  const fetchConseillers = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom, telephone")
+      .eq("role", "Conseiller");
+    setConseillers(data || []);
   };
 
   /* ================= UTILS ================= */
@@ -140,7 +141,9 @@ export default function Evangelisation() {
       } 🙌\n`;
 
       if (cible.telephone) {
-        const waLink = `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
+        const waLink = `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
+          message
+        )}`;
         window.open(waLink, "_blank");
       }
 
@@ -192,31 +195,28 @@ export default function Evangelisation() {
 
   /* ================= UI ================= */
   return (
-    <div className="min-h-screen w-full flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+    <div
+      className="min-h-screen w-full flex flex-col items-center p-6"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+    >
       <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
-        <button onClick={() => router.back()} className="text-white">← Retour</button>
+        <button onClick={() => router.back()} className="text-white">
+          ← Retour
+        </button>
         <LogoutLink />
       </div>
 
       <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
       <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
 
-{/* === TEST CHARGEMENT CONTACTS === */}
-<div className="bg-white p-4 rounded w-full max-w-md mb-6">
-  <h2 className="font-bold mb-2">Contacts chargés :</h2>
-  {contacts.length === 0 && <p>Aucun contact chargé</p>}
-  {contacts.map(c => (
-    <div key={c.id} className="border-b py-1">
-      {c.prenom} {c.nom} - {c.telephone || "—"}
-    </div>
-  ))}
-</div>
-
       {/* Sélection cible */}
       <div className="w-full max-w-md mb-6">
         <select
           value={selectedTargetType}
-          onChange={(e) => { setSelectedTargetType(e.target.value); setSelectedTarget(""); }}
+          onChange={(e) => {
+            setSelectedTargetType(e.target.value);
+            setSelectedTarget("");
+          }}
           className="w-full border rounded px-3 py-2 mb-3 text-center"
         >
           <option value="">-- Envoyer à --</option>
@@ -231,9 +231,11 @@ export default function Evangelisation() {
             className="w-full border rounded px-3 py-2 mb-3 text-center"
           >
             <option value="">-- Choisir --</option>
-            {(selectedTargetType === "cellule" ? cellules : conseillers).map(c => (
+            {(selectedTargetType === "cellule" ? cellules : conseillers).map((c) => (
               <option key={c.id} value={c.id}>
-                {selectedTargetType === "cellule" ? `${c.cellule_full} (${c.ville || "—"})` : `${c.prenom} ${c.nom}`}
+                {selectedTargetType === "cellule"
+                  ? `${c.cellule_full} (${c.ville || "—"})`
+                  : `${c.prenom} ${c.nom}`}
               </option>
             ))}
           </select>

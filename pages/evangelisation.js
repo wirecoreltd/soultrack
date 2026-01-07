@@ -49,13 +49,15 @@ export default function Evangelisation() {
   }, []);
 
   const fetchContacts = async () => {
-    const { data } = await supabase
-      .from("evangelises")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(1000);
-    setContacts(data || []);
-  };
+  const { data } = await supabase
+    .from("evangelises")
+    .select("*")
+    .neq("status_suivis_evangelises", "Envoyé") // NE PAS afficher les envoyés
+    .order("created_at", { ascending: false })
+    .limit(1000);
+  setContacts(data || []);
+};
+
 
   const fetchCellules = async () => {
     const { data } = await supabase
@@ -113,13 +115,14 @@ export default function Evangelisation() {
     if (!cible) throw new Error("Cible introuvable");
 
     /* ===== MESSAGE WHATSAPP ===== */
-    let message = `🙏 Bonjour ${
-      selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom
-    },\n\n`;
+    let message = `🙏 Bonjour ${cible.prenom},\n\n`;
+      selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom},\n\n`;
 
-    message += selectedContacts.length > 1
-      ? `Nous te confions avec joie ${selectedContacts.length} personnes rencontrées lors de l’évangélisation.\n\n`
-      : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n\n";
+    if (selectedContacts.length > 1) {
+  message += `Nous te confions avec joie ${selectedContacts.length} personnes rencontrées lors de l’évangélisation.\n\n`;
+} else {
+  message += "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n\n";
+}
 
     selectedContacts.forEach((m) => {
       message += "────────────────────\n";
@@ -138,13 +141,12 @@ export default function Evangelisation() {
       selectedContacts.length > 1 ? "ces suivis" : "ce suivi"
     } 🙌\n`;
 
-    // Ouvre le lien WhatsApp si téléphone disponible
     if (cible.telephone) {
       const waLink = `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
       window.open(waLink, "_blank");
     }
 
-    /* ===== INSERT DANS SUIVIS ===== */
+    /* ===== PREPARER INSERT SUIVI ===== */
     const insertData = selectedContacts.map((c) => ({
       prenom: c.prenom,
       nom: c.nom,
@@ -153,12 +155,15 @@ export default function Evangelisation() {
       besoin: c.besoin,
       infos_supplementaires: c.infos_supplementaires,
       is_whatsapp: c.is_whatsapp || false,
+
       sexe: c.sexe,
       type_conversion: c.type_conversion,
       priere_salut: c.priere_salut,
+
       cellule_id: selectedTargetType === "cellule" ? cible.id : null,
-      responsable_cellule: selectedTargetType === "cellule" ? cible.responsable : null,
+      responsable_cellule: selectedTargetType === "cellule" ? cible.responsable_id : null, // ⚡ UUID obligatoire
       conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
+
       evangelise_id: c.id,   // FK vers evangelises
       status_suivis_evangelises: "Envoyé",
       date_suivi: new Date().toISOString(),
@@ -166,23 +171,22 @@ export default function Evangelisation() {
 
     console.log("Insert data:", insertData);
 
-    const { error } = await supabase
+    /* ===== INSERT DANS SUIVIS ===== */
+    const { error: insertError } = await supabase
       .from("suivis_des_evangelises")
       .insert(insertData);
+    if (insertError) throw insertError;
 
-    if (error) throw error;
-
-    /* ===== UPDATE STATUS DANS EVANGELISES ===== */
+    /* ===== METTRE A JOUR LE STATUS DANS EVANGELISES ===== */
     const { error: updateError } = await supabase
       .from("evangelises")
       .update({ status_suivis_evangelises: "Envoyé" })
-      .in("id", selectedContacts.map(c => c.id));
-
-    if (updateError) console.error("Erreur update status:", updateError);
+      .in("id", selectedContacts.map((c) => c.id));
+    if (updateError) throw updateError;
 
     alert("✅ Contacts envoyés et suivis créés !");
     setCheckedContacts({});
-    fetchContacts(); // Les contacts envoyés ne seront plus affichés
+    fetchContacts(); // Les contacts envoyés sont filtrés grâce au status
   } catch (err) {
     console.error("ERREUR ENVOI", err);
     alert("❌ Une erreur est survenue.");
@@ -190,6 +194,7 @@ export default function Evangelisation() {
     setLoadingSend(false);
   }
 };
+
 
 
   /* ================= UI ================= */

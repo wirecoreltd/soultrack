@@ -102,60 +102,91 @@ export default function Evangelisation() {
 
   /* ================= ENVOI WHATSAPP ================= */
   const sendContacts = async () => {
-    if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+  if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
 
-    setLoadingSend(true);
+  setLoadingSend(true);
 
-    try {
-      const cible =
-        selectedTargetType === "cellule"
-          ? cellules.find((c) => c.id === selectedTarget)
-          : conseillers.find((c) => c.id === selectedTarget);
+  try {
+    const cible =
+      selectedTargetType === "cellule"
+        ? cellules.find((c) => c.id === selectedTarget)
+        : conseillers.find((c) => c.id === selectedTarget);
 
-      if (!cible) throw new Error("Cible introuvable");
+    if (!cible) throw new Error("Cible introuvable");
 
-      let message = `🙏 Bonjour ${
-        selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom
-      },\n\n`;
+    /* ================= INSERT SUIVIS ================= */
+    const inserts = selectedContacts.map((m) => ({
+      prenom: m.prenom,
+      nom: m.nom,
+      telephone: m.telephone,
+      is_whatsapp: m.is_whatsapp,
+      ville: m.ville,
+      besoin: m.besoin,
+      infos_supplementaires: m.infos_supplementaires,
+      sexe: m.sexe,
+      type_conversion: m.type_conversion,
+      priere_salut: m.priere_salut,
+      status_suivis_evangelises: "Envoyé",
+      evangelise_id: m.id,
+      conseiller_id:
+        selectedTargetType === "conseiller" ? selectedTarget : null,
+      cellule_id:
+        selectedTargetType === "cellule" ? selectedTarget : null,
+    }));
 
-      message += selectedContacts.length > 1
-        ? `Nous te confions avec joie ${selectedContacts.length} personnes rencontrées lors de l’évangélisation.\n\n`
-        : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n\n";
+    const { error: insertError } = await supabase
+      .from("suivis_des_evangelises")
+      .insert(inserts);
 
-      selectedContacts.forEach((m) => {
-        message += "────────────────────\n";
-        message += `👤 Nom : *${m.prenom} ${m.nom}*\n`;
-        message += `📱 Téléphone : ${m.telephone || "—"}\n`;
-        message += `🏙️ Ville : ${m.ville || "—"}\n`;
-        message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
-        message += `⚥ Sexe : ${m.sexe || "—"}\n`;
-        message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
-        message += `☀️ Type : ${m.type_conversion || "—"}\n`;
-        message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
-        message += `📝 Infos supplémentaires : ${formatBesoin(m.infos_supplementaires)}\n\n`;
-      });
+    if (insertError) throw insertError;
 
-      message += `Que le Seigneur te fortifie et t’utilise puissamment dans ${
-        selectedContacts.length > 1 ? "ces suivis" : "ce suivi"
-      } 🙌\n`;
+    /* ================= UPDATE EVANGELISES ================= */
+    const ids = selectedContacts.map((c) => c.id);
 
-      if (cible.telephone) {
-        const waLink = `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
+    const { error: updateError } = await supabase
+      .from("evangelises")
+      .update({ status_suivi: "Envoyé" })
+      .in("id", ids);
+
+    if (updateError) throw updateError;
+
+    /* ================= UI IMMÉDIATE ================= */
+    setContacts((prev) =>
+      prev.filter((c) => !ids.includes(c.id))
+    );
+    setCheckedContacts({});
+
+    /* ================= WHATSAPP ================= */
+    let message = `🙏 Bonjour ${
+      selectedTargetType === "cellule"
+        ? cible.cellule_full
+        : cible.prenom
+    },\n\n`;
+
+    selectedContacts.forEach((m) => {
+      message += `👤 ${m.prenom} ${m.nom}\n📱 ${m.telephone || "—"}\n🏙️ ${
+        m.ville || "—"
+      }\n\n`;
+    });
+
+    if (cible.telephone) {
+      window.open(
+        `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
           message
-        )}`;
-        window.open(waLink, "_blank");
-      }
-
-      setCheckedContacts({});
-      fetchContacts();
-      alert("✅ Contacts envoyés !");
-    } catch (err) {
-      console.error("ERREUR ENVOI", err);
-      alert("❌ Une erreur est survenue. Vérifie la console.");
-    } finally {
-      setLoadingSend(false);
+        )}`,
+        "_blank"
+      );
     }
-  };
+
+    alert("✅ Contacts envoyés et enregistrés");
+  } catch (err) {
+    console.error("ERREUR ENVOI", err);
+    alert("❌ Erreur lors de l’envoi");
+  } finally {
+    setLoadingSend(false);
+  }
+};
+
 
   /* ================= UI ================= */
   return (

@@ -23,6 +23,7 @@ export default function Evangelisation() {
   const [loadingSend, setLoadingSend] = useState(false);
   const [view, setView] = useState("card"); // "card" ou "table"
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
+  const [doublons, setDoublons] = useState([]); // contacts déjà en suivi
   const phoneMenuRef = useRef(null);
 
   /* ================= FETCH ================= */
@@ -43,29 +44,28 @@ export default function Evangelisation() {
   }, []);
 
   const fetchContacts = async () => {
-  const { data, error } = await supabase
-    .from("evangelises")
-    .select("*")
-    .eq("statut", "evangelisé")
-    .eq("status_suivi", "Non envoyé")
-    .order("created_at", { ascending: false })
-    .limit(1000);
+    const { data, error } = await supabase
+      .from("evangelises")
+      .select("*")
+      .eq("statut", "evangelisé")
+      .eq("status_suivi", "Non envoyé")
+      .order("created_at", { ascending: false })
+      .limit(1000);
 
-  if (error) {
-    console.error("Erreur fetchContacts:", error);
-    setContacts([]);
-    return;
-  }
+    if (error) {
+      console.error("Erreur fetchContacts:", error);
+      setContacts([]);
+      return;
+    }
 
-  console.log("Contacts chargés :", data);
-  setContacts(data || []);
-};
-
+    console.log("Contacts chargés :", data);
+    setContacts(data || []);
+  };
 
   const fetchCellules = async () => {
     const { data } = await supabase
       .from("cellules")
-      .select("id, cellule_full, responsable, telephone");
+      .select("id, cellule_full, responsable, telephone, ville");
     setCellules(data || []);
   };
 
@@ -101,132 +101,136 @@ export default function Evangelisation() {
     return "#888";
   };
 
-
   /* ================= ENVOI WHATSAPP ================= */
   const sendContacts = async () => {
-  if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
-  setLoadingSend(true);
+    if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+    setLoadingSend(true);
 
-  try {
-    const cible =
-      selectedTargetType === "cellule"
-        ? cellules.find((c) => c.id == selectedTarget)
-        : conseillers.find((c) => c.id == selectedTarget);
+    try {
+      const cible =
+        selectedTargetType === "cellule"
+          ? cellules.find((c) => c.id == selectedTarget)
+          : conseillers.find((c) => c.id == selectedTarget);
 
-    if (!cible || !cible.telephone)
-      throw new Error("Numéro de la cible invalide");
+      if (!cible || !cible.telephone)
+        throw new Error("Numéro de la cible invalide");
 
-    // ================= VERIFICATION CONTACTS =================
-    const { data: suivisExisting } = await supabase
-      .from("suivis_des_evangelises")
-      .select("evangelise_id, evangelises (telephone)");
+      // ================= VERIFICATION CONTACTS =================
+      const { data: suivisExisting } = await supabase
+        .from("suivis_des_evangelises")
+        .select("evangelise_id, evangelises (telephone)");
 
-    const existingPhones = suivisExisting.map(
-      (s) => s.evangelises?.telephone
-    );
-
-    const alreadyInSuivi = selectedContacts.some((c) =>
-      existingPhones.includes(c.telephone)
-    );
-
-    if (alreadyInSuivi) {
-      alert("⚠️ Un ou plusieurs contacts sont déjà en suivi !");
-      setLoadingSend(false);
-      return;
-    }
-
-    /* ================= INSERT SUIVIS ================= */
-    const inserts = selectedContacts.map((m) => ({
-      prenom: m.prenom,
-      nom: m.nom,
-      telephone: m.telephone,
-      is_whatsapp: m.is_whatsapp,
-      ville: m.ville,
-      besoin: m.besoin,
-      infos_supplementaires: m.infos_supplementaires,
-      sexe: m.sexe,
-      type_conversion: m.type_conversion,
-      priere_salut: m.priere_salut,
-      status_suivis_evangelises: "Envoyé",
-      evangelise_id: m.id,
-      conseiller_id:
-        selectedTargetType === "conseiller" ? selectedTarget : null,
-      cellule_id:
-        selectedTargetType === "cellule" ? selectedTarget : null,
-    }));
-
-    const { error: insertError } = await supabase
-      .from("suivis_des_evangelises")
-      .insert(inserts);
-
-    if (insertError) throw insertError;
-
-    /* ================= UPDATE EVANGELISES ================= */
-    const ids = selectedContacts.map((c) => c.id);
-
-    const { error: updateError } = await supabase
-      .from("evangelises")
-      .update({ status_suivi: "Envoyé" })
-      .in("id", ids);
-
-    if (updateError) throw updateError;
-
-    /* ================= UI IMMÉDIATE ================= */
-    setContacts((prev) =>
-      prev.filter((c) => !ids.includes(c.id))
-    );
-    setCheckedContacts({});
-
-    /* ================= MESSAGE WHATSAPP ================= */
-const nomCible =
-  selectedTargetType === "cellule"
-    ? cible.cellule_full || "Responsable de cellule"
-    : `${cible.prenom}`;
-
-const isMultiple = selectedContacts.length > 1;
-
-let message = `👋 Bonjour ${nomCible},\n\n`;
-
-message += isMultiple
-  ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
-  : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
-
-selectedContacts.forEach((m, index) => {
-  message += "────────────────────\n";
-  if (isMultiple) message += `👥 Personne ${index + 1}\n`;
-  message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
-  message += `📱 Téléphone : ${m.telephone || "—"}\n`;
-  message += `🏙️ Ville : ${m.ville || "—"}\n`;
-  message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
-  message += `🎗️ Sexe : ${m.sexe || "—"}\n`;
-  message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n`;
-  message += `☀️ Type de conversion : ${m.type_conversion || "—"}\n`;
-  message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
-  message += `📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
-});
-
-message +=
-  "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner\n\n";
-message += "Que Dieu te bénisse abondamment ✨";
-
-
-    if (cible.telephone) {
-      window.open(
-        `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
-          message
-        )}`,
-        "_blank"
+      const existingPhones = suivisExisting.map(
+        (s) => s.evangelises?.telephone
       );
-    }
 
-    alert("✅ Contacts envoyés et enregistrés");
-  } catch (err) {
-    console.error("ERREUR ENVOI", err);
-    alert("❌ Erreur lors de l’envoi");
-  } finally {
-    setLoadingSend(false);
-  }
-};
+      const alreadyInSuivi = selectedContacts.filter((c) =>
+        existingPhones.includes(c.telephone)
+      );
+      const newContacts = selectedContacts.filter((c) =>
+        !existingPhones.includes(c.telephone)
+      );
+
+      if (alreadyInSuivi.length > 0) {
+        setDoublons(alreadyInSuivi);
+      }
+
+      if (newContacts.length === 0) {
+        setLoadingSend(false);
+        return;
+      }
+
+      /* ================= INSERT SUIVIS ================= */
+      const inserts = newContacts.map((m) => ({
+        prenom: m.prenom,
+        nom: m.nom,
+        telephone: m.telephone,
+        is_whatsapp: m.is_whatsapp,
+        ville: m.ville,
+        besoin: m.besoin,
+        infos_supplementaires: m.infos_supplementaires,
+        sexe: m.sexe,
+        type_conversion: m.type_conversion,
+        priere_salut: m.priere_salut,
+        status_suivis_evangelises: "Envoyé",
+        evangelise_id: m.id,
+        conseiller_id:
+          selectedTargetType === "conseiller" ? selectedTarget : null,
+        cellule_id:
+          selectedTargetType === "cellule" ? selectedTarget : null,
+      }));
+
+      const { error: insertError } = await supabase
+        .from("suivis_des_evangelises")
+        .insert(inserts);
+
+      if (insertError) throw insertError;
+
+      /* ================= UPDATE EVANGELISES ================= */
+      const ids = newContacts.map((c) => c.id);
+
+      const { error: updateError } = await supabase
+        .from("evangelises")
+        .update({ status_suivi: "Envoyé" })
+        .in("id", ids);
+
+      if (updateError) throw updateError;
+
+      /* ================= UI IMMÉDIATE ================= */
+      setContacts((prev) =>
+        prev.filter((c) => !ids.includes(c.id))
+      );
+      setCheckedContacts({});
+
+      /* ================= MESSAGE WHATSAPP ================= */
+      const nomCible =
+        selectedTargetType === "cellule"
+          ? cible.cellule_full || "Responsable de cellule"
+          : `${cible.prenom}`;
+
+      const isMultiple = newContacts.length > 1;
+
+      let message = `👋 Bonjour ${nomCible},\n\n`;
+
+      message += isMultiple
+        ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
+        : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
+
+      newContacts.forEach((m, index) => {
+        message += "────────────────────\n";
+        if (isMultiple) message += `👥 Personne ${index + 1}\n`;
+        message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
+        message += `📱 Téléphone : ${m.telephone || "—"}\n`;
+        message += `🏙️ Ville : ${m.ville || "—"}\n`;
+        message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
+        message += `🎗️ Sexe : ${m.sexe || "—"}\n`;
+        message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n`;
+        message += `☀️ Type de conversion : ${m.type_conversion || "—"}\n`;
+        message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
+        message += `📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
+      });
+
+      message +=
+        "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner\n\n";
+      message += "Que Dieu te bénisse abondamment ✨";
+
+      if (cible.telephone) {
+        window.open(
+          `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
+            message
+          )}`,
+          "_blank"
+        );
+      }
+
+      alert("✅ Contacts envoyés et enregistrés");
+    } catch (err) {
+      console.error("ERREUR ENVOI", err);
+      alert("❌ Erreur lors de l’envoi");
+    } finally {
+      setLoadingSend(false);
+    }
+  };
 
   /* ================= UI ================= */
   return (
@@ -262,13 +266,13 @@ message += "Que Dieu te bénisse abondamment ✨";
           >
             <option value="">-- Choisir --</option>
             {(selectedTargetType === "cellule" ? cellules : conseillers).map((c) => (
-  <option key={c.id} value={c.id}>
-    {selectedTargetType === "cellule"
-      ? c.ville
-        ? `${c.cellule_full} - ${c.ville}`
-        : c.cellule_full
-      : `${c.prenom} ${c.nom}`}
-  </option>
+              <option key={c.id} value={c.id}>
+                {selectedTargetType === "cellule"
+                  ? c.ville
+                    ? `${c.cellule_full} - ${c.ville}`
+                    : c.cellule_full
+                  : `${c.prenom} ${c.nom}`}
+              </option>
             ))}
           </select>
         )}
@@ -285,20 +289,49 @@ message += "Que Dieu te bénisse abondamment ✨";
       </div>
 
       <div className="w-full max-w-6xl flex flex-col items-center">
-  {/* Toggle Vue Carte / Vue Table */}
-  <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
-    <button
-      onClick={() => setView(view === "card" ? "table" : "card")}
-      className="text-sm font-semibold underline text-white"
-    >
-      {view === "card" ? "Vue Table" : "Vue Carte"}
-    </button>
-  </div>
 
-  {/* ================= AFFICHAGE CONTACTS ================= */}
-  {contacts && (
-    <>  
+        {/* ================= DOUBLONS ================= */}
+        {doublons.length > 0 && (
+          <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4 w-full max-w-6xl">
+            <p className="font-bold text-yellow-800">⚠️ Un ou plusieurs contacts sont déjà en suivi !</p>
+            {doublons.map((c) => (
+              <div key={c.id} className="flex justify-between items-center mt-2 bg-white p-2 rounded shadow">
+                <span>{c.prenom} {c.nom} ({c.telephone})</span>
+                <div className="flex gap-2">
+                  <button
+                    className="bg-blue-500 text-white px-2 py-1 rounded"
+                    onClick={() => setDoublons((prev) => prev.filter((d) => d.id !== c.id))}
+                  >
+                    Garder
+                  </button>
+                  <button
+                    className="bg-red-500 text-white px-2 py-1 rounded"
+                    onClick={() => {
+                      setDoublons((prev) => prev.filter((d) => d.id !== c.id));
+                      setContacts((prev) => prev.filter((d) => d.id !== c.id));
+                    }}
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
+        {/* Toggle Vue Carte / Vue Table */}
+        <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
+          <button
+            onClick={() => setView(view === "card" ? "table" : "card")}
+            className="text-sm font-semibold underline text-white"
+          >
+            {view === "card" ? "Vue Table" : "Vue Carte"}
+          </button>
+        </div>
+
+        {/* ================= AFFICHAGE CONTACTS ================= */}
+        {contacts && (
+          <>  
             {/* VUE CARTE */}
             {view === "card" && (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
@@ -373,21 +406,19 @@ message += "Que Dieu te bénisse abondamment ✨";
 
       {/* POPUPS */}
       {editMember && (
-  <EditEvangelisePopup
-    member={editMember}
-    cellules={cellules}
-    conseillers={conseillers}
-    onClose={() => setEditMember(null)}
-    onUpdateMember={(updatedMember) => {
-      // 1. Mettre à jour instantanément la liste des contacts
-      setContacts((prev) =>
-        prev.map((c) => (c.id === updatedMember.id ? updatedMember : c))
-      );
-      setEditMember(null); // fermer le popup
-    }}
-  />
-)}
-
+        <EditEvangelisePopup
+          member={editMember}
+          cellules={cellules}
+          conseillers={conseillers}
+          onClose={() => setEditMember(null)}
+          onUpdateMember={(updatedMember) => {
+            setContacts((prev) =>
+              prev.map((c) => (c.id === updatedMember.id ? updatedMember : c))
+            );
+            setEditMember(null);
+          }}
+        />
+      )}
 
       {popupMember && (
         <DetailsEvangePopup

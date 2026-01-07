@@ -108,12 +108,27 @@ const fetchContacts = async () => {
   };
 
  /* ================= ENVOI WHATSAPP + SUIVI ================= */
+
+  /* ================= UI ================= */
+
+  return (
+    <div
+      className="min-h-screen w-full flex flex-col items-center p-6"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+    >
+      <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
+        <button onClick={() => router.back()} className="text-white">← Retour</button>
+        <LogoutLink />
+      </div>
+
+     /* ================= ENVOI WHATSAPP + SUIVI ================= */
 const sendContacts = async () => {
   if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+
   setLoadingSend(true);
 
   try {
-    // Trouver la cible
+    // Récupérer la cible (cellule ou conseiller)
     const cible =
       selectedTargetType === "cellule"
         ? cellules.find((c) => c.id === selectedTarget)
@@ -122,7 +137,9 @@ const sendContacts = async () => {
     if (!cible) throw new Error("Cible introuvable");
 
     /* ===== MESSAGE WHATSAPP ===== */
-    let message = `🙏 Bonjour ${cible.prenom},\n\n`;
+    let message = `🙏 Bonjour ${
+      selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom
+    },\n\n`;
 
     message += selectedContacts.length > 1
       ? `Nous te confions avec joie ${selectedContacts.length} personnes rencontrées lors de l’évangélisation.\n\n`
@@ -159,28 +176,30 @@ const sendContacts = async () => {
       besoin: c.besoin,
       infos_supplementaires: c.infos_supplementaires,
       is_whatsapp: c.is_whatsapp || false,
+
       sexe: c.sexe,
       type_conversion: c.type_conversion,
       priere_salut: c.priere_salut,
 
-      // ⚡ UUID correct ou null
+      // ⚡ UUID correct pour cellule ou conseiller
       cellule_id: selectedTargetType === "cellule" ? cible.id : null,
-      responsable_cellule: selectedTargetType === "cellule" ? cible.responsable || null : null,
+      responsable_cellule: selectedTargetType === "cellule" ? cible.responsable_id || null : null,
       conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
 
-      evangelise_id: c.id,
+      evangelise_id: c.id, // FK vers evangelises
       status_suivis_evangelises: "Envoyé",
       date_suivi: new Date().toISOString(),
     }));
 
     console.log("Insert data:", insertData);
 
+    /* ===== INSERT DANS SUIVIS ===== */
     const { error: insertError } = await supabase
       .from("suivis_des_evangelises")
       .insert(insertData);
     if (insertError) throw insertError;
 
-    // Mettre à jour le statut dans evangelises
+    /* ===== METTRE A JOUR LE STATUS DANS EVANGELISES ===== */
     const { error: updateError } = await supabase
       .from("evangelises")
       .update({ status_suivis_evangelises: "Envoyé" })
@@ -189,28 +208,15 @@ const sendContacts = async () => {
 
     alert("✅ Contacts envoyés et suivis créés !");
     setCheckedContacts({});
-    fetchContacts();
-
+    fetchContacts(); // 🔄 Rafraîchir la liste, les envoyés disparaissent
   } catch (err) {
     console.error("ERREUR ENVOI", err);
-    alert("❌ Une erreur est survenue. Vérifie console pour details.");
+    alert("❌ Une erreur est survenue. Vérifie la console pour plus de détails.");
   } finally {
     setLoadingSend(false);
   }
 };
-  /* ================= UI ================= */
-
-  return (
-    <div
-      className="min-h-screen w-full flex flex-col items-center p-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
-      <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
-        <button onClick={() => router.back()} className="text-white">← Retour</button>
-        <LogoutLink />
-      </div>
-
-      <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
+ <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
       <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>      
 
       <div className="w-full max-w-md mb-6">

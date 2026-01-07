@@ -14,23 +14,18 @@ export default function Evangelisation() {
   const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
-
   const [selectedTargetType, setSelectedTargetType] = useState("");
   const [selectedTarget, setSelectedTarget] = useState("");
-
   const [checkedContacts, setCheckedContacts] = useState({});
   const [detailsOpen, setDetailsOpen] = useState({});
   const [editMember, setEditMember] = useState(null);
   const [popupMember, setPopupMember] = useState(null);
-
   const [loadingSend, setLoadingSend] = useState(false);
   const [view, setView] = useState("card");
-
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
 
   /* ================= FETCH ================= */
-
   useEffect(() => {
     fetchContacts();
     fetchCellules();
@@ -44,28 +39,24 @@ export default function Evangelisation() {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  /* ================= FETCH CONTACTS ================= */
-const fetchContacts = async () => {
-  const { data, error } = await supabase
-    .from("evangelises")
-    .select("*")
-    .or("status_suivi.eq.Null,status_suivi.neq.Envoyé") // ⚡ colonne correcte
-    .order("created_at", { ascending: false })
-    .limit(1000);
+  const fetchContacts = async () => {
+    const { data, error } = await supabase
+      .from("evangelises")
+      .select("*")
+      .or("status_suivis_evangelises.eq.Null,status_suivis_evangelises.neq.Envoyé")
+      .order("created_at", { ascending: false })
+      .limit(1000);
 
-  if (error) {
-    console.error("Erreur fetchContacts:", error);
-    setContacts([]);
-    return;
-  }
-
-  setContacts(data || []);
-};
-
+    if (error) {
+      console.error("Erreur fetchContacts:", error);
+      setContacts([]);
+      return;
+    }
+    setContacts(data || []);
+  };
 
   const fetchCellules = async () => {
     const { data } = await supabase
@@ -83,7 +74,6 @@ const fetchContacts = async () => {
   };
 
   /* ================= UTILS ================= */
-
   const handleCheck = (id) =>
     setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -107,125 +97,114 @@ const fetchContacts = async () => {
     return "#888";
   };
 
- /* ================= ENVOI WHATSAPP + SUIVI ================= */
+  /* ================= ENVOI WHATSAPP + SUIVI ================= */
+  const sendContacts = async () => {
+    if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+
+    setLoadingSend(true);
+
+    try {
+      // Récupérer la cible (cellule ou conseiller)
+      const cible =
+        selectedTargetType === "cellule"
+          ? cellules.find((c) => c.id === selectedTarget)
+          : conseillers.find((c) => c.id === selectedTarget);
+
+      if (!cible) throw new Error("Cible introuvable");
+
+      /* ===== MESSAGE WHATSAPP ===== */
+      let message = `🙏 Bonjour ${
+        selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom
+      },\n\n`;
+
+      message += selectedContacts.length > 1
+        ? `Nous te confions avec joie ${selectedContacts.length} personnes rencontrées lors de l’évangélisation.\n\n`
+        : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n\n";
+
+      selectedContacts.forEach((m) => {
+        message += "────────────────────\n";
+        message += `👤 Nom : *${m.prenom} ${m.nom}*\n`;
+        message += `📱 Téléphone : ${m.telephone || "—"}\n`;
+        message += `🏙️ Ville : ${m.ville || "—"}\n`;
+        message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
+        message += `⚥ Sexe : ${m.sexe || "—"}\n`;
+        message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
+        message += `☀️ Type : ${m.type_conversion || "—"}\n`;
+        message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
+        message += `📝 Infos supplémentaires : ${formatBesoin(m.infos_supplementaires)}\n\n`;
+      });
+
+      message += `Que le Seigneur te fortifie et t’utilise puissamment dans ${
+        selectedContacts.length > 1 ? "ces suivis" : "ce suivi"
+      } 🙌\n`;
+
+      if (cible.telephone) {
+        const waLink = `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
+        window.open(waLink, "_blank");
+      }
+
+      /* ===== PREPARER INSERT SUIVI ===== */
+      const insertData = selectedContacts.map((c) => ({
+        prenom: c.prenom,
+        nom: c.nom,
+        telephone: c.telephone,
+        ville: c.ville,
+        besoin: c.besoin,
+        infos_supplementaires: c.infos_supplementaires,
+        is_whatsapp: c.is_whatsapp || false,
+        sexe: c.sexe,
+        type_conversion: c.type_conversion,
+        priere_salut: c.priere_salut,
+        cellule_id: selectedTargetType === "cellule" ? cible.id : null,
+        responsable_cellule: selectedTargetType === "cellule" ? cible.responsable || null : null,
+        conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
+        evangelise_id: c.id,
+        status_suivis_evangelises: "Envoyé",
+        date_suivi: new Date().toISOString(),
+      }));
+
+      console.log("Insert data:", insertData);
+
+      /* ===== INSERT DANS SUIVIS ===== */
+      const { error: insertError } = await supabase
+        .from("suivis_des_evangelises")
+        .insert(insertData);
+      if (insertError) throw insertError;
+
+      /* ===== METTRE A JOUR LE STATUS DANS EVANGELISES ===== */
+      const { error: updateError } = await supabase
+        .from("evangelises")
+        .update({ status_suivis_evangelises: "Envoyé" })
+        .in("id", selectedContacts.map((c) => c.id));
+      if (updateError) throw updateError;
+
+      alert("✅ Contacts envoyés et suivis créés !");
+      setCheckedContacts({});
+      fetchContacts();
+    } catch (err) {
+      console.error("ERREUR ENVOI", err);
+      alert("❌ Une erreur est survenue. Vérifie la console pour plus de détails.");
+    } finally {
+      setLoadingSend(false);
+    }
+  };
 
   /* ================= UI ================= */
-
   return (
-    <div
-      className="min-h-screen w-full flex flex-col items-center p-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
+    <div className="min-h-screen w-full flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
       <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
         <button onClick={() => router.back()} className="text-white">← Retour</button>
         <LogoutLink />
       </div>
 
-     /* ================= ENVOI WHATSAPP + SUIVI ================= */
-const sendContacts = async () => {
-  if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+      <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
+      <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
 
-  setLoadingSend(true);
-
-  try {
-    // Récupérer la cible (cellule ou conseiller)
-    const cible =
-      selectedTargetType === "cellule"
-        ? cellules.find((c) => c.id === selectedTarget)
-        : conseillers.find((c) => c.id === selectedTarget);
-
-    if (!cible) throw new Error("Cible introuvable");
-
-    /* ===== MESSAGE WHATSAPP ===== */
-    let message = `🙏 Bonjour ${
-      selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom
-    },\n\n`;
-
-    message += selectedContacts.length > 1
-      ? `Nous te confions avec joie ${selectedContacts.length} personnes rencontrées lors de l’évangélisation.\n\n`
-      : "Nous te confions avec joie une personne rencontrée lors de l’évangélisation.\n\n";
-
-    selectedContacts.forEach((m) => {
-      message += "────────────────────\n";
-      message += `👤 Nom : *${m.prenom} ${m.nom}*\n`;
-      message += `📱 Téléphone : ${m.telephone || "—"}\n`;
-      message += `🏙️ Ville : ${m.ville || "—"}\n`;
-      message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
-      message += `⚥ Sexe : ${m.sexe || "—"}\n`;
-      message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "—"}\n`;
-      message += `☀️ Type : ${m.type_conversion || "—"}\n`;
-      message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
-      message += `📝 Infos supplémentaires : ${formatBesoin(m.infos_supplementaires)}\n\n`;
-    });
-
-    message += `Que le Seigneur te fortifie et t’utilise puissamment dans ${
-      selectedContacts.length > 1 ? "ces suivis" : "ce suivi"
-    } 🙌\n`;
-
-    if (cible.telephone) {
-      const waLink = `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
-      window.open(waLink, "_blank");
-    }
-
-    /* ===== PREPARER INSERT SUIVI ===== */
-    const insertData = selectedContacts.map((c) => ({
-      prenom: c.prenom,
-      nom: c.nom,
-      telephone: c.telephone,
-      ville: c.ville,
-      besoin: c.besoin,
-      infos_supplementaires: c.infos_supplementaires,
-      is_whatsapp: c.is_whatsapp || false,
-
-      sexe: c.sexe,
-      type_conversion: c.type_conversion,
-      priere_salut: c.priere_salut,
-
-      // ⚡ UUID correct pour cellule ou conseiller
-      cellule_id: selectedTargetType === "cellule" ? cible.id : null,
-      responsable_cellule: selectedTargetType === "cellule" ? cible.responsable_id || null : null,
-      conseiller_id: selectedTargetType === "conseiller" ? cible.id : null,
-
-      evangelise_id: c.id, // FK vers evangelises
-      status_suivis_evangelises: "Envoyé",
-      date_suivi: new Date().toISOString(),
-    }));
-
-    console.log("Insert data:", insertData);
-
-    /* ===== INSERT DANS SUIVIS ===== */
-    const { error: insertError } = await supabase
-      .from("suivis_des_evangelises")
-      .insert(insertData);
-    if (insertError) throw insertError;
-
-    /* ===== METTRE A JOUR LE STATUS DANS EVANGELISES ===== */
-    const { error: updateError } = await supabase
-      .from("evangelises")
-      .update({ status_suivis_evangelises: "Envoyé" })
-      .in("id", selectedContacts.map((c) => c.id));
-    if (updateError) throw updateError;
-
-    alert("✅ Contacts envoyés et suivis créés !");
-    setCheckedContacts({});
-    fetchContacts(); // 🔄 Rafraîchir la liste, les envoyés disparaissent
-  } catch (err) {
-    console.error("ERREUR ENVOI", err);
-    alert("❌ Une erreur est survenue. Vérifie la console pour plus de détails.");
-  } finally {
-    setLoadingSend(false);
-  }
-};
- <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
-      <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>      
-
+      {/* Sélection cible */}
       <div className="w-full max-w-md mb-6">
         <select
           value={selectedTargetType}
-          onChange={(e) => {
-            setSelectedTargetType(e.target.value);
-            setSelectedTarget("");
-          }}
+          onChange={(e) => { setSelectedTargetType(e.target.value); setSelectedTarget(""); }}
           className="w-full border rounded px-3 py-2 mb-3 text-center"
         >
           <option value="">-- Envoyer à --</option>
@@ -240,15 +219,11 @@ const sendContacts = async () => {
             className="w-full border rounded px-3 py-2 mb-3 text-center"
           >
             <option value="">-- Choisir --</option>
-            {(selectedTargetType === "cellule" ? cellules : conseillers).map(
-              (c) => (
-                <option key={c.id} value={c.id}>
-                  {selectedTargetType === "cellule"
-                    ? `${c.cellule_full} (${c.ville || "—"})`
-                    : `${c.prenom} ${c.nom}`}
-                </option>
-              )
-            )}
+            {(selectedTargetType === "cellule" ? cellules : conseillers).map(c => (
+              <option key={c.id} value={c.id}>
+                {selectedTargetType === "cellule" ? `${c.cellule_full} (${c.ville || "—"})` : `${c.prenom} ${c.nom}`}
+              </option>
+            ))}
           </select>
         )}
 
@@ -261,57 +236,6 @@ const sendContacts = async () => {
             {loadingSend ? "Envoi..." : "📤 Envoyer WhatsApp"}
           </button>
         )}
-      </div>
-
-      {/* VUE CARTE */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
-        {contacts.map((member) => (
-          <div
-            key={member.id}
-            className="bg-white rounded-2xl shadow-xl p-4 border-l-4 relative"
-            style={{ borderLeftColor: getBorderColor(member) }}
-          >
-            <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
-            <p className="text-center text-sm text-orange-500 underline decoration-orange-400 cursor-pointer font-semibold"
-              onClick={() => setOpenPhoneMenuId(member.id)}>
-              {member.telephone || "—"}
-            </p>
-
-            {openPhoneMenuId === member.id && (
-              <div ref={phoneMenuRef} className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
-                onClick={(e) => e.stopPropagation()}>
-                <a href={member.telephone ? `tel:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📞 Appeler</a>
-                <a href={member.telephone ? `sms:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>✉️ SMS</a>
-                <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}?call` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📱 Appel WhatsApp</a>
-                <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>💬 Message WhatsApp</a>
-              </div>
-            )}
-
-            <p className="text-center text-sm">🏙️ Ville : {member.ville || "—"}</p>
-
-            <label className="flex justify-center gap-2 mt-2">
-              <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} />
-              Sélectionner
-            </label>
-
-            <button onClick={() => setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))}
-              className="text-orange-500 underline text-sm block mx-auto mt-2">
-              {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-            </button>
-
-            {detailsOpen[member.id] && (
-              <div className="text-sm mt-3 space-y-1">
-                <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-                <p>⚥ Sexe : {member.sexe || "—"}</p>
-                <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
-                <p>☀️ Type : {member.type_conversion || "—"}</p>
-                <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-                <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
-                <button onClick={() => { setEditMember(member); setPopupMember(null); }} className="text-blue-600 text-sm mt-4 w-full text-center">✏️ Modifier le contact</button>
-              </div>
-            )}
-          </div>
-        ))}
       </div>
 
       {/* VUE TABLE */}

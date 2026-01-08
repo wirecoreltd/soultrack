@@ -41,6 +41,10 @@ useEffect(() => {
     setLoading(false);
   };
 
+useEffect(() => {
+  init();
+}, []);
+
   // ================= USER =================
   const fetchUser = async () => {
     const { data: session } = await supabase.auth.getSession();

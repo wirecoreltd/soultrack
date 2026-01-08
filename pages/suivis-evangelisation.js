@@ -142,27 +142,31 @@ export default function SuivisEvangelisation() {
 
   // ================= UPSERT MEMBRE =================
   const upsertMembre = async (suivi) => {
-    const payload = {
-      suivi_int_id: Number(suivi.id), // BIGINT
-      nom: suivi.nom,
-      prenom: suivi.prenom,
-      telephone: suivi.telephone,
-      ville: suivi.ville,
-      sexe: suivi.sexe,
-      besoin: suivi.besoin,
-      infos_supplementaires: suivi.infos_supplementaires,
-      cellule_id: suivi.cellule_id,
-      conseiller_id: suivi.conseiller_id,
-      statut_initial: "intégré",
-      suivi_statut: suivi.status_suivis_evangelises,
-      suivi_commentaire_suivis: suivi.commentaire_evangelises,
-    };
+    try {
+      const payload = {
+        suivi_int_id: Number(suivi.id),
+        nom: suivi.nom,
+        prenom: suivi.prenom,
+        telephone: suivi.telephone,
+        ville: suivi.ville,
+        sexe: suivi.sexe,
+        besoin: suivi.besoin,
+        infos_supplementaires: suivi.infos_supplementaires,
+        cellule_id: suivi.cellule_id,
+        conseiller_id: suivi.conseiller_id,
+        statut_initial: "intégré",
+        suivi_statut: suivi.status_suivis_evangelises,
+        suivi_commentaire_suivis: suivi.commentaire_evangelises,
+      };
 
-    const { error } = await supabase
-      .from("membres_complets")
-      .upsert(payload, { onConflict: "suivi_int_id" });
+      const { error } = await supabase
+        .from("membres_complets")
+        .upsert(payload, { onConflict: "suivi_int_id" });
 
-    if (error) console.error("UPSERT ERROR", error);
+      if (error) console.error("UPSERT ERROR", error);
+    } catch (err) {
+      console.error("Erreur upsert membre:", err.message);
+    }
   };
 
   // ================= UPDATE SUIVI =================
@@ -175,6 +179,7 @@ export default function SuivisEvangelisation() {
     try {
       setUpdating((p) => ({ ...p, [id]: true }));
 
+      // Update suivi
       const { error } = await supabase
         .from("suivis_des_evangelises")
         .update({
@@ -185,10 +190,12 @@ export default function SuivisEvangelisation() {
 
       if (error) throw error;
 
-      // Si le statut est Intégré → upsert
-      if (newStatus === "Intégré") await upsertMembre({ ...m, status_suivis_evangelises: newStatus, commentaire_evangelises: newComment });
+      // Upsert membre si intégré
+      if (newStatus === "Intégré") {
+        await upsertMembre({ ...m, status_suivis_evangelises: newStatus, commentaire_evangelises: newComment });
+      }
 
-      // Update local state
+      // Update state local
       setAllSuivis((prev) =>
         prev.map((s) =>
           s.id === id
@@ -197,7 +204,7 @@ export default function SuivisEvangelisation() {
         )
       );
 
-      // Nettoyer les changements temporaires
+      // Nettoyer les changements
       setCommentChanges((prev) => {
         const copy = { ...prev };
         delete copy[id];

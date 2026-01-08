@@ -122,36 +122,54 @@ export default function SuivisEvangelisation() {
   const handleStatusChange = (id, value) =>
     setStatusChanges((p) => ({ ...p, [id]: value }));
 
-  const updateSuivi = async (id) => {
-    const newComment = commentChanges[id] ?? "";
-    const newStatus = statusChanges[id] ?? "";
-    if (!newComment && !newStatus) return;
+const updateSuivi = async (id, m) => {
+  const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
+  const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
+  if (!newComment && !newStatus) return;
 
-    try {
-      setUpdating((p) => ({ ...p, [id]: true }));
-      await supabase
-        .from("suivis_des_evangelises")
-        .update({
-          commentaire_evangelises: newComment,
-          status_suivis_evangelises: newStatus
-        })
-        .eq("id", id);
+  try {
+    setUpdating((p) => ({ ...p, [id]: true }));
 
-      // Mettre à jour localement pour éviter de refetch
-      setSuivis((prev) =>
-        prev.map((s) =>
-          s.id === id
-            ? { ...s, commentaire_evangelises: newComment, status_suivis_evangelises: newStatus }
-            : s
-        )
-      );
-    } catch (error) {
-      console.error(error);
-      alert("Erreur lors de la sauvegarde !");
-    } finally {
-      setUpdating((p) => ({ ...p, [id]: false }));
+    // 1️⃣ Mettre à jour dans suivis_des_evangelises
+    await supabase
+      .from("suivis_des_evangelises")
+      .update({
+        commentaire_evangelises: newComment,
+        status_suivis_evangelises: newStatus
+      })
+      .eq("id", id);
+
+    // 2️⃣ Si Intégré -> copier dans membres_complets
+    if (newStatus === "Intégré") {
+      await supabase.from("membres_complets").insert({
+        nom: m.evangelises.nom,
+        prenom: m.evangelises.prenom,
+        telephone: m.evangelises.telephone,
+        email: m.evangelises.email,
+        statut_suivis: newStatus,
+        commentaire_suivis: newComment,
+        cellule_id: m.cellule_id,
+        conseiller_id: m.conseiller_id,
+        infos_supplementaires: m.evangelises.infos_supplementaires,
+        suivi_id: m.id
+      });
     }
-  };
+
+    // 3️⃣ Mettre à jour localement
+    setSuivis((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? { ...s, commentaire_evangelises: newComment, status_suivis_evangelises: newStatus }
+          : s
+      )
+    );
+  } catch (error) {
+    console.error(error);
+    alert("Erreur lors de la sauvegarde !");
+  } finally {
+    setUpdating((p) => ({ ...p, [id]: false }));
+  }
+};
 
   const formatBesoin = (b) => {
     if (!b) return "—";
@@ -245,9 +263,9 @@ export default function SuivisEvangelisation() {
                       <option value="Intégré">Intégré</option>
                       <option value="Refus">Refus</option>
                     </select>
-
+                    
                     <button
-                      onClick={() => updateSuivi(m.id)}
+                      onClick={() => updateSuivi(m.id, m)}
                       disabled={updating[m.id]}
                       className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all ${
                         updating[m.id]
@@ -257,6 +275,7 @@ export default function SuivisEvangelisation() {
                     >
                       {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
                     </button>
+
                   </div>
 
                   <button

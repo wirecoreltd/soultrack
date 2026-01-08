@@ -145,20 +145,30 @@ setAllSuivis(filtered);
     if (error) throw error;
 
     // 🔹 Si le statut est Intégré, ajouter dans membres_complets
-    if (newStatus === "Intégré") {
-      await supabase.from("membres_complets").insert({
-        nom: m.evangelises.nom,
-        prenom: m.evangelises.prenom,
-        telephone: m.evangelises.telephone,
-        email: m.evangelises.email,
-        statut_suivis: newStatus,
-        commentaire_suivis: newComment,
+   if (newStatus === "Intégré") {
+  const { error: insertError } = await supabase
+    .from("membres_complets")
+    .upsert(
+      {
+        suivi_int_id: m.id, // 🔥 BIGINT OK
+        nom: m.nom,
+        prenom: m.prenom,
+        telephone: m.telephone,
+        ville: m.ville,
+        sexe: m.sexe,
+        besoin: m.besoin,
+        infos_supplementaires: m.infos_supplementaires,
         cellule_id: m.cellule_id,
         conseiller_id: m.conseiller_id,
-        infos_supplementaires: m.evangelises.infos_supplementaires,
-        suivi_id: m.id,
-      });
-    }
+        statut_initial: "intégré",
+        suivi_statut: newStatus,
+        suivi_commentaire_suivis: newComment,
+      },
+      { onConflict: "suivi_int_id" }
+    );
+
+  if (insertError) throw insertError;
+}
 
     // 🔹 Mettre à jour le state local pour que ça reste visible immédiatement
     setAllSuivis((prev) =>

@@ -10,8 +10,7 @@ import DetailsModal from "../components/DetailsModal";
 import { useMembers } from "../context/MembersContext";
 
 export default function SuivisMembres() {
-  const { members, , updateMember } = useMembers();
-
+  const { members, updateMember } = useMembers();
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
@@ -24,10 +23,8 @@ export default function SuivisMembres() {
   const [editMember, setEditMember] = useState(null);
   const [showRefus, setShowRefus] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(null);
-
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
-
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
 

@@ -23,9 +23,13 @@ export default function SuivisEvangelisation() {
   const [user, setUser] = useState(null);
 
   // ================= INIT =================
-  useEffect(() => {
-    init();
-  }, []);
+  // Rerun fetchSuivis dès que showRefus change
+useEffect(() => {
+  if (user) {
+    fetchSuivis(user, cellules);
+  }
+}, [showRefus]);
+
 
   const init = async () => {
     const userData = await fetchUser();
@@ -233,15 +237,12 @@ if (showRefus) {
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
         <button
-          onClick={() => {
-            setShowRefus(!showRefus);
-            fetchSuivis(user, cellules);
-          }}
+          onClick={() => setShowRefus(!showRefus)}
           className="text-orange-400 text-sm underline hover:text-orange-500"
         >
           {showRefus ? "Voir tous les suivis" : "Voir les refus"}
         </button>
-      </div>
+
 
       {/* ================= VUE CARTE ================= */}
       {view === "card" && (

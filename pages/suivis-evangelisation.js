@@ -87,17 +87,25 @@ export default function SuivisEvangelisation() {
 
     let filtered = data || [];
 
-    // Filtrage selon rôle
-    if (userData.role === "Conseiller") {
-      filtered = filtered.filter((m) => m.conseiller_id === userData.id);
-    } else if (userData.role === "ResponsableCellule") {
-      const mesCellulesIds = cellulesData
-        .filter((c) => c.responsable_id === userData.id)
-        .map((c) => c.id);
-      filtered = filtered.filter((m) =>
-        mesCellulesIds.includes(m.cellule_id)
-      );
-    }
+// Filtrage selon rôle
+if (userData.role === "Conseiller") {
+  filtered = filtered.filter((m) => m.conseiller_id === userData.id);
+} else if (userData.role === "ResponsableCellule") {
+  const mesCellulesIds = cellulesData
+    .filter((c) => c.responsable_id === userData.id)
+    .map((c) => c.id);
+  filtered = filtered.filter((m) =>
+    mesCellulesIds.includes(m.cellule_id)
+  );
+}
+
+// 🔹 Filtrer les refus selon toggle
+if (showRefus) {
+  filtered = filtered.filter((m) => m.status_suivis_evangelises === "Refus");
+} else {
+  filtered = filtered.filter((m) => m.status_suivis_evangelises !== "Refus");
+}
+
 
     // Toggle refus
     if (showRefus) {

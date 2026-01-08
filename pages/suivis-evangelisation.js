@@ -1,4 +1,4 @@
-"use client"; 
+"use client";
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -23,13 +23,9 @@ export default function SuivisEvangelisation() {
   const [user, setUser] = useState(null);
 
   // ================= INIT =================
-  // Rerun fetchSuivis dès que showRefus change
-useEffect(() => {
-  if (user) {
-    fetchSuivis(user, cellules);
-  }
-}, [showRefus]);
-
+  useEffect(() => {
+    init();
+  }, []);
 
   const init = async () => {
     const userData = await fetchUser();
@@ -40,10 +36,6 @@ useEffect(() => {
     }
     setLoading(false);
   };
-
-useEffect(() => {
-  init();
-}, []);
 
   // ================= USER =================
   const fetchUser = async () => {
@@ -89,25 +81,25 @@ useEffect(() => {
 
     if (error) {
       console.error(error);
-      setSuivis([]);
+      setAllSuivis([]);
       return;
     }
 
     let filtered = data || [];
 
-// Filtrage selon rôle
-if (userData.role === "Conseiller") {
-  filtered = filtered.filter((m) => m.conseiller_id === userData.id);
-} else if (userData.role === "ResponsableCellule") {
-  const mesCellulesIds = cellulesData
-    .filter((c) => c.responsable_id === userData.id)
-    .map((c) => c.id);
-  filtered = filtered.filter((m) =>
-    mesCellulesIds.includes(m.cellule_id)
-  );
-}
-setAllSuivis(filtered);
-  };  
+    // Filtrage selon rôle
+    if (userData.role === "Conseiller") {
+      filtered = filtered.filter((m) => m.conseiller_id === userData.id);
+    } else if (userData.role === "ResponsableCellule") {
+      const mesCellulesIds = cellulesData
+        .filter((c) => c.responsable_id === userData.id)
+        .map((c) => c.id);
+      filtered = filtered.filter((m) =>
+        mesCellulesIds.includes(m.cellule_id)
+      );
+    }
+    setAllSuivis(filtered);
+  };
 
   // ================= HELPERS =================
   const getBorderColor = (m) => {
@@ -118,110 +110,90 @@ setAllSuivis(filtered);
     return "#ccc";
   };
 
-  const payload = {
-  suivi_int_id: Number(suivi.id),
-  nom: suivi.nom,
-  prenom: suivi.prenom,
-  telephone: suivi.telephone,
-};
-
-console.log("UPSERT PAYLOAD", payload);
-
-const { error } = await supabase
-  .from("membres_complets")
-  .upsert(payload, { onConflict: "suivi_int_id" });
-
-if (error) {
-  console.error("UPSERT ERROR", error);
-}
-
-
   const handleCommentChange = (id, value) =>
     setCommentChanges((p) => ({ ...p, [id]: value }));
 
   const handleStatusChange = (id, value) =>
     setStatusChanges((p) => ({ ...p, [id]: value }));
 
- const updateSuivi = async (id, m) => {
-  const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
-  const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
+  const updateSuivi = async (id, m) => {
+    const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
+    const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
 
-  if (!newComment && !newStatus) return;
+    if (!newComment && !newStatus) return;
 
-  try {
-    setUpdating((p) => ({ ...p, [id]: true }));
+    try {
+      setUpdating((p) => ({ ...p, [id]: true }));
 
-    // 🔹 Mettre à jour dans la table suivis_des_evangelises
-    const { error } = await supabase
-      .from("suivis_des_evangelises")
-      .update({
-        commentaire_evangelises: newComment,
-        status_suivis_evangelises: newStatus,
-      })
-      .eq("id", id); // ne pas utiliser .select().single() ici
-
-    if (error) throw error;
-
-    // 🔹 Si le statut est Intégré, ajouter dans membres_complets
-   if (newStatus === "Intégré") {
-  const { error: insertError } = await supabase
-    .from("membres_complets")
-    .upsert(
-      {
-        suivi_int_id: m.id, // 🔥 BIGINT OK
-        nom: m.nom,
-        prenom: m.prenom,
-        telephone: m.telephone,
-        ville: m.ville,
-        sexe: m.sexe,
-        besoin: m.besoin,
-        infos_supplementaires: m.infos_supplementaires,
-        cellule_id: m.cellule_id,
-        conseiller_id: m.conseiller_id,
-        statut_initial: "intégré",
-        suivi_statut: newStatus,
-        suivi_commentaire_suivis: newComment,
-      },
-      { onConflict: "suivi_int_id" }
-    );
-
-  if (insertError) throw insertError;
-}
-
-    // 🔹 Mettre à jour le state local pour que ça reste visible immédiatement
-    setAllSuivis((prev) =>
-  prev.map((s) =>
-    s.id === id
-      ? {
-          ...s,
+      // 🔹 Mettre à jour dans la table suivis_des_evangelises
+      const { error } = await supabase
+        .from("suivis_des_evangelises")
+        .update({
           commentaire_evangelises: newComment,
           status_suivis_evangelises: newStatus,
-        }
-      : s
-  )
-);
+        })
+        .eq("id", id);
 
+      if (error) throw error;
 
-    // 🔹 Nettoyer les changements temporaires
-    setCommentChanges((prev) => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
-    setStatusChanges((prev) => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
+      // 🔹 Si le statut est Intégré, ajouter dans membres_complets
+      if (newStatus === "Intégré") {
+        const { error: insertError } = await supabase
+          .from("membres_complets")
+          .upsert(
+            {
+              suivi_int_id: m.id, // BIGINT
+              nom: m.nom,
+              prenom: m.prenom,
+              telephone: m.telephone,
+              ville: m.ville,
+              sexe: m.sexe,
+              besoin: m.besoin,
+              infos_supplementaires: m.infos_supplementaires,
+              cellule_id: m.cellule_id,
+              conseiller_id: m.conseiller_id,
+              statut_initial: "Intégré",
+              suivi_statut: newStatus,
+              suivi_commentaire_suivis: newComment,
+            },
+            { onConflict: "suivi_int_id" }
+          );
 
-  } catch (err) {
-    console.error("Erreur lors de la sauvegarde :", err.message);
-    alert("Erreur lors de la sauvegarde : " + err.message);
-  } finally {
-    setUpdating((p) => ({ ...p, [id]: false }));
-  }
-};  
-    
+        if (insertError) throw insertError;
+      }
+
+      // 🔹 Mise à jour du state local
+      setAllSuivis((prev) =>
+        prev.map((s) =>
+          s.id === id
+            ? {
+                ...s,
+                commentaire_evangelises: newComment,
+                status_suivis_evangelises: newStatus,
+              }
+            : s
+        )
+      );
+
+      // 🔹 Nettoyer les changements temporaires
+      setCommentChanges((prev) => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      });
+      setStatusChanges((prev) => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      });
+    } catch (err) {
+      console.error("Erreur lors de la sauvegarde :", err.message);
+      alert("Erreur lors de la sauvegarde : " + err.message);
+    } finally {
+      setUpdating((p) => ({ ...p, [id]: false }));
+    }
+  };
+
   const formatBesoin = (b) => {
     if (!b) return "—";
     try {
@@ -238,19 +210,23 @@ if (error) {
     setDetailsTable(null);
     setEditingContact(null);
   };
-  
-  const suivisAffiches = allSuivis.filter((m) =>
-  showRefus
-    ? m.status_suivis_evangelises === "Refus"
-    : m.status_suivis_evangelises !== "Refus"
-);
 
+  const suivisAffiches = allSuivis.filter((m) =>
+    showRefus
+      ? m.status_suivis_evangelises === "Refus"
+      : m.status_suivis_evangelises !== "Refus"
+  );
 
   // ================= RENDER =================
-  if (loading) return <p className="text-center mt-10">Chargement...</p>;
-  if (!user) return <p className="text-center mt-10 text-red-600">Non connecté</p>;
+  if (loading)
+    return <p className="text-center mt-10">Chargement...</p>;
+  if (!user)
+    return (
+      <p className="text-center mt-10 text-red-600">Non connecté</p>
+    );
 
   return (
+    
   <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
     {/* Header */}
     <div className="w-full max-w-5xl mb-6 flex justify-between">

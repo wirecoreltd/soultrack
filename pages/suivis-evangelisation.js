@@ -118,6 +118,24 @@ setAllSuivis(filtered);
     return "#ccc";
   };
 
+  const payload = {
+  suivi_int_id: Number(suivi.id),
+  nom: suivi.nom,
+  prenom: suivi.prenom,
+  telephone: suivi.telephone,
+};
+
+console.log("UPSERT PAYLOAD", payload);
+
+const { error } = await supabase
+  .from("membres_complets")
+  .upsert(payload, { onConflict: "suivi_int_id" });
+
+if (error) {
+  console.error("UPSERT ERROR", error);
+}
+
+
   const handleCommentChange = (id, value) =>
     setCommentChanges((p) => ({ ...p, [id]: value }));
 

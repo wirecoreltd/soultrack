@@ -110,14 +110,7 @@ if (showRefus) {
   filtered = filtered.filter((m) => m.status_suivis_evangelises !== "Refus");
 }
 
-
-    // Toggle refus
-    if (showRefus) {
-      filtered = filtered.filter((m) => m.status_suivis_evangelises === "Refus");
-    }
-
-    setSuivis(filtered);
-  };
+setSuivis(filtered);
 
   // ================= HELPERS =================
   const getBorderColor = (m) => {
@@ -236,13 +229,14 @@ if (showRefus) {
         <button onClick={switchView} className="text-white underline">
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
+      
         <button
           onClick={() => setShowRefus(!showRefus)}
           className="text-orange-400 text-sm underline hover:text-orange-500"
         >
           {showRefus ? "Voir tous les suivis" : "Voir les refus"}
         </button>
-
+      </div>
 
       {/* ================= VUE CARTE ================= */}
       {view === "card" && (

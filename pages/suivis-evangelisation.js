@@ -190,14 +190,14 @@ export default function SuivisEvangelisation() {
             </h2>
 
             <p className="text-orange-500 underline font-semibold mb-1">
-              📱 {m.evangelises?.telephone || "—"}
+              {m.evangelises?.telephone || "—"}
             </p>
 
-            <p className="text-sm text-gray-700 mb-1">
+            <p className="text-sm text-black-700 mb-1">
               🏠 Cellule : {m.cellules?.cellule_full || "—"}
             </p>
 
-            <p className="text-sm text-gray-700 mb-2">
+            <p className="text-sm text-black-700 mb-2">
               👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
             </p>
 

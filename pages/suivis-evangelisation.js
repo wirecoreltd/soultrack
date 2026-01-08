@@ -124,75 +124,81 @@ setAllSuivis(filtered);
   const handleStatusChange = (id, value) =>
     setStatusChanges((p) => ({ ...p, [id]: value }));
 
- const updateSuivi = async (id, m) => {
-  const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
-  const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
+ const updateSuivi = async (id) => {
+  const newComment = commentChanges[id];
+  const newStatus = statusChanges[id];
 
   if (!newComment && !newStatus) return;
 
+  setUpdating(prev => ({ ...prev, [id]: true }));
+
   try {
-    setUpdating((p) => ({ ...p, [id]: true }));
+    const member = members.find(m => m.id === id);
+    if (!member) throw new Error("Membre non trouvé");
 
-    // 🔹 Mettre à jour dans la table suivis_des_evangelises
-    const { error } = await supabase
+    // 🔹 Préparer l'objet de mise à jour pour suivis_des_evangelises
+    const payload = {
+      updated_at: new Date(),
+    };
+    if (newComment !== undefined) payload.commentaire_evangelises = newComment;
+    if (newStatus) payload.status_suivis_evangelises = newStatus;
+
+    // 🔹 Mettre à jour le suivi dans suivis_des_evangelises
+    const { data: updatedSuivi, error: updateError } = await supabase
       .from("suivis_des_evangelises")
-      .update({
-        commentaire_evangelises: newComment,
-        status_suivis_evangelises: newStatus,
-      })
-      .eq("id", id); // ne pas utiliser .select().single() ici
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
 
-    if (error) throw error;
+    if (updateError) throw updateError;
 
-    // 🔹 Si le statut est Intégré, ajouter dans membres_complets
-    if (newStatus === "Intégré") {
+    // 🔹 Mettre à jour le state local pour l'affichage immédiat
+    setAllMembers(prev =>
+      prev.map(s =>
+        s.id === id
+          ? { ...s, commentaire_evangelises: newComment || s.commentaire_evangelises, status_suivis_evangelises: newStatus || s.status_suivis_evangelises }
+          : s
+      )
+    );
+
+    // 🔹 Si le nouveau statut est "Intégrer", copier dans membres_complets
+    if (Number(newStatus) === statutIds.integrer) {
       await supabase.from("membres_complets").insert({
-        nom: m.evangelises.nom,
-        prenom: m.evangelises.prenom,
-        telephone: m.evangelises.telephone,
-        email: m.evangelises.email,
-        statut_suivis: newStatus,
-        commentaire_suivis: newComment,
-        cellule_id: m.cellule_id,
-        conseiller_id: m.conseiller_id,
-        infos_supplementaires: m.evangelises.infos_supplementaires,
-        suivi_id: m.id,
+        nom: member.nom,
+        prenom: member.prenom || null,
+        telephone: member.telephone || null,
+        email: member.email || null,
+        statut: "Intégré",
+        cellule_id: member.cellule_id || null,        // UUID ou null
+        conseiller_id: member.conseiller_id || null,  // UUID ou null
+        commentaire_suivis: newComment || member.commentaire_evangelises || null,
+        suivi_id: member.id,
+        suivi_statut: "Intégré",
+        suivi_commentaire_suivis: newComment || member.commentaire_evangelises || null,
       });
     }
 
-    // 🔹 Mettre à jour le state local pour que ça reste visible immédiatement
-    setAllSuivis((prev) =>
-  prev.map((s) =>
-    s.id === id
-      ? {
-          ...s,
-          commentaire_evangelises: newComment,
-          status_suivis_evangelises: newStatus,
-        }
-      : s
-  )
-);
-
-
     // 🔹 Nettoyer les changements temporaires
-    setCommentChanges((prev) => {
+    setCommentChanges(prev => {
       const copy = { ...prev };
       delete copy[id];
       return copy;
     });
-    setStatusChanges((prev) => {
+    setStatusChanges(prev => {
       const copy = { ...prev };
       delete copy[id];
       return copy;
     });
 
   } catch (err) {
-    console.error("Erreur lors de la sauvegarde :", err.message);
-    alert("Erreur lors de la sauvegarde : " + err.message);
+    console.error("Erreur lors de la sauvegarde :", err);
+    alert("Erreur lors de la sauvegarde : " + (err.message || err));
   } finally {
-    setUpdating((p) => ({ ...p, [id]: false }));
+    setUpdating(prev => ({ ...prev, [id]: false }));
   }
-};  
+};
+
   const formatBesoin = (b) => {
     if (!b) return "—";
     try {

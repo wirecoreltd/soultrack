@@ -171,7 +171,7 @@ export default function SuivisEvangelisation() {
 
      {/* ================= VUE CARTE ================= */}
 {view === "card" && (
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-6xl">
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
     {suivis.map((m) => {
       const ouvert = detailsCarteId === m.id;
       const conseiller = conseillers.find(
@@ -181,20 +181,20 @@ export default function SuivisEvangelisation() {
       return (
         <div
           key={m.id}
-          className="bg-white rounded-2xl shadow p-4 border-l-4"
+          className="bg-white rounded-2xl shadow p-4 border-l-4 text-black space-y-1"
           style={{ borderLeftColor: getBorderColor(m) }}
         >
           <h2 className="font-bold text-center">
             {m.evangelises?.prenom} {m.evangelises?.nom}
           </h2>
 
-          <p className="text-sm text-center">
+          <p className="text-sm text-black-700 mb-1 text-center">
             📱 {m.evangelises?.telephone || "—"}
           </p>
-          <p className="text-sm text-center">
+          <p className="text-sm text-black-700 mb-1 text-center">
             🏠 {m.cellules?.cellule_full || "—"}
           </p>
-          <p className="text-sm text-center">
+          <p className="text-sm text-black-700 mb-1 text-center">
             👤 {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
           </p>
 
@@ -208,26 +208,30 @@ export default function SuivisEvangelisation() {
                     rows={2}
                   />
 
-            <label className="block text-center text-sm font-semibold text-slate-700 mt-3 mb-1">
+            <label className="font-semibold text-blue-700 mb-1 text-center">
               Statut du suivis
             </label>
 
             <select
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
             >
-              <option value="">-- Sélectionner un statut --</option>
-              <option>En attente</option>
+              <option value="">-- Sélectionner un statut --</option>              
               <option>En cours</option>
               <option>Intégré</option>
               <option>Refus</option>
             </select>
 
             <button
-              disabled
-              className="mt-3 w-full rounded-lg bg-slate-300 text-slate-600 font-semibold py-2 cursor-not-allowed"
-            >
-              Sauvegarder
-            </button>
+                          onClick={() => updateSuivi(m.id)}
+                          disabled={updating[m.id]}
+                          className={`mt-2 w-full font-bold py-2 rounded-lg shadow-md transition-all
+                            ${updating[m.id]
+                              ? "bg-blue-300 cursor-not-allowed"
+                              : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white"
+                            }`}
+                        >
+                          {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
+                </button>
           </div>
 
           {/* Bouton détails */}
@@ -247,15 +251,16 @@ export default function SuivisEvangelisation() {
                   }`}
                 >
                   {ouvert && (
-                    <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
+                    <div className="text-black text-sm mt-2 w-full space-y-1">
                       <p>🏙️ Ville : {m.evangelises?.ville || "—"}</p>
-                      <p>⚥ Sexe : {m.evangelises?.sexe || "—"}</p>
+                      <p>🎗️ Sexe : {m.evangelises?.sexe || "—"}</p>
                       <p>
                         🙏 Prière salut :{" "}
                         {m.evangelises?.priere_salut ? "Oui" : "Non"}
                       </p>
                       <p>☀️ Type : {m.evangelises?.type_conversion || "—"}</p>
                       <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>
+                      <p>📝 Infos : {formatBesoin(m.evangelises?.infos_supplementaires)}</p>  
 
                       <textarea
                         rows={2}

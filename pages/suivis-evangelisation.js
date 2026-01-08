@@ -216,172 +216,178 @@ setSuivis(filtered);
   if (!user) return <p className="text-center mt-10 text-red-600">Non connecté</p>;
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
-      <div className="w-full max-w-5xl mb-6 flex justify-between">
-        <button onClick={() => window.history.back()} className="text-white">← Retour</button>
-        <LogoutLink />
-      </div>
+  <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
+    {/* Header */}
+    <div className="w-full max-w-5xl mb-6 flex justify-between">
+      <button onClick={() => window.history.back()} className="text-white">← Retour</button>
+      <LogoutLink />
+    </div>
 
-      <Image src="/logo.png" alt="Logo" width={80} height={80} />
-      <h1 className="text-3xl font-bold text-white mb-6">📋 Suivis des Évangélisés</h1>
+    <Image src="/logo.png" alt="Logo" width={80} height={80} />
+    <h1 className="text-3xl font-bold text-white mb-6">📋 Suivis des Évangélisés</h1>
 
-      <div className="mb-6 flex justify-between w-full max-w-6xl">
-        <button onClick={switchView} className="text-white underline">
-          {view === "card" ? "Vue Table" : "Vue Carte"}
-        </button>
-      
-        <button
-          onClick={() => setShowRefus(!showRefus)}
-          className="text-orange-400 text-sm underline hover:text-orange-500"
-        >
-          {showRefus ? "Voir tous les suivis" : "Voir les refus"}
-        </button>
-      </div>
+    {/* Toggle Vue / Refus */}
+    <div className="mb-6 flex justify-between w-full max-w-6xl">
+      <button onClick={switchView} className="text-white underline">
+        {view === "card" ? "Vue Table" : "Vue Carte"}
+      </button>
 
-      {/* ================= VUE CARTE ================= */}
-      {view === "card" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-          {suivis.map((m) => {
-            const ouvert = detailsCarteId === m.id;
-            const conseiller = conseillers.find((c) => c.id === m.conseiller_id);
+      <button
+        onClick={() => setShowRefus(!showRefus)}
+        className="text-orange-400 text-sm underline hover:text-orange-500"
+      >
+        {showRefus ? "Voir tous les suivis" : "Voir les refus"}
+      </button>
+    </div>
 
-            return (
-              <div
-                key={m.id}
-                className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
-                style={{ borderLeftColor: getBorderColor(m) }}
-              >
-                <div className="flex flex-col items-center">
-                  <h2 className="font-bold text-black text-base text-center mb-1">
-                    {m.evangelises?.prenom} {m.evangelises?.nom}
-                  </h2>
+    {/* ================= VUE CARTE ================= */}
+    {view === "card" && (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
+        {suivis.map((m) => {
+          const ouvert = detailsCarteId === m.id;
+          const conseiller = conseillers.find((c) => c.id === m.conseiller_id);
 
-                  <p className="text-orange-500 underline font-semibold mb-1">{m.evangelises?.telephone || "—"}</p>
-                  <p className="text-sm text-black-700 mb-1">🏠 Cellule : {m.cellules?.cellule_full || "—"}</p>
-                  <p className="text-sm text-black-700 mb-2">👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}</p>
+          return (
+            <div
+              key={m.id}
+              className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
+              style={{ borderLeftColor: getBorderColor(m) }}
+            >
+              <div className="flex flex-col items-center">
+                <h2 className="font-bold text-black text-base text-center mb-1">
+                  {m.evangelises?.prenom} {m.evangelises?.nom}
+                </h2>
 
-                  {/* ================= COMMENTAIRE + STATUT ================= */}
-                    <div className="w-full bg-slate-50 rounded-xl p-3 mt-2">
-                      {/* Commentaire */}
-                      <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
-                        Commentaire Suivis
-                      </label>
-                      <textarea
-                        rows={2}
-                        value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
-                        onChange={(e) => handleCommentChange(m.id, e.target.value)}
-                        className="w-full rounded-lg border px-3 py-2"
-                      />
-                      
-                      <select
-                        value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""}
-                        onChange={(e) => handleStatusChange(m.id, e.target.value)}
-                      >
-                        <option value="">-- Sélectionner un statut --</option>
-                        <option value="En cours">En cours</option>
-                        <option value="Intégré">Intégré</option>
-                        <option value="Refus">Refus</option>
-                      </select>
-                    
-                      {/* Bouton Sauvegarder */}
-                      <button
-                        onClick={() => updateSuivi(m.id, m)}
-                        disabled={updating[m.id]}
-                        className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all ${
-                          updating[m.id]
-                            ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                            : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
-                        }`}
-                      >
-                        {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
-                      </button>
-                    </div>
+                <p className="text-orange-500 underline font-semibold mb-1">
+                  {m.evangelises?.telephone || "—"}
+                </p>
+                <p className="text-sm text-black-700 mb-1">
+                  🏠 Cellule : {m.cellules?.cellule_full || "—"}
+                </p>
+                <p className="text-sm text-black-700 mb-2">
+                  👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
+                </p>
 
+                {/* Commentaire + statut */}
+                <div className="w-full bg-slate-50 rounded-xl p-3 mt-2">
+                  <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
+                    Commentaire Suivis
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
+                    onChange={(e) => handleCommentChange(m.id, e.target.value)}
+                    className="w-full rounded-lg border px-3 py-2"
+                  />
+
+                  <select
+                    value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""}
+                    onChange={(e) => handleStatusChange(m.id, e.target.value)}
+                    className="mt-2 w-full rounded-lg border px-3 py-2"
+                  >
+                    <option value="">-- Sélectionner un statut --</option>
+                    <option value="En cours">En cours</option>
+                    <option value="Intégré">Intégré</option>
+                    <option value="Refus">Refus</option>
+                  </select>
 
                   <button
-                    onClick={() => setDetailsCarteId(ouvert ? null : m.id)}
-                    className="text-orange-500 underline text-sm mt-3"
+                    onClick={() => updateSuivi(m.id, m)}
+                    disabled={updating[m.id]}
+                    className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all ${
+                      updating[m.id]
+                        ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                        : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
+                    }`}
                   >
-                    {ouvert ? "Fermer détails" : "Détails"}
+                    {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
                   </button>
                 </div>
 
-                {/* Détails */}
-                <div className={`transition-all duration-500 overflow-hidden ${ouvert ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
-                  {ouvert && (
-                    <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
-                      <p>🏙️ Ville : {m.evangelises?.ville || "—"}</p>
-                      <p>🎗️ Sexe : {m.evangelises?.sexe || "—"}</p>
-                      <p>🙏 Prière salut : {m.evangelises?.priere_salut ? "Oui" : "Non"}</p>
-                      <p>☀️ Type : {m.evangelises?.type_conversion || "—"}</p>
-                      <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>
-                      <p>📝 Infos : {m.evangelises?.infos_supplementaires || "—"}</p>
-
-                      <button
-                        onClick={() => m.evangelises?.id && setEditingContact(m.evangelises)}
-                        className="text-blue-600 text-sm underline w-full"
-                      >
-                        ✏️ Modifier le contact
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <button
+                  onClick={() => setDetailsCarteId(ouvert ? null : m.id)}
+                  className="text-orange-500 underline text-sm mt-3"
+                >
+                  {ouvert ? "Fermer détails" : "Détails"}
+                </button>
               </div>
-            );
-          })}
-        </div>
-      )}
 
-      {/* ================= VUE TABLE ================= */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto">
-          <table className="w-full bg-white rounded shadow">
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="p-2">Nom</th>
-                <th className="p-2">Téléphone</th>
-                <th className="p-2">Attribué</th>
-                <th className="p-2">Actions</th>
+              {/* Détails */}
+              <div className={`transition-all duration-500 overflow-hidden ${ouvert ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
+                {ouvert && (
+                  <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
+                    <p>🏙️ Ville : {m.evangelises?.ville || "—"}</p>
+                    <p>🎗️ Sexe : {m.evangelises?.sexe || "—"}</p>
+                    <p>🙏 Prière salut : {m.evangelises?.priere_salut ? "Oui" : "Non"}</p>
+                    <p>☀️ Type : {m.evangelises?.type_conversion || "—"}</p>
+                    <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>
+                    <p>📝 Infos : {m.evangelises?.infos_supplementaires || "—"}</p>
+
+                    <button
+                      onClick={() => m.evangelises?.id && setEditingContact(m.evangelises)}
+                      className="text-blue-600 text-sm underline w-full"
+                    >
+                      ✏️ Modifier le contact
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )}
+
+    {/* ================= VUE TABLE ================= */}
+    {view === "table" && (
+      <div className="w-full max-w-6xl overflow-x-auto">
+        <table className="w-full bg-white rounded shadow">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="p-2">Nom</th>
+              <th className="p-2">Téléphone</th>
+              <th className="p-2">Attribué</th>
+              <th className="p-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {suivis.map((m) => (
+              <tr key={m.id} className="border-t">
+                <td className="p-2">{m.evangelises?.prenom} {m.evangelises?.nom}</td>
+                <td className="p-2">{m.evangelises?.telephone || "—"}</td>
+                <td className="p-2">{m.cellules?.cellule_full || "—"}</td>
+                <td className="p-2">
+                  <button onClick={() => setDetailsTable(m)} className="text-orange-500 underline mr-3">Détails</button>
+                  <button onClick={() => m.evangelises?.id && setEditingContact(m.evangelises)} className="text-blue-600 underline">Modifier</button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {suivis.map((m) => (
-                <tr key={m.id} className="border-t">
-                  <td className="p-2">{m.evangelises?.prenom} {m.evangelises?.nom}</td>
-                  <td className="p-2">{m.evangelises?.telephone || "—"}</td>
-                  <td className="p-2">{m.cellules?.cellule_full || "—"}</td>
-                  <td className="p-2">
-                    <button onClick={() => setDetailsTable(m)} className="text-orange-500 underline mr-3">Détails</button>
-                    <button onClick={() => m.evangelises?.id && setEditingContact(m.evangelises)} className="text-blue-600 underline">Modifier</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
 
-      {view === "table" && detailsTable && (
-        <DetailsEvangePopup
-          member={detailsTable}
-          onClose={() => setDetailsTable(null)}
-          onEdit={(s) => {
-            setDetailsTable(null);
-            s.evangelises?.id && setEditingContact(s.evangelises);
-          }}
-        />
-      )}
+    {view === "table" && detailsTable && (
+      <DetailsEvangePopup
+        member={detailsTable}
+        onClose={() => setDetailsTable(null)}
+        onEdit={(s) => {
+          setDetailsTable(null);
+          s.evangelises?.id && setEditingContact(s.evangelises);
+        }}
+      />
+    )}
 
-      {editingContact && (
-        <EditEvangelisePopup
-          member={editingContact}
-          onClose={() => setEditingContact(null)}
-          onUpdateMember={() => {
-            setEditingContact(null);
-            fetchSuivis(user, cellules);
-          }}
-        />
-      )}
-    </div>
-  );
+    {editingContact && (
+      <EditEvangelisePopup
+        member={editingContact}
+        onClose={() => setEditingContact(null)}
+        onUpdateMember={() => {
+          setEditingContact(null);
+          fetchSuivis(user, cellules);
+        }}
+      />
+    )}
+  </div>
+);
 }

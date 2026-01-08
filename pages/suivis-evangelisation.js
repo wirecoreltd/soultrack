@@ -390,4 +390,3 @@ setSuivis(filtered);
     )}
   </div>
 );
-}

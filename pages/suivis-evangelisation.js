@@ -259,8 +259,8 @@ export default function SuivisEvangelisation() {
                         {m.evangelises?.priere_salut ? "Oui" : "Non"}
                       </p>
                       <p>☀️ Type : {m.evangelises?.type_conversion || "—"}</p>
-                      <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>
-                      <p>📝 Infos : {formatBesoin(m.evangelises?.infos_supplementaires)}</p>  
+                      <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>                      
+                      <p>📝 Infos : {m.evangelises?.infos_supplementaires || "—"}</p>  
 
                       <textarea
                         rows={2}

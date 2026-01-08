@@ -48,12 +48,12 @@ export default function SuivisEvangelisation() {
     return data;
   };
 
-  /*----------------------*/
+  /* ================= UTILS ================= */
   const updateMember = (id, newData) => {
-  setSuivis(prev =>
-    prev.map(m => (m.id === id ? { ...m, ...newData } : m))
-  );
-};
+    setSuivis(prev =>
+      prev.map(m => (m.id === id ? { ...m, ...newData } : m))
+    );
+  };
 
   /* ================= CONSEILLERS ================= */
   const fetchConseillers = async () => {
@@ -106,55 +106,49 @@ export default function SuivisEvangelisation() {
     return "#ccc";
   };
 
-  /* ================= COMMENTAIRE ================= */
-const handleCommentChange = (id, value) => {
-  // Mettre à jour l'état local pour l'UI immédiate
-  setCommentChanges(prev => ({ ...prev, [id]: value }));
-
-  // Mettre à jour directement le membre dans le state local pour que ça reste visible dans la carte
-  const member = suivis.find(m => m.id === id);
-  if (member) {
-    updateMember(id, { ...member, commentaire_evangelises: value });
-  }
-};
+  const handleCommentChange = (id, value) => {
+    setCommentChanges(prev => ({ ...prev, [id]: value }));
+    const member = suivis.find(m => m.id === id);
+    if (member) {
+      updateMember(id, { ...member, commentaire_evangelises: value });
+    }
+  };
 
   /* ================= UPDATE COMMENTAIRE ================= */
   const updateSuivi = async (id) => {
-  const newComment = commentChanges[id];
-  if (!newComment) return;
+    const newComment = commentChanges[id];
+    if (!newComment) return;
 
-  setUpdating(prev => ({ ...prev, [id]: true }));
+    setUpdating(prev => ({ ...prev, [id]: true }));
 
-  try {
-    const { data: updatedMember, error } = await supabase
-      .from("suivis_des_evangelises")
-      .update({ commentaire_evangelises: newComment })
-      .eq("id", id)
-      .select()
-      .single();
+    try {
+      const { data: updatedMember, error } = await supabase
+        .from("suivis_des_evangelises")
+        .update({ commentaire_evangelises: newComment })
+        .eq("id", id)
+        .select()
+        .maybeSingle(); // <-- Evite l'erreur du tableau
 
-    if (error) throw error;
+      if (error) throw error;
 
-    // Mettre à jour le state local avec la valeur confirmée par la DB
-    updateMember(id, updatedMember);
+      if (updatedMember) updateMember(id, updatedMember);
 
-    // Supprimer le commentaire temporaire stocké
-    setCommentChanges(prev => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
+      // Supprimer le commentaire temporaire
+      setCommentChanges(prev => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      });
 
-  } catch (err) {
-    console.error("Erreur updateSuivi :", err);
-    alert("Erreur lors de la sauvegarde : " + err.message);
-  } finally {
-    setUpdating(prev => ({ ...prev, [id]: false }));
-  }
-};
+    } catch (err) {
+      console.error("Erreur updateSuivi :", err);
+      alert("Erreur lors de la sauvegarde : " + err.message);
+    } finally {
+      setUpdating(prev => ({ ...prev, [id]: false }));
+    }
+  };
 
-/*-------------------------------*/
-
+  /* ================= FORMAT BESOIN ================= */
   const formatBesoin = (b) => {
     if (!b) return "—";
     try {
@@ -211,35 +205,26 @@ const handleCommentChange = (id, value) => {
                       onChange={(e) => handleCommentChange(m.id, e.target.value)}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                     />
-
-
-
-
-                    <label className="block w-full text-center font-semibold text-blue-700 mb-1">Statut du suivis</label>
-                    <select className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400">
-                      <option value="">-- Sélectionner un statut --</option>
-                      <option>En cours</option>
-                      <option>Intégré</option>
-                      <option>Refus</option>
-                    </select>
-
                     <button
                       onClick={() => updateSuivi(m.id)}
                       disabled={updating[m.id]}
-                      className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all ${
-                        updating[m.id]
-                          ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                          : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
-                      }`}
+                      className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all
+                        ${updating[m.id] ? "bg-slate-300 text-slate-600 cursor-not-allowed" : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"}
+                      `}
                     >
                       {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
                     </button>
                   </div>
 
-                  <button onClick={() => setDetailsCarteId(ouvert ? null : m.id)} className="text-orange-500 underline text-sm mt-3">{ouvert ? "Fermer détails" : "Détails"}</button>
+                  <button
+                    onClick={() => setDetailsCarteId(ouvert ? null : m.id)}
+                    className="text-orange-500 underline text-sm mt-3"
+                  >
+                    {ouvert ? "Fermer détails" : "Détails"}
+                  </button>
                 </div>
 
-                {/* DETAILS */}
+                {/* DÉTAILS */}
                 <div className={`transition-all duration-500 overflow-hidden ${ouvert ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
                   {ouvert && (
                     <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
@@ -249,7 +234,12 @@ const handleCommentChange = (id, value) => {
                       <p>☀️ Type : {m.evangelises?.type_conversion || "—"}</p>
                       <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>
                       <p>📝 Infos : {m.evangelises?.infos_supplementaires || "—"}</p>
-                      <button onClick={() => m.evangelises?.id && setEditingContact(m.evangelises)} className="text-blue-600 text-sm underline w-full">✏️ Modifier le contact</button>
+                      <button
+                        onClick={() => m.evangelises?.id && setEditingContact(m.evangelises)}
+                        className="text-blue-600 text-sm underline w-full"
+                      >
+                        ✏️ Modifier le contact
+                      </button>
                     </div>
                   )}
                 </div>
@@ -272,7 +262,7 @@ const handleCommentChange = (id, value) => {
               </tr>
             </thead>
             <tbody>
-              {filteredSuivis.map(m => (
+              {suivis.map((m) => (
                 <tr key={m.id} className="border-t">
                   <td className="p-2">{m.evangelises?.prenom} {m.evangelises?.nom}</td>
                   <td className="p-2">{m.evangelises?.telephone || "—"}</td>
@@ -292,7 +282,7 @@ const handleCommentChange = (id, value) => {
         <DetailsEvangePopup
           member={detailsTable}
           onClose={() => setDetailsTable(null)}
-          onEdit={s => {
+          onEdit={(s) => {
             setDetailsTable(null);
             s.evangelises?.id && setEditingContact(s.evangelises);
           }}

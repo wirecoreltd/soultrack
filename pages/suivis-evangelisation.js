@@ -17,6 +17,10 @@ export default function SuivisEvangelisation() {
   const [statusChanges, setStatusChanges] = useState({});
   const [showRefus, setShowRefus] = useState(false);
   const [user, setUser] = useState(null);
+  const [detailsCarteId, setDetailsCarteId] = useState(null);
+  const [detailsTable, setDetailsTable] = useState(null);
+  const [editingContact, setEditingContact] = useState(null);
+
 
   // ================= INIT =================
   useEffect(() => {

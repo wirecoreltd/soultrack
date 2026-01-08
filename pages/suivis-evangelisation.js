@@ -249,7 +249,7 @@ setAllSuivis(filtered);
     {/* ================= VUE CARTE ================= */}
     {view === "card" && (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-        {suivis.map((m) => {
+        {suivisAffiches.map((m) => {
           const ouvert = detailsCarteId === m.id;
           const conseiller = conseillers.find((c) => c.id === m.conseiller_id);
 

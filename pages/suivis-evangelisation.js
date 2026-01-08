@@ -125,12 +125,14 @@ export default function SuivisEvangelisation() {
   const updateSuivi = async (id, m) => {
   const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
   const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
+
+  // Si rien à mettre à jour, on sort
   if (!newComment && !newStatus) return;
 
-  setUpdating(p => ({ ...p, [id]: true }));
-
   try {
-    // 🔹 Toujours utiliser select() pour récupérer l'objet mis à jour
+    setUpdating((p) => ({ ...p, [id]: true }));
+
+    // 1️⃣ Mise à jour dans suivis_des_evangelises
     const { data, error } = await supabase
       .from("suivis_des_evangelises")
       .update({
@@ -138,38 +140,56 @@ export default function SuivisEvangelisation() {
         status_suivis_evangelises: newStatus
       })
       .eq("id", id)
-      .select()
-      .single(); // <- important, sinon le state local ne reflète pas la DB
+      .select(); // <- on ne met plus .single()
 
     if (error) throw error;
 
-    // 🔹 Mettre à jour le state local avec la valeur confirmée par la DB
-    setSuivis(prev =>
-      prev.map(s => (s.id === id ? { ...s, ...data } : s))
-    );
+    // 2️⃣ Récupère le premier objet mis à jour
+    const updatedItem = data && data.length > 0 ? data[0] : null;
+    if (updatedItem) {
+      // Mettre à jour le state local
+      setSuivis((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, ...updatedItem } : s))
+      );
 
-    // 🔹 Supprimer le changement temporaire
-    setCommentChanges(prev => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
-    setStatusChanges(prev => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
+      // Supprime le commentaire temporaire stocké
+      setCommentChanges((prev) => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      });
 
-  } catch (err) {
-    console.error("Erreur updateSuivi :", err);
-    alert("Erreur lors de la sauvegarde : " + err.message);
+      setStatusChanges((prev) => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      });
+    }
+
+    // 3️⃣ Si Intégré -> copier dans membres_complets
+    if (newStatus === "Intégré") {
+      await supabase.from("membres_complets").insert({
+        nom: m.evangelises.nom,
+        prenom: m.evangelises.prenom,
+        telephone: m.evangelises.telephone,
+        email: m.evangelises.email,
+        statut_suivis: newStatus,
+        commentaire_suivis: newComment,
+        cellule_id: m.cellule_id,
+        conseiller_id: m.conseiller_id,
+        infos_supplementaires: m.evangelises.infos_supplementaires,
+        suivi_id: m.id
+      });
+    }
+
+  } catch (error) {
+    console.error("Erreur lors de la sauvegarde :", error);
+    alert("Erreur lors de la sauvegarde !");
   } finally {
-    setUpdating(p => ({ ...p, [id]: false }));
+    setUpdating((p) => ({ ...p, [id]: false }));
   }
 };
-
-
-
+  
   const formatBesoin = (b) => {
     if (!b) return "—";
     try {
@@ -238,43 +258,48 @@ export default function SuivisEvangelisation() {
                   <p className="text-sm text-black-700 mb-1">🏠 Cellule : {m.cellules?.cellule_full || "—"}</p>
                   <p className="text-sm text-black-700 mb-2">👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}</p>
 
-                  {/* Commentaire + statut */}
-                  <div className="w-full bg-slate-50 rounded-xl p-3 mt-2">
-                    <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
-                      Commentaire Suivis
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
-                      onChange={(e) => handleCommentChange(m.id, e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                    />
-                    <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
-                      Statut du suivis
-                    </label>
-                    <select
-                      value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""}
-                      onChange={(e) => handleStatusChange(m.id, e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
-                    >
-                      <option value="">-- Sélectionner un statut --</option>
-                      <option value="En cours">En cours</option>
-                      <option value="Intégré">Intégré</option>
-                      <option value="Refus">Refus</option>
-                    </select>
+                  {/* ================= COMMENTAIRE + STATUT ================= */}
+                    <div className="w-full bg-slate-50 rounded-xl p-3 mt-2">
+                      {/* Commentaire */}
+                      <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
+                        Commentaire Suivis
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
+                        onChange={(e) => handleCommentChange(m.id, e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                      />
                     
-                    <button
-                      onClick={() => updateSuivi(m.id, m)}
-                      disabled={updating[m.id]}
-                      className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all ${
-                        updating[m.id]
-                          ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                          : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
-                      }`}
-                    >
-                      {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
-                    </button>
-                  </div>
+                      {/* Statut */}
+                      <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
+                        Statut du suivis
+                      </label>
+                      <select
+                        value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""}
+                        onChange={(e) => handleStatusChange(m.id, e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
+                      >
+                        <option value="">-- Sélectionner un statut --</option>
+                        <option value="En cours">En cours</option>
+                        <option value="Intégré">Intégré</option>
+                        <option value="Refus">Refus</option>
+                      </select>
+                    
+                      {/* Bouton Sauvegarder */}
+                      <button
+                        onClick={() => updateSuivi(m.id, m)}
+                        disabled={updating[m.id]}
+                        className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all ${
+                          updating[m.id]
+                            ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                            : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
+                        }`}
+                      >
+                        {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
+                      </button>
+                    </div>
+
 
                   <button
                     onClick={() => setDetailsCarteId(ouvert ? null : m.id)}

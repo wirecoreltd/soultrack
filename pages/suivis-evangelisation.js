@@ -203,7 +203,7 @@ export default function SuivisEvangelisation() {
 
             {/* ================= COMMENTAIRE + STATUT ================= */}
             <div className="w-full bg-slate-50 rounded-xl p-3 mt-2">
-              <label className="block text-center text-sm font-semibold text-blue-700 text-slate-700 mb-1">
+              <label className="block text-center text-sm font-semibold text-blue-700 mb-1">
                 Commentaire suivis évangélisé
               </label>
 
@@ -214,7 +214,7 @@ export default function SuivisEvangelisation() {
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
               />
 
-              <label className="block text-center text-sm text-blue-700 font-semibold text-slate-700 mt-3 mb-1">
+              <label className="block text-center text-sm text-blue-700 font-semibold mt-3 mb-1">
                 Statut du suivis
               </label>
 

@@ -18,6 +18,8 @@ export default function SuivisEvangelisation() {
   const [detailsTable, setDetailsTable] = useState(null);
   const [editingContact, setEditingContact] = useState(null);
   const [commentChanges, setCommentChanges] = useState({});
+  const [statusChanges, setStatusChanges] = useState({});
+  const [showRefus, setShowRefus] = useState(false);
   const [user, setUser] = useState(null);
 
   /* ================= INIT ================= */
@@ -29,11 +31,7 @@ export default function SuivisEvangelisation() {
     const userData = await fetchUser();
     await fetchConseillers();
     const cellulesData = await fetchCellules();
-
-    if (userData) {
-      await fetchSuivis(userData, cellulesData);
-    }
-
+    if (userData) await fetchSuivis(userData, cellulesData);
     setLoading(false);
   };
 
@@ -88,9 +86,7 @@ export default function SuivisEvangelisation() {
     let filtered = data || [];
 
     if (userData.role === "Conseiller") {
-      filtered = filtered.filter(
-        (m) => m.conseiller_id === userData.id
-      );
+      filtered = filtered.filter((m) => m.conseiller_id === userData.id);
     }
 
     if (userData.role === "ResponsableCellule") {
@@ -98,19 +94,26 @@ export default function SuivisEvangelisation() {
         .filter((c) => c.responsable_id === userData.id)
         .map((c) => c.id);
 
-      filtered = filtered.filter((m) =>
-        mesCellulesIds.includes(m.cellule_id)
-      );
+      filtered = filtered.filter((m) => mesCellulesIds.includes(m.cellule_id));
+    }
+
+    if (showRefus) {
+      filtered = filtered.filter((m) => m.statut_suivis === 4); // Refus
     }
 
     setSuivis(filtered);
   };
 
   /* ================= HELPERS ================= */
+  const statutIds = { envoye: 1, "en cours": 2, integrer: 3, refus: 4 };
+  const statutLabels = { 1: "Envoyé", 2: "En cours", 3: "Intégré", 4: "Refus" };
+
   const getBorderColor = (m) => {
-    if (m.status_suivis_evangelises === "En cours") return "#FFA500";
-    if (m.status_suivis_evangelises === "Integrer") return "#34A853";
-    if (m.status_suivis_evangelises === "Venu à l’église") return "#3B82F6";
+    const status = m.statut_suivis ?? m.suivi_statut_id;
+    if (status === statutIds["en cours"]) return "#FFA500";
+    if (status === statutIds["integrer"]) return "#34A853";
+    if (status === statutIds["refus"]) return "#FF4B5C";
+    if (status === statutIds["envoye"]) return "#3B82F6";
     return "#ccc";
   };
 
@@ -118,13 +121,23 @@ export default function SuivisEvangelisation() {
     setCommentChanges((p) => ({ ...p, [id]: value }));
 
   const updateSuivi = async (id) => {
-    if (!commentChanges[id]) return;
+    const updates = {};
+    if (commentChanges[id]) updates.commentaire_evangelises = commentChanges[id];
+    if (statusChanges[id]) updates.statut_suivis = Number(statusChanges[id]);
+
+    if (Object.keys(updates).length === 0) return;
+
+    setUpdating((prev) => ({ ...prev, [id]: true }));
 
     await supabase
       .from("suivis_des_evangelises")
-      .update({ commentaire_evangelises: commentChanges[id] })
+      .update(updates)
       .eq("id", id);
 
+    const statut = Number(statusChanges[id]);
+    if (statut === statutIds.refus) setShowRefus(true);
+
+    setUpdating((prev) => ({ ...prev, [id]: false }));
     fetchSuivis(user, cellules);
   };
 
@@ -165,9 +178,17 @@ export default function SuivisEvangelisation() {
         📋 Suivis des Évangélisés
       </h1>
 
-      <button onClick={switchView} className="text-white underline mb-6">
-        {view === "card" ? "Vue Table" : "Vue Carte"}
-      </button>
+      <div className="mb-4 flex justify-between w-full max-w-6xl">
+        <button onClick={switchView} className="text-white underline">
+          {view === "card" ? "Vue Table" : "Vue Carte"}
+        </button>
+        <button
+          onClick={() => setShowRefus(!showRefus)}
+          className="text-orange-400 text-sm underline hover:text-orange-500"
+        >
+          {showRefus ? "Voir tous les suivis" : "Voir les refus"}
+        </button>
+      </div>
 
      {/* ================= VUE CARTE ================= */}
 {view === "card" && (
@@ -219,12 +240,16 @@ export default function SuivisEvangelisation() {
               </label>
 
               <select
+                value={statusChanges[m.id] ?? (m.statut_suivis ?? "")}
+                onChange={(e) =>
+                  setStatusChanges((prev) => ({ ...prev, [m.id]: e.target.value }))
+                }
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
               >
-                <option value="">-- Sélectionner un statut --</option>                
-                <option>En cours</option>
-                <option>Intégré</option>
-                <option>Refus</option>
+                <option value="">-- Sélectionner un statut --</option>
+                <option value={statutIds["en cours"]}>En cours</option>
+                <option value={statutIds["integrer"]}>Intégré</option>
+                <option value={statutIds["refus"]}>Refus</option>
               </select>
 
               <button
@@ -240,7 +265,6 @@ export default function SuivisEvangelisation() {
               >
                 {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
               </button>
-
             </div>
 
             <button
@@ -283,75 +307,76 @@ export default function SuivisEvangelisation() {
   </div>
 )}
 
-      {/* ================= VUE TABLE ================= */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto">
-          <table className="w-full bg-white rounded shadow">
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="p-2">Nom</th>
-                <th className="p-2">Téléphone</th>
-                <th className="p-2">Attribué</th>
-                <th className="p-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {suivis.map((m) => (
-                <tr key={m.id} className="border-t">
-                  <td className="p-2">
-                    {m.evangelises?.prenom} {m.evangelises?.nom}
-                  </td>
-                  <td className="p-2">
-                    {m.evangelises?.telephone || "—"}
-                  </td>
-                  <td className="p-2">
-                    {m.cellules?.cellule_full || "—"}
-                  </td>
-                  <td className="p-2">
-                    <button
-                      onClick={() => setDetailsTable(m)}
-                      className="text-orange-500 underline mr-3"
-                    >
-                      Détails
-                    </button>
-                    <button
-                      onClick={() =>
-                        m.evangelises?.id &&
-                        setEditingContact(m.evangelises)
-                      }
-                      className="text-blue-600 underline"
-                    >
-                      Modifier
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+{/* ================= VUE TABLE ================= */}
+{view === "table" && (
+  <div className="w-full max-w-6xl overflow-x-auto">
+    <table className="w-full bg-white rounded shadow">
+      <thead className="bg-gray-200">
+        <tr>
+          <th className="p-2">Nom</th>
+          <th className="p-2">Téléphone</th>
+          <th className="p-2">Attribué</th>
+          <th className="p-2">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {suivis.map((m) => (
+          <tr key={m.id} className="border-t">
+            <td className="p-2">
+              {m.evangelises?.prenom} {m.evangelises?.nom}
+            </td>
+            <td className="p-2">
+              {m.evangelises?.telephone || "—"}
+            </td>
+            <td className="p-2">
+              {m.cellules?.cellule_full || "—"}
+            </td>
+            <td className="p-2">
+              <button
+                onClick={() => setDetailsTable(m)}
+                className="text-orange-500 underline mr-3"
+              >
+                Détails
+              </button>
+              <button
+                onClick={() =>
+                  m.evangelises?.id &&
+                  setEditingContact(m.evangelises)
+                }
+                className="text-blue-600 underline"
+              >
+                Modifier
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
 
-      {view === "table" && detailsTable && (
-        <DetailsEvangePopup
-          member={detailsTable}
-          onClose={() => setDetailsTable(null)}
-          onEdit={(s) => {
-            setDetailsTable(null);
-            s.evangelises?.id && setEditingContact(s.evangelises);
-          }}
-        />
-      )}
+{view === "table" && detailsTable && (
+  <DetailsEvangePopup
+    member={detailsTable}
+    onClose={() => setDetailsTable(null)}
+    onEdit={(s) => {
+      setDetailsTable(null);
+      s.evangelises?.id && setEditingContact(s.evangelises);
+    }}
+  />
+)}
 
-      {editingContact && (
-        <EditEvangelisePopup
-          member={editingContact}
-          onClose={() => setEditingContact(null)}
-          onUpdateMember={() => {
-            setEditingContact(null);
-            fetchSuivis(user, cellules);
-          }}
-        />
-      )}
-    </div>
-  );
+{editingContact && (
+  <EditEvangelisePopup
+    member={editingContact}
+    onClose={() => setEditingContact(null)}
+    onUpdateMember={() => {
+      setEditingContact(null);
+      fetchSuivis(user, cellules);
+    }}
+  />
+)}
+
+</div>
+);
 }

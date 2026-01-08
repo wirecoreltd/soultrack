@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
+import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditEvangelisePopup from "../components/EditEvangelisePopup";
 import DetailsEvangePopup from "../components/DetailsEvangePopup";
@@ -11,29 +12,30 @@ export default function SuivisEvangelisation() {
   const [conseillers, setConseillers] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState("table");
+  const [view, setView] = useState("card");
   const [updating, setUpdating] = useState({});
+  const [detailsCarteId, setDetailsCarteId] = useState(null);
+  const [detailsTable, setDetailsTable] = useState(null);
+  const [editingContact, setEditingContact] = useState(null);
   const [commentChanges, setCommentChanges] = useState({});
   const [statusChanges, setStatusChanges] = useState({});
   const [showRefus, setShowRefus] = useState(false);
   const [user, setUser] = useState(null);
-  const [detailsCarteId, setDetailsCarteId] = useState(null);
-  const [detailsTable, setDetailsTable] = useState(null);
-  const [editingContact, setEditingContact] = useState(null);
-
 
   // ================= INIT =================
   useEffect(() => {
     init();
   }, []);
 
+  useEffect(() => {
+    if (user) fetchSuivis(user, cellules);
+  }, [showRefus]);
+
   const init = async () => {
     const userData = await fetchUser();
-    const cellulesData = await fetchCellules();
     await fetchConseillers();
-    if (userData) {
-      await fetchSuivis(userData, cellulesData);
-    }
+    const cellulesData = await fetchCellules();
+    if (userData) await fetchSuivis(userData, cellulesData);
     setLoading(false);
   };
 
@@ -76,7 +78,7 @@ export default function SuivisEvangelisation() {
   const fetchSuivis = async (userData, cellulesData) => {
     const { data, error } = await supabase
       .from("suivis_des_evangelises")
-      .select("*, evangelises(*), cellules(*)")
+      .select(`*, evangelises (*), cellules (*)`)
       .order("id", { ascending: false });
 
     if (error) {
@@ -94,9 +96,7 @@ export default function SuivisEvangelisation() {
       const mesCellulesIds = cellulesData
         .filter((c) => c.responsable_id === userData.id)
         .map((c) => c.id);
-      filtered = filtered.filter((m) =>
-        mesCellulesIds.includes(m.cellule_id)
-      );
+      filtered = filtered.filter((m) => mesCellulesIds.includes(m.cellule_id));
     }
 
     setAllSuivis(filtered);
@@ -123,8 +123,9 @@ export default function SuivisEvangelisation() {
 
   const switchView = () => {
     setView(view === "card" ? "table" : "card");
-    setCommentChanges({});
-    setStatusChanges({});
+    setDetailsCarteId(null);
+    setDetailsTable(null);
+    setEditingContact(null);
   };
 
   const suivisAffiches = allSuivis.filter((m) =>
@@ -140,32 +141,28 @@ export default function SuivisEvangelisation() {
     setStatusChanges((p) => ({ ...p, [id]: value }));
 
   // ================= UPSERT MEMBRE =================
-  const insertOrUpdateMembre = async (m, newStatus, newComment) => {
-    try {
-      const payload = {
-        suivi_int_id: Number(m.id),
-        nom: m.nom,
-        prenom: m.prenom,
-        telephone: m.telephone,
-        ville: m.ville,
-        sexe: m.sexe,
-        besoin: m.besoin,
-        infos_supplementaires: m.infos_supplementaires,
-        cellule_id: m.cellule_id,
-        conseiller_id: m.conseiller_id,
-        statut_initial: "Intégré",
-        suivi_statut: newStatus,
-        suivi_commentaire_suivis: newComment,
-      };
+  const upsertMembre = async (suivi) => {
+    const payload = {
+      suivi_int_id: Number(suivi.id), // BIGINT
+      nom: suivi.nom,
+      prenom: suivi.prenom,
+      telephone: suivi.telephone,
+      ville: suivi.ville,
+      sexe: suivi.sexe,
+      besoin: suivi.besoin,
+      infos_supplementaires: suivi.infos_supplementaires,
+      cellule_id: suivi.cellule_id,
+      conseiller_id: suivi.conseiller_id,
+      statut_initial: "intégré",
+      suivi_statut: suivi.status_suivis_evangelises,
+      suivi_commentaire_suivis: suivi.commentaire_evangelises,
+    };
 
-      const { error } = await supabase
-        .from("membres_complets")
-        .upsert(payload, { onConflict: "suivi_int_id" });
+    const { error } = await supabase
+      .from("membres_complets")
+      .upsert(payload, { onConflict: "suivi_int_id" });
 
-      if (error) throw error;
-    } catch (err) {
-      console.error("Erreur UPSERT membres_complets:", err.message);
-    }
+    if (error) console.error("UPSERT ERROR", error);
   };
 
   // ================= UPDATE SUIVI =================
@@ -178,7 +175,6 @@ export default function SuivisEvangelisation() {
     try {
       setUpdating((p) => ({ ...p, [id]: true }));
 
-      // Mettre à jour dans suivis_des_evangelises
       const { error } = await supabase
         .from("suivis_des_evangelises")
         .update({
@@ -189,12 +185,10 @@ export default function SuivisEvangelisation() {
 
       if (error) throw error;
 
-      // 🔹 Upsert dans membres_complets si Intégré
-      if (newStatus === "Intégré") {
-        await insertOrUpdateMembre(m, newStatus, newComment);
-      }
+      // Si le statut est Intégré → upsert
+      if (newStatus === "Intégré") await upsertMembre({ ...m, status_suivis_evangelises: newStatus, commentaire_evangelises: newComment });
 
-      // Mise à jour locale
+      // Update local state
       setAllSuivis((prev) =>
         prev.map((s) =>
           s.id === id
@@ -203,7 +197,7 @@ export default function SuivisEvangelisation() {
         )
       );
 
-      // Nettoyer les changements
+      // Nettoyer les changements temporaires
       setCommentChanges((prev) => {
         const copy = { ...prev };
         delete copy[id];

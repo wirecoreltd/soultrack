@@ -123,71 +123,77 @@ export default function SuivisEvangelisation() {
     setStatusChanges((p) => ({ ...p, [id]: value }));
 
   const updateSuivi = async (id, m) => {
-    const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
-    const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
-    if (!newComment && !newStatus) return;
+  const newComment = commentChanges[id];
+  const newStatus = statusChanges[id];
 
-    try {
-      setUpdating((p) => ({ ...p, [id]: true }));
+  // Si rien n'a changé, on ne fait rien
+  if (newComment === undefined && newStatus === undefined) return;
 
-      // 1️⃣ Mettre à jour dans Supabase
-      const { error } = await supabase
-        .from("suivis_des_evangelises")
-        .update({
-          commentaire_evangelises: newComment,
-          status_suivis_evangelises: newStatus
-        })
-        .eq("id", id);
+  try {
+    setUpdating((p) => ({ ...p, [id]: true }));
 
-      if (error) throw error;
+    // Préparer l'objet à updater dynamiquement
+    const payload = {};
+    if (newComment !== undefined) payload.commentaire_evangelises = newComment;
+    if (newStatus !== undefined) payload.status_suivis_evangelises = newStatus;
 
-      // 2️⃣ Si Intégré -> copier dans membres_complets
-      if (newStatus === "Intégré") {
-        await supabase.from("membres_complets").insert({
-          nom: m.evangelises.nom,
-          prenom: m.evangelises.prenom,
-          telephone: m.evangelises.telephone,
-          email: m.evangelises.email,
-          statut_suivis: newStatus,
-          commentaire_suivis: newComment,
-          cellule_id: m.cellule_id,
-          conseiller_id: m.conseiller_id,
-          infos_supplementaires: m.evangelises.infos_supplementaires,
-          suivi_id: m.id
-        });
-      }
+    // Mise à jour Supabase
+    const { error } = await supabase
+      .from("suivis_des_evangelises")
+      .update(payload)
+      .eq("id", id);
 
-      // 3️⃣ Mettre à jour localement
-      setSuivis(prev =>
-        prev.map(s =>
-          s.id === id
-            ? { ...s, commentaire_evangelises: newComment, status_suivis_evangelises: newStatus }
-            : s
-        )
-      );
+    if (error) throw error;
 
-      // 4️⃣ Nettoyer les changements locaux
-      setCommentChanges(prev => {
-        const copy = { ...prev };
-        delete copy[id];
-        return copy;
+    // Si Intégré, copier dans membres_complets
+    if (newStatus === "Intégré") {
+      await supabase.from("membres_complets").insert({
+        nom: m.evangelises.nom,
+        prenom: m.evangelises.prenom,
+        telephone: m.evangelises.telephone,
+        email: m.evangelises.email,
+        statut_suivis: newStatus,
+        commentaire_suivis: newComment ?? m.commentaire_evangelises,
+        cellule_id: m.cellule_id,
+        conseiller_id: m.conseiller_id,
+        infos_supplementaires: m.evangelises.infos_supplementaires,
+        suivi_id: m.id
       });
-      setStatusChanges(prev => {
-        const copy = { ...prev };
-        delete copy[id];
-        return copy;
-      });
-
-      // 5️⃣ Rafraîchir la liste pour synchroniser la DB
-      await fetchSuivis(user, cellules);
-
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de la sauvegarde !");
-    } finally {
-      setUpdating(p => ({ ...p, [id]: false }));
     }
-  };
+
+    // Mettre à jour localement
+    setSuivis(prev =>
+      prev.map(s =>
+        s.id === id
+          ? {
+              ...s,
+              commentaire_evangelises: newComment ?? s.commentaire_evangelises,
+              status_suivis_evangelises: newStatus ?? s.status_suivis_evangelises
+            }
+          : s
+      )
+    );
+
+    // Supprimer les changements locaux
+    setCommentChanges(prev => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+    setStatusChanges(prev => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+
+  } catch (err) {
+    console.error(err);
+    alert("Erreur lors de la sauvegarde !");
+  } finally {
+    setUpdating(p => ({ ...p, [id]: false }));
+  }
+};
+
 
   const formatBesoin = (b) => {
     if (!b) return "—";

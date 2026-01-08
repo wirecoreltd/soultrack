@@ -171,7 +171,7 @@ export default function SuivisEvangelisation() {
 
      {/* ================= VUE CARTE ================= */}
 {view === "card" && (
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-6xl">
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
     {suivis.map((m) => {
       const ouvert = detailsCarteId === m.id;
       const conseiller = conseillers.find(
@@ -181,119 +181,114 @@ export default function SuivisEvangelisation() {
       return (
         <div
           key={m.id}
-          className="bg-white rounded-2xl shadow p-4 border-l-4"
+          className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
           style={{ borderLeftColor: getBorderColor(m) }}
         >
-          <h2 className="font-bold text-center">
-            {m.evangelises?.prenom} {m.evangelises?.nom}
-          </h2>
+          <div className="flex flex-col items-center">
+            <h2 className="font-bold text-black text-base text-center mb-1">
+              {m.evangelises?.prenom} {m.evangelises?.nom}
+            </h2>
 
-          <p className="text-sm text-center">
-            📱 {m.evangelises?.telephone || "—"}
-          </p>
-          <p className="text-sm text-center">
-            🏠 {m.cellules?.cellule_full || "—"}
-          </p>
-          <p className="text-sm text-center">
-            👤 {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
-          </p>
+            <p className="text-orange-500 underline font-semibold mb-1">
+              📱 {m.evangelises?.telephone || "—"}
+            </p>
 
-          {/* ================= COMMENTAIRE + STATUT (VISUEL) ================= */}
-          <div className="flex flex-col w-full mt-2">
-                  <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Commentaire Suivis Evangelisé</label>
-                  <textarea
-                    value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
-                    onChange={(e) => handleCommentChange(m.id, e.target.value)}
-                    className="w-full border rounded-lg p-2"
-                    rows={2}
-                  />
+            <p className="text-sm text-gray-700 mb-1">
+              🏠 Cellule : {m.cellules?.cellule_full || "—"}
+            </p>
 
-            <label className="block text-center text-sm font-semibold text-slate-700 mt-3 mb-1">
-              Statut du suivis
-            </label>
+            <p className="text-sm text-gray-700 mb-2">
+              👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
+            </p>
 
-            <select
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
-            >
-              <option value="">-- Sélectionner un statut --</option>
-              <option>En attente</option>
-              <option>En cours</option>
-              <option>Intégré</option>
-              <option>Refus</option>
-            </select>
+            {/* ================= COMMENTAIRE + STATUT ================= */}
+            <div className="w-full bg-slate-50 rounded-xl p-3 mt-2">
+              <label className="block text-center text-sm font-semibold text-slate-700 mb-1">
+                Commentaire suivis évangélisé
+              </label>
+
+              <textarea
+                rows={2}
+                value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
+                onChange={(e) => handleCommentChange(m.id, e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+              />
+
+              <label className="block text-center text-sm font-semibold text-slate-700 mt-3 mb-1">
+                Statut du suivis
+              </label>
+
+              <select
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
+              >
+                <option value="">-- Sélectionner un statut --</option>
+                <option>En attente</option>
+                <option>En cours</option>
+                <option>Intégré</option>
+                <option>Refus</option>
+              </select>
+
+              <button
+                disabled
+                className="mt-3 w-full rounded-lg bg-slate-300 text-slate-600 font-semibold py-2 cursor-not-allowed"
+              >
+                Sauvegarder
+              </button>
+            </div>
 
             <button
-              disabled
-              className="mt-3 w-full rounded-lg bg-slate-300 text-slate-600 font-semibold py-2 cursor-not-allowed"
+              onClick={() => setDetailsCarteId(ouvert ? null : m.id)}
+              className="text-orange-500 underline text-sm mt-3"
             >
-              Sauvegarder
+              {ouvert ? "Fermer détails" : "Détails"}
             </button>
           </div>
 
-          {/* Bouton détails */}
-          <button
-            onClick={() =>
-              setDetailsCarteId(ouvert ? null : m.id)
-            }
-            className="text-orange-500 underline text-sm block mx-auto mt-3"
+          {/* ================= DÉTAILS ================= */}
+          <div
+            className={`transition-all duration-500 overflow-hidden ${
+              ouvert ? "max-h-[1000px] mt-3" : "max-h-0"
+            }`}
           >
-            {ouvert ? "Fermer détails" : "Détails"}
+            {ouvert && (
+              <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
+                <p>🏙️ Ville : {m.evangelises?.ville || "—"}</p>
+                <p>🎗️ Sexe : {m.evangelises?.sexe || "—"}</p>
+                <p>🙏 Prière salut : {m.evangelises?.priere_salut ? "Oui" : "Non"}</p>
+                <p>☀️ Type : {m.evangelises?.type_conversion || "—"}</p>
+                <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>
+                <p>📝 Infos : {m.evangelises?.infos_supplementaires || "—"}</p>
+
+                <textarea
+                  rows={2}
+                  className="w-full border rounded px-2 py-1"
+                  value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
+                  onChange={(e) => handleCommentChange(m.id, e.target.value)}
+                />
+
+                <button
+                  onClick={() => updateSuivi(m.id)}
+                  className="w-full bg-green-600 text-white rounded py-1"
+                >
+                  Mettre à jour
                 </button>
 
-                {/* ================= CARRÉ GRANDISSANT ================= */}
-                <div
-                  className={`overflow-hidden transition-all duration-500 ${
-                    ouvert ? "max-h-[1000px] mt-3" : "max-h-0"
-                  }`}
+                <button
+                  onClick={() =>
+                    m.evangelises?.id && setEditingContact(m.evangelises)
+                  }
+                  className="text-blue-600 text-sm underline w-full"
                 >
-                  {ouvert && (
-                    <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
-                      <p>🏙️ Ville : {m.evangelises?.ville || "—"}</p>
-                      <p>⚥ Sexe : {m.evangelises?.sexe || "—"}</p>
-                      <p>
-                        🙏 Prière salut :{" "}
-                        {m.evangelises?.priere_salut ? "Oui" : "Non"}
-                      </p>
-                      <p>☀️ Type : {m.evangelises?.type_conversion || "—"}</p>
-                      <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>
-
-                      <textarea
-                        rows={2}
-                        className="w-full border rounded px-2 py-1"
-                        value={
-                          commentChanges[m.id] ??
-                          m.commentaire_evangelises ??
-                          ""
-                        }
-                        onChange={(e) =>
-                          handleCommentChange(m.id, e.target.value)
-                        }
-                      />
-
-                      <button
-                        onClick={() => updateSuivi(m.id)}
-                        className="w-full bg-green-600 text-white rounded py-1"
-                      >
-                        Mettre à jour
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          m.evangelises?.id &&
-                          setEditingContact(m.evangelises)
-                        }
-                        className="text-blue-600 text-sm underline w-full"
-                      >
-                        ✏️ Modifier
-                      </button>
-                    </div>
-                  )}
-                </div>
+                  ✏️ Modifier le contact
+                </button>
               </div>
-            );
-          })}
+            )}
+          </div>
         </div>
-      )}
+      );
+    })}
+  </div>
+)}
 
       {/* ================= VUE TABLE ================= */}
       {view === "table" && (

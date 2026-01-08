@@ -124,7 +124,7 @@ setAllSuivis(filtered);
   const handleStatusChange = (id, value) =>
     setStatusChanges((p) => ({ ...p, [id]: value }));
 
- const updateSuivi = async (id, m) => {
+const updateSuivi = async (id, m) => {
   const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
   const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
 
@@ -140,49 +140,51 @@ setAllSuivis(filtered);
         commentaire_evangelises: newComment,
         status_suivis_evangelises: newStatus,
       })
-      .eq("id", id); // ne pas utiliser .select().single() ici
+      .eq("id", id);
 
     if (error) throw error;
 
     // 🔹 Si le statut est Intégré, ajouter dans membres_complets
-   if (newStatus === "Intégré") {
-  const { error: insertError } = await supabase
-    .from("membres_complets")
-    .upsert(
-      {
-        suivi_int_id: m.id, // 🔥 BIGINT OK
-        nom: m.nom,
-        prenom: m.prenom,
-        telephone: m.telephone,
-        ville: m.ville,
-        sexe: m.sexe,
-        besoin: m.besoin,
-        infos_supplementaires: m.infos_supplementaires,
-        cellule_id: m.cellule_id,
-        conseiller_id: m.conseiller_id,
-        statut_initial: "intégré",
-        suivi_statut: newStatus,
-        suivi_commentaire_suivis: newComment,
-      },
-      { onConflict: "suivi_int_id" }
-    );
+    if (newStatus === "Intégré") {
+      const { error: insertError } = await supabase
+        .from("membres_complets")
+        .upsert(
+          {
+            suivi_int_id: m.id, 
+            nom: m.nom,
+            prenom: m.prenom,
+            telephone: m.telephone,
+            ville: m.ville,
+            sexe: m.sexe,
+            besoin: m.besoin,
+            infos_supplementaires: m.infos_supplementaires,
+            cellule_id: m.cellule_id,
+            conseiller_id: m.conseiller_id,
+            statut_initial: "intégré",
+            suivi_statut: newStatus,
+            suivi_commentaire_suivis: newComment,
+          },
+          { onConflict: "suivi_int_id" }
+        );
 
-  if (insertError) throw insertError;
-}
+      if (insertError) throw insertError;
 
-    // 🔹 Mettre à jour le state local pour que ça reste visible immédiatement
-    setAllSuivis((prev) =>
-  prev.map((s) =>
-    s.id === id
-      ? {
-          ...s,
-          commentaire_evangelises: newComment,
-          status_suivis_evangelises: newStatus,
-        }
-      : s
-  )
-);
-
+      // 🔹 SUPPRIMER LE CONTACT DU STATE POUR DISPARITION INSTANTANÉE
+      setAllSuivis((prev) => prev.filter((item) => item.id !== id));
+    } else {
+      // 🔹 Mettre à jour le state local si autre statut (pas intégré)
+      setAllSuivis((prev) =>
+        prev.map((s) =>
+          s.id === id
+            ? {
+                ...s,
+                commentaire_evangelises: newComment,
+                status_suivis_evangelises: newStatus,
+              }
+            : s
+        )
+      );
+    }
 
     // 🔹 Nettoyer les changements temporaires
     setCommentChanges((prev) => {
@@ -195,14 +197,14 @@ setAllSuivis(filtered);
       delete copy[id];
       return copy;
     });
-
   } catch (err) {
     console.error("Erreur lors de la sauvegarde :", err.message);
     alert("Erreur lors de la sauvegarde : " + err.message);
   } finally {
     setUpdating((p) => ({ ...p, [id]: false }));
   }
-};  
+};
+
     
   const formatBesoin = (b) => {
     if (!b) return "—";

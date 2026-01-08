@@ -13,7 +13,7 @@ export default function SuivisEvangelisation() {
   const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("card");
-
+  const [updating, setUpdating] = useState({});
   const [detailsCarteId, setDetailsCarteId] = useState(null);
   const [detailsTable, setDetailsTable] = useState(null);
   const [editingContact, setEditingContact] = useState(null);

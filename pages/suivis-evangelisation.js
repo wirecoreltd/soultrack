@@ -110,7 +110,7 @@ export default function SuivisEvangelisation() {
   // Mise à jour dans la table Supabase
   const { data, error } = await supabase
     .from("suivis_des_evangelises")
-    .update({ commentaire_suivis: newComment }) // <-- le vrai nom de la colonne
+    .update({ commentaire_evangelises: newComment }) // <-- le vrai nom de la colonne
     .eq("id", id);
 
   if (error) {
@@ -119,7 +119,7 @@ export default function SuivisEvangelisation() {
   } else {
     // Mise à jour locale immédiate pour que ça reste visible
     setSuivis((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, commentaire_suivis: newComment } : m))
+      prev.map((m) => (m.id === id ? { ...m, commentaire_evangelises: newComment } : m))
     );
     // Supprime le changement stocké localement
     setCommentChanges((prev) => ({ ...prev, [id]: "" }));

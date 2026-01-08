@@ -126,47 +126,23 @@ export default function SuivisEvangelisation() {
   const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
   const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
 
-  // Si rien à mettre à jour, on sort
   if (!newComment && !newStatus) return;
 
   try {
     setUpdating((p) => ({ ...p, [id]: true }));
 
-    // 1️⃣ Mise à jour dans suivis_des_evangelises
-    const { data, error } = await supabase
+    // 1️⃣ Update dans Supabase
+    const { error } = await supabase
       .from("suivis_des_evangelises")
       .update({
         commentaire_evangelises: newComment,
-        status_suivis_evangelises: newStatus
+        status_suivis_evangelises: newStatus,
       })
-      .eq("id", id)
-      .select(); // <- on ne met plus .single()
+      .eq("id", id);
 
     if (error) throw error;
 
-    // 2️⃣ Récupère le premier objet mis à jour
-    const updatedItem = data && data.length > 0 ? data[0] : null;
-    if (updatedItem) {
-      // Mettre à jour le state local
-      setSuivis((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, ...updatedItem } : s))
-      );
-
-      // Supprime le commentaire temporaire stocké
-      setCommentChanges((prev) => {
-        const copy = { ...prev };
-        delete copy[id];
-        return copy;
-      });
-
-      setStatusChanges((prev) => {
-        const copy = { ...prev };
-        delete copy[id];
-        return copy;
-      });
-    }
-
-    // 3️⃣ Si Intégré -> copier dans membres_complets
+    // 2️⃣ Si Intégré -> copier dans membres_complets
     if (newStatus === "Intégré") {
       await supabase.from("membres_complets").insert({
         nom: m.evangelises.nom,
@@ -182,13 +158,35 @@ export default function SuivisEvangelisation() {
       });
     }
 
-  } catch (error) {
-    console.error("Erreur lors de la sauvegarde :", error);
-    alert("Erreur lors de la sauvegarde !");
+    // 3️⃣ Update local state pour que ça reste visible
+    setSuivis((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? { ...s, commentaire_evangelises: newComment, status_suivis_evangelises: newStatus }
+          : s
+      )
+    );
+
+    // 4️⃣ Supprimer le changement temporaire
+    setCommentChanges((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+    setStatusChanges((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+
+  } catch (err) {
+    console.error("Erreur lors de la sauvegarde :", err.message);
+    alert("Erreur lors de la sauvegarde : " + err.message);
   } finally {
     setUpdating((p) => ({ ...p, [id]: false }));
   }
 };
+
   
   const formatBesoin = (b) => {
     if (!b) return "—";

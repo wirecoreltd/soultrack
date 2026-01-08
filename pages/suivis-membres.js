@@ -1,4 +1,4 @@
-        "use client";
+"use client";
 
 import { useEffect, useState, useRef } from "react";
 import React from "react";
@@ -7,10 +7,9 @@ import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditMemberSuivisPopup from "../components/EditMemberSuivisPopup";
 import DetailsModal from "../components/DetailsModal";
-import { useMembers } from "../context/MembersContext";
 
 export default function SuivisMembres() {
-  const { members, updateMember } = useMembers();
+  const [allMembers, setAllMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
@@ -32,7 +31,6 @@ export default function SuivisMembres() {
     setDetailsOpen((prev) => (prev === id ? null : id));
 
   const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
-  const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
 
   // 🔹 Fermer menu téléphone si clic en dehors
   useEffect(() => {
@@ -45,9 +43,9 @@ export default function SuivisMembres() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 🔹 Fetch membres_complets
+  // 🔹 Fetch membres_complets et cellules/conseillers
   useEffect(() => {
-    const fetchMembresComplets = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -82,44 +80,35 @@ export default function SuivisMembres() {
 
         setAllMembers(data || []);
         if (!data || data.length === 0) setMessage("Aucun membre à afficher.");
+
+        // Charger cellules et conseillers
+        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
+        const { data: conseillersData } = await supabase.from("profiles").select("id, prenom, nom").eq("role", "Conseiller");
+        setCellules(cellulesData || []);
+        setConseillers(conseillersData || []);
+
       } catch (err) {
-        console.error("❌ Erreur fetchMembresComplets:", err.message || err);
+        console.error("Erreur fetchMembresComplets:", err.message || err);
         setMessage("Erreur lors de la récupération des membres.");
       } finally {
         setLoading(false);
       }
     };
+    fetchData();
+  }, []);
 
-    const fetchCellulesConseillers = async () => {
-      try {
-        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
-        const { data: conseillersData } = await supabase.from("profiles").select("id, prenom, nom").eq("role", "Conseiller");
-        setCellules(cellulesData || []);
-        setConseillers(conseillersData || []);
-      } catch (err) {
-        console.error("Erreur chargement cellules/conseillers :", err);
-      }
-    };
-
-    fetchMembresComplets();
-    fetchCellulesConseillers();
-  }, [setAllMembers]);
-
-  // 🔹 Changement commentaire uniquement
+  // 🔹 Gestion commentaire
   const handleCommentChange = (id, value) => {
-    // Mettre à jour l'état local
     setCommentChanges(prev => ({ ...prev, [id]: value }));
-
-    // Mettre à jour le membre dans le contexte pour que l'UI reflète immédiatement
-    const member = members.find(m => m.id === id);
-    if (member) {
-      updateMember(id, { ...member, commentaire_suivis: value });
-    }
+    setAllMembers(prev =>
+      prev.map(m => m.id === id ? { ...m, commentaire_suivis: value } : m)
+    );
   };
 
+  // 🔹 Couleur bordure selon statut
   const getBorderColor = (m) => {
     if (!m) return "#ccc";
-    const status = m.statut_suivis ?? m.suivi_statut;
+    const status = m.statut_suivis ?? 0;
     if (status === statutIds["en attente"]) return "#FFA500";
     if (status === statutIds["integrer"]) return "#34A853";
     if (status === statutIds["refus"]) return "#FF4B5C";
@@ -127,118 +116,74 @@ export default function SuivisMembres() {
     return "#ccc";
   };
 
-     const updateSuivi = async (id) => {
-  const newComment = commentChanges[id];
-  const newStatus = statusChanges[id];
+  // 🔹 Mettre à jour suivi et copier dans membres_complets si "Intégrer"
+  const updateSuivi = async (id) => {
+    const newComment = commentChanges[id];
+    const newStatus = statusChanges[id];
 
-  if (!newComment && !newStatus) return;
+    if (!newComment && !newStatus) return;
+    setUpdating(prev => ({ ...prev, [id]: true }));
 
-  setUpdating(prev => ({ ...prev, [id]: true }));
+    try {
+      const member = allMembers.find(m => m.id === id);
+      if (!member) throw new Error("Membre non trouvé");
 
-  try {
-    const member = members.find(m => m.id === id);
-    if (!member) throw new Error("Membre non trouvé");
+      // 🔹 Mise à jour dans suivis_des_evangelises
+      const payload = { updated_at: new Date() };
+      if (newComment !== undefined) payload.commentaire_evangelises = newComment;
+      if (newStatus) payload.status_suivis_evangelises = newStatus;
 
-    // 🔹 Préparer l'objet de mise à jour pour suivis_des_evangelises
-    const payload = {
-      updated_at: new Date(),
-    };
-    if (newComment !== undefined) payload.commentaire_evangelises = newComment;
-    if (newStatus) payload.status_suivis_evangelises = newStatus;
+      const { error: updateError } = await supabase
+        .from("suivis_des_evangelises")
+        .update(payload)
+        .eq("id", id);
 
-    // 🔹 Mettre à jour le suivi dans suivis_des_evangelises
-    const { data: updatedSuivi, error: updateError } = await supabase
-      .from("suivis_des_evangelises")
-      .update(payload)
-      .eq("id", id)
-      .select()
-      .single();
+      if (updateError) throw updateError;
 
-    if (updateError) throw updateError;
+      setAllMembers(prev =>
+        prev.map(s =>
+          s.id === id
+            ? { ...s, commentaire_evangelises: newComment || s.commentaire_evangelises, status_suivis_evangelises: newStatus || s.status_suivis_evangelises }
+            : s
+        )
+      );
 
-    // 🔹 Mettre à jour le state local pour l'affichage immédiat
-    setAllMembers(prev =>
-      prev.map(s =>
-        s.id === id
-          ? { ...s, commentaire_evangelises: newComment || s.commentaire_evangelises, status_suivis_evangelises: newStatus || s.status_suivis_evangelises }
-          : s
-      )
-    );
+      // 🔹 Copier dans membres_complets si statut = Integrer
+      if (Number(newStatus) === statutIds.integrer) {
+        await supabase.from("membres_complets").insert({
+          nom: member.nom,
+          prenom: member.prenom || null,
+          telephone: member.telephone || null,
+          email: member.email || null,
+          statut: "Intégré",
+          cellule_id: member.cellule_id || null,
+          conseiller_id: member.conseiller_id || null,
+          commentaire_suivis: newComment || member.commentaire_evangelises || null,
+          suivi_id: member.id,
+          suivi_statut: "Intégré",
+          suivi_commentaire_suivis: newComment || member.commentaire_evangelises || null,
+        });
+      }
 
-    // 🔹 Si le nouveau statut est "Intégrer", copier dans membres_complets
-    if (Number(newStatus) === statutIds.integrer) {
-      await supabase.from("membres_complets").insert({
-        nom: member.nom,
-        prenom: member.prenom || null,
-        telephone: member.telephone || null,
-        email: member.email || null,
-        statut: "Intégré",
-        cellule_id: member.cellule_id || null,        // UUID ou null
-        conseiller_id: member.conseiller_id || null,  // UUID ou null
-        commentaire_suivis: newComment || member.commentaire_evangelises || null,
-        suivi_id: member.id,
-        suivi_statut: "Intégré",
-        suivi_commentaire_suivis: newComment || member.commentaire_evangelises || null,
-      });
+      // 🔹 Nettoyer changements temporaires
+      setCommentChanges(prev => { const c = { ...prev }; delete c[id]; return c; });
+      setStatusChanges(prev => { const c = { ...prev }; delete c[id]; return c; });
+
+    } catch (err) {
+      console.error("Erreur lors de la sauvegarde :", err);
+      alert("Erreur lors de la sauvegarde : " + (err.message || err));
+    } finally {
+      setUpdating(prev => ({ ...prev, [id]: false }));
     }
-
-    // 🔹 Nettoyer les changements temporaires
-    setCommentChanges(prev => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
-    setStatusChanges(prev => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
-
-  } catch (err) {
-    console.error("Erreur lors de la sauvegarde :", err);
-    alert("Erreur lors de la sauvegarde : " + (err.message || err));
-  } finally {
-    setUpdating(prev => ({ ...prev, [id]: false }));
-  }
-};
-
-
-
-  const filteredMembers = members.filter(m => {
-  const status = m.statut_suivis ?? 0;
-
-  if (showRefus) {
-    // Si toggle "Voir les refus", ne montre que les refus
-    return status === statutIds.refus;
-  } else {
-    // Sinon, montre tout sauf intégrés et refus
-    return status === statutIds.envoye || status === statutIds["en attente"];
-  }
-});
-
-
-  const uniqueMembers = Array.from(new Map(filteredMembers.map(item => [item.id, item])).values());
-
-  const handleAfterSend = (updatedMember) => {
-    updateMember(updatedMember.id, updatedMember);
   };
 
-  const DetailsPopup = ({ m }) => {
-    const commentRef = useRef(null);
+  const filteredMembers = allMembers.filter(m => {
+    const status = m.statut_suivis ?? 0;
+    if (showRefus) return status === statutIds.refus;
+    return status === statutIds.envoye || status === statutIds["en attente"];
+  });
 
-    useEffect(() => {
-      if (commentRef.current) {
-        commentRef.current.focus();
-        commentRef.current.selectionStart = commentRef.current.value.length;
-      }
-    }, [commentChanges[m.id]]);
-
-    const celluleNom = m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—";
-    const conseillerNom = m.conseiller_id
-      ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim()
-      : "—";
-
-    return (
+  return (
       <div className="text-black text-sm space-y-2 w-full">
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
         <p>🏙 Ville : {m.ville || ""}</p>

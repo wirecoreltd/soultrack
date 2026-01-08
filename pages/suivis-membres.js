@@ -297,6 +297,24 @@ export default function SuivisMembres() {
                     rows={2}
                   />
 
+                            <label className="font-semibold text-blue-700 mb-1 text-center">
+                          Statut Intégration
+                        </label>
+                        
+                        <select
+                          value={statusChanges[m.id] ?? ""}
+                          onChange={(e) =>
+                            setStatusChanges(prev => ({
+                              ...prev,
+                              [m.id]: e.target.value
+                            }))
+                          }
+                          className="w-full border rounded-lg p-2 mb-2"
+                        >
+                          <option value="">-- Sélectionner un statut --</option>
+                          <option value="3">Intégrer</option>
+                        </select>
+
                   <button
                     onClick={() => updateSuivi(m.id)}
                     className="mt-2 bg-blue-500 text-white py-1 rounded w-full"

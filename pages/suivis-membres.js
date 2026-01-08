@@ -10,7 +10,7 @@ import DetailsModal from "../components/DetailsModal";
 import { useMembers } from "../context/MembersContext";
 
 export default function SuivisMembres() {
-  const { members, setAllMembers, updateMember } = useMembers();
+  const { members, , updateMember } = useMembers();
 
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -139,38 +139,72 @@ export default function SuivisMembres() {
   setUpdating(prev => ({ ...prev, [id]: true }));
 
   try {
+    const member = members.find(m => m.id === id);
+    if (!member) throw new Error("Membre non trouvé");
+
+    // 🔹 Préparer l'objet de mise à jour pour suivis_des_evangelises
     const payload = {
       updated_at: new Date(),
     };
+    if (newComment !== undefined) payload.commentaire_evangelises = newComment;
+    if (newStatus) payload.status_suivis_evangelises = newStatus;
 
-    if (newComment !== undefined) {
-      payload.commentaire_suivis = newComment;
-    }
-
-    if (newStatus) {
-      payload.statut_suivis = Number(newStatus);
-    }
-
-    const { data: updatedMember, error } = await supabase
-      .from("membres_complets")
+    // 🔹 Mettre à jour le suivi dans suivis_des_evangelises
+    const { data: updatedSuivi, error: updateError } = await supabase
+      .from("suivis_des_evangelises")
       .update(payload)
       .eq("id", id)
       .select()
       .single();
 
-    if (error) throw error;
+    if (updateError) throw updateError;
 
-    updateMember(updatedMember.id, updatedMember);
+    // 🔹 Mettre à jour le state local pour l'affichage immédiat
+    setAllMembers(prev =>
+      prev.map(s =>
+        s.id === id
+          ? { ...s, commentaire_evangelises: newComment || s.commentaire_evangelises, status_suivis_evangelises: newStatus || s.status_suivis_evangelises }
+          : s
+      )
+    );
+
+    // 🔹 Si le nouveau statut est "Intégrer", copier dans membres_complets
+    if (Number(newStatus) === statutIds.integrer) {
+      await supabase.from("membres_complets").insert({
+        nom: member.nom,
+        prenom: member.prenom || null,
+        telephone: member.telephone || null,
+        email: member.email || null,
+        statut: "Intégré",
+        cellule_id: member.cellule_id || null,        // UUID ou null
+        conseiller_id: member.conseiller_id || null,  // UUID ou null
+        commentaire_suivis: newComment || member.commentaire_evangelises || null,
+        suivi_id: member.id,
+        suivi_statut: "Intégré",
+        suivi_commentaire_suivis: newComment || member.commentaire_evangelises || null,
+      });
+    }
+
+    // 🔹 Nettoyer les changements temporaires
+    setCommentChanges(prev => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+    setStatusChanges(prev => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
 
   } catch (err) {
-    console.error("Erreur updateSuivi :", err);
-
+    console.error("Erreur lors de la sauvegarde :", err);
+    alert("Erreur lors de la sauvegarde : " + (err.message || err));
   } finally {
-    setTimeout(() => {
-      setUpdating(prev => ({ ...prev, [id]: false }));
-    }, 800);
+    setUpdating(prev => ({ ...prev, [id]: false }));
   }
 };
+
 
 
   const filteredMembers = members.filter(m => {

@@ -93,53 +93,29 @@ export default function SuivisEvangelisation() {
     setEditingContact(null);
   };
 
-  const updateSuivi = async (id, m) => {
-    const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
-    const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
+  const updateSuivi = async (id) => {
+  setUpdating((prev) => ({ ...prev, [id]: true }));
 
-    if (!newComment && !newStatus) return;
+  const newComment = commentChanges[id] ?? "";
 
-    try {
-      setUpdating(p => ({ ...p, [id]: true }));
+  const { error } = await supabase
+    .from("suivis_des_evangelises")
+    .update({ commentaire_evangelises: newComment })
+    .eq("id", id);
 
-      // 1️⃣ Mettre à jour dans suivis_des_evangelises
-      await supabase
-        .from("suivis_des_evangelises")
-        .update({
-          commentaire_evangelises: newComment,
-          status_suivis_evangelises: newStatus
-        })
-        .eq("id", id);
+  if (error) {
+    console.error("Erreur lors de la mise à jour du commentaire :", error);
+  } else {
+    // Met à jour localement pour que le commentaire reste après le refresh
+    setSuivis((prev) =>
+      prev.map((m) =>
+        m.id === id ? { ...m, commentaire_evangelises: newComment } : m
+      )
+    );
+  }
 
-      // 2️⃣ Si Intégré -> copier dans membres_complets
-      if (newStatus === "Intégré") {
-        await supabase.from("membres_complets").insert({
-          nom: m.evangelises.nom,
-          prenom: m.evangelises.prenom,
-          telephone: m.evangelises.telephone,
-          email: m.evangelises.email,
-          statut_suivis: newStatus,
-          commentaire_suivis: newComment,
-          cellule_id: m.cellule_id,
-          conseiller_id: m.conseiller_id,
-          infos_supplementaires: m.evangelises.infos_supplementaires,
-          suivi_id: m.id
-        });
-      }
-
-      // 3️⃣ Mettre à jour localement
-      setSuivis(prev => prev.map(s =>
-        s.id === id
-          ? { ...s, commentaire_evangelises: newComment, status_suivis_evangelises: newStatus }
-          : s
-      ));
-    } catch (error) {
-      console.error(error);
-      alert("Erreur lors de la sauvegarde !");
-    } finally {
-      setUpdating(p => ({ ...p, [id]: false }));
-    }
-  };
+  setUpdating((prev) => ({ ...prev, [id]: false }));
+};
 
   const getBorderColor = (m) => {
     if (m.status_suivis_evangelises === "En cours") return "#FFA500";

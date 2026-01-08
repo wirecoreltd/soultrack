@@ -210,9 +210,22 @@ export default function SuivisEvangelisation() {
                       <option value="Refus">Refus</option>
                     </select>
 
-                    <button onClick={() => updateSuivi(m.id, m)} disabled={updating[m.id]} className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all ${updating[m.id] ? "bg-slate-300 text-slate-600 cursor-not-allowed" : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"}`}>
+                    <button
+                      onClick={() => updateSuivi(m.id, m)}
+                      disabled={
+                        updating[m.id] || (
+                          (commentChanges[m.id] ?? m.commentaire_evangelises) === (m.commentaire_evangelises ?? "") &&
+                          (statusChanges[m.id] ?? m.status_suivis_evangelises) === (m.status_suivis_evangelises ?? "")
+                        )
+                      }
+                      className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all ${
+                        updating[m.id]
+                          ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                          : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
+                      }`}
+                    >
                       {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
-                    </button>
+                    </button>  
                   </div>
 
                   <button onClick={() => setDetailsCarteId(ouvert ? null : m.id)} className="text-orange-500 underline text-sm mt-3">

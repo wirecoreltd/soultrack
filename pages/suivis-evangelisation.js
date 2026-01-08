@@ -264,21 +264,7 @@ export default function SuivisEvangelisation() {
                 <p>🙏 Prière salut : {m.evangelises?.priere_salut ? "Oui" : "Non"}</p>
                 <p>☀️ Type : {m.evangelises?.type_conversion || "—"}</p>
                 <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>
-                <p>📝 Infos : {m.evangelises?.infos_supplementaires || "—"}</p>
-
-                <textarea
-                  rows={2}
-                  className="w-full border rounded px-2 py-1"
-                  value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
-                  onChange={(e) => handleCommentChange(m.id, e.target.value)}
-                />
-
-                <button
-                  onClick={() => updateSuivi(m.id)}
-                  className="w-full bg-green-600 text-white rounded py-1"
-                >
-                  Mettre à jour
-                </button>
+                <p>📝 Infos : {m.evangelises?.infos_supplementaires || "—"}</p>                
 
                 <button
                   onClick={() =>

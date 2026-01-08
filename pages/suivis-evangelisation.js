@@ -1,4 +1,4 @@
-"use client";
+"use client"; 
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -8,7 +8,7 @@ import EditEvangelisePopup from "../components/EditEvangelisePopup";
 import DetailsEvangePopup from "../components/DetailsEvangePopup";
 
 export default function SuivisEvangelisation() {
-  const [allSuivis, setAllSuivis] = useState([]);
+  const [suivis, setSuivis] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +23,14 @@ export default function SuivisEvangelisation() {
   const [user, setUser] = useState(null);
 
   // ================= INIT =================
+  // Rerun fetchSuivis dès que showRefus change
+useEffect(() => {
+  if (user) {
+    fetchSuivis(user, cellules);
+  }
+}, [showRefus]);
+
+
   const init = async () => {
     const userData = await fetchUser();
     await fetchConseillers();
@@ -33,10 +41,9 @@ export default function SuivisEvangelisation() {
     setLoading(false);
   };
 
-  // 🔹 DÉMARRAGE DE LA PAGE
-  useEffect(() => {
-    init();
-  }, []);
+useEffect(() => {
+  init();
+}, []);
 
   // ================= USER =================
   const fetchUser = async () => {
@@ -82,40 +89,40 @@ export default function SuivisEvangelisation() {
 
     if (error) {
       console.error(error);
-      setAllSuivis([]);
+      setSuivis([]);
       return;
     }
 
     let filtered = data || [];
 
-    // 🔹 Filtrage selon rôle
-    if (userData.role === "Conseiller") {
-      filtered = filtered.filter((m) => m.conseiller_id === userData.id);
-    } else if (userData.role === "ResponsableCellule") {
-      const mesCellulesIds = cellulesData
-        .filter((c) => c.responsable_id === userData.id)
-        .map((c) => c.id);
-
-      filtered = filtered.filter((m) =>
-        mesCellulesIds.includes(m.cellule_id)
-      );
-    }
-
-    setAllSuivis(filtered);
-  };
-
-  // ================= FILTRE AFFICHAGE =================
-  const suivisAffiches = allSuivis.filter((m) =>
-    showRefus
-      ? m.status_suivis_evangelises === "Refus"
-      : m.status_suivis_evangelises !== "Refus"
+// Filtrage selon rôle
+if (userData.role === "Conseiller") {
+  filtered = filtered.filter((m) => m.conseiller_id === userData.id);
+} else if (userData.role === "ResponsableCellule") {
+  const mesCellulesIds = cellulesData
+    .filter((c) => c.responsable_id === userData.id)
+    .map((c) => c.id);
+  filtered = filtered.filter((m) =>
+    mesCellulesIds.includes(m.cellule_id)
   );
+}
+
+// 🔹 Filtrer les refus selon toggle
+if (showRefus) {
+  filtered = filtered.filter((m) => m.status_suivis_evangelises === "Refus");
+} else {
+  filtered = filtered.filter((m) => m.status_suivis_evangelises !== "Refus");
+}
+
+setSuivis(filtered);
+  };  
 
   // ================= HELPERS =================
   const getBorderColor = (m) => {
-    if (m.status_suivis_evangelises === "En cours") return "#FFA500";
-    if (m.status_suivis_evangelises === "Intégré") return "#34A853";
-    if (m.status_suivis_evangelises === "Refus") return "#FF4B5C";
+    const status = m.status_suivis_evangelises;
+    if (status === "En cours") return "#FFA500";
+    if (status === "Intégré") return "#34A853";
+    if (status === "Refus") return "#FF4B5C";
     return "#ccc";
   };
 
@@ -125,45 +132,80 @@ export default function SuivisEvangelisation() {
   const handleStatusChange = (id, value) =>
     setStatusChanges((p) => ({ ...p, [id]: value }));
 
-  // ================= UPDATE =================
-  const updateSuivi = async (id, m) => {
-    const newComment =
-      commentChanges[id] ?? m.commentaire_evangelises ?? "";
-    const newStatus =
-      statusChanges[id] ?? m.status_suivis_evangelises ?? "";
+ const updateSuivi = async (id, m) => {
+  const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
+  const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
 
-    if (!newComment && !newStatus) return;
+  if (!newComment && !newStatus) return;
 
+  try {
+    setUpdating((p) => ({ ...p, [id]: true }));
+
+    // 🔹 Mettre à jour dans la table suivis_des_evangelises
+    const { error } = await supabase
+      .from("suivis_des_evangelises")
+      .update({
+        commentaire_evangelises: newComment,
+        status_suivis_evangelises: newStatus,
+      })
+      .eq("id", id); // ne pas utiliser .select().single() ici
+
+    if (error) throw error;
+
+    // 🔹 Si le statut est Intégré, ajouter dans membres_complets
+    if (newStatus === "Intégré") {
+      await supabase.from("membres_complets").insert({
+        nom: m.evangelises.nom,
+        prenom: m.evangelises.prenom,
+        telephone: m.evangelises.telephone,
+        email: m.evangelises.email,
+        statut_suivis: newStatus,
+        commentaire_suivis: newComment,
+        cellule_id: m.cellule_id,
+        conseiller_id: m.conseiller_id,
+        infos_supplementaires: m.evangelises.infos_supplementaires,
+        suivi_id: m.id,
+      });
+    }
+
+    // 🔹 Mettre à jour le state local pour que ça reste visible immédiatement
+    setSuivis((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? { ...s, commentaire_evangelises: newComment, status_suivis_evangelises: newStatus }
+          : s
+      )
+    );
+
+    // 🔹 Nettoyer les changements temporaires
+    setCommentChanges((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+    setStatusChanges((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+
+  } catch (err) {
+    console.error("Erreur lors de la sauvegarde :", err.message);
+    alert("Erreur lors de la sauvegarde : " + err.message);
+  } finally {
+    setUpdating((p) => ({ ...p, [id]: false }));
+  }
+};
+
+
+  
+  const formatBesoin = (b) => {
+    if (!b) return "—";
     try {
-      setUpdating((p) => ({ ...p, [id]: true }));
-
-      const { error } = await supabase
-        .from("suivis_des_evangelises")
-        .update({
-          commentaire_evangelises: newComment,
-          status_suivis_evangelises: newStatus,
-        })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      // 🔹 MAJ immédiate du state (INSTANTANÉ)
-      setAllSuivis((prev) =>
-        prev.map((s) =>
-          s.id === id
-            ? {
-                ...s,
-                commentaire_evangelises: newComment,
-                status_suivis_evangelises: newStatus,
-              }
-            : s
-        )
-      );
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de la sauvegarde");
-    } finally {
-      setUpdating((p) => ({ ...p, [id]: false }));
+      const arr = JSON.parse(b);
+      return Array.isArray(arr) ? arr.join(", ") : b;
+    } catch {
+      return b;
     }
   };
 
@@ -175,102 +217,133 @@ export default function SuivisEvangelisation() {
   };
 
   // ================= RENDER =================
-  if (loading)
-    return <p className="text-center mt-10">Chargement...</p>;
-  if (!user)
-    return (
-      <p className="text-center mt-10 text-red-600">
-        Non connecté
-      </p>
-    );
+  if (loading) return <p className="text-center mt-10">Chargement...</p>;
+  if (!user) return <p className="text-center mt-10 text-red-600">Non connecté</p>;
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
-      <div className="flex justify-between mb-4">
-        <button
-          onClick={() => window.history.back()}
-          className="text-white"
-        >
-          ← Retour
-        </button>
-        <LogoutLink />
-      </div>
+  <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
+    {/* Header */}
+    <div className="w-full max-w-5xl mb-6 flex justify-between">
+      <button onClick={() => window.history.back()} className="text-white">← Retour</button>
+      <LogoutLink />
+    </div>
 
-      <Image src="/logo.png" alt="Logo" width={80} height={80} />
-      <h1 className="text-3xl font-bold text-white mb-6">
-        📋 Suivis des Évangélisés
-      </h1>
+    <Image src="/logo.png" alt="Logo" width={80} height={80} />
+    <h1 className="text-3xl font-bold text-white mb-6">📋 Suivis des Évangélisés</h1>
 
-      <div className="flex justify-between mb-6">
-        <button onClick={switchView} className="text-white underline">
-          {view === "card" ? "Vue Table" : "Vue Carte"}
-        </button>
+    {/* Toggle Vue / Refus */}
+    <div className="mb-6 flex justify-between w-full max-w-6xl">
+      <button onClick={switchView} className="text-white underline">
+        {view === "card" ? "Vue Table" : "Vue Carte"}
+      </button>
 
-        <button
-          onClick={() => setShowRefus(!showRefus)}
-          className="text-orange-400 underline"
-        >
-          {showRefus
-            ? "Voir tous les suivis"
-            : "Voir les refus"}
-        </button>
-      </div>
+      <button
+        onClick={() => setShowRefus(!showRefus)}
+        className="text-orange-400 text-sm underline hover:text-orange-500"
+      >
+        {showRefus ? "Voir tous les suivis" : "Voir les refus"}
+      </button>
+    </div>
 
-      {/* ================= VUE CARTE ================= */}
-      {view === "card" && (
-        <div className="grid md:grid-cols-3 gap-4">
-          {suivisAffiches.map((m) => (
+    {/* ================= VUE CARTE ================= */}
+    {view === "card" && (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
+        {suivis.map((m) => {
+          const ouvert = detailsCarteId === m.id;
+          const conseiller = conseillers.find((c) => c.id === m.conseiller_id);
+
+          return (
             <div
               key={m.id}
-              className="bg-white p-4 rounded-xl border-l-4"
+              className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
               style={{ borderLeftColor: getBorderColor(m) }}
             >
-              <h2 className="font-bold">
-                {m.evangelises?.prenom} {m.evangelises?.nom}
-              </h2>
+              <div className="flex flex-col items-center">
+                <h2 className="font-bold text-black text-base text-center mb-1">
+                  {m.evangelises?.prenom} {m.evangelises?.nom}
+                </h2>
 
-              <textarea
-                value={
-                  commentChanges[m.id] ??
-                  m.commentaire_evangelises ??
-                  ""
-                }
-                onChange={(e) =>
-                  handleCommentChange(m.id, e.target.value)
-                }
-                className="w-full mt-2 border rounded p-2"
-              />
+                <p className="text-orange-500 underline font-semibold mb-1">
+                  {m.evangelises?.telephone || "—"}
+                </p>
+                <p className="text-sm text-black-700 mb-1">
+                  🏠 Cellule : {m.cellules?.cellule_full || "—"}
+                </p>
+                <p className="text-sm text-black-700 mb-2">
+                  👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
+                </p>
 
-              <select
-                value={
-                  statusChanges[m.id] ??
-                  m.status_suivis_evangelises ??
-                  ""
-                }
-                onChange={(e) =>
-                  handleStatusChange(m.id, e.target.value)
-                }
-                className="w-full mt-2 border rounded p-2"
-              >
-                <option value="">-- Statut --</option>
-                <option value="En cours">En cours</option>
-                <option value="Intégré">Intégré</option>
-                <option value="Refus">Refus</option>
-              </select>
+                {/* Commentaire + statut */}
+                <div className="w-full bg-slate-50 rounded-xl p-3 mt-2">
+                  <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
+                    Commentaire Suivis
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
+                    onChange={(e) => handleCommentChange(m.id, e.target.value)}
+                    className="w-full rounded-lg border px-3 py-2"
+                  />
+                  <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
+                  Statut du suivis
+                    </label>
+                  <select
+                    value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""}
+                    onChange={(e) => handleStatusChange(m.id, e.target.value)}
+                    className="mt-2 w-full rounded-lg border px-3 py-2"
+                  >
+                    <option value="">-- Sélectionner un statut --</option>
+                    <option value="En cours">En cours</option>
+                    <option value="Intégré">Intégré</option>
+                    <option value="Refus">Refus</option>
+                  </select>
 
-              <button
-                onClick={() => updateSuivi(m.id, m)}
-                disabled={updating[m.id]}
-                className="mt-3 w-full bg-blue-600 text-white py-2 rounded"
-              >
-                {updating[m.id]
-                  ? "Enregistrement..."
-                  : "Sauvegarder"}
-              </button>
+                  <button
+                    onClick={() => updateSuivi(m.id, m)}
+                    disabled={updating[m.id]}
+                    className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all ${
+                      updating[m.id]
+                        ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                        : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
+                    }`}
+                  >
+                    {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setDetailsCarteId(ouvert ? null : m.id)}
+                  className="text-orange-500 underline text-sm mt-3"
+                >
+                  {ouvert ? "Fermer détails" : "Détails"}
+                </button>
+              </div>
+
+              {/* Détails */}
+              <div className={`transition-all duration-500 overflow-hidden ${ouvert ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
+                {ouvert && (
+                  <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
+                    <p>🏙️ Ville : {m.evangelises?.ville || "—"}</p>
+                    <p>🎗️ Sexe : {m.evangelises?.sexe || "—"}</p>
+                    <p>🙏 Prière salut : {m.evangelises?.priere_salut ? "Oui" : "Non"}</p>
+                    <p>☀️ Type : {m.evangelises?.type_conversion || "—"}</p>
+                    <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>
+                    <p>📝 Infos : {m.evangelises?.infos_supplementaires || "—"}</p>
+
+                    <button
+                      onClick={() => m.evangelises?.id && setEditingContact(m.evangelises)}
+                      className="text-blue-600 text-sm underline w-full"
+                    >
+                      ✏️ Modifier le contact
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
+    )}
 
     {/* ================= VUE TABLE ================= */}
     {view === "table" && (

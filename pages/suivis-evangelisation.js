@@ -104,26 +104,29 @@ export default function SuivisEvangelisation() {
 
   /* ================= UPDATE COMMENTAIRE ================= */
   const updateSuivi = async (id) => {
-    setUpdating((prev) => ({ ...prev, [id]: true }));
+  const newComment = commentChanges[id] ?? "";
+  setUpdating((prev) => ({ ...prev, [id]: true }));
 
-    const newComment = commentChanges[id] ?? "";
+  // Mise à jour dans la table Supabase
+  const { data, error } = await supabase
+    .from("suivis_des_evangelises")
+    .update({ commentaire_suivis: newComment }) // <-- le vrai nom de la colonne
+    .eq("id", id);
 
-    const { error } = await supabase
-      .from("suivis_des_evangelises")
-      .update({ commentaire_evangelises: newComment })
-      .eq("id", id);
+  if (error) {
+    console.error("Erreur lors de la sauvegarde :", error.message);
+    alert("Erreur lors de la sauvegarde : " + error.message);
+  } else {
+    // Mise à jour locale immédiate pour que ça reste visible
+    setSuivis((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, commentaire_suivis: newComment } : m))
+    );
+    // Supprime le changement stocké localement
+    setCommentChanges((prev) => ({ ...prev, [id]: "" }));
+  }
 
-    if (error) {
-      console.error("Erreur lors de la mise à jour du commentaire :", error);
-    } else {
-      // Mise à jour locale pour que le commentaire reste visible
-      setSuivis((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, commentaire_evangelises: newComment } : m))
-      );
-    }
-
-    setUpdating((prev) => ({ ...prev, [id]: false }));
-  };
+  setUpdating((prev) => ({ ...prev, [id]: false }));
+};
 
   const formatBesoin = (b) => {
     if (!b) return "—";

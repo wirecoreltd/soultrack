@@ -146,46 +146,23 @@ setAllSuivis(filtered);
 
     // 🔹 Si le statut est Intégré, ajouter dans membres_complets
     if (newStatus === "Intégré") {
-  const { error: insertError } = await supabase
-    .from("membres_complets")
-    .insert({
-      nom: m.evangelises?.nom,
-      prenom: m.evangelises?.prenom,
-      telephone: m.evangelises?.telephone,
-      email: m.evangelises?.email,
-
-      statut: "membre",
-      statut_initial: "visiteur",
-
-      cellule_id: m.cellule_id,
-      conseiller_id: m.conseiller_id,
-
-      commentaire_suivis: newComment,
-      suivi_statut: newStatus,
-      suivi_id: m.id,
-
-      suivi_besoin: m.evangelises?.besoin,
-      suivi_infos: m.evangelises?.infos_supplementaires,
-      suivi_telephone: m.evangelises?.telephone,
-      suivi_updated_at: new Date().toISOString(),
-
-      sexe: m.evangelises?.sexe,
-      ville: m.evangelises?.ville,
-      is_whatsapp: m.evangelises?.is_whatsapp ?? false,
-    });
-
-  if (insertError) throw insertError;
-}
+      await supabase.from("membres_complets").insert({
+        nom: m.evangelises.nom,
+        prenom: m.evangelises.prenom,
+        telephone: m.evangelises.telephone,
+        email: m.evangelises.email,
+        statut_suivis: newStatus,
+        commentaire_suivis: newComment,
+        cellule_id: m.cellule_id,
+        conseiller_id: m.conseiller_id,
+        infos_supplementaires: m.evangelises.infos_supplementaires,
+        suivi_id: m.id,
+      });
+    }
 
     // 🔹 Mettre à jour le state local pour que ça reste visible immédiatement
-    setAllSuivis((prev) => {
-  // Si intégré → sortir de la page
-  if (newStatus === "Intégré") {
-    return prev.filter((s) => s.id !== id);
-  }
-
-  // Sinon mise à jour normale
-  return prev.map((s) =>
+    setAllSuivis((prev) =>
+  prev.map((s) =>
     s.id === id
       ? {
           ...s,
@@ -193,9 +170,8 @@ setAllSuivis(filtered);
           status_suivis_evangelises: newStatus,
         }
       : s
-  );
-});
-
+  )
+);
 
 
     // 🔹 Nettoyer les changements temporaires

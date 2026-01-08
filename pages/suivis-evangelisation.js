@@ -111,6 +111,7 @@ if (showRefus) {
 }
 
 setSuivis(filtered);
+  };  
 
   // ================= HELPERS =================
   const getBorderColor = (m) => {
@@ -390,3 +391,4 @@ setSuivis(filtered);
     )}
   </div>
 );
+}

@@ -79,7 +79,7 @@ export default function SuivisEvangelisation() {
   const fetchSuivis = async (userData, cellulesData) => {
     const { data, error } = await supabase
       .from("suivis_des_evangelises")
-      .select(`*, evangelises (*), cellules (*)`)
+      .select(`id, commentaire_evangelises, status_suivis_evangelises, evangelises (*), cellules (*)`)
       .order("id", { ascending: false });
 
     if (error) {
@@ -201,7 +201,7 @@ export default function SuivisEvangelisation() {
                     <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">Commentaire Suivis</label>
                     <textarea
                       rows={2}
-                      value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
+                      value={commentChanges[m.id] ?? m.commentaire_evangelises}
                       onChange={(e) => handleCommentChange(m.id, e.target.value)}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                     />

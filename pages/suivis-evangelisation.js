@@ -122,7 +122,7 @@ export default function SuivisEvangelisation() {
   const handleStatusChange = (id, value) =>
     setStatusChanges((p) => ({ ...p, [id]: value }));
 
-  const updateSuivi = async (id, m) => {
+ const updateSuivi = async (id, m) => {
   const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
   const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
 
@@ -131,18 +131,18 @@ export default function SuivisEvangelisation() {
   try {
     setUpdating((p) => ({ ...p, [id]: true }));
 
-    // 1️⃣ Update dans Supabase
+    // 🔹 Mettre à jour dans la table suivis_des_evangelises
     const { error } = await supabase
       .from("suivis_des_evangelises")
       .update({
         commentaire_evangelises: newComment,
         status_suivis_evangelises: newStatus,
       })
-      .eq("id", id);
+      .eq("id", id); // ne pas utiliser .select().single() ici
 
     if (error) throw error;
 
-    // 2️⃣ Si Intégré -> copier dans membres_complets
+    // 🔹 Si le statut est Intégré, ajouter dans membres_complets
     if (newStatus === "Intégré") {
       await supabase.from("membres_complets").insert({
         nom: m.evangelises.nom,
@@ -154,11 +154,11 @@ export default function SuivisEvangelisation() {
         cellule_id: m.cellule_id,
         conseiller_id: m.conseiller_id,
         infos_supplementaires: m.evangelises.infos_supplementaires,
-        suivi_id: m.id
+        suivi_id: m.id,
       });
     }
 
-    // 3️⃣ Update local state pour que ça reste visible
+    // 🔹 Mettre à jour le state local pour que ça reste visible immédiatement
     setSuivis((prev) =>
       prev.map((s) =>
         s.id === id
@@ -167,7 +167,7 @@ export default function SuivisEvangelisation() {
       )
     );
 
-    // 4️⃣ Supprimer le changement temporaire
+    // 🔹 Nettoyer les changements temporaires
     setCommentChanges((prev) => {
       const copy = { ...prev };
       delete copy[id];
@@ -186,6 +186,7 @@ export default function SuivisEvangelisation() {
     setUpdating((p) => ({ ...p, [id]: false }));
   }
 };
+
 
   
   const formatBesoin = (b) => {
@@ -266,17 +267,12 @@ export default function SuivisEvangelisation() {
                         rows={2}
                         value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
                         onChange={(e) => handleCommentChange(m.id, e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                        className="w-full rounded-lg border px-3 py-2"
                       />
-                    
-                      {/* Statut */}
-                      <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
-                        Statut du suivis
-                      </label>
+                      
                       <select
                         value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""}
                         onChange={(e) => handleStatusChange(m.id, e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
                       >
                         <option value="">-- Sélectionner un statut --</option>
                         <option value="En cours">En cours</option>

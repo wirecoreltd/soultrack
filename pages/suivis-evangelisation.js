@@ -1,4 +1,4 @@
-"use client";
+"use client"; 
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -8,7 +8,7 @@ import EditEvangelisePopup from "../components/EditEvangelisePopup";
 import DetailsEvangePopup from "../components/DetailsEvangePopup";
 
 export default function SuivisEvangelisation() {
-  const [suivis, setSuivis] = useState([]);
+  const [allSuivis, setAllSuivis] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,13 +23,13 @@ export default function SuivisEvangelisation() {
   const [user, setUser] = useState(null);
 
   // ================= INIT =================
-  useEffect(() => {
-    init();
-  }, []);
+  // Rerun fetchSuivis dès que showRefus change
+useEffect(() => {
+  if (user) {
+    fetchSuivis(user, cellules);
+  }
+}, [showRefus]);
 
-  useEffect(() => {
-    if (user) fetchSuivis(user, cellules);
-  }, [showRefus]);
 
   const init = async () => {
     const userData = await fetchUser();
@@ -40,6 +40,10 @@ export default function SuivisEvangelisation() {
     }
     setLoading(false);
   };
+
+useEffect(() => {
+  init();
+}, []);
 
   // ================= USER =================
   const fetchUser = async () => {
@@ -62,6 +66,7 @@ export default function SuivisEvangelisation() {
       .from("profiles")
       .select("id, prenom, nom")
       .eq("role", "Conseiller");
+
     setConseillers(data || []);
   };
 
@@ -70,6 +75,7 @@ export default function SuivisEvangelisation() {
     const { data } = await supabase
       .from("cellules")
       .select("id, cellule_full, responsable_id");
+
     setCellules(data || []);
     return data || [];
   };
@@ -89,19 +95,19 @@ export default function SuivisEvangelisation() {
 
     let filtered = data || [];
 
-    if (userData.role === "Conseiller") {
-      filtered = filtered.filter((m) => m.conseiller_id === userData.id);
-    } else if (userData.role === "ResponsableCellule") {
-      const mesCellulesIds = cellulesData
-        .filter((c) => c.responsable_id === userData.id)
-        .map((c) => c.id);
-      filtered = filtered.filter((m) =>
-        mesCellulesIds.includes(m.cellule_id)
-      );
-    }
-
-    setSuivis(filtered);
-  };
+// Filtrage selon rôle
+if (userData.role === "Conseiller") {
+  filtered = filtered.filter((m) => m.conseiller_id === userData.id);
+} else if (userData.role === "ResponsableCellule") {
+  const mesCellulesIds = cellulesData
+    .filter((c) => c.responsable_id === userData.id)
+    .map((c) => c.id);
+  filtered = filtered.filter((m) =>
+    mesCellulesIds.includes(m.cellule_id)
+  );
+}
+setAllSuivis(filtered);
+  };  
 
   // ================= HELPERS =================
   const getBorderColor = (m) => {
@@ -118,95 +124,75 @@ export default function SuivisEvangelisation() {
   const handleStatusChange = (id, value) =>
     setStatusChanges((p) => ({ ...p, [id]: value }));
 
-  const updateSuivi = async (m) => {
-    const newComment = commentChanges[m.id] ?? m.commentaire_evangelises ?? "";
-    const newStatus = statusChanges[m.id] ?? m.status_suivis_evangelises ?? "";
+ const updateSuivi = async (id, m) => {
+  const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
+  const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
 
-    if (!newComment && !newStatus) return;
+  if (!newComment && !newStatus) return;
 
-    try {
-      setUpdating((p) => ({ ...p, [m.id]: true }));
+  try {
+    setUpdating((p) => ({ ...p, [id]: true }));
 
-      // 🔹 Mettre à jour le suivi
-      const { error: suiviError } = await supabase
-        .from("suivis_des_evangelises")
-        .update({
+    // 🔹 Mettre à jour dans la table suivis_des_evangelises
+    const { error } = await supabase
+      .from("suivis_des_evangelises")
+      .update({
+        commentaire_evangelises: newComment,
+        status_suivis_evangelises: newStatus,
+      })
+      .eq("id", id); // ne pas utiliser .select().single() ici
+
+    if (error) throw error;
+
+    // 🔹 Si le statut est Intégré, ajouter dans membres_complets
+    if (newStatus === "Intégré") {
+      await supabase.from("membres_complets").insert({
+        nom: m.evangelises.nom,
+        prenom: m.evangelises.prenom,
+        telephone: m.evangelises.telephone,
+        email: m.evangelises.email,
+        statut_suivis: newStatus,
+        commentaire_suivis: newComment,
+        cellule_id: m.cellule_id,
+        conseiller_id: m.conseiller_id,
+        infos_supplementaires: m.evangelises.infos_supplementaires,
+        suivi_id: m.id,
+      });
+    }
+
+    // 🔹 Mettre à jour le state local pour que ça reste visible immédiatement
+    setAllSuivis((prev) =>
+  prev.map((s) =>
+    s.id === id
+      ? {
+          ...s,
           commentaire_evangelises: newComment,
           status_suivis_evangelises: newStatus,
-        })
-        .eq("id", m.id);
-      if (suiviError) throw suiviError;
+        }
+      : s
+  )
+);
 
-      // 🔹 Copier dans membres_complets si intégré
-      if (newStatus === "Intégré") {
-        const { error: insertError } = await supabase
-          .from("membres_complets")
-          .insert([
-            {
-              nom: m.nom,
-              prenom: m.prenom,
-              telephone: m.telephone,
-              email: m.email ?? null,
-              statut_suivis: 3, // Intégré
-              ville: m.ville ?? null,
-              is_whatsapp: m.is_whatsapp ?? false,
-              infos_supplementaires: m.infos_supplementaires ?? null,
-              commentaire_suivis: newComment,
-              cellule_id: m.cellule_id || null,
-              conseiller_id: m.conseiller_id || null,
-              suivi_id: m.evangelise_id, // UUID unique
-              suivi_statut: newStatus,
-              suivi_commentaire_suivis: newComment,
-              suivi_besoin: m.besoin ?? null,
-              suivi_infos: m.infos_supplementaires ?? null,
-              suivi_telephone: m.telephone ?? null,
-              suivi_updated_at: new Date().toISOString(),
-            },
-          ]);
-        if (insertError) throw insertError;
-      }
 
-      // 🔹 Mise à jour locale
-      setSuivis((prev) =>
-        prev.map((s) =>
-          s.id === m.id
-            ? { ...s, commentaire_evangelises: newComment, status_suivis_evangelises: newStatus }
-            : s
-        )
-      );
+    // 🔹 Nettoyer les changements temporaires
+    setCommentChanges((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+    setStatusChanges((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
 
-      // 🔹 Nettoyage
-      setCommentChanges((prev) => {
-        const copy = { ...prev };
-        delete copy[m.id];
-        return copy;
-      });
-      setStatusChanges((prev) => {
-        const copy = { ...prev };
-        delete copy[m.id];
-        return copy;
-      });
-    } catch (err) {
-      console.error("Erreur lors de la sauvegarde :", err.message);
-      alert("Erreur lors de la sauvegarde : " + err.message);
-    } finally {
-      setUpdating((p) => ({ ...p, [m.id]: false }));
-    }
-  };
-
-  const switchView = () => {
-    setView(view === "card" ? "table" : "card");
-    setDetailsCarteId(null);
-    setDetailsTable(null);
-    setEditingContact(null);
-  };
-
-  const suivisAffiches = suivis.filter((m) =>
-    showRefus
-      ? m.status_suivis_evangelises === "Refus"
-      : m.status_suivis_evangelises !== "Refus"
-  );
-
+  } catch (err) {
+    console.error("Erreur lors de la sauvegarde :", err.message);
+    alert("Erreur lors de la sauvegarde : " + err.message);
+  } finally {
+    setUpdating((p) => ({ ...p, [id]: false }));
+  }
+};  
   const formatBesoin = (b) => {
     if (!b) return "—";
     try {
@@ -216,6 +202,20 @@ export default function SuivisEvangelisation() {
       return b;
     }
   };
+
+  const switchView = () => {
+    setView(view === "card" ? "table" : "card");
+    setDetailsCarteId(null);
+    setDetailsTable(null);
+    setEditingContact(null);
+  };
+  
+  const suivisAffiches = allSuivis.filter((m) =>
+  showRefus
+    ? m.status_suivis_evangelises === "Refus"
+    : m.status_suivis_evangelises !== "Refus"
+);
+
 
   // ================= RENDER =================
   if (loading) return <p className="text-center mt-10">Chargement...</p>;

@@ -8,7 +8,7 @@ import EditEvangelisePopup from "../components/EditEvangelisePopup";
 import DetailsEvangePopup from "../components/DetailsEvangePopup";
 
 export default function SuivisEvangelisation() {
-  const [suivis, setSuivis] = useState([]);
+  const [allSuivis, setAllSuivis] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -106,15 +106,7 @@ if (userData.role === "Conseiller") {
     mesCellulesIds.includes(m.cellule_id)
   );
 }
-
-// 🔹 Filtrer les refus selon toggle
-if (showRefus) {
-  filtered = filtered.filter((m) => m.status_suivis_evangelises === "Refus");
-} else {
-  filtered = filtered.filter((m) => m.status_suivis_evangelises !== "Refus");
-}
-
-setSuivis(filtered);
+setAllSuivis(filtered);
   };  
 
   // ================= HELPERS =================
@@ -169,13 +161,18 @@ setSuivis(filtered);
     }
 
     // 🔹 Mettre à jour le state local pour que ça reste visible immédiatement
-    setSuivis((prev) =>
-      prev.map((s) =>
-        s.id === id
-          ? { ...s, commentaire_evangelises: newComment, status_suivis_evangelises: newStatus }
-          : s
-      )
-    );
+    setAllSuivis((prev) =>
+  prev.map((s) =>
+    s.id === id
+      ? {
+          ...s,
+          commentaire_evangelises: newComment,
+          status_suivis_evangelises: newStatus,
+        }
+      : s
+  )
+);
+
 
     // 🔹 Nettoyer les changements temporaires
     setCommentChanges((prev) => {
@@ -195,10 +192,7 @@ setSuivis(filtered);
   } finally {
     setUpdating((p) => ({ ...p, [id]: false }));
   }
-};
-
-
-  
+};  
   const formatBesoin = (b) => {
     if (!b) return "—";
     try {
@@ -215,6 +209,13 @@ setSuivis(filtered);
     setDetailsTable(null);
     setEditingContact(null);
   };
+  
+  const suivisAffiches = allSuivis.filter((m) =>
+  showRefus
+    ? m.status_suivis_evangelises === "Refus"
+    : m.status_suivis_evangelises !== "Refus"
+);
+
 
   // ================= RENDER =================
   if (loading) return <p className="text-center mt-10">Chargement...</p>;
@@ -358,7 +359,7 @@ setSuivis(filtered);
             </tr>
           </thead>
           <tbody>
-            {suivis.map((m) => (
+            {suivisAffiches.map((m) => (
               <tr key={m.id} className="border-t">
                 <td className="p-2">{m.evangelises?.prenom} {m.evangelises?.nom}</td>
                 <td className="p-2">{m.evangelises?.telephone || "—"}</td>

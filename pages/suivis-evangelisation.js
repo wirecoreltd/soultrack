@@ -107,26 +107,32 @@ export default function SuivisEvangelisation() {
   const newComment = commentChanges[id] ?? "";
   setUpdating((prev) => ({ ...prev, [id]: true }));
 
-  // Mise à jour dans la table Supabase
   const { data, error } = await supabase
     .from("suivis_des_evangelises")
-    .update({ commentaire_evangelises: newComment }) // <-- le vrai nom de la colonne
+    .update({ commentaire_evangelises: newComment })
     .eq("id", id);
 
   if (error) {
     console.error("Erreur lors de la sauvegarde :", error.message);
     alert("Erreur lors de la sauvegarde : " + error.message);
   } else {
-    // Mise à jour locale immédiate pour que ça reste visible
+    // Mise à jour locale immédiate
     setSuivis((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, commentaire_evangelises: newComment } : m))
+      prev.map((m) =>
+        m.id === id ? { ...m, commentaire_evangelises: newComment } : m
+      )
     );
-    // Supprime le changement stocké localement
-    setCommentChanges((prev) => ({ ...prev, [id]: "" }));
+    // On peut supprimer la valeur temporaire mais le textarea prendra le commentaire mis à jour
+    setCommentChanges((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
   }
 
   setUpdating((prev) => ({ ...prev, [id]: false }));
 };
+/*-------------------------------*/
 
   const formatBesoin = (b) => {
     if (!b) return "—";
@@ -184,6 +190,7 @@ export default function SuivisEvangelisation() {
                       onChange={(e) => handleCommentChange(m.id, e.target.value)}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                     />
+
 
                     <label className="block w-full text-center font-semibold text-blue-700 mb-1">Statut du suivis</label>
                     <select className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400">

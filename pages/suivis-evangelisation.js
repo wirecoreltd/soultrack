@@ -123,58 +123,32 @@ export default function SuivisEvangelisation() {
     setStatusChanges((p) => ({ ...p, [id]: value }));
 
   const updateSuivi = async (id, m) => {
-  const newComment = commentChanges[id];
-  const newStatus = statusChanges[id];
+  const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
+  const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
+  if (!newComment && !newStatus) return;
 
-  // Si rien n'a changé, on ne fait rien
-  if (newComment === undefined && newStatus === undefined) return;
+  setUpdating(p => ({ ...p, [id]: true }));
 
   try {
-    setUpdating((p) => ({ ...p, [id]: true }));
-
-    // Préparer l'objet à updater dynamiquement
-    const payload = {};
-    if (newComment !== undefined) payload.commentaire_evangelises = newComment;
-    if (newStatus !== undefined) payload.status_suivis_evangelises = newStatus;
-
-    // Mise à jour Supabase
-    const { error } = await supabase
+    // 🔹 Toujours utiliser select() pour récupérer l'objet mis à jour
+    const { data, error } = await supabase
       .from("suivis_des_evangelises")
-      .update(payload)
-      .eq("id", id);
+      .update({
+        commentaire_evangelises: newComment,
+        status_suivis_evangelises: newStatus
+      })
+      .eq("id", id)
+      .select()
+      .single(); // <- important, sinon le state local ne reflète pas la DB
 
     if (error) throw error;
 
-    // Si Intégré, copier dans membres_complets
-    if (newStatus === "Intégré") {
-      await supabase.from("membres_complets").insert({
-        nom: m.evangelises.nom,
-        prenom: m.evangelises.prenom,
-        telephone: m.evangelises.telephone,
-        email: m.evangelises.email,
-        statut_suivis: newStatus,
-        commentaire_suivis: newComment ?? m.commentaire_evangelises,
-        cellule_id: m.cellule_id,
-        conseiller_id: m.conseiller_id,
-        infos_supplementaires: m.evangelises.infos_supplementaires,
-        suivi_id: m.id
-      });
-    }
-
-    // Mettre à jour localement
+    // 🔹 Mettre à jour le state local avec la valeur confirmée par la DB
     setSuivis(prev =>
-      prev.map(s =>
-        s.id === id
-          ? {
-              ...s,
-              commentaire_evangelises: newComment ?? s.commentaire_evangelises,
-              status_suivis_evangelises: newStatus ?? s.status_suivis_evangelises
-            }
-          : s
-      )
+      prev.map(s => (s.id === id ? { ...s, ...data } : s))
     );
 
-    // Supprimer les changements locaux
+    // 🔹 Supprimer le changement temporaire
     setCommentChanges(prev => {
       const copy = { ...prev };
       delete copy[id];
@@ -187,12 +161,13 @@ export default function SuivisEvangelisation() {
     });
 
   } catch (err) {
-    console.error(err);
-    alert("Erreur lors de la sauvegarde !");
+    console.error("Erreur updateSuivi :", err);
+    alert("Erreur lors de la sauvegarde : " + err.message);
   } finally {
     setUpdating(p => ({ ...p, [id]: false }));
   }
 };
+
 
 
   const formatBesoin = (b) => {

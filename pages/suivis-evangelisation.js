@@ -203,6 +203,11 @@ setAllSuivis(filtered);
     setUpdating((p) => ({ ...p, [id]: false }));
   }
 };  
+  const suivisAffiches = allSuivis.filter((m) => {
+  if (showRefus) return m.status_suivis_evangelises === "Refus";
+  return !["Refus", "Intégré"].includes(m.status_suivis_evangelises);
+});
+  
   const formatBesoin = (b) => {
     if (!b) return "—";
     try {

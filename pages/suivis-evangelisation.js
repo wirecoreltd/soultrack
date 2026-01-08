@@ -48,6 +48,13 @@ export default function SuivisEvangelisation() {
     return data;
   };
 
+  /*----------------------*/
+  const updateMember = (id, newData) => {
+  setSuivis(prev =>
+    prev.map(m => (m.id === id ? { ...m, ...newData } : m))
+  );
+};
+
   /* ================= CONSEILLERS ================= */
   const fetchConseillers = async () => {
     const { data } = await supabase
@@ -99,39 +106,43 @@ export default function SuivisEvangelisation() {
     return "#ccc";
   };
 
-  const handleCommentChange = (id, value) =>
-    setCommentChanges((p) => ({ ...p, [id]: value }));
+  handleCommentChange
 
   /* ================= UPDATE COMMENTAIRE ================= */
   const updateSuivi = async (id) => {
-  const newComment = commentChanges[id] ?? "";
-  setUpdating((prev) => ({ ...prev, [id]: true }));
+  const newComment = commentChanges[id];
+  if (!newComment) return;
 
-  const { data, error } = await supabase
-    .from("suivis_des_evangelises")
-    .update({ commentaire_evangelises: newComment })
-    .eq("id", id);
+  setUpdating(prev => ({ ...prev, [id]: true }));
 
-  if (error) {
-    console.error("Erreur lors de la sauvegarde :", error.message);
-    alert("Erreur lors de la sauvegarde : " + error.message);
-  } else {
-    // Mise à jour locale immédiate
-    setSuivis((prev) =>
-      prev.map((m) =>
-        m.id === id ? { ...m, commentaire_evangelises: newComment } : m
-      )
-    );
-    // On peut supprimer la valeur temporaire mais le textarea prendra le commentaire mis à jour
-    setCommentChanges((prev) => {
+  try {
+    const { data: updatedMember, error } = await supabase
+      .from("suivis_des_evangelises")
+      .update({ commentaire_evangelises: newComment })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Mettre à jour le state local avec la valeur confirmée par la DB
+    updateMember(id, updatedMember);
+
+    // Supprimer le commentaire temporaire stocké
+    setCommentChanges(prev => {
       const copy = { ...prev };
       delete copy[id];
       return copy;
     });
-  }
 
-  setUpdating((prev) => ({ ...prev, [id]: false }));
+  } catch (err) {
+    console.error("Erreur updateSuivi :", err);
+    alert("Erreur lors de la sauvegarde : " + err.message);
+  } finally {
+    setUpdating(prev => ({ ...prev, [id]: false }));
+  }
 };
+
 /*-------------------------------*/
 
   const formatBesoin = (b) => {
@@ -190,6 +201,7 @@ export default function SuivisEvangelisation() {
                       onChange={(e) => handleCommentChange(m.id, e.target.value)}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                     />
+
 
 
                     <label className="block w-full text-center font-semibold text-blue-700 mb-1">Statut du suivis</label>

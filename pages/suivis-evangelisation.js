@@ -203,8 +203,8 @@ export default function SuivisEvangelisation() {
 
             {/* ================= COMMENTAIRE + STATUT ================= */}
             <div className="w-full bg-slate-50 rounded-xl p-3 mt-2">
-              <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">
-                Commentaire suivis évangélisé
+              <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
+                Commentaire Suivis
               </label>
 
               <textarea
@@ -214,7 +214,7 @@ export default function SuivisEvangelisation() {
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
               />
 
-              <label className="font-semibold text-blue-700 mb-1 text-center">
+              <label className="block w-full text-center font-semibold text-blue-700 mb-1">
                 Statut du suivis
               </label>
 

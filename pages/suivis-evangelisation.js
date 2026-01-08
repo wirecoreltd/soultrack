@@ -185,127 +185,92 @@ export default function SuivisEvangelisation() {
     );
 
   return (
-  <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
-    {/* Header */}
-    <div className="w-full max-w-5xl mb-6 flex justify-between">
-      <button onClick={() => window.history.back()} className="text-white">← Retour</button>
-      <LogoutLink />
-    </div>
+    <div className="min-h-screen p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
+      <div className="flex justify-between mb-4">
+        <button
+          onClick={() => window.history.back()}
+          className="text-white"
+        >
+          ← Retour
+        </button>
+        <LogoutLink />
+      </div>
 
-    <Image src="/logo.png" alt="Logo" width={80} height={80} />
-    <h1 className="text-3xl font-bold text-white mb-6">📋 Suivis des Évangélisés</h1>
+      <Image src="/logo.png" alt="Logo" width={80} height={80} />
+      <h1 className="text-3xl font-bold text-white mb-6">
+        📋 Suivis des Évangélisés
+      </h1>
 
-    {/* Toggle Vue / Refus */}
-    <div className="mb-6 flex justify-between w-full max-w-6xl">
-      <button onClick={switchView} className="text-white underline">
-        {view === "card" ? "Vue Table" : "Vue Carte"}
-      </button>
+      <div className="flex justify-between mb-6">
+        <button onClick={switchView} className="text-white underline">
+          {view === "card" ? "Vue Table" : "Vue Carte"}
+        </button>
 
-      <button
-        onClick={() => setShowRefus(!showRefus)}
-        className="text-orange-400 text-sm underline hover:text-orange-500"
-      >
-        {showRefus ? "Voir tous les suivis" : "Voir les refus"}
-      </button>
-    </div>
+        <button
+          onClick={() => setShowRefus(!showRefus)}
+          className="text-orange-400 underline"
+        >
+          {showRefus
+            ? "Voir tous les suivis"
+            : "Voir les refus"}
+        </button>
+      </div>
 
-    {/* ================= VUE CARTE ================= */}
-    {view === "card" && (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-        {suivis.map((m) => {
-          const ouvert = detailsCarteId === m.id;
-          const conseiller = conseillers.find((c) => c.id === m.conseiller_id);
-
-          return (
+      {/* ================= VUE CARTE ================= */}
+      {view === "card" && (
+        <div className="grid md:grid-cols-3 gap-4">
+          {suivisAffiches.map((m) => (
             <div
               key={m.id}
-              className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
+              className="bg-white p-4 rounded-xl border-l-4"
               style={{ borderLeftColor: getBorderColor(m) }}
             >
-              <div className="flex flex-col items-center">
-                <h2 className="font-bold text-black text-base text-center mb-1">
-                  {m.evangelises?.prenom} {m.evangelises?.nom}
-                </h2>
+              <h2 className="font-bold">
+                {m.evangelises?.prenom} {m.evangelises?.nom}
+              </h2>
 
-                <p className="text-orange-500 underline font-semibold mb-1">
-                  {m.evangelises?.telephone || "—"}
-                </p>
-                <p className="text-sm text-black-700 mb-1">
-                  🏠 Cellule : {m.cellules?.cellule_full || "—"}
-                </p>
-                <p className="text-sm text-black-700 mb-2">
-                  👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
-                </p>
+              <textarea
+                value={
+                  commentChanges[m.id] ??
+                  m.commentaire_evangelises ??
+                  ""
+                }
+                onChange={(e) =>
+                  handleCommentChange(m.id, e.target.value)
+                }
+                className="w-full mt-2 border rounded p-2"
+              />
 
-                {/* Commentaire + statut */}
-                <div className="w-full bg-slate-50 rounded-xl p-3 mt-2">
-                  <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
-                    Commentaire Suivis
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
-                    onChange={(e) => handleCommentChange(m.id, e.target.value)}
-                    className="w-full rounded-lg border px-3 py-2"
-                  />
+              <select
+                value={
+                  statusChanges[m.id] ??
+                  m.status_suivis_evangelises ??
+                  ""
+                }
+                onChange={(e) =>
+                  handleStatusChange(m.id, e.target.value)
+                }
+                className="w-full mt-2 border rounded p-2"
+              >
+                <option value="">-- Statut --</option>
+                <option value="En cours">En cours</option>
+                <option value="Intégré">Intégré</option>
+                <option value="Refus">Refus</option>
+              </select>
 
-                  <select
-                    value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""}
-                    onChange={(e) => handleStatusChange(m.id, e.target.value)}
-                    className="mt-2 w-full rounded-lg border px-3 py-2"
-                  >
-                    <option value="">-- Sélectionner un statut --</option>
-                    <option value="En cours">En cours</option>
-                    <option value="Intégré">Intégré</option>
-                    <option value="Refus">Refus</option>
-                  </select>
-
-                  <button
-                    onClick={() => updateSuivi(m.id, m)}
-                    disabled={updating[m.id]}
-                    className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all ${
-                      updating[m.id]
-                        ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                        : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
-                    }`}
-                  >
-                    {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
-                  </button>
-                </div>
-
-                <button
-                  onClick={() => setDetailsCarteId(ouvert ? null : m.id)}
-                  className="text-orange-500 underline text-sm mt-3"
-                >
-                  {ouvert ? "Fermer détails" : "Détails"}
-                </button>
-              </div>
-
-              {/* Détails */}
-              <div className={`transition-all duration-500 overflow-hidden ${ouvert ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
-                {ouvert && (
-                  <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
-                    <p>🏙️ Ville : {m.evangelises?.ville || "—"}</p>
-                    <p>🎗️ Sexe : {m.evangelises?.sexe || "—"}</p>
-                    <p>🙏 Prière salut : {m.evangelises?.priere_salut ? "Oui" : "Non"}</p>
-                    <p>☀️ Type : {m.evangelises?.type_conversion || "—"}</p>
-                    <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>
-                    <p>📝 Infos : {m.evangelises?.infos_supplementaires || "—"}</p>
-
-                    <button
-                      onClick={() => m.evangelises?.id && setEditingContact(m.evangelises)}
-                      className="text-blue-600 text-sm underline w-full"
-                    >
-                      ✏️ Modifier le contact
-                    </button>
-                  </div>
-                )}
-              </div>
+              <button
+                onClick={() => updateSuivi(m.id, m)}
+                disabled={updating[m.id]}
+                className="mt-3 w-full bg-blue-600 text-white py-2 rounded"
+              >
+                {updating[m.id]
+                  ? "Enregistrement..."
+                  : "Sauvegarder"}
+              </button>
             </div>
-          );
-        })}
-      </div>
-    )}
+          ))}
+        </div>
+      )}
 
     {/* ================= VUE TABLE ================= */}
     {view === "table" && (

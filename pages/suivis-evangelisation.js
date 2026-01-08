@@ -1,4 +1,4 @@
-"use client"; 
+"use client";
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -8,7 +8,7 @@ import EditEvangelisePopup from "../components/EditEvangelisePopup";
 import DetailsEvangePopup from "../components/DetailsEvangePopup";
 
 export default function SuivisEvangelisation() {
-  const [suivis, setSuivis] = useState([]);
+  const [allSuivis, setAllSuivis] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,14 +23,6 @@ export default function SuivisEvangelisation() {
   const [user, setUser] = useState(null);
 
   // ================= INIT =================
-  // Rerun fetchSuivis dès que showRefus change
-useEffect(() => {
-  if (user) {
-    fetchSuivis(user, cellules);
-  }
-}, [showRefus]);
-
-
   const init = async () => {
     const userData = await fetchUser();
     await fetchConseillers();
@@ -41,9 +33,10 @@ useEffect(() => {
     setLoading(false);
   };
 
-useEffect(() => {
-  init();
-}, []);
+  // 🔹 DÉMARRAGE DE LA PAGE
+  useEffect(() => {
+    init();
+  }, []);
 
   // ================= USER =================
   const fetchUser = async () => {
@@ -89,40 +82,40 @@ useEffect(() => {
 
     if (error) {
       console.error(error);
-      setSuivis([]);
+      setAllSuivis([]);
       return;
     }
 
     let filtered = data || [];
 
-// Filtrage selon rôle
-if (userData.role === "Conseiller") {
-  filtered = filtered.filter((m) => m.conseiller_id === userData.id);
-} else if (userData.role === "ResponsableCellule") {
-  const mesCellulesIds = cellulesData
-    .filter((c) => c.responsable_id === userData.id)
-    .map((c) => c.id);
-  filtered = filtered.filter((m) =>
-    mesCellulesIds.includes(m.cellule_id)
+    // 🔹 Filtrage selon rôle
+    if (userData.role === "Conseiller") {
+      filtered = filtered.filter((m) => m.conseiller_id === userData.id);
+    } else if (userData.role === "ResponsableCellule") {
+      const mesCellulesIds = cellulesData
+        .filter((c) => c.responsable_id === userData.id)
+        .map((c) => c.id);
+
+      filtered = filtered.filter((m) =>
+        mesCellulesIds.includes(m.cellule_id)
+      );
+    }
+
+    setAllSuivis(filtered);
+  };
+
+  // ================= FILTRE AFFICHAGE =================
+  const suivisAffiches = allSuivis.filter((m) =>
+    showRefus
+      ? m.status_suivis_evangelises === "Refus"
+      : m.status_suivis_evangelises !== "Refus"
   );
-}
-
-// 🔹 Filtrer les refus selon toggle
-if (showRefus) {
-  filtered = filtered.filter((m) => m.status_suivis_evangelises === "Refus");
-} else {
-  filtered = filtered.filter((m) => m.status_suivis_evangelises !== "Refus");
-}
-
-setSuivis(filtered);
-  };  
 
   // ================= HELPERS =================
   const getBorderColor = (m) => {
-    const status = m.status_suivis_evangelises;
-    if (status === "En cours") return "#FFA500";
-    if (status === "Intégré") return "#34A853";
-    if (status === "Refus") return "#FF4B5C";
+    if (m.status_suivis_evangelises === "En cours") return "#FFA500";
+    if (m.status_suivis_evangelises === "Intégré") return "#34A853";
+    if (m.status_suivis_evangelises === "Refus") return "#FF4B5C";
     return "#ccc";
   };
 
@@ -132,80 +125,45 @@ setSuivis(filtered);
   const handleStatusChange = (id, value) =>
     setStatusChanges((p) => ({ ...p, [id]: value }));
 
- const updateSuivi = async (id, m) => {
-  const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
-  const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
+  // ================= UPDATE =================
+  const updateSuivi = async (id, m) => {
+    const newComment =
+      commentChanges[id] ?? m.commentaire_evangelises ?? "";
+    const newStatus =
+      statusChanges[id] ?? m.status_suivis_evangelises ?? "";
 
-  if (!newComment && !newStatus) return;
+    if (!newComment && !newStatus) return;
 
-  try {
-    setUpdating((p) => ({ ...p, [id]: true }));
-
-    // 🔹 Mettre à jour dans la table suivis_des_evangelises
-    const { error } = await supabase
-      .from("suivis_des_evangelises")
-      .update({
-        commentaire_evangelises: newComment,
-        status_suivis_evangelises: newStatus,
-      })
-      .eq("id", id); // ne pas utiliser .select().single() ici
-
-    if (error) throw error;
-
-    // 🔹 Si le statut est Intégré, ajouter dans membres_complets
-    if (newStatus === "Intégré") {
-      await supabase.from("membres_complets").insert({
-        nom: m.evangelises.nom,
-        prenom: m.evangelises.prenom,
-        telephone: m.evangelises.telephone,
-        email: m.evangelises.email,
-        statut_suivis: newStatus,
-        commentaire_suivis: newComment,
-        cellule_id: m.cellule_id,
-        conseiller_id: m.conseiller_id,
-        infos_supplementaires: m.evangelises.infos_supplementaires,
-        suivi_id: m.id,
-      });
-    }
-
-    // 🔹 Mettre à jour le state local pour que ça reste visible immédiatement
-    setSuivis((prev) =>
-      prev.map((s) =>
-        s.id === id
-          ? { ...s, commentaire_evangelises: newComment, status_suivis_evangelises: newStatus }
-          : s
-      )
-    );
-
-    // 🔹 Nettoyer les changements temporaires
-    setCommentChanges((prev) => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
-    setStatusChanges((prev) => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
-
-  } catch (err) {
-    console.error("Erreur lors de la sauvegarde :", err.message);
-    alert("Erreur lors de la sauvegarde : " + err.message);
-  } finally {
-    setUpdating((p) => ({ ...p, [id]: false }));
-  }
-};
-
-
-  
-  const formatBesoin = (b) => {
-    if (!b) return "—";
     try {
-      const arr = JSON.parse(b);
-      return Array.isArray(arr) ? arr.join(", ") : b;
-    } catch {
-      return b;
+      setUpdating((p) => ({ ...p, [id]: true }));
+
+      const { error } = await supabase
+        .from("suivis_des_evangelises")
+        .update({
+          commentaire_evangelises: newComment,
+          status_suivis_evangelises: newStatus,
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      // 🔹 MAJ immédiate du state (INSTANTANÉ)
+      setAllSuivis((prev) =>
+        prev.map((s) =>
+          s.id === id
+            ? {
+                ...s,
+                commentaire_evangelises: newComment,
+                status_suivis_evangelises: newStatus,
+              }
+            : s
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la sauvegarde");
+    } finally {
+      setUpdating((p) => ({ ...p, [id]: false }));
     }
   };
 
@@ -217,8 +175,14 @@ setSuivis(filtered);
   };
 
   // ================= RENDER =================
-  if (loading) return <p className="text-center mt-10">Chargement...</p>;
-  if (!user) return <p className="text-center mt-10 text-red-600">Non connecté</p>;
+  if (loading)
+    return <p className="text-center mt-10">Chargement...</p>;
+  if (!user)
+    return (
+      <p className="text-center mt-10 text-red-600">
+        Non connecté
+      </p>
+    );
 
   return (
   <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">

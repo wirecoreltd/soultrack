@@ -227,11 +227,20 @@ export default function SuivisEvangelisation() {
                 <option>Refus</option>
               </select>
 
-              <button                
-                className="mt-3 w-full rounded-lg bg-slate-300 text-slate-600 font-semibold py-2 cursor-not-allowed"
+              <button
+                onClick={() => updateSuivi(m.id)}
+                disabled={updating[m.id]}
+                className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all
+                  ${
+                    updating[m.id]
+                      ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                      : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
+                  }
+                `}
               >
-                Sauvegarder
+                {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
               </button>
+
             </div>
 
             <button

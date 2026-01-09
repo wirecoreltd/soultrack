@@ -157,18 +157,7 @@ export default function SuivisEvangelisation() {
     console.error("❌ UPSERT MEMBRE", error);
     throw error;
   }
-};
-
-
-      const { error } = await supabase
-        .from("membres_complets")
-        .upsert(payload, { onConflict: "suivi_int_id" });
-
-      if (error) console.error("UPSERT ERROR", error);
-    } catch (err) {
-      console.error("Erreur upsert membre:", err.message);
-    }
-  };
+};      
 
   // ================= UPDATE SUIVI =================
   const updateSuivi = async (id, m) => {

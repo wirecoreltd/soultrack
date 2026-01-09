@@ -354,8 +354,8 @@ setAllSuivis((prev) =>
               <div className={`transition-all duration-500 overflow-hidden ${ouvert ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
                 {ouvert && (
                   <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
-                    <p>🏙️ Ville : {m.evangelises?.ville || "—"}</p>
-                    <p>🎗️ Sexe : {m.evangelises?.sexe || "—"}</p>
+                    <p>🏙️ Ville : {m.ville || "—"}</p>
+                    <p>🎗️ Sexe : {m.sexe || "—"}</p>
                     <p>🙏 Prière salut : {m.evangelises?.priere_salut ? "Oui" : "Non"}</p>
                     <p>☀️ Type : {m.evangelises?.type_conversion || "—"}</p>
                     <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>

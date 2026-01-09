@@ -80,7 +80,7 @@ export default function EditEvangeliseSuiviPopup({
     };
 
     const { error, data } = await supabase
-      .from("evangelises")
+      .from("suivis_des_evangelises")
       .update(cleanData)
       .eq("id", member.id)
       .select()

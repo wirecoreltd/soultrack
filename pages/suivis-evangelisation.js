@@ -77,18 +77,13 @@ export default function SuivisEvangelisation() {
   // ================= SUIVIS =================
   const fetchSuivis = async (userData, cellulesData) => {
   try {
-    // 🔹 Récupération simple avec relations
     const { data, error } = await supabase
       .from("suivis_des_evangelises")
-      .select(`
-        *,
-        evangelises:evangelise_id (*),
-        cellules:cellule_id (*)
-      `)
+      .select("*")
       .order("id", { ascending: false });
 
     if (error) {
-      console.error("Erreur fetchSuivis:", error.message);
+      console.error("Erreur fetchSuivis:", error);
       setAllSuivis([]);
       return;
     }
@@ -107,10 +102,11 @@ export default function SuivisEvangelisation() {
 
     setAllSuivis(filtered);
   } catch (err) {
-    console.error("Erreur fetchSuivis catch:", err.message);
+    console.error("Erreur fetchSuivis:", err.message);
     setAllSuivis([]);
   }
 };
+
 
   // ================= HELPERS =================
   const getBorderColor = (m) => {

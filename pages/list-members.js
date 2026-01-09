@@ -209,10 +209,15 @@ export default function ListMembers() {
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const getBorderColor = (m) => {
-  if (["nouveau", "visiteur", "veut rejoindre ICC"].includes(m.statut)) return "#34A853"; // Nouveau
-  if (["actif", "a déjà son église", "intégrer"].includes(m.statut)) return "#34A853"; // Existant
-  if (["ancien", "refus", "inactif"].includes(m.statut)) return "#999999"; // Inactif
-  return "#ccc"; // par défaut
+  const s = m.statut || m.suivi_statut_libelle || "";
+  const etat = m.etat_contact || "";
+
+  // Couleurs selon état ou statut
+  if (etat === "Inactif") return "#999999";        // gris
+  if (["Nouveau", "nouveau", "visiteur", "veut rejoindre ICC"].includes(s)) return "#34A853"; // vert
+  if (["Existant", "actif", "ancien", "a déjà son église"].includes(s)) return "#34A853";    // vert
+
+  return "#ccc"; // default
 };
 
   const formatDate = (dateStr) => {

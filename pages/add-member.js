@@ -96,13 +96,12 @@ export default function AddMember() {
         prenom: "",
         telephone: "",
         ville: "",
-        statut: "",
+        statut: "nouveau",
         venu: "",
         besoin: [],
         besoinLibre: "",
         is_whatsapp: false,
         infos_supplementaires: "",
-        etat_contact: "Nouveau",
       });
       setShowBesoinLibre(false);
     } catch (err) {
@@ -175,7 +174,6 @@ export default function AddMember() {
             <option value="visiteur">Visiteur</option>
           </select>
 
-
           <select value={formData.venu} onChange={(e) => setFormData({ ...formData, venu: e.target.value })} className="input" required>
             <option value="">-- Comment est-il venu ? --</option>
             <option value="invité">Invité</option>
@@ -228,4 +226,3 @@ export default function AddMember() {
       </div>
     </div>
   );
-}

@@ -25,6 +25,12 @@ export default function EditEvangeliseSuiviPopup({
     priere_salut: member.priere_salut || false,
     type_conversion: member.type_conversion || "",
     is_whatsapp: member.is_whatsapp || false,
+    commentaire_evangelises: member.commentaire_evangelises || "",
+    status_suivis_evangelises: member.status_suivis_evangelises || "Envoyé",
+    cellule_id: member.cellule_id || null,
+    conseiller_id: member.conseiller_id || null,
+    responsable_cellule: member.responsable_cellule || null,
+    evangelise_id: member.evangelise_id || null,
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -62,6 +68,7 @@ export default function EditEvangeliseSuiviPopup({
   };
 
   const handleSubmit = async () => {
+    if (loading) return; // sécurité double clic
     setLoading(true);
 
     const cleanData = {
@@ -77,12 +84,18 @@ export default function EditEvangeliseSuiviPopup({
       priere_salut: formData.priere_salut,
       type_conversion: formData.type_conversion,
       is_whatsapp: formData.is_whatsapp,
+      commentaire_evangelises: formData.commentaire_evangelises || null,
+      status_suivis_evangelises: formData.status_suivis_evangelises || "Envoyé",
+      cellule_id: formData.cellule_id || null,
+      conseiller_id: formData.conseiller_id || null,
+      responsable_cellule: formData.responsable_cellule || null,
+      evangelise_id: formData.evangelise_id || null,
     };
 
     const { error, data } = await supabase
       .from("suivis_des_evangelises")
       .update(cleanData)
-      .eq("id", member.id)
+      .eq("id", member.id) // ici c'est bigint
       .select()
       .single();
 
@@ -121,20 +134,13 @@ export default function EditEvangeliseSuiviPopup({
         </h2>
 
         <div className="flex flex-col gap-4 text-white">
-          {/* Prénom / Nom / Ville / Téléphone */}
           {["prenom", "nom", "ville", "telephone"].map((f) => (
             <div key={f} className="flex flex-col">
               <label className="font-semibold capitalize">{f}</label>
-              <input
-                name={f}
-                value={formData[f]}
-                onChange={handleChange}
-                className="input"
-              />
+              <input name={f} value={formData[f]} onChange={handleChange} className="input" />
             </div>
           ))}
 
-          {/* WhatsApp / Prière du salut */}
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -157,7 +163,6 @@ export default function EditEvangeliseSuiviPopup({
             Prière du salut
           </label>
 
-          {/* Type de conversion */}
           <label className="font-semibold">Type de conversion</label>
           <input
             name="type_conversion"
@@ -166,7 +171,6 @@ export default function EditEvangeliseSuiviPopup({
             className="input"
           />
 
-          {/* Besoins */}
           <div className="flex flex-col">
             <label className="font-semibold">Besoins</label>
             {besoinsOptions.map((item) => (
@@ -203,7 +207,6 @@ export default function EditEvangeliseSuiviPopup({
             )}
           </div>
 
-          {/* Infos supplémentaires */}
           <label className="font-semibold">Infos supplémentaires</label>
           <textarea
             name="infos_supplementaires"
@@ -213,9 +216,16 @@ export default function EditEvangeliseSuiviPopup({
             rows={3}
           />
 
+          <label className="font-semibold">Commentaire</label>
+          <textarea
+            name="commentaire_evangelises"
+            value={formData.commentaire_evangelises}
+            onChange={handleChange}
+            className="input"
+            rows={2}
+          />
         </div>
 
-        {/* Boutons */}
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
           <button
             onClick={onClose}

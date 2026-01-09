@@ -137,9 +137,9 @@ export default function SuivisEvangelisation() {
     setStatusChanges((p) => ({ ...p, [id]: value }));
 
   // ================= UPSERT MEMBRE =================
-  const upsertMembre = async (suivi) => {
+const upsertMembre = async (suivi) => {
   const payload = {
-    suivi_int_id: suivi.id, // 🔥 PAS Number()
+    suivi_int_id: suivi.id, // IMPORTANT
     nom: suivi.nom,
     prenom: suivi.prenom,
     telephone: suivi.telephone,
@@ -151,61 +151,78 @@ export default function SuivisEvangelisation() {
 
   const { error } = await supabase
     .from("membres_complets")
-    .upsert(payload, { onConflict: "suivi_int_id" });
+    .upsert(payload, {
+      onConflict: "suivi_int_id",
+    });
 
   if (error) {
     console.error("❌ UPSERT MEMBRE", error);
     throw error;
   }
-};      
+};
+   
 
   // ================= UPDATE SUIVI =================
-  const updateSuivi = async (id, m) => {
-  const newStatus = statusChanges[id] ?? m.status_suivis_evangelises;
-  const newComment = commentChanges[id] ?? m.commentaire_evangelises;
+const updateSuivi = async (id, m) => {
+  try {
+    setUpdating((p) => ({ ...p, [id]: true }));
 
-  await supabase
-    .from("suivis_des_evangelises")
-    .update({
-      status_suivis_evangelises: newStatus,
-      commentaire_evangelises: newComment,
-    })
-    .eq("id", id);
+    const newStatus = statusChanges[id] ?? m.status_suivis_evangelises;
+    const newComment = commentChanges[id] ?? m.commentaire_evangelises;
 
-  if (newStatus === "Intégré") {
-    await upsertMembre({
-      ...m,
-      status_suivis_evangelises: newStatus,
-      commentaire_evangelises: newComment,
-    });
-  }
+    // 1️⃣ Update suivi
+    const { error: suiviError } = await supabase
+      .from("suivis_des_evangelises")
+      .update({
+        status_suivis_evangelises: newStatus,
+        commentaire_evangelises: newComment,
+      })
+      .eq("id", id);
 
-  setAllSuivis((prev) =>
-    prev.map((s) =>
-      s.id === id
-        ? { ...s, status_suivis_evangelises: newStatus, commentaire_evangelises: newComment }
-        : s
-    )
-      );
+    if (suiviError) throw suiviError;
 
-      // Nettoyer les changements
-      setCommentChanges((prev) => {
-        const copy = { ...prev };
-        delete copy[id];
-        return copy;
+    // 2️⃣ Si intégré → upsert membre
+    if (newStatus === "Intégré") {
+      await upsertMembre({
+        ...m,
+        status_suivis_evangelises: newStatus,
+        commentaire_evangelises: newComment,
       });
-      setStatusChanges((prev) => {
-        const copy = { ...prev };
-        delete copy[id];
-        return copy;
-      });
-    } catch (err) {
-      console.error("Erreur lors de la sauvegarde :", err.message);
-      alert("Erreur lors de la sauvegarde : " + err.message);
-    } finally {
-      setUpdating((p) => ({ ...p, [id]: false }));
     }
-  };
+
+    // 3️⃣ Mise à jour UI immédiate
+    setAllSuivis((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? {
+              ...s,
+              status_suivis_evangelises: newStatus,
+              commentaire_evangelises: newComment,
+            }
+          : s
+      )
+    );
+
+    // 4️⃣ Nettoyage
+    setCommentChanges((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+
+    setStatusChanges((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+  } catch (err) {
+    console.error("❌ Erreur lors de la sauvegarde :", err);
+    alert("Erreur lors de la sauvegarde : " + err.message);
+  } finally {
+    setUpdating((p) => ({ ...p, [id]: false }));
+  }
+};
+
 
   // ================= RENDER =================
   if (loading) return <p className="text-center mt-10">Chargement...</p>;

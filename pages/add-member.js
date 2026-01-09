@@ -21,6 +21,7 @@ export default function AddMember() {
     besoinLibre: "", // temporaire pour l'input libre
     is_whatsapp: false,
     infos_supplementaires: "",
+     etat_contact: "Nouveau",
   });
 
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);

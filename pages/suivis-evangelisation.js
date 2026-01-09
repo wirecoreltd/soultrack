@@ -193,10 +193,7 @@ export default function SuivisEvangelisation() {
           commentaire_evangelises: newComment,
           status_suivis_evangelises: newStatus,
         })
-        .eq("id", id);
-      console.log("DATA raw:", data);
-      console.log("USER role:", userData?.role);
-      console.log("CELLULES:", cellulesData);
+        .eq("id", id);      
 
       if (error) throw error;
 

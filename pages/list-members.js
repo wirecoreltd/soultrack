@@ -533,7 +533,7 @@ export default function ListMembers() {
                 {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
               </div>
               <div className="flex-[1] text-white">{m.telephone || "—"}</div>
-              <div className="flex-[1] text-white">{m.statut || "—"}</div>
+              <div className="flex-[1] text-white">{m.etat_contact || "—"}</div>
               <div className="flex-[2] text-white">
                 {m.cellule_id
                   ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`

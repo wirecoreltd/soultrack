@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
-import EditEvangelisePopup from "../components/EditEvangelisePopup";
+import EditEvangeliseSuiviPopup from "../components/EditEvangeliseSuiviPopup";
 import DetailsEvangePopup from "../components/DetailsEvangePopup";
 
 export default function SuivisEvangelisation() {
@@ -394,7 +394,7 @@ export default function SuivisEvangelisation() {
     )}
 
     {editingContact && (
-      <EditEvangelisePopup
+      <EditEvangeliseSuiviPopup
         member={editingContact}
         onClose={() => setEditingContact(null)}
         onUpdateMember={() => {

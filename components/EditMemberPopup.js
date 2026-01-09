@@ -43,7 +43,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     besoin: initialBesoin,
     autreBesoin: "",
     commentaire_suivis: member?.commentaire_suivis || "",
-    bapteme_eau: member?.bapteme_eau ?? null,      
+    bapteme_eau: member?.bapteme_eau ?? null,
     bapteme_esprit: member?.bapteme_esprit ?? null,
     
   });
@@ -139,8 +139,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         venu: formData.venu || null,        
         besoin: JSON.stringify(finalBesoin),
         commentaire_suivis: formData.commentaire_suivis || null,
-        bapteme_eau: formData.bapteme_eau === true ? true : formData.bapteme_eau === false ? false : null,
-        bapteme_esprit: formData.bapteme_esprit === true ? true : formData.bapteme_esprit === false ? false : null,
+        bapteme_eau: formData.bapteme_eau,
+        bapteme_esprit: formData.bapteme_esprit,
       };
 
       const { error } = await supabase
@@ -216,19 +216,18 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             </select>
           </div>          
 
-          {/* Baptême d'Eau */}
+          {/* Baptême d'eau */}
             <div className="flex flex-col">
-              <label className="font-medium">Baptême d'Eau</label>
+              <label className="font-medium">💧 Baptême d'Eau</label>
               <select
                 name="bapteme_eau"
                 value={formData.bapteme_eau === null ? "" : formData.bapteme_eau ? "true" : "false"}
-                onChange={(e) => {
-                  const val = e.target.value;
+                onChange={(e) =>
                   setFormData(prev => ({
                     ...prev,
-                    bapteme_eau: val === "" ? null : val === "true" ? true : false
-                  }));
-                }}
+                    bapteme_eau: e.target.value === "true" ? true : false
+                  }))
+                }
                 className="input"
               >
                 <option value="">-- Sélectionner --</option>
@@ -237,19 +236,18 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               </select>
             </div>
             
-            {/* Baptême de Feu */}
+            {/* Baptême de feu */}
             <div className="flex flex-col">
-              <label className="font-medium">Baptême de Feu</label>
+              <label className="font-medium">🔥 Baptême de Feu</label>
               <select
                 name="bapteme_esprit"
                 value={formData.bapteme_esprit === null ? "" : formData.bapteme_esprit ? "true" : "false"}
-                onChange={(e) => {
-                  const val = e.target.value;
+                onChange={(e) =>
                   setFormData(prev => ({
                     ...prev,
-                    bapteme_esprit: val === "" ? null : val === "true" ? true : false
-                  }));
-                }}
+                    bapteme_esprit: e.target.value === "true" ? true : false
+                  }))
+                }
                 className="input"
               >
                 <option value="">-- Sélectionner --</option>

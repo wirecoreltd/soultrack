@@ -215,13 +215,13 @@ export default function ListMembers() {
   const getBorderColor = (m) => {
   if (!m.etat_contact) return "#ccc"; // défaut
 
-  const etat = m.etat_contact.trim().toLowerCase();
+  const etat = m.etat_contact.trim().toLowerCase(); // converti en minuscule
 
-  if (etat === "Existant") return "#03a31b";  // vert
-  if (etat === "Nouveau") return "#34A853";   // vert clair
+  if (etat === "existant") return "#34A853";  // vert
+  if (etat === "nouveau") return "#34A85e";   // vert clair (ajusté)
   if (etat === "inactif") return "#999999";   // gris
   return "#ccc"; // autre cas
-};  
+};
 
   const formatDate = (dateStr) => {
     try { return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr }); } catch { return ""; }
@@ -287,20 +287,20 @@ export default function ListMembers() {
                 </button>
                 {openPhoneMenuId === m.id && (
                   <div 
-  className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-52" 
-  onClick={(e) => e.stopPropagation()}
->
-  {/* Appel téléphonique */}
-  <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
-  {/* SMS */}
-  <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
-  {/* Appel WhatsApp */}
-  <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer"className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-  >📱 Appel WhatsApp</a>
-  {/* Message WhatsApp */}
-  <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-  >💬 Message WhatsApp</a>
-</div>
+                    className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-52" 
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Appel téléphonique */}
+                    <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
+                    {/* SMS */}
+                    <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
+                    {/* Appel WhatsApp */}
+                    <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer"className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                    >📱 Appel WhatsApp</a>
+                    {/* Message WhatsApp */}
+                    <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                    >💬 Message WhatsApp</a>
+                  </div>
 
                 )}
               </>

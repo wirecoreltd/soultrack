@@ -291,11 +291,11 @@ setAllSuivis((prev) =>
             >
               <div className="flex flex-col items-center">
                 <h2 className="font-bold text-black text-base text-center mb-1">
-                  {m.evangelises?.prenom} {m.evangelises?.nom}
+                  {m.prenom} {m..nom}
                 </h2>
 
                 <p className="text-orange-500 underline font-semibold mb-1">
-                  {m.evangelises?.telephone || "—"}
+                  {m.telephone || "—"}
                 </p>
                 <p className="text-sm text-black-700 mb-1">
                   🏠 Cellule : {m.cellules?.cellule_full || "—"}
@@ -356,13 +356,13 @@ setAllSuivis((prev) =>
                   <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
                     <p>🏙️ Ville : {m.ville || "—"}</p>
                     <p>🎗️ Sexe : {m.sexe || "—"}</p>
-                    <p>🙏 Prière salut : {m.evangelises?.priere_salut ? "Oui" : "Non"}</p>
-                    <p>☀️ Type : {m.evangelises?.type_conversion || "—"}</p>
-                    <p>❓ Besoin : {formatBesoin(m.evangelises?.besoin)}</p>
-                    <p>📝 Infos : {m.evangelises?.infos_supplementaires || "—"}</p>
+                    <p>🙏 Prière salut : {m..priere_salut ? "Oui" : "Non"}</p>
+                    <p>☀️ Type : {m..type_conversion || "—"}</p>
+                    <p>❓ Besoin : {formatBesoin(m..besoin)}</p>
+                    <p>📝 Infos : {m..infos_supplementaires || "—"}</p>
 
                     <button
-                      onClick={() => m.evangelises?.id && setEditingContact(m.evangelises)}
+                      onClick={() => m..id && setEditingContact(m.evangelises)}
                       className="text-blue-600 text-sm underline w-full"
                     >
                       ✏️ Modifier le contact

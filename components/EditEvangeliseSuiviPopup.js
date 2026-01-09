@@ -66,63 +66,72 @@ export default function EditEvangeliseSuiviPopup({
   };
 
   const handleSubmit = async () => {
-    if (loading) return; // sécurité double clic
-    setLoading(true);
+  if (loading) return; // Sécurité double clic
+  setLoading(true);
 
-    try {
-      const besoinsFinal =
-        formData.autreBesoin && showAutre
-          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
-          : formData.besoin;
-
-      // ⚠️ On doit utiliser id (bigint) pour la colonne id
-      const updateData = {
-        prenom: formData.prenom,
-        nom: formData.nom,
-        telephone: formData.telephone,
-        ville: formData.ville || null,
-        infos_supplementaires: formData.infos_supplementaires || null,
-        besoin: JSON.stringify(besoinsFinal),
-        priere_salut: formData.priere_salut === true,
-        type_conversion: formData.priere_salut ? formData.type_conversion : "",
-        is_whatsapp: formData.is_whatsapp,
-        sexe: formData.sexe || null,
-        cellule_id: formData.cellule_id || null,
-        conseiller_id: formData.conseiller_id || null,
-        responsable_cellule: formData.responsable_cellule || null,
-        evangelise_id: formData.evangelise_id || null,
-        commentaire_evangelises: formData.commentaire_evangelises || null,
-        status_suivis_evangelises: formData.status_suivis_evangelises || "Envoyé",
-        comment: formData.comment || null,
-      };
-
-      // Vérifid que member.id est un bigint
-      const idBigInt = Number(member.id);
-      if (isNaN(idBigInt)) throw new Error("ID du membre invalide (doit être un nombre)");
-
-      const { data, error } = await supabase
-        .from("suivis_des_evangelises")
-        .update(updateData)
-        .eq("id", idBigInt) // ✅ bigint
-        .select()
-        .single();
-
-      if (error) {
-        alert("❌ Erreur : " + error.message);
-      } else {
-        if (onUpdateMember) onUpdateMember(data);
-        setMessage("✅ Changement enregistré !");
-        setTimeout(() => {
-          setMessage("");
-          onClose();
-        }, 1200);
-      }
-    } catch (err) {
-      alert("❌ Une erreur est survenue : " + err.message);
-    } finally {
-      setLoading(false);
+  try {
+    // Vérifie que l'ID est bien un nombre (bigint)
+    if (typeof member.id !== "number") {
+      throw new Error(
+        `ID du membre invalide (doit être un nombre) : ${member.id}`
+      );
     }
-  };
+
+    // Préparer les besoins
+    const besoinsFinal =
+      formData.autreBesoin && showAutre
+        ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
+        : formData.besoin;
+
+    // Préparer les données à envoyer
+    const cleanData = {
+      prenom: formData.prenom,
+      nom: formData.nom,
+      telephone: formData.telephone,
+      ville: formData.ville || null,
+      infos_supplementaires: formData.infos_supplementaires || null,
+      besoin: JSON.stringify(besoinsFinal),
+      priere_salut: formData.priere_salut === "Oui" || formData.priere_salut === true,
+      type_conversion:
+        formData.priere_salut === "Oui" || formData.priere_salut === true
+          ? formData.type_conversion
+          : "",
+      is_whatsapp: formData.is_whatsapp,
+      sexe: formData.sexe || null,
+      cellule_id: formData.cellule_id || null,
+      conseiller_id: formData.conseiller_id || null,
+      responsable_cellule: formData.responsable_cellule || null,
+      evangelise_id: formData.evangelise_id || null,
+      commentaire_evangelises: formData.commentaire_evangelises || null,
+      status_suivis_evangelises: formData.status_suivis_evangelises || "Envoyé",
+      comment: formData.comment || null,
+    };
+
+    // MAJ dans Supabase
+    const { data, error } = await supabase
+      .from("suivis_des_evangelises")
+      .update(cleanData)
+      .eq("id", member.id) // ID bigint
+      .select()
+      .single();
+
+    if (error) {
+      alert("❌ Erreur : " + error.message);
+    } else {
+      if (onUpdateMember) onUpdateMember(data);
+      setMessage("✅ Changement enregistré !");
+      setTimeout(() => {
+        setMessage("");
+        onClose();
+      }, 1200);
+    }
+  } catch (err) {
+    alert("❌ Une erreur est survenue : " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4">

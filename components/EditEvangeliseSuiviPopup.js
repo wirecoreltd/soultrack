@@ -31,7 +31,6 @@ export default function EditEvangeliseSuiviPopup({
     conseiller_id: member.conseiller_id || null,
     responsable_cellule: member.responsable_cellule || null,
     evangelise_id: member.evangelise_id || null,
-    sexe: member.sexe || "",
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -40,7 +39,6 @@ export default function EditEvangeliseSuiviPopup({
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
-
     if (value === "Autre") {
       setShowAutre(checked);
       if (!checked) {
@@ -51,7 +49,6 @@ export default function EditEvangeliseSuiviPopup({
         }));
       }
     }
-
     setFormData((prev) => {
       const updated = checked
         ? [...prev.besoin, value]
@@ -78,14 +75,15 @@ export default function EditEvangeliseSuiviPopup({
           ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
           : formData.besoin;
 
-      const cleanData = {
+      // ⚠️ On doit utiliser id (bigint) pour la colonne id
+      const updateData = {
         prenom: formData.prenom,
         nom: formData.nom,
         telephone: formData.telephone,
         ville: formData.ville || null,
         infos_supplementaires: formData.infos_supplementaires || null,
         besoin: JSON.stringify(besoinsFinal),
-        priere_salut: formData.priere_salut,
+        priere_salut: formData.priere_salut === true,
         type_conversion: formData.priere_salut ? formData.type_conversion : "",
         is_whatsapp: formData.is_whatsapp,
         sexe: formData.sexe || null,
@@ -95,12 +93,17 @@ export default function EditEvangeliseSuiviPopup({
         evangelise_id: formData.evangelise_id || null,
         commentaire_evangelises: formData.commentaire_evangelises || null,
         status_suivis_evangelises: formData.status_suivis_evangelises || "Envoyé",
+        comment: formData.comment || null,
       };
+
+      // Vérifid que member.id est un bigint
+      const idBigInt = Number(member.id);
+      if (isNaN(idBigInt)) throw new Error("ID du membre invalide (doit être un nombre)");
 
       const { data, error } = await supabase
         .from("suivis_des_evangelises")
-        .update(cleanData)
-        .eq("id", member.id)
+        .update(updateData)
+        .eq("id", idBigInt) // ✅ bigint
         .select()
         .single();
 
@@ -129,10 +132,7 @@ export default function EditEvangeliseSuiviPopup({
           background: "linear-gradient(180deg, rgba(46,49,146,0.16), rgba(46,49,146,0.40))",
         }}
       >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-red-600 font-bold text-xl"
-        >
+        <button onClick={onClose} className="absolute top-4 right-4 text-red-600 font-bold text-xl">
           ✕
         </button>
 
@@ -166,7 +166,7 @@ export default function EditEvangeliseSuiviPopup({
             onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}
             required
           >
-            <option value="">Sexe</option>
+            <option value="" className="default-white">Sexe</option>
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
           </select>
@@ -185,7 +185,7 @@ export default function EditEvangeliseSuiviPopup({
               });
             }}
           >
-            <option value="">-- Prière du salut ? --</option>
+            <option value="" className="default-white">-- Prière du salut ? --</option>
             <option value="Oui">Oui</option>
             <option value="Non">Non</option>
           </select>
@@ -196,11 +196,14 @@ export default function EditEvangeliseSuiviPopup({
               className="input select-black"
               value={formData.type_conversion || ""}
               onChange={(e) =>
-                setFormData({ ...formData, type_conversion: e.target.value })
+                setFormData({
+                  ...formData,
+                  type_conversion: e.target.value,
+                })
               }
               required
             >
-              <option value="">Type</option>
+              <option value="" className="default-white">Type</option>
               <option value="Nouveau converti">Nouveau converti</option>
               <option value="Réconciliation">Réconciliation</option>
             </select>
@@ -262,6 +265,7 @@ export default function EditEvangeliseSuiviPopup({
           />
         </div>
 
+        {/* Boutons */}
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
           <button
             onClick={onClose}
@@ -282,7 +286,7 @@ export default function EditEvangeliseSuiviPopup({
           <p className="text-[#25297e] font-semibold text-center mt-3">{message}</p>
         )}
 
-        {/* Styles fusionnés */}
+        {/* Styles */}
         <style jsx>{`
           label {
             font-weight: 600;
@@ -298,10 +302,10 @@ export default function EditEvangeliseSuiviPopup({
             font-weight: 400;
           }
           .select-black {
-            color: black;
+            color: black; /* sélection dans le select */
           }
-          .select-black option {
-            color: black;
+          option.default-white {
+            color: white; /* texte par défaut */
           }
         `}</style>
       </div>

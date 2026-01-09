@@ -176,7 +176,7 @@ export default function DetailsMemberPopup({
           </div>
 
           {/* ✏️ Modifier le contact */}
-          <div className="mt-4 flex justify-center w-full"><p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
+          <div className="mt-4 flex justify-center w-full">            
             <button onClick={() => setEditMember(membre)} className="text-blue-600 text-sm w-full">
               ✏️ Modifier le contact
             </button>

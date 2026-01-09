@@ -37,6 +37,7 @@ export default function ListMembers() {
   const [showingToast, setShowingToast] = useState(false);
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const realtimeChannelRef = useRef(null);
+  const [etatContactFilter, setEtatContactFilter] = useState("");
 
   const statutLabels = {
     1: "En cours",
@@ -208,16 +209,11 @@ export default function ListMembers() {
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const getBorderColor = (m) => {
-    const s = m.statut || m.suivi_statut_libelle || "";
-    if (["refus"].includes(s)) return "#f56f22";
-    if (["actif"].includes(s)) return "#4285F4";
-    if (["a déjà son église"].includes(s)) return "#f21705";
-    if (["ancien"].includes(s)) return "#999999";
-    if (["visiteur"].includes(s)) return "#34A853";
-    if (["nouveau"].includes(s)) return "#34A843";
-    if (["veut rejoindre ICC"].includes(s)) return "#34A853";
-    return "#ccc";
-  };
+  if (["nouveau", "visiteur", "veut rejoindre ICC"].includes(m.statut)) return "#34A853"; // Nouveau
+  if (["actif", "a déjà son église", "intégrer"].includes(m.statut)) return "#34A853"; // Existant
+  if (["ancien", "refus", "inactif"].includes(m.statut)) return "#999999"; // Inactif
+  return "#ccc"; // par défaut
+};
 
   const formatDate = (dateStr) => {
     try { return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr }); } catch { return ""; }

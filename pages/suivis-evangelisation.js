@@ -291,7 +291,7 @@ setAllSuivis((prev) =>
             >
               <div className="flex flex-col items-center">
                 <h2 className="font-bold text-black text-base text-center mb-1">
-                  {m.prenom} {m..nom}
+                  {m.prenom} {m.nom}
                 </h2>
 
                 <p className="text-orange-500 underline font-semibold mb-1">

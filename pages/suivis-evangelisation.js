@@ -128,7 +128,11 @@ export default function SuivisEvangelisation() {
     setEditingContact(null);
   };
 
-  const suivisAffiches = allSuivis;
+  const suivisAffiches = allSuivis.filter((m) =>
+    showRefus
+      ? m.status_suivis_evangelises === "Refus"
+      : m.status_suivis_evangelises !== "Refus"
+  );
 
   const handleCommentChange = (id, value) =>
     setCommentChanges((p) => ({ ...p, [id]: value }));
@@ -137,92 +141,87 @@ export default function SuivisEvangelisation() {
     setStatusChanges((p) => ({ ...p, [id]: value }));
 
   // ================= UPSERT MEMBRE =================
-const upsertMembre = async (suivi) => {
-  const payload = {
-    suivi_int_id: suivi.id, // IMPORTANT
-    nom: suivi.nom,
-    prenom: suivi.prenom,
-    telephone: suivi.telephone,
-    cellule_id: suivi.cellule_id,
-    conseiller_id: suivi.conseiller_id,
-    suivi_statut: suivi.status_suivis_evangelises,
-    suivi_commentaire_suivis: suivi.commentaire_evangelises,
+  const upsertMembre = async (suivi) => {
+    try {
+      const payload = {
+        suivi_int_id: Number(suivi.id),
+        nom: suivi.nom,
+        prenom: suivi.prenom,
+        telephone: suivi.telephone,
+        ville: suivi.ville,
+        sexe: suivi.sexe,
+        besoin: suivi.besoin,
+        infos_supplementaires: suivi.infos_supplementaires,
+        cellule_id: suivi.cellule_id,
+        conseiller_id: suivi.conseiller_id,
+        statut_initial: "intégré",
+        suivi_statut: suivi.status_suivis_evangelises,
+        suivi_commentaire_suivis: suivi.commentaire_evangelises,
+      };
+
+      const { error } = await supabase
+        .from("membres_complets")
+        .upsert(payload, { onConflict: "suivi_int_id" });
+
+      if (error) console.error("UPSERT ERROR", error);
+    } catch (err) {
+      console.error("Erreur upsert membre:", err.message);
+    }
   };
 
-  const { error } = await supabase
-    .from("membres_complets")
-    .upsert(payload, {
-      onConflict: "suivi_int_id",
-    });
-
-  if (error) {
-    console.error("❌ UPSERT MEMBRE", error);
-    throw error;
-  }
-};
-   
-
   // ================= UPDATE SUIVI =================
-const updateSuivi = async (id, m) => {
-  try {
-    setUpdating((p) => ({ ...p, [id]: true }));
+  const updateSuivi = async (id, m) => {
+    const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
+    const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
 
-    const newStatus = statusChanges[id] ?? m.status_suivis_evangelises;
-    const newComment = commentChanges[id] ?? m.commentaire_evangelises;
+    if (!newComment && !newStatus) return;
 
-    // 1️⃣ Update suivi
-    const { error: suiviError } = await supabase
-      .from("suivis_des_evangelises")
-      .update({
-        status_suivis_evangelises: newStatus,
-        commentaire_evangelises: newComment,
-      })
-      .eq("id", id);
+    try {
+      setUpdating((p) => ({ ...p, [id]: true }));
 
-    if (suiviError) throw suiviError;
+      // Update suivi
+      const { error } = await supabase
+        .from("suivis_des_evangelises")
+        .update({
+          commentaire_evangelises: newComment,
+          status_suivis_evangelises: newStatus,
+        })
+        .eq("id", id);
 
-    // 2️⃣ Si intégré → upsert membre
-    if (newStatus === "Intégré") {
-      await upsertMembre({
-        ...m,
-        status_suivis_evangelises: newStatus,
-        commentaire_evangelises: newComment,
+      if (error) throw error;
+
+      // Upsert membre si intégré
+      if (newStatus === "Intégré") {
+        await upsertMembre({ ...m, status_suivis_evangelises: newStatus, commentaire_evangelises: newComment });
+      }
+
+      // Update state local
+      setAllSuivis((prev) =>
+        prev.map((s) =>
+          s.id === id
+            ? { ...s, commentaire_evangelises: newComment, status_suivis_evangelises: newStatus }
+            : s
+        )
+      );
+
+      // Nettoyer les changements
+      setCommentChanges((prev) => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
       });
+      setStatusChanges((prev) => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      });
+    } catch (err) {
+      console.error("Erreur lors de la sauvegarde :", err.message);
+      alert("Erreur lors de la sauvegarde : " + err.message);
+    } finally {
+      setUpdating((p) => ({ ...p, [id]: false }));
     }
-
-    // 3️⃣ Mise à jour UI immédiate
-    setAllSuivis((prev) =>
-      prev.map((s) =>
-        s.id === id
-          ? {
-              ...s,
-              status_suivis_evangelises: newStatus,
-              commentaire_evangelises: newComment,
-            }
-          : s
-      )
-    );
-
-    // 4️⃣ Nettoyage
-    setCommentChanges((prev) => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
-
-    setStatusChanges((prev) => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
-  } catch (err) {
-    console.error("❌ Erreur lors de la sauvegarde :", err);
-    alert("Erreur lors de la sauvegarde : " + err.message);
-  } finally {
-    setUpdating((p) => ({ ...p, [id]: false }));
-  }
-};
-
+  };
 
   // ================= RENDER =================
   if (loading) return <p className="text-center mt-10">Chargement...</p>;

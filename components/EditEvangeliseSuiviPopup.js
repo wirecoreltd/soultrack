@@ -68,58 +68,63 @@ export default function EditEvangeliseSuiviPopup({
   };
 
   const handleSubmit = async () => {
-    if (loading) return; // sécurité double clic
-    setLoading(true);
+  if (loading) return; // sécurité double clic
+  setLoading(true);
 
-    try {
-      const besoinsFinal =
-        formData.autreBesoin && showAutre
-          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
-          : formData.besoin;
+  try {
+    // Préparer les besoins
+    const besoinsFinal =
+      formData.autreBesoin && showAutre
+        ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
+        : formData.besoin;
 
-      const cleanData = {
-        prenom: formData.prenom,
-        nom: formData.nom,
-        telephone: formData.telephone,
-        ville: formData.ville || null,
-        infos_supplementaires: formData.infos_supplementaires || null,
-        besoin: JSON.stringify(besoinsFinal),
-        priere_salut: formData.priere_salut === true,
-        type_conversion: formData.priere_salut === true ? formData.type_conversion : "",
-        is_whatsapp: formData.is_whatsapp,
-        sexe: formData.sexe || null,
-        cellule_id: formData.cellule_id || null,
-        conseiller_id: formData.conseiller_id || null,
-        responsable_cellule: formData.responsable_cellule || null,
-        evangelise_id: formData.evangelise_id || null,
-        commentaire_evangelises: formData.commentaire_evangelises || null,
-        status_suivis_evangelises: formData.status_suivis_evangelises || "Envoyé",
-      };
+    // Préparer les données à envoyer
+    const cleanData = {
+      prenom: formData.prenom,
+      nom: formData.nom,
+      telephone: formData.telephone,
+      ville: formData.ville || null,
+      infos_supplementaires: formData.infos_supplementaires || null,
+      besoin: JSON.stringify(besoinsFinal),
+      priere_salut: formData.priere_salut, // boolean
+      type_conversion: formData.priere_salut ? formData.type_conversion : "",
+      is_whatsapp: formData.is_whatsapp,
+      sexe: formData.sexe || null,
+      commentaire_evangelises: formData.commentaire_evangelises || null,
+      status_suivis_evangelises: formData.status_suivis_evangelises || "Envoyé",
+      cellule_id: formData.cellule_id || null,        // UUID
+      conseiller_id: formData.conseiller_id || null,  // UUID
+      responsable_cellule: formData.responsable_cellule || null, // UUID
+      evangelise_id: formData.evangelise_id || null,  // UUID
+      comment: formData.comment || null,
+    };
 
-      // ✅ MAJ en utilisant id bigint
-      const { data, error } = await supabase
-        .from("suivis_des_evangelises")
-        .update(cleanData)
-        .eq("id", member.id) // <-- bigint ici
-        .select()
-        .single();
+    // MAJ dans Supabase
+    // ⚠️ UTILISER member.id (bigint) et non evangelise_id
+    const { data, error } = await supabase
+      .from("suivis_des_evangelises")
+      .update(cleanData)
+      .eq("id", member.id) // bigint correct
+      .select()
+      .single();
 
-      if (error) {
-        alert("❌ Une erreur est survenue : " + error.message);
-      } else {
-        if (onUpdateMember) onUpdateMember(data);
-        setMessage("✅ Changement enregistré !");
-        setTimeout(() => {
-          setMessage("");
-          onClose();
-        }, 1200);
-      }
-    } catch (err) {
-      alert("❌ Une erreur est survenue : " + err.message);
-    } finally {
-      setLoading(false);
+    if (error) {
+      alert("❌ Une erreur est survenue : " + error.message);
+    } else {
+      if (onUpdateMember) onUpdateMember(data);
+      setMessage("✅ Changement enregistré !");
+      setTimeout(() => {
+        setMessage("");
+        onClose();
+      }, 1200);
     }
-  };
+  } catch (err) {
+    alert("❌ Une erreur est survenue : " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4">

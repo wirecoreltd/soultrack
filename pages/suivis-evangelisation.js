@@ -305,7 +305,7 @@ setAllSuivis((prev) =>
                   {m.telephone || "—"}
                 </p>
                 <p className="text-sm text-black-700 mb-1">
-                  🏠 Cellule : {m.cellules?.cellule_full || "—"}
+                  🏠 Cellule : {cellule?.cellule_full || "—"}
                 </p>
                 <p className="text-sm text-black-700 mb-2">
                   👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}

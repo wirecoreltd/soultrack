@@ -45,22 +45,22 @@ export default function Evangelisation() {
 
   // ===== Fetch contacts non envoyés =====
   const fetchContacts = async () => {
-    const { data, error } = await supabase
-      .from("evangelises")
-      .select("*")
-      .eq("status_suivi", "Non envoyé")
-      .order("date_suivi", { ascending: false }) // <- correction ici
-      .limit(1000);
+  const { data, error } = await supabase
+    .from("evangelises")
+    .select("*")
+    .eq("status_suivi", "Non envoyé")
+    .order("created_at", { ascending: false }) // <-- correct
+    .limit(1000);
 
-    if (error) {
-      console.error("Erreur fetchContacts:", error);
-      setContacts([]);
-      return;
-    }
+  if (error) {
+    console.error("Erreur fetchContacts:", error);
+    setContacts([]);
+    return;
+  }
 
-    console.log("Contacts chargés :", data);
-    setContacts(data || []);
-  };
+  console.log("Contacts chargés :", data);
+  setContacts(data || []);
+};
 
   const fetchCellules = async () => {
     const { data } = await supabase

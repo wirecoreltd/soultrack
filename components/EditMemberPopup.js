@@ -24,12 +24,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
-
-  const normalizeBapteme = (val) => {
-  if (val === true || val === "Oui" || val === "oui") return "Oui";
-  if (val === false || val === "Non" || val === "non") return "Non";
-  return "";
-};
+  
 
   const [formData, setFormData] = useState({
     prenom: member?.prenom || "",
@@ -44,9 +39,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     is_whatsapp: !!member?.is_whatsapp,
     star: !!member?.star,
     sexe: member?.sexe || "",
-    venu: member?.venu || "",
-    bapteme_eau: normalizeBapteme(member?.bapteme_eau),
-    bapteme_esprit: normalizeBapteme(member?.bapteme_esprit),
+    venu: member?.venu || "",   
     besoin: initialBesoin,
     autreBesoin: "",
     commentaire_suivis: member?.commentaire_suivis || "",
@@ -140,9 +133,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         is_whatsapp: !!formData.is_whatsapp,
         star: !!formData.star,
         sexe: formData.sexe || null,
-        venu: formData.venu || null,
-        bapteme_eau: formData.bapteme_eau || null,
-        bapteme_esprit: formData.bapteme_esprit || null,
+        venu: formData.venu || null,        
         besoin: JSON.stringify(finalBesoin),
         commentaire_suivis: formData.commentaire_suivis || null,
       };
@@ -218,38 +209,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="Homme">Homme</option>
               <option value="Femme">Femme</option>
             </select>
-          </div>
-
-            {/* Bapteme d'Eau */}
-              <div className="flex flex-col">
-                <label className="font-medium">Bapteme d'Eau:</label>
-                <select
-                  name="bapteme_eau"
-                  value={formData.bapteme_eau}
-                  onChange={handleChange}
-                  className="input"
-                >
-                  <option value="">-- Bapteme d'Eau --</option>
-                  <option value="Oui">Oui</option>
-                  <option value="Non">Non</option>
-                </select>
-              </div>
-              
-              {/* Bapteme de Feu */}
-              <div className="flex flex-col">
-                <label className="font-medium">Bapteme de Feu:</label>
-                <select
-                  name="bapteme_esprit"
-                  value={formData.bapteme_esprit}
-                  onChange={handleChange}
-                  className="input"
-                >
-                  <option value="">-- Bapteme de Feu --</option>
-                  <option value="Oui">Oui</option>
-                  <option value="Non">Non</option>
-                </select>
-              </div>  
-
+          </div>          
 
           {/* Statut */}
           <div>

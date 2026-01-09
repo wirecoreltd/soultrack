@@ -230,7 +230,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <select name="bapteme_esprit" value={formData.bapteme_esprit} onChange={handleChange} className="input">
                 <option value="">-- Bapteme de Feu --</option>
                 <option value="Oui">Oui</option>
-                <option value="FNon">Non</option>
+                <option value="Non">Non</option>
               </select>
             </div>
 

@@ -178,68 +178,69 @@ export default function SuivisEvangelisation() {
 
   // ================= UPDATE SUIVI =================
   const updateSuivi = async (id, m) => {
-    const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
-    const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
+  const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
+  const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
 
-    if (!newComment && !newStatus) return;
+  if (!newComment && !newStatus) return;
 
-    try {
-      setUpdating((p) => ({ ...p, [id]: true }));
+  try {
+    setUpdating((p) => ({ ...p, [id]: true }));
 
-      // Update suivi
-      const { error } = await supabase
-        .from("suivis_des_evangelises")
-        .update({
-          commentaire_evangelises: newComment,
-          status_suivis_evangelises: newStatus,
-        })
-        .eq("id", id);      
+    const { error } = await supabase
+      .from("suivis_des_evangelises")
+      .update({
+        commentaire_evangelises: newComment,
+        status_suivis_evangelises: newStatus,
+      })
+      .eq("id", id);
 
-      if (error) throw error;
+    if (error) throw error;
 
-      // Upsert membre si intégré
-if (newStatus === "Intégré") {
-  await upsertMembre({
-    ...m,
-    status_suivis_evangelises: newStatus,
-    commentaire_evangelises: newComment
-  });
-
-  // 🔥 Retirer immédiatement de la liste
-  setAllSuivis((prev) => prev.filter((s) => s.id !== id));
-  return; // ⛔ stop ici
-}
-
-// Sinon (En cours / Refus) → update normal
-setAllSuivis((prev) =>
-  prev.map((s) =>
-    s.id === id
-      ? {
-          ...s,
-          commentaire_evangelises: newComment,
-          status_suivis_evangelises: newStatus
-        }
-      : s
-  )
-);
-      // Nettoyer les changements
-      setCommentChanges((prev) => {
-        const copy = { ...prev };
-        delete copy[id];
-        return copy;
+    // ✅ Si intégré → upsert + retrait immédiat
+    if (newStatus === "Intégré") {
+      await upsertMembre({
+        ...m,
+        status_suivis_evangelises: newStatus,
+        commentaire_evangelises: newComment,
       });
-      setStatusChanges((prev) => {
-        const copy = { ...prev };
-        delete copy[id];
-        return copy;
-      });
-    } catch (err) {
-      console.error("Erreur lors de la sauvegarde :", err.message);
-      alert("Erreur lors de la sauvegarde : " + err.message);
-    } finally {
-      setUpdating((p) => ({ ...p, [id]: false }));
+
+      setAllSuivis((prev) => prev.filter((s) => s.id !== id));
+      return;
     }
-  };
+
+    // ✅ Sinon update local
+    setAllSuivis((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? {
+              ...s,
+              commentaire_evangelises: newComment,
+              status_suivis_evangelises: newStatus,
+            }
+          : s
+      )
+    );
+
+    // Nettoyage
+    setCommentChanges((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+
+    setStatusChanges((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+  } catch (err) {
+    console.error("Erreur lors de la sauvegarde :", err.message);
+    alert("Erreur lors de la sauvegarde : " + err.message);
+  } finally {
+    setUpdating((p) => ({ ...p, [id]: false }));
+  }
+};
+
 
   // ================= RENDER =================
   if (loading) return <p className="text-center mt-10">Chargement...</p>;

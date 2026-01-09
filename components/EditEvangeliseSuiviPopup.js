@@ -22,7 +22,7 @@ export default function EditEvangeliseSuiviPopup({
     besoin: initialBesoin,
     autreBesoin: "",
     infos_supplementaires: member.infos_supplementaires || "",
-    priere_salut: member.priere_salut ? "Oui" : "Non",
+    priere_salut: member.priere_salut || false,
     type_conversion: member.type_conversion || "",
     is_whatsapp: member.is_whatsapp || false,
     commentaire_evangelises: member.commentaire_evangelises || "",
@@ -68,17 +68,15 @@ export default function EditEvangeliseSuiviPopup({
   };
 
   const handleSubmit = async () => {
-    if (loading) return; // Sécurité double clic
+    if (loading) return; // sécurité double clic
     setLoading(true);
 
     try {
-      // Préparer les besoins
       const besoinsFinal =
         formData.autreBesoin && showAutre
           ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
           : formData.besoin;
 
-      // Préparer les données
       const cleanData = {
         prenom: formData.prenom,
         nom: formData.nom,
@@ -86,30 +84,28 @@ export default function EditEvangeliseSuiviPopup({
         ville: formData.ville || null,
         infos_supplementaires: formData.infos_supplementaires || null,
         besoin: JSON.stringify(besoinsFinal),
-        priere_salut: formData.priere_salut === "Oui",
-        type_conversion: formData.priere_salut === "Oui" ? formData.type_conversion : "",
+        priere_salut: formData.priere_salut === true,
+        type_conversion: formData.priere_salut === true ? formData.type_conversion : "",
         is_whatsapp: formData.is_whatsapp,
         sexe: formData.sexe || null,
-        // UUID
         cellule_id: formData.cellule_id || null,
         conseiller_id: formData.conseiller_id || null,
         responsable_cellule: formData.responsable_cellule || null,
         evangelise_id: formData.evangelise_id || null,
         commentaire_evangelises: formData.commentaire_evangelises || null,
         status_suivis_evangelises: formData.status_suivis_evangelises || "Envoyé",
-        comment: formData.comment || null,
       };
 
-      // Update avec bigint id
+      // ✅ MAJ en utilisant id bigint
       const { data, error } = await supabase
         .from("suivis_des_evangelises")
         .update(cleanData)
-        .eq("id", member.id) // ✅ bigint
+        .eq("id", member.id) // <-- bigint ici
         .select()
         .single();
 
       if (error) {
-        alert("❌ Erreur : " + error.message);
+        alert("❌ Une erreur est survenue : " + error.message);
       } else {
         if (onUpdateMember) onUpdateMember(data);
         setMessage("✅ Changement enregistré !");
@@ -133,7 +129,6 @@ export default function EditEvangeliseSuiviPopup({
           background: "linear-gradient(180deg, rgba(46,49,146,0.16), rgba(46,49,146,0.40))",
         }}
       >
-        {/* Croix fermer */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-red-600 font-bold text-xl"
@@ -171,32 +166,36 @@ export default function EditEvangeliseSuiviPopup({
             onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}
             required
           >
-            <option value="" className="option-placeholder">Sexe</option>
+            <option value="" className="text-white">
+              Sexe
+            </option>
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
           </select>
 
-          {/* PRIER DU SALUT */}
+          {/* Prière du salut */}
           <select
             className="input select-black"
-            value={formData.priere_salut}
+            value={formData.priere_salut ? "Oui" : "Non"}
             required
             onChange={(e) => {
               const value = e.target.value;
               setFormData({
                 ...formData,
-                priere_salut: value,
+                priere_salut: value === "Oui",
                 type_conversion: value === "Oui" ? formData.type_conversion : "",
               });
             }}
           >
-            <option value="" className="option-placeholder">-- Prière du salut ? --</option>
+            <option value="" className="text-white">
+              -- Prière du salut ? --
+            </option>
             <option value="Oui">Oui</option>
             <option value="Non">Non</option>
           </select>
 
           {/* Type de conversion */}
-          {formData.priere_salut === "Oui" && (
+          {formData.priere_salut && (
             <select
               className="input select-black"
               value={formData.type_conversion || ""}
@@ -205,12 +204,15 @@ export default function EditEvangeliseSuiviPopup({
               }
               required
             >
-              <option value="" className="option-placeholder">Type</option>
+              <option value="" className="text-white">
+                Type
+              </option>
               <option value="Nouveau converti">Nouveau converti</option>
               <option value="Réconciliation">Réconciliation</option>
             </select>
           )}
 
+          {/* Besoins */}
           <div className="flex flex-col">
             <label className="font-semibold">Besoins</label>
             {besoinsOptions.map((item) => (
@@ -247,6 +249,7 @@ export default function EditEvangeliseSuiviPopup({
             )}
           </div>
 
+          {/* Infos supplémentaires */}
           <label className="font-semibold">Infos supplémentaires</label>
           <textarea
             name="infos_supplementaires"
@@ -256,6 +259,7 @@ export default function EditEvangeliseSuiviPopup({
             rows={3}
           />
 
+          {/* Commentaire */}
           <label className="font-semibold">Commentaire</label>
           <textarea
             name="commentaire_evangelises"
@@ -300,13 +304,8 @@ export default function EditEvangeliseSuiviPopup({
             color: white;
             font-weight: 400;
           }
-          /* Menu déroulant texte noir */
           .select-black option {
             color: black;
-          }
-          /* Placeholder blanc */
-          .option-placeholder {
-            color: white;
           }
         `}</style>
       </div>

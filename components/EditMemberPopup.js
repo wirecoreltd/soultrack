@@ -25,6 +25,12 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   const [conseillers, setConseillers] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
 
+  const normalizeBapteme = (val) => {
+  if (val === true || val === "Oui" || val === "oui") return "Oui";
+  if (val === false || val === "Non" || val === "non") return "Non";
+  return "";
+};
+
   const [formData, setFormData] = useState({
     prenom: member?.prenom || "",
     nom: member?.nom || "",
@@ -39,8 +45,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     star: !!member?.star,
     sexe: member?.sexe || "",
     venu: member?.venu || "",
-    bapteme_eau: member?.bapteme_eau || "",
-    bapteme_esprit: member?.bapteme_esprit || "",
+    bapteme_eau: normalizeBapteme(member?.bapteme_eau),
+    bapteme_esprit: normalizeBapteme(member?.bapteme_esprit),
     besoin: initialBesoin,
     autreBesoin: "",
     commentaire_suivis: member?.commentaire_suivis || "",
@@ -215,24 +221,35 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </div>
 
             {/* Bapteme d'Eau */}
-            <div className="flex flex-col">
-              <label className="font-medium">Bapteme d'Eau:</label>
-              <select name="bapteme_eau" value={formData.bapteme_eau} onChange={handleChange} className="input">
-                <option value="">-- Bapteme d'Eau --</option>
-                <option value="Oui">Oui</option>
-                <option value="Non">Non</option>
-              </select>
-            </div>
+              <div className="flex flex-col">
+                <label className="font-medium">Bapteme d'Eau:</label>
+                <select
+                  name="bapteme_eau"
+                  value={formData.bapteme_eau}
+                  onChange={handleChange}
+                  className="input"
+                >
+                  <option value="">-- Bapteme d'Eau --</option>
+                  <option value="Oui">Oui</option>
+                  <option value="Non">Non</option>
+                </select>
+              </div>
+              
+              {/* Bapteme de Feu */}
+              <div className="flex flex-col">
+                <label className="font-medium">Bapteme de Feu:</label>
+                <select
+                  name="bapteme_esprit"
+                  value={formData.bapteme_esprit}
+                  onChange={handleChange}
+                  className="input"
+                >
+                  <option value="">-- Bapteme de Feu --</option>
+                  <option value="Oui">Oui</option>
+                  <option value="Non">Non</option>
+                </select>
+              </div>  
 
-            {/* Bapteme de Feu */}
-            <div className="flex flex-col">
-              <label className="font-medium">Bapteme de Feu:</label>
-              <select name="bapteme_esprit" value={formData.bapteme_esprit} onChange={handleChange} className="input">
-                <option value="">-- Bapteme de Feu --</option>
-                <option value="Oui">Oui</option>
-                <option value="Non">Non</option>
-              </select>
-            </div>
 
           {/* Statut */}
           <div>

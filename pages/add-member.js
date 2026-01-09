@@ -167,12 +167,7 @@ export default function AddMember() {
             <option value="Femme">Femme</option>
           </select>
 
-          <select 
-            value={formData.statut} 
-            onChange={(e) => setFormData({ ...formData, statut: e.target.value })} 
-            className="input" 
-            required
-          >
+          <select value={formData.statut} onChange={(e) => setFormData({ ...formData, statut: e.target.value })} className="input" required>
             <option value="">-- Raison de la venue --</option>
             <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
             <option value="a déjà son église">A déjà son église</option>

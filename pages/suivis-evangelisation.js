@@ -112,8 +112,6 @@ export default function SuivisEvangelisation() {
   }
 };
 
-
-
   // ================= HELPERS =================
   const getBorderColor = (m) => {
     const status = m.status_suivis_evangelises;
@@ -145,9 +143,6 @@ export default function SuivisEvangelisation() {
   return m.status_suivis_evangelises === "En cours" || m.status_suivis_evangelises === "Envoyé";
 });
 
-
-
-
   const handleCommentChange = (id, value) =>
     setCommentChanges((p) => ({ ...p, [id]: value }));
 
@@ -174,7 +169,6 @@ export default function SuivisEvangelisation() {
   suivi_commentaire_suivis: suivi.commentaire_evangelises,
   suivi_updated_at: new Date().toISOString(),
 };
-
 
       const { error } = await supabase
         .from("membres_complets")
@@ -204,6 +198,9 @@ export default function SuivisEvangelisation() {
           status_suivis_evangelises: newStatus,
         })
         .eq("id", id);
+      console.log("DATA raw:", data);
+      console.log("USER role:", userData?.role);
+      console.log("CELLULES:", cellulesData);
 
       if (error) throw error;
 

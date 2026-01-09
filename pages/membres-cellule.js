@@ -72,14 +72,9 @@ export default function MembresCellule() {
         const { data: membresData, error } = await membresQuery;
         if (error) throw error;
 
-        // ===== FILTRE : uniquement ceux qui ont cellule_id ET statut_suivis === 3 =====
-        const membresIntegrer = (membresData || []).filter(
-          m => m.cellule_id && m.statut_suivis === 3
-        );
+        setMembres(membresData || []);
 
-        setMembres(membresIntegrer);
-
-        if (!membresIntegrer || membresIntegrer.length === 0) {
+        if (!membresData || membresData.length === 0) {
           setMessage("Aucun membre trouvé");
         }
 

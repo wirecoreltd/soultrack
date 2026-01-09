@@ -78,6 +78,7 @@ export default function AddMember() {
     const dataToSend = {
       ...formData,
       besoin: finalBesoin,
+      etat_contact: "Nouveau",
     };
 
     delete dataToSend.besoinLibre; // plus utilisé

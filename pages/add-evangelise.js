@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 
-export default function AddEvangelise() {
+export default function AddEvangelise({ onNewEvangelise }) {
   const router = useRouter();
   const { token } = router.query;
 
@@ -38,7 +38,7 @@ export default function AddEvangelise() {
     "Paix",
   ];
 
-  // 🔐 Vérification du token
+  // Vérification du token
   useEffect(() => {
     if (!token) return;
 
@@ -80,22 +80,31 @@ export default function AddEvangelise() {
     }
 
     const finalData = {
-      ...formData,
+      nom: formData.nom.trim(),
+      prenom: formData.prenom.trim(),
+      telephone: formData.telephone.trim() || null,
+      ville: formData.ville.trim() || null,
+      statut: "evangelisé",
+      sexe: formData.sexe || null,
+      priere_salut: formData.priere_salut === "Oui",
+      type_conversion: formData.priere_salut === "Oui" ? formData.type_conversion || null : null,
       besoin: finalBesoins,
-      priere_salut: formData.priere_salut === "Oui", // BOOLEAN en DB
+      infos_supplementaires: formData.infos_supplementaires || null,
+      is_whatsapp: formData.is_whatsapp,
     };
 
     try {
-      // 1️⃣ Insert évangélisé
-      const { error: insertError } = await supabase
+      // Insert évangélisé et récupérer l'objet créé
+      const { data: newEvangelise, error: insertError } = await supabase
         .from("evangelises")
-        .insert([finalData]);
+        .insert([finalData])
+        .select()
+        .single();
 
       if (insertError) throw insertError;
 
-      // 2️⃣ Rapport du jour
+      // Mise à jour rapport du jour
       const today = new Date().toISOString().slice(0, 10);
-
       const hommes = formData.sexe === "Homme" ? 1 : 0;
       const femmes = formData.sexe === "Femme" ? 1 : 0;
       const priere = formData.priere_salut === "Oui" ? 1 : 0;
@@ -119,10 +128,8 @@ export default function AddEvangelise() {
             hommes: existingReport.hommes + hommes,
             femmes: existingReport.femmes + femmes,
             priere: existingReport.priere + priere,
-            nouveau_converti:
-              existingReport.nouveau_converti + nouveau_converti,
-            reconciliation:
-              existingReport.reconciliation + reconciliation,
+            nouveau_converti: existingReport.nouveau_converti + nouveau_converti,
+            reconciliation: existingReport.reconciliation + reconciliation,
           })
           .eq("date", today);
       } else {
@@ -138,7 +145,10 @@ export default function AddEvangelise() {
         ]);
       }
 
-      // ✅ Reset form
+      // ⚡️ Ajouter le nouvel évangélisé dans la table affichée
+      if (onNewEvangelise) onNewEvangelise(newEvangelise);
+
+      // Reset form
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
@@ -155,7 +165,6 @@ export default function AddEvangelise() {
         infos_supplementaires: "",
         is_whatsapp: false,
       });
-
       setShowOtherField(false);
       setOtherBesoin("");
     } catch (err) {
@@ -190,7 +199,6 @@ export default function AddEvangelise() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg">
-
         <div className="flex justify-center mb-6">
           <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
         </div>
@@ -200,189 +208,178 @@ export default function AddEvangelise() {
         </h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
+          <input
+            className="input"
+            type="text"
+            placeholder="Prénom"
+            value={formData.prenom}
+            onChange={(e) =>
+              setFormData({ ...formData, prenom: e.target.value })
+            }
+            required
+          />
+          <input
+            className="input"
+            type="text"
+            placeholder="Nom"
+            value={formData.nom}
+            onChange={(e) =>
+              setFormData({ ...formData, nom: e.target.value })
+            }
+            required
+          />
+          <input
+            className="input"
+            type="text"
+            placeholder="Téléphone"
+            value={formData.telephone}
+            onChange={(e) =>
+              setFormData({ ...formData, telephone: e.target.value })
+            }
+          />
+          <input
+            className="input"
+            type="text"
+            placeholder="Ville"
+            value={formData.ville}
+            onChange={(e) =>
+              setFormData({ ...formData, ville: e.target.value })
+            }
+          />
 
+          {/* WhatsApp */}
+          <label className="flex items-center gap-2 text-gray-700">
             <input
-              className="input"
-              type="text"
-              placeholder="Prénom"
-              value={formData.prenom}
+              type="checkbox"
+              checked={formData.is_whatsapp}
               onChange={(e) =>
-                setFormData({ ...formData, prenom: e.target.value })
+                setFormData({ ...formData, is_whatsapp: e.target.checked })
               }
-              required
+              className="w-5 h-5 accent-indigo-600 cursor-pointer"
             />
-          
-            <input
-              className="input"
-              type="text"
-              placeholder="Nom"
-              value={formData.nom}
-              onChange={(e) =>
-                setFormData({ ...formData, nom: e.target.value })
-              }
-              required
-            />
-          
-            <input
-              className="input"
-              type="text"
-              placeholder="Téléphone"
-              value={formData.telephone}
-              onChange={(e) =>
-                setFormData({ ...formData, telephone: e.target.value })
-              }
-            />
-          
-            <input
-              className="input"
-              type="text"
-              placeholder="Ville"
-              value={formData.ville}
-              onChange={(e) =>
-                setFormData({ ...formData, ville: e.target.value })
-              }
-            />
-          
-            {/* WhatsApp */}
-            <label className="flex items-center gap-2 text-gray-700">
-              <input
-                type="checkbox"
-                checked={formData.is_whatsapp}
-                onChange={(e) =>
-                  setFormData({ ...formData, is_whatsapp: e.target.checked })
-                }
-                className="w-5 h-5 accent-indigo-600 cursor-pointer"
-              />
-              WhatsApp
-            </label>
-          
-            {/* Sexe */}
+            WhatsApp
+          </label>
+
+          {/* Sexe */}
+          <select
+            className="input"
+            value={formData.sexe}
+            onChange={(e) =>
+              setFormData({ ...formData, sexe: e.target.value })
+            }
+            required
+          >
+            <option value="">Sexe</option>
+            <option value="Homme">Homme</option>
+            <option value="Femme">Femme</option>
+          </select>
+
+          {/* Prière du salut */}
+          <select
+            className="input"
+            value={formData.priere_salut}
+            required
+            onChange={(e) => {
+              const value = e.target.value;
+              setFormData({
+                ...formData,
+                priere_salut: value,
+                type_conversion: value === "Oui" ? formData.type_conversion : "",
+              });
+            }}
+          >
+            <option value="">-- Prière du salut ? --</option>
+            <option value="Oui">Oui</option>
+            <option value="Non">Non</option>
+          </select>
+
+          {/* Type de conversion */}
+          {formData.priere_salut === "Oui" && (
             <select
               className="input"
-              value={formData.sexe}
+              value={formData.type_conversion}
               onChange={(e) =>
-                setFormData({ ...formData, sexe: e.target.value })
+                setFormData({ ...formData, type_conversion: e.target.value })
               }
               required
             >
-              <option value="">Sexe</option>
-              <option value="Homme">Homme</option>
-              <option value="Femme">Femme</option>
+              <option value="">Type</option>
+              <option value="Nouveau converti">Nouveau converti</option>
+              <option value="Réconciliation">Réconciliation</option>
             </select>
-          
-            {/* ✅ PRIER DU SALUT — VERSION STABLE */}
-            <select
-              className="input"
-              value={formData.priere_salut}
-              required
-              onChange={(e) => {
-                const value = e.target.value;
-                setFormData({
-                  ...formData,
-                  priere_salut: value,
-                  type_conversion: value === "Oui" ? formData.type_conversion : "",
-                });
-              }}
-            >
-              <option value="">-- Prière du salut ? --</option>
-              <option value="Oui">Oui</option>
-              <option value="Non">Non</option>
-            </select>
-          
-            {/* Type de conversion */}
-            {formData.priere_salut === "Oui" && (
-              <select
-                className="input"
-                value={formData.type_conversion}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    type_conversion: e.target.value,
-                  })
-                }
-                required
-              >
-                <option value="">Type</option>
-                <option value="Nouveau converti">Nouveau converti</option>
-                <option value="Réconciliation">Réconciliation</option>
-              </select>
-            )}
-          
-            {/* Besoins */}
-            <div className="mt-4">
-              <p className="font-semibold mb-2">Besoins :</p>
-          
-              {besoinsList.map((b) => (
-                <label key={b} className="flex items-center gap-3 mb-2">
-                  <input
-                    type="checkbox"
-                    value={b}
-                    checked={formData.besoin.includes(b)}
-                    onChange={() => handleBesoinChange(b)}
-                    className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600"
-                  />
-                  <span>{b}</span>
-                </label>
-              ))}
-          
-              <label className="flex items-center gap-3 mb-2">
-                <input
-                  type="checkbox"
-                  checked={showOtherField}
-                  onChange={() => setShowOtherField(!showOtherField)}
-                  className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600"
-                />
-                Autre
-              </label>
-          
-              {showOtherField && (
-                <input
-                  type="text"
-                  placeholder="Précisez le besoin..."
-                  value={otherBesoin}
-                  onChange={(e) => setOtherBesoin(e.target.value)}
-                  className="input mt-1"
-                />
-              )}
-            </div>
-          
-            <textarea
-              placeholder="Informations supplémentaires..."
-              rows={3}
-              value={formData.infos_supplementaires}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  infos_supplementaires: e.target.value,
-                })
-              }
-              className="input"
-            />
-          
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
-              >
-                Annuler
-              </button>
-          
-              <button
-                type="submit"
-                className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:scale-105 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
-              >
-                Ajouter
-              </button>
-            </div>
-          </form>
-          
-          {success && (
-            <p className="text-green-600 font-semibold text-center mt-3 animate-bounce">
-              ✅ Personne évangélisée ajoutée avec succès !
-            </p>
           )}
 
+          {/* Besoins */}
+          <div className="mt-4">
+            <p className="font-semibold mb-2">Besoins :</p>
+
+            {besoinsList.map((b) => (
+              <label key={b} className="flex items-center gap-3 mb-2">
+                <input
+                  type="checkbox"
+                  value={b}
+                  checked={formData.besoin.includes(b)}
+                  onChange={() => handleBesoinChange(b)}
+                  className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600"
+                />
+                <span>{b}</span>
+              </label>
+            ))}
+
+            <label className="flex items-center gap-3 mb-2">
+              <input
+                type="checkbox"
+                checked={showOtherField}
+                onChange={() => setShowOtherField(!showOtherField)}
+                className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600"
+              />
+              Autre
+            </label>
+
+            {showOtherField && (
+              <input
+                type="text"
+                placeholder="Précisez le besoin..."
+                value={otherBesoin}
+                onChange={(e) => setOtherBesoin(e.target.value)}
+                className="input mt-1"
+              />
+            )}
+          </div>
+
+          <textarea
+            placeholder="Informations supplémentaires..."
+            rows={3}
+            value={formData.infos_supplementaires}
+            onChange={(e) =>
+              setFormData({ ...formData, infos_supplementaires: e.target.value })
+            }
+            className="input"
+          />
+
+          <div className="flex gap-4">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            >
+              Annuler
+            </button>
+
+            <button
+              type="submit"
+              className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:scale-105 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            >
+              Ajouter
+            </button>
+          </div>
+        </form>
+
+        {success && (
+          <p className="text-green-600 font-semibold text-center mt-3 animate-bounce">
+            ✅ Personne évangélisée ajoutée avec succès !
+          </p>
+        )}
 
         <style jsx>{`
           .input {

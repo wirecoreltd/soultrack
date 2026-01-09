@@ -18,7 +18,7 @@ export default function AddMember() {
     statut: "",
     venu: "",
     besoin: [],
-    besoinLibre: "", // temporaire pour l'input libre
+    besoinLibre: "",
     is_whatsapp: false,
     infos_supplementaires: "",
   });
@@ -69,46 +69,45 @@ export default function AddMember() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const finalBesoin = showBesoinLibre && formData.besoinLibre
-    ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
-    : formData.besoin;
+    const finalBesoin = showBesoinLibre && formData.besoinLibre
+      ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
+      : formData.besoin;
 
-  const dataToSend = {
-    ...formData,
-    besoin: finalBesoin,
-    etat_contact: "Nouveau", // <-- Ajouté ici
+    const dataToSend = {
+      ...formData,
+      besoin: finalBesoin,
+      etat_contact: "Nouveau", // <-- statut par défaut à "Nouveau"
+    };
+
+    delete dataToSend.besoinLibre;
+
+    try {
+      const { error } = await supabase.from("membres_complets").insert([dataToSend]);
+      if (error) throw error;
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+
+      setFormData({
+        sexe: "",
+        nom: "",
+        prenom: "",
+        telephone: "",
+        ville: "",
+        statut: "",
+        venu: "",
+        besoin: [],
+        besoinLibre: "",
+        is_whatsapp: false,
+        infos_supplementaires: "",
+      });
+      setShowBesoinLibre(false);
+    } catch (err) {
+      alert(err.message);
+    }
   };
-
-  delete dataToSend.besoinLibre; // plus utilisé
-
-  try {
-    const { error } = await supabase.from("membres_complets").insert([dataToSend]);
-    if (error) throw error;
-
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
-
-    setFormData({
-      sexe: "",
-      nom: "",
-      prenom: "",
-      telephone: "",
-      ville: "",
-      statut: "nouveau",
-      venu: "",
-      besoin: [],
-      besoinLibre: "",
-      is_whatsapp: false,
-      infos_supplementaires: "",
-    });
-    setShowBesoinLibre(false);
-  } catch (err) {
-    alert(err.message);
-  }
-};
-
 
   const handleCancel = () => {
     setFormData({
@@ -117,7 +116,7 @@ export default function AddMember() {
       prenom: "",
       telephone: "",
       ville: "",
-      statut: "nouveau",
+      statut: "",
       venu: "",
       besoin: [],
       besoinLibre: "",
@@ -227,3 +226,4 @@ export default function AddMember() {
       </div>
     </div>
   );
+}

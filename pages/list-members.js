@@ -209,13 +209,15 @@ export default function ListMembers() {
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const getBorderColor = (m) => {
-  const etat = m.etat_contact?.toLowerCase() || "";
+  if (!m.etat_contact) return "#ccc"; // défaut
 
-  if (etat === "existant") return "#34A853";  // vert
-  if (etat === "nouveau") return "#34A853";   // vert clair
+  const etat = m.etat_contact.trim().toLowerCase();
+
+  if (etat === "Existant") return "#03a31b";  // vert
+  if (etat === "Nouveau") return "#34A853";   // vert clair
   if (etat === "inactif") return "#999999";   // gris
-  return "#ccc"; // défaut si autre
-};
+  return "#ccc"; // autre cas
+};  
 
   const formatDate = (dateStr) => {
     try { return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr }); } catch { return ""; }

@@ -130,8 +130,11 @@ export default function SuivisEvangelisation() {
 
   const suivisAffiches = allSuivis.filter((m) => {
   if (showRefus) return m.status_suivis_evangelises === "Refus";
-  return m.status_suivis_evangelises === "En cours";
+
+  // Par défaut on affiche En cours + Envoyé
+  return m.status_suivis_evangelises === "En cours" || m.status_suivis_evangelises === "Envoyé";
 });
+
 
 
   const handleCommentChange = (id, value) =>

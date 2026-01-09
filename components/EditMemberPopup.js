@@ -25,7 +25,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   const [conseillers, setConseillers] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
   
-
   const [formData, setFormData] = useState({
     prenom: member?.prenom || "",
     nom: member?.nom || "",
@@ -45,14 +44,13 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     commentaire_suivis: member?.commentaire_suivis || "",
     bapteme_eau: member?.bapteme_eau ?? null,
     bapteme_esprit: member?.bapteme_esprit ?? null,
-    
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  /* ===================== LOAD DATA ===================== */
+  // -------------------- LOAD DATA --------------------
   useEffect(() => {
     let mounted = true;
     const loadData = async () => {
@@ -75,7 +73,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     return () => { mounted = false; };
   }, []);
 
-  /* ===================== HANDLERS ===================== */
+  // -------------------- HANDLERS --------------------
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === "checkbox") {
@@ -84,6 +82,12 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       setFormData(prev => ({ ...prev, cellule_id: value, conseiller_id: "" }));
     } else if (name === "conseiller_id" && value) {
       setFormData(prev => ({ ...prev, conseiller_id: value, cellule_id: "" }));
+    } else if (name === "bapteme_eau" || name === "bapteme_esprit") {
+      // Convertir string "true"/"false" en boolean
+      setFormData(prev => ({
+        ...prev,
+        [name]: value === "true" ? true : value === "false" ? false : null
+      }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -106,7 +110,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     }));
   };
 
-  /* ===================== SUBMIT ===================== */
+  // -------------------- SUBMIT --------------------
   const handleSubmit = async () => {
     setMessage("");
     if (!formData.prenom.trim()) return setMessage("❌ Le prénom est obligatoire.");
@@ -163,7 +167,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       setTimeout(() => {
         setMessage("");
         onClose();
-      }, 3000);
+      }, 2000);
     } catch (err) {
       console.error(err);
       setMessage("❌ Une erreur est survenue lors de l’enregistrement.");
@@ -172,22 +176,14 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     }
   };
 
-  /* ===================== UI ===================== */
+  // -------------------- UI --------------------
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-md backdrop-saturate-150 flex items-center justify-center z-50 p-4">
-      <div
-        className="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl overflow-y-auto max-h-[90vh]"
-        style={{
-          background: "linear-gradient(180deg, rgba(46,49,146,0.16), rgba(46,49,146,0.40))",
-          backdropFilter: "blur(8px)",
-        }}
-      >
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl bg-gradient-to-b from-[rgba(46,49,146,0.16)] to-[rgba(46,49,146,0.4)]" style={{ backdropFilter: "blur(8px)" }}>
         <button onClick={onClose} className="absolute top-4 right-4 text-red-600 font-bold text-xl">✕</button>
-
         <h2 className="text-2xl font-bold text-center mb-6 text-white">
           Modifier le profil {member.prenom} {member.nom}
         </h2>
-
         <div className="flex flex-col gap-4 text-white">
 
           {["prenom","nom","telephone","ville"].map(f => (
@@ -216,45 +212,25 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             </select>
           </div>          
 
-          {/* Baptême d'eau */}
-            <div className="flex flex-col">
-              <label className="font-medium">💧 Baptême d'Eau</label>
-              <select
-                name="bapteme_eau"
-                value={formData.bapteme_eau === null ? "" : formData.bapteme_eau ? "true" : "false"}
-                onChange={(e) =>
-                  setFormData(prev => ({
-                    ...prev,
-                    bapteme_eau: e.target.value === "true" ? true : false
-                  }))
-                }
-                className="input"
-              >
-                <option value="">-- Sélectionner --</option>
-                <option value="true">Oui</option>
-                <option value="false">Non</option>
-              </select>
-            </div>
-            
-            {/* Baptême de feu */}
-            <div className="flex flex-col">
-              <label className="font-medium">🔥 Baptême de Feu</label>
-              <select
-                name="bapteme_esprit"
-                value={formData.bapteme_esprit === null ? "" : formData.bapteme_esprit ? "true" : "false"}
-                onChange={(e) =>
-                  setFormData(prev => ({
-                    ...prev,
-                    bapteme_esprit: e.target.value === "true" ? true : false
-                  }))
-                }
-                className="input"
-              >
-                <option value="">-- Sélectionner --</option>
-                <option value="true">Oui</option>
-                <option value="false">Non</option>
-              </select>
-            </div>
+          {/* Bapteme d'eau */}
+          <div className="flex flex-col">
+            <label className="font-medium">Bapteme d'eau</label>
+            <select name="bapteme_eau" value={formData.bapteme_eau === true ? "true" : formData.bapteme_eau === false ? "false" : ""} onChange={handleChange} className="input">
+              <option value="">-- Sélectionner --</option>
+              <option value="true">Oui</option>
+              <option value="false">Non</option>
+            </select>
+          </div>
+
+          {/* Bapteme de feu */}
+          <div className="flex flex-col">
+            <label className="font-medium">Bapteme de feu</label>
+            <select name="bapteme_esprit" value={formData.bapteme_esprit === true ? "true" : formData.bapteme_esprit === false ? "false" : ""} onChange={handleChange} className="input">
+              <option value="">-- Sélectionner --</option>
+              <option value="true">Oui</option>
+              <option value="false">Non</option>
+            </select>
+          </div>
 
 
           {/* Statut */}
@@ -364,7 +340,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         </div>
 
         {/* Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
           <button type="button" onClick={onClose} className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">Annuler</button>
           <button type="button" onClick={handleSubmit} disabled={loading} className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3 rounded-2xl shadow-md transition-all">
             {loading ? "Enregistrement..." : "Sauvegarder"}

@@ -356,13 +356,13 @@ setAllSuivis((prev) =>
                   <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
                     <p>🏙️ Ville : {m.ville || "—"}</p>
                     <p>🎗️ Sexe : {m.sexe || "—"}</p>
-                    <p>🙏 Prière salut : {m..priere_salut ? "Oui" : "Non"}</p>
-                    <p>☀️ Type : {m..type_conversion || "—"}</p>
-                    <p>❓ Besoin : {formatBesoin(m..besoin)}</p>
-                    <p>📝 Infos : {m..infos_supplementaires || "—"}</p>
+                    <p>🙏 Prière salut : {m.priere_salut ? "Oui" : "Non"}</p>
+                    <p>☀️ Type : {m.type_conversion || "—"}</p>
+                    <p>❓ Besoin : {formatBesoin(m.besoin)}</p>
+                    <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
                     <button
-                      onClick={() => m..id && setEditingContact(m.evangelises)}
+                      onClick={() => m.id && setEditingContact(m.evangelises)}
                       className="text-blue-600 text-sm underline w-full"
                     >
                       ✏️ Modifier le contact

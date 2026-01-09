@@ -62,43 +62,43 @@ export default function EditEvangelisePopup({
   };
 
   const handleSubmit = async () => {
-    setLoading(true);
+  setLoading(true);
 
-    const cleanData = {
-      prenom: formData.prenom,
-      nom: formData.nom,
-      telephone: formData.telephone,
-      ville: formData.ville,
-      infos_supplementaires: formData.infos_supplementaires || null,
-      besoin:
-        formData.autreBesoin && showAutre
-          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
-          : formData.besoin,
-      priere_salut: formData.priere_salut,
-      type_conversion: formData.type_conversion,
-      is_whatsapp: formData.is_whatsapp,
-    };
-
-    const { error, data } = await supabase
-      .from("evangelises")
-      .update(cleanData)
-      .eq("id", member.id)
-      .select()
-      .single();
-
-    if (error) {
-      alert("❌ Erreur : " + error.message);
-    } else {
-      if (onUpdateMember) onUpdateMember(data);
-      setMessage("✅ Changement enregistré !");
-      setTimeout(() => {
-        setMessage("");
-        onClose();
-      }, 1200);
-    }
-
-    setLoading(false);
+  const cleanData = {
+    prenom: formData.prenom,
+    nom: formData.nom,
+    telephone: formData.telephone,
+    ville: formData.ville,
+    infos_supplementaires: formData.infos_supplementaires || null,
+    besoin:
+      formData.autreBesoin && showAutre
+        ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
+        : formData.besoin,
+    priere_salut: formData.priere_salut,
+    type_conversion: formData.type_conversion,
+    is_whatsapp: formData.is_whatsapp,
   };
+
+  const { error, data } = await supabase
+    .from("suivis_des_evangelises")
+    .update(cleanData)
+    .eq("id", member.suivi_id)  // ← BIGINT correct
+    .select()
+    .single();
+
+  if (error) {
+    alert("❌ Erreur : " + error.message);
+  } else {
+    if (onUpdateMember) onUpdateMember(data);
+    setMessage("✅ Changement enregistré !");
+    setTimeout(() => {
+      setMessage("");
+      onClose();
+    }, 1200);
+  }
+
+  setLoading(false);
+};
 
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4">

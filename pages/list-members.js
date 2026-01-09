@@ -209,21 +209,13 @@ export default function ListMembers() {
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const getBorderColor = (m) => {
-  const s = m.statut?.toLowerCase() || "";
   const etat = m.etat_contact?.toLowerCase() || "";
 
-  // Inactif
-  if (etat === "inactif" || s === "inactif") return "#999999";
-
-  // Nouveau / Visiteur / Veut rejoindre ICC
-  if (["nouveau", "visiteur", "veut rejoindre icc"].includes(s)) return "#34A853";
-
-  // Existant / Actif / Ancien / A déjà son église
-  if (["actif", "ancien", "a déjà son église"].includes(s)) return "#34A853";
-
-  return "#ccc"; // default
+  if (etat === "existant") return "#34A853";  // vert
+  if (etat === "nouveau") return "#34A853";   // vert clair
+  if (etat === "inactif") return "#999999";   // gris
+  return "#ccc"; // défaut si autre
 };
-
 
   const formatDate = (dateStr) => {
     try { return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr }); } catch { return ""; }

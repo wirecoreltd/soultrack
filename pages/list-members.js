@@ -184,8 +184,12 @@ export default function ListMembers() {
   // -------------------- FILTRAGE CENTRALISE OPTIMISE --------------------
   const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
     const baseFiltered = filter
-      ? members.filter((m) => m.statut === filter || m.suivi_statut_libelle === filter)
-      : members;
+  ? members.filter((m) => {
+      if (!m.etat_contact) return false;
+      return m.etat_contact.trim().toLowerCase() === filter.toLowerCase();
+    })
+  : members;
+
 
     const searchFiltered = baseFiltered.filter((m) =>
       `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
@@ -412,18 +416,21 @@ export default function ListMembers() {
         />
       </div>
 
-      {/* Filtre sous la barre de recherche */}
-      <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">
-        <select
-          value={filter}
-          onChange={e => setFilter(e.target.value)}
-          className="px-3 py-1 rounded-md border text-black text-sm"
-        >
-          <option value="">-- Tous les statuts --</option>
-          {statusOptions.map((s, idx) => <option key={idx} value={s}>{s}</option>)}
-        </select>
-        <span className="text-white text-sm ml-2">{filteredMembers.length} membres</span>
-      </div>
+     {/* Filtre sous la barre de recherche */}
+        <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">
+          <select
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+            className="px-3 py-1 rounded-md border text-black text-sm"
+          >
+            <option value="">-- Tous les états de contact --</option>
+            <option value="nouveau">Nouveau</option>
+            <option value="existant">Existant</option>
+            <option value="inactif">Inactif</option>
+          </select>
+          <span className="text-white text-sm ml-2">{filteredMembers.length} membres</span>
+        </div>  
+
 
       {/* Toggle Vue Carte / Vue Table */}
       <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">

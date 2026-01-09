@@ -184,7 +184,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         <h2 className="text-2xl font-bold text-center mb-6 text-white">
           Modifier le profil {member.prenom} {member.nom}
         </h2>
-        <div className="flex flex-col gap-4 text-white">
+         <div className="overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-white">
 
           {["prenom","nom","telephone","ville"].map(f => (
             <div key={f} className="flex flex-col">

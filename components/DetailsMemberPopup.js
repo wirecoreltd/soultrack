@@ -150,13 +150,29 @@ export default function DetailsMemberPopup({
           <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
             <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
             <p>🎗️ Sexe : {membre.sexe || "—"}</p>
-            <p>💧 Bapteme d' Eau: {m.bapteme_eau === null ? "" : m.bapteme_eau ? "Oui" : "Non"}</p>
-            <p>🔥 Bapteme de Feu: {m.bapteme_esprit === null ? "" : m.bapteme_esprit ? "Oui" : "Non"}</p> 
-            <p>❓ Besoin : {membre.besoin ? (Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin) : "—"}</p>
+            <p>💧 Bapteme d' Eau: {membre.bapteme_eau === null ? "" : membre.bapteme_eau ? "Oui" : "Non"}</p>
+            <p>🔥 Bapteme de Feu: {membre.bapteme_esprit === null ? "" : membre.bapteme_esprit ? "Oui" : "Non"}</p> 
+            <p>
+              ❓ Besoin : {
+                membre.besoin 
+                  ? (() => {
+                      try {
+                        // Si c'est une string JSON, on parse
+                        const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
+                        // On transforme en texte séparé par des virgules
+                        return Array.isArray(besoins) ? besoins.join(", ") : besoins;
+                      } catch (e) {
+                        // fallback si ce n'est pas du JSON
+                        return membre.besoin;
+                      }
+                    })()
+                  : "—"
+              }
+            </p>
             <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
             <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
-            <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>
-            <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
+            <p>✨ Raison de la venue : {membre.statut_initial || "—"}</p>
+            <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
           </div>
 
           {/* ✏️ Modifier le contact */}

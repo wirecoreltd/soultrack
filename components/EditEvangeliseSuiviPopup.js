@@ -152,24 +152,58 @@ export default function EditEvangeliseSuiviPopup({
             WhatsApp
           </label>
 
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="priere_salut"
-              checked={formData.priere_salut}
-              onChange={handleChange}
-              className="accent-[#25297e]"
-            />
-            Prière du salut
-          </label>
+          {/* Sexe */}
+<select
+  className="input"
+  value={formData.sexe || ""}
+  onChange={(e) =>
+    setFormData({ ...formData, sexe: e.target.value })
+  }
+  required
+>
+  <option value="">Sexe</option>
+  <option value="Homme">Homme</option>
+  <option value="Femme">Femme</option>
+</select>
 
-          <label className="font-semibold">Type de conversion</label>
-          <input
-            name="type_conversion"
-            value={formData.type_conversion}
-            onChange={handleChange}
-            className="input"
-          />
+{/* ✅ PRIER DU SALUT — VERSION STABLE */}
+<select
+  className="input"
+  value={formData.priere_salut ? "Oui" : "Non"}
+  required
+  onChange={(e) => {
+    const value = e.target.value;
+    setFormData({
+      ...formData,
+      priere_salut: value === "Oui", // true ou false
+      type_conversion: value === "Oui" ? formData.type_conversion : "",
+    });
+  }}
+>
+  <option value="">-- Prière du salut ? --</option>
+  <option value="Oui">Oui</option>
+  <option value="Non">Non</option>
+</select>
+
+{/* Type de conversion */}
+{formData.priere_salut && (
+  <select
+    className="input"
+    value={formData.type_conversion || ""}
+    onChange={(e) =>
+      setFormData({
+        ...formData,
+        type_conversion: e.target.value,
+      })
+    }
+    required
+  >
+    <option value="">Type</option>
+    <option value="Nouveau converti">Nouveau converti</option>
+    <option value="Réconciliation">Réconciliation</option>
+  </select>
+)}
+
 
           <div className="flex flex-col">
             <label className="font-semibold">Besoins</label>

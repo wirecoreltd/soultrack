@@ -39,6 +39,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     star: !!member?.star,
     sexe: member?.sexe || "",
     venu: member?.venu || "",
+    bapteme_eau: member?.bapteme_eau || "",
+    bapteme_esprit: member?.bapteme_esprit || "",
     besoin: initialBesoin,
     autreBesoin: "",
     commentaire_suivis: member?.commentaire_suivis || "",
@@ -133,6 +135,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         star: !!formData.star,
         sexe: formData.sexe || null,
         venu: formData.venu || null,
+        bapteme_eau: formData.bapteme_eau || null,
+        bapteme_esprit: formData.bapteme_esprit || null,
         besoin: JSON.stringify(finalBesoin),
         commentaire_suivis: formData.commentaire_suivis || null,
       };
@@ -209,6 +213,26 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="Femme">Femme</option>
             </select>
           </div>
+
+            {/* Bapteme d'Eau */}
+            <div className="flex flex-col">
+              <label className="font-medium">Bapteme d'Eau:</label>
+              <select name="bapteme_eau" value={formData.bapteme_eau} onChange={handleChange} className="input">
+                <option value="">-- Bapteme d'Eau --</option>
+                <option value="Oui">Oui</option>
+                <option value="Non">Non</option>
+              </select>
+            </div>
+
+            {/* Bapteme de Feu */}
+            <div className="flex flex-col">
+              <label className="font-medium">Bapteme de Feu:</label>
+              <select name="bapteme_esprit" value={formData.bapteme_esprit} onChange={handleChange} className="input">
+                <option value="">-- Bapteme de Feu --</option>
+                <option value="Oui">Oui</option>
+                <option value="FNon">Non</option>
+              </select>
+            </div>
 
           {/* Statut */}
           <div>

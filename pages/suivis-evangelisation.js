@@ -128,11 +128,11 @@ export default function SuivisEvangelisation() {
     setEditingContact(null);
   };
 
-  const suivisAffiches = allSuivis.filter((m) =>
-    showRefus
-      ? m.status_suivis_evangelises === "Refus"
-      : m.status_suivis_evangelises !== "Refus"
-  );
+  const suivisAffiches = allSuivis.filter((m) => {
+  if (showRefus) return m.status_suivis_evangelises === "Refus";
+  return m.status_suivis_evangelises === "En cours";
+});
+
 
   const handleCommentChange = (id, value) =>
     setCommentChanges((p) => ({ ...p, [id]: value }));
@@ -144,20 +144,23 @@ export default function SuivisEvangelisation() {
   const upsertMembre = async (suivi) => {
     try {
       const payload = {
-        suivi_int_id: Number(suivi.id),
-        nom: suivi.nom,
-        prenom: suivi.prenom,
-        telephone: suivi.telephone,
-        ville: suivi.ville,
-        sexe: suivi.sexe,
-        besoin: suivi.besoin,
-        infos_supplementaires: suivi.infos_supplementaires,
-        cellule_id: suivi.cellule_id,
-        conseiller_id: suivi.conseiller_id,
-        statut_initial: "intégré",
-        suivi_statut: suivi.status_suivis_evangelises,
-        suivi_commentaire_suivis: suivi.commentaire_evangelises,
-      };
+  suivi_int_id: Number(suivi.id), // 🔑 LIEN UNIQUE
+  nom: suivi.nom,
+  prenom: suivi.prenom,
+  telephone: suivi.telephone,
+  ville: suivi.ville,
+  sexe: suivi.sexe,
+  besoin: suivi.besoin,
+  infos_supplementaires: suivi.infos_supplementaires,
+  cellule_id: suivi.cellule_id,
+  conseiller_id: suivi.conseiller_id,
+
+  statut_initial: "intégré",
+  suivi_statut: "Intégré",
+  suivi_commentaire_suivis: suivi.commentaire_evangelises,
+  suivi_updated_at: new Date().toISOString(),
+};
+
 
       const { error } = await supabase
         .from("membres_complets")
@@ -191,18 +194,31 @@ export default function SuivisEvangelisation() {
       if (error) throw error;
 
       // Upsert membre si intégré
-      if (newStatus === "Intégré") {
-        await upsertMembre({ ...m, status_suivis_evangelises: newStatus, commentaire_evangelises: newComment });
-      }
+if (newStatus === "Intégré") {
+  await upsertMembre({
+    ...m,
+    status_suivis_evangelises: newStatus,
+    commentaire_evangelises: newComment
+  });
 
-      // Update state local
-      setAllSuivis((prev) =>
-        prev.map((s) =>
-          s.id === id
-            ? { ...s, commentaire_evangelises: newComment, status_suivis_evangelises: newStatus }
-            : s
-        )
-      );
+  // 🔥 Retirer immédiatement de la liste
+  setAllSuivis((prev) => prev.filter((s) => s.id !== id));
+  return; // ⛔ stop ici
+}
+
+// Sinon (En cours / Refus) → update normal
+setAllSuivis((prev) =>
+  prev.map((s) =>
+    s.id === id
+      ? {
+          ...s,
+          commentaire_evangelises: newComment,
+          status_suivis_evangelises: newStatus
+        }
+      : s
+  )
+);
+
 
       // Nettoyer les changements
       setCommentChanges((prev) => {

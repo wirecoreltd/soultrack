@@ -77,7 +77,7 @@ export default function SuivisEvangelisation() {
   // ================= SUIVIS =================
   const fetchSuivis = async (userData, cellulesData) => {
   try {
-    // Récupération des suivis avec les bonnes relations
+    // 🔹 Récupération simple avec relations
     const { data, error } = await supabase
       .from("suivis_des_evangelises")
       .select(`
@@ -88,7 +88,7 @@ export default function SuivisEvangelisation() {
       .order("id", { ascending: false });
 
     if (error) {
-      console.error("Erreur fetchSuivis:", error);
+      console.error("Erreur fetchSuivis:", error.message);
       setAllSuivis([]);
       return;
     }
@@ -105,13 +105,13 @@ export default function SuivisEvangelisation() {
       filtered = filtered.filter((m) => mesCellulesIds.includes(m.cellule_id));
     }
 
-    // 🔹 Mise à jour state
     setAllSuivis(filtered);
   } catch (err) {
-    console.error("Erreur fetchSuivis:", err.message);
+    console.error("Erreur fetchSuivis catch:", err.message);
     setAllSuivis([]);
   }
 };
+
 
 
   // ================= HELPERS =================
@@ -142,10 +142,9 @@ export default function SuivisEvangelisation() {
 
   const suivisAffiches = allSuivis.filter((m) => {
   if (showRefus) return m.status_suivis_evangelises === "Refus";
-
-  // Par défaut on affiche En cours + Envoyé
   return m.status_suivis_evangelises === "En cours" || m.status_suivis_evangelises === "Envoyé";
 });
+
 
 
 

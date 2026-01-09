@@ -96,12 +96,13 @@ export default function AddMember() {
         prenom: "",
         telephone: "",
         ville: "",
-        statut: "nouveau",
+        statut: "",
         venu: "",
         besoin: [],
         besoinLibre: "",
         is_whatsapp: false,
         infos_supplementaires: "",
+        etat_contact: "Nouveau",
       });
       setShowBesoinLibre(false);
     } catch (err) {
@@ -166,13 +167,19 @@ export default function AddMember() {
             <option value="Femme">Femme</option>
           </select>
 
-          <select value={formData.statut} onChange={(e) => setFormData({ ...formData, statut: e.target.value })} className="input" required>
+          <select 
+            value={formData.statut} 
+            onChange={(e) => setFormData({ ...formData, statut: e.target.value })} 
+            className="input" 
+            required
+          >
             <option value="">-- Raison de la venue --</option>
             <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
             <option value="a déjà son église">A déjà son église</option>
             <option value="nouveau">Nouveau</option>  
             <option value="visiteur">Visiteur</option>
           </select>
+
 
           <select value={formData.venu} onChange={(e) => setFormData({ ...formData, venu: e.target.value })} className="input" required>
             <option value="">-- Comment est-il venu ? --</option>

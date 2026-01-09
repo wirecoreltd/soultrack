@@ -68,34 +68,43 @@ export default function EditEvangeliseSuiviPopup({
   };
 
   const handleSubmit = async () => {
-    if (loading) return; // sécurité double clic
-    setLoading(true);
+  if (loading) return; // sécurité double clic
+  setLoading(true);
 
+  try {
+    // Préparer les besoins
+    const besoinsFinal =
+      formData.autreBesoin && showAutre
+        ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
+        : formData.besoin;
+
+    // Préparer les données à envoyer
     const cleanData = {
       prenom: formData.prenom,
       nom: formData.nom,
       telephone: formData.telephone,
-      ville: formData.ville,
+      ville: formData.ville || null,
       infos_supplementaires: formData.infos_supplementaires || null,
-      besoin:
-        formData.autreBesoin && showAutre
-          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
-          : formData.besoin,
-      priere_salut: formData.priere_salut,
-      type_conversion: formData.type_conversion,
+      besoin: JSON.stringify(besoinsFinal),
+      priere_salut: formData.priere_salut === "Oui",
+      type_conversion: formData.priere_salut === "Oui" ? formData.type_conversion : "",
       is_whatsapp: formData.is_whatsapp,
-      commentaire_evangelises: formData.commentaire_evangelises || null,
-      status_suivis_evangelises: formData.status_suivis_evangelises || "Envoyé",
+      sexe: formData.sexe || null,
+      // UUID
       cellule_id: formData.cellule_id || null,
       conseiller_id: formData.conseiller_id || null,
       responsable_cellule: formData.responsable_cellule || null,
       evangelise_id: formData.evangelise_id || null,
+      commentaire_evangelises: formData.commentaire_evangelises || null,
+      status_suivis_evangelises: formData.status_suivis_evangelises || "Envoyé",
+      comment: formData.comment || null,
     };
 
-    const { error, data } = await supabase
+    // MAJ dans Supabase
+    const { data, error } = await supabase
       .from("suivis_des_evangelises")
       .update(cleanData)
-      .eq("id", member.id) // ici c'est bigint
+      .eq("id", member.id) // id bigint existant
       .select()
       .single();
 
@@ -109,9 +118,13 @@ export default function EditEvangeliseSuiviPopup({
         onClose();
       }, 1200);
     }
-
+  } catch (err) {
+    alert("❌ Une erreur est survenue : " + err.message);
+  } finally {
     setLoading(false);
-  };
+  }
+};
+
 
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4">
@@ -153,56 +166,66 @@ export default function EditEvangeliseSuiviPopup({
           </label>
 
           {/* Sexe */}
-<select
-  className="input"
-  value={formData.sexe || ""}
-  onChange={(e) =>
-    setFormData({ ...formData, sexe: e.target.value })
-  }
-  required
->
-  <option value="">Sexe</option>
-  <option value="Homme">Homme</option>
-  <option value="Femme">Femme</option>
-</select>
+            <select
+              className="input select-black"
+              value={formData.sexe || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, sexe: e.target.value })
+              }
+              required
+            >
+              <option value="">Sexe</option>
+              <option value="Homme">Homme</option>
+              <option value="Femme">Femme</option>
+            </select>
+            
+            {/* PRIER DU SALUT */}
+            <select
+              className="input select-black"
+              value={formData.priere_salut ? "Oui" : "Non"}
+              required
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData({
+                  ...formData,
+                  priere_salut: value === "Oui",
+                  type_conversion: value === "Oui" ? formData.type_conversion : "",
+                });
+              }}
+            >
+              <option value="">-- Prière du salut ? --</option>
+              <option value="Oui">Oui</option>
+              <option value="Non">Non</option>
+            </select>
+            
+            {/* Type de conversion */}
+            {formData.priere_salut && (
+              <select
+                className="input select-black"
+                value={formData.type_conversion || ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    type_conversion: e.target.value,
+                  })
+                }
+                required
+              >
+                <option value="">Type</option>
+                <option value="Nouveau converti">Nouveau converti</option>
+                <option value="Réconciliation">Réconciliation</option>
+              </select>
+            )}
+            
+            <style jsx>{`
+              .select-black {
+                color: black; /* texte sélectionné */
+              }
+              .select-black option {
+                color: black; /* texte dans le menu déroulant */
+              }
+            `}</style>
 
-{/* ✅ PRIER DU SALUT — VERSION STABLE */}
-<select
-  className="input"
-  value={formData.priere_salut ? "Oui" : "Non"}
-  required
-  onChange={(e) => {
-    const value = e.target.value;
-    setFormData({
-      ...formData,
-      priere_salut: value === "Oui", // true ou false
-      type_conversion: value === "Oui" ? formData.type_conversion : "",
-    });
-  }}
->
-  <option value="">-- Prière du salut ? --</option>
-  <option value="Oui">Oui</option>
-  <option value="Non">Non</option>
-</select>
-
-{/* Type de conversion */}
-{formData.priere_salut && (
-  <select
-    className="input"
-    value={formData.type_conversion || ""}
-    onChange={(e) =>
-      setFormData({
-        ...formData,
-        type_conversion: e.target.value,
-      })
-    }
-    required
-  >
-    <option value="">Type</option>
-    <option value="Nouveau converti">Nouveau converti</option>
-    <option value="Réconciliation">Réconciliation</option>
-  </select>
-)}
 
 
           <div className="flex flex-col">

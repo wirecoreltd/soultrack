@@ -305,7 +305,7 @@ export default function ListMembers() {
 
           <div className="w-full mt-2 text-sm text-black space-y-1">
             <p className="text-center">🏙️ Ville : {m.ville || "—"}</p>
-            <p className="text-center">🕊 Statut : {m.statut || "—"}</p>
+            <p className="text-center">🕊 Etat Contact : {m.etat_contact || "—"}</p>
             <p>🏠 Cellule : {m.cellule_id ? `${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` : "—"}</p>
             <p>👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
           </div>

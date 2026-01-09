@@ -76,20 +76,26 @@ export default function SuivisEvangelisation() {
 
   // ================= SUIVIS =================
   const fetchSuivis = async (userData, cellulesData) => {
+  try {
+    // Récupération des suivis avec les bonnes relations
     const { data, error } = await supabase
       .from("suivis_des_evangelises")
-      .select(`*, evangelises (*), cellules (*)`)
+      .select(`
+        *,
+        evangelises:evangelise_id (*),
+        cellules:cellule_id (*)
+      `)
       .order("id", { ascending: false });
 
     if (error) {
-      console.error(error);
+      console.error("Erreur fetchSuivis:", error);
       setAllSuivis([]);
       return;
     }
 
     let filtered = data || [];
 
-    // Filtrage selon rôle
+    // 🔹 Filtrage selon rôle
     if (userData.role === "Conseiller") {
       filtered = filtered.filter((m) => m.conseiller_id === userData.id);
     } else if (userData.role === "ResponsableCellule") {
@@ -99,8 +105,14 @@ export default function SuivisEvangelisation() {
       filtered = filtered.filter((m) => mesCellulesIds.includes(m.cellule_id));
     }
 
+    // 🔹 Mise à jour state
     setAllSuivis(filtered);
-  };
+  } catch (err) {
+    console.error("Erreur fetchSuivis:", err.message);
+    setAllSuivis([]);
+  }
+};
+
 
   // ================= HELPERS =================
   const getBorderColor = (m) => {

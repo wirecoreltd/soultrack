@@ -149,15 +149,18 @@ export default function DetailsMemberPopup({
           {/* ================= ALIGNÉ À GAUCHE ================= */}
           <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
             <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
-            <p> ⚥ Sexe : {membre.sexe || "—"}</p>
+            <p>🎗️ Sexe : {membre.sexe || "—"}</p>
+            <p>💧 Bapteme d' Eau: {m.bapteme_eau === null ? "" : m.bapteme_eau ? "Oui" : "Non"}</p>
+            <p>🔥 Bapteme de Feu: {m.bapteme_esprit === null ? "" : m.bapteme_esprit ? "Oui" : "Non"}</p> 
             <p>❓ Besoin : {membre.besoin ? (Array.isArray(membre.besoin) ? membre.besoin.join(", ") : membre.besoin) : "—"}</p>
             <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
             <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
-            <p>🧩 Statut initial : {membre.statut_initial || "visiteur"}</p>
+            <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>
+            <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
           </div>
 
           {/* ✏️ Modifier le contact */}
-          <div className="mt-4 flex justify-center w-full">
+          <div className="mt-4 flex justify-center w-full"><p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
             <button onClick={() => setEditMember(membre)} className="text-blue-600 text-sm w-full">
               ✏️ Modifier le contact
             </button>

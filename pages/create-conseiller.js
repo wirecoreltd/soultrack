@@ -34,7 +34,7 @@ export default function CreateConseiller() {
   useEffect(() => {
     async function fetchStarMembers() {
       const { data, error } = await supabase
-        .from("membres")
+        .from("membres_complets")
         .select("id, prenom, nom, telephone")
         .eq("star", true);
       if (error) console.error(error);

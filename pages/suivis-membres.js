@@ -312,21 +312,16 @@ export default function SuivisMembres() {
                         </label>
                         
                         <select
-                          value={statusChanges[m.id] ?? ""}
-                          onChange={(e) =>
-                            setStatusChanges(prev => ({
-                              ...prev,
-                              [m.id]: e.target.value
-                            }))
-                          }
-                          className="w-full border rounded-lg p-2 mb-2"
-                        >
-                           <option value="">-- Statut --</option>
+  value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
+  onChange={(e) => handleStatusChange(m.id, e.target.value)}
+  className="w-full border rounded-lg p-2 mb-2"
+>
+  <option value="">-- Statut --</option>
   <option value={statutIds["en attente"]}>En cours</option>
   <option value={statutIds.refus}>Refus</option>
   <option value={statutIds.integrer}>Intégrer</option>
 </select>
-                        </select>
+
 
                   <button
                     onClick={() => updateSuivi(m.id)}

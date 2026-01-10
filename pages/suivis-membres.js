@@ -159,11 +159,21 @@ export default function SuivisMembres() {
     }
   };
 
-  const filteredMembers = members.filter(m => {
-    const status = m.statut_suivis ?? 0;
-    if (status === 3 || status === 4) return false; // intégrés ou refusés
-    return status === 1 || status === 2; // envoyés ou en attente
-  });
+ const filteredMembers = members.filter(m => {
+  const status = m.statut_suivis;
+
+  // Mode "Voir les refus"
+  if (showRefus) {
+    return status === statutIds.refus;
+  }
+
+  // Vue normale (suivi en cours)
+  return (
+    status === statutIds.envoye ||
+    status === statutIds["en attente"]
+  );
+});
+
 
   const uniqueMembers = Array.from(new Map(filteredMembers.map(item => [item.id, item])).values());
 

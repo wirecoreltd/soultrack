@@ -321,8 +321,11 @@ export default function SuivisMembres() {
                           }
                           className="w-full border rounded-lg p-2 mb-2"
                         >
-                          <option value="">-- Sélectionner un statut --</option>
-                          <option value="3">Intégrer</option>
+                           <option value="">-- Statut --</option>
+  <option value={statutIds["en attente"]}>En cours</option>
+  <option value={statutIds.refus}>Refus</option>
+  <option value={statutIds.integrer}>Intégrer</option>
+</select>
                         </select>
 
                   <button

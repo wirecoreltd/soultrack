@@ -196,6 +196,14 @@ export default function SuivisMembres() {
       ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim()
       : "—";
 
+    const getStatutValue = (m, id) => {
+  if (statusChanges[id] !== undefined) {
+    return String(statusChanges[id]);
+  }
+  return String(m.statut_suivis ?? m.suivi_statut ?? "");
+};
+      
+
     return (
       <div className="text-black text-sm space-y-2 w-full">
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
@@ -311,16 +319,17 @@ export default function SuivisMembres() {
                           Statut Intégration
                         </label>
                         
-                        <select
-  value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
+                       <select
+  value={getStatutValue(m, m.id)}
   onChange={(e) => handleStatusChange(m.id, e.target.value)}
   className="w-full border rounded-lg p-2 mb-2"
 >
   <option value="">-- Statut --</option>
-  <option value={statutIds["en attente"]}>En cours</option>
-  <option value={statutIds.refus}>Refus</option>
-  <option value={statutIds.integrer}>Intégrer</option>
+  <option value={String(statutIds["en attente"])}>En cours</option>
+  <option value={String(statutIds.refus)}>Refus</option>
+  <option value={String(statutIds.integrer)}>Intégrer</option>
 </select>
+
 
 
                   <button

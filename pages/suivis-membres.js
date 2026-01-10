@@ -1,4 +1,4 @@
-        "use client";
+    "use client";
 
 import { useEffect, useState, useRef } from "react";
 import React from "react";
@@ -34,177 +34,157 @@ export default function SuivisMembres() {
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => (prev === id ? null : id));
 
-  const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
-  const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
+  const statutIds = {
+    envoye: 1,
+    "en attente": 2,
+    integrer: 3,
+    refus: 4,
+  };
 
-  // 🔹 Fermer menu téléphone si clic en dehors
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (phoneMenuRef.current && !phoneMenuRef.current.contains(event.target)) {
-        setOpenPhoneMenuId(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const statutLabels = {
+    1: "Envoyé",
+    2: "En cours",
+    3: "Intégré",
+    4: "Refus",
+  };
 
-  // 🔹 Fetch membres_complets
-  useEffect(() => {
-    const fetchMembresComplets = async () => {
-      setLoading(true);
-      try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) throw new Error("Utilisateur non connecté");
+  /* ====================== OUTILS STATUT ====================== */
 
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom, role")
-          .eq("id", user.id)
-          .single();
-        if (profileError || !profileData) throw profileError;
+  const getStatutValue = (m, id) => {
+    if (statusChanges[id] !== undefined) {
+      return String(statusChanges[id]);
+    }
+    return String(m.statut_suivis ?? m.suivi_statut ?? "");
+  };
 
-        setPrenom(profileData.prenom || "cher membre");
-        setRole(profileData.role);
+  const handleStatusChange = (id, value) => {
+    setStatusChanges((prev) => ({ ...prev, [id]: value }));
 
-        let query = supabase.from("membres_complets").select("*").order("created_at", { ascending: false });
+    const member = members.find((m) => m.id === id);
+    if (member) {
+      updateMember(id, {
+        ...member,
+        statut_suivis: Number(value),
+      });
+    }
+  };
 
-        if (profileData.role === "Conseiller") {
-          query = query.eq("conseiller_id", profileData.id);
-        } else if (profileData.role === "ResponsableCellule") {
-          const { data: cellulesData } = await supabase.from("cellules").select("id").eq("responsable_id", profileData.id);
-          const celluleIds = cellulesData?.map(c => c.id) || [];
-          if (celluleIds.length > 0) {
-            query = query.in("cellule_id", celluleIds);
-          } else {
-            query = query.eq("id", -1); // Aucun résultat
-          }
-        }
-
-        const { data, error } = await query;
-        if (error) throw error;
-
-        setAllMembers(data || []);
-        if (!data || data.length === 0) setMessage("Aucun membre à afficher.");
-      } catch (err) {
-        console.error("❌ Erreur fetchMembresComplets:", err.message || err);
-        setMessage("Erreur lors de la récupération des membres.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchCellulesConseillers = async () => {
-      try {
-        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
-        const { data: conseillersData } = await supabase.from("profiles").select("id, prenom, nom").eq("role", "Conseiller");
-        setCellules(cellulesData || []);
-        setConseillers(conseillersData || []);
-      } catch (err) {
-        console.error("Erreur chargement cellules/conseillers :", err);
-      }
-    };
-
-    fetchMembresComplets();
-    fetchCellulesConseillers();
-  }, [setAllMembers]);
-
-  // 🔹 Changement commentaire uniquement
   const handleCommentChange = (id, value) => {
-    // Mettre à jour l'état local
-    setCommentChanges(prev => ({ ...prev, [id]: value }));
+    setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
-    // Mettre à jour le membre dans le contexte pour que l'UI reflète immédiatement
-    const member = members.find(m => m.id === id);
+    const member = members.find((m) => m.id === id);
     if (member) {
       updateMember(id, { ...member, commentaire_suivis: value });
     }
   };
 
   const getBorderColor = (m) => {
-    if (!m) return "#ccc";
     const status = m.statut_suivis ?? m.suivi_statut;
     if (status === statutIds["en attente"]) return "#FFA500";
-    if (status === statutIds["integrer"]) return "#34A853";
-    if (status === statutIds["refus"]) return "#FF4B5C";
-    if (status === statutIds["envoye"]) return "#3B82F6";
+    if (status === statutIds.integrer) return "#34A853";
+    if (status === statutIds.refus) return "#FF4B5C";
+    if (status === statutIds.envoye) return "#3B82F6";
     return "#ccc";
   };
 
+  /* ====================== FETCH ====================== */
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Non connecté");
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id, prenom, role")
+          .eq("id", user.id)
+          .single();
+
+        setPrenom(profile?.prenom || "cher membre");
+        setRole(profile?.role);
+
+        const { data } = await supabase
+          .from("membres_complets")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        const normalized = (data || []).map((m) => ({
+          ...m,
+          statut_suivis: m.statut_suivis ?? m.suivi_statut,
+        }));
+
+        setAllMembers(normalized);
+      } catch (e) {
+        setMessage("Erreur chargement membres");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [setAllMembers]);
+
+  /* ====================== SAUVEGARDE ====================== */
+
   const updateSuivi = async (id) => {
     const newComment = commentChanges[id];
-    if (!newComment) {
-      setMessage({ type: "info", text: "Aucun changement détecté." });
+    const newStatus = statusChanges[id];
+
+    if (newComment === undefined && newStatus === undefined) {
+      setMessage({ type: "info", text: "Aucun changement" });
       return;
     }
-    setUpdating(prev => ({ ...prev, [id]: true }));
-    try {
-      const payload = { updated_at: new Date(), commentaire_suivis: newComment };
 
-      const { data: updatedMember, error: updateError } = await supabase
+    setUpdating((prev) => ({ ...prev, [id]: true }));
+
+    try {
+      const payload = { updated_at: new Date() };
+
+      if (newComment !== undefined) payload.commentaire_suivis = newComment;
+      if (newStatus !== undefined) payload.statut_suivis = Number(newStatus);
+
+      const { data } = await supabase
         .from("membres_complets")
         .update(payload)
         .eq("id", id)
         .select()
         .single();
-      if (updateError) throw updateError;
 
-      updateMember(updatedMember.id, updatedMember);
+      updateMember(id, data);
 
-      setMessage({ type: "success", text: "Mise à jour effectuée." });
-    } catch (err) {
-      console.error("Exception updateSuivi:", err);
-      setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
+      setMessage({ type: "success", text: "Mise à jour effectuée" });
+    } catch (e) {
+      setMessage({ type: "error", text: "Erreur sauvegarde" });
     } finally {
-      setUpdating(prev => ({ ...prev, [id]: false }));
+      setUpdating((prev) => ({ ...prev, [id]: false }));
     }
   };
 
- const filteredMembers = members.filter(m => {
-  const status = m.statut_suivis;
+  /* ====================== FILTRE ====================== */
 
-  // Mode "Voir les refus"
-  if (showRefus) {
-    return status === statutIds.refus;
-  }
+  const filteredMembers = members.filter((m) => {
+    const status = m.statut_suivis;
 
-  // Vue normale (suivi en cours)
-  return (
-    status === statutIds.envoye ||
-    status === statutIds["en attente"]
-  );
-});
-
-
-  const uniqueMembers = Array.from(new Map(filteredMembers.map(item => [item.id, item])).values());
-
-  const handleAfterSend = (updatedMember) => {
-    updateMember(updatedMember.id, updatedMember);
-  };
-
-  const DetailsPopup = ({ m }) => {
-    const commentRef = useRef(null);
-
-    useEffect(() => {
-      if (commentRef.current) {
-        commentRef.current.focus();
-        commentRef.current.selectionStart = commentRef.current.value.length;
-      }
-    }, [commentChanges[m.id]]);
-
-    const celluleNom = m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—";
-    const conseillerNom = m.conseiller_id
-      ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim()
-      : "—";
-
-    const getStatutValue = (m, id) => {
-  if (statusChanges[id] !== undefined) {
-    return String(statusChanges[id]);
-  }
-  return String(m.statut_suivis ?? m.suivi_statut ?? "");
-};
-      
+    if (showRefus) {
+      return status === statutIds.refus;
+    }
 
     return (
+      status === statutIds.envoye ||
+      status === statutIds["en attente"]
+    );
+  });
+
+  const uniqueMembers = Array.from(
+    new Map(filteredMembers.map((m) => [m.id, m])).values()
+  );
+
+  /* ====================== RETURN ====================== */
+
+  return (
+
       <div className="text-black text-sm space-y-2 w-full">
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
         <p>🏙 Ville : {m.ville || ""}</p>

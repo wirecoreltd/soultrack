@@ -39,11 +39,6 @@ export default function SuivisEvangelisation() {
     setLoading(false);
   };
 
-  const handleStatusChange = (id, value) => {
-  setStatusChanges(prev => ({ ...prev, [id]: Number(value) }));
-};
-
-
   // ================= USER =================
   const fetchUser = async () => {
     const { data: session } = await supabase.auth.getSession();
@@ -182,69 +177,69 @@ export default function SuivisEvangelisation() {
   };
 
   // ================= UPDATE SUIVI =================
-  const updateSuivi = async (id) => {
-  const member = members.find(m => m.id === id);
-  if (!member) return;
-
-  const newComment =
-    commentChanges[id] ?? member.commentaire_suivis ?? "";
-
-  const newStatus =
-    statusChanges[id] ?? member.statut_suivis;
+  const updateSuivi = async (id, m) => {
+  const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
+  const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
 
   if (!newComment && !newStatus) return;
 
   try {
-    setUpdating(prev => ({ ...prev, [id]: true }));
+    setUpdating((p) => ({ ...p, [id]: true }));
 
     const { error } = await supabase
-      .from("membres_complets")
+      .from("suivis_des_evangelises")
       .update({
-        commentaire_suivis: newComment,
-        statut_suivis: newStatus,
+        commentaire_evangelises: newComment,
+        status_suivis_evangelises: newStatus,
       })
       .eq("id", id);
 
     if (error) throw error;
 
-    // ✅ CAS REFUS → retrait immédiat
-    if (newStatus === 4) {
-      updateMember(id, {
-        ...member,
-        commentaire_suivis: newComment,
-        statut_suivis: 4,
+    // ✅ Si intégré → upsert + retrait immédiat
+    if (newStatus === "Intégré") {
+      await upsertMembre({
+        ...m,
+        status_suivis_evangelises: newStatus,
+        commentaire_evangelises: newComment,
       });
+
+      setAllSuivis((prev) => prev.filter((s) => s.id !== id));
       return;
     }
 
-    // ✅ AUTRES STATUTS → simple update local
-    updateMember(id, {
-      ...member,
-      commentaire_suivis: newComment,
-      statut_suivis: newStatus,
-    });
+    // ✅ Sinon update local
+    setAllSuivis((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? {
+              ...s,
+              commentaire_evangelises: newComment,
+              status_suivis_evangelises: newStatus,
+            }
+          : s
+      )
+    );
 
     // Nettoyage
-    setCommentChanges(p => {
-      const c = { ...p };
-      delete c[id];
-      return c;
+    setCommentChanges((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
     });
 
-    setStatusChanges(p => {
-      const c = { ...p };
-      delete c[id];
-      return c;
+    setStatusChanges((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
     });
-
   } catch (err) {
-    console.error("Erreur updateSuivi:", err.message);
-    alert("Erreur lors de la sauvegarde");
+    console.error("Erreur lors de la sauvegarde :", err.message);
+    alert("Erreur lors de la sauvegarde : " + err.message);
   } finally {
-    setUpdating(prev => ({ ...prev, [id]: false }));
+    setUpdating((p) => ({ ...p, [id]: false }));
   }
 };
-
 
 
   // ================= RENDER =================
@@ -329,17 +324,15 @@ export default function SuivisEvangelisation() {
                   Statut du suivis
                     </label>
                   <select
-  value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
-  onChange={(e) => handleStatusChange(m.id, e.target.value)}
-  className="w-full border rounded-lg p-2 mb-2"
->
-  <option value="">-- Sélectionner un statut --</option>
-  <option value="1">Envoyé</option>
-  <option value="2">En attente</option>
-  <option value="3">Intégrer</option>
-  <option value="4">Refus</option>
-</select>
-
+                    value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""}
+                    onChange={(e) => handleStatusChange(m.id, e.target.value)}
+                    className="mt-2 w-full rounded-lg border px-3 py-2"
+                  >
+                    <option value="">-- Sélectionner un statut --</option>
+                    <option value="En cours">En cours</option>
+                    <option value="Intégré">Intégré</option>
+                    <option value="Refus">Refus</option>
+                  </select>
 
                   <button
                     onClick={() => updateSuivi(m.id, m)}

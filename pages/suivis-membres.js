@@ -23,7 +23,7 @@ export default function SuivisMembres() {
   const [editMember, setEditMember] = useState(null);
   const [showRefus, setShowRefus] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(null);
-  const status = m.statut_suivis ?? m.suivi_statut;
+  //const status = m.statut_suivis ?? m.suivi_statut;//
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);

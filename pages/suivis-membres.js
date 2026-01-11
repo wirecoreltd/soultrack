@@ -94,8 +94,9 @@ export default function SuivisMembres() {
     };
 
           const handleStatusChange = (id, value) => {
-  setStatusChanges(prev => ({ ...prev, [id]: Number(value) }));
+  setStatusChanges(prev => ({ ...prev, [id]: value }));
 };
+
 
 
     const fetchCellulesConseillers = async () => {
@@ -139,11 +140,8 @@ export default function SuivisMembres() {
   const member = members.find(m => m.id === id);
   if (!member) return;
 
-  const newComment =
-    commentChanges[id] ?? member.commentaire_suivis ?? "";
-
-  const newStatus =
-    statusChanges[id] ?? member.statut_suivis;
+  const newComment = commentChanges[id] ?? member.commentaire_suivis ?? "";
+  const newStatus  = statusChanges[id] ?? member.statut_suivis ?? "";
 
   if (!newComment && !newStatus) return;
 
@@ -154,41 +152,17 @@ export default function SuivisMembres() {
       .from("membres_complets")
       .update({
         commentaire_suivis: newComment,
-        statut_suivis: newStatus,
+        statut_suivis: newStatus, // string correspondant à l'option
       })
       .eq("id", id);
 
     if (error) throw error;
 
-    // ✅ CAS REFUS → retrait immédiat
-    if (newStatus === 4) {
-      updateMember(id, {
-        ...member,
-        commentaire_suivis: newComment,
-        statut_suivis: 4,
-      });
-      return;
-    }
-
-    // ✅ AUTRES STATUTS → simple update local
-    updateMember(id, {
-      ...member,
-      commentaire_suivis: newComment,
-      statut_suivis: newStatus,
-    });
+    updateMember(id, { ...member, commentaire_suivis: newComment, statut_suivis: newStatus });
 
     // Nettoyage
-    setCommentChanges(p => {
-      const c = { ...p };
-      delete c[id];
-      return c;
-    });
-
-    setStatusChanges(p => {
-      const c = { ...p };
-      delete c[id];
-      return c;
-    });
+    setCommentChanges(p => { const c = {...p}; delete c[id]; return c; });
+    setStatusChanges(p => { const c = {...p}; delete c[id]; return c; });
 
   } catch (err) {
     console.error("Erreur updateSuivi:", err.message);
@@ -197,6 +171,7 @@ export default function SuivisMembres() {
     setUpdating(prev => ({ ...prev, [id]: false }));
   }
 };
+
 
   const filteredMembers = members.filter(m => {
     const status = m.statut_suivis ?? 0;
@@ -341,17 +316,16 @@ export default function SuivisMembres() {
                         </label>
                         
                        <select
-  value={statusChanges[m.id] ?? m.statut_suivis ?? ""}
-  onChange={(e) => handleStatusChange(m.id, e.target.value)}
-  className="w-full border rounded-lg p-2 mb-2"
->
-  <option value="">-- Sélectionner un statut --</option>
-  <option value="1">Envoyé</option>
-  <option value="2">En attente</option>
-  <option value="3">Intégrer</option>
-  <option value="4">Refus</option>
-</select>
-
+                          value={statusChanges[m.id] ?? String(m.statut_suivis ?? "")}
+                          onChange={(e) => handleStatusChange(m.id, e.target.value)}
+                          className="w-full border rounded-lg p-2 mb-2"
+                        >
+                          <option value="">-- Sélectionner un statut --</option>
+                          <option value="1">Envoyé</option>
+                          <option value="2">En attente</option>
+                          <option value="3">Intégré</option>
+                          <option value="4">Refus</option>
+                        </select>
 
                   <button
                     onClick={() => updateSuivi(m.id)}

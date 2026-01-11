@@ -11,6 +11,7 @@ import { useMembers } from "../context/MembersContext";
 
 export default function SuivisMembres() {
   const { members, setAllMembers, updateMember } = useMembers();
+
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
@@ -23,9 +24,10 @@ export default function SuivisMembres() {
   const [editMember, setEditMember] = useState(null);
   const [showRefus, setShowRefus] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(null);
-  //const status = m.statut_suivis ?? m.suivi_statut;//
+
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
+
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
 
@@ -91,10 +93,6 @@ export default function SuivisMembres() {
       }
     };
 
-          const handleStatusChange = (id, value) => {
-          setStatusChanges(prev => ({ ...prev, [id]: value }));
-        };
-
     const fetchCellulesConseillers = async () => {
       try {
         const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
@@ -133,50 +131,39 @@ export default function SuivisMembres() {
   };
 
   const updateSuivi = async (id) => {
-  const member = members.find(m => m.id === id);
-  if (!member) return;
-
-  const newComment =
-    commentChanges[id] ?? member.commentaire_suivis ?? "";
-
-  const newStatus =
-    statusChanges[id] ?? member.suivi_statut;
-
-  try {
+    const newComment = commentChanges[id];
+    if (!newComment) {
+      setMessage({ type: "info", text: "Aucun changement détecté." });
+      return;
+    }
     setUpdating(prev => ({ ...prev, [id]: true }));
+    try {
+      const payload = { updated_at: new Date(), commentaire_suivis: newComment };
 
-    const { error } = await supabase
-      .from("membres_complets")
-      .update({
-        commentaire_suivis: newComment,
-        suivi_statut: newStatus, // 🔥 LE BON CHAMP
-      })
-      .eq("id", id);
+      const { data: updatedMember, error: updateError } = await supabase
+        .from("membres_complets")
+        .update(payload)
+        .eq("id", id)
+        .select()
+        .single();
+      if (updateError) throw updateError;
 
-    if (error) throw error;
+      updateMember(updatedMember.id, updatedMember);
 
-    // 🔥 update UI immédiat
-    updateMember(id, {
-      ...member,
-      commentaire_suivis: newComment,
-      suivi_statut: newStatus,
-    });
-
-  } catch (err) {
-    console.error("Erreur updateSuivi:", err.message);
-  } finally {
-    setUpdating(prev => ({ ...prev, [id]: false }));
-  }
-};
-
-
+      setMessage({ type: "success", text: "Mise à jour effectuée." });
+    } catch (err) {
+      console.error("Exception updateSuivi:", err);
+      setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
+    } finally {
+      setUpdating(prev => ({ ...prev, [id]: false }));
+    }
+  };
 
   const filteredMembers = members.filter(m => {
-  if (showRefus) return m.suivi_statut === 4;
-  return m.suivi_statut === 1 || m.suivi_statut === 2;
-});
-
-
+    const status = m.statut_suivis ?? 0;
+    if (status === 3 || status === 4) return false; // intégrés ou refusés
+    return status === 1 || status === 2; // envoyés ou en attente
+  });
 
   const uniqueMembers = Array.from(new Map(filteredMembers.map(item => [item.id, item])).values());
 
@@ -314,18 +301,19 @@ export default function SuivisMembres() {
                           Statut Intégration
                         </label>
                         
-                       <select
-                          value={statusChanges[m.id] ?? m.suivi_statut ?? ""}
-                          onChange={(e) => handleStatusChange(m.id, Number(e.target.value))}
+                        <select
+                          value={statusChanges[m.id] ?? ""}
+                          onChange={(e) =>
+                            setStatusChanges(prev => ({
+                              ...prev,
+                              [m.id]: e.target.value
+                            }))
+                          }
                           className="w-full border rounded-lg p-2 mb-2"
                         >
                           <option value="">-- Sélectionner un statut --</option>
-                          <option value={1}>Envoyé</option>
-                          <option value={2}>En attente</option>
-                          <option value={3}>Intégré</option>
-                          <option value={4}>Refus</option>
+                          <option value="3">Intégrer</option>
                         </select>
-
 
                   <button
                     onClick={() => updateSuivi(m.id)}

@@ -11,7 +11,6 @@ import { useMembers } from "../context/MembersContext";
 
 export default function SuivisMembres() {
   const { members, setAllMembers, updateMember } = useMembers();
-
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
@@ -24,10 +23,9 @@ export default function SuivisMembres() {
   const [editMember, setEditMember] = useState(null);
   const [showRefus, setShowRefus] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(null);
-
+  const status = m.statut_suivis ?? m.suivi_statut;
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
-
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
 
@@ -94,10 +92,8 @@ export default function SuivisMembres() {
     };
 
           const handleStatusChange = (id, value) => {
-  setStatusChanges(prev => ({ ...prev, [id]: value }));
-};
-
-
+          setStatusChanges(prev => ({ ...prev, [id]: value }));
+        };
 
     const fetchCellulesConseillers = async () => {
       try {
@@ -140,10 +136,11 @@ export default function SuivisMembres() {
   const member = members.find(m => m.id === id);
   if (!member) return;
 
-  const newComment = commentChanges[id] ?? member.commentaire_suivis ?? "";
-  const newStatus  = statusChanges[id] ?? member.statut_suivis ?? "";
+  const newComment =
+    commentChanges[id] ?? member.commentaire_suivis ?? "";
 
-  if (!newComment && !newStatus) return;
+  const newStatus =
+    statusChanges[id] ?? member.suivi_statut;
 
   try {
     setUpdating(prev => ({ ...prev, [id]: true }));
@@ -152,32 +149,34 @@ export default function SuivisMembres() {
       .from("membres_complets")
       .update({
         commentaire_suivis: newComment,
-        statut_suivis: newStatus, // string correspondant à l'option
+        suivi_statut: newStatus, // 🔥 LE BON CHAMP
       })
       .eq("id", id);
 
     if (error) throw error;
 
-    updateMember(id, { ...member, commentaire_suivis: newComment, statut_suivis: newStatus });
-
-    // Nettoyage
-    setCommentChanges(p => { const c = {...p}; delete c[id]; return c; });
-    setStatusChanges(p => { const c = {...p}; delete c[id]; return c; });
+    // 🔥 update UI immédiat
+    updateMember(id, {
+      ...member,
+      commentaire_suivis: newComment,
+      suivi_statut: newStatus,
+    });
 
   } catch (err) {
     console.error("Erreur updateSuivi:", err.message);
-    alert("Erreur lors de la sauvegarde");
   } finally {
     setUpdating(prev => ({ ...prev, [id]: false }));
   }
 };
 
 
+
   const filteredMembers = members.filter(m => {
-    const status = m.statut_suivis ?? 0;
-    if (status === 3 || status === 4) return false; // intégrés ou refusés
-    return status === 1 || status === 2; // envoyés ou en attente
-  });
+  if (showRefus) return m.suivi_statut === 4;
+  return m.suivi_statut === 1 || m.suivi_statut === 2;
+});
+
+
 
   const uniqueMembers = Array.from(new Map(filteredMembers.map(item => [item.id, item])).values());
 
@@ -316,16 +315,17 @@ export default function SuivisMembres() {
                         </label>
                         
                        <select
-                          value={statusChanges[m.id] ?? String(m.statut_suivis ?? "")}
-                          onChange={(e) => handleStatusChange(m.id, e.target.value)}
+                          value={statusChanges[m.id] ?? m.suivi_statut ?? ""}
+                          onChange={(e) => handleStatusChange(m.id, Number(e.target.value))}
                           className="w-full border rounded-lg p-2 mb-2"
                         >
                           <option value="">-- Sélectionner un statut --</option>
-                          <option value="1">Envoyé</option>
-                          <option value="2">En attente</option>
-                          <option value="3">Intégré</option>
-                          <option value="4">Refus</option>
+                          <option value={1}>Envoyé</option>
+                          <option value={2}>En attente</option>
+                          <option value={3}>Intégré</option>
+                          <option value={4}>Refus</option>
                         </select>
+
 
                   <button
                     onClick={() => updateSuivi(m.id)}

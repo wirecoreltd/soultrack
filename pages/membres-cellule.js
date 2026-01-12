@@ -53,16 +53,17 @@ export default function MembresCellule() {
 
         if (celluleIds.length === 0) {
           setMembres([]);
-          setMessage("Aucun membre trouvé");
-          setLoading(false);
+          setMessage("Aucun membre intégré");
           return;
         }
 
-        // -------- MEMBRES (SOURCE DE VÉRITÉ) --------
+        // ======== SOURCE DE VÉRITÉ ========
+        // 👉 UNIQUEMENT membres intégrés
         let membresQuery = supabase
           .from("membres_complets")
           .select("*")
           .in("cellule_id", celluleIds)
+          .eq("statut_suivis", 3) // 🔒 INTÉGRÉ UNIQUEMENT
           .order("created_at", { ascending: false });
 
         if (profile.role === "Conseiller") {
@@ -75,7 +76,7 @@ export default function MembresCellule() {
         setMembres(membresData || []);
 
         if (!membresData || membresData.length === 0) {
-          setMessage("Aucun membre trouvé");
+          setMessage("Aucun membre intégré trouvé");
         }
 
       } catch (err) {
@@ -101,14 +102,17 @@ export default function MembresCellule() {
     );
   };
 
-  const filteredMembres = (filterCellule
-  ? membres.filter(m => m.cellule_id === filterCellule)
-  : membres
-).filter(m => m.statut_suivis !== 3); // exclut les membres intégrés
+  const filteredMembres = filterCellule
+    ? membres.filter(m => m.cellule_id === filterCellule)
+    : membres;
 
+  if (loading) {
+    return <p className="text-white mt-10 text-center">Chargement...</p>;
+  }
 
-  if (loading) return <p className="text-white mt-10 text-center">Chargement...</p>;
-  if (message) return <p className="text-white mt-10 text-center">{message}</p>;
+  if (message) {
+    return <p className="text-white mt-10 text-center">{message}</p>;
+  }
 
   // ================= RENDER =================
   return (
@@ -133,7 +137,7 @@ export default function MembresCellule() {
       />
 
       <h1 className="text-white text-2xl font-bold text-center mb-4">
-        👥 Membres de mes cellules
+        👥 Membres intégrés de mes cellules
       </h1>
 
       {/* FILTRES */}
@@ -181,16 +185,14 @@ export default function MembresCellule() {
                 Détails
               </button>
 
-              {/* CARRÉ GRANDISSANT */}
               {selectedMembre === m.id && (
                 <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm space-y-1 border">
                   <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                   <p>⚥ Sexe : {m.sexe || "—"}</p>
                   <p>❓ Besoin : {m.besoin || "—"}</p>
                   <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                  <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                  <p>🧩 Raison de la venue : {m.statut_initial || "—"}</p>
-                  <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
+                  <p>🧩 Venu par : {m.venu || "—"}</p>
+                  <p>📝 Commentaire suivi : {m.commentaire_suivis || "—"}</p>
 
                   <button
                     onClick={() => setEditMember(m)}

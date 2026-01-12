@@ -134,8 +134,8 @@ export default function SuivisMembres() {
   const newComment = commentChanges[id];
   const newStatus = statusChanges[id];
 
-  if (!newComment && !newStatus) {
-    setMessage({ type: "info", text: "Aucun changement détecté." });
+  // ✅ SEULE vérification à faire
+  if (newComment === undefined && newStatus === undefined) {
     return;
   }
 
@@ -150,7 +150,7 @@ export default function SuivisMembres() {
       payload.commentaire_suivis = newComment;
     }
 
-    if (newStatus) {
+    if (newStatus !== undefined) {
       payload.statut_suivis = Number(newStatus);
     }
 
@@ -163,23 +163,15 @@ export default function SuivisMembres() {
 
     if (error) throw error;
 
-    // 🔥 Mise à jour immédiate dans le contexte global
     updateMember(updatedMember.id, updatedMember);
 
-    // Nettoyage local
-    setStatusChanges(prev => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });    
-
   } catch (err) {
-    console.error("updateSuivi error:", err);
-    setMessage({ type: "error", text: "Erreur lors de la mise à jour." });
+    console.error(err);
   } finally {
     setUpdating(prev => ({ ...prev, [id]: false }));
   }
 };
+
 
 
   const filteredMembers = members.filter(m => {
@@ -334,7 +326,7 @@ export default function SuivisMembres() {
                         </label>
                         
                         <select
-                          value={statusChanges[m.id] ?? ""}
+                          value={statusChanges[m.id] ?? String(m.statut_suivis ?? "")}
                           onChange={(e) =>
                             setStatusChanges(prev => ({
                               ...prev,

@@ -171,9 +171,7 @@ export default function SuivisMembres() {
       const copy = { ...prev };
       delete copy[id];
       return copy;
-    });
-
-    setMessage({ type: "success", text: "Suivi mis à jour avec succès." });
+    });    
 
   } catch (err) {
     console.error("updateSuivi error:", err);
@@ -351,11 +349,17 @@ export default function SuivisMembres() {
                         </select>
 
                   <button
-                    onClick={() => updateSuivi(m.id)}
-                    className="mt-2 bg-blue-500 text-white py-1 rounded w-full"
-                  >
-                    Sauvegarder
-                  </button>
+                          onClick={() => updateSuivi(m.id)}
+                          disabled={updating[m.id]}
+                          className={`mt-2 py-1 rounded w-full transition ${
+                            updating[m.id]
+                              ? "bg-gray-400 cursor-not-allowed"
+                              : "bg-blue-500 hover:bg-blue-600 text-white"
+                          }`}
+                        >
+                          {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
+                        </button>
+
                 </div>
 
                 <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">

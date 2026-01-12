@@ -185,10 +185,17 @@ export default function SuivisMembres() {
 
 
   const filteredMembers = members.filter(m => {
-  const status = m.statut_suivis ?? 0;
-  if (status === 3 || status === 4) return false;
-  return status === 1 || status === 2;
+  const statut = m.statut_suivis ?? m.suivi_statut ?? null;
+
+  // 🔴 Voir uniquement les refus
+  if (showRefus) {
+    return statut === 4;
+  }
+
+  // 🟢 Vue normale : tout sauf refus
+  return statut !== 4;
 });
+
 
 
   const uniqueMembers = Array.from(new Map(filteredMembers.map(item => [item.id, item])).values());
@@ -252,7 +259,8 @@ export default function SuivisMembres() {
 
       <div className="mb-4 flex justify-between w-full max-w-6xl">
         <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline hover:text-black-200">{view === "card" ? "Vue Table" : "Vue Carte"}</button>
-        <button onClick={() => setShowRefus(!showRefus)} className="text-orange-400 text-sm underline hover:text-orange-500">{showRefus ? "Voir tout les suivis" : "Voir les refus"}</button>
+        <button onClick={() => setShowRefus(prev => !prev)} className="text-orange-400 text-sm underline hover:text-orange-500">{showRefus ? "Voir tous les suivis" : "Voir les refus"}</button>
+
       </div>
 
       {message && <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{message.text}</div>}

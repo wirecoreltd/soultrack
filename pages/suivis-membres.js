@@ -131,39 +131,65 @@ export default function SuivisMembres() {
   };
 
   const updateSuivi = async (id) => {
-    const newComment = commentChanges[id];
-    if (!newComment) {
-      setMessage({ type: "info", text: "Aucun changement détecté." });
-      return;
+  const newComment = commentChanges[id];
+  const newStatus = statusChanges[id];
+
+  if (!newComment && !newStatus) {
+    setMessage({ type: "info", text: "Aucun changement détecté." });
+    return;
+  }
+
+  setUpdating(prev => ({ ...prev, [id]: true }));
+
+  try {
+    const payload = {
+      updated_at: new Date(),
+    };
+
+    if (newComment !== undefined) {
+      payload.commentaire_suivis = newComment;
     }
-    setUpdating(prev => ({ ...prev, [id]: true }));
-    try {
-      const payload = { updated_at: new Date(), commentaire_suivis: newComment };
 
-      const { data: updatedMember, error: updateError } = await supabase
-        .from("membres_complets")
-        .update(payload)
-        .eq("id", id)
-        .select()
-        .single();
-      if (updateError) throw updateError;
-
-      updateMember(updatedMember.id, updatedMember);
-
-      setMessage({ type: "success", text: "Mise à jour effectuée." });
-    } catch (err) {
-      console.error("Exception updateSuivi:", err);
-      setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
-    } finally {
-      setUpdating(prev => ({ ...prev, [id]: false }));
+    if (newStatus) {
+      payload.statut_suivis = Number(newStatus);
     }
-  };
+
+    const { data: updatedMember, error } = await supabase
+      .from("membres_complets")
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // 🔥 Mise à jour immédiate dans le contexte global
+    updateMember(updatedMember.id, updatedMember);
+
+    // Nettoyage local
+    setStatusChanges(prev => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+
+    setMessage({ type: "success", text: "Suivi mis à jour avec succès." });
+
+  } catch (err) {
+    console.error("updateSuivi error:", err);
+    setMessage({ type: "error", text: "Erreur lors de la mise à jour." });
+  } finally {
+    setUpdating(prev => ({ ...prev, [id]: false }));
+  }
+};
+
 
   const filteredMembers = members.filter(m => {
-    const status = m.statut_suivis ?? 0;
-    if (status === 3 || status === 4) return false; // intégrés ou refusés
-    return status === 1 || status === 2; // envoyés ou en attente
-  });
+  const status = m.statut_suivis ?? 0;
+  if (status === 3 || status === 4) return false;
+  return status === 1 || status === 2;
+});
+
 
   const uniqueMembers = Array.from(new Map(filteredMembers.map(item => [item.id, item])).values());
 
@@ -313,6 +339,7 @@ export default function SuivisMembres() {
                         >
                           <option value="">-- Sélectionner un statut --</option>
                           <option value="3">Intégrer</option>
+                          <option value="4">Refus</option>
                         </select>
 
                   <button

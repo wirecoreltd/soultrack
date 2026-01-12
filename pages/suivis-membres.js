@@ -163,7 +163,10 @@ export default function SuivisMembres() {
 
     if (error) throw error;
 
-    updateMember(updatedMember.id, updatedMember);
+    setMembers(prev =>
+  prev.filter(m => m.id !== updatedMember.id)
+);
+
 
   } catch (err) {
     console.error(err);
@@ -175,7 +178,10 @@ export default function SuivisMembres() {
 
 
   const filteredMembers = members.filter(m => {
-  const statut = m.statut_suivis ?? m.suivi_statut ?? null;
+  const status = m.statut_suivis ?? 0;
+  return status === 1 || status === 2;
+});
+
 
   // 🔴 Voir uniquement les refus
   if (showRefus) {

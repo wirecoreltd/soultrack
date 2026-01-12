@@ -177,29 +177,16 @@ export default function SuivisMembres() {
 
 
 
-  const filteredMembers = members.filter(m => {
+ const filteredMembers = members.filter(m => {
   const status = m.statut_suivis ?? 0;
 
-  // 🔴 Voir uniquement les refus
   if (showRefus) {
     return status === 4;
   }
 
-  // 🟢 Vue normale : Envoyé + En attente
   return status === 1 || status === 2;
 });
-
-
-  // 🔴 Voir uniquement les refus
-  if (showRefus) {
-    return statut === 4;
-  }
-
-  // 🟢 Vue normale : tout sauf refus
-  return statut !== 4;
-});
-
-
+;
 
   const uniqueMembers = Array.from(new Map(filteredMembers.map(item => [item.id, item])).values());
 

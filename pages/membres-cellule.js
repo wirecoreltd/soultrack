@@ -101,9 +101,11 @@ export default function MembresCellule() {
     );
   };
 
-  const filteredMembres = filterCellule
-    ? membres.filter(m => m.cellule_id === filterCellule)
-    : membres;
+  const filteredMembres = (filterCellule
+  ? membres.filter(m => m.cellule_id === filterCellule)
+  : membres
+).filter(m => m.statut_suivis !== 3); // exclut les membres intégrés
+
 
   if (loading) return <p className="text-white mt-10 text-center">Chargement...</p>;
   if (message) return <p className="text-white mt-10 text-center">{message}</p>;

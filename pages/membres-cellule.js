@@ -18,6 +18,7 @@ export default function MembresCellule() {
   const [selectedMembre, setSelectedMembre] = useState(null);
   const [editMember, setEditMember] = useState(null);
   const [detailsMember, setDetailsMember] = useState(null);
+  const [detailsOpen, setDetailsOpen] = useState({});
 
   // ================= FETCH =================
   useEffect(() => {
@@ -57,13 +58,11 @@ export default function MembresCellule() {
           return;
         }
 
-        // ======== SOURCE DE VÉRITÉ ========
-        // 👉 UNIQUEMENT membres intégrés
         let membresQuery = supabase
           .from("membres_complets")
           .select("*")
           .in("cellule_id", celluleIds)
-          .eq("statut_suivis", 3) // 🔒 INTÉGRÉ UNIQUEMENT
+          .eq("statut_suivis", 3)
           .order("created_at", { ascending: false });
 
         if (profile.role === "Conseiller") {
@@ -94,6 +93,12 @@ export default function MembresCellule() {
   const getCelluleNom = (celluleId) => {
     const c = cellules.find(c => c.id === celluleId);
     return c?.cellule_full || "—";
+  };
+
+  const getBorderColor = (m) => {
+    if (m.besoin) return "#f97316";        // orange
+    if (m.is_whatsapp) return "#22c55e";   // vert
+    return "#3b82f6";                      // bleu par défaut
   };
 
   const handleUpdateMember = (updated) => {
@@ -165,62 +170,45 @@ export default function MembresCellule() {
         </select>
       </div>
 
-     {/* ================= VUE CARTE ================= */}
+      {/* ================= VUE CARTE ================= */}
       {view === "card" && (
         <div className="flex justify-center">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
             {filteredMembres.map(m => (
               <div
                 key={m.id}
-                className="bg-white p-4 rounded-2xl shadow-xl border-l-4 relative"
+                className="bg-white p-4 rounded-2xl shadow-xl border-l-4"
                 style={{ borderLeftColor: getBorderColor(m) }}
               >
-                {/* Prénom Nom */}
-                <h2 className="text-center font-bold text-lg">{m.prenom} {m.nom}</h2>
-      
-                {/* Téléphone interactif */}
-                <div className="text-center mt-1 relative">
-                  <button
-                    onClick={() =>
-                      setSelectedMembre(selectedMembre === m.id ? null : m.id)
-                    }
-                    className="text-orange-500 underline font-semibold"
-                  >
-                    {m.telephone || "—"}
-                  </button>
-      
-                  {selectedMembre === m.id && m.telephone && (
-                    <div
-                      className="absolute z-50 mt-2 bg-white shadow-lg rounded-lg border w-52 left-1/2 -translate-x-1/2"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">📞 Appeler</a>
-                      <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">✉️ SMS</a>
-                      <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm hover:bg-gray-100">📱 Appel WhatsApp</a>
-                      <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm hover:bg-gray-100">💬 Message WhatsApp</a>
-                    </div>
-                  )}
-                </div>
-      
-                {/* Infos principales alignées à gauche */}
-                <div className="mt-2 text-sm text-black space-y-1 text-left">
-                  <p>🏙️ Ville : {m.ville || "—"}</p>
-                  <p>🏠 Cellule : {getCelluleNom(m.cellule_id)}</p>
-                  <p>👤 Conseiller : {m.conseiller || "—"}</p>
-                </div>
-      
-                {/* Bouton détails */}
+                <h2 className="text-center font-bold text-lg">
+                  {m.prenom} {m.nom}
+                </h2>
+
+                <p className="text-center text-orange-500 underline font-semibold">
+                  {m.telephone || "—"}
+                </p>
+
+                <p className="text-center text-sm mt-1">
+                  🏙️ {m.ville || "—"}
+                </p>
+
+                <p className="text-center text-sm">
+                  🏠 {getCelluleNom(m.cellule_id)}
+                </p>
+
                 <button
                   onClick={() =>
-                    setDetailsOpen(prev => ({ ...prev, [m.id]: !prev[m.id] }))
+                    setDetailsOpen(prev => ({
+                      ...prev,
+                      [m.id]: !prev[m.id]
+                    }))
                   }
                   className="text-orange-500 underline mt-2 block mx-auto text-sm"
                 >
-                  {detailsOpen?.[m.id] ? "Fermer détails" : "Détails"}
+                  {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
                 </button>
-      
-                {/* Infos étendues */}
-                {detailsOpen?.[m.id] && (
+
+                {detailsOpen[m.id] && (
                   <div className="mt-3 p-3 bg-gray-50 rounded-lg border text-sm space-y-1 text-left">
                     <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🎗️ Sexe : {m.sexe || "—"}</p>
@@ -231,7 +219,7 @@ export default function MembresCellule() {
                     <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
                     <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>
                     <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
-      
+
                     <button
                       onClick={() => setEditMember(m)}
                       className="text-blue-600 text-sm mt-2 block mx-auto underline"
@@ -246,39 +234,32 @@ export default function MembresCellule() {
         </div>
       )}
 
-
       {/* ================= VUE TABLE ================= */}
       {view === "table" && (
-        <div className="overflow-x-auto bg-white rounded-xl shadow">
-          <table className="w-full text-sm text-left text-gray-700">
-            <thead className="bg-gray-100">
+        <div className="overflow-x-auto bg-white/10 rounded-xl p-2">
+          <table className="w-full text-sm text-white">
+            <thead className="border-b border-white/30">
               <tr>
-                <th className="px-4 py-2">Nom</th>
-                <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Ville</th>
-                <th className="px-4 py-2">Cellule</th>
-                <th className="px-4 py-2">Actions</th>
+                <th className="px-3 py-2 text-left">Nom</th>
+                <th className="px-3 py-2 text-left">Téléphone</th>
+                <th className="px-3 py-2 text-left">Ville</th>
+                <th className="px-3 py-2 text-left">Cellule</th>
+                <th className="px-3 py-2 text-left">Action</th>
               </tr>
             </thead>
             <tbody>
               {filteredMembres.map(m => (
-                <tr key={m.id} className="border-t">
-                  <td className="px-4 py-2">{m.prenom} {m.nom}</td>
-                  <td className="px-4 py-2">{m.telephone || "—"}</td>
-                  <td className="px-4 py-2">{m.ville || "—"}</td>
-                  <td className="px-4 py-2">{getCelluleNom(m.cellule_id)}</td>
-                  <td className="px-4 py-2 space-x-2">
+                <tr key={m.id} className="border-b border-white/10">
+                  <td className="px-3 py-2">{m.prenom} {m.nom}</td>
+                  <td className="px-3 py-2">{m.telephone || "—"}</td>
+                  <td className="px-3 py-2">{m.ville || "—"}</td>
+                  <td className="px-3 py-2">{getCelluleNom(m.cellule_id)}</td>
+                  <td className="px-3 py-2">
                     <button
                       onClick={() => setDetailsMember(m)}
-                      className="text-indigo-600 underline text-sm"
+                      className="text-orange-300 underline"
                     >
-                      👁 Voir
-                    </button>
-                    <button
-                      onClick={() => setEditMember(m)}
-                      className="text-blue-600 underline text-sm"
-                    >
-                      ✏️ Modifier
+                      Détails
                     </button>
                   </td>
                 </tr>
@@ -288,7 +269,7 @@ export default function MembresCellule() {
         </div>
       )}
 
-      {/* POPUP DETAILS */}
+      {/* POPUPS */}
       {detailsMember && (
         <MemberDetailsPopup
           member={detailsMember}
@@ -297,7 +278,6 @@ export default function MembresCellule() {
         />
       )}
 
-      {/* POPUP EDIT */}
       {editMember && (
         <EditMemberPopup
           member={editMember}

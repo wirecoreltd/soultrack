@@ -161,11 +161,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         .single();
 
       onUpdateMember?.(data);
-
-      setMessage("✅ Enregistrement / Modification réussie");
-
-      setTimeout(() => {
-        setMessage("");
         onClose();
       }, 2000);
     } catch (err) {

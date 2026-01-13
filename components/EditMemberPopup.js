@@ -161,8 +161,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         .single();
 
       onUpdateMember?.(data);
-        onClose();
-      }, 2000);
+        onClose();      
     } catch (err) {
       console.error(err);
       setMessage("❌ Une erreur est survenue lors de l’enregistrement.");

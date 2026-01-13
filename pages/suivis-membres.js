@@ -447,12 +447,13 @@ export default function SuivisMembres() {
         <DetailsModal
           m={detailsModalMember}
           onClose={() => setDetailsModalMember(null)}
-          handleAfterStatusUpdate={handleAfterStatusUpdate}
           handleCommentChange={handleCommentChange}
-          statusChanges={statusChanges}
+          handleStatusChange={(id, value) => setStatusChanges(prev => ({ ...prev, [id]: value }))}
           commentChanges={commentChanges}
+          statusChanges={statusChanges}
           updating={updating}
           updateSuivi={updateSuivi}
+          handleAfterStatusUpdate={handleAfterStatusUpdate} // ✅ passé correctement
         />
       )}
 

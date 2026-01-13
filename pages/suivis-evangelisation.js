@@ -308,7 +308,7 @@ export default function SuivisEvangelisation() {
                 <p className="text-sm text-black-700 mb-2">
                   👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
                 </p>
-                <p className="text-orange-500 underline font-semibold mb-1">
+                <p className="text-sm text-black-700 mb-2>
                   🏙️ Ville : {m.ville || "—"}
                 </p>
 
@@ -412,10 +412,11 @@ export default function SuivisEvangelisation() {
 
         return (
           <div
-            key={m.id}
-            className="flex flex-col sm:flex-row items-start sm:items-center px-3 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition gap-2 border-l-4"
-            style={{ borderLeftColor: getBorderColor(m) }}
-          >
+  key={m.id}
+  className="flex flex-col sm:flex-row items-start sm:items-center px-3 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition gap-2 border-l-4"
+  style={{ borderLeftColor: getBorderColor(m) }}
+>
+
 
             {/* Nom */}
             <div className="flex-[2] font-bold text-white">

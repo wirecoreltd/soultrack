@@ -107,9 +107,16 @@ export default function MembresCellule() {
     );
   };
 
-  const filteredMembres = filterCellule
-    ? membres.filter(m => m.cellule_id === filterCellule)
-    : membres;
+  const filteredMembres = membres
+  .filter(m =>
+    (!filterCellule || m.cellule_id === filterCellule) &&
+    (!search || 
+      m.prenom.toLowerCase().includes(search.toLowerCase()) ||
+      m.nom.toLowerCase().includes(search.toLowerCase()) ||
+      (m.telephone && m.telephone.includes(search))
+    )
+  );
+
 
   if (loading) {
     return <p className="text-white mt-10 text-center">Chargement...</p>;
@@ -142,40 +149,45 @@ export default function MembresCellule() {
       />
 
       <h1 className="text-white text-2xl font-bold text-center mb-4">
-        👥 Membres Cellules
+        👥 Membres intégrés de mes cellules
       </h1>
+      
       {/* Barre de recherche */}
-          <div className="w-full flex justify-center mb-4">
-            <input
-              type="text"
-              placeholder="Recherche..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full max-w-md px-4 py-2 rounded-full border text-black focus:outline-none"
-            />
-          </div>
-         <select
+      <div className="w-full max-w-4xl flex justify-center mb-2">
+        <input
+          type="text"
+          placeholder="Recherche..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-2/3 px-3 py-1 rounded-md border text-black focus:outline-none"
+        />
+      </div>
+      
+      {/* Filtre sous la barre de recherche */}
+      <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">
+        <select
           value={filterCellule}
-          onChange={(e) => setFilterCellule(e.target.value)}
-          className="px-3 py-1.5 text-sm rounded-full bg-white text-black shadow"
+          onChange={e => setFilterCellule(e.target.value)}
+          className="px-3 py-1 rounded-md border text-black text-sm"
         >
-          <option value="">Toutes les cellules</option>
+          <option value="">-- Toutes les cellules --</option>
           {cellules.map(c => (
-            <option key={c.id} value={c.id}>
-              {c.cellule_full}
-            </option>
+            <option key={c.id} value={c.id}>{c.cellule_full}</option>
           ))}
         </select>
-
-        {/* Toggle Vue Carte / Vue Table */}
-        <div className="w-full flex justify-center mb-6">
-          <button
-            onClick={() => setView(view === "card" ? "table" : "card")}
-            className="text-sm font-semibold underline text-white"
-          >
-            {view === "card" ? "Vue Table" : "Vue Carte"}
-          </button>
-        </div>     
+        <span className="text-white text-sm ml-2">{filteredMembres.length} membres</span>
+      </div>
+      
+      {/* Toggle Vue Carte / Vue Table */}
+      <div className="w-full max-w-6xl flex justify-center mb-6">
+        <button
+          onClick={() => setView(view === "card" ? "table" : "card")}
+          className="text-sm font-semibold underline text-white"
+        >
+          {view === "card" ? "Vue Table" : "Vue Carte"}
+        </button>
+      </div>
+    
          
       {/* ================= VUE CARTE ================= */}
       {view === "card" && (

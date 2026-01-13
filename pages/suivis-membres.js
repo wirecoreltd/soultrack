@@ -8,11 +8,9 @@ import LogoutLink from "../components/LogoutLink";
 import EditMemberSuivisPopup from "../components/EditMemberSuivisPopup";
 import DetailsModal from "../components/DetailsModal";
 import { useMembers } from "../context/MembersContext";
-import { useRouter } from "next/navigation";
 
 export default function SuivisMembres() {
   const { members, setAllMembers, updateMember } = useMembers();
-  const router = useRouter();
 
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -152,9 +150,9 @@ export default function SuivisMembres() {
 
       if (error) throw error;
 
+      // 🔹 Si statut devient autre que Refus, on le retire des refus
       setAllMembers(prev => prev.map(m => m.id === id ? updatedMember : m));
 
-      return updatedMember;
     } catch (err) {
       console.error(err);
     } finally {
@@ -181,29 +179,35 @@ export default function SuivisMembres() {
     }
   };
 
-  // 🔹 Fonction pour gérer l'après changement de statut
-  const handleAfterStatusUpdate = (statut) => {
-    if (statut === statutIds["en attente"]) return;
-    if (statut === statutIds["refus"]) {
-      router.push("/suivis/refus");
-      return;
-    }
-    if (statut === statutIds["integrer"]) {
-      router.back();
-      return;
-    }
-  };
-
   // 🔹 Filtrage membres
   const filteredMembers = members.filter(m => {
     const status = m.statut_suivis ?? 0;
-    if (showRefus) return status === statutIds["refus"];
-    return status === statutIds["envoye"] || status === statutIds["en attente"];
+    if (showRefus) return status === 4;       // Refus
+    return status === 1 || status === 2;       // Vue normale
   });
 
   const uniqueMembers = Array.from(new Map(filteredMembers.map(item => [item.id, item])).values());
 
-  return (
+  const handleAfterSend = (updatedMember) => {
+    updateMember(updatedMember.id, updatedMember);
+  };
+
+  const DetailsPopup = ({ m }) => {
+    const commentRef = useRef(null);
+
+    useEffect(() => {
+      if (commentRef.current) {
+        commentRef.current.focus();
+        commentRef.current.selectionStart = commentRef.current.value.length;
+      }
+    }, [commentChanges[m.id]]);
+
+    const celluleNom = m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—";
+    const conseillerNom = m.conseiller_id
+      ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim()
+      : "—";
+
+    return (
       <div className="text-black text-sm space-y-2 w-full">
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
         <p>🏙 Ville : {m.ville || ""}</p>

@@ -111,7 +111,7 @@ export default function DetailsModal({
 
             {isRefus ? (
               <button
-                onClick={() => reactivateMember(m.id)}
+                onClick={() => reactivateMember(m.id)} // 🔹 ici on utilise la vraie fonction
                 disabled={updating[m.id]}
                 className={`mt-2 py-2 rounded w-full transition ${
                   updating[m.id]

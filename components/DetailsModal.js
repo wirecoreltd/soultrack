@@ -10,10 +10,8 @@ export default function DetailsModal({
   statusChanges,
   handleCommentChange,
   handleStatusChange,
-  handleAfterStatusUpdate,
+  reactivateMember, // 🔹 fonction passée depuis le parent
   updating,
-  updateSuivi,
-  reactivateMember, // 🔹 ajouter pour la réactivation
 }) {
   if (!m || !m.id) return null;
 
@@ -21,8 +19,7 @@ export default function DetailsModal({
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
   const phoneMenuRef = useRef(null);
 
-  const isRefus = (m.statut_suivis ?? 0) === 4;
-
+  // 🔹 Fermer menu téléphone si clic en dehors
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
@@ -45,6 +42,7 @@ export default function DetailsModal({
           ✖
         </button>
 
+        {/* ================= CONTENU CENTRÉ ================= */}
         <div className="flex flex-col items-center text-center">
           <h2 className="text-xl font-bold">
             {m.prenom} {m.nom} {m.star && "⭐"}
@@ -62,10 +60,34 @@ export default function DetailsModal({
 
               {openPhoneMenu && (
                 <div className="absolute top-full mt-2 bg-white border rounded-lg shadow w-56 z-50">
-                  <a href={`tel:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler</a>
-                  <a href={`sms:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">✉️ SMS</a>
-                  <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 WhatsApp</a>
-                  <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Message WhatsApp</a>
+                  <a
+                    href={`tel:${m.telephone}`}
+                    className="block px-4 py-2 hover:bg-gray-100 text-black"
+                  >
+                    📞 Appeler
+                  </a>
+                  <a
+                    href={`sms:${m.telephone}`}
+                    className="block px-4 py-2 hover:bg-gray-100 text-black"
+                  >
+                    ✉️ SMS
+                  </a>
+                  <a
+                    href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block px-4 py-2 hover:bg-gray-100 text-black"
+                  >
+                    💬 WhatsApp
+                  </a>
+                  <a
+                    href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?text=Bonjour`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block px-4 py-2 hover:bg-gray-100 text-black"
+                  >
+                    📱 Message WhatsApp
+                  </a>
                 </div>
               )}
             </div>
@@ -77,74 +99,60 @@ export default function DetailsModal({
 
           {/* ================= COMMENTAIRE & STATUT ================= */}
           <div className="flex flex-col w-full mt-4">
+            {/* Commentaire */}
             <label className="font-semibold text-blue-700 mb-1 text-center">
               Commentaire Suivis
             </label>
             <textarea
               value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
-              onChange={isRefus ? undefined : (e) => handleCommentChange(m.id, e.target.value)}
-              readOnly={isRefus}
-              className={`w-full border rounded-lg p-2 ${isRefus ? "bg-gray-100 text-gray-600 cursor-not-allowed" : ""}`}
+              onChange={(e) => handleCommentChange(m.id, e.target.value)}
+              className="w-full border rounded-lg p-2"
               rows={2}
             />
 
+            {/* Statut */}
             <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">
               Statut Intégration
             </label>
             <select
-              value={isRefus ? "4" : statusChanges[m.id] ?? ""}
-              onChange={isRefus ? undefined : (e) => handleStatusChange(m.id, e.target.value)}
-              disabled={isRefus}
-              className={`w-full border rounded-lg p-2 mb-2 ${isRefus ? "bg-gray-100 text-red-600 cursor-not-allowed" : ""}`}
+              value={statusChanges[m.id] ?? "4"} // 🔹 par défaut Refus
+              onChange={(e) => handleStatusChange(m.id, e.target.value)}
+              className="w-full border rounded-lg p-2 mb-2"
             >
-              {isRefus ? (
-                <option value="4">Refus</option>
-              ) : (
-                <>
-                  <option value="">-- Sélectionner un statut --</option>
-                  <option value="2">En attente</option>
-                  <option value="3">Intégré</option>
-                  <option value="4">Refus</option>
-                </>
-              )}
+              <option value="2">En attente</option>
+              <option value="3">Intégré</option>
+              <option value="4">Refus</option>
             </select>
 
-            {isRefus ? (
-              <button
-                onClick={() => reactivateMember(m.id)} // 🔹 ici on utilise la vraie fonction
-                disabled={updating[m.id]}
-                className={`mt-2 py-2 rounded w-full transition ${
-                  updating[m.id]
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-green-500 hover:bg-green-600 text-white"
-                }`}
-              >
-                {updating[m.id] ? "Réactivation..." : "Réactiver"}
-              </button>
-            ) : (
-              <button
-                onClick={async () => {
-                  const updated = await updateSuivi(m.id);
-                  if (updated?.statut_suivis) handleAfterStatusUpdate(Number(updated.statut_suivis));
-                  onClose();
-                }}
-                disabled={updating[m.id]}
-                className={`mt-2 w-full font-bold py-2 rounded-lg shadow-md transition-all ${
-                  updating[m.id]
-                    ? "bg-blue-300 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white"
-                }`}
-              >
-                {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
-              </button>
-            )}
+            {/* 💚 Bouton Réactiver */}
+            <button
+              onClick={async () => {
+                await reactivateMember(m.id);
+                onClose(); // 🔹 ferme automatiquement le popup
+              }}
+              disabled={updating[m.id]}
+              className={`mt-2 py-2 rounded w-full transition ${
+                updating[m.id]
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-500 hover:bg-green-600 text-white"
+              }`}
+            >
+              {updating[m.id] ? "Réactivation..." : "Réactiver"}
+            </button>
           </div>
 
           {/* ================= INFOS DÉTAILLÉES ================= */}
           <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
             <p>⚥ Sexe : {m.sexe || "—"}</p>
-            <p>❓ Besoin : {m.besoin ? (Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin) : "—"}</p>
+            <p>
+              ❓ Besoin :{" "}
+              {m.besoin
+                ? Array.isArray(m.besoin)
+                  ? m.besoin.join(", ")
+                  : m.besoin
+                : "—"}
+            </p>
             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
             <p>📋 Statut initial : {m.statut_initial || "—"}</p>
@@ -161,12 +169,13 @@ export default function DetailsModal({
           </div>
         </div>
 
+        {/* ================= POPUP ÉDITION ================= */}
         {editMember && (
           <EditMemberSuivisPopup
             member={editMember}
             onClose={() => {
               setEditMember(null);
-              onClose();
+              onClose(); // 🔹 ferme DetailsModal également
             }}
             onUpdateMember={() => {
               setEditMember(null);

@@ -390,7 +390,8 @@ export default function SuivisEvangelisation() {
             <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
               <div className="flex-[2]">Nom complet</div>
               <div className="flex-[1]">Téléphone</div>
-              <div className="flex-[1]">Attribué</div>
+              <div className="flex-[1]">Attribué à</div>
+              <div className="flex-[1]">Ville</div>        
               <div className="flex-[1] flex justify-center items-center">Actions</div>
             </div>
       
@@ -404,20 +405,38 @@ export default function SuivisEvangelisation() {
                   className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
                   style={{ borderLeftColor: getBorderColor(evangelise) }}
                 >
-                  <div className="flex-[2] text-white flex items-center gap-1">
-                    {evangelise.prenom || "—"} {evangelise.nom || ""}
-                  </div>
-                  <div className="text-sm">
-          📞 {m.telephone || "—"}
-        </div>
-                  <div className="flex-[1] text-white flex items-center">{cellule.cellule_full || "—"}</div>
-                  <div className="flex-[1] flex justify-center items-center gap-2">
-                    <button
-                      onClick={() => setDetailsTable(m)}
-                      className="text-orange-500 underline text-sm"
-                    >
-                      Détails
-                    </button>
+                  {/* Nom */}
+            <div className="flex-[2] font-bold text-white">
+              <span className="sm:hidden text-xs text-gray-300 block">Nom</span>
+              {m.prenom} {m.nom}
+            </div>
+
+            {/* Téléphone */}
+            <div className="flex-[1] text-white text-sm">
+              <span className="sm:hidden text-xs text-gray-300 block">Téléphone</span>
+              {m.telephone || "—"}
+            </div>
+
+            {/* Attribué */}
+            <div className="flex-[1] text-white text-sm">
+              <span className="sm:hidden text-xs text-gray-300 block">Attribué</span>
+              {cellule.cellule_full || "—"}
+            </div>
+       {/* Ville */}
+            <div className="flex-[1] text-white text-sm">
+              <span className="sm:hidden text-xs text-gray-300 block">Ville</span>
+              {m.ville || "—"}
+            </div>
+
+            {/* Actions */}
+            <div className="flex-[1] flex sm:justify-center gap-3 text-sm">
+              <button
+                onClick={() => setDetailsTable(m)}
+                className="text-orange-400 underline"
+              >
+                Détails
+              </button>
+
                     {evangelise.id && (
                       <button
                         onClick={() => setEditingContact(evangelise)}

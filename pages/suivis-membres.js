@@ -396,7 +396,8 @@ export default function SuivisMembres() {
           statusChanges={statusChanges}
           updating={updating}
           updateSuivi={updateSuivi}
-          handleAfterStatusUpdate={handleAfterStatusUpdate} // ✅ passé correctement
+          reactivateMember={reactivateMember} // 🔹 PASSER la fonction
+          handleAfterStatusUpdate={handleAfterStatusUpdate} // ✅
         />
       )}
 

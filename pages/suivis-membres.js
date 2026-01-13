@@ -451,14 +451,15 @@ export default function SuivisMembres() {
         <DetailsModal
           m={detailsModalMember}
           onClose={() => setDetailsModalMember(null)}
+          handleAfterStatusUpdate={handleAfterStatusUpdate}
           handleCommentChange={handleCommentChange}
           statusChanges={statusChanges}
           commentChanges={commentChanges}
           updating={updating}
           updateSuivi={updateSuivi}
-          setStatusChanges={setStatusChanges}
         />
       )}
+
 
       {editMember && (
         <EditMemberSuivisPopup

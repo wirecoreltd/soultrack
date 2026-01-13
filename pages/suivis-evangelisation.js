@@ -407,7 +407,9 @@ export default function SuivisEvangelisation() {
                   <div className="flex-[2] text-white flex items-center gap-1">
                     {evangelise.prenom || "—"} {evangelise.nom || ""}
                   </div>
-                  <div className="flex-[1] text-white">{evangelise.telephone || "—"}</div>
+                  <div className="text-sm">
+          📞 {m.telephone || "—"}
+        </div>
                   <div className="flex-[1] text-white flex items-center">{cellule.cellule_full || "—"}</div>
                   <div className="flex-[1] flex justify-center items-center gap-2">
                     <button

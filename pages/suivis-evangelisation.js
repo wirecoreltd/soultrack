@@ -384,65 +384,62 @@ export default function SuivisEvangelisation() {
     )}
 
     {/* ================= VUE TABLE ================= */}
-    {view === "table" && (
-      <div className="w-full max-w-6xl overflow-x-auto py-2 mx-auto">
-        <div className="min-w-[900px] space-y-2">
-    
-          {/* Header */}
-          <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-gray-400">
-            <div className="flex-[2]">Nom complet</div>
-            <div className="flex-[1]">Téléphone</div>
-            <div className="flex-[1]">Attribué à</div>
-            <div className="flex-[1]">Ville</div>
-            <div className="flex-[1] text-center">Actions</div>
-          </div>
-    
-          {/* Lignes */}
-          {suivisAffiches.map((m) => {
-    
-            // 🔹 Relations
-            const cellule = cellules.find(c => c.id === m.cellule_id);
-            const conseiller = conseillers.find(c => c.id === m.conseiller_id);
-    
-            const attribueA = cellule
-              ? `🏠 ${cellule.cellule_full}`
-              : conseiller
-                ? `👤 ${conseiller.prenom} ${conseiller.nom}`
-                : "—";
-    
-            return (
-              <div
-                key={m.id}
-                className="flex flex-col sm:flex-row items-start sm:items-center px-3 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition gap-2 border-l-4"
-                style={{ borderLeftColor: getBorderColor(m) }}                  
-    >
-    
-    
-                {/* Nom */}
-                <div className="flex-[2] font-bold text-white">
-                  <span className="sm:hidden text-xs text-gray-300 block">Nom</span>
-                  {m.prenom} {m.nom}
-                </div>
-    
-                {/* Téléphone */}
-                <div className="flex-[1] text-sm text-white">
-                  <span className="sm:hidden text-xs text-gray-300 block">Téléphone</span>
-                  {m.telephone || "—"}
-                </div>
-    
-                {/* Attribué à */}
-                <div className="flex-[1] text-sm text-white">
-                  <span className="sm:hidden text-xs text-gray-300 block">Attribué à</span>
-                  {attribueA}
-                </div>
-    
-                {/* Ville */}
-                <div className="flex-[1] text-sm text-white">
-                  <span className="sm:hidden text-xs text-gray-300 block">Ville</span>
-                  {m.ville || "—"}
-                </div>
-    
-                {/* Actions */}
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto py-2 mx-auto">
+          <div className="min-w-[900px] space-y-2">
+      
+            {/* Header */}
+            <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-gray-400">
+              <div className="flex-[2]">Nom complet</div>
+              <div className="flex-[1]">Téléphone</div>
+              <div className="flex-[1]">Attribué à</div>
+              <div className="flex-[1]">Ville</div>
+              <div className="flex-[1] text-center">Actions</div>
+            </div>
+      
+            {/* Lignes */}
+            {suivisAffiches.map((m) => {
+              const cellule = cellules.find(c => c.id === m.cellule_id);
+              const conseiller = conseillers.find(c => c.id === m.conseiller_id);
+      
+              const attribueA = cellule
+                ? `🏠 ${cellule.cellule_full}`
+                : conseiller
+                  ? `👤 ${conseiller.prenom} ${conseiller.nom}`
+                  : "—";
+      
+              return (
+                <div
+                  key={m.id}
+                  className="flex flex-col sm:flex-row items-start sm:items-center px-3 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition gap-2 border-l-4"
+                  style={{ borderLeftColor: getBorderColor(m) }}
+                >
+      
+                  {/* Nom */}
+                  <div className="flex-[2] font-bold text-white">
+                    <span className="sm:hidden text-xs text-gray-300 block">Nom</span>
+                    {m.prenom} {m.nom}
+                  </div>
+      
+                  {/* Téléphone */}
+                  <div className="flex-[1] text-sm text-white">
+                    <span className="sm:hidden text-xs text-gray-300 block">Téléphone</span>
+                    {m.telephone || "—"}
+                  </div>
+      
+                  {/* Attribué à */}
+                  <div className="flex-[1] text-sm text-white">
+                    <span className="sm:hidden text-xs text-gray-300 block">Attribué à</span>
+                    {attribueA}
+                  </div>
+      
+                  {/* Ville */}
+                  <div className="flex-[1] text-sm text-white">
+                    <span className="sm:hidden text-xs text-gray-300 block">Ville</span>
+                    {m.ville || "—"}
+                  </div>
+      
+                  {/* Actions */}
                   <div className="flex-[1] flex sm:justify-center gap-3 text-sm">
                     <button
                       onClick={() => setDetailsTable(m)}
@@ -450,22 +447,22 @@ export default function SuivisEvangelisation() {
                     >
                       Détails
                     </button>
-                  
+      
                     <button
                       onClick={() => setEditingContact(m)}
                       className="text-blue-600 underline"
                     >
                       Modifier
                     </button>
-                   </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+                  </div>
+      
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
 
     {view === "table" && detailsTable && (
       <DetailsEvangePopup

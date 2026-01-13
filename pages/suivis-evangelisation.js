@@ -308,7 +308,7 @@ export default function SuivisEvangelisation() {
                 <p className="text-sm text-black-700 mb-2">
                   👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
                 </p>
-                <p className="text-sm text-black-700 mb-2>
+                <p className="text-sm text-black-700 mb-2">
                   🏙️ Ville : {m.ville || "—"}
                 </p>
 

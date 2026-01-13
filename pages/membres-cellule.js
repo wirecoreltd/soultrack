@@ -14,7 +14,7 @@ export default function MembresCellule() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [view, setView] = useState("card");
-
+  const [search, setSearch] = useState("");
   const [selectedMembre, setSelectedMembre] = useState(null);
   const [editMember, setEditMember] = useState(null);
   const [detailsMember, setDetailsMember] = useState(null);
@@ -146,7 +146,7 @@ export default function MembresCellule() {
       </h1>
 
       {/* FILTRES */}
-      <div className="flex gap-3 mb-4">
+      <div className="flex justify-center gap-3 mb-4">
         <select
           className="px-3 py-2 rounded"
           value={filterCellule}
@@ -160,14 +160,26 @@ export default function MembresCellule() {
           ))}
         </select>
 
-        <select
-          className="px-3 py-2 rounded"
-          value={view}
-          onChange={(e) => setView(e.target.value)}
-        >
-          <option value="card">Vue carte</option>
-          <option value="table">Vue table</option>
-        </select>
+        {/* Toggle Vue Carte / Vue Table */}
+          <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
+            <button
+              onClick={() => setView(view === "card" ? "table" : "card")}
+              className="text-sm font-semibold underline text-white"
+            >
+              {view === "card" ? "Vue Table" : "Vue Carte"}
+            </button>
+          </div>
+            {/* Barre de recherche */}
+<div className="w-full max-w-4xl flex justify-center mb-2">
+  <input
+    type="text"
+    placeholder="Recherche..."
+    value={search}
+    onChange={e => setSearch(e.target.value)}
+    className="w-2/3 px-3 py-1 rounded-md border text-black"
+  />
+</div>
+    
       </div>
 
       {/* ================= VUE CARTE ================= */}

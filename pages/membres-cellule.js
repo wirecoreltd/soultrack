@@ -153,15 +153,16 @@ export default function MembresCellule() {
       </h1>
       
       {/* Barre de recherche */}
-      <div className="w-full max-w-4xl flex justify-center mb-2">
+      <div className="w-full flex justify-center mb-2">
         <input
           type="text"
           placeholder="Recherche..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-2/3 px-3 py-1 rounded-md border text-black focus:outline-none"
-        />
-      </div>
+          className="w-4/5 max-w-2xl px-4 py-2 rounded-full border border-gray-300 text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+        </div>
+
       
       {/* Filtre sous la barre de recherche */}
       <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">

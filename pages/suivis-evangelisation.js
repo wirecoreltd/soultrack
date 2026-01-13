@@ -382,33 +382,53 @@ export default function SuivisEvangelisation() {
     )}
 
     {/* ================= VUE TABLE ================= */}
-    {view === "table" && (
-      <div className="w-full max-w-6xl overflow-x-auto">
-        <table className="w-full bg-white rounded shadow">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="p-2">Nom</th>
-              <th className="p-2">Téléphone</th>
-              <th className="p-2">Attribué</th>
-              <th className="p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {suivisAffiches.map((m) => (
-              <tr key={m.id} className="border-t">
-                <td className="p-2">{m.evangelises?.prenom} {m.evangelises?.nom}</td>
-                <td className="p-2">{m.evangelises?.telephone || "—"}</td>
-                <td className="p-2">{m.cellules?.cellule_full || "—"}</td>
-                <td className="p-2">
-                  <button onClick={() => setDetailsTable(m)} className="text-orange-500 underline mr-3">Détails</button>
-                  <button onClick={() => m.evangelises?.id && setEditingContact(m.evangelises)} className="text-blue-600 underline">Modifier</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+{view === "table" && (
+  <div className="w-full max-w-6xl overflow-x-auto py-2 mx-auto">
+    <div className="min-w-[700px] space-y-2">
+      
+      {/* Header */}
+      <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+        <div className="flex-[2]">Nom complet</div>
+        <div className="flex-[1]">Téléphone</div>
+        <div className="flex-[1]">Attribué</div>
+        <div className="flex-[1] flex justify-center items-center">Actions</div>
       </div>
-    )}
+
+      {/* Lignes */}
+      {suivisAffiches.map((m) => (
+        <div
+          key={m.id}
+          className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
+          style={{ borderLeftColor: getBorderColor(m.evangelises) }}
+        >
+          <div className="flex-[2] text-white flex items-center gap-1">
+            {m.evangelises?.prenom} {m.evangelises?.nom}
+          </div>
+          <div className="flex-[1] text-white">{m.evangelises?.telephone || "—"}</div>
+          <div className="flex-[1] text-white flex items-center">
+            {m.cellules?.cellule_full || "—"}
+          </div>
+          <div className="flex-[1] flex justify-center items-center gap-2">
+            <button
+              onClick={() => setDetailsTable(m)}
+              className="text-orange-500 underline text-sm"
+            >
+              Détails
+            </button>
+            <button
+              onClick={() => m.evangelises?.id && setEditingContact(m.evangelises)}
+              className="text-blue-600 underline text-sm"
+            >
+              Modifier
+            </button>
+          </div>
+        </div>
+      ))}
+
+    </div>
+  </div>
+)}
+
 
     {view === "table" && detailsTable && (
       <DetailsEvangePopup

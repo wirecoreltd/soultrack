@@ -176,8 +176,7 @@ export default function MembresCellule() {
             {view === "card" ? "Vue Table" : "Vue Carte"}
           </button>
         </div>     
-          </div>
-
+         
       {/* ================= VUE CARTE ================= */}
       {view === "card" && (
         <div className="flex justify-center">

@@ -446,16 +446,9 @@ export default function SuivisEvangelisation() {
                       className="text-orange-400 underline"
                     >
                       Détails
-                    </button>
-      
-                    <button
-                      onClick={() => setEditingContact(m)}
-                      className="text-blue-600 underline"
-                    >
-                      Modifier
-                    </button>
-                  </div>
-      
+                    </button>      
+                    
+                  </div>      
                 </div>
               );
             })}

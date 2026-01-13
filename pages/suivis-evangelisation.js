@@ -382,53 +382,55 @@ export default function SuivisEvangelisation() {
     )}
 
     {/* ================= VUE TABLE ================= */}
-{view === "table" && (
-  <div className="w-full max-w-6xl overflow-x-auto py-2 mx-auto">
-    <div className="min-w-[700px] space-y-2">
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto py-2 mx-auto">
+          <div className="min-w-[700px] space-y-2">
+            
+            {/* Header */}
+            <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+              <div className="flex-[2]">Nom complet</div>
+              <div className="flex-[1]">Téléphone</div>
+              <div className="flex-[1]">Attribué</div>
+              <div className="flex-[1] flex justify-center items-center">Actions</div>
+            </div>
       
-      {/* Header */}
-      <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
-        <div className="flex-[2]">Nom complet</div>
-        <div className="flex-[1]">Téléphone</div>
-        <div className="flex-[1]">Attribué</div>
-        <div className="flex-[1] flex justify-center items-center">Actions</div>
-      </div>
-
-      {/* Lignes */}
-      {suivisAffiches.map((m) => (
-        <div
-          key={m.id}
-          className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
-          style={{ borderLeftColor: getBorderColor(m.evangelises) }}
-        >
-          <div className="flex-[2] text-white flex items-center gap-1">
-            {m.evangelises?.prenom} {m.evangelises?.nom}
-          </div>
-          <div className="flex-[1] text-white">{m.evangelises?.telephone || "—"}</div>
-          <div className="flex-[1] text-white flex items-center">
-            {m.cellules?.cellule_full || "—"}
-          </div>
-          <div className="flex-[1] flex justify-center items-center gap-2">
-            <button
-              onClick={() => setDetailsTable(m)}
-              className="text-orange-500 underline text-sm"
-            >
-              Détails
-            </button>
-            <button
-              onClick={() => m.evangelises?.id && setEditingContact(m.evangelises)}
-              className="text-blue-600 underline text-sm"
-            >
-              Modifier
-            </button>
+            {/* Lignes */}
+            {suivisAffiches.map((m) => {
+              const evangelise = m.evangelises || {};
+              const cellule = m.cellules || {};
+              return (
+                <div
+                  key={m.id}
+                  className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
+                  style={{ borderLeftColor: getBorderColor(evangelise) }}
+                >
+                  <div className="flex-[2] text-white flex items-center gap-1">
+                    {evangelise.prenom || "—"} {evangelise.nom || ""}
+                  </div>
+                  <div className="flex-[1] text-white">{evangelise.telephone || "—"}</div>
+                  <div className="flex-[1] text-white flex items-center">{cellule.cellule_full || "—"}</div>
+                  <div className="flex-[1] flex justify-center items-center gap-2">
+                    <button
+                      onClick={() => setDetailsTable(m)}
+                      className="text-orange-500 underline text-sm"
+                    >
+                      Détails
+                    </button>
+                    {evangelise.id && (
+                      <button
+                        onClick={() => setEditingContact(evangelise)}
+                        className="text-blue-600 underline text-sm"
+                      >
+                        Modifier
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      ))}
-
-    </div>
-  </div>
-)}
-
+      )}
 
     {view === "table" && detailsTable && (
       <DetailsEvangePopup

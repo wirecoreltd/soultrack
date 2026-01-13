@@ -364,33 +364,41 @@ export default function Evangelisation() {
               </div>
             )}
 
-            {/* VUE TABLE */}
-            {view === "table" && (
-              <div className="w-full max-w-6xl overflow-x-auto py-2">
-                <div className="min-w-[700px] space-y-2">
-                  <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
-                    <div className="flex-[2]">Nom complet</div>
-                    <div className="flex-[1]">Téléphone</div>
-                    <div className="flex-[1]">Ville</div>
-                    <div className="flex-[1] flex justify-center items-center">Sélectionner</div>
-                    <div className="flex-[1]">Action</div>
-                  </div>
+            {/* ================= VUE TABLE ================= */}
+{view === "table" && (
+  <div className="overflow-x-auto bg-white/10 rounded-xl p-4 max-w-6xl mx-auto">
+    <table className="w-full text-sm text-white">
+      <thead className="border-b border-white/30">
+        <tr>
+          <th className="px-4 py-2 text-left">Nom</th>
+          <th className="px-4 py-2 text-left">Téléphone</th>
+          <th className="px-4 py-2 text-left">Ville</th>
+          <th className="px-4 py-2 text-left">Cellule</th>
+          <th className="px-4 py-2 text-left">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {filteredMembres.map(m => (
+          <tr key={m.id} className="border-b border-white/10 hover:bg-white/20 transition-colors">
+            <td className="px-4 py-2">{m.prenom} {m.nom}</td>
+            <td className="px-4 py-2">{m.telephone || "—"}</td>
+            <td className="px-4 py-2">{m.ville || "—"}</td>
+            <td className="px-4 py-2">{getCelluleNom(m.cellule_id)}</td>
+            <td className="px-4 py-2">
+              <button
+                onClick={() => setDetailsMember(m)}
+                className="text-orange-300 underline hover:text-orange-400"
+              >
+                Détails
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
 
-                  {contacts.map((m) => (
-                    <div key={m.id} className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
-                      <div className="flex-[2] text-white flex items-center gap-1">{m.prenom} {m.nom}</div>
-                      <div className="flex-[1] text-white">{m.telephone || "—"}</div>
-                      <div className="flex-[1] text-white">{m.ville || "—"}</div>
-                      <div className="flex-[1] flex justify-center items-center"><input type="checkbox" checked={checkedContacts[m.id] || false} onChange={() => handleCheck(m.id)} /></div>
-                      <div className="flex-[1]"><button onClick={() => setPopupMember(m)} className="text-orange-500 underline text-sm">Détails</button></div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
 
       {/* POPUPS */}
       {editMember && (

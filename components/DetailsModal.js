@@ -87,8 +87,13 @@ export default function DetailsModal({
             {/* Statut Intégration */}
             <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Statut Intégration</label>
             <select
-              value={statusChanges[m.id] ?? ""}
-              onChange={(e) => handleStatusChange(m.id, e.target.value)}
+              value={statusChanges[m.id] ?? String(m.statut_suivis ?? "")}
+              onChange={(e) =>
+                setStatusChanges(prev => ({
+                  ...prev,
+                  [m.id]: e.target.value
+                }))
+              }
               className="w-full border rounded-lg p-2 mb-2"
             >
               <option value="">-- Sélectionner un statut --</option>

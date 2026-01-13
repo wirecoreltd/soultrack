@@ -165,55 +165,87 @@ export default function MembresCellule() {
         </select>
       </div>
 
-      {/* ================= VUE CARTE ================= */}
+     {/* ================= VUE CARTE ================= */}
       {view === "card" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {filteredMembres.map(m => (
-            <div key={m.id} className="bg-white rounded-xl p-4 shadow">
-              <h2 className="font-bold">
-                {m.prenom} {m.nom}
-              </h2>
-              <p>📞 {m.telephone || "—"}</p>
-              <p>🏙️ Ville : {m.venu || "—"}</p>  
-              <p>📌 {getCelluleNom(m.cellule_id)}</p>
-
-              <button
-                className="text-orange-600 text-sm mt-2"
-                onClick={() =>
-                  setSelectedMembre(selectedMembre === m.id ? null : m.id)
-                }
+        <div className="flex justify-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
+            {filteredMembres.map(m => (
+              <div
+                key={m.id}
+                className="bg-white p-4 rounded-2xl shadow-xl border-l-4 relative"
+                style={{ borderLeftColor: getBorderColor(m) }}
               >
-                Détails
-              </button>
-
-              {selectedMembre === m.id && (
-                <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm space-y-1 border">
-                  <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                  <p>🎗️ Sexe : {m.sexe || "—"}</p>
-                  <p>💧 Bapteme d' Eau: {
-                    m.bapteme_eau === null ? "" : (m.bapteme_eau === true || m.bapteme_eau === "true") ? "Oui" : "Non"
-                  }</p>
-                  
-                  <p>🔥 Bapteme de Feu: {
-                    m.bapteme_esprit === null ? "" : (m.bapteme_esprit === true || m.bapteme_esprit === "true") ? "Oui" : "Non"
-                  }</p>
-                  <p>❓ Besoin : {m.besoin || "—"}</p>
-                  <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                  <p>🧩 Venu par : {m.venu || "—"}</p>
-                  <p>📝 Commentaire suivi : {m.commentaire_suivis || "—"}</p>
-
+                {/* Prénom Nom */}
+                <h2 className="text-center font-bold text-lg">{m.prenom} {m.nom}</h2>
+      
+                {/* Téléphone interactif */}
+                <div className="text-center mt-1 relative">
                   <button
-                    onClick={() => setEditMember(m)}
-                    className="text-blue-600 text-sm mt-2 underline"
+                    onClick={() =>
+                      setSelectedMembre(selectedMembre === m.id ? null : m.id)
+                    }
+                    className="text-orange-500 underline font-semibold"
                   >
-                    ✏️ Modifier
+                    {m.telephone || "—"}
                   </button>
+      
+                  {selectedMembre === m.id && m.telephone && (
+                    <div
+                      className="absolute z-50 mt-2 bg-white shadow-lg rounded-lg border w-52 left-1/2 -translate-x-1/2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">📞 Appeler</a>
+                      <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">✉️ SMS</a>
+                      <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm hover:bg-gray-100">📱 Appel WhatsApp</a>
+                      <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm hover:bg-gray-100">💬 Message WhatsApp</a>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
+      
+                {/* Infos principales alignées à gauche */}
+                <div className="mt-2 text-sm text-black space-y-1 text-left">
+                  <p>🏙️ Ville : {m.ville || "—"}</p>
+                  <p>🏠 Cellule : {getCelluleNom(m.cellule_id)}</p>
+                  <p>👤 Conseiller : {m.conseiller || "—"}</p>
+                </div>
+      
+                {/* Bouton détails */}
+                <button
+                  onClick={() =>
+                    setDetailsOpen(prev => ({ ...prev, [m.id]: !prev[m.id] }))
+                  }
+                  className="text-orange-500 underline mt-2 block mx-auto text-sm"
+                >
+                  {detailsOpen?.[m.id] ? "Fermer détails" : "Détails"}
+                </button>
+      
+                {/* Infos étendues */}
+                {detailsOpen?.[m.id] && (
+                  <div className="mt-3 p-3 bg-gray-50 rounded-lg border text-sm space-y-1 text-left">
+                    <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                    <p>🎗️ Sexe : {m.sexe || "—"}</p>
+                    <p>💧 Bapteme d'Eau : {m.bapteme_eau ? "Oui" : "Non"}</p>
+                    <p>🔥 Bapteme de Feu : {m.bapteme_esprit ? "Oui" : "Non"}</p>
+                    <p>❓ Besoin : {m.besoin || "—"}</p>
+                    <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                    <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+                    <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>
+                    <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
+      
+                    <button
+                      onClick={() => setEditMember(m)}
+                      className="text-blue-600 text-sm mt-2 block mx-auto underline"
+                    >
+                      ✏️ Modifier le contact
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
+
 
       {/* ================= VUE TABLE ================= */}
       {view === "table" && (

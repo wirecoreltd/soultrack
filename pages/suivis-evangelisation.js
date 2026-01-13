@@ -443,22 +443,20 @@ export default function SuivisEvangelisation() {
             </div>
 
             {/* Actions */}
-            <div className="flex-[1] flex sm:justify-center gap-3 text-sm">
-              <button
-                onClick={() => setDetailsTable(m)}
-                className="text-orange-400 underline"
-              >
-                Détails
-              </button>
-            
+<div className="flex-[1] flex sm:justify-center gap-3 text-sm">
+  <button
+    onClick={() => setDetailsTable(m)}
+    className="text-orange-400 underline"
+  >
+    Détails
+  </button>
 
-                    {evangelise.id && (
-                      <button
-                        onClick={() => setEditingContact(evangelise)}
-                        className="text-blue-600 underline text-sm"
-                      >
-                        Modifier
-                      </button>
+  <button
+    onClick={() => setEditingContact(m)}
+    className="text-blue-600 underline"
+  >
+    Modifier
+  </button>
                     )}
                   </div>
                 </div>

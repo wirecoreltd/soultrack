@@ -414,7 +414,6 @@ export default function Evangelisation() {
           onClose={() => setPopupMember(null)}
           onEdit={(m) => { setEditMember(m); setPopupMember(null); }}
         />
-      )}
-    </div>
+      )}    
   );
 }

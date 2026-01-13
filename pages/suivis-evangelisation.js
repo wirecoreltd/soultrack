@@ -396,26 +396,19 @@ export default function SuivisEvangelisation() {
       
             {/* Lignes */}
             {suivisAffiches.map((m) => {
-              const cellule = cellules.find(c => c.id === m.cellule_id);
-
+              const evangelise = m.evangelises || {};
+              const cellule = m.cellules || {};
               return (
                 <div
                   key={m.id}
                   className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
                   style={{ borderLeftColor: getBorderColor(evangelise) }}
                 >
-                  <div className="flex-[2] text-white">
-  {m.prenom || "—"} {m.nom || ""}
-</div>
-
-<div className="flex-[1] text-white">
-  {m.telephone || "—"}
-</div>
-
-<div className="flex-[1] text-white">
-  {cellule?.cellule_full || "—"}
-</div>
-
+                  <div className="flex-[2] text-white flex items-center gap-1">
+                    {evangelise.prenom || "—"} {evangelise.nom || ""}
+                  </div>
+                  <div className="flex-[1] text-white">{evangelise.telephone || "—"}</div>
+                  <div className="flex-[1] text-white flex items-center">{cellule.cellule_full || "—"}</div>
                   <div className="flex-[1] flex justify-center items-center gap-2">
                     <button
                       onClick={() => setDetailsTable(m)}

@@ -167,84 +167,120 @@ export default function MembresCellule() {
 
       {/* ================= VUE CARTE ================= */}
       {view === "card" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {filteredMembres.map(m => (
-            <div key={m.id} className="bg-white rounded-xl p-4 shadow">
-              <h2 className="font-bold">
-                {m.prenom} {m.nom}
-              </h2>
-              <p>📞 {m.telephone || "—"}</p>
-              <p>🏙️ Ville : {m.venu || "—"}</p>  
-              <p>📌 {getCelluleNom(m.cellule_id)}</p>
-
-              <button
-                className="text-orange-600 text-sm mt-2"
-                onClick={() =>
-                  setSelectedMembre(selectedMembre === m.id ? null : m.id)
-                }
-              >
-                Détails
-              </button>
-
-              {selectedMembre === m.id && (
-                <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm space-y-1 border">
-                  <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                  <p>🎗️ Sexe : {m.sexe || "—"}</p>
-                  <p>💧 Bapteme d' Eau: {
-                    m.bapteme_eau === null ? "" : (m.bapteme_eau === true || m.bapteme_eau === "true") ? "Oui" : "Non"
-                  }</p>
-                  
-                  <p>🔥 Bapteme de Feu: {
-                    m.bapteme_esprit === null ? "" : (m.bapteme_esprit === true || m.bapteme_esprit === "true") ? "Oui" : "Non"
-                  }</p>
-                  <p>❓ Besoin : {m.besoin || "—"}</p>
-                  <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                  <p>🧩 Venu par : {m.venu || "—"}</p>
-                  <p>📝 Commentaire suivi : {m.commentaire_suivis || "—"}</p>
-
-                  <button
-                    onClick={() => setEditMember(m)}
-                    className="text-blue-600 text-sm mt-2 underline"
-                  >
-                    ✏️ Modifier
-                  </button>
+        <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {filteredMembres.map((m) => {
+            const isOpen = popupMember?.id === m.id;
+            return (
+              <div key={m.id} className="bg-white p-4 rounded-xl shadow-md border-l-4 relative hover:shadow-lg transition">
+                
+                {/* Badges */}
+                {m.star && <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>}
+                {m.isNouveau && (
+                  <span className="absolute top-3 left-3 px-2 py-1 rounded text-xs font-semibold" style={{ backgroundColor: "#2E3192", color: "white" }}>
+                    Nouveau
+                  </span>
+                )}
+      
+                {/* Prénom/Nom */}
+                <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
+      
+                {/* Téléphone déroulant */}
+                <div className="relative flex justify-center mt-1">
+                  {m.telephone ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id); }}
+                        className="text-orange-500 underline font-semibold text-center"
+                      >
+                        {m.telephone}
+                      </button>
+                      {openPhoneMenuId === m.id && (
+                        <div className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-52" onClick={(e) => e.stopPropagation()}>
+                          <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
+                          <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
+                          <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Appel WhatsApp</a>
+                          <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 Message WhatsApp</a>
+                        </div>
+                      )}
+                    </>
+                  ) : <span className="text-gray-400">—</span>}
                 </div>
-              )}
-            </div>
-          ))}
+      
+                {/* Infos principales */}
+                <div className="mt-2 text-sm text-black space-y-1">
+                  <p>🏙️ Ville : {m.ville || "—"}</p>
+                  <p>🕊 Etat Contact : {m.etat_contact || "—"}</p>
+                  <p>🏠 Cellule : {m.cellule_id ? cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—" : "—"}</p>
+                  <p>👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
+                </div>
+      
+                {/* Bouton Détails */}
+                <button
+                  onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
+                  className="text-orange-500 underline text-sm mt-2 w-full"
+                >
+                  {isOpen ? "Fermer détails" : "Détails"}
+                </button>
+      
+                {/* Détails étendus */}
+                {isOpen && (
+                  <div className="text-black text-sm mt-2 w-full space-y-1">
+                    <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                    <p>🎗️ Sexe : {m.sexe || "—"}</p>
+                    <p>💧 Bapteme d'Eau : {m.bapteme_eau === true ? "Oui" : "Non"}</p>
+                    <p>🔥 Bapteme de Feu : {m.bapteme_esprit === true ? "Oui" : "Non"}</p>
+                    <p>❓ Besoin : {m.besoin || "—"}</p>
+                    <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                    <p>🧩 Venu par : {m.venu || "—"}</p>
+                    <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>
+                    <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
+                    <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">
+                      ✏️ Modifier le contact
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
+
       {/* ================= VUE TABLE ================= */}
       {view === "table" && (
-        <div className="overflow-x-auto bg-white rounded-xl shadow">
-          <table className="w-full text-sm text-left text-gray-700">
+        <div className="w-full max-w-6xl overflow-x-auto py-2">
+          <table className="min-w-full bg-white rounded-xl shadow-md overflow-hidden">
             <thead className="bg-gray-100">
               <tr>
-                <th className="px-4 py-2">Nom</th>
-                <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Ville</th>
-                <th className="px-4 py-2">Cellule</th>
-                <th className="px-4 py-2">Actions</th>
+                <th className="px-4 py-2 text-left text-sm font-semibold">Nom complet</th>
+                <th className="px-4 py-2 text-left text-sm font-semibold">Téléphone</th>
+                <th className="px-4 py-2 text-left text-sm font-semibold">Ville</th>
+                <th className="px-4 py-2 text-left text-sm font-semibold">Cellule</th>
+                <th className="px-4 py-2 text-left text-sm font-semibold">Sexe</th>
+                <th className="px-4 py-2 text-left text-sm font-semibold">WhatsApp</th>
+                <th className="px-4 py-2 text-left text-sm font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredMembres.map(m => (
-                <tr key={m.id} className="border-t">
+              {filteredMembres.map((m) => (
+                <tr key={m.id} className="border-t hover:bg-gray-50 transition">
                   <td className="px-4 py-2">{m.prenom} {m.nom}</td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.ville || "—"}</td>
-                  <td className="px-4 py-2">{getCelluleNom(m.cellule_id)}</td>
-                  <td className="px-4 py-2 space-x-2">
+                  <td className="px-4 py-2">{m.cellule_id ? cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—" : "—"}</td>
+                  <td className="px-4 py-2">{m.sexe || "—"}</td>
+                  <td className="px-4 py-2">{m.is_whatsapp ? "Oui" : "Non"}</td>
+                  <td className="px-4 py-2">
                     <button
-                      onClick={() => setDetailsMember(m)}
-                      className="text-indigo-600 underline text-sm"
+                      onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
+                      className="text-orange-500 underline text-sm"
                     >
-                      👁 Voir
+                      {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
                     </button>
                     <button
                       onClick={() => setEditMember(m)}
-                      className="text-blue-600 underline text-sm"
+                      className="text-blue-600 underline text-sm ml-2"
                     >
                       ✏️ Modifier
                     </button>

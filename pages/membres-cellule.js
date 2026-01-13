@@ -209,7 +209,7 @@ export default function MembresCellule() {
                 </button>
 
                 {detailsOpen[m.id] && (
-                  <div className="mt-3 p-3 bg-white-50 rounded-lg border text-sm space-y-1 text-left">
+                  <div className="mt-3 p-3 rounded-lg text-sm space-y-1 text-left">
                     <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🎗️ Sexe : {m.sexe || "—"}</p>
                     <p>💧 Bapteme d'Eau : {m.bapteme_eau ? "Oui" : "Non"}</p>

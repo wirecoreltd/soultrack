@@ -174,6 +174,7 @@ export default function MembresCellule() {
                 {m.prenom} {m.nom}
               </h2>
               <p>📞 {m.telephone || "—"}</p>
+              <p>🏙️ Ville : {m.venu || "—"}</p>  
               <p>📌 {getCelluleNom(m.cellule_id)}</p>
 
               <button
@@ -188,7 +189,14 @@ export default function MembresCellule() {
               {selectedMembre === m.id && (
                 <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm space-y-1 border">
                   <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                  <p>⚥ Sexe : {m.sexe || "—"}</p>
+                  <p>🎗️ Sexe : {m.sexe || "—"}</p>
+                  <p>💧 Bapteme d' Eau: {
+                    m.bapteme_eau === null ? "" : (m.bapteme_eau === true || m.bapteme_eau === "true") ? "Oui" : "Non"
+                  }</p>
+                  
+                  <p>🔥 Bapteme de Feu: {
+                    m.bapteme_esprit === null ? "" : (m.bapteme_esprit === true || m.bapteme_esprit === "true") ? "Oui" : "Non"
+                  }</p>
                   <p>❓ Besoin : {m.besoin || "—"}</p>
                   <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
                   <p>🧩 Venu par : {m.venu || "—"}</p>

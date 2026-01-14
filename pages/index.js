@@ -116,27 +116,26 @@ export default function IndexPage() {
           <LogoutLink />
         </div>
 
-        {/* 👤 Utilisateur + ⛪ Église */}
-<div className="flex flex-col items-end mt-2 space-y-1">
-  <p className="text-orange-200 text-sm">
-    👋 Bienvenue {prenom}
-  </p>
+        {/* 👤 Utilisateur + Église */}
+        <div className="flex flex-col items-end mt-4 space-y-1">
+          <p className="text-orange-200 text-sm">
+            👋 Bienvenue {prenom}
+          </p>
 
-  {/* 🔹 Identité Église */}
-  <div className="text-right space-y-0.5">
-    <p className="text-black font-bold text-base">
-      ⛪ Église Principale
-    </p>
-    <p className="text-amber-300 text-sm font-semibold">
-      📍 Maurice
-    </p>
-  </div>
-</div>
-
+          <div className="text-right mt-1 space-y-0.5">
+            <p className="text-black font-bold text-base">
+              ⛪ Église Principale
+            </p>
+            <p className="text-amber-300 font-semibold text-sm">
+              📍 Maurice
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* 🔹 Logo */}
       <div className="mb-6">
-        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18 mx-auto" />
+        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-20 mx-auto" />
       </div>
 
       {/* 🔹 Titre */}
@@ -146,7 +145,7 @@ export default function IndexPage() {
 
       {/* 🔹 Message */}
       <p className="text-white text-lg italic mb-6 max-w-2xl leading-relaxed tracking-wide font-light">
-        La famille est le premier lieu où l'amour, le soutien et la foi se transmettent. 
+        La famille est le premier lieu où l'amour, le soutien et la foi se transmettent. <br />
         Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté.
       </p>
 

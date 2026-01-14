@@ -385,21 +385,22 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {/* Details Modal */}
       {detailsModalMember && (
-        <DetailsModal
-          m={detailsModalMember}
-          onClose={() => setDetailsModalMember(null)}
-          handleCommentChange={handleCommentChange}
-          handleStatusChange={(id, value) => setStatusChanges(prev => ({ ...prev, [id]: value }))}
-          commentChanges={commentChanges}
-          statusChanges={statusChanges}
-          updating={updating}
-          updateSuivi={updateSuivi}
-          reactivateMember={reactivateMember} // 🔹 PASSER la fonction
-          handleAfterStatusUpdate={handleAfterStatusUpdate} // ✅
-        />
-      )}
+          <DetailsModal
+            m={detailsModalMember}
+            onClose={() => setDetailsModalMember(null)}
+            handleCommentChange={handleCommentChange}
+            handleStatusChange={(id, value) =>
+              setStatusChanges(prev => ({ ...prev, [id]: value }))
+            }
+            commentChanges={commentChanges}
+            statusChanges={statusChanges}
+            updating={updating}
+            reactivateMember={reactivateMember}
+            showRefus={showRefus} // ✅ AJOUT ICI
+          />
+        )}
+
 
       {/* Edit Member Popup */}
       {editMember && (

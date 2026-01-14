@@ -1,14 +1,16 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient"; // Assurez-vous que ce fichier existe
 
 export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit }) {
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
   const [comment, setComment] = useState(member.commentaire_suivis || "");
   const [status, setStatus] = useState(member.statut_suivis || "");
+  const [saving, setSaving] = useState(false);
+
   const popupRef = useRef(null);
   const phoneMenuRef = useRef(null);
-  const [saving, setSaving] = useState(false);
 
   const formatBesoin = (b) => {
     if (!b) return "—";
@@ -21,7 +23,7 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
     }
   };
 
-  // Fermer popup si clic à l'extérieur
+  // Fermer popup si clic en dehors
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (popupRef.current && !popupRef.current.contains(e.target)) {
@@ -33,19 +35,41 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
   }, [onClose]);
 
   const handleSave = async () => {
+    if (!member.id) return;
     setSaving(true);
 
-    // Simule la sauvegarde côté serveur
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    // On définit le statut à intégrer si choisi
+    let statutToSave = status;
+    if (status === "3") {
+      // Statut "Intégré"
+      statutToSave = 3;
+    }
 
-    console.log("✅ Simulé sauvegarde:", { comment, status });
+    try {
+      const { error } = await supabase
+        .from("membres_complets")
+        .update({
+          commentaire_suivis: comment,
+          statut_suivis: statutToSave,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", member.id);
 
-    // Met à jour le membre côté front
-    member.commentaire_suivis = comment;
-    member.statut_suivis = status;
+      if (error) {
+        console.error("Erreur lors de la sauvegarde :", error);
+        alert("Erreur lors de la sauvegarde : " + error.message);
+      } else {
+        // Mise à jour locale
+        member.commentaire_suivis = comment;
+        member.statut_suivis = statutToSave;
+        onClose(); // ferme le popup après succès
+      }
+    } catch (err) {
+      console.error("Erreur réseau :", err);
+      alert("Erreur réseau : " + err.message);
+    }
 
     setSaving(false);
-    onClose();
   };
 
   return (

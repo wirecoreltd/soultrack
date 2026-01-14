@@ -76,6 +76,12 @@ export default function Header() {
         </p>
       </div>
 
+{/* Info utilisateur alignée à droite sous Déconnexion */}
+      <div className="flex justify-end flex-col text-right space-y-1 mb-6">
+               <p className="text-white text-sm">{eglise} <span className="text-amber-300 font-semibold">- {branche}</span></p>
+      </div>
+
+
       {/* Logo */}
       <div className="flex justify-center mb-6">
         <img

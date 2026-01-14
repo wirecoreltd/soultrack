@@ -46,7 +46,6 @@ export default function IndexPage() {
     router.push(path.startsWith("/") ? path : "/" + path);
   };
 
-  // Calcul des cartes à afficher selon les rôles
   let cardsToShow = [];
   if (roles.includes("Administrateur")) {
     Object.values(roleCards).forEach((cards) => {

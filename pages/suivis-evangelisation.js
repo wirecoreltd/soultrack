@@ -542,16 +542,19 @@ export default function SuivisEvangelisation() {
       )}
 
 
-    {/* Détail popup */}
-      {view === "table" && detailsTable && (
-        <DetailEvangeliseSuivisPopup
-          member={detailsTable}
-          onClose={() => setDetailsTable(null)}
-          onEdit={(s) => {
-            setDetailsTable(null);
-            if (s?.id) setEditingContact(s);
-          }}
-        />
+    <DetailEvangeliseSuivisPopup
+  member={detailsTable}
+  onClose={() => setDetailsTable(null)}
+  onEdit={(s) => {
+    setDetailsTable(null);
+    if (s?.id) setEditingContact(s);
+  }}
+  onSave={(id, updatedMember) => {
+    updateSuivi(id, updatedMember);
+    setDetailsTable(null);
+  }}
+/>
+
       )}
 
     {editingContact && (

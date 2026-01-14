@@ -542,16 +542,17 @@ export default function SuivisEvangelisation() {
       )}
 
 
-    {view === "table" && detailsTable && (
-      <DetailEvangeliseSuivisPopup
-        member={detailsTable}
-        onClose={() => setDetailsTable(null)}
-        onEdit={(s) => {
-          setDetailsTable(null);
-          s.evangelises?.id && setEditingContact(s.evangelises);
-        }}
-      />
-    )}
+    {/* Détail popup */}
+      {view === "table" && detailsTable && (
+        <DetailEvangeliseSuivisPopup
+          member={detailsTable}
+          onClose={() => setDetailsTable(null)}
+          onEdit={(s) => {
+            setDetailsTable(null);
+            if (s?.id) setEditingContact(s);
+          }}
+        />
+      )}
 
     {editingContact && (
       <EditEvangeliseSuiviPopup

@@ -1,12 +1,13 @@
+//components/DetailEvangeliseSuivisPopup.js//
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient"; // ✅ Import correct pour export default
+import supabase from "../lib/supabaseClient";
 
 export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit }) {
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
-  const [comment, setComment] = useState(member.commentaire_suivis || "");
-  const [status, setStatus] = useState(member.statut_suivis || "");
+  const [comment, setComment] = useState(member.commentaire_evangelises || "");
+  const [status, setStatus] = useState(member.status_suivis_evangelises || "");
   const [saving, setSaving] = useState(false);
 
   const phoneMenuRef = useRef(null);
@@ -14,7 +15,6 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
 
   const formatBesoin = (b) => {
     if (!b) return "—";
-    if (Array.isArray(b)) return b.join(", ");
     try {
       const arr = JSON.parse(b);
       return Array.isArray(arr) ? arr.join(", ") : b;
@@ -23,13 +23,10 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
     }
   };
 
-  // Fermer popup si clic à l’extérieur
+  // Fermer popup si clic extérieur
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (
-        popupRef.current &&
-        !popupRef.current.contains(e.target)
-      ) {
+      if (popupRef.current && !popupRef.current.contains(e.target)) {
         onClose();
       }
     };
@@ -37,7 +34,7 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
-  // Fermer menu téléphone si clic à l’extérieur
+  // Fermer menu téléphone
   useEffect(() => {
     const handleClickOutsideMenu = (e) => {
       if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
@@ -45,34 +42,61 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
       }
     };
     document.addEventListener("mousedown", handleClickOutsideMenu);
-    return () => document.removeEventListener("mousedown", handleClickOutsideMenu);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutsideMenu);
   }, []);
 
+  // ================= UPSERT MEMBRE (comme carte) =================
+  const upsertMembre = async (suivi) => {
+    try {
+      const payload = {
+        suivi_int_id: Number(suivi.id),
+        nom: suivi.nom,
+        prenom: suivi.prenom,
+        telephone: suivi.telephone,
+        ville: suivi.ville,
+        sexe: suivi.sexe,
+        besoin: suivi.besoin,
+        infos_supplementaires: suivi.infos_supplementaires,
+        cellule_id: suivi.cellule_id,
+        conseiller_id: suivi.conseiller_id,
+        statut_initial: "intégré",
+        suivi_statut: "Intégré",
+        suivi_commentaire_suivis: comment,
+        suivi_updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from("membres_complets")
+        .upsert(payload, { onConflict: "suivi_int_id" });
+
+      if (error) console.error("UPSERT MEMBRE ERROR:", error);
+    } catch (err) {
+      console.error("Erreur upsert membre:", err.message);
+    }
+  };
+
+  // ================= SAVE =================
   const handleSave = async () => {
     if (!member.id) return;
 
     setSaving(true);
 
     try {
-      const updates = {
-        commentaire_suivis: comment,
-        statut_suivis: Number(status),
-        updated_at: new Date().toISOString(),
-      };
-
-      // ✅ Si statut = 3 (Intégré), on met aussi statut général du contact
-      if (Number(status) === 3) {
-        updates.statut = "Intégré";
-      }
-
-      const { data, error } = await supabase
-        .from("membres_complets")
-        .update(updates)
-        .eq("id", member.id)
-        .select()
-        .single();
+      const { error } = await supabase
+        .from("suivis_des_evangelises")
+        .update({
+          commentaire_evangelises: comment,
+          status_suivis_evangelises: status,
+        })
+        .eq("id", member.id);
 
       if (error) throw error;
+
+      // ✅ si intégré → membres + retirer de la liste
+      if (status === "Intégré") {
+        await upsertMembre(member);
+      }
 
       setSaving(false);
       onClose();
@@ -89,7 +113,7 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
         ref={popupRef}
         className="bg-white rounded-lg p-6 w-96 relative shadow-xl max-h-[90vh] overflow-y-auto"
       >
-        {/* ❌ Fermer */}
+        {/* Fermer */}
         <button
           onClick={onClose}
           className="absolute top-2 right-2 text-gray-500 font-bold hover:text-gray-700"
@@ -102,7 +126,7 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
           {member.prenom} {member.nom}
         </h2>
 
-        {/* Numéro téléphone interactif */}
+        {/* Téléphone */}
         <p
           onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
           className="text-center text-orange-500 font-semibold underline cursor-pointer"
@@ -119,29 +143,45 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
           >
             <a
               href={member.telephone ? `tel:${member.telephone}` : "#"}
-              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
+              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
+                !member.telephone ? "opacity-50 pointer-events-none" : ""
+              }`}
             >
               📞 Appeler
             </a>
             <a
               href={member.telephone ? `sms:${member.telephone}` : "#"}
-              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
+              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
+                !member.telephone ? "opacity-50 pointer-events-none" : ""
+              }`}
             >
               ✉️ SMS
             </a>
             <a
-              href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}?call` : "#"}
+              href={
+                member.telephone
+                  ? `https://wa.me/${member.telephone.replace(/\D/g, "")}?call`
+                  : "#"
+              }
               target="_blank"
               rel="noopener noreferrer"
-              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
+              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
+                !member.telephone ? "opacity-50 pointer-events-none" : ""
+              }`}
             >
               📱 Appel WhatsApp
             </a>
             <a
-              href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}` : "#"}
+              href={
+                member.telephone
+                  ? `https://wa.me/${member.telephone.replace(/\D/g, "")}`
+                  : "#"
+              }
               target="_blank"
               rel="noopener noreferrer"
-              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
+              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
+                !member.telephone ? "opacity-50 pointer-events-none" : ""
+              }`}
             >
               💬 Message WhatsApp
             </a>
@@ -166,7 +206,7 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
           />
 
           <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">
-            Statut Intégration
+            Statut du suivis
           </label>
           <select
             value={status}
@@ -174,9 +214,9 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
             className="w-full border rounded-lg p-2 mb-2"
           >
             <option value="">-- Sélectionner un statut --</option>
-            <option value="2">En attente</option>
-            <option value="3">Intégré</option>
-            <option value="4">Refus</option>
+            <option value="En cours">En cours</option>
+            <option value="Intégré">Intégré</option>
+            <option value="Refus">Refus</option>
           </select>
 
           <button

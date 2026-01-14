@@ -122,10 +122,15 @@ export default function IndexPage() {
             👋 Bienvenue {prenom}
           </p>
 
-          <p className="text-white/90 text-sm font-semibold">
-            ⛪ Église Principale — Maurice
-          </p>
-        </div>
+          {/* 🔹 Identité Église */}
+            <div className="text-center mb-6 space-y-1">
+              <p className="text-black font-bold text-base">
+                ⛪ Église Principale
+              </p>
+              <p className="text-amber-300 text-sm font-semibold">
+                📍 Maurice
+              </p>
+            </div>
       </div>
 
       {/* 🔹 Logo */}

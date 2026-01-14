@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import supabase from "@/lib/supabaseClient"; // ✅ Import correct pour export default
+import supabase from "../lib/supabaseClient"; // ✅ Import correct pour export default
 
 export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit }) {
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);

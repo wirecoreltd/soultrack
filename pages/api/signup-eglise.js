@@ -1,5 +1,10 @@
-import supabase from "../../lib/supabaseClient";
-import bcrypt from "bcryptjs";
+import { createClient } from "@supabase/supabase-js";
+
+// ⚠️ Utiliser uniquement côté serveur
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,       // URL Supabase
+  process.env.SUPABASE_SERVICE_ROLE_KEY       // Clé SERVICE_ROLE (privée)
+);
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -17,8 +22,8 @@ export default async function handler(req, res) {
   } = req.body;
 
   try {
-    // 1️⃣ Vérifier que l'email n'existe pas déjà
-    const { data: existing, error: existingError } = await supabase
+    // 1️⃣ Vérifier si l'email existe déjà dans profiles
+    const { data: existing, error: existingError } = await supabaseAdmin
       .from("profiles")
       .select("id")
       .eq("email", adminEmail)
@@ -29,7 +34,7 @@ export default async function handler(req, res) {
     }
 
     // 2️⃣ Créer l'église
-    const { data: egliseData, error: egliseError } = await supabase
+    const { data: egliseData, error: egliseError } = await supabaseAdmin
       .from("eglises")
       .insert([{ nom: nomEglise }])
       .select()
@@ -42,7 +47,7 @@ export default async function handler(req, res) {
     const egliseId = egliseData.id;
 
     // 3️⃣ Créer la branche
-    const { data: brancheData, error: brancheError } = await supabase
+    const { data: brancheData, error: brancheError } = await supabaseAdmin
       .from("branches")
       .insert([{ nom: nomBranche, localisation, eglise_id: egliseId }])
       .select()
@@ -54,18 +59,28 @@ export default async function handler(req, res) {
 
     const brancheId = brancheData.id;
 
-    // 4️⃣ Hasher le mot de passe
-    const passwordHash = bcrypt.hashSync(adminPassword, 10);
+    // 4️⃣ Créer l'utilisateur admin dans Supabase Auth
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email: adminEmail,
+      password: adminPassword,
+      email_confirm: true,
+    });
 
-    // 5️⃣ Créer le profil admin
-    const { data: profileData, error: profileError } = await supabase
+    if (authError) {
+      return res.status(400).json({ error: authError.message });
+    }
+
+    const adminUserId = authData.user.id;
+
+    // 5️⃣ Créer le profil admin dans profiles
+    const { data: profileData, error: profileError } = await supabaseAdmin
       .from("profiles")
       .insert([
         {
+          id: adminUserId,
           prenom: adminPrenom,
           nom: adminNom,
           email: adminEmail,
-          password_hash: passwordHash,
           role: "Administrateur",
           roles: ["Administrateur"],
           eglise_id: egliseId,
@@ -80,6 +95,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: profileError.message });
     }
 
+    // ✅ Succès
     return res.status(200).json({
       message: "Église, branche et admin créés avec succès !",
       eglise: egliseData,

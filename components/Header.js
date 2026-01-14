@@ -1,41 +1,36 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import LogoutLink from "./LogoutLink";
-import Image from "next/image";
 
-export default function Header({ prenom = "Admin", eglise = "Église Principale", branche = "Maurice" }) {
-  const router = useRouter();
-
+export default function Header({ prenom, eglise, branche }) {
   return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col items-center p-4 space-y-3">
+    <div className="w-full max-w-5xl flex flex-col items-center space-y-2">
       
-      {/* 🔹 Top bar: ← Retour et Déconnexion */}
-      <div className="w-full flex justify-between items-center">
+      {/* Barre du haut : Retour / Déconnexion */}
+      <div className="w-full flex justify-between items-center mb-1">
         <button
-          onClick={() => router.back()}
-          className="text-white font-login text-lg font-bold hover:text-gray-200 transition-colors"
+          onClick={() => history.back()}
+          className="text-white text-base hover:text-gray-200 transition-colors"
         >
           ← Retour
         </button>
-
-        <LogoutLink className="text-white font-login text-lg font-bold" />
+        <LogoutLink className="text-white text-base" />
       </div>
 
-      {/* 🔹 Infos utilisateur */}
-      <div className="flex flex-col items-center text-center space-y-1">
-        <p className="text-yellow-100 font-login text-lg font-bold">👋 Bienvenue {prenom}</p>
-        <p className="text-black font-login text-lg font-bold inline">
-          {eglise}{" "}
-          <span className="text-amber-300 font-login text-lg font-bold">- {branche}</span>
+      {/* Bienvenue et infos utilisateur */}
+      <div className="text-center space-y-1">
+        <p className="text-yellow-100 text-base">
+          👋 Bienvenue <span className="font-semibold text-white">{prenom}</span>
+        </p>
+        <p className="text-base text-black">
+          {eglise} <span className="font-semibold text-amber-300">— {branche}</span>
         </p>
       </div>
 
-      {/* 🔹 Logo centré */}
-      <div className="mt-3">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={100} height={100} />
+      {/* Logo centré */}
+      <div className="mt-2">
+        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-20 mx-auto" />
       </div>
-
     </div>
   );
 }

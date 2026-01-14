@@ -117,21 +117,22 @@ export default function IndexPage() {
         </div>
 
         {/* 👤 Utilisateur + ⛪ Église */}
-        <div className="flex flex-col items-end mt-2 space-y-1">
-          <p className="text-orange-200 text-sm">
-            👋 Bienvenue {prenom}
-          </p>
+<div className="flex flex-col items-end mt-2 space-y-1">
+  <p className="text-orange-200 text-sm">
+    👋 Bienvenue {prenom}
+  </p>
 
-          {/* 🔹 Identité Église */}
-            <div className="text-center mb-6 space-y-1">
-              <p className="text-black font-bold text-base">
-                ⛪ Église Principale
-              </p>
-              <p className="text-amber-300 text-sm font-semibold">
-                📍 Maurice
-              </p>
-            </div>
-      </div>
+  {/* 🔹 Identité Église */}
+  <div className="text-right space-y-0.5">
+    <p className="text-black font-bold text-base">
+      ⛪ Église Principale
+    </p>
+    <p className="text-amber-300 text-sm font-semibold">
+      📍 Maurice
+    </p>
+  </div>
+</div>
+
 
       {/* 🔹 Logo */}
       <div className="mb-6">

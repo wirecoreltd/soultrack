@@ -52,13 +52,13 @@ export default function Header() {
       <div className="flex justify-between items-center mb-1">
         <button
           onClick={() => router.back()}
-          className="text-white hover:text-gray-200"
+          className="text-amber-300 hover:text-gray-200"
         >
           ← Retour
         </button>
         <button
           onClick={handleLogout}
-          className="text-white hover:text-gray-200 font-semibold"
+          className="ttext-white text-sm hover:text-gray-200 font-semibold"
         >
           Déconnexion
         </button>

@@ -10,10 +10,12 @@ export default function DetailsModal({
   statusChanges,
   handleCommentChange,
   handleStatusChange,
-  reactivateMember, // 🔹 fonction passée depuis le parent
+  updateSuivi,
+  reactivateMember,
   updating,
   showRefus,
 }) {
+
   if (!m || !m.id) return null;
 
   const [editMember, setEditMember] = useState(null);
@@ -116,30 +118,51 @@ export default function DetailsModal({
               Statut Intégration
             </label>
             <select
-              value={statusChanges[m.id] ?? "4"} // 🔹 par défaut Refus
-              onChange={(e) => handleStatusChange(m.id, e.target.value)}
-              className="w-full border rounded-lg p-2 mb-2"
-            >
-              <option value="2">En attente</option>
-              <option value="3">Intégré</option>
-              <option value="4">Refus</option>
-            </select>
+  value={statusChanges[m.id] ?? String(m.statut_suivis ?? "")}
+  onChange={(e) => handleStatusChange(m.id, e.target.value)}
+  className="w-full border rounded-lg p-2 mb-2"
+>
+  <option value="">-- Sélectionner un statut --</option>
+  <option value="2">En attente</option>
+  <option value="3">Intégré</option>
+  <option value="4">Refus</option>
+</select>
 
-            {/* 💚 Bouton Réactiver */}
-            <button
-              onClick={async () => {
-                await reactivateMember(m.id);
-                onClose(); // 🔹 ferme automatiquement le popup
-              }}
-              disabled={updating[m.id]}
-              className={`mt-2 py-2 rounded w-full transition ${
-                updating[m.id]
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-green-500 hover:bg-green-600 text-white"
-              }`}
-            >
-              {updating[m.id] ? "Réactivation..." : "Réactiver"}
-            </button>
+
+            {showRefus ? (
+  /* 🔴 VUE REFUS → Réactiver */
+  <button
+    onClick={async () => {
+      await reactivateMember(m.id);
+      onClose();
+    }}
+    disabled={updating[m.id]}
+    className={`mt-2 py-2 rounded w-full transition ${
+      updating[m.id]
+        ? "bg-gray-400 cursor-not-allowed"
+        : "bg-green-500 hover:bg-green-600 text-white"
+    }`}
+  >
+    {updating[m.id] ? "Réactivation..." : "Réactiver"}
+  </button>
+) : (
+  /* 🔵 VUE NORMALE → Sauvegarder (COMME LA CARTE) */
+  <button
+    onClick={async () => {
+      await updateSuivi(m.id); // ✅ même fonction que la vue carte
+      onClose();
+    }}
+    disabled={updating[m.id]}
+    className={`mt-2 py-2 rounded w-full transition ${
+      updating[m.id]
+        ? "bg-gray-400 cursor-not-allowed"
+        : "bg-blue-500 hover:bg-blue-600 text-white"
+    }`}
+  >
+    {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
+  </button>
+)}
+
           </div>
 
           {/* ================= INFOS DÉTAILLÉES ================= */}

@@ -54,7 +54,7 @@ export default function Header() {
       <div className="flex flex-col items-end text-right space-y-0 mb-4">
         <p className="text-white text-base">👋 Bienvenue <span className="font-semibold">{prenom}</span></p>
         <p className="text-white text-base">
-          {eglise} <span className="text-amber-300 font-semibold">- {branche}</span>
+          {eglise} <span className="text-amber-300 font-semibold">-{branche}</span>
         </p>
       </div>
 

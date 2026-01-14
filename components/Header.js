@@ -8,8 +8,6 @@ export default function Header() {
   const router = useRouter();
 
   const [prenom, setPrenom] = useState("Utilisateur");
-  const [eglise, setEglise] = useState("Église Principale");
-  const [branche, setBranche] = useState("Maurice");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,15 +25,13 @@ export default function Header() {
 
         const { data: profile, error } = await supabase
           .from("profiles")
-          .select("prenom, eglise_nom, branche_nom")
+          .select("prenom")
           .eq("id", user.id)
           .single();
 
         if (error) throw error;
 
         setPrenom(profile?.prenom || "Utilisateur");
-        setEglise(profile?.eglise_nom || "Église Principale");
-        setBranche(profile?.branche_nom || "Maurice");
       } catch (err) {
         console.error("❌ Erreur récupération profil :", err);
       } finally {
@@ -47,12 +43,8 @@ export default function Header() {
   }, []);
 
   const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      router.push("/login");
-    } catch (err) {
-      console.error("❌ Erreur lors de la déconnexion :", err);
-    }
+    await supabase.auth.signOut();
+    router.push("/login");
   };
 
   return (
@@ -80,13 +72,6 @@ export default function Header() {
           👋 Bienvenue{" "}
           <span className="font-semibold">
             {loading ? "..." : prenom}
-          </span>
-        </p>
-
-        <p className="text-white text-sm">
-          {eglise}{" "}
-          <span className="text-amber-300 font-semibold">
-            - {branche}
           </span>
         </p>
       </div>

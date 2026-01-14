@@ -12,6 +12,7 @@ export default function DetailsModal({
   handleStatusChange,
   reactivateMember, // 🔹 fonction passée depuis le parent
   updating,
+  showRefus,
 }) {
   if (!m || !m.id) return null;
 

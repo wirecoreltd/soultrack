@@ -52,7 +52,7 @@ export default function Header() {
       <div className="flex justify-between items-center mb-1">
         <button
           onClick={() => router.back()}
-          className="text-amber-300 hover:text-gray-200"
+          className="text-white hover:text-gray-200"
         >
           ← Retour
         </button>
@@ -64,13 +64,13 @@ export default function Header() {
         </button>
       </div>
 
-      {/* Info utilisateur sous Déconnexion */}
-      <div className="text-left ml-2 space-y-1 mb-6">
+      {/* Info utilisateur alignée à droite sous Déconnexion */}
+      <div className="flex justify-end flex-col text-right space-y-1 mb-6">
         <p className="text-white text-sm">👋 Bienvenue <span className="font-semibold">{prenom}</span></p>
         <p className="text-white text-sm">{eglise} <span className="text-amber-300 font-semibold">- {branche}</span></p>
       </div>
 
-      {/* Logo centré sous le header */}
+      {/* Logo centré */}
       <div className="flex justify-center mb-6">
         <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18" />
       </div>

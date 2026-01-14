@@ -164,54 +164,10 @@ export default function DetailsEvangePopup({ member, onClose, onEdit }) {
               </a>
             </div>
           )}
-        </div>
-
-        <p>💬 Cellule : {member.cellule_full || "—"}</p>
-        <p>👤 Conseiller : {member.responsable || "—"}</p>
-        <p>🏙️ Ville : {member.ville || "—"}</p>
-
-        {/* Commentaire et statut */}
-        <div className="flex flex-col mt-4">
-          <label className="font-semibold text-blue-700 mb-1 text-center">
-            Commentaire Suivis
-          </label>
-          <textarea
-            value={commentaire}
-            onChange={(e) => setCommentaire(e.target.value)}
-            className="w-full border rounded-lg p-2"
-            rows={2}
-          />
-
-          <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">
-            Statut Intégration
-          </label>
-          <select
-            value={statutSuivis}
-            onChange={(e) => setStatutSuivis(e.target.value)}
-            className="w-full border rounded-lg p-2 mb-2"
-          >
-            <option value="">-- Sélectionner un statut --</option>
-            <option value="2">En attente</option>
-            <option value="4">Refus</option>
-            <option value="3">Intégré</option>
-          </select>
-
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className={`mt-2 w-full font-bold py-2 rounded-lg shadow-md transition-all ${
-              saving
-                ? "bg-blue-300 cursor-not-allowed"
-                : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white"
-            }`}
-          >
-            {saving ? "Enregistrement..." : "Sauvegarder"}
-          </button>
-        </div>
-
-        {/* ====== LEFT ALIGN ====== */}
-        <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
-          <p>⚥ Sexe : {member.sexe || "—"}</p>
+        </div>    
+          <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
+          <p>🏙️ Ville : {member.ville || "—"}</p>    
+          <p>🎗️ Sexe : {member.sexe || "—"}</p>
           <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
           <p>☀️ Type : {member.type_conversion || "—"}</p>
           <p>❓ Besoin : {formatBesoin(member.besoin)}</p>

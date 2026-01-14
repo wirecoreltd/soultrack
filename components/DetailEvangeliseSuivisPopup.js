@@ -2,9 +2,9 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
 
-export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit }) {
+export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit, onSave })
+ {
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
   const [comment, setComment] = useState(member.commentaire_evangelises || "");
   const [status, setStatus] = useState(member.status_suivis_evangelises || "");
@@ -77,7 +77,14 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
   };
 
   // ================= SAVE =================
-  const handleSave = async () => {
+  const handleSave = () => {
+  onSave(member.id, {
+    ...member,
+    commentaire_evangelises: comment,
+    status_suivis_evangelises: status,
+  });
+};
+
     if (!member.id) return;
 
     setSaving(true);

@@ -1,35 +1,41 @@
+//✅ /components/Header.js
 "use client";
 
+import { useRouter } from "next/navigation";
 import LogoutLink from "./LogoutLink";
 
-export default function Header({ prenom, eglise = "Église Principale", branche = "Maurice" }) {
-  return (
-    <div className="w-full max-w-5xl flex flex-col items-center space-y-2">
+export default function Header({ prenom, eglise, branche }) {
+  const router = useRouter();
 
-      {/* Barre du haut : Retour / Déconnexion */}
-      <div className="w-full flex justify-between items-center mb-1">
+  return (
+    <div className="w-full max-w-5xl mb-6">
+      {/* Ligne du haut : Retour à gauche, Déconnexion à droite */}
+      <div className="flex justify-between items-center mb-2">
         <button
-          onClick={() => history.back()}
-          className="text-white text-base hover:text-gray-200 transition-colors"
+          onClick={() => router.back()}
+          className="text-white hover:text-gray-200"
         >
           ← Retour
         </button>
-        <LogoutLink className="text-white text-base" />
+        <LogoutLink />
       </div>
 
-      {/* Bienvenue et infos utilisateur */}
-      <div className="text-center">
-        <p className="text-white text-base mb-1">
-          👋 Bienvenue {prenom}
+      {/* Bienvenue et prénom */}
+      <div className="text-right mb-1">
+        <p className="text-white text-sm">
+          👋 Bienvenue <span className="font-semibold">{prenom}</span>
         </p>
-        <p className="text-white text-base">
-          {eglise} — {branche}
-        </p>
+      </div>
+
+      {/* Église et Branche sur une seule ligne */}
+      <div className="text-right">
+        <span className="text-white">{eglise}</span>{" "}
+        <span className="text-amber-300 font-semibold">— {branche}</span>
       </div>
 
       {/* Logo centré */}
-      <div className="mt-2">
-        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-20 mx-auto" />
+      <div className="flex justify-center mt-4">
+        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18" />
       </div>
     </div>
   );

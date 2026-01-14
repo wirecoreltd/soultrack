@@ -6,7 +6,7 @@ import LogoutLink from "../components/LogoutLink";
 import SendLinkPopup from "../components/SendLinkPopup";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import Header from "../components/HeaderPages";
+import HeaderPages from "../components/HeaderPages";
 
 export default function MembresHub() {
   const router = useRouter();

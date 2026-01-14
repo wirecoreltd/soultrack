@@ -58,7 +58,7 @@ export default function Header() {
         </button>
         <button
           onClick={handleLogout}
-          className="text-amber-300e text-sm hover:text-gray-200"
+          className="text-amber-300 text-sm hover:text-gray-200"
         >
           Déconnexion
         </button>

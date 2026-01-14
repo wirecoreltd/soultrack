@@ -1,243 +1,260 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { useState } from "react";
+import supabase from "../lib/supabaseClient";
 
-export default function DetailsEvangePopup({
+export default function EditEvangelisePopup({
   member,
+  cellules = [],
+  conseillers = [],
   onClose,
-  onEdit,
-  onAfterStatusUpdate, // navigation / refresh parent
+  onUpdateMember,
 }) {
-  const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
-  const [status, setStatus] = useState(member.statut_suivis ?? "");
-  const [comment, setComment] = useState(member.commentaire_suivis ?? "");
-  const [saving, setSaving] = useState(false);
+  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
 
-  const phoneMenuRef = useRef(null);
-  const popupRef = useRef(null);
+  const initialBesoin =
+    typeof member.besoin === "string" ? JSON.parse(member.besoin || "[]") : member.besoin || [];
 
-  // ================= CLICK OUTSIDE PHONE MENU =================
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (
-        phoneMenuRef.current &&
-        !phoneMenuRef.current.contains(e.target)
-      ) {
-        setOpenPhoneMenu(false);
+  const [formData, setFormData] = useState({
+    prenom: member.prenom || "",
+    nom: member.nom || "",
+    telephone: member.telephone || "",
+    ville: member.ville || "",
+    besoin: initialBesoin,
+    autreBesoin: "",
+    infos_supplementaires: member.infos_supplementaires || "",
+    priere_salut: member.priere_salut || false,
+    type_conversion: member.type_conversion || "",
+    is_whatsapp: member.is_whatsapp || false,
+  });
+
+  const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleBesoinChange = (e) => {
+    const { value, checked } = e.target;
+
+    if (value === "Autre") {
+      setShowAutre(checked);
+      if (!checked) {
+        setFormData((prev) => ({
+          ...prev,
+          autreBesoin: "",
+          besoin: prev.besoin.filter((b) => b !== "Autre"),
+        }));
       }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // ================= FORMAT BESOIN =================
-  const formatBesoin = (b) => {
-    if (!b) return "—";
-    if (Array.isArray(b)) return b.join(", ");
-    try {
-      const arr = JSON.parse(b);
-      return Array.isArray(arr) ? arr.join(", ") : b;
-    } catch {
-      return b;
     }
+
+    setFormData((prev) => {
+      const updated = checked
+        ? [...prev.besoin, value]
+        : prev.besoin.filter((b) => b !== value);
+      return { ...prev, besoin: updated };
+    });
   };
 
-  // ================= SAVE =================
-  const handleSave = async () => {
-    if (!status) return;
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
 
-    setSaving(true);
+  const handleSubmit = async () => {
+    setLoading(true);
 
-    const newStatut = Number(status);
-
-    const updatePayload = {
-      statut_suivis: newStatut,
-      commentaire_suivis: comment,
-      updated_at: new Date().toISOString(),
+    const cleanData = {
+      prenom: formData.prenom,
+      nom: formData.nom,
+      telephone: formData.telephone,
+      ville: formData.ville,
+      infos_supplementaires: formData.infos_supplementaires || null,
+      besoin:
+        formData.autreBesoin && showAutre
+          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
+          : formData.besoin,
+      priere_salut: formData.priere_salut,
+      type_conversion: formData.type_conversion,
+      is_whatsapp: formData.is_whatsapp,
     };
 
-    // ✅ Si intégré → devient membre intégré
-    if (newStatut === 3) {
-      updatePayload.statut = "integré";
-      updatePayload.etat_contact = "integré";
-    }
-
-    const { data, error } = await supabase
-      .from("membres_complets")
-      .update(updatePayload)
+    const { error, data } = await supabase
+      .from("evangelises")
+      .update(cleanData)
       .eq("id", member.id)
       .select()
       .single();
 
-    setSaving(false);
-
     if (error) {
-      console.error("Erreur update suivi:", error);
-      alert("Erreur lors de la mise à jour");
-      return;
+      alert("❌ Erreur : " + error.message);
+    } else {
+      if (onUpdateMember) onUpdateMember(data);
+      setMessage("✅ Changement enregistré !");
+      setTimeout(() => {
+        setMessage("");
+        // Fermer les deux popups
+        onClose();
+      }, 1200);
     }
 
-    // 🔁 logique navigation centrale (comme cartes)
-    if (onAfterStatusUpdate && data?.statut_suivis) {
-      onAfterStatusUpdate(Number(data.statut_suivis));
-    }
-
-    onClose(); // ✅ popup se ferme toujours après action
+    setLoading(false);
   };
-
-  if (!member) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div
-        ref={popupRef}
-        className="bg-white rounded-xl p-6 w-96 relative shadow-xl max-h-[90vh] overflow-y-auto"
-      >
-        {/* ❌ Fermer */}
+      <div className="bg-white p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto shadow-xl relative">
+
+        {/* Croix fermer */}
         <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-gray-500 font-bold hover:text-gray-700"
+          onClick={onClose} // Annuler => ferme les deux popups
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 font-bold text-lg"
         >
-          ✖
+          ×
         </button>
 
-        {/* ================= CENTRÉ ================= */}
-        <div className="flex flex-col items-center text-center">
-          <h2 className="text-lg font-bold mb-1">
-            {member.prenom} {member.nom}
-          </h2>
+        <h2 className="text-lg font-bold text-gray-800 text-center mb-4">
+          Modifier {member.prenom} {member.nom}
+        </h2>
 
-          {/* 📞 TELEPHONE */}
-          <div className="relative mt-1">
-            <p
-              onClick={() => setOpenPhoneMenu((p) => !p)}
-              className="text-orange-500 underline font-semibold cursor-pointer"
-            >
-              {member.telephone || "—"}
-            </p>
+        <div className="flex flex-col space-y-3 text-sm">
+          {/* Prénom / Nom */}
+          <label className="font-semibold">Prénom</label>
+          <input
+            name="prenom"
+            value={formData.prenom}
+            onChange={handleChange}
+            className="border rounded px-2 py-1"
+          />
 
-            {/* MENU TELEPHONE */}
-            {openPhoneMenu && (
-              <div
-                ref={phoneMenuRef}
-                className="absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <a
-                  href={member.telephone ? `tel:${member.telephone}` : "#"}
-                  className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
-                    !member.telephone ? "opacity-50 pointer-events-none" : ""
-                  }`}
-                >
-                  📞 Appeler
-                </a>
+          <label className="font-semibold">Nom</label>
+          <input
+            name="nom"
+            value={formData.nom}
+            onChange={handleChange}
+            className="border rounded px-2 py-1"
+          />
 
-                <a
-                  href={member.telephone ? `sms:${member.telephone}` : "#"}
-                  className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
-                    !member.telephone ? "opacity-50 pointer-events-none" : ""
-                  }`}
-                >
-                  ✉️ SMS
-                </a>
+          <label className="font-semibold">Ville</label>
+          <input
+            name="ville"
+            value={formData.ville}
+            onChange={handleChange}
+            className="border rounded px-2 py-1"
+          />
 
-                <a
-                  href={
-                    member.telephone
-                      ? `https://wa.me/${member.telephone.replace(/\D/g, "")}?call`
-                      : "#"
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
-                    !member.telephone ? "opacity-50 pointer-events-none" : ""
-                  }`}
-                >
-                  📱 Appel WhatsApp
-                </a>
+          <label className="font-semibold">Téléphone</label>
+          <input
+            name="telephone"
+            value={formData.telephone}
+            onChange={handleChange}
+            className="border rounded px-2 py-1"
+          />
 
-                <a
-                  href={
-                    member.telephone
-                      ? `https://wa.me/${member.telephone.replace(/\D/g, "")}`
-                      : "#"
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
-                    !member.telephone ? "opacity-50 pointer-events-none" : ""
-                  }`}
-                >
-                  💬 Message WhatsApp
-                </a>
-              </div>
+          {/* WhatsApp / Prière du salut */}
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="is_whatsapp"
+              checked={formData.is_whatsapp}
+              onChange={handleChange}
+            />
+            WhatsApp
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="priere_salut"
+              checked={formData.priere_salut}
+              onChange={handleChange}
+            />
+            Prière du salut
+          </label>
+
+          {/* Type de conversion */}
+          <label className="font-semibold">Type de conversion</label>
+          <input
+            name="type_conversion"
+            value={formData.type_conversion}
+            onChange={handleChange}
+            className="border rounded px-2 py-1"
+          />
+
+          {/* Besoins */}
+          <div className="mt-2">
+            <p className="font-semibold mb-2">Besoins :</p>
+            {besoinsOptions.map((item) => (
+              <label key={item} className="flex items-center gap-3 mb-2">
+                <input
+                  type="checkbox"
+                  value={item}
+                  checked={formData.besoin.includes(item)}
+                  onChange={handleBesoinChange}
+                  className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+                />
+                {item}
+              </label>
+            ))}
+
+            {/* Autre */}
+            <label className="flex items-center gap-3 mb-2">
+              <input
+                type="checkbox"
+                value="Autre"
+                checked={showAutre}
+                onChange={handleBesoinChange}
+                className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+              />
+              Autre
+            </label>
+
+            {showAutre && (
+              <input
+                type="text"
+                name="autreBesoin"
+                value={formData.autreBesoin}
+                onChange={handleChange}
+                placeholder="Précisez..."
+                className="border rounded px-2 py-1 w-full"
+              />
             )}
           </div>
 
-          <p className="mt-2">🏠 Cellule : {member.cellule_full || "—"}</p>
-          <p>👤 Conseiller : {member.responsable || "—"}</p>
-          <p>🏙 Ville : {member.ville || "—"}</p>
+          {/* Infos supplémentaires */}
+          <label className="font-semibold">Infos supplémentaires</label>
+          <textarea
+            name="infos_supplementaires"
+            value={formData.infos_supplementaires}
+            onChange={handleChange}
+            className="border rounded px-2 py-1"
+            rows={3}
+          />
 
-          {/* ================= COMMENTAIRE ================= */}
-          <div className="flex flex-col w-full mt-4">
-            <label className="font-semibold text-blue-700 mb-1 text-center">
-              Commentaire Suivis
-            </label>
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              className="w-full border rounded-lg p-2"
-              rows={2}
-            />
+          {message && (
+            <p className="text-green-600 text-center font-semibold">{message}</p>
+          )}
 
-            {/* ================= STATUT ================= */}
-            <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">
-              Statut du Suivis
-            </label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="w-full border rounded-lg p-2 mb-2"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="2">En attente</option>
-              <option value="4">Refus</option>
-              <option value="3">Intégré</option>
-            </select>
-
-            {/* 💾 SAUVEGARDER */}
+          {/* Boutons */}
+          <div className="flex justify-between mt-4">
             <button
-              onClick={handleSave}
-              disabled={saving}
-              className={`mt-2 w-full font-bold py-2 rounded-lg shadow-md transition-all ${
-                saving
-                  ? "bg-blue-300 cursor-not-allowed"
-                  : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white"
+              onClick={onClose} // Annuler
+              className="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400"
+            >
+              Annuler
+            </button>
+
+            <button
+              onClick={handleSubmit} // Enregistrer
+              disabled={loading}
+              className={`px-4 py-2 rounded-md text-white font-bold ${
+                loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
               }`}
             >
-              {saving ? "Enregistrement..." : "Sauvegarder"}
+              {loading ? "Enregistrement..." : "Enregistrer"}
             </button>
           </div>
-        </div>
-
-        {/* ================= ALIGNÉ À GAUCHE ================= */}
-        <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
-          <p>🎗 Sexe : {member.sexe || "—"}</p>
-          <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
-          <p>☀️ Type : {member.type_conversion || "—"}</p>
-          <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-          <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
-        </div>
-
-        {/* ================= MODIFIER ================= */}
-        <div className="mt-6 flex justify-center">
-          <button
-            onClick={() => onEdit(member)}
-            className="text-blue-600 text-sm font-semibold hover:underline"
-          >
-            ✏️ Modifier le contact
-          </button>
         </div>
       </div>
     </div>

@@ -5,7 +5,7 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditEvangeliseSuiviPopup from "../components/EditEvangeliseSuiviPopup";
-import DetailEvangeliseSuivisPopup from "../components/DetailEvangeliseSuivisPopup";
+import DetailsEvangePopup from "../components/DetailsEvangePopup";
 
 export default function SuivisEvangelisation() {
   const [allSuivis, setAllSuivis] = useState([]);
@@ -542,17 +542,16 @@ export default function SuivisEvangelisation() {
       )}
 
 
-    {/* Détail popup */}
-      {view === "table" && detailsTable && (
-        <DetailEvangeliseSuivisPopup
-          member={detailsTable}
-          onClose={() => setDetailsTable(null)}
-          onEdit={(s) => {
-            setDetailsTable(null);
-            if (s?.id) setEditingContact(s);
-          }}
-        />
-      )}
+    {view === "table" && detailsTable && (
+      <DetailsEvangePopup
+        member={detailsTable}
+        onClose={() => setDetailsTable(null)}
+        onEdit={(s) => {
+          setDetailsTable(null);
+          s.evangelises?.id && setEditingContact(s.evangelises);
+        }}
+      />
+    )}
 
     {editingContact && (
       <EditEvangeliseSuiviPopup

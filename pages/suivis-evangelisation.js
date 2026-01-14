@@ -503,14 +503,12 @@ export default function SuivisEvangelisation() {
                   <div className="flex-[2] font-bold text-white">
                     <span className="sm:hidden text-xs text-gray-300 block">Nom</span>
                     {m.prenom} {m.nom}
-                  </div>
-      
+                  </div>      
+                 
                   {/* Téléphone */}
-                  <div className="flex-[1] text-sm text-white relative">
-                    <span className="sm:hidden text-xs text-gray-300 block">Téléphone</span>
-                  
-                    <button
-                      <div className="relative">
+                    <div className="flex-[1] text-sm text-white relative">
+                      <span className="sm:hidden text-xs text-gray-300 block">Téléphone</span>
+                    
                       <p
                         onClick={(e) => {
                           e.stopPropagation();
@@ -521,11 +519,64 @@ export default function SuivisEvangelisation() {
                         {m.telephone || "—"}
                       </p>
                     
-                      {/* MENU */}
-                      {phoneMenuId === m.id && /* menu ici */}
+                      {phoneMenuId === m.id && (
+                        <div
+                          ref={phoneMenuRef}
+                          className="absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <a
+                            href={m.telephone ? `tel:${m.telephone}` : "#"}
+                            className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
+                              !m.telephone ? "opacity-50 pointer-events-none" : ""
+                            }`}
+                          >
+                            📞 Appeler
+                          </a>
+                    
+                          <a
+                            href={m.telephone ? `sms:${m.telephone}` : "#"}
+                            className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
+                              !m.telephone ? "opacity-50 pointer-events-none" : ""
+                            }`}
+                          >
+                            ✉️ SMS
+                          </a>
+                    
+                          <a
+                            href={
+                              m.telephone
+                                ? `https://wa.me/${m.telephone.replace(/\D/g, "")}?call`
+                                : "#"
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
+                              !m.telephone ? "opacity-50 pointer-events-none" : ""
+                            }`}
+                          >
+                            📱 Appel WhatsApp
+                          </a>
+                    
+                          <a
+                            href={
+                              m.telephone
+                                ? `https://wa.me/${m.telephone.replace(/\D/g, "")}`
+                                : "#"
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
+                              !m.telephone ? "opacity-50 pointer-events-none" : ""
+                            }`}
+                          >
+                            💬 Message WhatsApp
+                          </a>
+                        </div>
+                      )}
                     </div>
 
-      
+                         
                   {/* Attribué à */}
                   <div className="flex-[1] text-sm text-white">
                     <span className="sm:hidden text-xs text-gray-300 block">Attribué à</span>

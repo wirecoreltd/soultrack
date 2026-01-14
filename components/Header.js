@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
-import LogoutLink from "./LogoutLink";
 
 export default function Header() {
-  const [prenom, setPrenom] = useState("");
+  const router = useRouter();
+  const [prenom, setPrenom] = useState("Utilisateur");
   const [eglise, setEglise] = useState("Église Principale");
   const [branche, setBranche] = useState("Maurice");
 
@@ -34,12 +35,33 @@ export default function Header() {
     fetchProfile();
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("userRole");
+      router.push("/login");
+    } catch (err) {
+      console.error("Erreur lors de la déconnexion :", err);
+    }
+  };
+
   return (
     <div className="w-full max-w-5xl mx-auto mt-4">
-      {/* Top bar: ← Retour et Déconnexion */}
+      {/* Top bar ← Retour et Déconnexion */}
       <div className="flex justify-between items-center mb-1">
-        <button className="text-amber-300 hover:text-gray-200">← Retour</button>
-        <LogoutLink />
+        <button
+          onClick={() => router.back()}
+          className="text-amber-300 hover:text-gray-200"
+        >
+          ← Retour
+        </button>
+        <button
+          onClick={handleLogout}
+          className="text-white hover:text-gray-200 font-semibold"
+        >
+          Déconnexion
+        </button>
       </div>
 
       {/* Info utilisateur sous Déconnexion */}

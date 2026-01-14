@@ -60,7 +60,7 @@ export default function Header() {
 
       {/* Logo centré */}
       <div className="flex justify-center mb-6">
-        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-20" />
+        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18" />
       </div>
     </div>
   );

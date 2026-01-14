@@ -27,19 +27,45 @@ const roleCards = {
 };
 
 export default function IndexPage() {
+  const [prenom, setPrenom] = useState("");
+  const [eglise, setEglise] = useState("Église Principale");
+  const [branche, setBranche] = useState("Maurice");
   const [roles, setRoles] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
-    const storedRoles = localStorage.getItem("userRole");
-    if (storedRoles) {
+    const fetchUser = async () => {
       try {
-        const parsedRoles = JSON.parse(storedRoles);
-        setRoles(Array.isArray(parsedRoles) ? parsedRoles : [parsedRoles]);
-      } catch {
-        setRoles([storedRoles]);
+        const userEmail = localStorage.getItem("userEmail");
+        if (!userEmail) return;
+
+        const { data: profileData, error } = await supabase
+          .from("profiles")
+          .select("prenom, nom, eglise, branche")
+          .eq("email", userEmail)
+          .single();
+
+        if (error) throw error;
+
+        setPrenom(profileData?.prenom || "cher membre");
+        setEglise(profileData?.eglise || "Église Principale");
+        setBranche(profileData?.branche || "Maurice");
+
+        const storedRoles = localStorage.getItem("userRole");
+        if (storedRoles) {
+          try {
+            const parsedRoles = JSON.parse(storedRoles);
+            setRoles(Array.isArray(parsedRoles) ? parsedRoles : [parsedRoles]);
+          } catch {
+            setRoles([storedRoles]);
+          }
+        }
+      } catch (err) {
+        console.error("Erreur récupération utilisateur :", err);
       }
-    }
+    };
+
+    fetchUser();
   }, []);
 
   const handleRedirect = (path) => {
@@ -69,12 +95,36 @@ export default function IndexPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
-      {/* 🔹 Header */}
-      <Header />
+    <div
+      className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+    >
+      {/* Header */}
+      <Header
+        prenom={prenom}
+        eglise={eglise}
+        branche={branche}
+        onBack={() => router.back()}
+      />
 
-      {/* 🔹 Cartes des fonctionnalités */}
-      <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl mx-auto mt-4">
+      {/* Logo Centré */}
+      <div className="mb-6">
+        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-20 mx-auto" />
+      </div>
+
+      {/* Titre */}
+      <h1 className="text-3xl font-login text-white mb-6 text-center font-bold">
+        Tableau De Bord
+      </h1>
+
+      {/* Message motivant */}
+      <p className="text-white text-lg italic mb-6 max-w-2xl leading-relaxed tracking-wide font-light">
+        La famille est le premier lieu où l'amour, le soutien et la foi se transmettent. 
+        Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté.
+      </p>
+
+      {/* Cartes des fonctionnalités */}
+      <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl">
         {cardsToShow.map((card) => (
           <div
             key={card.path}
@@ -88,8 +138,8 @@ export default function IndexPage() {
         ))}
       </div>
 
-      {/* 🔹 Verset biblique sous les cartes */}
-      <div className="text-white text-lg italic max-w-2xl mx-auto mt-6 leading-relaxed tracking-wide font-light text-center">
+      {/* Verset biblique */}
+      <div className="text-white text-lg italic max-w-2xl mt-6 leading-relaxed tracking-wide font-light">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         1 Corinthiens 12:14 ❤️
       </div>

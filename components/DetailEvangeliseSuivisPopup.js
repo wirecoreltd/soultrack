@@ -1,13 +1,20 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import supabase from "@/lib/supabaseClient"; // Assure-toi que ce chemin est correct
 
-export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit }) {
+export default function DetailEvangeliseSuivisPopup({
+  member,
+  onClose,
+  onEdit,
+  commentChanges,
+  statusChanges,
+  handleCommentChange,
+  handleStatusChange,
+  handleAfterStatusUpdate,
+  updating,
+  updateSuivi,
+}) {
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
-  const [commentaire, setCommentaire] = useState(member.commentaire_suivis || "");
-  const [statut, setStatut] = useState(member.statut_suivis || "");
-  const [saving, setSaving] = useState(false);
   const phoneMenuRef = useRef(null);
   const popupRef = useRef(null);
 
@@ -22,12 +29,10 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
     }
   };
 
-  // Fermer le popup et menu si clic à l'extérieur
+  // 🔹 Fermer le popup si clic en dehors
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (
-        popupRef.current && !popupRef.current.contains(e.target)
-      ) {
+      if (popupRef.current && !popupRef.current.contains(e.target)) {
         onClose();
       }
     };
@@ -35,55 +40,13 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
-  // Fermer menu téléphone si clic en dehors
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (
-        phoneMenuRef.current &&
-        !phoneMenuRef.current.contains(e.target)
-      ) {
-        setOpenPhoneMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleSave = async () => {
-    if (!member.id) return;
-    setSaving(true);
-
-    const updateData = {
-      commentaire_suivis: commentaire,
-      statut_suivis: Number(statut),
-    };
-
-    // Si le statut est "Intégré" (3), on met aussi le contact en statut = "Intégré"
-    if (Number(statut) === 3) {
-      updateData.statut = "integrer";
-    }
-
-    const { error } = await supabase
-      .from("membres_complets")
-      .update(updateData)
-      .eq("id", member.id);
-
-    if (error) {
-      console.error("Erreur update suivi:", error.message);
-      alert("Impossible de sauvegarder. Voir console.");
-    }
-
-    setSaving(false);
-    onClose();
-  };
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div
         ref={popupRef}
-        className="bg-white rounded-lg p-6 w-96 relative shadow-xl max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-xl p-6 w-96 relative shadow-xl max-h-[90vh] overflow-y-auto"
       >
-        {/* Croix fermeture */}
+        {/* ❌ Fermer */}
         <button
           onClick={onClose}
           className="absolute top-2 right-2 text-gray-500 font-bold hover:text-gray-700"
@@ -91,19 +54,22 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
           ✖
         </button>
 
-        {/* Nom */}
-        <h2 className="text-lg font-bold text-gray-800 text-center mb-4">
-          {member.prenom} {member.nom}
+        {/* ================= CENTRÉ ================= */}
+        <h2 className="text-xl font-bold text-center mb-4">
+          {member.prenom} {member.nom} {member.star && "⭐"}
         </h2>
 
-        {/* Téléphone + menu */}
-        <div className="relative text-center mb-3">
-          <p
-            onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
-            className="text-orange-500 font-semibold underline cursor-pointer"
+        {/* 📞 Téléphone */}
+        <div className="relative mb-2 text-center">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenPhoneMenu(!openPhoneMenu);
+            }}
+            className="text-orange-500 underline font-semibold"
           >
             {member.telephone || "—"}
-          </p>
+          </button>
 
           {openPhoneMenu && (
             <div
@@ -159,29 +125,30 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
           )}
         </div>
 
-        {/* Infos principales */}
-        <p>🏠 Cellule : {member.cellule_full || "—"}</p>
-        <p>👤 Conseiller : {member.responsable || "—"}</p>
-        <p>🏙️ Ville : {member.ville || "—"}</p>
+        <p className="text-center">🏠 Cellule : {member.cellule_full || "—"}</p>
+        <p className="text-center">👤 Conseiller : {member.responsable || "—"}</p>
+        <p className="text-center">🏙 Ville : {member.ville || "—"}</p>
 
-        {/* Commentaire & statut */}
-        <div className="flex flex-col mt-3">
+        {/* ================= COMMENTAIRE & STATUT ================= */}
+        <div className="flex flex-col w-full mt-4">
+          {/* Commentaire */}
           <label className="font-semibold text-blue-700 mb-1 text-center">
             Commentaire Suivis
           </label>
           <textarea
-            value={commentaire}
-            onChange={(e) => setCommentaire(e.target.value)}
+            value={commentChanges[member.id] ?? member.commentaire_suivis ?? ""}
+            onChange={(e) => handleCommentChange(member.id, e.target.value)}
             className="w-full border rounded-lg p-2"
             rows={2}
           />
 
+          {/* Statut */}
           <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">
             Statut Intégration
           </label>
           <select
-            value={statut}
-            onChange={(e) => setStatut(e.target.value)}
+            value={statusChanges[member.id] ?? ""}
+            onChange={(e) => handleStatusChange(member.id, e.target.value)}
             className="w-full border rounded-lg p-2 mb-2"
           >
             <option value="">-- Sélectionner un statut --</option>
@@ -190,20 +157,27 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
             <option value="4">Refus</option>
           </select>
 
+          {/* 💾 Sauvegarder */}
           <button
-            onClick={handleSave}
-            disabled={saving}
+            onClick={async () => {
+              const updated = await updateSuivi(member.id);
+              if (updated?.statut_suivis) {
+                handleAfterStatusUpdate(Number(updated.statut_suivis));
+              }
+              onClose(); // 🔹 Fermer popup automatiquement
+            }}
+            disabled={updating[member.id]}
             className={`mt-2 w-full font-bold py-2 rounded-lg shadow-md transition-all ${
-              saving
+              updating[member.id]
                 ? "bg-blue-300 cursor-not-allowed"
                 : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white"
             }`}
           >
-            {saving ? "Enregistrement..." : "Sauvegarder"}
+            {updating[member.id] ? "Enregistrement..." : "Sauvegarder"}
           </button>
         </div>
 
-        {/* Infos alignées à gauche */}
+        {/* ================= INFOS ALIGNÉ À GAUCHE ================= */}
         <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
           <p>⚥ Sexe : {member.sexe || "—"}</p>
           <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
@@ -212,8 +186,8 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit })
           <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
         </div>
 
-        {/* Bouton modifier centré */}
-        <div className="mt-6 flex justify-center">
+        {/* ✏️ Modifier le contact */}
+        <div className="mt-4 flex justify-center w-full">
           <button
             onClick={() => onEdit(member)}
             className="text-blue-600 text-sm font-semibold hover:underline"

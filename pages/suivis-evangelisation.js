@@ -21,6 +21,8 @@ export default function SuivisEvangelisation() {
   const [statusChanges, setStatusChanges] = useState({});
   const [showRefus, setShowRefus] = useState(false);
   const [user, setUser] = useState(null);
+  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
+  const phoneMenuRef = useRef(null);
 
   // ================= INIT =================
   useEffect(() => {
@@ -30,6 +32,13 @@ export default function SuivisEvangelisation() {
   useEffect(() => {
     if (user) fetchSuivis(user, cellules);
   }, [showRefus]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+        setOpenPhoneMenuId(null);
+      }
+    };
 
   const init = async () => {
     const userData = await fetchUser();
@@ -299,9 +308,18 @@ export default function SuivisEvangelisation() {
                   {m.prenom} {m.nom}
                 </h2>
 
-                <p className="text-orange-500 underline font-semibold mb-1">
-                  {m.telephone || "—"}
-                </p>
+                <p className="text-center text-sm text-orange-500 underline decoration-orange-400 cursor-pointer font-semibold" onClick={() => setOpenPhoneMenuId(member.id)}>
+                      {member.telephone || "—"}
+                    </p>
+
+                    {openPhoneMenuId === member.id && (
+                      <div ref={phoneMenuRef} className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2" onClick={(e) => e.stopPropagation()}>
+                        <a href={member.telephone ? `tel:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📞 Appeler</a>
+                        <a href={member.telephone ? `sms:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>✉️ SMS</a>
+                        <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}?call` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📱 Appel WhatsApp</a>
+                        <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>💬 Message WhatsApp</a>
+                      </div>
+                    )}
                 <p className="text-sm text-black-700 mb-1">
                   🏠 Cellule : {cellule?.cellule_full || "—"}
                 </p>

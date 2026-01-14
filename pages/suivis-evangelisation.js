@@ -21,8 +21,23 @@ export default function SuivisEvangelisation() {
   const [statusChanges, setStatusChanges] = useState({});
   const [showRefus, setShowRefus] = useState(false);
   const [user, setUser] = useState(null);
+  const [phoneMenuId, setPhoneMenuId] = useState(null);
+  const phoneMenuRef = useRef(null);
 
-  // ================= INIT =================
+    // ================= INIT =================
+
+    useEffect(() => {
+      const handleClickOutside = (e) => {
+        if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+          setPhoneMenuId(null);
+        }
+      };
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+
+
   useEffect(() => {
     init();
   }, []);
@@ -299,9 +314,62 @@ export default function SuivisEvangelisation() {
                   {m.prenom} {m.nom}
                 </h2>
 
-                <p className="text-orange-500 underline font-semibold mb-1">
-                  {m.telephone || "—"}
-                </p>
+                {phoneMenuId === m.id && (
+                  <div
+                    ref={phoneMenuRef}
+                    className="absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <a
+                      href={m.telephone ? `tel:${m.telephone}` : "#"}
+                      className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
+                        !m.telephone ? "opacity-50 pointer-events-none" : ""
+                      }`}
+                    >
+                      📞 Appeler
+                    </a>
+                
+                    <a
+                      href={m.telephone ? `sms:${m.telephone}` : "#"}
+                      className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
+                        !m.telephone ? "opacity-50 pointer-events-none" : ""
+                      }`}
+                    >
+                      ✉️ SMS
+                    </a>
+                
+                    <a
+                      href={
+                        m.telephone
+                          ? `https://wa.me/${m.telephone.replace(/\D/g, "")}?call`
+                          : "#"
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
+                        !m.telephone ? "opacity-50 pointer-events-none" : ""
+                      }`}
+                    >
+                      📱 Appel WhatsApp
+                    </a>
+                
+                    <a
+                      href={
+                        m.telephone
+                          ? `https://wa.me/${m.telephone.replace(/\D/g, "")}`
+                          : "#"
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
+                        !m.telephone ? "opacity-50 pointer-events-none" : ""
+                      }`}
+                    >
+                      💬 Message WhatsApp
+                    </a>
+                  </div>
+                )}
+
                 <p className="text-sm text-black-700 mb-1">
                   🏠 Cellule : {cellule?.cellule_full || "—"}
                 </p>
@@ -422,10 +490,25 @@ export default function SuivisEvangelisation() {
                   </div>
       
                   {/* Téléphone */}
-                  <div className="flex-[1] text-sm text-white">
+                  <div className="flex-[1] text-sm text-white relative">
                     <span className="sm:hidden text-xs text-gray-300 block">Téléphone</span>
-                    {m.telephone || "—"}
-                  </div>
+                  
+                    <button
+                      <div className="relative">
+                      <p
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPhoneMenuId(phoneMenuId === m.id ? null : m.id);
+                        }}
+                        className="text-orange-500 underline font-semibold cursor-pointer"
+                      >
+                        {m.telephone || "—"}
+                      </p>
+                    
+                      {/* MENU */}
+                      {phoneMenuId === m.id && /* menu ici */}
+                    </div>
+
       
                   {/* Attribué à */}
                   <div className="flex-[1] text-sm text-white">

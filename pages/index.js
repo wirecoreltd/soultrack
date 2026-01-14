@@ -1,4 +1,3 @@
-//✅ /pages/index.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -23,7 +22,6 @@ const roleCards = {
   ResponsableCellule: [
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" },
   ],
- 
   Membre: [],
 };
 
@@ -42,7 +40,6 @@ export default function IndexPage() {
           return;
         }
 
-        // 🔹 Récupération du profil connecté
         const { data: profileData, error } = await supabase
           .from("profiles")
           .select("nom, prenom")
@@ -51,11 +48,13 @@ export default function IndexPage() {
 
         if (error) throw error;
 
-        const fullName = profileData?.nom ? `${profileData.nom} ${profileData.prenom}` : "Utilisateur";
+        const fullName = profileData?.nom
+          ? `${profileData.nom} ${profileData.prenom}`
+          : "Utilisateur";
+
         setUserName(fullName);
         setPrenom(profileData?.prenom || "cher membre");
 
-        // 🔹 Récupération des rôles depuis le localStorage
         const storedRoles = localStorage.getItem("userRole");
         if (storedRoles) {
           try {
@@ -117,28 +116,35 @@ export default function IndexPage() {
           <LogoutLink />
         </div>
 
-        <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">👋 Bienvenue {prenom}</p>
+        {/* 👤 Utilisateur + ⛪ Église */}
+        <div className="flex flex-col items-end mt-2 space-y-1">
+          <p className="text-orange-200 text-sm">
+            👋 Bienvenue {prenom}
+          </p>
+
+          <p className="text-white/90 text-sm font-semibold">
+            ⛪ Église Principale — Maurice
+          </p>
         </div>
       </div>
 
-      {/* 🔹 Logo centré */}
+      {/* 🔹 Logo */}
       <div className="mb-6">
         <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18 mx-auto" />
       </div>
 
       {/* 🔹 Titre */}
-      <h1 className="text-3xl font-login text-white mb-6 text-center font-bold">
+      <h1 className="text-3xl text-white mb-6 text-center font-bold">
         Tableau De Bord
       </h1>
 
-      {/* 🔹 Message motivant */}
+      {/* 🔹 Message */}
       <p className="text-white text-lg italic mb-6 max-w-2xl leading-relaxed tracking-wide font-light">
         La famille est le premier lieu où l'amour, le soutien et la foi se transmettent. 
         Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté.
       </p>
 
-      {/* 🔹 Cartes des fonctionnalités */}
+      {/* 🔹 Cartes */}
       <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl">
         {cardsToShow.map((card) => (
           <div
@@ -153,7 +159,7 @@ export default function IndexPage() {
         ))}
       </div>
 
-      {/* 🔹 Verset biblique sous les cartes */}
+      {/* 🔹 Verset */}
       <div className="text-white text-lg italic max-w-2xl mt-6 leading-relaxed tracking-wide font-light">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         1 Corinthiens 12:14 ❤️

@@ -4,7 +4,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
-import Header from "../components/Header"; // ← Import du nouveau header
+import LogoutLink from "../components/LogoutLink";
+import Header from "../components/Header";
 
 const roleCards = {
   Administrateur: [
@@ -37,15 +38,11 @@ export default function IndexPage() {
     const fetchUser = async () => {
       try {
         const userEmail = localStorage.getItem("userEmail");
-        if (!userEmail) {
-          setPrenom("cher membre");
-          return;
-        }
+        if (!userEmail) return;
 
-        // 🔹 Récupération du profil connecté
         const { data: profileData, error } = await supabase
           .from("profiles")
-          .select("prenom, nom, eglise, branche")
+          .select("prenom, eglise, branche")
           .eq("email", userEmail)
           .single();
 
@@ -55,7 +52,6 @@ export default function IndexPage() {
         setEglise(profileData?.eglise || "Église Principale");
         setBranche(profileData?.branche || "Maurice");
 
-        // 🔹 Récupération des rôles depuis le localStorage
         const storedRoles = localStorage.getItem("userRole");
         if (storedRoles) {
           try {
@@ -67,7 +63,6 @@ export default function IndexPage() {
         }
       } catch (err) {
         console.error("Erreur récupération utilisateur :", err);
-        setPrenom("cher membre");
       }
     };
 
@@ -78,7 +73,6 @@ export default function IndexPage() {
     router.push(path.startsWith("/") ? path : "/" + path);
   };
 
-  // 🔹 Filtrage des cartes selon rôles
   let cardsToShow = [];
   if (roles.includes("Administrateur")) {
     Object.values(roleCards).forEach((cards) => {
@@ -108,6 +102,17 @@ export default function IndexPage() {
     >
       {/* 🔹 Header central */}
       <Header prenom={prenom} eglise={eglise} branche={branche} />
+
+      {/* 🔹 Titre */}
+      <h1 className="text-3xl font-login text-white mb-6 font-bold">
+        Tableau De Bord
+      </h1>
+
+      {/* 🔹 Message motivant */}
+      <p className="text-white text-lg italic mb-6 max-w-2xl leading-relaxed tracking-wide font-light">
+        La famille est le premier lieu où l'amour, le soutien et la foi se transmettent. 
+        Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté.
+      </p>
 
       {/* 🔹 Cartes des fonctionnalités */}
       <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl">

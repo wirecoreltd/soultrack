@@ -23,7 +23,7 @@ export default function MembresHub() {
       className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      <Header />
+      <HeaderPages />
 
       {/* 🔹 Titre + texte motivant */}
       <div className="text-center mb-6">

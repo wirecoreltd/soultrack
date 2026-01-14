@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useSearchParams } from "next/navigation";
 import { useMembers } from "../context/MembersContext";
+import Header from "../components/Header";
 
 export default function ListMembers() {
   const [filter, setFilter] = useState("");
@@ -402,12 +403,7 @@ export default function ListMembers() {
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#2E3192" }}>
       {/* Top Bar */}
-      <div className="w-full max-w-5xl flex justify-between items-center mb-2">
-        <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black/20">← Retour</button>
-        <LogoutLink className="bg-white/10 text-white px-3 py-1 rounded-lg hover:bg-white/20 text-sm" />
-      </div>
-      <div className="w-full max-w-5xl flex justify-end mb-2"><p className="text-orange-200 text-sm">👋 Bienvenue {prenom || "cher membre"}</p></div>
-      <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} className="mx-auto mb-2" />
+      <Header />
       <h1 className="text-2xl sm:text-3xl font-bold text-white text-center mb-2">Liste des Membres</h1>
 
       {/* Barre de recherche */}

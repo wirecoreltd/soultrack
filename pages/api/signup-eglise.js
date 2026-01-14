@@ -1,4 +1,5 @@
 import supabase from "../../lib/supabaseClient";
+import bcrypt from "bcryptjs";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -16,18 +17,16 @@ export default async function handler(req, res) {
   } = req.body;
 
   try {
-    // 1️⃣ Créer l'utilisateur admin dans Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: adminEmail,
-      password: adminPassword,
-      email_confirm: true,
-    });
+    // 1️⃣ Vérifier que l'email n'existe pas déjà
+    const { data: existing, error: existingError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", adminEmail)
+      .single();
 
-    if (authError) {
-      return res.status(400).json({ error: authError.message });
+    if (existing) {
+      return res.status(400).json({ error: "Email déjà utilisé" });
     }
-
-    const adminUserId = authData.user.id;
 
     // 2️⃣ Créer l'église
     const { data: egliseData, error: egliseError } = await supabase
@@ -55,15 +54,18 @@ export default async function handler(req, res) {
 
     const brancheId = brancheData.id;
 
-    // 4️⃣ Créer le profile admin
+    // 4️⃣ Hasher le mot de passe
+    const passwordHash = bcrypt.hashSync(adminPassword, 10);
+
+    // 5️⃣ Créer le profil admin
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
       .insert([
         {
-          id: adminUserId, // correspond à Supabase Auth
           prenom: adminPrenom,
           nom: adminNom,
           email: adminEmail,
+          password_hash: passwordHash,
           role: "Administrateur",
           roles: ["Administrateur"],
           eglise_id: egliseId,

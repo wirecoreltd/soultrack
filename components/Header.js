@@ -2,10 +2,10 @@
 
 import LogoutLink from "./LogoutLink";
 
-export default function Header({ prenom, eglise, branche }) {
+export default function Header({ prenom, eglise = "Église Principale", branche = "Maurice" }) {
   return (
     <div className="w-full max-w-5xl flex flex-col items-center space-y-2">
-      
+
       {/* Barre du haut : Retour / Déconnexion */}
       <div className="w-full flex justify-between items-center mb-1">
         <button
@@ -18,12 +18,12 @@ export default function Header({ prenom, eglise, branche }) {
       </div>
 
       {/* Bienvenue et infos utilisateur */}
-      <div className="text-center space-y-1">
-        <p className="text-yellow-100 text-base">
-          👋 Bienvenue <span className="font-semibold text-white">{prenom}</span>
+      <div className="text-center">
+        <p className="text-white text-base mb-1">
+          👋 Bienvenue {prenom}
         </p>
-        <p className="text-base text-black">
-          {eglise} <span className="font-semibold text-amber-300">— {branche}</span>
+        <p className="text-white text-base">
+          {eglise} — {branche}
         </p>
       </div>
 

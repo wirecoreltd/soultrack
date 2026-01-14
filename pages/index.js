@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import supabase from "../lib/supabaseClient";
-import LogoutLink from "../components/LogoutLink";
 import Header from "../components/Header";
+import supabase from "../lib/supabaseClient";
 
 const roleCards = {
   Administrateur: [
@@ -69,11 +68,9 @@ export default function IndexPage() {
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
-      {/* Header + Logo */}
+    <div className="min-h-screen flex flex-col items-center p-6 text-center space-y-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+      
+      {/* Header avec logo et infos */}
       <Header />
 
       {/* Cartes des fonctionnalités */}
@@ -91,8 +88,8 @@ export default function IndexPage() {
         ))}
       </div>
 
-      {/* Verset biblique sous les cartes */}
-      <div className="text-gray-800 text-lg italic max-w-2xl mt-6 leading-relaxed tracking-wide font-light">
+      {/* Verset biblique */}
+      <div className="text-white text-lg italic max-w-2xl mt-6 leading-relaxed tracking-wide font-light">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         1 Corinthiens 12:14 ❤️
       </div>

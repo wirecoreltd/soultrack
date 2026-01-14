@@ -1,9 +1,10 @@
+//✅ /pages/index.js
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
-import LogoutLink from "../components/LogoutLink";
+import Header from "../components/Header"; // ← Import du nouveau header
 
 const roleCards = {
   Administrateur: [
@@ -26,9 +27,10 @@ const roleCards = {
 };
 
 export default function IndexPage() {
-  const [userName, setUserName] = useState("");
   const [prenom, setPrenom] = useState("");
   const [roles, setRoles] = useState([]);
+  const [eglise, setEglise] = useState("Église Principale");
+  const [branche, setBranche] = useState("Maurice");
   const router = useRouter();
 
   useEffect(() => {
@@ -40,21 +42,20 @@ export default function IndexPage() {
           return;
         }
 
+        // 🔹 Récupération du profil connecté
         const { data: profileData, error } = await supabase
           .from("profiles")
-          .select("nom, prenom")
+          .select("prenom, nom, eglise, branche")
           .eq("email", userEmail)
           .single();
 
         if (error) throw error;
 
-        const fullName = profileData?.nom
-          ? `${profileData.nom} ${profileData.prenom}`
-          : "Utilisateur";
-
-        setUserName(fullName);
         setPrenom(profileData?.prenom || "cher membre");
+        setEglise(profileData?.eglise || "Église Principale");
+        setBranche(profileData?.branche || "Maurice");
 
+        // 🔹 Récupération des rôles depuis le localStorage
         const storedRoles = localStorage.getItem("userRole");
         if (storedRoles) {
           try {
@@ -77,6 +78,7 @@ export default function IndexPage() {
     router.push(path.startsWith("/") ? path : "/" + path);
   };
 
+  // 🔹 Filtrage des cartes selon rôles
   let cardsToShow = [];
   if (roles.includes("Administrateur")) {
     Object.values(roleCards).forEach((cards) => {
@@ -104,52 +106,10 @@ export default function IndexPage() {
       className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* 🔹 Top bar */}
-      <div className="w-full max-w-5xl mb-6">
-        <div className="flex justify-between items-center">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-white hover:text-gray-200 transition-colors"
-          >
-            ← Retour
-          </button>
-          <LogoutLink />
-        </div>
+      {/* 🔹 Header central */}
+      <Header prenom={prenom} eglise={eglise} branche={branche} />
 
-        {/* 👤 Utilisateur + Église */}
-        <div className="flex flex-col items-end mt-4 space-y-1">
-          <p className="text-orange-200 text-sm">
-            👋 Bienvenue {prenom}
-          </p>
-
-          <div className="text-right mt-1 space-y-0.5">
-            <p className="text-black font-bold text-base">
-              ⛪ Église Principale
-            </p>
-            <p className="text-amber-300 font-semibold text-sm">
-              📍 Maurice
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* 🔹 Logo */}
-      <div className="mb-6">
-        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-20 mx-auto" />
-      </div>
-
-      {/* 🔹 Titre */}
-      <h1 className="text-3xl text-white mb-6 text-center font-bold">
-        Tableau De Bord
-      </h1>
-
-      {/* 🔹 Message */}
-      <p className="text-white text-lg italic mb-6 max-w-2xl leading-relaxed tracking-wide font-light">
-        La famille est le premier lieu où l'amour, le soutien et la foi se transmettent. <br />
-        Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté.
-      </p>
-
-      {/* 🔹 Cartes */}
+      {/* 🔹 Cartes des fonctionnalités */}
       <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl">
         {cardsToShow.map((card) => (
           <div
@@ -164,7 +124,7 @@ export default function IndexPage() {
         ))}
       </div>
 
-      {/* 🔹 Verset */}
+      {/* 🔹 Verset biblique sous les cartes */}
       <div className="text-white text-lg italic max-w-2xl mt-6 leading-relaxed tracking-wide font-light">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         1 Corinthiens 12:14 ❤️

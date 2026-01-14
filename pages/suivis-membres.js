@@ -386,20 +386,21 @@ export default function SuivisMembres() {
       )}
 
       {detailsModalMember && (
-          <DetailsModal
-            m={detailsModalMember}
-            onClose={() => setDetailsModalMember(null)}
-            handleCommentChange={handleCommentChange}
-            handleStatusChange={(id, value) =>
-              setStatusChanges(prev => ({ ...prev, [id]: value }))
-            }
-            commentChanges={commentChanges}
-            statusChanges={statusChanges}
-            updating={updating}
-            reactivateMember={reactivateMember}
-            showRefus={showRefus} // ✅ AJOUT ICI
-          />
-        )}
+  <DetailsModal
+    m={detailsModalMember}
+    onClose={() => setDetailsModalMember(null)}
+    handleCommentChange={handleCommentChange}
+    handleStatusChange={(id, value) =>
+      setStatusChanges(prev => ({ ...prev, [id]: value }))
+    }
+    commentChanges={commentChanges}
+    statusChanges={statusChanges}
+    updating={updating}
+    updateSuivi={updateSuivi}      // ✅ AJOUT
+    reactivateMember={reactivateMember}
+    showRefus={showRefus}          // ✅
+  />
+)}
 
 
       {/* Edit Member Popup */}

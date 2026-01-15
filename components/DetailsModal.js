@@ -96,7 +96,7 @@ export default function DetailsModal({
             </div>
           )}
 
-          <p className="mt-2">🏙 Ville : {m.ville || "—"}</p>
+          <p className="mt-2">🏙️ Ville : {m.ville || "—"}</p>
           <p>🏠 Cellule : {m.cellule_full || "—"}</p>
           <p>👤 Conseiller : {m.responsable || "—"}</p>
 
@@ -168,7 +168,14 @@ export default function DetailsModal({
           {/* ================= INFOS DÉTAILLÉES ================= */}
           <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
             <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-            <p>⚥ Sexe : {m.sexe || "—"}</p>
+            <p>🎗️ Sexe : {m.sexe || "—"}</p>
+            <p>💧 Bapteme d' Eau: {
+                m.bapteme_eau === null ? "" : (m.bapteme_eau === true || m.bapteme_eau === "true") ? "Oui" : "Non"
+              }</p>
+              
+              <p>🔥 Bapteme de Feu: {
+                m.bapteme_esprit === null ? "" : (m.bapteme_esprit === true || m.bapteme_esprit === "true") ? "Oui" : "Non"
+              }</p>
             <p>
               ❓ Besoin :{" "}
               {m.besoin
@@ -179,7 +186,9 @@ export default function DetailsModal({
             </p>
             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-            <p>📋 Statut initial : {m.statut_initial || "—"}</p>
+            <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>
+            <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
+            <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>  
           </div>
 
           {/* ✏️ Modifier le contact */}

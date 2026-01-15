@@ -8,19 +8,17 @@ export default function Header() {
   const router = useRouter();
 
   const [prenom, setPrenom] = useState("Utilisateur");
-  const [eglise, setEglise] = useState("Église");
-  const [branche, setBranche] = useState("Branche");
+  const [eglise, setEglise] = useState("");
+  const [branche, setBranche] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser();
+        const { data: sessionData } = await supabase.auth.getSession();
+        const user = sessionData?.session?.user;
 
-        if (userError || !user) {
+        if (!user) {
           setLoading(false);
           return;
         }
@@ -34,8 +32,8 @@ export default function Header() {
         if (error) throw error;
 
         setPrenom(profile?.prenom || "Utilisateur");
-        setEglise(profile?.eglise_nom || "Église");
-        setBranche(profile?.branche_nom || "Branche");
+        setEglise(profile?.eglise_nom || "");
+        setBranche(profile?.branche_nom || "");
       } catch (err) {
         console.error("❌ Erreur récupération profil :", err);
       } finally {
@@ -88,13 +86,17 @@ export default function Header() {
           className="w-20 h-auto mb-2"
         />
 
-        <p className="text-gray-200 text-sm font-serif tracking-wide">
-          {eglise}
-          <span className="text-amber-300 font-semibold">
-            {" "}
-            — {branche}
-          </span>
-        </p>
+        {(eglise || branche) && (
+          <p className="text-white text-base font-medium">
+            {eglise}
+            {branche && (
+              <span className="text-amber-300 font-semibold">
+                {" "}
+                — {branche}
+              </span>
+            )}
+          </p>
+        )}
       </div>
     </div>
   );

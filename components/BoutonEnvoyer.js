@@ -60,7 +60,8 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
           conseiller_id: type === "conseiller" ? cible.id : null,
           suivi_cellule_nom: type === "cellule" ? cible.cellule_full : null,
           suivi_responsable: type === "conseiller" ? `${cible.prenom} ${cible.nom}` : responsablePrenom,
-          suivi_responsable_id: type === "conseiller" ? cible.id : null
+          suivi_responsable_id: type === "conseiller" ? cible.id : null,
+          etat_contact: "Existant"
         })
         .eq("id", membre.id)
         .select()

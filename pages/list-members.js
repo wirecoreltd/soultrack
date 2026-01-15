@@ -375,6 +375,7 @@ export default function ListMembers() {
 
           {isOpen && (
             <div className="text-black text-sm mt-2 w-full space-y-1">
+            <p className="font-semibold text-center text-bleu">💡 Statut Suivi: {m.suivi_statut || "—"}</p>
               <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
               <p>🎗️ Sexe : {m.sexe || "—"}</p>
               <p>💧 Bapteme d' Eau: {
@@ -390,8 +391,7 @@ export default function ListMembers() {
               <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>
               <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
               <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
-              <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
-              <p>💡 Statut Suivi : {m.suivi_statut || "—"}</p>
+              <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>              
               <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">
                 ✏️ Modifier le contact
               </button>

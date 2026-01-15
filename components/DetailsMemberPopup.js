@@ -75,7 +75,7 @@ export default function DetailsMemberPopup({
             </div>
           )}
 
-          <p className="mt-2">🏙 Ville : {membre.ville || "—"}</p>
+          <p className="mt-2">🏙️ Ville : {membre.ville || "—"}</p>
           <p>
             🏠 Cellule :{" "}
             {membre.cellule_id
@@ -148,6 +148,7 @@ export default function DetailsMemberPopup({
 
           {/* ================= ALIGNÉ À GAUCHE ================= */}
           <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
+            <p><span className="font-semibold">💡 Statut Suivi:</span> {membre.suivi_statut || "—"}</p>
             <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
             <p>🎗️ Sexe : {membre.sexe || "—"}</p>
             <p>💧 Bapteme d' Eau: {membre.bapteme_eau === null ? "" : membre.bapteme_eau ? "Oui" : "Non"}</p>
@@ -170,11 +171,11 @@ export default function DetailsMemberPopup({
               }
             </p>
             <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
-            <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
+            <p>🧩 Comment est-il venu : {membre.venu || "—"}</p>
             <p>✨ Raison de la venue : {membre.statut_initial || "—"}</p>
             <p>🙏 Prière du salut : {membre.priere_salut || "—"}</p>  
             <p>☀️ Type de conversion : {membre.type_conversion|| "—"}</p> 
-            <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
+            <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>            
           </div>
 
           {/* ✏️ Modifier le contact */}

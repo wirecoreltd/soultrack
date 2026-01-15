@@ -9,6 +9,7 @@ import EditMemberSuivisPopup from "../components/EditMemberSuivisPopup";
 import DetailsModal from "../components/DetailsModal";
 import { useMembers } from "../context/MembersContext";
 import { useRouter } from "next/navigation";
+import DetailsModal from "../components/HeaderPages";
 
 export default function SuivisMembres() {
   const router = useRouter();
@@ -224,21 +225,9 @@ export default function SuivisMembres() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-      {/* Header */}
-      <div className="w-full max-w-5xl mb-6">
-        <div className="flex justify-between items-center">
-          <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black-200 transition-colors">← Retour</button>
-          <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
-        </div>
-        <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">👋 Bienvenue {prenom}</p>
-        </div>
-      </div>
 
-      {/* Logo */}
-      <div className="mb-4">
-        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
-      </div>
+      {/* Header avec logo et infos */}
+      <HeaderPages />
 
       {/* Title */}
       <div className="text-center mb-6">

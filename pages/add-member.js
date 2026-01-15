@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
@@ -21,8 +20,8 @@ export default function AddMember() {
     besoinLibre: "",
     is_whatsapp: false,
     infos_supplementaires: "",
-    priere_salut: "", 
-  type_conversion: "",
+    priere_salut: "",      // <-- nouveau
+    type_conversion: "",   // <-- nouveau
   });
 
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
@@ -45,9 +44,7 @@ export default function AddMember() {
         .gte("expires_at", new Date().toISOString())
         .single();
 
-      if (error || !data) {
-        setErrorMsg("Lien invalide ou expiré.");
-      }
+      if (error || !data) setErrorMsg("Lien invalide ou expiré.");
       setLoading(false);
     };
 
@@ -80,17 +77,14 @@ export default function AddMember() {
     const dataToSend = {
       ...formData,
       besoin: finalBesoin,
-      etat_contact: "Nouveau", // statut par défaut
+      etat_contact: "Nouveau", // statut par défaut à "Nouveau"
     };
-    
-    // Supprimer les champs temporaires non utilisés
+
     delete dataToSend.besoinLibre;
-    
+
     try {
       const { error } = await supabase.from("membres_complets").insert([dataToSend]);
       if (error) throw error;
-      ...
-
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
@@ -191,40 +185,39 @@ export default function AddMember() {
             <option value="autre">Autre</option>
           </select>
 
-          {/* Prière du salut */}
+          {/* 🔹 Champs Prière du salut et Type de conversion */}
+          <select
+            className="input"
+            value={formData.priere_salut}
+            required
+            onChange={(e) => {
+              const value = e.target.value;
+              setFormData({
+                ...formData,
+                priere_salut: value,
+                type_conversion: value === "Oui" ? formData.type_conversion : "",
+              });
+            }}
+          >
+            <option value="">-- Prière du salut ? --</option>
+            <option value="Oui">Oui</option>
+            <option value="Non">Non</option>
+          </select>
+
+          {formData.priere_salut === "Oui" && (
             <select
               className="input"
-              value={formData.priere_salut}
+              value={formData.type_conversion}
+              onChange={(e) =>
+                setFormData({ ...formData, type_conversion: e.target.value })
+              }
               required
-              onChange={(e) => {
-                const value = e.target.value;
-                setFormData({
-                  ...formData,
-                  priere_salut: value,
-                  type_conversion: value === "Oui" ? formData.type_conversion : "", // reset si Non
-                });
-              }}
             >
-              <option value="">-- Prière du salut ? --</option>
-              <option value="Oui">Oui</option>
-              <option value="Non">Non</option>
+              <option value="">Type</option>
+              <option value="Nouveau converti">Nouveau converti</option>
+              <option value="Réconciliation">Réconciliation</option>
             </select>
-            
-            {/* Type de conversion */}
-            {formData.priere_salut === "Oui" && (
-              <select
-                className="input"
-                value={formData.type_conversion}
-                onChange={(e) =>
-                  setFormData({ ...formData, type_conversion: e.target.value })
-                }
-                required
-              >
-                <option value="">Type</option>
-                <option value="Nouveau converti">Nouveau converti</option>
-                <option value="Réconciliation">Réconciliation</option>
-              </select>
-            )}
+          )}  
 
           <div>
             <p className="font-semibold mb-2 text-sm sm:text-base">Besoins :</p>
@@ -243,7 +236,7 @@ export default function AddMember() {
             {showBesoinLibre && (
               <input type="text" placeholder="Précisez..." value={formData.besoinLibre} onChange={(e) => setFormData({ ...formData, besoinLibre: e.target.value })} className="input mt-1" />
             )}
-          </div>
+          </div>          
 
           <textarea placeholder="Informations supplémentaires..." rows={2} value={formData.infos_supplementaires} onChange={(e) => setFormData({ ...formData, infos_supplementaires: e.target.value })} className="input" />
 

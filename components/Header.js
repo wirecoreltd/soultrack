@@ -8,8 +8,6 @@ export default function Header() {
   const router = useRouter();
 
   const [prenom, setPrenom] = useState("Utilisateur");
-  const [eglise, setEglise] = useState("Église");
-  const [branche, setBranche] = useState("Branche");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,15 +25,13 @@ export default function Header() {
 
         const { data: profile, error } = await supabase
           .from("profiles")
-          .select("prenom, eglise_nom, branche_nom")
+          .select("prenom")
           .eq("id", user.id)
           .single();
 
         if (error) throw error;
 
         setPrenom(profile?.prenom || "Utilisateur");
-        setEglise(profile?.eglise_nom || "Église");
-        setBranche(profile?.branche_nom || "Branche");
       } catch (err) {
         console.error("❌ Erreur récupération profil :", err);
       } finally {
@@ -71,7 +67,7 @@ export default function Header() {
       </div>
 
       {/* User info */}
-      <div className="flex justify-end flex-col text-right space-y-1 mb-4">
+      <div className="flex justify-end flex-col text-right space-y-1 mb-6">
         <p className="text-white text-sm">
           👋 Bienvenue{" "}
           <span className="font-semibold">
@@ -80,21 +76,13 @@ export default function Header() {
         </p>
       </div>
 
-      {/* Logo + Église */}
-      <div className="flex flex-col items-center mb-6">
+      {/* Logo */}
+      <div className="flex justify-center mb-6">
         <img
           src="/logo.png"
           alt="Logo SoulTrack"
-          className="w-20 h-auto mb-2"
+          className="w-20 h-auto"
         />
-
-        <p className="text-gray-200 text-sm font-serif tracking-wide">
-          {eglise}
-          <span className="text-amber-300 font-semibold">
-            {" "}
-            — {branche}
-          </span>
-        </p>
       </div>
     </div>
   );

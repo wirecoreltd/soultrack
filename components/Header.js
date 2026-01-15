@@ -14,7 +14,7 @@ export default function Header() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const userEmail = localStorage.getItem("userEmail"); // récupère l'email stocké au login
+      const userEmail = localStorage.getItem("userEmail"); // récupère l’email stocké au login
       if (!userEmail) {
         setLoading(false);
         return;
@@ -72,7 +72,7 @@ export default function Header() {
         </button>
       </div>
 
-      {/* Info utilisateur alignée à droite sous Déconnexion */}
+      {/* Prénom aligné à droite sous Déconnexion */}
       <div className="flex justify-end flex-col text-right space-y-1 mb-6">
         <p className="text-white text-sm">
           👋 Bienvenue{" "}

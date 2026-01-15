@@ -50,9 +50,7 @@ export default function SuivisMembres() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const besoinText = Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin || "";
-
-  // 🔹 Fetch membres_complets et cellules/conseillers
+    // 🔹 Fetch membres_complets et cellules/conseillers
   useEffect(() => {
     const fetchMembresComplets = async () => {
       setLoading(true);
@@ -237,7 +235,7 @@ export default function SuivisMembres() {
               <p>🔥 Bapteme de Feu: {
                 m.bapteme_esprit === null ? "" : (m.bapteme_esprit === true || m.bapteme_esprit === "true") ? "Oui" : "Non"
               }</p> 
-        <p>❓Besoin : {besoinText}</p>
+        <p>❓Besoin : {!m.besoin ? "" : Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin}</p>
         <p>📝 Infos : {m.infos_supplementaires || ""}</p>
         <p>🧩 Comment est-il venu : {m.venu || ""}</p>  
         <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? ""}</p>

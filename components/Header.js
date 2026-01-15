@@ -10,36 +10,26 @@ export default function Header() {
   const [prenom, setPrenom] = useState("Utilisateur");
   const [eglise, setEglise] = useState("Église Principale");
   const [branche, setBranche] = useState("Maurice");
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // ✅ Récupérer l'utilisateur connecté
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-          setLoading(false);
-          return;
-        }
+        const userEmail = localStorage.getItem("userEmail");
+        if (!userEmail) return;
 
-        // ✅ Récupérer prénom + église + branche depuis profiles
         const { data: profile, error } = await supabase
           .from("profiles")
           .select("prenom, eglise_nom, branche_nom")
-          .eq("id", user.id)
+          .eq("email", userEmail)
           .single();
 
         if (error) throw error;
 
-        // ✅ Mettre à jour les states
         setPrenom(profile?.prenom || "Utilisateur");
         setEglise(profile?.eglise_nom || "Église Principale");
         setBranche(profile?.branche_nom || "Maurice");
-
       } catch (err) {
-        console.error("❌ Erreur récupération profil :", err);
-      } finally {
-        setLoading(false);
+        console.error("Erreur récupération profil :", err);
       }
     };
 
@@ -73,8 +63,7 @@ export default function Header() {
       {/* Prénom utilisateur aligné à droite */}
       <div className="flex justify-end flex-col text-right space-y-1 mb-6">
         <p className="text-white text-sm">
-          👋 Bienvenue{" "}
-          <span className="font-semibold">{loading ? "..." : prenom}</span>
+          👋 Bienvenue <span className="font-semibold">{prenom}</span>
         </p>
       </div>
 
@@ -87,8 +76,7 @@ export default function Header() {
         />
         {/* Église / Branche juste sous le logo */}
         <p className="text-white text-base font-medium mt-2">
-          {eglise}{" "}
-          <span className="text-amber-300 font-semibold">- {branche}</span>
+          {eglise} <span className="text-amber-300 font-semibold">- {branche}</span>
         </p>
       </div>
     </div>

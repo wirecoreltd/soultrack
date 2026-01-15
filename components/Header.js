@@ -7,55 +7,43 @@ import supabase from "../lib/supabaseClient";
 export default function Header() {
   const router = useRouter();
 
-  const [prenom, setPrenom] = useState("");
-  const [eglise, setEglise] = useState("");
-  const [branche, setBranche] = useState("");
+  const [prenom, setPrenom] = useState("Utilisateur");
+  const [eglise, setEglise] = useState("Église Principale");
+  const [branche, setBranche] = useState("Maurice");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadProfile = async () => {
+    const fetchProfile = async () => {
       try {
-        // 🔹 1️⃣ Récupérer user Supabase
-        const { data: authData, error } = await supabase.auth.getUser();
-        if (error || !authData?.user) return;
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
 
-        const userId = authData.user.id;
+        if (userError || !user) {
+          setLoading(false);
+          return;
+        }
 
-        // 🔹 2️⃣ Récupérer profile
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile, error } = await supabase
           .from("profiles")
-          .select("prenom, eglise_id, branche_id")
-          .eq("id", userId)
+          .select("prenom, eglise_nom, branche_nom")
+          .eq("id", user.id)
           .single();
 
-        if (profileError || !profile) return;
+        if (error) throw error;
 
-        setPrenom(profile.prenom || "");
-
-        // 🔹 3️⃣ Récupérer le nom de l'église si eglise_id existe
-        if (profile.eglise_id) {
-          const { data: egliseData } = await supabase
-            .from("eglises")
-            .select("nom")
-            .eq("id", profile.eglise_id)
-            .single();
-          setEglise(egliseData?.nom || "");
-        }
-
-        // 🔹 4️⃣ Récupérer le nom de la branche si branche_id existe
-        if (profile.branche_id) {
-          const { data: brancheData } = await supabase
-            .from("branches")
-            .select("nom")
-            .eq("id", profile.branche_id)
-            .single();
-          setBranche(brancheData?.nom || "");
-        }
+        setPrenom(profile?.prenom || "Utilisateur");
+        setEglise(profile?.eglise_nom || "Église Principale");
+        setBranche(profile?.branche_nom || "Maurice");
       } catch (err) {
-        console.error("Erreur récupération profil :", err);
+        console.error("❌ Erreur récupération profil :", err);
+      } finally {
+        setLoading(false);
       }
     };
 
-    loadProfile();
+    fetchProfile();
   }, []);
 
   const handleLogout = async () => {
@@ -66,7 +54,7 @@ export default function Header() {
   return (
     <div className="w-full max-w-5xl mx-auto mt-4">
       {/* Top bar */}
-      <div className="flex justify-between items-center mb-2">
+      <div className="flex justify-between items-center mb-1">
         <button
           onClick={() => router.back()}
           className="text-amber-300 hover:text-gray-200 transition"
@@ -82,18 +70,24 @@ export default function Header() {
         </button>
       </div>
 
-      {/* Welcome */}
-      <div className="flex justify-end mb-4">
+      {/* Info utilisateur alignée à droite sous Déconnexion */}
+      <div className="flex justify-end flex-col text-right space-y-1 mb-6">
         <p className="text-white text-sm">
-          👋 Bienvenue <span className="font-semibold">{prenom || "—"}</span>
+          👋 Bienvenue <span className="font-semibold">{loading ? "..." : prenom}</span>
         </p>
       </div>
 
-      {/* Logo + Église / Branche */}
-      <div className="flex flex-col items-center gap-2">
-       <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-auto" />
-       <p className="text-white text-sm">{eglise} <span className="text-amber-300 font-semibold">- {branche}</span></p>
-        )}
+      {/* Logo centré */}
+      <div className="flex flex-col justify-center items-center mb-6">
+        <img
+          src="/logo.png"
+          alt="Logo SoulTrack"
+          className="w-20 h-auto"
+        />
+        {/* Église / Branche sous le logo */}
+        <p className="text-white text-base font-medium mt-2">
+          {eglise} <span className="text-amber-300 font-semibold">- {branche}</span>
+        </p>
       </div>
     </div>
   );

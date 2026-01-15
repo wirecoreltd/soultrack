@@ -80,11 +80,13 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       let message = `👋 Bonjour ${responsablePrenom}!\n\n`;
       message += `Une personne précieuse t’est confiée pour l’accompagnement.\n\n`;
       message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
-      message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
-      message += `🏙️ Ville: ${membre.ville || "—"}\n`;
-      message += `✨ Raison de la venue: ${membre.statut_initial || "—"}\n`;
-      message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
       message += `🎗️ Sexe: ${membre.sexe || "—"}\n`; 
+      message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
+      message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
+      message += `🏙️ Ville: ${membre.ville || "—"}\n`;
+      message += `✨ Raison de la venue: ${membre.statut_initial || "—"}\n`;   
+      message += `🙏 Prière du salut: ${membre.priere_salut || "—"}\n`; 
+      message += `☀️ Type de conversion: ${membre.type_conversion || "—"}\n`;
       message += `❓Besoin: ${
       membre.besoin
         ? (() => {

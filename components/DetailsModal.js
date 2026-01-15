@@ -33,6 +33,18 @@ export default function DetailsModal({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // ✅ Transformer m.besoin en texte lisible
+let besoinText = "";
+if (Array.isArray(m.besoin)) {
+  besoinText = m.besoin.join(", ");
+} else if (typeof m.besoin === "string") {
+  try {
+    const parsed = JSON.parse(m.besoin);
+    besoinText = Array.isArray(parsed) ? parsed.join(", ") : m.besoin;
+  } catch {
+    besoinText = m.besoin;
+  }
+}
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
@@ -176,14 +188,7 @@ export default function DetailsModal({
               <p>🔥 Bapteme de Feu: {
                 m.bapteme_esprit === null ? "" : (m.bapteme_esprit === true || m.bapteme_esprit === "true") ? "Oui" : "Non"
               }</p>
-            <p>
-              ❓ Besoin :{" "}
-              {m.besoin
-                ? Array.isArray(m.besoin)
-                  ? m.besoin.join(", ")
-                  : m.besoin
-                : "—"}
-            </p>
+            <p>❓ Besoin : {besoinText || "—"}</p>
             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
             <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>

@@ -91,18 +91,8 @@ export default function Header() {
 
       {/* Logo + Église / Branche */}
       <div className="flex flex-col items-center gap-2">
-        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-auto" />
-
-        {(eglise || branche) && (
-          <p className="text-white text-base font-medium tracking-wide">
-            {eglise}
-            {branche && (
-              <span className="text-amber-300 font-semibold">
-                {" "}
-                – {branche}
-              </span>
-            )}
-          </p>
+       <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-auto" />
+       <p className="text-white text-sm">{eglise} <span className="text-amber-300 font-semibold">- {branche}</span></p>
         )}
       </div>
     </div>

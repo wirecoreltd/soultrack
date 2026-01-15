@@ -6,6 +6,7 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import LogoutLink from "../components/LogoutLink";
+import HeaderPages from "../components/HeaderPages";
 
 export default function ListConseillers() {
   const [conseillers, setConseillers] = useState([]);
@@ -94,23 +95,8 @@ export default function ListConseillers() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-      {/* Header */}
-      <div className="w-full max-w-5xl mb-6">
-        <div className="flex justify-between items-center">
-          <button onClick={() => router.back()} className="flex items-center text-white hover:text-gray-200 transition-colors">
-            ← Retour
-          </button>
-          <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
-        </div>
-        <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">👋 Bienvenue {prenom}</p>
-        </div>
-      </div>
-
-      {/* Logo */}
-      <div className="mb-4">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={72} />
-      </div>
+  
+      <HeaderPages />
 
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-white mb-2">📋 Liste des Conseillers</h1>

@@ -201,29 +201,9 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
               <option value="Homme">Homme</option>
               <option value="Femme">Femme</option>
             </select>
-          </div>
+          </div>          
 
-          {/* Serviteur */}
-          <div className="flex flex-col">
-            <label className="font-medium">Définir en tant que serviteur</label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} className="accent-[#25297e]" />
-              Oui
-            </label>
-          </div>
-
-          {/* État du contact */}
-          <div className="flex flex-col">
-            <label className="font-medium">État du contact</label>
-            <select name="etat_contact" value={formData.etat_contact} onChange={handleChange} className="input">
-              <option value="">-- Sélectionner --</option>
-              <option value="Nouveau">Nouveau</option>
-              <option value="Existant">Existant</option>
-              <option value="Inactif">Inactif</option>
-            </select>
-          </div>
-
-          {/* Bapteme d'eau */}
+         {/* Bapteme d'eau */}
           <div className="flex flex-col">
             <label className="font-medium">Bapteme d'eau</label>
             <select name="bapteme_eau" value={formData.bapteme_eau === true ? "true" : formData.bapteme_eau === false ? "false" : ""} onChange={handleChange} className="input">
@@ -281,29 +261,7 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
             )}
           </div>
 
-          {/* Cellule */}
-          <div className="flex flex-col">
-            <label className="font-medium">Cellule</label>
-            <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input" disabled={loadingData}>
-              <option value="">-- Cellule --</option>
-              {cellules.map(c => (
-                <option key={c.id} value={c.id}>{c.cellule_full}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Conseiller */}
-          <div className="flex flex-col">
-            <label className="font-medium">Conseiller</label>
-            <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input" disabled={loadingData}>
-              <option value="">-- Conseiller --</option>
-              {conseillers.map(c => (
-                <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Besoins */}
+        {/* Besoins */}
           <div className="flex flex-col">
             <label className="font-medium">Besoins</label>
             {besoinsOptions.map(b => (
@@ -320,7 +278,7 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
               <input name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input mt-2" placeholder="Précisez" />
             )}
           </div>
-                       {/* Comment est-il venu ? */}
+          {/* Comment est-il venu ? */}
           <div className="flex flex-col">
             <label className="font-medium">Comment est-il venu ?</label>
             <select name="venu" value={formData.venu} onChange={handleChange} className="input">
@@ -358,35 +316,7 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
               <option value="a déjà son église">A déjà son église</option>
               <option value="visiteur">Visiteur</option>
             </select>
-          </div>
-
-          {/* Suivi statut */}
-          <div className="flex flex-col">
-            <label className="font-medium">Suivi statut</label>
-            <select
-              value={formData.suivi_statut ?? ""}
-              onChange={(e) => setFormData(prev => ({ ...prev, suivi_statut: e.target.value }))}
-              className="input"
-            >
-              <option value="">-- Sélectionner un statut --</option>
-              <option value="En Attente">En Attente</option>
-              <option value="Intégrer">Intégrer</option>
-              <option value="Refus">Refus</option>
-            </select>
-          </div>
-
-          {/* Commentaire suivis */}
-          <div className="flex flex-col">
-            <label className="font-medium">Commentaire suivis</label>
-            <textarea
-              name="commentaire_suivis"
-              value={formData.commentaire_suivis}
-              onChange={handleChange}
-              className="input"
-              rows={2}
-            />
-          </div>
-
+          </div>     
         </div>
 
         {/* Buttons */}

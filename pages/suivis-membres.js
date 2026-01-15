@@ -227,13 +227,21 @@ export default function SuivisMembres() {
     return (
       <div className="text-black text-sm space-y-2 w-full">
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-        <p>🏙 Ville : {m.ville || ""}</p>
-        <p>🧩 Comment est-il venu : {m.venu || ""}</p>
-        <p>⚥ Sexe : {m.sexe || ""}</p>
-        <p>📋 Statut initial : {m.statut_initial ?? m.statut ?? ""}</p>
+        <p>🎗️ Sexe : {m.sexe || ""}</p>
+        <p>💧 Bapteme d' Eau: {
+                m.bapteme_eau === null ? "" : (m.bapteme_eau === true || m.bapteme_eau === "true") ? "Oui" : "Non"
+              }</p>
+              
+              <p>🔥 Bapteme de Feu: {
+                m.bapteme_esprit === null ? "" : (m.bapteme_esprit === true || m.bapteme_esprit === "true") ? "Oui" : "Non"
+              }</p> 
         <p>❓Besoin : {!m.besoin ? "" : Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin}</p>
-        <p>📝 Infos : {m.infos_supplementaires || ""}</p>       
-
+        <p>📝 Infos : {m.infos_supplementaires || ""}</p>
+        <p>🧩 Comment est-il venu : {m.venu || ""}</p>  
+        <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? ""}</p>
+        <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
+        <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>        
+        
         <div className="mt-4 flex justify-center">
           <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-4">✏️ Modifier le contact</button>
         </div>
@@ -300,7 +308,7 @@ export default function SuivisMembres() {
 
                 <p className="text-sm text-black-700 mb-1">🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}</p>
                 <p className="text-sm text-black-700 mb-1">👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
-
+                <p>className="text-sm text-black-700 mb-1">🏙 Ville : {m.ville || ""}</p>    
                 {/* Commentaire & Statut */}
                 <div className="flex flex-col w-full mt-2">
                   <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Commentaire Suivis</label>

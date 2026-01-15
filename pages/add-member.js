@@ -21,6 +21,8 @@ export default function AddMember() {
     besoinLibre: "",
     is_whatsapp: false,
     infos_supplementaires: "",
+    priere_salut: "", 
+  type_conversion: "",
   });
 
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
@@ -78,14 +80,17 @@ export default function AddMember() {
     const dataToSend = {
       ...formData,
       besoin: finalBesoin,
-      etat_contact: "Nouveau", // <-- statut par défaut à "Nouveau"
+      etat_contact: "Nouveau", // statut par défaut
     };
-
+    
+    // Supprimer les champs temporaires non utilisés
     delete dataToSend.besoinLibre;
-
+    
     try {
       const { error } = await supabase.from("membres_complets").insert([dataToSend]);
       if (error) throw error;
+      ...
+
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
@@ -102,6 +107,8 @@ export default function AddMember() {
         besoinLibre: "",
         is_whatsapp: false,
         infos_supplementaires: "",
+        priere_salut: "",
+        type_conversion: "",
       });
       setShowBesoinLibre(false);
     } catch (err) {
@@ -122,6 +129,8 @@ export default function AddMember() {
       besoinLibre: "",
       is_whatsapp: false,
       infos_supplementaires: "",
+      priere_salut: "",
+      type_conversion: "",
     });
     setShowBesoinLibre(false);
   };
@@ -181,6 +190,41 @@ export default function AddMember() {
             <option value="evangélisation">Évangélisation</option>
             <option value="autre">Autre</option>
           </select>
+
+          {/* Prière du salut */}
+            <select
+              className="input"
+              value={formData.priere_salut}
+              required
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData({
+                  ...formData,
+                  priere_salut: value,
+                  type_conversion: value === "Oui" ? formData.type_conversion : "", // reset si Non
+                });
+              }}
+            >
+              <option value="">-- Prière du salut ? --</option>
+              <option value="Oui">Oui</option>
+              <option value="Non">Non</option>
+            </select>
+            
+            {/* Type de conversion */}
+            {formData.priere_salut === "Oui" && (
+              <select
+                className="input"
+                value={formData.type_conversion}
+                onChange={(e) =>
+                  setFormData({ ...formData, type_conversion: e.target.value })
+                }
+                required
+              >
+                <option value="">Type</option>
+                <option value="Nouveau converti">Nouveau converti</option>
+                <option value="Réconciliation">Réconciliation</option>
+              </select>
+            )}
 
           <div>
             <p className="font-semibold mb-2 text-sm sm:text-base">Besoins :</p>

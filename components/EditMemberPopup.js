@@ -44,6 +44,10 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     commentaire_suivis: member?.commentaire_suivis || "",
     bapteme_eau: member?.bapteme_eau ?? null,
     bapteme_esprit: member?.bapteme_esprit ?? null,
+    etat_contact: formData.etat_contact || null,
+    priere_salut: formData.priere_salut,
+    type_conversion: formData.type_conversion,
+    suivi_statut: formData.suivi_statut,
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -145,6 +149,10 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         commentaire_suivis: formData.commentaire_suivis || null,
         bapteme_eau: formData.bapteme_eau,
         bapteme_esprit: formData.bapteme_esprit,
+        etat_contact: formData.etat_contact || null,
+        priere_salut: formData.priere_salut,
+        type_conversion: formData.type_conversion,
+        suivi_statut: formData.suivi_statut,
       };
 
       const { error } = await supabase
@@ -229,17 +237,16 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
           {/* Statut */}
           <div>
-            <label className="font-semibold text-black block mb-1">Statut</label>
+            <label className="font-semibold text-black block mb-1">Etat Contact</label>
             <select
-              name="statut"
+              name="etat_contact"
               value={formData.statut}
               onChange={handleChange}
               className="input"
             >
-              <option value="">-- Statut --</option>
-              <option value="actif">Actif</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="ancien">Ancien</option>
+              <option value="">-- etat_contact --</option>
+              <option value="existant">Existant</option>
+              <option value="nouveau">Nouveau</option>              
               <option value="inactif">Inactif</option>
             </select>
           </div>
@@ -332,6 +339,17 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </div>
 
         </div>
+
+         {/* Statut Suivi */}
+          <div className="flex flex-col">
+            <label className="font-medium">Statut Suivi</label>
+            <select name="suivi_statut" value={formData.suivi_statut} onChange={handleChange} className="input">
+              <option value="">-- Sélectionner --</option>
+              <option value="En Attente">En Attente</option>
+              <option value="Intégré">Intégrer</option>
+              <option value="Refus">Refus</option>
+            </select>
+          </div>    
 
         {/* Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">

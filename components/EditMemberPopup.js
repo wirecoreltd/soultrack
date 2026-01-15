@@ -1,384 +1,252 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import supabase from "../lib/supabaseClient";
+import { useState } from "react";
 
-export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
-  if (!member) return null;
-
-  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
-
-  const parseBesoin = (b) => {
-    if (!b) return [];
-    if (Array.isArray(b)) return b;
-    try {
-      const parsed = JSON.parse(b);
-      return Array.isArray(parsed) ? parsed : [String(b)];
-    } catch {
-      return [String(b)];
-    }
-  };
-
-  const initialBesoin = parseBesoin(member?.besoin);
-
-  const [cellules, setCellules] = useState([]);
-  const [conseillers, setConseillers] = useState([]);
-  const [loadingData, setLoadingData] = useState(true);
-  
+export default function EditMemberPopup({ member, onClose, onSave }) {
   const [formData, setFormData] = useState({
     prenom: member?.prenom || "",
     nom: member?.nom || "",
     telephone: member?.telephone || "",
     ville: member?.ville || "",
-    statut: member?.statut || "",
-    statut_initial: member?.statut_initial || "",
-    cellule_id: member?.cellule_id ?? "",
-    conseiller_id: member?.conseiller_id ?? "",
-    infos_supplementaires: member?.infos_supplementaires || "",
-    is_whatsapp: !!member?.is_whatsapp,
-    star: !!member?.star,
     sexe: member?.sexe || "",
-    venu: member?.venu || "",   
-    besoin: initialBesoin,
-    autreBesoin: "",
+    star: member?.star || false,
+
+    etat_contact: member?.etat_contact || "",
+
+    bapteme_eau: member?.bapteme_eau || "",
+    bapteme_feu: member?.bapteme_feu || "",
+
+    priere_salut: member?.priere_salut || "",
+    type_conversion: member?.type_conversion || "",
+
+    cellule_id: member?.cellule_id || "",
+    conseiller_id: member?.conseiller_id || "",
+
+    besoins: member?.besoins || [],
+    comment_venu: member?.comment_venu || "",
+    infos_supp: member?.infos_supp || "",
+
+    statut_arrivee: member?.statut_arrivee || "",
+    statut_suivis: member?.statut_suivis ?? "",
     commentaire_suivis: member?.commentaire_suivis || "",
-    bapteme_eau: member?.bapteme_eau ?? null,
-    bapteme_esprit: member?.bapteme_esprit ?? null,
   });
 
-  const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const besoinsOptions = [
+    "Finances",
+    "Santé",
+    "Travail",
+    "Les Enfants",
+    "La Famille",
+  ];
 
-  // -------------------- LOAD DATA --------------------
-  useEffect(() => {
-    let mounted = true;
-    const loadData = async () => {
-      try {
-        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
-        const { data: conseillersData } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom")
-          .eq("role", "Conseiller");
-        if (!mounted) return;
-        setCellules(cellulesData || []);
-        setConseillers(conseillersData || []);
-        setLoadingData(false);
-      } catch (err) {
-        console.error("Erreur chargement cellules/conseillers:", err);
-        setLoadingData(false);
-      }
-    };
-    loadData();
-    return () => { mounted = false; };
-  }, []);
-
-  // -------------------- HANDLERS --------------------
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    if (type === "checkbox") {
-      setFormData(prev => ({ ...prev, [name]: checked }));
-    } else if (name === "cellule_id" && value) {
-      setFormData(prev => ({ ...prev, cellule_id: value, conseiller_id: "" }));
-    } else if (name === "conseiller_id" && value) {
-      setFormData(prev => ({ ...prev, conseiller_id: value, cellule_id: "" }));
-    } else if (name === "bapteme_eau" || name === "bapteme_esprit") {
-      // Convertir string "true"/"false" en boolean
-      setFormData(prev => ({
-        ...prev,
-        [name]: value === "true" ? true : value === "false" ? false : null
-      }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handleBesoinChange = (e) => {
-    const { value, checked } = e.target;
-    if (value === "Autre") {
-      setShowAutre(checked);
-      setFormData(prev => ({
-        ...prev,
-        besoin: checked ? [...prev.besoin, "Autre"] : prev.besoin.filter(b => b !== "Autre"),
-        autreBesoin: ""
-      }));
-      return;
-    }
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      besoin: checked ? [...prev.besoin, value] : prev.besoin.filter(b => b !== value)
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
-  // -------------------- SUBMIT --------------------
-  const handleSubmit = async () => {
-    setMessage("");
-    if (!formData.prenom.trim()) return setMessage("❌ Le prénom est obligatoire.");
-    if (!formData.nom.trim()) return setMessage("❌ Le nom est obligatoire.");
-
-    setLoading(true);
-
-    try {
-      let finalBesoin = [...formData.besoin];
-      if (showAutre && formData.autreBesoin.trim()) {
-        finalBesoin = finalBesoin.filter(b => b !== "Autre");
-        finalBesoin.push(formData.autreBesoin.trim());
-      } else {
-        finalBesoin = finalBesoin.filter(b => b !== "Autre");
-      }
-
-      const payload = {
-        prenom: formData.prenom,
-        nom: formData.nom,
-        telephone: formData.telephone || null,
-        ville: formData.ville || null,
-        statut: formData.statut || null,
-        statut_initial: formData.statut_initial || null,
-        cellule_id: formData.cellule_id || null,
-        conseiller_id: formData.conseiller_id || null,
-        infos_supplementaires: formData.infos_supplementaires || null,
-        is_whatsapp: !!formData.is_whatsapp,
-        star: !!formData.star,
-        sexe: formData.sexe || null,
-        venu: formData.venu || null,        
-        besoin: JSON.stringify(finalBesoin),
-        commentaire_suivis: formData.commentaire_suivis || null,
-        bapteme_eau: formData.bapteme_eau,
-        bapteme_esprit: formData.bapteme_esprit,
-      };
-
-      const { error } = await supabase
-        .from("membres_complets")
-        .update(payload)
-        .eq("id", member.id);
-
-      if (error) throw error;
-
-      const { data } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("id", member.id)
-        .single();
-
-      onUpdateMember?.(data);
-        onClose();      
-    } catch (err) {
-      console.error(err);
-      setMessage("❌ Une erreur est survenue lors de l’enregistrement.");
-    } finally {
-      setLoading(false);
-    }
+  const toggleBesoin = (besoin) => {
+    setFormData((prev) => ({
+      ...prev,
+      besoins: prev.besoins.includes(besoin)
+        ? prev.besoins.filter((b) => b !== besoin)
+        : [...prev.besoins, besoin],
+    }));
   };
 
-  // -------------------- UI --------------------
+  const handleSubmit = () => {
+    onSave({
+      ...formData,
+      statut_suivis: formData.statut_suivis
+        ? Number(formData.statut_suivis)
+        : null,
+      type_conversion:
+        formData.priere_salut === "Oui"
+          ? formData.type_conversion
+          : null,
+    });
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4">
-      <div className="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl bg-gradient-to-b from-[rgba(46,49,146,0.16)] to-[rgba(46,49,146,0.4)]" style={{ backdropFilter: "blur(8px)" }}>
-        <button onClick={onClose} className="absolute top-4 right-4 text-red-600 font-bold text-xl">✕</button>
-        <h2 className="text-2xl font-bold text-center mb-6 text-white">
-          Modifier le profil {member.prenom} {member.nom}
-        </h2>
-         <div className="overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-white">
+    <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+      <div className="bg-white rounded-xl w-full max-w-3xl p-6 overflow-y-auto max-h-[90vh]">
 
-          {["prenom","nom","telephone","ville"].map(f => (
-            <div key={f} className="flex flex-col">
-              <label className="font-medium capitalize">{f}</label>
-              <input name={f} value={formData[f]} onChange={handleChange} className="input" />
-            </div>
-          ))}
+        <h2 className="text-xl font-bold mb-6">Modifier le membre</h2>
 
-          {/* Serviteur */}
-          <div className="flex flex-col">
-            <label className="font-medium">Serviteur</label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} className="accent-[#25297e]" />
-              Définir en tant que serviteur ⭐
-            </label>
-          </div>
+        {/* IDENTITÉ */}
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Prénom">
+            <input name="prenom" value={formData.prenom} onChange={handleChange} className="input" />
+          </Field>
 
-          {/* Sexe */}
-          <div className="flex flex-col">
-            <label className="font-medium">Sexe</label>
+          <Field label="Nom">
+            <input name="nom" value={formData.nom} onChange={handleChange} className="input" />
+          </Field>
+
+          <Field label="Téléphone">
+            <input name="telephone" value={formData.telephone} onChange={handleChange} className="input" />
+          </Field>
+
+          <Field label="Ville">
+            <input name="ville" value={formData.ville} onChange={handleChange} className="input" />
+          </Field>
+
+          <Field label="Sexe">
             <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
               <option value="">-- Sexe --</option>
               <option value="Homme">Homme</option>
               <option value="Femme">Femme</option>
             </select>
-          </div>          
+          </Field>
 
-          {/* Bapteme d'eau */}
-          <div className="flex flex-col">
-            <label className="font-medium">Bapteme d'eau</label>
-            <select name="bapteme_eau" value={formData.bapteme_eau === true ? "true" : formData.bapteme_eau === false ? "false" : ""} onChange={handleChange} className="input">
-              <option value="">-- Sélectionner --</option>
-              <option value="true">Oui</option>
-              <option value="false">Non</option>
-            </select>
+          <div className="flex items-center gap-2 mt-6">
+            <input
+              type="checkbox"
+              checked={formData.star}
+              onChange={(e) =>
+                setFormData({ ...formData, star: e.target.checked })
+              }
+            />
+            <label className="font-medium">Définir en tant que serviteur ⭐</label>
           </div>
+        </div>
 
-          {/* Bapteme de feu */}
-          <div className="flex flex-col">
-            <label className="font-medium">Bapteme de feu</label>
-            <select name="bapteme_esprit" value={formData.bapteme_esprit === true ? "true" : formData.bapteme_esprit === false ? "false" : ""} onChange={handleChange} className="input">
-              <option value="">-- Sélectionner --</option>
-              <option value="true">Oui</option>
-              <option value="false">Non</option>
+        {/* ÉTAT CONTACT */}
+        <Field label="État du contact">
+          <select
+            name="etat_contact"
+            value={formData.etat_contact}
+            onChange={handleChange}
+            className="input"
+          >
+            <option value="">-- État du contact --</option>
+            <option value="Nouveau">Nouveau</option>
+            <option value="Existant">Existant</option>
+            <option value="Inactif">Inactif</option>
+          </select>
+        </Field>
+
+        {/* BAPTÊMES */}
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Baptême d’eau">
+            <select name="bapteme_eau" value={formData.bapteme_eau} onChange={handleChange} className="input">
+              <option value="">-- Oui / Non --</option>
+              <option value="Oui">Oui</option>
+              <option value="Non">Non</option>
             </select>
-          </div>
+          </Field>
 
+          <Field label="Baptême de feu">
+            <select name="bapteme_feu" value={formData.bapteme_feu} onChange={handleChange} className="input">
+              <option value="">-- Oui / Non --</option>
+              <option value="Oui">Oui</option>
+              <option value="Non">Non</option>
+            </select>
+          </Field>
+        </div>
 
-          {/* Statut */}
-          <div>
-            <label className="font-semibold text-black block mb-1">Statut</label>
+        {/* PRIÈRE DU SALUT */}
+        <Field label="Prière du salut">
+          <select
+            className="input"
+            value={formData.priere_salut}
+            onChange={(e) => {
+              const value = e.target.value;
+              setFormData({
+                ...formData,
+                priere_salut: value,
+                type_conversion: value === "Oui" ? formData.type_conversion : "",
+              });
+            }}
+          >
+            <option value="">-- Prière du salut ? --</option>
+            <option value="Oui">Oui</option>
+            <option value="Non">Non</option>
+          </select>
+        </Field>
+
+        {formData.priere_salut === "Oui" && (
+          <Field label="Type de conversion">
             <select
-              name="statut"
-              value={formData.statut}
-              onChange={handleChange}
               className="input"
+              value={formData.type_conversion}
+              onChange={(e) =>
+                setFormData({ ...formData, type_conversion: e.target.value })
+              }
             >
-              <option value="">-- Statut --</option>
-              <option value="actif">Actif</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="ancien">Ancien</option>
-              <option value="inactif">Inactif</option>
+              <option value="">Type</option>
+              <option value="Nouveau converti">Nouveau converti</option>
+              <option value="Réconciliation">Réconciliation</option>
             </select>
-          </div>
+          </Field>
+        )}
 
-          {/* Cellule */}
-          <div>
-            <label className="font-semibold text-black block mb-1">Cellule</label>
-            <select
-              name="cellule_id"
-              value={formData.cellule_id ?? ""}
-              onChange={handleChange}
-              className="input"
-              disabled={loadingData}
-            >
-              <option value="">-- Cellule --</option>
-              {cellules.map((c) => (
-                <option key={c.id} value={c.id}>{c.cellule_full}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Conseiller */}
-          <div>
-            <label className="font-semibold text-black block mb-1">Conseiller</label>
-            <select
-              name="conseiller_id"
-              value={formData.conseiller_id ?? ""}
-              onChange={handleChange}
-              className="input"
-              disabled={loadingData}
-            >
-              <option value="">-- Conseiller --</option>
-              {conseillers.map((c) => (
-                <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Besoins */}
-          <div className="flex flex-col">
-            <label className="font-medium">Besoins</label>
-            {besoinsOptions.map(b => (
+        {/* BESOINS */}
+        <div>
+          <label className="font-medium block mb-2">Besoins</label>
+          <div className="grid grid-cols-2 gap-2">
+            {besoinsOptions.map((b) => (
               <label key={b} className="flex items-center gap-2">
-                <input type="checkbox" value={b} checked={formData.besoin.includes(b)} onChange={handleBesoinChange} className="accent-[#25297e]" />
+                <input
+                  type="checkbox"
+                  checked={formData.besoins.includes(b)}
+                  onChange={() => toggleBesoin(b)}
+                />
                 {b}
               </label>
             ))}
-            <label className="flex items-center gap-2">
-              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} className="accent-[#25297e]" />
-              Autre
-            </label>
-            {showAutre && (
-              <input name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input mt-2" placeholder="Précisez" />
-            )}
           </div>
-
-          {/* Venu */}
-          <div className="flex flex-col">
-            <label className="font-medium">Comment est-il venu ?</label>
-            <select name="venu" value={formData.venu} onChange={handleChange} className="input">
-              <option value="">-- Sélectionner --</option>
-              <option value="invité">Invité</option>
-              <option value="réseaux">Réseaux</option>
-              <option value="evangélisation">Évangélisation</option>
-              <option value="autre">Autre</option>
-            </select>
-          </div>
-
-          {/* Infos supplémentaires */}
-          <div className="flex flex-col">
-            <label className="font-medium">Informations supplémentaires</label>
-            <textarea name="infos_supplementaires" value={formData.infos_supplementaires} onChange={handleChange} className="input" rows={2} />
-          </div>
-
-          {/* Statut initial */}
-          <div className="flex flex-col">
-            <label className="font-medium">Statut à l'arrivée</label>
-            <select name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="input">
-              <option value="">-- Sélectionner --</option>
-              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="visiteur">Visiteur</option>
-            </select>
-          </div>
-
-          {/* Commentaire suivis */}
-          <div className="flex flex-col">
-            <label className="font-medium">Commentaire suivis</label>
-            <textarea name="commentaire_suivis" value={formData.commentaire_suivis} onChange={handleChange} className="input" rows={2} />
-          </div>
-
         </div>
 
-        {/* Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
-          <button type="button" onClick={onClose} className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">Annuler</button>
-          <button type="button" onClick={handleSubmit} disabled={loading} className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3 rounded-2xl shadow-md transition-all">
-            {loading ? "Enregistrement..." : "Sauvegarder"}
+        {/* STATUT SUIVI */}
+        <Field label="Statut du suivi">
+          <select
+            value={String(formData.statut_suivis ?? "")}
+            onChange={(e) =>
+              setFormData({ ...formData, statut_suivis: e.target.value })
+            }
+            className="input"
+          >
+            <option value="">-- Sélectionner un statut --</option>
+            <option value="2">En attente</option>
+            <option value="3">Intégré</option>
+            <option value="4">Refus</option>
+          </select>
+        </Field>
+
+        <Field label="Commentaire suivis">
+          <textarea
+            className="input"
+            rows={3}
+            value={formData.commentaire_suivis}
+            onChange={(e) =>
+              setFormData({ ...formData, commentaire_suivis: e.target.value })
+            }
+          />
+        </Field>
+
+        {/* ACTIONS */}
+        <div className="flex justify-end gap-3 mt-6">
+          <button onClick={onClose} className="btn-secondary">
+            Annuler
+          </button>
+          <button onClick={handleSubmit} className="btn-primary">
+            Enregistrer
           </button>
         </div>
-
-        {/* Message succès ou erreur sous les boutons */}
-        {message && (
-          <p className="text-[#25297e] font-semibold text-center mt-3">
-            {message}
-          </p>
-        )}
-
-        <style jsx>{`
-  label {
-    font-weight: 600; /* semi-bold */
-    color: white;
-  }
-
-  .input {
-    width: 100%;
-    border: 1px solid #a0c4ff;
-    border-radius: 14px;
-    padding: 12px;
-    background: rgba(255,255,255,0.1);
-    color: white;
-    font-weight: 400; /* NORMAL pour les valeurs */
-  }
-
-  /* Texte affiché dans le select (avant ouverture) */
-  select.input {
-    font-weight: 400;
-    color: white;
-  }
-
-  /* Options du menu déroulant (quand ouvert) */
-  select.input option {
-    background: white;
-    color: black;
-    font-weight: 400;
-  }
-`}</style>
-
       </div>
+    </div>
+  );
+}
+
+/* 🔹 Champ avec label standard */
+function Field({ label, children }) {
+  return (
+    <div className="flex flex-col mb-4">
+      <label className="font-medium mb-1">{label}</label>
+      {children}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditEvangeliseSuiviPopup from "../components/EditEvangeliseSuiviPopup";
 import DetailsEvangePopup from "../components/DetailsEvangePopup";
+import HeaderPages from "../components/HeaderPages";
 
 export default function SuivisEvangelisation() {
   const [allSuivis, setAllSuivis] = useState([]);
@@ -264,13 +265,9 @@ export default function SuivisEvangelisation() {
   return (
     
   <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
-    {/* Header */}
-    <div className="w-full max-w-5xl mb-6 flex justify-between">
-      <button onClick={() => window.history.back()} className="text-white">← Retour</button>
-      <LogoutLink />
-    </div>
-
-    <Image src="/logo.png" alt="Logo" width={80} height={80} />
+    
+    <HeaderPages />
+    
     <h1 className="text-3xl font-bold text-white mb-6">📋 Suivis des Évangélisés</h1>
 
     {/* Toggle Vue / Refus */}

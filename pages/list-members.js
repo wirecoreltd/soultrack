@@ -388,6 +388,8 @@ export default function ListMembers() {
               <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
               <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>
+              <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
+              <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
               <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
               <p>💡 Statut Suivi : {statutLabels[m.statut_suivis] || "—"}</p>
               <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">

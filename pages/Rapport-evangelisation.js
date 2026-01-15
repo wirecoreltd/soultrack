@@ -5,6 +5,7 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import EditEvanRapportLine from "../components/EditEvanRapportLine";
+import HeaderPages from "../components/HeaderPages";
 
 export default function RapportEvangelisation() {
   const router = useRouter();
@@ -40,17 +41,9 @@ export default function RapportEvangelisation() {
 
   return (
     <div className="min-h-screen p-6" style={{ background: "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)" }}>
-      {/* 🔹 Bouton retour */}
-      <button
-        onClick={() => router.back()}
-        className="mb-4 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded shadow text-gray-800"
-      >
-        ← Retour
-      </button>
 
-      {/* Logo + titre */}
-      <div className="flex flex-col items-center mb-6">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
+        <HeaderPages />
+  
         <h1 className="text-3xl font-bold text-gray-800 mt-2">Rapport Évangélisation</h1>
         <p className="text-gray-600 italic mt-1">Résumé des évangélisations par date</p>
       </div>

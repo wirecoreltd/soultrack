@@ -13,22 +13,46 @@ export default function Header() {
 
   useEffect(() => {
     const loadProfile = async () => {
-      const { data: authData, error } = await supabase.auth.getUser();
-      if (error || !authData?.user) return;
+      try {
+        // 🔹 1️⃣ Récupérer user Supabase
+        const { data: authData, error } = await supabase.auth.getUser();
+        if (error || !authData?.user) return;
 
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("prenom")
-        .eq("id", authData.user.id)
-        .single();
+        const userId = authData.user.id;
 
-      if (profileError || !profile) return;
+        // 🔹 2️⃣ Récupérer profile
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("prenom, eglise_id, branche_id")
+          .eq("id", userId)
+          .single();
 
-      setPrenom(profile.prenom || "");
-      
-      // ⛔ temporaire tant que les tables église/branche ne sont pas liées
-      setEglise("");
-      setBranche("");
+        if (profileError || !profile) return;
+
+        setPrenom(profile.prenom || "");
+
+        // 🔹 3️⃣ Récupérer le nom de l'église si eglise_id existe
+        if (profile.eglise_id) {
+          const { data: egliseData } = await supabase
+            .from("eglises")
+            .select("nom")
+            .eq("id", profile.eglise_id)
+            .single();
+          setEglise(egliseData?.nom || "");
+        }
+
+        // 🔹 4️⃣ Récupérer le nom de la branche si branche_id existe
+        if (profile.branche_id) {
+          const { data: brancheData } = await supabase
+            .from("branches")
+            .select("nom")
+            .eq("id", profile.branche_id)
+            .single();
+          setBranche(brancheData?.nom || "");
+        }
+      } catch (err) {
+        console.error("Erreur récupération profil :", err);
+      }
     };
 
     loadProfile();
@@ -61,20 +85,13 @@ export default function Header() {
       {/* Welcome */}
       <div className="flex justify-end mb-4">
         <p className="text-white text-sm">
-          👋 Bienvenue{" "}
-          <span className="font-semibold">
-            {prenom || "—"}
-          </span>
+          👋 Bienvenue <span className="font-semibold">{prenom || "—"}</span>
         </p>
       </div>
 
-      {/* Logo + Église */}
+      {/* Logo + Église / Branche */}
       <div className="flex flex-col items-center gap-2">
-        <img
-          src="/logo.png"
-          alt="Logo SoulTrack"
-          className="w-20 h-auto"
-        />
+        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-auto" />
 
         {(eglise || branche) && (
           <p className="text-white text-base font-medium tracking-wide">

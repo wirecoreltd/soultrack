@@ -283,7 +283,7 @@ export default function AddMember() {
         {/* Besoins */}
         <p className="text-sm sm:text-base font-semibold mb-1">Besoins</p>
         {besoinsOptions.map(item => (
-          <label key={item} className="flex items-center gap-3 mb-2 text-sm sm:text-base">
+          <label key={item} className="flex items-center gap-1 mb-2 text-sm sm:text-base">
             <input
               type="checkbox"
               value={item}

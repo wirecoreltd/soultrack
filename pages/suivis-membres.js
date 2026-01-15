@@ -9,7 +9,7 @@ import EditMemberSuivisPopup from "../components/EditMemberSuivisPopup";
 import DetailsModal from "../components/DetailsModal";
 import { useMembers } from "../context/MembersContext";
 import { useRouter } from "next/navigation";
-import DetailsModal from "../components/HeaderPages";
+import HeaderPages from "../components/HeaderPages";
 
 export default function SuivisMembres() {
   const router = useRouter();

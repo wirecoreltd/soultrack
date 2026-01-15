@@ -241,10 +241,10 @@ export default function SuivisMembres() {
               }</p> 
         <p>❓ Besoin : {besoinText}</p>
         <p>📝 Infos : {m.infos_supplementaires || ""}</p>
-        <p>🧩 Comment est-il venu : {m.venu || ""}/p>  
+        <p>🧩 Comment est-il venu : {m.venu || ""}</p>
         <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? ""}</p>
         <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
-        <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>        
+        <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>      
         
         <div className="mt-4 flex justify-center">
           <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-4">✏️ Modifier le contact</button>

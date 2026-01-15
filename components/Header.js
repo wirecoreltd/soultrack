@@ -14,19 +14,17 @@ export default function Header() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-          console.log("Utilisateur non connecté");
-          setLoading(false);
-          return;
-        }
+      const userEmail = localStorage.getItem("userEmail"); // récupère l'email stocké au login
+      if (!userEmail) {
+        setLoading(false);
+        return;
+      }
 
-        // Récupération du profil via l'ID
+      try {
         const { data: profile, error } = await supabase
           .from("profiles")
           .select("prenom, eglise_nom, branche_nom")
-          .eq("id", user.id)
+          .eq("email", userEmail)
           .single();
 
         if (error) throw error;
@@ -35,7 +33,7 @@ export default function Header() {
         setEglise(profile?.eglise_nom || "Église Principale");
         setBranche(profile?.branche_nom || "Maurice");
       } catch (err) {
-        console.error("Erreur récupération profil :", err);
+        console.error("❌ Erreur récupération profil :", err);
       } finally {
         setLoading(false);
       }
@@ -45,8 +43,14 @@ export default function Header() {
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
+    try {
+      await supabase.auth.signOut();
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("userRole");
+      router.push("/login");
+    } catch (err) {
+      console.error("Erreur lors de la déconnexion :", err);
+    }
   };
 
   return (
@@ -68,10 +72,11 @@ export default function Header() {
         </button>
       </div>
 
-      {/* Prénom utilisateur aligné à droite */}
+      {/* Info utilisateur alignée à droite sous Déconnexion */}
       <div className="flex justify-end flex-col text-right space-y-1 mb-6">
         <p className="text-white text-sm">
-          👋 Bienvenue <span className="font-semibold">{loading ? "..." : prenom}</span>
+          👋 Bienvenue{" "}
+          <span className="font-semibold">{loading ? "..." : prenom}</span>
         </p>
       </div>
 
@@ -82,7 +87,7 @@ export default function Header() {
           alt="Logo SoulTrack"
           className="w-20 h-auto"
         />
-        {/* Église / Branche juste sous le logo */}
+        {/* Église / Branche sous le logo */}
         <p className="text-white text-base font-medium mt-2">
           {eglise} <span className="text-amber-300 font-semibold">- {branche}</span>
         </p>

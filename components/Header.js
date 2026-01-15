@@ -10,17 +10,23 @@ export default function Header() {
   const [prenom, setPrenom] = useState("Utilisateur");
   const [eglise, setEglise] = useState("Église Principale");
   const [branche, setBranche] = useState("Maurice");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const userEmail = localStorage.getItem("userEmail");
-        if (!userEmail) return;
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+          console.log("Utilisateur non connecté");
+          setLoading(false);
+          return;
+        }
 
+        // Récupération du profil via l'ID
         const { data: profile, error } = await supabase
           .from("profiles")
           .select("prenom, eglise_nom, branche_nom")
-          .eq("email", userEmail)
+          .eq("id", user.id)
           .single();
 
         if (error) throw error;
@@ -30,6 +36,8 @@ export default function Header() {
         setBranche(profile?.branche_nom || "Maurice");
       } catch (err) {
         console.error("Erreur récupération profil :", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -63,7 +71,7 @@ export default function Header() {
       {/* Prénom utilisateur aligné à droite */}
       <div className="flex justify-end flex-col text-right space-y-1 mb-6">
         <p className="text-white text-sm">
-          👋 Bienvenue <span className="font-semibold">{prenom}</span>
+          👋 Bienvenue <span className="font-semibold">{loading ? "..." : prenom}</span>
         </p>
       </div>
 

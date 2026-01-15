@@ -13,20 +13,22 @@ export default function Header() {
 
   useEffect(() => {
     const loadProfile = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (error || !data?.user) return;
+      const { data: authData, error } = await supabase.auth.getUser();
+      if (error || !authData?.user) return;
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("prenom, eglise_nom, branche_nom")
-        .eq("id", data.user.id)
+        .select("prenom")
+        .eq("id", authData.user.id)
         .single();
 
-      if (!profile) return;
+      if (profileError || !profile) return;
 
       setPrenom(profile.prenom || "");
-      setEglise(profile.eglise_nom || "");
-      setBranche(profile.branche_nom || "");
+      
+      // ⛔ temporaire tant que les tables église/branche ne sont pas liées
+      setEglise("");
+      setBranche("");
     };
 
     loadProfile();
@@ -59,22 +61,28 @@ export default function Header() {
       {/* Welcome */}
       <div className="flex justify-end mb-4">
         <p className="text-white text-sm">
-          👋 Bienvenue <span className="font-semibold">{prenom}</span>
+          👋 Bienvenue{" "}
+          <span className="font-semibold">
+            {prenom || "—"}
+          </span>
         </p>
       </div>
 
-      {/* Logo */}
+      {/* Logo + Église */}
       <div className="flex flex-col items-center gap-2">
-        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-auto" />
+        <img
+          src="/logo.png"
+          alt="Logo SoulTrack"
+          className="w-20 h-auto"
+        />
 
-        {/* Église / Branche */}
         {(eglise || branche) && (
           <p className="text-white text-base font-medium tracking-wide">
             {eglise}
             {branche && (
               <span className="text-amber-300 font-semibold">
                 {" "}
-               – {branche}
+                – {branche}
               </span>
             )}
           </p>

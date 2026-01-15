@@ -30,25 +30,30 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
     nom: member?.nom || "",
     telephone: member?.telephone || "",
     ville: member?.ville || "",
-    statut: member?.statut || "",
-    statut_initial: member?.statut_initial || "",
+    sexe: member?.sexe || "",
+    star: !!member?.star,
+    etat_contact: member?.etat_contact || "Nouveau",
+    bapteme_eau: member?.bapteme_eau ?? null,
+    bapteme_esprit: member?.bapteme_esprit ?? null,
+    priere_salut: member?.priere_salut || "",
+    type_conversion: member?.type_conversion || "",
     cellule_id: member?.cellule_id ?? "",
     conseiller_id: member?.conseiller_id ?? "",
-    infos_supplementaires: member?.infos_supplementaires || "",
-    is_whatsapp: !!member?.is_whatsapp,
-    star: !!member?.star,
-    sexe: member?.sexe || "",
-    venu: member?.venu || "",
     besoin: initialBesoin,
     autreBesoin: "",
+    venu: member?.venu || "",
+    infos_supplementaires: member?.infos_supplementaires || "",
+    statut_initial: member?.statut_initial || "",
+    suivi_statut: member?.suivi_statut || "",
     commentaire_suivis: member?.commentaire_suivis || "",
+    is_whatsapp: !!member?.is_whatsapp,
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  /* ===================== LOAD DATA ===================== */
+  // -------------------- LOAD DATA --------------------
   useEffect(() => {
     let mounted = true;
     const loadData = async () => {
@@ -71,7 +76,7 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
     return () => { mounted = false; };
   }, []);
 
-  /* ===================== HANDLERS ===================== */
+  // -------------------- HANDLERS --------------------
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === "checkbox") {
@@ -80,6 +85,11 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
       setFormData(prev => ({ ...prev, cellule_id: value, conseiller_id: "" }));
     } else if (name === "conseiller_id" && value) {
       setFormData(prev => ({ ...prev, conseiller_id: value, cellule_id: "" }));
+    } else if (name === "bapteme_eau" || name === "bapteme_esprit") {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value === "true" ? true : value === "false" ? false : null
+      }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -102,7 +112,7 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
     }));
   };
 
-  /* ===================== SUBMIT ===================== */
+  // -------------------- SUBMIT --------------------
   const handleSubmit = async () => {
     setMessage("");
     if (!formData.prenom.trim()) return setMessage("❌ Le prénom est obligatoire.");
@@ -124,17 +134,22 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
         nom: formData.nom,
         telephone: formData.telephone || null,
         ville: formData.ville || null,
-        statut: formData.statut || null,
-        statut_initial: formData.statut_initial || null,
+        sexe: formData.sexe || null,
+        star: !!formData.star,
+        etat_contact: formData.etat_contact || "Nouveau",
+        bapteme_eau: formData.bapteme_eau,
+        bapteme_esprit: formData.bapteme_esprit,
+        priere_salut: formData.priere_salut || null,
+        type_conversion: formData.type_conversion || null,
         cellule_id: formData.cellule_id || null,
         conseiller_id: formData.conseiller_id || null,
-        infos_supplementaires: formData.infos_supplementaires || null,
-        is_whatsapp: !!formData.is_whatsapp,
-        star: !!formData.star,
-        sexe: formData.sexe || null,
-        venu: formData.venu || null,
         besoin: JSON.stringify(finalBesoin),
+        venu: formData.venu || null,
+        infos_supplementaires: formData.infos_supplementaires || null,
+        statut_initial: formData.statut_initial || null,
+        suivi_statut: formData.suivi_statut || null,
         commentaire_suivis: formData.commentaire_suivis || null,
+        is_whatsapp: !!formData.is_whatsapp,
       };
 
       const { error } = await supabase
@@ -151,13 +166,7 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
         .single();
 
       onUpdateMember?.(data);
-
-      setMessage("✅ Enregistrement / Modification réussie");
-
-      setTimeout(() => {
-        setMessage("");
-        onClose();
-      }, 3000);
+      onClose();
     } catch (err) {
       console.error(err);
       setMessage("❌ Une erreur est survenue lors de l’enregistrement.");
@@ -165,31 +174,24 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
       setLoading(false);
     }
   };
-
-  /* ===================== UI ===================== */
+  // -------------------- UI --------------------
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-md backdrop-saturate-150 flex items-center justify-center z-50 p-4">
-      <div
-        className="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl overflow-y-auto max-h-[90vh]"
-        style={{
-          background: "linear-gradient(180deg, rgba(46,49,146,0.16), rgba(46,49,146,0.40))",
-          backdropFilter: "blur(8px)",
-        }}
-      >
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl bg-gradient-to-b from-[rgba(46,49,146,0.16)] to-[rgba(46,49,146,0.4)]" style={{ backdropFilter: "blur(8px)" }}>
         <button onClick={onClose} className="absolute top-4 right-4 text-red-600 font-bold text-xl">✕</button>
-
         <h2 className="text-2xl font-bold text-center mb-6 text-white">
           Modifier le profil {member.prenom} {member.nom}
         </h2>
 
-        <div className="flex flex-col gap-4 text-white">
+        <div className="overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-white">
 
+          {/* Prénom / Nom / Téléphone / Ville */}
           {["prenom","nom","telephone","ville"].map(f => (
             <div key={f} className="flex flex-col">
               <label className="font-medium capitalize">{f}</label>
               <input name={f} value={formData[f]} onChange={handleChange} className="input" />
             </div>
-          ))}          
+          ))}
 
           {/* Sexe */}
           <div className="flex flex-col">
@@ -201,22 +203,105 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
             </select>
           </div>
 
-          {/* Statut */}
-          <div>
-            <label className="font-semibold text-black block mb-1">Statut</label>
-            <select
-              name="statut"
-              value={formData.statut}
-              onChange={handleChange}
-              className="input"
-            >
-              <option value="">-- Statut --</option>
-              <option value="actif">Actif</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="ancien">Ancien</option>
-              <option value="inactif">Inactif</option>
+          {/* Serviteur */}
+          <div className="flex flex-col">
+            <label className="font-medium">Définir en tant que serviteur</label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} className="accent-[#25297e]" />
+              Oui
+            </label>
+          </div>
+
+          {/* État du contact */}
+          <div className="flex flex-col">
+            <label className="font-medium">État du contact</label>
+            <select name="etat_contact" value={formData.etat_contact} onChange={handleChange} className="input">
+              <option value="">-- Sélectionner --</option>
+              <option value="Nouveau">Nouveau</option>
+              <option value="Existant">Existant</option>
+              <option value="Inactif">Inactif</option>
             </select>
-          </div>          
+          </div>
+
+          {/* Bapteme d'eau */}
+          <div className="flex flex-col">
+            <label className="font-medium">Bapteme d'eau</label>
+            <select name="bapteme_eau" value={formData.bapteme_eau === true ? "true" : formData.bapteme_eau === false ? "false" : ""} onChange={handleChange} className="input">
+              <option value="">-- Sélectionner --</option>
+              <option value="true">Oui</option>
+              <option value="false">Non</option>
+            </select>
+          </div>
+
+          {/* Bapteme de feu */}
+          <div className="flex flex-col">
+            <label className="font-medium">Bapteme de feu</label>
+            <select name="bapteme_esprit" value={formData.bapteme_esprit === true ? "true" : formData.bapteme_esprit === false ? "false" : ""} onChange={handleChange} className="input">
+              <option value="">-- Sélectionner --</option>
+              <option value="true">Oui</option>
+              <option value="false">Non</option>
+            </select>
+          </div>
+
+          {/* Prière du salut */}
+          <div className="flex flex-col">
+            <label className="font-medium">Prière du salut</label>
+            <select
+              className="input"
+              name="priere_salut"
+              value={formData.priere_salut}
+              required
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData({
+                  ...formData,
+                  priere_salut: value,
+                  type_conversion: value === "Oui" ? formData.type_conversion : "",
+                });
+              }}
+            >
+              <option value="">-- Prière du salut ? --</option>
+              <option value="Oui">Oui</option>
+              <option value="Non">Non</option>
+            </select>
+
+            {/* Type de conversion */}
+            {formData.priere_salut === "Oui" && (
+              <select
+                className="input mt-2"
+                name="type_conversion"
+                value={formData.type_conversion}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Type</option>
+                <option value="Nouveau converti">Nouveau converti</option>
+                <option value="Réconciliation">Réconciliation</option>
+              </select>
+            )}
+          </div>
+
+          {/* Cellule */}
+          <div className="flex flex-col">
+            <label className="font-medium">Cellule</label>
+            <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input" disabled={loadingData}>
+              <option value="">-- Cellule --</option>
+              {cellules.map(c => (
+                <option key={c.id} value={c.id}>{c.cellule_full}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Conseiller */}
+          <div className="flex flex-col">
+            <label className="font-medium">Conseiller</label>
+            <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input" disabled={loadingData}>
+              <option value="">-- Conseiller --</option>
+              {conseillers.map(c => (
+                <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
+              ))}
+            </select>
+          </div>
 
           {/* Besoins */}
           <div className="flex flex-col">
@@ -235,8 +320,7 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
               <input name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input mt-2" placeholder="Précisez" />
             )}
           </div>
-
-          {/* Venu */}
+                       {/* Comment est-il venu ? */}
           <div className="flex flex-col">
             <label className="font-medium">Comment est-il venu ?</label>
             <select name="venu" value={formData.venu} onChange={handleChange} className="input">
@@ -248,29 +332,78 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
             </select>
           </div>
 
-          {/* Infos supplémentaires */}
+          {/* Informations supplémentaires */}
           <div className="flex flex-col">
             <label className="font-medium">Informations supplémentaires</label>
-            <textarea name="infos_supplementaires" value={formData.infos_supplementaires} onChange={handleChange} className="input" rows={2} />
+            <textarea
+              name="infos_supplementaires"
+              value={formData.infos_supplementaires}
+              onChange={handleChange}
+              className="input"
+              rows={2}
+            />
           </div>
 
-          {/* Statut initial */}
+          {/* Statut à l'arrivée */}
           <div className="flex flex-col">
             <label className="font-medium">Statut à l'arrivée</label>
-            <select name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="input">
+            <select
+              name="statut_initial"
+              value={formData.statut_initial}
+              onChange={handleChange}
+              className="input"
+            >
               <option value="">-- Sélectionner --</option>
               <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
               <option value="a déjà son église">A déjà son église</option>
               <option value="visiteur">Visiteur</option>
             </select>
-          </div>       
+          </div>
+
+          {/* Suivi statut */}
+          <div className="flex flex-col">
+            <label className="font-medium">Suivi statut</label>
+            <select
+              value={formData.suivi_statut ?? ""}
+              onChange={(e) => setFormData(prev => ({ ...prev, suivi_statut: e.target.value }))}
+              className="input"
+            >
+              <option value="">-- Sélectionner un statut --</option>
+              <option value="En Attente">En Attente</option>
+              <option value="Intégrer">Intégrer</option>
+              <option value="Refus">Refus</option>
+            </select>
+          </div>
+
+          {/* Commentaire suivis */}
+          <div className="flex flex-col">
+            <label className="font-medium">Commentaire suivis</label>
+            <textarea
+              name="commentaire_suivis"
+              value={formData.commentaire_suivis}
+              onChange={handleChange}
+              className="input"
+              rows={2}
+            />
+          </div>
 
         </div>
 
         {/* Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
-          <button type="button" onClick={onClose} className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">Annuler</button>
-          <button type="button" onClick={handleSubmit} disabled={loading} className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3 rounded-2xl shadow-md transition-all">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+          >
             {loading ? "Enregistrement..." : "Sauvegarder"}
           </button>
         </div>
@@ -282,36 +415,34 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
           </p>
         )}
 
+        {/* Styles */}
         <style jsx>{`
-  label {
-    font-weight: 600; /* semi-bold */
-    color: white;
-  }
+          label {
+            font-weight: 600; /* semi-bold */
+            color: white;
+          }
 
-  .input {
-    width: 100%;
-    border: 1px solid #a0c4ff;
-    border-radius: 14px;
-    padding: 12px;
-    background: rgba(255,255,255,0.1);
-    color: white;
-    font-weight: 400; /* NORMAL pour les valeurs */
-  }
+          .input {
+            width: 100%;
+            border: 1px solid #a0c4ff;
+            border-radius: 14px;
+            padding: 12px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-weight: 400;
+          }
 
-  /* Texte affiché dans le select (avant ouverture) */
-  select.input {
-    font-weight: 400;
-    color: white;
-  }
+          select.input {
+            font-weight: 400;
+            color: white;
+          }
 
-  /* Options du menu déroulant (quand ouvert) */
-  select.input option {
-    background: white;
-    color: black;
-    font-weight: 400;
-  }
-`}</style>
-
+          select.input option {
+            background: white;
+            color: black;
+            font-weight: 400;
+          }
+        `}</style>
       </div>
     </div>
   );

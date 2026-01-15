@@ -389,6 +389,7 @@ export default function ListMembers() {
               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
               <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>
               <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
+              <p>💡 Statut Suivi : {statutLabels[m.statut_suivis] || "—"}</p>
               <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">
                 ✏️ Modifier le contact
               </button>

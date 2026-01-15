@@ -391,7 +391,7 @@ export default function ListMembers() {
               <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
               <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
               <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
-              <p>💡 Statut Suivi : {statutLabels[m.suivi_statut] || "—"}</p>
+              <p>💡 Statut Suivi : {m.suivi_statut || "—"}
               <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">
                 ✏️ Modifier le contact
               </button>

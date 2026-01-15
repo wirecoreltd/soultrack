@@ -239,7 +239,7 @@ export default function SuivisMembres() {
               <p>🔥 Bapteme de Feu: {
                 m.bapteme_esprit === null ? "" : (m.bapteme_esprit === true || m.bapteme_esprit === "true") ? "Oui" : "Non"
               }</p> 
-        <p>❓ Besoin : {besoinText}</p>
+        <p>❓ Besoin : {besoins}</p>
         <p>📝 Infos : {m.infos_supplementaires || ""}</p>
         <p>🧩 Comment est-il venu : {m.venu || ""}</p>
         <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? ""}</p>

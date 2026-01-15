@@ -7,6 +7,7 @@ import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditEvangelisePopup from "../components/EditEvangelisePopup";
 import DetailsEvangePopup from "../components/DetailsEvangePopup";
+import HeaderPages from "../components/HeaderPages";
 
 export default function Evangelisation() {
   const router = useRouter();

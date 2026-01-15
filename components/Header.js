@@ -1,5 +1,3 @@
-rajoute le église / branche juste en dessous du Sous le Logo. Propose moi un font different mais en coherence avec la page
-
 "use client";
 
 import { useEffect, useState } from "react";

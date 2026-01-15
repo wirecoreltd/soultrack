@@ -281,7 +281,7 @@ export default function SuivisMembres() {
 
                 <p className="text-sm text-black-700 mb-1">🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}</p>
                 <p className="text-sm text-black-700 mb-1">👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
-                <p className="text-sm text-black-700 mb-1">🏙 Ville : {m.ville || ""}</p>    
+                <p className="text-sm text-black-700 mb-1">🏙️ Ville : {m.ville || ""}</p>    
                 {/* Commentaire & Statut */}
                 <div className="flex flex-col w-full mt-2">
                   <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Commentaire Suivis</label>

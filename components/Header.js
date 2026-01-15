@@ -8,40 +8,43 @@ export default function Header() {
   const router = useRouter();
 
   const [prenom, setPrenom] = useState("Utilisateur");
-  const [eglise, setEglise] = useState("");
-  const [branche, setBranche] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [eglise, setEglise] = useState(null);
+  const [branche, setBranche] = useState(null);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const user = sessionData?.session?.user;
+    const loadProfile = async (userId) => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("prenom, eglise_nom, branche_nom")
+        .eq("id", userId)
+        .single();
 
-        if (!user) {
-          setLoading(false);
-          return;
-        }
-
-        const { data: profile, error } = await supabase
-          .from("profiles")
-          .select("prenom, eglise_nom, branche_nom")
-          .eq("id", user.id)
-          .single();
-
-        if (error) throw error;
-
-        setPrenom(profile?.prenom || "Utilisateur");
-        setEglise(profile?.eglise_nom || "");
-        setBranche(profile?.branche_nom || "");
-      } catch (err) {
-        console.error("❌ Erreur récupération profil :", err);
-      } finally {
-        setLoading(false);
+      if (!error && data) {
+        setPrenom(data.prenom || "Utilisateur");
+        setEglise(data.eglise_nom);
+        setBranche(data.branche_nom);
       }
     };
 
-    fetchProfile();
+    // 1️⃣ Charger si session déjà prête
+    supabase.auth.getSession().then(({ data }) => {
+      if (data?.session?.user) {
+        loadProfile(data.session.user.id);
+      }
+    });
+
+    // 2️⃣ Écouter les changements d’auth (clé du bug)
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session?.user) {
+          loadProfile(session.user.id);
+        }
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -68,17 +71,14 @@ export default function Header() {
         </button>
       </div>
 
-      {/* User info */}
-      <div className="flex justify-end flex-col text-right space-y-1 mb-4">
+      {/* Welcome */}
+      <div className="flex justify-end mb-4">
         <p className="text-white text-sm">
-          👋 Bienvenue{" "}
-          <span className="font-semibold">
-            {loading ? "..." : prenom}
-          </span>
+          👋 Bienvenue <span className="font-semibold">{prenom}</span>
         </p>
       </div>
 
-      {/* Logo + Église / Branche */}
+      {/* Logo + Église */}
       <div className="flex flex-col items-center mb-6">
         <img
           src="/logo.png"

@@ -219,6 +219,10 @@ export default function SuivisMembres() {
       }
     }, [commentChanges[m.id]]);
 
+      const besoinText = Array.isArray(m.besoin)
+    ? m.besoin.join(", ")
+    : m.besoin || "";
+
     const celluleNom = m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—";
     const conseillerNom = m.conseiller_id
       ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim()
@@ -235,9 +239,9 @@ export default function SuivisMembres() {
               <p>🔥 Bapteme de Feu: {
                 m.bapteme_esprit === null ? "" : (m.bapteme_esprit === true || m.bapteme_esprit === "true") ? "Oui" : "Non"
               }</p> 
-        <p>❓Besoin : {!m.besoin ? "" : Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin}</p>
+        <p>❓ Besoin : {besoinText}</p>
         <p>📝 Infos : {m.infos_supplementaires || ""}</p>
-        <p>🧩 Comment est-il venu : {m.venu || ""}</p>  
+        <p>🧩 Comment est-il venu : {m.venu || ""}/p>  
         <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? ""}</p>
         <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
         <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>        

@@ -219,12 +219,9 @@ export default function Evangelisation() {
   /* ================= UI ================= */
   return (
     <div className="min-h-screen w-full flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-      <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
-        <button onClick={() => router.back()} className="text-white">← Retour</button>
-        <LogoutLink />
-      </div>
-
-      <Image src="/logo.png" alt="Logo" width={90} height={90} className="mb-3" />
+  
+      <HeaderPages />
+  
       <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
 
       {/* Sélection cible */}

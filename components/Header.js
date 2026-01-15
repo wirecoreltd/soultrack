@@ -83,6 +83,14 @@ export default function Header() {
           className="w-20 h-auto"
         />
       </div>
+            {/* Église / Branche sous le logo */}
+        <p className="flex justify-end flex-col text-right space-y-1 mb-6">
+          {eglise}
+          <span className="text-amber-300 font-semibold">
+            {" "}
+            - {branche}
+          </span>
+        </p>
     </div>
   );
 }

@@ -143,7 +143,7 @@ export default function AddMember() {
         </button>
 
         <div className="flex justify-center mb-4 sm:mb-6">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={70} height={70} className="sm:w-[80px] sm:h-[80px]" />
+          <Image src="/logo.png" alt="SoulTrack Logo" width={70} height={70} className="sm:w-[80px] sm:h-[60px]" />
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">Ajouter un nouveau membre</h1>

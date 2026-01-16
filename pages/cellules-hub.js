@@ -10,6 +10,7 @@ import LogoutLink from "../components/LogoutLink";
 import AccessGuard from "../components/AccessGuard";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
+import HeaderPages from "../components/HeaderPages";
 
 export default function CellulesHub() {
   const router = useRouter();
@@ -44,28 +45,8 @@ export default function CellulesHub() {
         className="min-h-screen flex flex-col items-center p-6"
         style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
       >
-        {/* 🔹 Top bar: Retour + Déconnexion */}
-        <div className="w-full max-w-5xl flex justify-between items-center mb-2">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-white font-semibold hover:text-gray-200 transition-colors"
-          >
-            ← Retour
-          </button>
-
-          <LogoutLink className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors" />
-        </div>
-
-        {/* 🔹 Prénom utilisateur sous déconnexion */}
-        <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">👋 Bienvenue {prenom}</p>
-        </div>
-
-        {/* 🔹 Logo centré */}
-        <div className="mb-6">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={90} height={90} />
-        </div>
-
+        <HeaderPages />
+        
         {/* 🔹 Cartes principales */}
         <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6 flex-wrap">
           <Link

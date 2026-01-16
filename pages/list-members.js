@@ -384,8 +384,11 @@ export default function ListMembers() {
               
               <p>🔥 Bapteme de Feu: {
                 m.bapteme_esprit === null ? "" : (m.bapteme_esprit === true || m.bapteme_esprit === "true") ? "Oui" : "Non"
-              }</p>        
-              <p>❓ Besoin : {besoins}</p>
+              }</p>
+              <p>✒️ Formation : {m.Formation || "—"}</p>  
+                <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>   
+              
+<p>❓ Besoin : {besoins}</p>
               <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
               <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>

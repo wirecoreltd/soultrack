@@ -19,6 +19,7 @@ export default function MembresCellule() {
   const [editMember, setEditMember] = useState(null);
   const [detailsMember, setDetailsMember] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState({});
+  import HeaderPages from "../components/HeaderPages";
 
   // ================= FETCH =================
   useEffect(() => {
@@ -132,21 +133,8 @@ export default function MembresCellule() {
       className="min-h-screen p-6"
       style={{ background: "linear-gradient(135deg,#2E3192,#92EFFD)" }}
     >
-      {/* HEADER */}
-      <div className="flex justify-between mb-6">
-        <button onClick={() => history.back()} className="text-white">
-          ← Retour
-        </button>
-        <LogoutLink />
-      </div>
-
-      <Image
-        src="/logo.png"
-        width={80}
-        height={80}
-        alt="logo"
-        className="mx-auto mb-4"
-      />
+      
+<HeaderPages />
 
       <h1 className="text-white text-2xl font-bold text-center mb-4">
         👥 Membres intégrés de mes cellules

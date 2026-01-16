@@ -47,6 +47,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     suivi_statut: member?.suivi_statut || "",
     commentaire_suivis: member?.commentaire_suivis || "",
     is_whatsapp: !!member?.is_whatsapp,
+    Formation: !!member?.Formation,
+    Soin_Pastoral: !!member?.Soin_Pastoral,
+    Ministere: !!member?.Ministere,
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -150,6 +153,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         suivi_statut: formData.suivi_statut || null,
         commentaire_suivis: formData.commentaire_suivis || null,
         is_whatsapp: !!formData.is_whatsapp,
+        Formation: !!formData.Formation,
+        Soin_Pastoral: !!formData.Soin_Pastoral,
+        Ministere: !!formData.Ministere,
       };
 
       const { error } = await supabase
@@ -241,6 +247,30 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="true">Oui</option>
               <option value="false">Non</option>
             </select>
+          </div>
+
+           {/* Formation*/}
+          <div className="flex flex-col">
+            <label className="font-medium">Formation</label>
+            <textarea
+              name="Formation"
+              value={formData.Formation}
+              onChange={handleChange}
+              className="input"
+              rows={2}
+            />
+          </div>
+
+          {/* Soin Pastoral*/}
+          <div className="flex flex-col">
+            <label className="font-medium">Soin_Pastoral</label>
+            <textarea
+              name="Soin_Pastoral"
+              value={formData.Soin_Pastoral}
+              onChange={handleChange}
+              className="input"
+              rows={2}
+            />
           </div>
 
           {/* Prière du salut */}

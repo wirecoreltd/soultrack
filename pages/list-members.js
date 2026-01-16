@@ -381,14 +381,13 @@ export default function ListMembers() {
               <p>💧 Bapteme d' Eau: {
                 m.bapteme_eau === null ? "" : (m.bapteme_eau === true || m.bapteme_eau === "true") ? "Oui" : "Non"
               }</p>
-              
               <p>🔥 Bapteme de Feu: {
                 m.bapteme_esprit === null ? "" : (m.bapteme_esprit === true || m.bapteme_esprit === "true") ? "Oui" : "Non"
               }</p>
               <p>✒️ Formation : {m.Formation || "—"}</p>  
-                <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>   
-              
-<p>❓ Besoin : {besoins}</p>
+              <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>
+              <p>💢 Ministere : {m.Ministere || "—"}</p>    
+              <p>❓ Besoin : {besoins}</p>
               <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
               <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>

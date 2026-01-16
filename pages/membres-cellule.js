@@ -6,6 +6,7 @@ import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditMemberPopup from "../components/EditMemberPopup";
 import MemberDetailsPopup from "../components/MemberDetailsPopup";
+import HeaderPages from "../components/HeaderPages";
 
 export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
@@ -19,7 +20,7 @@ export default function MembresCellule() {
   const [editMember, setEditMember] = useState(null);
   const [detailsMember, setDetailsMember] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState({});
-  import HeaderPages from "../components/HeaderPages";
+  
 
   // ================= FETCH =================
   useEffect(() => {

@@ -8,24 +8,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
 
-   const ministereOptions = [
-    "Intercession",
-    "Louange",
-    "Technique",
-    "Communication",
-    "Les Enfant",
-    "Les ados",
-    "Les jeunes",
-    "Finance",
-    "Nettoyage",
-    "Conseiller",
-    "Compassion",
-    "Visite",
-    "Berger",
-    "Moderation",
-  ];
-
-
   const parseBesoin = (b) => {
     if (!b) return [];
     if (Array.isArray(b)) return b;
@@ -214,9 +196,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             <div key={f} className="flex flex-col">
               <label className="font-medium capitalize">{f}</label>
               <input name={f} value={formData[f]} onChange={handleChange} className="input" />
-            <label className="flex items-center gap-2 mt-1">
-          Numero Whatsapp <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} />
-        </label>
             </div>
           ))}
 
@@ -230,20 +209,14 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             </select>
           </div>
 
-         {/* SERVITEUR */}
-        <label className="flex items-center gap-2 mt-3">
-          Définir en tant que serviteur <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} />
-        </label>
-
-{/* MINISTERE */}
-        {formData.star && (
-          <div className="mt-3">
-            <label>Ministere</label>
-            {ministereOptions.map(m => (
-              <label key={m} className="flex items-center gap-2">
-                <input type="checkbox" value={m} checked={formData.Ministere.includes(m)} onChange={handleMinistereChange} />
-                {m}
-              </label>
+          {/* Serviteur */}
+          <div className="flex flex-col">
+            <label className="font-medium">Définir en tant que serviteur</label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} className="accent-[#25297e]" />
+              Oui
+            </label>
+          </div>
 
           {/* État du contact */}
           <div className="flex flex-col">

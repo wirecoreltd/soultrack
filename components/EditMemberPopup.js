@@ -47,10 +47,28 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     suivi_statut: member?.suivi_statut || "",
     commentaire_suivis: member?.commentaire_suivis || "",
     is_whatsapp: !!member?.is_whatsapp,
-    Formation: !!member?.Formation,
-    Soin_Pastoral: !!member?.Soin_Pastoral,
-    Ministere: !!member?.Ministere,
+    Formation: member?.Formation || "",
+    Soin_Pastoral: member?.Soin_Pastoral || "",
+    Ministere: parseBesoin(member?.Ministere),
+
   });
+  
+    const ministereOptions = [
+    "Intercession",
+    "Louange",
+    "Technique",
+    "Communication",
+    "Les Enfants",
+    "Les ados",
+    "Les jeunes",
+    "Finance",
+    "Nettoyage",
+    "Conseiller",
+    "Compassion",
+    "Visite",
+    "Berger",
+    "Modération",
+  ];
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [loading, setLoading] = useState(false);
@@ -83,7 +101,12 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === "checkbox") {
-      setFormData(prev => ({ ...prev, [name]: checked }));
+      setFormData(prev => ({
+        ...prev,
+        [name]: checked,
+        ...(name === "star" && !checked ? { Ministere: [] } : {}),
+      }));
+    }
     } else if (name === "cellule_id" && value) {
       setFormData(prev => ({ ...prev, cellule_id: value, conseiller_id: "" }));
     } else if (name === "conseiller_id" && value) {
@@ -153,9 +176,11 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         suivi_statut: formData.suivi_statut || null,
         commentaire_suivis: formData.commentaire_suivis || null,
         is_whatsapp: !!formData.is_whatsapp,
-        Formation: !!formData.Formation,
-        Soin_Pastoral: !!formData.Soin_Pastoral,
-        Ministere: !!formData.Ministere,
+        Formation: formData.Formation || null,
+          Soin_Pastoral: formData.Soin_Pastoral || null,
+          Ministere: formData.star
+            ? JSON.stringify(formData.Ministere)
+            : null,
       };
 
       const { error } = await supabase
@@ -210,13 +235,18 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </div>
 
           {/* Serviteur */}
-          <div className="flex flex-col">
-            <label className="font-medium">Définir en tant que serviteur</label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} className="accent-[#25297e]" />
-              Oui
-            </label>
-          </div>
+          <div className="flex items-center justify-between">
+          <label className="font-medium">
+            Définir en tant que serviteur
+          </label>
+          <input
+            type="checkbox"
+            name="star"
+            checked={formData.star}
+            onChange={handleChange}
+            className="accent-[#25297e]"
+          />
+        </div>
 
           {/* État du contact */}
           <div className="flex flex-col">
@@ -272,6 +302,34 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               rows={2}
             />
           </div>
+
+            {formData.star && (
+              <div className="flex flex-col">
+                <label className="font-medium">Ministère</label>
+            
+                {ministereOptions.map(m => (
+                  <label key={m} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      value={m}
+                      checked={formData.Ministere.includes(m)}
+                      onChange={(e) => {
+                        const { value, checked } = e.target;
+                        setFormData(prev => ({
+                          ...prev,
+                          Ministere: checked
+                            ? [...prev.Ministere, value]
+                            : prev.Ministere.filter(v => v !== value),
+                        }));
+                      }}
+                      className="accent-[#25297e]"
+                    />
+                    {m}
+                  </label>
+                ))}
+              </div>
+            )}          
+
 
           {/* Prière du salut */}
           <div className="flex flex-col">

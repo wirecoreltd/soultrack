@@ -99,27 +99,33 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   // -------------------- HANDLERS --------------------
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    if (type === "checkbox") {
-      setFormData(prev => ({
-        ...prev,
-        [name]: checked,
-        ...(name === "star" && !checked ? { Ministere: [] } : {}),
-      }));
-    }
-    } else if (name === "cellule_id" && value) {
-      setFormData(prev => ({ ...prev, cellule_id: value, conseiller_id: "" }));
-    } else if (name === "conseiller_id" && value) {
-      setFormData(prev => ({ ...prev, conseiller_id: value, cellule_id: "" }));
-    } else if (name === "bapteme_eau" || name === "bapteme_esprit") {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value === "true" ? true : value === "false" ? false : null
-      }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
-  };
+  const { name, value, type, checked } = e.target;
+
+  if (type === "checkbox") {
+    setFormData(prev => ({
+      ...prev,
+      [name]: checked,
+      // si on décoche "serviteur", on vide Ministere
+      ...(name === "star" && !checked ? { Ministere: [] } : {}),
+    }));
+
+  } else if (name === "cellule_id" && value) {
+    setFormData(prev => ({ ...prev, cellule_id: value, conseiller_id: "" }));
+
+  } else if (name === "conseiller_id" && value) {
+    setFormData(prev => ({ ...prev, conseiller_id: value, cellule_id: "" }));
+
+  } else if (name === "bapteme_eau" || name === "bapteme_esprit") {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value === "true" ? true : value === "false" ? false : null
+    }));
+
+  } else {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  }
+};
+
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;

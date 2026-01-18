@@ -236,16 +236,16 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             
                 {/* Checkbox WhatsApp sous téléphone */}
                 {f === "telephone" && (
-                  <div className="flex items-center justify-between mt-2">
-                    <label className="font-medium">Numéro Whatsapp</label>
-                    <input
-                      type="checkbox"
-                      name="is_whatsapp"
-                      checked={formData.is_whatsapp}
-                      onChange={handleChange}
-                      className="accent-[#25297e]"
-                    />
-                  </div>
+                 <div className="flex items-center gap-2 mt-3">
+                  <input
+                    type="checkbox"
+                    name="is_whatsapp"
+                    checked={formData.is_whatsapp}
+                    onChange={handleChange}
+                    className="accent-[#25297e]"
+                  />
+                  <label className="font-medium">Numéro Whatsapp</label>
+                </div>
                 )}
               </div>
             ))}

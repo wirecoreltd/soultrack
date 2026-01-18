@@ -274,32 +274,36 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   />
 </div>
 
-          {formData.star && (
-                        <div className="flex flex-col">
-                          <label className="font-medium">Ministère</label>
-                      
-                          {ministereOptions.map(m => (
-                            <label key={m} className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                value={m}
-                                checked={formData.Ministere.includes(m)}
-                                onChange={(e) => {
-                                  const { value, checked } = e.target;
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    Ministere: checked
-                                      ? [...prev.Ministere, value]
-                                      : prev.Ministere.filter(v => v !== value),
-                                  }));
-                                }}
-                                className="accent-[#25297e]"
-                              />
-                              {m}
-                            </label>
-                          ))}
-                        </div>
-                      )}          
+              {formData.star && (
+  <div className="flex flex-col gap-2">
+    <label className="font-medium">Ministère</label>
+
+    {ministereOptions.map(m => (
+      <label
+        key={m}
+        className="flex items-center justify-between"
+      >
+        <span>{m}</span>
+        <input
+          type="checkbox"
+          value={m}
+          checked={formData.Ministere.includes(m)}
+          onChange={(e) => {
+            const { value, checked } = e.target;
+            setFormData(prev => ({
+              ...prev,
+              Ministere: checked
+                ? [...prev.Ministere, value]
+                : prev.Ministere.filter(v => v !== value),
+            }));
+          }}
+          className="accent-[#25297e]"
+        />
+      </label>
+    ))}
+  </div>
+)}
+      
 
           {/* État du contact */}
           <div className="flex flex-col">

@@ -253,6 +253,32 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             className="accent-[#25297e]"
           />
         </div>
+          {formData.star && (
+                        <div className="flex flex-col">
+                          <label className="font-medium">Ministère</label>
+                      
+                          {ministereOptions.map(m => (
+                            <label key={m} className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                value={m}
+                                checked={formData.Ministere.includes(m)}
+                                onChange={(e) => {
+                                  const { value, checked } = e.target;
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    Ministere: checked
+                                      ? [...prev.Ministere, value]
+                                      : prev.Ministere.filter(v => v !== value),
+                                  }));
+                                }}
+                                className="accent-[#25297e]"
+                              />
+                              {m}
+                            </label>
+                          ))}
+                        </div>
+                      )}          
 
           {/* État du contact */}
           <div className="flex flex-col">
@@ -308,35 +334,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               rows={2}
             />
           </div>
-
-            {formData.star && (
-              <div className="flex flex-col">
-                <label className="font-medium">Ministère</label>
             
-                {ministereOptions.map(m => (
-                  <label key={m} className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      value={m}
-                      checked={formData.Ministere.includes(m)}
-                      onChange={(e) => {
-                        const { value, checked } = e.target;
-                        setFormData(prev => ({
-                          ...prev,
-                          Ministere: checked
-                            ? [...prev.Ministere, value]
-                            : prev.Ministere.filter(v => v !== value),
-                        }));
-                      }}
-                      className="accent-[#25297e]"
-                    />
-                    {m}
-                  </label>
-                ))}
-              </div>
-            )}          
-
-
           {/* Prière du salut */}
           <div className="flex flex-col">
             <label className="font-medium">Prière du salut</label>

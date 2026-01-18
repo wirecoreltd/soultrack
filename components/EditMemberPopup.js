@@ -260,19 +260,20 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             </select>
           </div>
 
-          {/* Serviteur */}
-          <div className="flex items-center justify-between">
-          <label className="font-medium">
-            Définir en tant que serviteur
-          </label>
-          <input
-            type="checkbox"
-            name="star"
-            checked={formData.star}
-            onChange={handleChange}
-            className="accent-[#25297e]"
-          />
-        </div>
+          {/* Serviteur */}         
+<div className="flex items-center gap-3 mt-3">
+  <label className="font-medium">
+    Définir en tant que serviteur
+  </label>
+  <input
+    type="checkbox"
+    name="star"
+    checked={formData.star}
+    onChange={handleChange}
+    className="accent-[#25297e]"
+  />
+</div>
+
           {formData.star && (
                         <div className="flex flex-col">
                           <label className="font-medium">Ministère</label>

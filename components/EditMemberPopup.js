@@ -223,28 +223,32 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         <div className="overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-white">
 
           {/* Prénom / Nom / Téléphone / Ville */}
-           <div key={f} className="flex flex-col">
-              <label className="font-medium capitalize">{f}</label>
+            {["prenom", "nom", "telephone", "ville"].map((f) => (
               <div key={f} className="flex flex-col">
-  <label className="font-medium capitalize">{f}</label>
-  <input name={f} value={formData[f]} onChange={handleChange} className="input" />
-
-  {f === "telephone" && (
-    <div className="flex items-center justify-between mt-2">
-      <label className="font-medium">Numéro Whatsapp</label>
-      <input
-        type="checkbox"
-        name="is_whatsapp"
-        checked={formData.is_whatsapp}
-        onChange={handleChange}
-        className="accent-[#25297e]"
-      />
-    </div>
-  )}
-</div>
-
-            </div>
-          ))}
+                <label className="font-medium capitalize">{f}</label>
+            
+                <input
+                  name={f}
+                  value={formData[f]}
+                  onChange={handleChange}
+                  className="input"
+                />
+            
+                {/* Checkbox WhatsApp sous téléphone */}
+                {f === "telephone" && (
+                  <div className="flex items-center justify-between mt-2">
+                    <label className="font-medium">Numéro Whatsapp</label>
+                    <input
+                      type="checkbox"
+                      name="is_whatsapp"
+                      checked={formData.is_whatsapp}
+                      onChange={handleChange}
+                      className="accent-[#25297e]"
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
 
           {/* Sexe */}
           <div className="flex flex-col">

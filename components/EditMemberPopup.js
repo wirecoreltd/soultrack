@@ -222,35 +222,33 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
         <div className="overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-white">
 
-          {/* Prénom / Nom / Téléphone / Ville */}
-            {["prenom", "nom", "telephone", "ville"].map((f) => (
-              <div key={f} className="flex flex-col">
-                <label className="font-medium capitalize">{f}</label>
-            
-                <input
-                  name={f}
-                  value={formData[f]}
-                  onChange={handleChange}
-                  className="input"
-                />
-            
-                {/* Checkbox WhatsApp sous téléphone */}
-                {f === "telephone" && (
-                 <div className="flex items-center gap-3 mt-4">
-                  <label className="font-medium">Numéro Whatsapp</label>
-                  <input
-                    type="checkbox"
-                    name="is_whatsapp"
-                    checked={formData.is_whatsapp}
-                    onChange={handleChange}
-                    className="accent-[#25297e]"
-                  />
-                </div>  
-                  <label className="font-medium">Numéro Whatsapp</label>
-                </div>
-                )}
-              </div>
-            ))}
+          {["prenom", "nom", "telephone", "ville"].map((f) => (
+  <div key={f} className="flex flex-col">
+    <label className="font-medium capitalize">{f}</label>
+
+    <input
+      name={f}
+      value={formData[f]}
+      onChange={handleChange}
+      className="input"
+    />
+
+    {/* Checkbox WhatsApp sous téléphone */}
+    {f === "telephone" && (
+      <div className="flex items-center gap-3 mt-3">
+        <label className="font-medium">Numéro Whatsapp</label>
+        <input
+          type="checkbox"
+          name="is_whatsapp"
+          checked={formData.is_whatsapp}
+          onChange={handleChange}
+          className="accent-[#25297e]"
+        />
+      </div>
+    )}
+  </div>
+))}
+
 
           {/* Sexe */}
           <div className="flex flex-col">

@@ -236,7 +236,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             
                 {/* Checkbox WhatsApp sous téléphone */}
                 {f === "telephone" && (
-                 <div className="flex items-center gap-2 mt-3">
+                 <div className="flex items-center gap-3 mt-4">
+                  <label className="font-medium">Numéro Whatsapp</label>
                   <input
                     type="checkbox"
                     name="is_whatsapp"
@@ -244,6 +245,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
                     onChange={handleChange}
                     className="accent-[#25297e]"
                   />
+                </div>  
                   <label className="font-medium">Numéro Whatsapp</label>
                 </div>
                 )}

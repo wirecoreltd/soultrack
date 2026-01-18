@@ -223,8 +223,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         <div className="overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-white">
 
           {/* Prénom / Nom / Téléphone / Ville */}
-          {["prenom","nom","telephone","ville"].map(f => (
-            <div key={f} className="flex flex-col">
+           <div key={f} className="flex flex-col">
               <label className="font-medium capitalize">{f}</label>
               <div key={f} className="flex flex-col">
   <label className="font-medium capitalize">{f}</label>

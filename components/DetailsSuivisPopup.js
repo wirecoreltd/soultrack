@@ -197,8 +197,7 @@ export default function DetailsSuivisPopup({
                 m.bapteme_esprit === null ? "" : (m.bapteme_esprit === true || m.bapteme_esprit === "true") ? "Oui" : "Non"
               }</p>
             <p>✒️ Formation : {m.Formation || "—"}</p>  
-            <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>
-            <p>💢 Ministere : {formatMinistere(m.Ministere)}</p>    
+            <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>              
             <p>❓ Besoin : {formatMinistere(m.besoin)}</p>  
             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>

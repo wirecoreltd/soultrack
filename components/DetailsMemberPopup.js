@@ -28,15 +28,8 @@ export default function DetailsMemberPopup({
   const [editMember, setEditMember] = useState(null);
   const phoneMenuRef = useRef(null);
 
-  // Fermer menu téléphone en cliquant dehors
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
-        setOpenPhoneMenu(false);
-      }
-    };
-
-    const formatMinistere = (ministere) => {
+   // ---------------- HELPERS ----------------
+  const formatMinistere = (ministere) => {
       if (!ministere) return "—";
     
       try {
@@ -56,6 +49,13 @@ export default function DetailsMemberPopup({
       }
     };  
 
+  // Fermer menu téléphone en cliquant dehors
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+        setOpenPhoneMenu(false);
+      }
+    };  
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);

@@ -282,13 +282,15 @@ export default function ListMembers() {
           )}          
     
           {/* Nom centré */}
-          <div className="flex flex-col items-center">
-            <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
-    
-            {/* Téléphone */}
-            <div className="relative flex justify-center mt-1">
-              {m.telephone
-                ? <>
+            <div className="flex flex-col items-center mt-3">
+              <h2 className="text-lg font-bold text-center">
+                {m.prenom} {m.nom}
+              </h2>
+            
+              {/* Téléphone */}
+              <div className="relative flex justify-center mt-1">
+                {m.telephone ? (
+                  <>
                     <button
                       type="button"
                       onClick={e => { e.stopPropagation(); setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id); }}

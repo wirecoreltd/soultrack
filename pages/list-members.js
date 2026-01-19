@@ -275,8 +275,8 @@ export default function ListMembers() {
         <div className="relative flex flex-col px-2 py-2 rounded-lg bg-white hover:bg-white border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
           {/* Badge Nouveau en haut à droite */}
           {m.isNouveau && (
-            <div className="absolute top-2 right-2 flex items-center gap-1">
-              <span className="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
+            <div className="absolute top-5 right-2 flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
               <span className="text-blue-500 text-xs font-semibold">Nouveau</span>
             </div>
           )}

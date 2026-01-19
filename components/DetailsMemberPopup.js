@@ -35,6 +35,28 @@ export default function DetailsMemberPopup({
         setOpenPhoneMenu(false);
       }
     };
+
+    const formatMinistere = (ministere) => {
+      if (!ministere) return "—";
+    
+      try {
+        const parsed = typeof ministere === "string" ? JSON.parse(ministere) : ministere;
+        return Array.isArray(parsed) ? parsed.join(", ") : parsed;
+      } catch {
+        return "—";
+      }
+    };
+    const formatArrayField = (field) => {
+      if (!field) return "—";
+      try {
+        const parsed = typeof field === "string" ? JSON.parse(field) : field;
+        return Array.isArray(parsed) ? parsed.join(", ") : parsed;
+      } catch {
+        return "—";
+      }
+    };  
+
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -153,24 +175,8 @@ export default function DetailsMemberPopup({
             <p>🔥 Bapteme de Feu: {membre.bapteme_esprit === null ? "" : membre.bapteme_esprit ? "Oui" : "Non"}</p>
             <p>✒️ Formation : {membre.Formation || "—"}</p>  
             <p>❤️‍🩹 Soin Pastoral : {membre.Soin_Pastoral || "—"}</p>
-            <p>💢 Ministere : {membre.Ministere}</p>
-            <p>
-              ❓ Besoin : {
-                membre.besoin 
-                  ? (() => {
-                      try {
-                        // Si c'est une string JSON, on parse
-                        const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
-                        // On transforme en texte séparé par des virgules
-                        return Array.isArray(besoins) ? besoins.join(", ") : besoins;
-                      } catch (e) {
-                        // fallback si ce n'est pas du JSON
-                        return membre.besoin;
-                      }
-                    })()
-                  : "—"
-              }
-            </p>
+            <p>💢 Ministere : {formatMinistere(membre.Ministere)}</p>
+            <p>❓ Besoin : {formatArrayField(membre.besoin)}</p>
             <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
             <p>🧩 Comment est-il venu : {membre.venu || "—"}</p>
             <p>✨ Raison de la venue : {membre.statut_initial || "—"}</p>

@@ -568,6 +568,8 @@ export default function ListMembers() {
               <div className="flex-[2] text-white flex items-center gap-1">
                 {m.prenom} {m.nom}
                 {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                {m.isNouveau && <span className="px-2 py-1 rounded text-xs font-semibold bg-[#2E3192] text-white">Nouveau</span>}
+                {m.deja_existant && <span className="px-2 py-1 rounded text-xs font-semibold bg-red-500 text-white">Déjà dans la base</span>}  
               </div>
               <div className="flex-[1] text-white">{m.telephone || "—"}</div>
               <div className="flex-[1] text-white">{m.etat_contact || "—"}</div>

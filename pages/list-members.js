@@ -261,6 +261,21 @@ export default function ListMembers() {
       if (Array.isArray(m.besoin)) return m.besoin.join(", ");
       try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; }
     })();
+      const formatMinistere = (ministere) => {
+    if (!ministere) return "—";
+  
+    try {
+      const parsed = typeof ministere === "string"
+        ? JSON.parse(ministere)
+        : ministere;
+  
+      return Array.isArray(parsed)
+        ? parsed.join(", ")
+        : "—";
+    } catch {
+      return "—";
+    }
+  };
 
     return (
       <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4 relative">
@@ -386,7 +401,7 @@ export default function ListMembers() {
               }</p>
               <p>✒️ Formation : {m.Formation || "—"}</p>  
               <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>
-              <p>💢 Ministere : {m.Ministere || "—"}</p>    
+              <p>💢 Ministere : {formatMinistere(m.Ministere)}</p>   
               <p>❓ Besoin : {besoins}</p>
               <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
               <p>🧩 Comment est-il venu : {m.venu || "—"}</p>

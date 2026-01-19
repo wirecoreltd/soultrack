@@ -219,7 +219,7 @@ export default function SuivisMembres() {
         <p>✒️ Formation : {m.Formation || "—"}</p>  
         <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>        
         <p>💢 Ministere : {formatMinistere(m.Ministere)}</p>
-        <p>❓ Besoin : {formatArrayField(membre.besoin)}</p>
+        <p>❓ Besoin : {formatArrayField(m.besoin)}</p>
         <p>📝 Infos : {m.infos_supplementaires || ""}</p>
         <p>🧩 Comment est-il venu : {m.venu || ""}</p>
         <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? ""}</p>

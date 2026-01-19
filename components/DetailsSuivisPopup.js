@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import EditMemberSuivisPopup from "./EditMemberSuivisPopup";
 
-export default function DetailsModal({
+export default function DetailsSuivisPopup({
   m,
   onClose,
   commentChanges,
@@ -224,7 +224,7 @@ export default function DetailsModal({
             member={editMember}
             onClose={() => {
               setEditMember(null);
-              onClose(); // 🔹 ferme DetailsModal également
+              onClose(); // 🔹 ferme DetailsSuivisPopup également
             }}
             onUpdateMember={() => {
               setEditMember(null);

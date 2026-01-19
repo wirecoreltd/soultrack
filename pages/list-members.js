@@ -473,32 +473,62 @@ export default function ListMembers() {
       </div>
 
       {/* ==================== VUE CARTE ==================== */}
-      {view === "card" && (
-        <>
-          {filteredNouveaux.length > 0 && (
-            <>
-              <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">
-                💖 Bien aimé venu le {dateDuJour}
-              </h2>
-              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-                {filteredNouveaux.map(m => renderMemberCard({ ...m, isNouveau: true }))}
-              </div>
-            </>
-          )}
+        {view === "card" && (
+          <>
+            {/* ----------------- Calcul des flags ----------------- */}
+            {(() => {
+              // On combine tous les membres pour vérifier les doublons par téléphone
+              const tousLesMembres = [...filteredNouveaux, ...filteredAnciens];
+        
+              // Nouveaux avec flag deja_existant
+              const nouveauxAvecFlag = filteredNouveaux.map(m => ({
+                ...m,
+                isNouveau: true,
+                deja_existant: tousLesMembres.some(
+                  other => other.telephone === m.telephone && other.id !== m.id
+                ),
+              }));
+        
+              // Anciens avec flag deja_existant
+              const anciensAvecFlag = filteredAnciens.map(m => ({
+                ...m,
+                deja_existant: tousLesMembres.some(
+                  other => other.telephone === m.telephone && other.id !== m.id
+                ),
+              }));
+        
+              return (
+                <>
+                  {/* ==================== Nouveaux Membres ==================== */}
+                  {nouveauxAvecFlag.length > 0 && (
+                    <>
+                      <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">
+                        💖 Bien aimé venu le {dateDuJour}
+                      </h2>
+                      <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+                        {nouveauxAvecFlag.map(m => renderMemberCard(m))}
+                      </div>
+                    </>
+                  )}
+        
+                  {/* ==================== Membres existants ==================== */}
+                  {anciensAvecFlag.length > 0 && (
+                    <>
+                      <h2 className="w-full max-w-6xl font-bold mb-2 text-lg bg-gradient-to-r from-blue-500 to-gray-300 bg-clip-text text-transparent">
+                        Membres existants
+                      </h2>
+                      <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                        {anciensAvecFlag.map(m => renderMemberCard(m))}
+                      </div>
+                    </>
+                  )}
+                </>
+              );
+            })()}
+          </>
+        )}
 
-          {filteredAnciens.length > 0 && (
-            <>
-              <h2 className="w-full max-w-6xl font-bold mb-2 text-lg bg-gradient-to-r from-blue-500 to-gray-300 bg-clip-text text-transparent">
-                Membres existants
-              </h2>
-              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                {filteredAnciens.map(m => renderMemberCard(m))}
-              </div>
-            </>
-          )}
-        </>
-      )}
-
+      {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (
       <div className="w-full max-w-6xl overflow-x-auto py-2">
         <div className="min-w-[700px] space-y-2"> {/* Largeur minimum pour scroll horizontal */}

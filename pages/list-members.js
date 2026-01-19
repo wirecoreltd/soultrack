@@ -456,7 +456,7 @@ export default function ListMembers() {
         </>
       )}
 
-     {/* ==================== VUE CARTE ==================== */}
+     {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto py-2">
           <div className="min-w-[700px] space-y-2">
@@ -484,11 +484,12 @@ export default function ListMembers() {
               >
                 {/* Badge Nouveau en haut à droite */}
                 {m.isNouveau && (
-                  <div className="flex justify-end mb-1">
-                    <span className="w-3 h-3 rounded-full bg-blue-500 inline-block mr-1"></span>
-                    <span className="text-blue-500 text-xs font-semibold">Nouveau</span>
+                  <div className="flex justify-end mb-1"><span
+                      className="w-2.5 h-2.5 rounded-full mr-1" style={{ backgroundColor: "#2E3192" }}/>
+                    <span className="text-xs font-semibold" style={{ color: "#FFFFFF" }}> Nouveau </span>
                   </div>
                 )}
+
       
                 {/* Ligne principale */}
                 <div className="flex flex-row items-center gap-2">

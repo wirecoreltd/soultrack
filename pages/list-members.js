@@ -484,11 +484,20 @@ export default function ListMembers() {
               >
                 {/* Badge Nouveau en haut à droite */}
                 {m.isNouveau && (
-                  <div className="flex justify-end mb-1"><span
-                      className="w-2.5 h-2.5 rounded-full mr-1" style={{ backgroundColor: "#2E3192" }}/>
-                    <span className="text-xs font-semibold" style={{ color: "#FFFFFF" }}> Nouveau </span>
+                {m.isNouveau && (
+                  <div className="flex justify-end mb-1">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full mr-1"
+                      style={{ backgroundColor: "#2E3192" }}
+                    />
+                    <span
+                      className="text-xs font-semibold"
+                      style={{ color: "#2E3192" }}
+                    >
+                      Nouveau
+                    </span>
                   </div>
-                )}
+                )}                    
 
       
                 {/* Ligne principale */}

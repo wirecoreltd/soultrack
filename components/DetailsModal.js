@@ -33,18 +33,17 @@ export default function DetailsModal({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ✅ Transformer m.besoin en texte lisible
-let besoinText = "";
-if (Array.isArray(m.besoin)) {
-  besoinText = m.besoin.join(", ");
-} else if (typeof m.besoin === "string") {
-  try {
-    const parsed = JSON.parse(m.besoin);
-    besoinText = Array.isArray(parsed) ? parsed.join(", ") : m.besoin;
-  } catch {
-    besoinText = m.besoin;
-  }
-}
+  //  HELPER // 
+  const formatMinistere = (besoin) => {
+        if (!besoin) return "—";
+      
+        try {
+          const parsed = typeof besoin === "string" ? JSON.parse(besoin) : besoin;
+          return Array.isArray(parsed) ? parsed.join(", ") : parsed;
+        } catch {
+          return "—";
+        }
+      };
 
   const formatMinistere = (ministere) => {
       if (!ministere) return "—";
@@ -56,6 +55,7 @@ if (Array.isArray(m.besoin)) {
         return "—";
       }
     };
+  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">

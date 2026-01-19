@@ -189,23 +189,21 @@ export default function SuivisMembres() {
       }
     }, [commentChanges[m.id]]);
 
-    // ✅ BESOIN — corrige JSON string ou tableau
-    let besoinText = "";
-    if (Array.isArray(m.besoin)) {
-      besoinText = m.besoin.join(", ");
-    } else if (typeof m.besoin === "string") {
-      try {
-        const parsed = JSON.parse(m.besoin);
-        besoinText = Array.isArray(parsed) ? parsed.join(", ") : m.besoin;
-      } catch {
-        besoinText = m.besoin;
-      }
-    }
-
+    //  HELPERS  //
     const formatMinistere = (ministere) => {
       if (!ministere) return "—";
       try {
         const parsed = typeof ministere === "string" ? JSON.parse(ministere) : ministere;
+        return Array.isArray(parsed) ? parsed.join(", ") : parsed;
+      } catch {
+        return "—";
+      }
+    };  
+
+    const formatArrayField = (field) => {
+      if (!field) return "—";
+      try {
+        const parsed = typeof field === "string" ? JSON.parse(field) : field;
         return Array.isArray(parsed) ? parsed.join(", ") : parsed;
       } catch {
         return "—";
@@ -221,6 +219,7 @@ export default function SuivisMembres() {
         <p>✒️ Formation : {m.Formation || "—"}</p>  
         <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>        
         <p>💢 Ministere : {formatMinistere(m.Ministere)}</p>
+        <p>❓ Besoin : {formatArrayField(membre.besoin)}</p>
         <p>📝 Infos : {m.infos_supplementaires || ""}</p>
         <p>🧩 Comment est-il venu : {m.venu || ""}</p>
         <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? ""}</p>

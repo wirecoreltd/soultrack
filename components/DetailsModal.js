@@ -45,6 +45,17 @@ if (Array.isArray(m.besoin)) {
     besoinText = m.besoin;
   }
 }
+
+  const formatMinistere = (ministere) => {
+      if (!ministere) return "—";
+    
+      try {
+        const parsed = typeof ministere === "string" ? JSON.parse(ministere) : ministere;
+        return Array.isArray(parsed) ? parsed.join(", ") : parsed;
+      } catch {
+        return "—";
+      }
+    };
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
@@ -142,39 +153,38 @@ if (Array.isArray(m.besoin)) {
 
 
             {showRefus ? (
-  /* 🔴 VUE REFUS → Réactiver */
-  <button
-    onClick={async () => {
-      await reactivateMember(m.id);
-      onClose();
-    }}
-    disabled={updating[m.id]}
-    className={`mt-2 py-2 rounded w-full transition ${
-      updating[m.id]
-        ? "bg-gray-400 cursor-not-allowed"
-        : "bg-green-500 hover:bg-green-600 text-white"
-    }`}
-  >
-    {updating[m.id] ? "Réactivation..." : "Réactiver"}
-  </button>
-) : (
-  /* 🔵 VUE NORMALE → Sauvegarder (COMME LA CARTE) */
-  <button
-    onClick={async () => {
-      await updateSuivi(m.id); // ✅ même fonction que la vue carte
-      onClose();
-    }}
-    disabled={updating[m.id]}
-    className={`mt-2 py-2 rounded w-full transition ${
-      updating[m.id]
-        ? "bg-gray-400 cursor-not-allowed"
-        : "bg-blue-500 hover:bg-blue-600 text-white"
-    }`}
-  >
-    {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
-  </button>
-)}
-
+            /* 🔴 VUE REFUS → Réactiver */
+            <button
+              onClick={async () => {
+                await reactivateMember(m.id);
+                onClose();
+              }}
+              disabled={updating[m.id]}
+              className={`mt-2 py-2 rounded w-full transition ${
+                updating[m.id]
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-500 hover:bg-green-600 text-white"
+              }`}
+            >
+              {updating[m.id] ? "Réactivation..." : "Réactiver"}
+            </button>
+          ) : (
+            /* 🔵 VUE NORMALE → Sauvegarder (COMME LA CARTE) */
+            <button
+              onClick={async () => {
+                await updateSuivi(m.id); // ✅ même fonction que la vue carte
+                onClose();
+              }}
+              disabled={updating[m.id]}
+              className={`mt-2 py-2 rounded w-full transition ${
+                updating[m.id]
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-500 hover:bg-blue-600 text-white"
+              }`}
+            >
+              {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
+            </button>
+          )}
           </div>
 
           {/* ================= INFOS DÉTAILLÉES ================= */}
@@ -183,11 +193,13 @@ if (Array.isArray(m.besoin)) {
             <p>🎗️ Sexe : {m.sexe || "—"}</p>
             <p>💧 Bapteme d' Eau: {
                 m.bapteme_eau === null ? "" : (m.bapteme_eau === true || m.bapteme_eau === "true") ? "Oui" : "Non"
-              }</p>
-              
+              }</p>              
               <p>🔥 Bapteme de Feu: {
                 m.bapteme_esprit === null ? "" : (m.bapteme_esprit === true || m.bapteme_esprit === "true") ? "Oui" : "Non"
               }</p>
+            <p>✒️ Formation : {m.Formation || "—"}</p>  
+            <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>
+            <p>💢 Ministere : {formatMinistere(m.Ministere)}</p>    
             <p>❓ Besoin : {besoinText || "—"}</p>
             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>

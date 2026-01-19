@@ -289,27 +289,36 @@ export default function ListMembers() {
             
               {/* Téléphone */}
               <div className="relative flex justify-center mt-1">
-                {m.telephone ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={e => { e.stopPropagation(); setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id); }}
-                      className="text-orange-500 underline font-semibold text-center"
-                    >
-                      {m.telephone}
-                    </button>
-                    {openPhoneMenuId === m.id && (
-                      <div className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-52" onClick={e => e.stopPropagation()}>
-                        <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
-                        <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
-                        <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 WhatsApp Call</a>
-                        <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 WhatsApp Message</a>
-                      </div>
-                    )}
-                  </>
-                : <span className="text-gray-400">—</span>
-              }
-            </div>
+  {m.telephone ? (
+    <>
+      <button
+        type="button"
+        onClick={e => {
+          e.stopPropagation();
+          setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
+        }}
+        className="text-orange-500 underline font-semibold text-center"
+      >
+        {m.telephone}
+      </button>
+
+      {openPhoneMenuId === m.id && (
+        <div
+          className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-52"
+          onClick={e => e.stopPropagation()}
+        >
+          <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
+          <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
+          <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 WhatsApp Call</a>
+          <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 WhatsApp Message</a>
+        </div>
+      )}
+    </>
+  ) : (
+    <span className="text-gray-400">—</span>
+  )}
+</div>
+
     
             {/* Infos principales */}
             <div className="w-full mt-2 text-sm text-black space-y-1">

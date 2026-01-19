@@ -282,13 +282,13 @@ export default function ListMembers() {
           )}          
     
           {/* Nom centré */}
-            <div className="flex flex-col items-center mt-3">
+            <div className="flex flex-col items-center mt-5">
               <h2 className="text-lg font-bold text-center">
                 {m.prenom} {m.nom}
               </h2>
             
               {/* Téléphone */}
-              <div className="relative flex justify-center mt-1">
+              <div className="relative flex justify-center mt-2">
   {m.telephone ? (
     <>
       <button

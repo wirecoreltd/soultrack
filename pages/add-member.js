@@ -68,64 +68,70 @@ export default function AddMember() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    // Vérification si le téléphone existe déjà
-    let deja_existant = false;
-    try {
-      const { data: existing, error } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("telephone", formData.telephone)
-        .single();
+  const finalBesoin = showBesoinLibre && formData.besoinLibre
+    ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
+    : formData.besoin;
 
-      if (!error && existing) {
-        deja_existant = true;
-      }
-    } catch (err) {
-      deja_existant = false; // si aucun résultat
-    }
+  // Crée l'objet contact à envoyer
+  const dataToSend = {
+    ...formData,
+    besoin: finalBesoin,
+    etat_contact: "Nouveau", // statut par défaut
+  };
 
-    const finalBesoin = showBesoinLibre && formData.besoinLibre
-      ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
-      : formData.besoin;
+  delete dataToSend.besoinLibre;
 
-    const dataToSend = {
-      ...formData,
-      besoin: finalBesoin,
-      etat_contact: "Nouveau",
-      deja_existant,
+  try {
+    // Vérifier si le téléphone existe déjà
+    const { data: existing } = await supabase
+      .from("membres_complets")
+      .select("id")
+      .eq("telephone", formData.telephone)
+      .single();
+
+    // Créer un objet temporaire pour le front
+    const newContact = {
+      ...dataToSend,
+      id: existing?.id || Date.now(), // id temporaire si pas encore en base
+      deja_existant: !!existing,      // true si trouvé
+      isNouveau: true,                // pour afficher badge "Nouveau"
     };
 
-    delete dataToSend.besoinLibre;
+    // Ici, tu peux ajouter newContact dans ton state pour l'afficher dans la vue carte
+    // Exemple : setContacts(prev => [newContact, ...prev]);
+    // ❗️ pas besoin de stocker deja_existant dans la DB
 
-    try {
-      const { error } = await supabase.from("membres_complets").insert([dataToSend]);
-      if (error) throw error;
+    // Insertion dans la table Supabase
+    const { error } = await supabase.from("membres_complets").insert([dataToSend]);
+    if (error) throw error;
 
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 3000);
 
-      setFormData({
-        sexe: "",
-        nom: "",
-        prenom: "",
-        telephone: "",
-        ville: "",
-        statut: "",
-        venu: "",
-        besoin: [],
-        besoinLibre: "",
-        is_whatsapp: false,
-        infos_supplementaires: "",
-        priere_salut: "",
-        type_conversion: "",
-      });
-      setShowBesoinLibre(false);
-    } catch (err) {
-      alert(err.message);
-    }
-  };
+    setFormData({
+      sexe: "",
+      nom: "",
+      prenom: "",
+      telephone: "",
+      ville: "",
+      statut: "",
+      venu: "",
+      besoin: [],
+      besoinLibre: "",
+      is_whatsapp: false,
+      infos_supplementaires: "",
+      priere_salut: "",
+      type_conversion: "",
+    });
+    setShowBesoinLibre(false);
+
+  } catch (err) {
+    alert(err.message);
+  }
+};
+
 
   const handleCancel = () => {
     setFormData({

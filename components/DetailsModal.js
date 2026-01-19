@@ -34,7 +34,7 @@ export default function DetailsModal({
   }, []);
 
   //  HELPER // 
-  const formatMinistere = (besoin) => {
+  const formatbesoin = (besoin) => {
         if (!besoin) return "—";
       
         try {
@@ -141,16 +141,15 @@ export default function DetailsModal({
               Statut Intégration
             </label>
             <select
-  value={statusChanges[m.id] ?? String(m.statut_suivis ?? "")}
-  onChange={(e) => handleStatusChange(m.id, e.target.value)}
-  className="w-full border rounded-lg p-2 mb-2"
->
-  <option value="">-- Sélectionner un statut --</option>
-  <option value="2">En attente</option>
-  <option value="3">Intégré</option>
-  <option value="4">Refus</option>
-</select>
-
+              value={statusChanges[m.id] ?? String(m.statut_suivis ?? "")}
+              onChange={(e) => handleStatusChange(m.id, e.target.value)}
+              className="w-full border rounded-lg p-2 mb-2"
+            >
+              <option value="">-- Sélectionner un statut --</option>
+              <option value="2">En attente</option>
+              <option value="3">Intégré</option>
+              <option value="4">Refus</option>
+            </select>
 
             {showRefus ? (
             /* 🔴 VUE REFUS → Réactiver */
@@ -200,7 +199,7 @@ export default function DetailsModal({
             <p>✒️ Formation : {m.Formation || "—"}</p>  
             <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>
             <p>💢 Ministere : {formatMinistere(m.Ministere)}</p>    
-            <p>❓ Besoin : {besoinText || "—"}</p>
+            <p>❓ Besoin : {formatMinistere(m.besoin)}</p>  
             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
             <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>

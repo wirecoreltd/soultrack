@@ -168,9 +168,12 @@ export default function ListMembers() {
   }, []);
 
   // -------------------- Update après édition --------------------
-  const onUpdateMemberHandler = (updatedMember) => {
-    updateMember(updatedMember);
-    setEditMember(null);
+    const onUpdateMemberHandler = (updatedMember) => {
+    updateMember(updatedMember);  // update context
+    setEditMember(null);          // ferme le popup
+  
+    // ⚡ forcer rerender de la table en réappliquant les filtres
+    setFilter(prev => prev);      // déclenche le useMemo
   };
 
   // -------------------- Fermer menu téléphone en cliquant dehors --------------------

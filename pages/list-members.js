@@ -275,7 +275,7 @@ export default function ListMembers() {
         <div key={m.id} className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative" >
           {/* Badge Nouveau */}
           {m.isNouveau && (
-            <div className="absolute -top-3 right-2 flex items-center gap-1">
+            <div className="absolute top-2 right-2 flex items-center gap-1">
               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#2E3192" }}></span>
               <span className="text-xs font-semibold" style={{ color: "#2E3192" }}>Nouveau</span>
             </div>

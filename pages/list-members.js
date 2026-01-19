@@ -263,53 +263,53 @@ export default function ListMembers() {
   });
 
   // -------------------- Rendu Carte --------------------
-  const renderMemberCard = (m) => {
-    const isOpen = detailsOpen[m.id];
-    const besoins = (() => {
-      if (!m.besoin) return "—";
-      if (Array.isArray(m.besoin)) return m.besoin.join(", ");
-      try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; }
-    })();
-      const formatMinistere = (ministere) => {
-    if (!ministere) return "—";
-  
+  // -------------------- Rendu Carte --------------------
+const renderMemberCard = (m) => {
+  const isOpen = detailsOpen[m.id];
+
+  const besoins = (() => {
+    if (!m.besoin) return "—";
+    if (Array.isArray(m.besoin)) return m.besoin.join(", ");
     try {
-      const parsed = typeof ministere === "string"
-        ? JSON.parse(ministere)
-        : ministere;
-  
-      return Array.isArray(parsed)
-        ? parsed.join(", ")
-        : "—";
+      const arr = JSON.parse(m.besoin);
+      return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+    } catch {
+      return m.besoin;
+    }
+  })();
+
+  const formatMinistere = (ministere) => {
+    if (!ministere) return "—";
+    try {
+      const parsed =
+        typeof ministere === "string" ? JSON.parse(ministere) : ministere;
+      return Array.isArray(parsed) ? parsed.join(", ") : "—";
     } catch {
       return "—";
     }
   };
 
-    return (
-  <div key={m.id} className="bg-white p-3 rounded-xl shadow-md border-l-4 relative">
-    {/* Étoile si star */}
-    {m.star && <span className="absolute top-3 right-3 text-yellow-400 text-xl">⭐</span>}
+  return (
+    <div
+      className="bg-white p-3 rounded-xl shadow-md border-l-4 relative"
+      style={{ borderLeftColor: getBorderColor(m) }}
+    >
+      {/* Badges en haut à droite */}
+      <div className="absolute top-3 right-3 flex gap-1 items-center">
+        {m.star && <span className="text-yellow-400 text-xl">⭐</span>}
 
-    {/* Badge Nouveau */}
-    {m.isNouveau && (
-      <span
-        className="absolute top-3 right-3 px-2 py-1 rounded text-xs font-semibold"
-        style={{ backgroundColor: "#2E3192", color: "white" }}
-      >
-        Nouveau
-      </span>
-    )}
+        {m.isNouveau && (
+          <span className="px-2 py-1 rounded text-xs font-semibold bg-[#2E3192] text-white">
+            Nouveau
+          </span>
+        )}
 
-    {/* Badge Déjà dans la base */}
-    {m.deja_existant && (
-      <span
-        className="absolute top-3 right-3 px-2 py-1 rounded text-xs font-semibold"
-        style={{ backgroundColor: "red", color: "white", transform: "translateX(-70px)" }}
-      >
-        Déjà dans la base
-      </span>
-    )}
+        {m.deja_existant && (
+          <span className="px-2 py-1 rounded text-xs font-semibold bg-red-500 text-white">
+            Déjà dans la base
+          </span>
+        )}
+      </div>
 
     {/* Le reste de la carte */}
     <div className="flex flex-col items-center mt-6">

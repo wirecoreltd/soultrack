@@ -88,22 +88,20 @@ dataToSend.deja_existant = !!existing; // true si le contact existe déjà
       .eq("telephone", formData.telephone)
       .single();
 
-    deja_existant = !!existing; // true si trouvé
+    deja_existant = !!existing;
   } catch (err) {
-    deja_existant = false; // si pas trouvé
+    deja_existant = false; // si aucun résultat
   }
 
-  // Préparer les besoins
   const finalBesoin = showBesoinLibre && formData.besoinLibre
     ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
     : formData.besoin;
 
-  // Préparer les données à insérer
   const dataToSend = {
     ...formData,
     besoin: finalBesoin,
     etat_contact: "Nouveau",
-    deja_existant, // flag pour indiquer qu’il existe déjà
+    deja_existant, // ajouter flag
   };
 
   delete dataToSend.besoinLibre;
@@ -115,7 +113,6 @@ dataToSend.deja_existant = !!existing; // true si le contact existe déjà
     setSuccess(true);
     setTimeout(() => setSuccess(false), 3000);
 
-    // reset formulaire
     setFormData({
       sexe: "",
       nom: "",
@@ -132,11 +129,11 @@ dataToSend.deja_existant = !!existing; // true si le contact existe déjà
       type_conversion: "",
     });
     setShowBesoinLibre(false);
-
   } catch (err) {
     alert(err.message);
   }
 };
+
 
   const handleCancel = () => {
     setFormData({

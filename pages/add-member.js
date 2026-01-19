@@ -24,6 +24,15 @@ export default function AddMember() {
     type_conversion: "",   // <-- nouveau
   });
 
+  // Vérification si le téléphone existe déjà
+const { data: existing } = await supabase
+  .from("membres_complets")
+  .select("*")
+  .eq("telephone", formData.telephone)
+  .single();
+
+dataToSend.deja_existant = !!existing; // true si le contact existe déjà
+
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(true);

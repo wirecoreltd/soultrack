@@ -223,32 +223,31 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         <div className="overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-white">
 
           {["prenom", "nom", "telephone", "ville"].map((f) => (
-  <div key={f} className="flex flex-col">
-    <label className="font-medium capitalize">{f}</label>
-
-    <input
-      name={f}
-      value={formData[f]}
-      onChange={handleChange}
-      className="input"
-    />
-
-    {/* Checkbox WhatsApp sous téléphone */}
-    {f === "telephone" && (
-      <div className="flex items-center gap-3 mt-3">
-        <label className="font-medium">Numéro Whatsapp</label>
-        <input
-          type="checkbox"
-          name="is_whatsapp"
-          checked={formData.is_whatsapp}
-          onChange={handleChange}
-          className="accent-[#25297e]"
-        />
-      </div>
-    )}
-  </div>
-))}
-
+            <div key={f} className="flex flex-col">
+              <label className="font-medium capitalize">{f}</label>
+          
+              <input
+                name={f}
+                value={formData[f]}
+                onChange={handleChange}
+                className="input"
+              />
+          
+              {/* Checkbox WhatsApp sous téléphone */}
+              {f === "telephone" && (
+                <div className="flex items-center gap-3 mt-3">
+                  <label className="font-medium">Numéro Whatsapp</label>
+                  <input
+                    type="checkbox"
+                    name="is_whatsapp"
+                    checked={formData.is_whatsapp}
+                    onChange={handleChange}
+                    className="accent-[#25297e]"
+                  />
+                </div>
+              )}
+            </div>
+          ))}
 
           {/* Sexe */}
           <div className="flex flex-col">
@@ -261,60 +260,59 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </div>
 
           {/* Serviteur */}         
-<div className="flex items-center gap-3 mt-3">
-  <label className="font-medium">
-    Définir en tant que serviteur
-  </label>
-  <input
-    type="checkbox"
-    name="star"
-    checked={formData.star}
-    onChange={handleChange}
-    className="accent-[#25297e]"
-  />
-</div>
+            <div className="flex items-center gap-3 mt-3">
+              <label className="font-medium">
+                Définir en tant que serviteur
+              </label>
+              <input
+                type="checkbox"
+                name="star"
+                checked={formData.star}
+                onChange={handleChange}
+                className="accent-[#25297e]"
+              />
+            </div>
 
               {formData.star && (
-  <div className="flex flex-col gap-2">
-    <label className="font-medium">Ministère</label>
+                <div className="flex flex-col gap-2">
+                  <label className="font-medium">Ministère</label>
+              
+                  {ministereOptions.map(m => (
+                    <label
+                      key={m}
+                      className="flex items-center justify-between"
+                    >
+                      <span>{m}</span>
+                      <input
+                        type="checkbox"
+                        value={m}
+                        checked={formData.Ministere.includes(m)}
+                        onChange={(e) => {
+                          const { value, checked } = e.target;
+                          setFormData(prev => ({
+                            ...prev,
+                            Ministere: checked
+                              ? [...prev.Ministere, value]
+                              : prev.Ministere.filter(v => v !== value),
+                          }));
+                        }}
+                        className="accent-[#25297e]"
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}      
 
-    {ministereOptions.map(m => (
-      <label
-        key={m}
-        className="flex items-center justify-between"
-      >
-        <span>{m}</span>
-        <input
-          type="checkbox"
-          value={m}
-          checked={formData.Ministere.includes(m)}
-          onChange={(e) => {
-            const { value, checked } = e.target;
-            setFormData(prev => ({
-              ...prev,
-              Ministere: checked
-                ? [...prev.Ministere, value]
-                : prev.Ministere.filter(v => v !== value),
-            }));
-          }}
-          className="accent-[#25297e]"
-        />
-      </label>
-    ))}
-  </div>
-)}
-      
-
-          {/* État du contact */}
-          <div className="flex flex-col">
-            <label className="font-medium">État du contact</label>
-            <select name="etat_contact" value={formData.etat_contact} onChange={handleChange} className="input">
-              <option value="">-- Sélectionner --</option>
-              <option value="Nouveau">Nouveau</option>
-              <option value="Existant">Existant</option>
-              <option value="Inactif">Inactif</option>
-            </select>
-          </div>
+            {/* État du contact */}
+            <div className="flex flex-col">
+              <label className="font-medium">État du contact</label>
+              <select name="etat_contact" value={formData.etat_contact} onChange={handleChange} className="input">
+                <option value="">-- Sélectionner --</option>
+                <option value="Nouveau">Nouveau</option>
+                <option value="Existant">Existant</option>
+                <option value="Inactif">Inactif</option>
+              </select>
+            </div>
 
           {/* Bapteme d'eau */}
           <div className="flex flex-col">
@@ -337,16 +335,16 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </div>
 
            {/* Formation*/}
-          <div className="flex flex-col">
-            <label className="font-medium">Formation</label>
-            <textarea
-              name="Formation"
-              value={formData.Formation}
-              onChange={handleChange}
-              className="input"
-              rows={2}
-            />
-          </div>
+            <div className="flex flex-col">
+              <label className="font-medium">Formation</label>
+              <textarea
+                name="Formation"
+                value={formData.Formation}
+                onChange={handleChange}
+                className="input"
+                rows={2}
+              />
+            </div>
 
           {/* Soin Pastoral*/}
           <div className="flex flex-col">
@@ -437,7 +435,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <input name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input mt-2" placeholder="Précisez" />
             )}
           </div>
-                       {/* Comment est-il venu ? */}
+             
+          {/* Comment est-il venu ? */}
           <div className="flex flex-col">
             <label className="font-medium">Comment est-il venu ?</label>
             <select name="venu" value={formData.venu} onChange={handleChange} className="input">
@@ -447,7 +446,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="evangélisation">Évangélisation</option>
               <option value="autre">Autre</option>
             </select>
-          </div>
+          </div>  
 
           {/* Informations supplémentaires */}
           <div className="flex flex-col">
@@ -463,7 +462,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
           {/* Statut à l'arrivée */}
           <div className="flex flex-col">
-            <label className="font-medium">Statut à l'arrivée</label>
+            <label className="font-medium">Raison de la venue</label>
             <select
               name="statut_initial"
               value={formData.statut_initial}
@@ -503,7 +502,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               rows={2}
             />
           </div>
-
         </div>
 
         {/* Buttons */}

@@ -172,9 +172,13 @@ export default function ListMembers() {
       const [refreshKey, setRefreshKey] = useState(0);
       
       const onUpdateMemberHandler = (updatedMember) => {
-        updateMember(updatedMember); // update context
-        setEditMember(null);         // ferme le popup
-        setRefreshKey(prev => prev + 1); // force recalcul useMemo
+        updateMember(updatedMember); // Met à jour le contexte
+        setEditMember(null);         // Ferme le popup édition
+      
+        // ⚡ Si le membre édité est ouvert dans le popup détails, on le met à jour aussi
+        setPopupMember(prev =>
+          prev?.id === updatedMember.id ? { ...prev, ...updatedMember } : prev
+        );
       };
 
 

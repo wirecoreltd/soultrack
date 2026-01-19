@@ -6,7 +6,7 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditMemberSuivisPopup from "../components/EditMemberSuivisPopup";
-import DetailsModal from "../components/DetailsModal";
+import DetailsSuivisPopup from "../components/DetailsSuivisPopup";
 import { useMembers } from "../context/MembersContext";
 import { useRouter } from "next/navigation";
 import HeaderPages from "../components/HeaderPages";
@@ -19,7 +19,7 @@ export default function SuivisMembres() {
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
   const [role, setRole] = useState([]);
-  const [detailsModalMember, setDetailsModalMember] = useState(null);
+  const [DetailsSuivisPopupMember, setDetailsSuivisPopupMember] = useState(null);
   const [statusChanges, setStatusChanges] = useState({});
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
@@ -357,7 +357,7 @@ export default function SuivisMembres() {
                   <div className="flex-[1] text-white">{statutLabels[m.statut_suivis ?? m.suivi_statut] || "—"}</div>
                   <div className="flex-[2] text-white">{attribue}</div>
                   <div className="flex-[1]">
-                    <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm whitespace-nowrap">Détails</button>
+                    <button onClick={() => setDetailsSuivisPopupMember(m)} className="text-orange-500 underline text-sm whitespace-nowrap">Détails</button>
                   </div>
                 </div>
               );
@@ -366,10 +366,10 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {detailsModalMember && (
-  <DetailsModal
-    m={detailsModalMember}
-    onClose={() => setDetailsModalMember(null)}
+      {DetailsSuivisPopupMember && (
+  <DetailsSuivisPopup
+    m={DetailsSuivisPopupMember}
+    onClose={() => setDetailsSuivisPopupMember(null)}
     handleCommentChange={handleCommentChange}
     handleStatusChange={(id, value) =>
       setStatusChanges(prev => ({ ...prev, [id]: value }))

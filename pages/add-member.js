@@ -77,47 +77,68 @@ dataToSend.deja_existant = !!existing; // true si le contact existe déjà
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const finalBesoin = showBesoinLibre && formData.besoinLibre
-      ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
-      : formData.besoin;
+  // Vérifier si le téléphone existe déjà
+  let deja_existant = false;
+  try {
+    const { data: existing } = await supabase
+      .from("membres_complets")
+      .select("*")
+      .eq("telephone", formData.telephone)
+      .single();
 
-    const dataToSend = {
-      ...formData,
-      besoin: finalBesoin,
-      etat_contact: "Nouveau", // statut par défaut à "Nouveau"
-    };
+    deja_existant = !!existing;
+  } catch (err) {
+    // si pas trouvé, existing = null → déjà_existant = false
+    deja_existant = false;
+  }
 
-    delete dataToSend.besoinLibre;
+  // Préparer les besoins
+  const finalBesoin = showBesoinLibre && formData.besoinLibre
+    ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
+    : formData.besoin;
 
-    try {
-      const { error } = await supabase.from("membres_complets").insert([dataToSend]);
-      if (error) throw error;
-
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-
-      setFormData({
-        sexe: "",
-        nom: "",
-        prenom: "",
-        telephone: "",
-        ville: "",
-        statut: "",
-        venu: "",
-        besoin: [],
-        besoinLibre: "",
-        is_whatsapp: false,
-        infos_supplementaires: "",
-        priere_salut: "",
-        type_conversion: "",
-      });
-      setShowBesoinLibre(false);
-    } catch (err) {
-      alert(err.message);
-    }
+  // Préparer les données à insérer
+  const dataToSend = {
+    ...formData,
+    besoin: finalBesoin,
+    etat_contact: "Nouveau", // reste toujours nouveau
+    deja_existant,           // flag pour la carte
   };
+
+  delete dataToSend.besoinLibre;
+
+  try {
+    const { error } = await supabase.from("membres_complets").insert([dataToSend]);
+    if (error) throw error;
+
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 3000);
+
+    // Reset du formulaire
+    setFormData({
+      sexe: "",
+      nom: "",
+      prenom: "",
+      telephone: "",
+      ville: "",
+      statut: "",
+      venu: "",
+      besoin: [],
+      besoinLibre: "",
+      is_whatsapp: false,
+      infos_supplementaires: "",
+      priere_salut: "",
+      type_conversion: "",
+    });
+    setShowBesoinLibre(false);
+
+  } catch (err) {
+    alert(err.message);
+  }
+};
+
 
   const handleCancel = () => {
     setFormData({

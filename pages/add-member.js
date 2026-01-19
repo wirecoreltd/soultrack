@@ -79,7 +79,7 @@ dataToSend.deja_existant = !!existing; // true si le contact existe déjà
   const handleSubmit = async (e) => {
   e.preventDefault();
 
-  // Vérification si le téléphone existe déjà
+  // Vérifier si le téléphone existe déjà
   let deja_existant = false;
   try {
     const { data: existing } = await supabase
@@ -87,10 +87,10 @@ dataToSend.deja_existant = !!existing; // true si le contact existe déjà
       .select("*")
       .eq("telephone", formData.telephone)
       .single();
-    
-    deja_existant = !!existing;
+
+    deja_existant = !!existing; // true si trouvé
   } catch (err) {
-    deja_existant = false; // pas trouvé → false
+    deja_existant = false; // si pas trouvé
   }
 
   // Préparer les besoins
@@ -132,12 +132,11 @@ dataToSend.deja_existant = !!existing; // true si le contact existe déjà
       type_conversion: "",
     });
     setShowBesoinLibre(false);
+
   } catch (err) {
     alert(err.message);
   }
 };
-
-
 
   const handleCancel = () => {
     setFormData({

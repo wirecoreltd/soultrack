@@ -150,7 +150,10 @@ export default function DetailsMemberPopup({
             <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
             <p>🎗️ Sexe : {membre.sexe || "—"}</p>
             <p>💧 Bapteme d' Eau: {membre.bapteme_eau === null ? "" : membre.bapteme_eau ? "Oui" : "Non"}</p>
-            <p>🔥 Bapteme de Feu: {membre.bapteme_esprit === null ? "" : membre.bapteme_esprit ? "Oui" : "Non"}</p> 
+            <p>🔥 Bapteme de Feu: {membre.bapteme_esprit === null ? "" : membre.bapteme_esprit ? "Oui" : "Non"}</p>
+            <p>✒️ Formation : {membre.Formation || "—"}</p>  
+            <p>❤️‍🩹 Soin Pastoral : {membre.Soin_Pastoral || "—"}</p>
+            <p>💢 Ministere : {formatMinistere(membre.Ministere)}</
             <p>
               ❓ Besoin : {
                 membre.besoin 

@@ -272,7 +272,7 @@ export default function ListMembers() {
       };
     
       return (
-        <div className="relative flex flex-col px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
+        <div className="relative flex flex-col px-2 py-2 rounded-lg bg-white hover:bg-white border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
           {/* Badge Nouveau en haut à droite */}
           {m.isNouveau && (
             <div className="absolute top-2 right-2 flex items-center gap-1">

@@ -208,6 +208,9 @@ export default function SuivisMembres() {
         <p>🎗️ Sexe : {m.sexe || ""}</p>
         <p>💧 Baptême d'Eau : {m.bapteme_eau ? "Oui" : "Non"}</p>
         <p>🔥 Baptême de Feu : {m.bapteme_esprit ? "Oui" : "Non"}</p>
+        <p>✒️ Formation : {m.Formation || "—"}</p>  
+        <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>
+        <p>💢 Ministere : {m.Ministere}</p>  
         <p>❓ Besoin : {besoinText}</p>
         <p>📝 Infos : {m.infos_supplementaires || ""}</p>
         <p>🧩 Comment est-il venu : {m.venu || ""}</p>

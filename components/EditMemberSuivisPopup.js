@@ -257,18 +257,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="Homme">Homme</option>
               <option value="Femme">Femme</option>
             </select>
-          </div>
-
-            {/* État du contact */}
-            <div className="flex flex-col">
-              <label className="font-medium">État du contact</label>
-              <select name="etat_contact" value={formData.etat_contact} onChange={handleChange} className="input">
-                <option value="">-- Sélectionner --</option>
-                <option value="Nouveau">Nouveau</option>
-                <option value="Existant">Existant</option>
-                <option value="Inactif">Inactif</option>
-              </select>
-            </div>
+          </div>            
 
           {/* Bapteme d'eau */}
           <div className="flex flex-col">

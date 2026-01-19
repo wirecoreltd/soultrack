@@ -272,14 +272,22 @@ export default function ListMembers() {
       };
     
       return (
-        <div className="relative flex flex-col px-2 py-2 rounded-lg bg-white hover:bg-white border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
-          {/* Badge Nouveau en haut à droite */}
+        <div key={m.id} className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative" >
+          {/* Badge Nouveau */}
           {m.isNouveau && (
-            <div className="absolute -top-5 right-2 flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
-              <span className="text-blue-500 text-xs font-semibold">Nouveau</span>
+            <div className="absolute top-1 right-2 flex items-center gap-1">
+              <span
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ backgroundColor: "#2E3192" }}
+              ></span>
+              <span
+                className="text-xs font-semibold"
+                style={{ color: "#2E3192" }}
+              >
+                Nouveau
+              </span>
             </div>
-          )}
+          )}          
     
           {/* Nom centré */}
           <div className="flex flex-col items-center">

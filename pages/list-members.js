@@ -28,6 +28,7 @@ export default function ListMembers() {
   const searchParams = useSearchParams();
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
 
+  // -------------------- Nouveaux états --------------------
   const [commentChanges, setCommentChanges] = useState({});
   const [statusChanges, setStatusChanges] = useState({});
   const [updating, setUpdating] = useState({});
@@ -37,6 +38,26 @@ export default function ListMembers() {
   const [showingToast, setShowingToast] = useState(false);
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const realtimeChannelRef = useRef(null);
+  const [etatContactFilter, setEtatContactFilter] = useState("");
+
+  const statutLabels = {
+    1: "En cours",
+    2: "En attente",
+    3: "Intégrer",
+    4: "Refus",
+  };
+
+  const statusOptions = [
+    "actif",
+    "ancien",
+    "visiteur",
+    "nouveau",
+    "veut rejoindre ICC",
+    "refus",
+    "integrer",
+    "En cours",
+    "a déjà son église",
+  ];
 
   const { members, setAllMembers, updateMember } = useMembers();
 
@@ -53,27 +74,30 @@ export default function ListMembers() {
   const updateSuivi = async (id) => {
     setUpdating((prev) => ({ ...prev, [id]: true }));
     try {
+      console.log("Update suivi pour:", id, commentChanges[id], statusChanges[id]);
       setTimeout(() => {
         setUpdating((prev) => ({ ...prev, [id]: false }));
         showToast("✅ Suivi enregistré !");
       }, 1000);
     } catch (err) {
-      console.error(err);
+      console.error("Erreur update suivi:", err);
       setUpdating((prev) => ({ ...prev, [id]: false }));
     }
   };
 
+  // -------------------- FETCH --------------------
   const fetchMembers = async (profile = null) => {
     setLoading(true);
     try {
       let query = supabase.from("membres_complets").select("*").order("created_at", { ascending: false });
       if (conseillerIdFromUrl) query = query.eq("conseiller_id", conseillerIdFromUrl);
       else if (profile?.role === "Conseiller") query = query.eq("conseiller_id", profile.id);
+
       const { data, error } = await query;
       if (error) throw error;
       setAllMembers(data || []);
     } catch (err) {
-      console.error(err);
+      console.error("Erreur fetchMembers:", err);
       setAllMembers([]);
     } finally {
       setLoading(false);
@@ -82,8 +106,8 @@ export default function ListMembers() {
 
   const fetchCellules = async () => {
     const { data, error } = await supabase.from("cellules").select("id, cellule_full");
+    if (error) console.error("Erreur fetchCellules:", error);
     if (data) setCellules(data);
-    if (error) console.error(error);
   };
 
   const fetchConseillers = async () => {
@@ -113,17 +137,21 @@ export default function ListMembers() {
           setPrenom(profileData.prenom || "");
           await fetchMembers(profileData);
         } else console.error(profileError);
-      } else await fetchMembers();
+      } else {
+        await fetchMembers();
+      }
 
       fetchCellules();
       fetchConseillers();
     };
+
     fetchSessionAndProfile();
   }, []);
 
+  // -------------------- Realtime --------------------
   useEffect(() => {
     if (realtimeChannelRef.current) {
-      try { realtimeChannelRef.current.unsubscribe(); } catch {}
+      try { realtimeChannelRef.current.unsubscribe(); } catch (e) {}
       realtimeChannelRef.current = null;
     }
 
@@ -131,19 +159,28 @@ export default function ListMembers() {
     channel.on("postgres_changes", { event: "*", schema: "public", table: "membres_complets" }, () => fetchMembers());
     channel.on("postgres_changes", { event: "*", schema: "public", table: "cellules" }, () => { fetchCellules(); fetchMembers(); });
     channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { fetchConseillers(); fetchMembers(); });
-    try { channel.subscribe(); } catch (err) { console.warn(err); }
-    realtimeChannelRef.current = channel;
+    try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
 
-    return () => { try { realtimeChannelRef.current?.unsubscribe(); realtimeChannelRef.current = null; } catch {} };
+    realtimeChannelRef.current = channel;
+    return () => {
+      try { if (realtimeChannelRef.current) { realtimeChannelRef.current.unsubscribe(); realtimeChannelRef.current = null; } } catch (e) {}
+    };
   }, []);
 
+  // -------------------- Update après édition --------------------
   const [refreshKey, setRefreshKey] = useState(0);
+      
   const onUpdateMemberHandler = (updatedMember) => {
-    updateMember(updatedMember);
-    setEditMember(null);
-    setPopupMember(prev => prev?.id === updatedMember.id ? { ...prev, ...updatedMember } : prev);
+    updateMember(updatedMember); // Met à jour le contexte
+    setEditMember(null);         // Ferme le popup édition
+
+    // ⚡ Si le membre édité est ouvert dans le popup détails, on le met à jour aussi
+    setPopupMember(prev =>
+      prev?.id === updatedMember.id ? { ...prev, ...updatedMember } : prev
+    );
   };
 
+  // -------------------- Fermer menu téléphone en cliquant dehors --------------------
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (!e.target.closest(".phone-menu")) setOpenPhoneMenuId(null);
@@ -152,30 +189,51 @@ export default function ListMembers() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // -------------------- Marquer doublons par téléphone --------------------
+  const membersWithDuplicateFlag = useMemo(() => {
+    const phoneCount = {};
+    members.forEach(m => {
+      const tel = (m.telephone || "").replace(/\D/g, "").trim();
+      if (!tel) return;
+      phoneCount[tel] = (phoneCount[tel] || 0) + 1;
+    });
+    return members.map(m => {
+      const tel = (m.telephone || "").replace(/\D/g, "").trim();
+      return { ...m, deja_existant: tel && phoneCount[tel] > 1 };
+    });
+  }, [members]);
+
+  // -------------------- FILTRAGE CENTRALISE OPTIMISE --------------------
   const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
     const baseFiltered = filter
-      ? members.filter(m => m.etat_contact && m.etat_contact.trim().toLowerCase() === filter.toLowerCase())
-      : members;
+      ? membersWithDuplicateFlag.filter((m) =>
+          m.etat_contact && m.etat_contact.trim().toLowerCase() === filter.toLowerCase()
+        )
+      : membersWithDuplicateFlag;
 
-    const searchFiltered = baseFiltered.filter(m =>
+    const searchFiltered = baseFiltered.filter((m) =>
       `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
     );
 
-    const nouveaux = searchFiltered.filter(m =>
+    const nouveaux = searchFiltered.filter((m) =>
       ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
     );
 
-    const anciens = searchFiltered.filter(m =>
-      !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+    const anciens = searchFiltered.filter(
+      (m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
     );
 
-    return { filteredMembers: searchFiltered, filteredNouveaux: nouveaux, filteredAnciens: anciens };
-  }, [members, filter, search, refreshKey]);
+    return {
+      filteredMembers: searchFiltered,
+      filteredNouveaux: nouveaux,
+      filteredAnciens: anciens,
+    };
+  }, [membersWithDuplicateFlag, filter, search, refreshKey]);
 
-  const toggleDetails = (id) => setDetailsOpen(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const getBorderColor = (m) => {
-    if (!m.etat_contact) return "#ccc";
+    if (!m.etat_contact) return "#ccc"; // défaut
     const etat = m.etat_contact.trim().toLowerCase();
     if (etat === "existant") return "#34A853";
     if (etat === "nouveau") return "#34A85e";
@@ -189,14 +247,28 @@ export default function ListMembers() {
 
   const toggleStar = async (member) => {
     try {
-      const { error } = await supabase.from("membres_complets").update({ star: !member.star }).eq("id", member.id);
+      const { error } = await supabase
+        .from("membres_complets")
+        .update({ star: !member.star })
+        .eq("id", member.id);
+
       if (error) throw error;
-      setAllMembers(prev => prev.map(m => m.id === member.id ? { ...m, star: !member.star } : m));
-    } catch (err) { console.error(err); }
+
+      setAllMembers((prev) =>
+        prev.map((m) => (m.id === member.id ? { ...m, star: !member.star } : m))
+      );
+    } catch (err) {
+      console.error("Erreur toggleStar:", err);
+    }
   };
 
   const today = new Date();
-  const dateDuJour = today.toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const dateDuJour = today.toLocaleDateString("fr-FR", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   // -------------------- Rendu carte --------------------
   const renderMemberCard = (m) => {

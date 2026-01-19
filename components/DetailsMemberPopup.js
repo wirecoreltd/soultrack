@@ -153,7 +153,7 @@ export default function DetailsMemberPopup({
             <p>🔥 Bapteme de Feu: {membre.bapteme_esprit === null ? "" : membre.bapteme_esprit ? "Oui" : "Non"}</p>
             <p>✒️ Formation : {membre.Formation || "—"}</p>  
             <p>❤️‍🩹 Soin Pastoral : {membre.Soin_Pastoral || "—"}</p>
-            <p>💢 Ministere : {formatMinistere(membre.Ministere)}</p>
+            <p>💢 Ministere : {membre.Ministere)}</p>
             <p>
               ❓ Besoin : {
                 membre.besoin 

@@ -168,13 +168,15 @@ export default function ListMembers() {
   }, []);
 
   // -------------------- Update après édition --------------------
-    const onUpdateMemberHandler = (updatedMember) => {
-    updateMember(updatedMember);  // update context
-    setEditMember(null);          // ferme le popup
-  
-    // ⚡ forcer rerender de la table en réappliquant les filtres
-    setFilter(prev => prev);      // déclenche le useMemo
-  };
+    // state factice pour forcer rerender
+      const [refreshKey, setRefreshKey] = useState(0);
+      
+      const onUpdateMemberHandler = (updatedMember) => {
+        updateMember(updatedMember); // update context
+        setEditMember(null);         // ferme le popup
+        setRefreshKey(prev => prev + 1); // force recalcul useMemo
+      };
+
 
   // -------------------- Fermer menu téléphone en cliquant dehors --------------------
   useEffect(() => {
@@ -212,7 +214,7 @@ export default function ListMembers() {
       filteredNouveaux: nouveaux,
       filteredAnciens: anciens,
     };
-  }, [members, filter, search]);
+  }, [members, filter, search, refreshKey]);
 
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 

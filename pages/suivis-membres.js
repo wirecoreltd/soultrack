@@ -202,6 +202,16 @@ export default function SuivisMembres() {
       }
     }
 
+    const formatMinistere = (ministere) => {
+      if (!ministere) return "—";
+      try {
+        const parsed = typeof ministere === "string" ? JSON.parse(ministere) : ministere;
+        return Array.isArray(parsed) ? parsed.join(", ") : parsed;
+      } catch {
+        return "—";
+      }
+    };  
+
     return (
       <div className="text-black text-sm space-y-2 w-full">
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>

@@ -324,12 +324,13 @@ export default function ListMembers() {
                 className="flex items-center justify-center gap-1 text-red-600 text-sm mt-2 w-full rounded-lg border border-red-600 py-1 hover:bg-red-50 transition"
               >
                 🗑️ Supprimer
-              </button>            
-          </div>
-          )}
-        </div>
-      );
-  };
+    </button>
+  </div>
+)}
+
+</div> 
+);
+}; 
 
   // -------------------- Rendu --------------------
   return (

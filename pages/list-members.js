@@ -61,9 +61,6 @@ export default function ListMembers() {
   ];
 
   const { members, setAllMembers, updateMember } = useMembers();
-
-  // -------------------- Supprimer un membre --------------------
-  const [nouveauxMembres, setNouveauxMembres] = useState([]); // si ce n'est pas déjà défini
   
   useEffect(() => {
     setNouveauxMembres(filteredNouveaux); // mettre à jour quand filteredNouveaux change

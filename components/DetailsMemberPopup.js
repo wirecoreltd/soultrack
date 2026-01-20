@@ -187,40 +187,40 @@ export default function DetailsMemberPopup({
           </div>
 
           {/* ✏️ Modifier le contact */}
-<div className="mt-4 w-full flex flex-col gap-3">
+            <div className="mt-4 w-full flex flex-col gap-3">
+            
+              <button
+                onClick={() => setEditMember(membre)}
+                className="text-blue-600 text-sm w-full text-center"
+              >
+                ✏️ Modifier le contact
+              </button>
+            
+              {/* 🗑️ Supprimer le contact */}
+              <div className="w-full">
+                <button
+                  onClick={() => {
+                    if (!onDelete) return;
+            
+                    const confirmDelete = window.confirm(
+                      "⚠️ Suppression définitive\n\n" +
+                      "Voulez-vous vraiment supprimer ce contact ?\n\n" +
+                      "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
+                      "Cette action est irréversible."
+                    );
+            
+                    if (confirmDelete) {
+                      onDelete(membre.id);
+                      onClose();
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-2
+                             border border-red-600 text-red-600 rounded-lg py-2 text-sm font-semibold hover:bg-red-50 transition" >
+                  🗑️ Supprimer le contact
+                </button>
+              </div>
+            </div>
 
-  <button
-    onClick={() => setEditMember(membre)}
-    className="text-blue-600 text-sm w-full text-center"
-  >
-    ✏️ Modifier le contact
-  </button>
-
-  {/* 🗑️ Supprimer le contact */}
-  <div className="w-full">
-    <button
-      onClick={() => {
-        if (!onDelete) return;
-
-        const confirmDelete = window.confirm(
-          "⚠️ Suppression définitive\n\n" +
-          "Voulez-vous vraiment supprimer ce contact ?\n\n" +
-          "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
-          "Cette action est irréversible."
-        );
-
-        if (confirmDelete) {
-          onDelete(membre.id);
-          onClose();
-        }
-      }}
-      className="w-full flex items-center justify-center gap-2 border border-red-600 text-red-600"
-    >
-      🗑️ Supprimer le contact
-    </button>
-  </div>
-
-</div>
 
 
         {/* ================= POPUP EDIT MEMBER ================= */}

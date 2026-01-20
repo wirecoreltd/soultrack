@@ -404,50 +404,7 @@ export default function ListMembers() {
           )}
         </>
       )}
-
-      {/* ==================== VUE TABLE ==================== */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto py-2">
-          {/* ... ton code table existant, sans bouton supprimer ... */}
-        </div>
-      )}
-
-      {/* Popups */}
-      {popupMember && (
-        <DetailsMemberPopup
-          membre={popupMember}
-          onClose={() => setPopupMember(null)}
-          cellules={cellules}
-          conseillers={conseillers}
-          session={session}
-          commentChanges={commentChanges}
-          handleCommentChange={handleCommentChange}
-          statusChanges={statusChanges}
-          setStatusChanges={setStatusChanges}
-          updateSuivi={updateSuivi}
-          updating={updating}
-        />
-      )}
-
-      {editMember && (
-        <EditMemberPopup
-          member={editMember}
-          onClose={() => setEditMember(null)}
-          onUpdateMember={(updatedMember) => {
-            updateMember(updatedMember);
-            setEditMember(null);
-            setPopupMember(prev => prev?.id === updatedMember.id ? { ...prev, ...updatedMember } : prev);
-          }}
-        />
-      )}
-
-      {/* Toast */}
-      {showingToast && (
-        <div className="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50">{toastMessage}</div>
-      )}
-    </div>
-  );
-}
+      
      {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto py-2">

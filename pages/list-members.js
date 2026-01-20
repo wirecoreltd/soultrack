@@ -486,8 +486,8 @@ export default function ListMembers() {
                 <div className="flex flex-row items-center gap-2">
                   <div className="flex-[2] text-white font-semibold flex items-center gap-2">
                   <span>{m.prenom} {m.nom}</span>                
-                  <span className="flex items-center gap-1 text-xs font-semibold text-white">
-                  <span className="inline-block w-2 h-2 rounded-full bg-white" />
+                  <span className="flex items-center gap-1 text-xs font-semibold text-orange">
+                  <span className="inline-block w-2 h-2 rounded-full bg-orange" />
                     Nouveau
                   </span>
                 </div>

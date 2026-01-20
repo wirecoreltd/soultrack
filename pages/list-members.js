@@ -207,60 +207,78 @@ export default function ListMembers() {
   });
 
   // -------------------- Rendu Carte --------------------
-  const renderMemberCard = (m) => {
-    const isOpen = detailsOpen[m.id];
-    const besoins = !m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })();
-    const formatMinistere = ministere => {
-      if (!ministere) return "—";
-      try { const parsed = typeof ministere === "string" ? JSON.parse(ministere) : ministere; return Array.isArray(parsed) ? parsed.join(", ") : "—"; } catch { return "—"; }
-    };
+const renderMemberCard = (m) => {
+  const isOpen = detailsOpen[m.id];
 
-    return (
-      <div key={m.id} className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative">
-        {/* Badge Nouveau */}
-        {m.isNouveau && (
-          <div className="absolute top-2 right-3 flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#2E3192" }}></span>
-            <span className="text-xs font-semibold" style={{ color: "#2E3192" }}>Nouveau</span>
-          </div>
-        )}
+  const besoins = !m.besoin
+    ? "—"
+    : Array.isArray(m.besoin)
+      ? m.besoin.join(", ")
+      : (() => { 
+          try { 
+            const arr = JSON.parse(m.besoin); 
+            return Array.isArray(arr) ? arr.join(", ") : m.besoin; 
+          } catch { 
+            return m.besoin; 
+          } 
+        })();
 
-        {/* Nom centré */}
-        <div className="flex flex-col items-center mt-6">
-          <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
+  const formatMinistere = (ministere) => {
+    if (!ministere) return "—";
+    try {
+      const parsed = typeof ministere === "string" ? JSON.parse(ministere) : ministere;
+      return Array.isArray(parsed) ? parsed.join(", ") : "—";
+    } catch {
+      return "—";
+    }
+  };
 
-          {/* Téléphone */}
-          <div className="relative flex justify-center mt-3">
-            {m.telephone ? (
-              <>
-                <button
-                  type="button"
-                  onClick={e => { e.stopPropagation(); setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id); }}
-                  className="text-orange-500 underline font-semibold text-center"
-                >
-                  {m.telephone}
-                </button>
-                {openPhoneMenuId === m.id && (
-                  <div className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-52" onClick={e => e.stopPropagation()}>
-                    <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
-                    <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
-                    <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 WhatsApp Call</a>
-                    <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 WhatsApp Message</a>
-                  </div>
-                )}
-              </>
-            ) : (
-              <span className="text-gray-400">—</span>
-            )}
-          </div>
+  return (
+    <div key={m.id} className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative">
+      {/* Badge Nouveau */}
+      {m.isNouveau && (
+        <div className="absolute top-2 right-3 flex items-center gap-1">
+          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#2E3192" }}></span>
+          <span className="text-xs font-semibold" style={{ color: "#2E3192" }}>Nouveau</span>
+        </div>
+      )}
 
-          {/* Infos principales */}
-          <div className="w-full mt-2 text-sm text-black space-y-1">
-            <p className="text-center">🏙️ Ville : {m.ville || "—"}</p>
-            <p className="text-center">🕊 Etat Contact : {m.etat_contact || "—"}</p>
-            <p>🏠 Cellule : {m.cellule_id ? `${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` : "—"}</p>
-            <p>👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
-          </div>
+      {/* Nom centré */}
+      <div className="flex flex-col items-center mt-6">
+        <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
+
+        {/* Téléphone */}
+        <div className="relative flex justify-center mt-3">
+          {m.telephone ? (
+            <>
+              <button
+                type="button"
+                onClick={e => { e.stopPropagation(); setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id); }}
+                className="text-orange-500 underline font-semibold text-center"
+              >
+                {m.telephone}
+              </button>
+              {openPhoneMenuId === m.id && (
+                <div className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-52" onClick={e => e.stopPropagation()}>
+                  <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
+                  <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
+                  <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 WhatsApp Call</a>
+                  <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 WhatsApp Message</a>
+                </div>
+              )}
+            </>
+          ) : (
+            <span className="text-gray-400">—</span>
+          )}
+        </div>
+
+        {/* Infos principales */}
+        <div className="w-full mt-2 text-sm text-black space-y-1">
+          <p className="text-center">🏙️ Ville : {m.ville || "—"}</p>
+          <p className="text-center">🕊 Etat Contact : {m.etat_contact || "—"}</p>
+          <p>🏠 Cellule : {m.cellule_id ? `${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` : "—"}</p>
+          <p>👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
+        </div>
 
           {/* Select pour envoyer */}
           <div className="mt-2 w-full">
@@ -316,21 +334,22 @@ export default function ListMembers() {
 
               {/* ------------------ BOUTON SUPPRIMER CARTE ------------------ */}
               <button
-                onClick={() => {
-                  if (window.confirm("⚠️ Voulez-vous vraiment supprimer ce contact de la liste ?")) {
-                    handleSupprimerMembre(m.id); // <-- supprime n'importe quel membre
-                  }
-                }}
-                className="flex items-center justify-center gap-1 text-red-600 text-sm mt-2 w-full rounded-lg border border-red-600 py-1 hover:bg-red-50 transition"
-              >
-                🗑️ Supprimer
-    </button>
-  </div>
-)}
+              onClick={() => {
+                if (window.confirm("⚠️ Voulez-vous vraiment supprimer ce contact de la liste ?")) {
+                  handleSupprimerMembre(m.id);
+                }
+              }}
+              className="flex items-center justify-center gap-1 text-red-600 text-sm mt-2 w-full rounded-lg border border-red-600 py-1 hover:bg-red-50 transition"
+            >
+              🗑️ Supprimer
+            </button>
+          </div>
+        )} {/* <-- Fin Détails */}
 
-</div> 
-);
-}; 
+      </div> {/* <-- Fin nom & téléphone */}
+    </div> {/* <-- Fin carte */}
+  ); // <-- Fin return
+};  
 
   // -------------------- Rendu --------------------
   return (

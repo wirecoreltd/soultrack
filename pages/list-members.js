@@ -372,10 +372,28 @@ const handleAfterSend = (memberSent) => {
                   <BoutonEnvoyer
                     membre={m}
                     type={selectedTargetType[m.id]}
-                    cible={selectedTargetType[m.id] === "cellule" ? cellules.find(c => c.id === selectedTargets[m.id]) : conseillers.find(c => c.id === selectedTargets[m.id])}
-                    onEnvoyer={id => handleAfterSend(id, selectedTargetType[m.id], selectedTargetType[m.id] === "cellule" ? cellules.find(c => c.id === selectedTargets[m.id]) : conseillers.find(c => c.id === selectedTargets[m.id]))}
+                    cible={
+                      selectedTargetType[m.id] === "cellule"
+                        ? cellules.find(c => c.id === selectedTargets[m.id])
+                        : conseillers.find(c => c.id === selectedTargets[m.id])
+                    }
                     session={session}
                     showToast={showToast}
+                    // Callback quand le contact est envoyé
+                    onEnvoyer={(updatedMember) => {
+                      handleAfterSend(
+                        updatedMember,
+                        selectedTargetType[m.id],
+                        selectedTargetType[m.id] === "cellule"
+                          ? cellules.find(c => c.id === selectedTargets[m.id])
+                          : conseillers.find(c => c.id === selectedTargets[m.id])
+                      );
+                    }}
+                    // Callback pour retirer le contact de la section Nouveau sans envoyer
+                    removeFromNouveaux={() => {
+                      setFilteredNouveaux(prev => prev.filter(member => member.id !== m.id));
+                      showToast(`❌ ${m.prenom} ${m.nom} retiré de la section Nouveau`);
+                    }}
                   />
                 </div>
               )}

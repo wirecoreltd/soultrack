@@ -115,12 +115,44 @@ export default function ListMembers() {
     if (data) setConseillers(data);
   };
 
-  const handleAfterSend = (updatedMember, type, cible) => {
-    const updatedWithActif = { ...updatedMember, statut: "actif" };
-    updateMember(updatedWithActif);
-    const cibleName = type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`;
-    showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
-  };
+  // ==================== Détection doublon par téléphone ====================
+const isDuplicateByPhone = (member) => {
+  if (!member?.telephone) return false;
+
+  const tel = member.telephone.replace(/\D/g, "");
+
+  return members.some((m) => {
+    if (m.id === member.id) return false;
+    if (!m.telephone) return false;
+
+    const otherTel = m.telephone.replace(/\D/g, "");
+    return otherTel === tel;
+  });
+};
+
+  const handleAfterSend = (member, type, cible) => {
+  const isDuplicate = isDuplicateByPhone(member);
+
+  console.log("DOUBLON ?", isDuplicate);
+
+  if (isDuplicate) {
+    // pour l’instant : simple info
+    showToast("⚠️ Contact déjà présent dans la base");
+    return;
+  }
+
+  // comportement normal
+  const updatedWithActif = { ...member, statut: "actif" };
+  updateMember(updatedWithActif);
+
+  const cibleName =
+    type === "cellule"
+      ? cible.cellule_full
+      : `${cible.prenom} ${cible.nom}`;
+
+  showToast(`✅ ${member.prenom} ${member.nom} envoyé à ${cibleName}`);
+};
+
 
   useEffect(() => {
     const fetchSessionAndProfile = async () => {

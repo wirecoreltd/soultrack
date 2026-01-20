@@ -37,10 +37,14 @@ export default function ListMembers() {
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
-  const realtimeChannelRef = useRef(null);
+  const [etatContactFilter, setEtatContactFilter] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const { members, setAllMembers, updateMember } = useMembers();
+  const [filteredNouveaux, setFilteredNouveaux] = useState([]);
+  const [filteredMembers, setFilteredMembers] = useState([]);
 
+  // -------------------- Helper Toast --------------------
   const showToast = (msg) => {
     setToastMessage(msg);
     setShowingToast(true);
@@ -54,6 +58,7 @@ export default function ListMembers() {
   const updateSuivi = async (id) => {
     setUpdating((prev) => ({ ...prev, [id]: true }));
     try {
+      console.log("Update suivi pour:", id, commentChanges[id], statusChanges[id]);
       setTimeout(() => {
         setUpdating((prev) => ({ ...prev, [id]: false }));
         showToast("✅ Suivi enregistré !");
@@ -64,7 +69,7 @@ export default function ListMembers() {
     }
   };
 
-  // -------------------- FETCH --------------------
+  // ==================== FETCH DATA ====================
   const fetchMembers = async (profile = null) => {
     setLoading(true);
     try {
@@ -94,31 +99,8 @@ export default function ListMembers() {
     if (data) setConseillers(data);
   };
 
-  // -------------------- Détection doublon par téléphone --------------------
-  const isDuplicateByPhone = (member) => {
-    if (!member?.telephone) return false;
-    const tel = member.telephone.replace(/\D/g, "");
-    return members.some((m) => {
-      if (m.id === member.id) return false;
-      if (!m.telephone) return false;
-      return m.telephone.replace(/\D/g, "") === tel;
-    });
-  };
-
-  // -------------------- handleAfterSend --------------------
-  const handleAfterSend = (memberSent) => {
-    // Supprime le membre de la liste des nouveaux
-    setFilteredNouveaux(prev => prev.filter(m => m.id !== memberSent.id));
-
-    // Optionnel : met à jour la liste générale
-    setFilteredMembers(prev =>
-      prev.map(m => (m.id === memberSent.id ? { ...m, etat_contact: "Existant" } : m))
-    );
-
-    showToast(`✅ ${memberSent.prenom} ${memberSent.nom} a été déplacé dans les suivis`);
-  };
-
   // -------------------- Realtime --------------------
+  const realtimeChannelRef = useRef(null);
   useEffect(() => {
     if (realtimeChannelRef.current) {
       try { realtimeChannelRef.current.unsubscribe(); } catch (e) {}
@@ -130,12 +112,40 @@ export default function ListMembers() {
     channel.on("postgres_changes", { event: "*", schema: "public", table: "cellules" }, () => { fetchCellules(); fetchMembers(); });
     channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { fetchConseillers(); fetchMembers(); });
     try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
-    realtimeChannelRef.current = channel;
 
+    realtimeChannelRef.current = channel;
     return () => {
       try { if (realtimeChannelRef.current) { realtimeChannelRef.current.unsubscribe(); realtimeChannelRef.current = null; } } catch (e) {}
     };
   }, []);
+
+  // -------------------- Session & initial fetch --------------------
+  useEffect(() => {
+    const fetchSessionAndProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+
+      if (session?.user) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, prenom, role")
+          .eq("id", session.user.id)
+          .single();
+        if (!profileError) {
+          setPrenom(profileData.prenom || "");
+          await fetchMembers(profileData);
+        } else console.error(profileError);
+      } else {
+        await fetchMembers();
+      }
+
+      fetchCellules();
+      fetchConseillers();
+    };
+
+    fetchSessionAndProfile();
+  }, []);
+
   // -------------------- Fermer menu téléphone en cliquant dehors --------------------
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -145,28 +155,28 @@ export default function ListMembers() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // -------------------- FILTRAGE OPTIMISE --------------------
-  const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
-    const baseFiltered = filter
-      ? members.filter((m) => m.etat_contact && m.etat_contact.trim().toLowerCase() === filter.toLowerCase())
-      : members;
-
-    const searchFiltered = baseFiltered.filter((m) =>
-      `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
+  // -------------------- Détection doublon par téléphone --------------------
+  const isDuplicateByPhone = (member) => {
+    if (!member?.telephone) return false;
+    const tel = member.telephone.replace(/\D/g, "");
+    return members.some((m) => {
+      if (m.id === member.id) return false;
+      if (!m.telephone) return false;
+      const otherTel = m.telephone.replace(/\D/g, "");
+      return otherTel === tel;
+    });
+  };
+  // -------------------- FILTRAGE CENTRALISE OPTIMISE --------------------
+  useEffect(() => {
+    const nouveaux = members.filter(m =>
+      ["visiteur", "veut rejoindre ICC", "nouveau"].includes((m.statut || "").toLowerCase())
     );
-
-    const nouveaux = searchFiltered.filter((m) =>
-      ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+    const anciens = members.filter(m =>
+      !["visiteur", "veut rejoindre ICC", "nouveau"].includes((m.statut || "").toLowerCase())
     );
-
-    const anciens = searchFiltered.filter(
-      (m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-    );
-
-    return { filteredMembers: searchFiltered, filteredNouveaux: nouveaux, filteredAnciens: anciens };
-  }, [members, filter, search]);
-
-  const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+    setFilteredNouveaux(nouveaux);
+    setFilteredMembers(members);
+  }, [members, refreshKey]);
 
   const getBorderColor = (m) => {
     if (!m.etat_contact) return "#ccc";
@@ -178,7 +188,11 @@ export default function ListMembers() {
   };
 
   const formatDate = (dateStr) => {
-    try { return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr }); } catch { return ""; }
+    try {
+      return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr });
+    } catch {
+      return "";
+    }
   };
 
   const toggleStar = async (member) => {
@@ -189,26 +203,59 @@ export default function ListMembers() {
         .eq("id", member.id);
 
       if (error) throw error;
-      setAllMembers((prev) => prev.map((m) => (m.id === member.id ? { ...m, star: !member.star } : m)));
+
+      setAllMembers(prev =>
+        prev.map(m => (m.id === member.id ? { ...m, star: !member.star } : m))
+      );
     } catch (err) {
       console.error("Erreur toggleStar:", err);
     }
   };
 
   const today = new Date();
-  const dateDuJour = today.toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const dateDuJour = today.toLocaleDateString("fr-FR", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  // -------------------- handleAfterSend --------------------
+  const handleAfterSend = (memberSent) => {
+    // Supprime de la section Nouveau
+    setFilteredNouveaux(prev => prev.filter(m => m.id !== memberSent.id));
+
+    // Met à jour le membre dans la liste principale
+    setFilteredMembers(prev =>
+      prev.map(m => (m.id === memberSent.id ? { ...m, etat_contact: "Existant" } : m))
+    );
+
+    showToast(`✅ ${memberSent.prenom} ${memberSent.nom} a été déplacé dans les suivis`);
+  };
 
   // -------------------- Rendu Carte --------------------
   const renderMemberCard = (m) => {
     const isOpen = detailsOpen[m.id];
-    const besoins = !m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })();
+
+    const besoins = !m.besoin
+      ? "—"
+      : Array.isArray(m.besoin)
+        ? m.besoin.join(", ")
+        : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })();
+
     const formatMinistere = ministere => {
       if (!ministere) return "—";
-      try { const parsed = typeof ministere === "string" ? JSON.parse(ministere) : ministere; return Array.isArray(parsed) ? parsed.join(", ") : "—"; } catch { return "—"; }
+      try {
+        const parsed = typeof ministere === "string" ? JSON.parse(ministere) : ministere;
+        return Array.isArray(parsed) ? parsed.join(", ") : "—";
+      } catch {
+        return "—";
+      }
     };
 
     return (
       <div key={m.id} className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative">
+        {/* Badge Nouveau */}
         {m.isNouveau && (
           <div className="absolute top-2 right-3 flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#2E3192" }}></span>
@@ -216,10 +263,11 @@ export default function ListMembers() {
           </div>
         )}
 
+        {/* Nom centré */}
         <div className="flex flex-col items-center mt-6">
           <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
 
-          {/* Téléphone */}
+          {/* Téléphone avec menu */}
           <div className="relative flex justify-center mt-3">
             {m.telephone ? (
               <>
@@ -231,7 +279,10 @@ export default function ListMembers() {
                   {m.telephone}
                 </button>
                 {openPhoneMenuId === m.id && (
-                  <div className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-52" onClick={e => e.stopPropagation()}>
+                  <div
+                    className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-52"
+                    onClick={e => e.stopPropagation()}
+                  >
                     <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
                     <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
                     <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 WhatsApp Call</a>
@@ -250,48 +301,30 @@ export default function ListMembers() {
             <p>👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
           </div>
 
-          {/* Select pour envoyer / retirer */}
+          {/* Select pour envoyer */}
           <div className="mt-2 w-full">
             <label className="font-semibold text-sm">Envoyer à :</label>
-            <select
-              value={selectedTargetType[m.id] || ""}
-              onChange={e => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
-              className="mt-1 w-full border rounded px-2 py-1 text-sm"
-            >
+            <select value={selectedTargetType[m.id] || ""} onChange={e => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))} className="mt-1 w-full border rounded px-2 py-1 text-sm">
               <option value="">-- Choisir une option --</option>
               <option value="cellule">Une Cellule</option>
               <option value="conseiller">Un Conseiller</option>
             </select>
-
             {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
-              <select
-                value={selectedTargets[m.id] || ""}
-                onChange={e => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
-                className="mt-1 w-full border rounded px-2 py-1 text-sm"
-              >
+              <select value={selectedTargets[m.id] || ""} onChange={e => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))} className="mt-1 w-full border rounded px-2 py-1 text-sm">
                 <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
-                {selectedTargetType[m.id] === "cellule"
-                  ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)
-                  : conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)
-                }
+                {selectedTargetType[m.id] === "cellule" ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>) : null}
+                {selectedTargetType[m.id] === "conseiller" ? conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>) : null}
               </select>
             )}
-
             {selectedTargetType[m.id] && selectedTargets[m.id] && (
               <div className="pt-2">
                 <BoutonEnvoyer
                   membre={m}
                   type={selectedTargetType[m.id]}
-                  cible={
-                    selectedTargetType[m.id] === "cellule"
-                      ? cellules.find(c => c.id === selectedTargets[m.id])
-                      : conseillers.find(c => c.id === selectedTargets[m.id])
-                  }
+                  cible={selectedTargetType[m.id] === "cellule" ? cellules.find(c => c.id === selectedTargets[m.id]) : conseillers.find(c => c.id === selectedTargets[m.id])}
                   session={session}
                   showToast={showToast}
-                  onEnvoyer={(updatedMember) => {
-                    handleAfterSend(updatedMember);
-                  }}
+                  onEnvoyer={(updatedMember) => handleAfterSend(updatedMember)}
                   removeFromNouveaux={() => {
                     setFilteredNouveaux(prev => prev.filter(member => member.id !== m.id));
                     showToast(`❌ ${m.prenom} ${m.nom} retiré de la section Nouveau`);
@@ -301,33 +334,49 @@ export default function ListMembers() {
             )}
           </div>
 
-          <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">
+          <button onClick={() => setDetailsOpen(prev => ({ ...prev, [m.id]: !prev[m.id] }))} className="text-orange-500 underline text-sm mt-2">
             {isOpen ? "Fermer détails" : "Détails"}
           </button>
-
-          {isOpen && (
-            <div className="text-black text-sm mt-2 w-full space-y-1">
-              <p className="font-semibold text-center" style={{ color: "#2E3192" }}>💡 Statut Suivi: {m.suivi_statut || "—"}</p>
-              <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-              <p>🎗️ Sexe : {m.sexe || "—"}</p>
-              <p>💧 Bapteme d'Eau: {m.bapteme_eau === true || m.bapteme_eau === "true" ? "Oui" : "Non"}</p>
-              <p>🔥 Bapteme de Feu: {m.bapteme_esprit === true || m.bapteme_esprit === "true" ? "Oui" : "Non"}</p>
-              <p>✒️ Formation : {m.Formation || "—"}</p>
-              <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>
-              <p>💢 Ministere : {formatMinistere(m.Ministere)}</p>
-              <p>❓ Besoin : {besoins}</p>
-              <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-              <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-              <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>
-              <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
-              <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
-              <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
-              <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">✏️ Modifier le contact</button>
-            </div>
-          )}
         </div>
-      );
-    };
+      </div>
+    );
+  };
+  // -------------------- Rendu Vue Table --------------------
+  const renderMemberTableRow = (m) => {
+    const isDuplicate = isDuplicateByPhone(m);
+
+    return (
+      <div
+        key={m.id}
+        className={`flex flex-row items-center px-2 py-2 rounded-lg transition duration-150 gap-2 border-l-4 ${isDuplicate ? "bg-red-100/40 hover:bg-red-100/50" : "bg-blue-100/30 hover:bg-blue-100/50"}`}
+        style={{ borderLeftColor: getBorderColor(m) }}
+      >
+        <div className="flex-[2] text-white font-semibold flex items-center gap-1">
+          {m.prenom} {m.nom}
+          {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+          {isDuplicate && <span className="text-red-500 ml-1 text-xs font-bold">⚠️ Doublon</span>}
+        </div>
+
+        <div className="flex-[1] text-white">{m.telephone || "—"}</div>
+        <div className="flex-[1] text-white">{m.etat_contact || "—"}</div>
+        <div className="flex-[2] text-white">
+          {m.cellule_id
+            ? `🏠 ${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}`
+            : m.conseiller_id
+            ? `👤 ${conseillers.find(c => c.id === m.conseiller_id)?.prenom} ${conseillers.find(c => c.id === m.conseiller_id)?.nom}`
+            : "—"}
+        </div>
+        <div className="flex-[1]">
+          <button
+            onClick={() => setPopupMember(prev => (prev?.id === m.id ? null : { ...m }))}
+            className="text-orange-500 underline text-sm whitespace-nowrap"
+          >
+            {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   // -------------------- Rendu principal --------------------
   return (
@@ -335,7 +384,7 @@ export default function ListMembers() {
       <Header />
       <h1 className="text-2xl sm:text-3xl font-bold text-white text-center mb-2">Liste des Membres</h1>
 
-      {/* Barre de recherche */}
+      {/* Barre recherche */}
       <div className="w-full max-w-4xl flex justify-center mb-2">
         <input
           type="text"
@@ -346,54 +395,39 @@ export default function ListMembers() {
         />
       </div>
 
-      {/* Filtre */}
-      <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">
-        <select value={filter} onChange={e => setFilter(e.target.value)} className="px-3 py-1 rounded-md border text-black text-sm">
-          <option value="">-- Tous les états de contact --</option>
-          <option value="nouveau">Nouveau</option>
-          <option value="existant">Existant</option>
-          <option value="inactif">Inactif</option>
-        </select>
-        <span className="text-white text-sm ml-2">{filteredMembers.length} membres</span>
-      </div>
-
-      {/* Carte / Table toggle */}
+      {/* Toggle Vue Carte / Table */}
       <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
-        <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-sm font-semibold underline text-white">
+        <button
+          onClick={() => setView(view === "card" ? "table" : "card")}
+          className="text-sm font-semibold underline text-white"
+        >
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
       </div>
 
-      {/* ==================== VUE CARTE ==================== */}
-      {view === "card" && (
-        <>
-          {filteredNouveaux.length > 0 && (
-            <>
-              <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">💖 Bien aimé venu le {dateDuJour}</h2>
-              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-                {filteredNouveaux.map(m => renderMemberCard({ ...m, isNouveau: true }))}
-              </div>
-            </>
-          )}
-          {filteredAnciens.length > 0 && (
-            <>
-              <h2 className="w-full max-w-6xl font-bold mb-2 text-lg bg-gradient-to-r from-blue-500 to-gray-300 bg-clip-text text-transparent">Membres existants</h2>
-              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                {filteredAnciens.map(m => renderMemberCard(m))}
-              </div>
-            </>
-          )}
-        </>
-      )}
-
       {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto py-2">
-          {/* Table rows (similar à renderMemberCard mais format table) */}
+          <div className="min-w-[700px] space-y-2">
+            {/* Header */}
+            <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+              <div className="flex-[2]">Nom complet</div>
+              <div className="flex-[1]">Téléphone</div>
+              <div className="flex-[1]">Statut</div>
+              <div className="flex-[2]">Affectation</div>
+              <div className="flex-[1]">Actions</div>
+            </div>
+
+            {/* Nouveaux Membres */}
+            {filteredNouveaux.map(renderMemberTableRow)}
+
+            {/* Membres existants */}
+            {filteredAnciens.map(renderMemberTableRow)}
+          </div>
         </div>
       )}
 
-      {/* ==================== POPUPS ==================== */}
+      {/* =================== DETAILS MEMBER POPUP =================== */}
       {popupMember && (
         <DetailsMemberPopup
           membre={popupMember}
@@ -409,6 +443,7 @@ export default function ListMembers() {
           updating={updating}
         />
       )}
+
       {editMember && (
         <EditMemberPopup
           member={editMember}
@@ -417,11 +452,12 @@ export default function ListMembers() {
         />
       )}
 
-      {/* Toast */}
+      {/* =================== TOAST =================== */}
       {showingToast && (
-        <div className="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50">{toastMessage}</div>
+        <div className="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50">
+          {toastMessage}
+        </div>
       )}
     </div>
   );
 }
-

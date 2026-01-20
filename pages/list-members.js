@@ -144,15 +144,18 @@ export default function ListMembers() {
     return { filteredMembers: searched, filteredNouveaux: nouveaux, filteredAnciens: anciens };
   }, [members, filter, search]);
 
-  // ✅ SYNCHRO CORRECTE
+  // -------------------- STATE GLOBAL POUR L'AFFICHAGE --------------------//
+  // --- Ici on crée displayedMembers qui contient tous les membres pour toute la page --- //
+  const [displayedMembers, setDisplayedMembers] = useState([]);
   useEffect(() => {
-    setNouveauxMembres(filteredNouveaux);
-  }, [filteredNouveaux]);
+    setDisplayedMembers(filteredMembers); // synchronisation automatique
+  }, [filteredMembers]);
 
-  // -------------------- SUPPRIMER (UI ONLY) --------------------
+  // -------------------- SUPPRIMER N'IMPORTE QUEL MEMBRE --------------------//
+  // --- Cette fonction supprime le membre de displayedMembers, donc de toute la page --- //
   const handleSupprimerMembre = (id) => {
-    setNouveauxMembres((prev) => prev.filter((m) => m.id !== id));
-    showToast("🗑️ Contact retiré de la section Nouveaux");
+    setDisplayedMembers((prev) => prev.filter((m) => m.id !== id));
+    showToast("🗑️ Contact retiré de la liste");
   };
 
   // -------------------- UTILS --------------------

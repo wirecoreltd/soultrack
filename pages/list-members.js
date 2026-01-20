@@ -522,32 +522,40 @@ export default function ListMembers() {
                   </span>
                 </div>
                 {filteredAnciens.map((m) => (
-                  <div
-                    key={m.id}
-                    className="flex flex-row items-center px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 gap-2 border-l-4"
-                    style={{ borderLeftColor: getBorderColor(m) }}
-                  >
-                    <div className="flex-[2] text-white font-semibold flex items-center gap-2">
-                        <span>{m.prenom} {m.nom}</span>                     
-                     </div>
+  <div
+    key={m.id}
+    className="flex flex-row items-center px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 gap-2 border-l-4"
+    style={{ borderLeftColor: getBorderColor(m) }}
+  >
+    <div className="flex-[2] text-white font-semibold flex items-center gap-1">
+      <span>{m.prenom} {m.nom}</span>
+      {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+    </div>
 
-                    {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-                    </div>
-                    <div className="flex-[1] text-white">{m.telephone || "—"}</div>
-                    <div className="flex-[1] text-white">{m.etat_contact || "—"}</div>
-                    <div className="flex-[2] text-white">
-                      {m.cellule_id
-                        ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
-                        : m.conseiller_id
-                        ? `👤 ${conseillers.find((c) => c.id === m.conseiller_id)?.prenom} ${conseillers.find((c) => c.id === m.conseiller_id)?.nom}`
-                        : "—"}
-                    </div>
-                    <div className="flex-[1]">
-                      <button
-                        onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
-                        className="text-orange-500 underline text-sm whitespace-nowrap"
-                      >
-                        {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+    <div className="flex-[1] text-white">
+      {m.telephone || "—"}
+    </div>
+
+    <div className="flex-[1] text-white">
+      {m.etat_contact || "—"}
+    </div>
+
+    <div className="flex-[2] text-white">
+      {m.cellule_id
+        ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
+        : m.conseiller_id
+        ? `👤 ${conseillers.find((c) => c.id === m.conseiller_id)?.prenom} ${conseillers.find((c) => c.id === m.conseiller_id)?.nom}`
+        : "—"}
+    </div>
+
+    <div className="flex-[1]">
+      <button
+        onClick={() =>
+          setPopupMember(popupMember?.id === m.id ? null : { ...m })
+        }
+        className="text-orange-500 underline text-sm whitespace-nowrap"
+      >
+        {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
                       </button>
                     </div>
                   </div>

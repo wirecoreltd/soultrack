@@ -537,8 +537,16 @@ export default function ListMembers() {
                     className="flex flex-row items-center px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 gap-2 border-l-4"
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
-                    <div className="flex-[2] text-white flex items-center gap-1">
-                      {m.prenom} {m.nom}
+                    <div className="flex-[2] text-white font-semibold flex items-center gap-2">
+                        <span>{m.prenom} {m.nom}</span>
+                      
+                        {m.isNouveau && (
+                          <span className="flex items-center gap-1 text-xs font-semibold text-white">
+                            <span className="inline-block w-2 h-2 rounded-full bg-white" />
+                            Nouveau
+                          </span>
+                        )}
+                      </div>
                       {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                     </div>
                     <div className="flex-[1] text-white">{m.telephone || "—"}</div>

@@ -483,8 +483,7 @@ export default function ListMembers() {
                 style={{ borderLeftColor: getBorderColor(m) }}
               >
                 {/* Badge Nouveau en haut à droite */}
-                {m.isNouveau && (
-                {m.isNouveau && (
+                 {m.isNouveau && (
                   <div className="flex justify-end mb-1">
                     <span
                       className="inline-block w-2.5 h-2.5 rounded-full mr-1"

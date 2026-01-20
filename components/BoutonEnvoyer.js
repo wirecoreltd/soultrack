@@ -103,10 +103,10 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
   };
 
   const handleSupprimer = () => {
-  if (onSupprimer) onSupprimer(membre.id);
-  setShowDoublonPopup(false);
-  setDoublonDetected(false);
-};
+    if (onSupprimer) onSupprimer(membre.id);
+    setShowDoublonPopup(false);
+    setDoublonDetected(false);
+  };
 
   return (
     <>

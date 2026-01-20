@@ -206,153 +206,152 @@ export default function ListMembers() {
     day: "numeric",
   });
 
-  // -------------------- Rendu Carte --------------------
-const renderMemberCard = (m) => {
-  const isOpen = detailsOpen[m.id];
-
-  const besoins = !m.besoin
-    ? "—"
-    : Array.isArray(m.besoin)
-      ? m.besoin.join(", ")
-      : (() => { 
-          try { 
-            const arr = JSON.parse(m.besoin); 
-            return Array.isArray(arr) ? arr.join(", ") : m.besoin; 
-          } catch { 
-            return m.besoin; 
-          } 
-        })();
-
-  const formatMinistere = (ministere) => {
-    if (!ministere) return "—";
-    try {
-      const parsed = typeof ministere === "string" ? JSON.parse(ministere) : ministere;
-      return Array.isArray(parsed) ? parsed.join(", ") : "—";
-    } catch {
-      return "—";
-    }
-  };
-
-  return (
-    <div key={m.id} className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative">
-      {/* Badge Nouveau */}
-      {m.isNouveau && (
-        <div className="absolute top-2 right-3 flex items-center gap-1">
-          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#2E3192" }}></span>
-          <span className="text-xs font-semibold" style={{ color: "#2E3192" }}>Nouveau</span>
-        </div>
-      )}
-
-      {/* Nom centré */}
-      <div className="flex flex-col items-center mt-6">
-        <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
-
-        {/* Téléphone */}
-        <div className="relative flex justify-center mt-3">
-          {m.telephone ? (
-            <>
-              <button
-                type="button"
-                onClick={e => { e.stopPropagation(); setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id); }}
-                className="text-orange-500 underline font-semibold text-center"
-              >
-                {m.telephone}
-              </button>
-              {openPhoneMenuId === m.id && (
-                <div className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-52" onClick={e => e.stopPropagation()}>
-                  <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
-                  <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
-                  <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 WhatsApp Call</a>
-                  <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 WhatsApp Message</a>
-                </div>
-              )}
-            </>
-          ) : (
-            <span className="text-gray-400">—</span>
+      // -------------------- Rendu Carte --------------------
+    const renderMemberCard = (m) => {
+      const isOpen = detailsOpen[m.id];
+    
+      const besoins = !m.besoin
+        ? "—"
+        : Array.isArray(m.besoin)
+        ? m.besoin.join(", ")
+        : (() => {
+            try {
+              const arr = JSON.parse(m.besoin);
+              return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+            } catch {
+              return m.besoin;
+            }
+          })();
+    
+      const formatMinistere = (ministere) => {
+        if (!ministere) return "—";
+        try {
+          const parsed = typeof ministere === "string" ? JSON.parse(ministere) : ministere;
+          return Array.isArray(parsed) ? parsed.join(", ") : "—";
+        } catch {
+          return "—";
+        }
+      };
+    
+      return (
+        <div key={m.id} className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative">
+          
+          {/* Badge Nouveau */}
+          {m.isNouveau && (
+            <div className="absolute top-2 right-3 flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#2E3192" }} />
+              <span className="text-xs font-semibold" style={{ color: "#2E3192" }}>
+                Nouveau
+              </span>
+            </div>
           )}
-        </div>
-
-        {/* Infos principales */}
-        <div className="w-full mt-2 text-sm text-black space-y-1">
-          <p className="text-center">🏙️ Ville : {m.ville || "—"}</p>
-          <p className="text-center">🕊 Etat Contact : {m.etat_contact || "—"}</p>
-          <p>🏠 Cellule : {m.cellule_id ? `${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` : "—"}</p>
-          <p>👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
-        </div>
-
-          {/* Select pour envoyer */}
-          <div className="mt-2 w-full">
-            <label className="font-semibold text-sm">Envoyer à :</label>
-            <select value={selectedTargetType[m.id] || ""} onChange={e => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))} className="mt-1 w-full border rounded px-2 py-1 text-sm">
-              <option value="">-- Choisir une option --</option>
-              <option value="cellule">Une Cellule</option>
-              <option value="conseiller">Un Conseiller</option>
-            </select>
-            {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
-              <select value={selectedTargets[m.id] || ""} onChange={e => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))} className="mt-1 w-full border rounded px-2 py-1 text-sm">
-                <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
-                {selectedTargetType[m.id] === "cellule" ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>) : null}
-                {selectedTargetType[m.id] === "conseiller" ? conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>) : null}
-              </select>
-            )}
-            {selectedTargetType[m.id] && selectedTargets[m.id] && (
-              <div className="pt-2">
-                <BoutonEnvoyer
-                  membre={m}
-                  type={selectedTargetType[m.id]}
-                  cible={selectedTargetType[m.id] === "cellule" ? cellules.find(c => c.id === selectedTargets[m.id]) : conseillers.find(c => c.id === selectedTargets[m.id])}
-                  onEnvoyer={id => handleAfterSend(id, selectedTargetType[m.id], selectedTargetType[m.id] === "cellule" ? cellules.find(c => c.id === selectedTargets[m.id]) : conseillers.find(c => c.id === selectedTargets[m.id]))}
-                  session={session}
-                  showToast={showToast}
-                />
+    
+          {/* Nom */}
+          <div className="flex flex-col items-center mt-6">
+            <h2 className="text-lg font-bold text-center">
+              {m.prenom} {m.nom}
+            </h2>
+    
+            {/* Téléphone */}
+            <div className="relative flex justify-center mt-3">
+              {m.telephone ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
+                    }}
+                    className="text-orange-500 underline font-semibold"
+                  >
+                    {m.telephone}
+                  </button>
+    
+                  {openPhoneMenuId === m.id && (
+                    <div
+                      className="absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-52"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">📞 Appeler</a>
+                      <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">✉️ SMS</a>
+                      <a
+                        href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block px-4 py-2 text-sm hover:bg-gray-100"
+                      >
+                        💬 WhatsApp
+                      </a>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <span className="text-gray-400">—</span>
+              )}
+            </div>
+    
+            {/* Infos principales */}
+            <div className="w-full mt-2 text-sm text-black space-y-1">
+              <p className="text-center">🏙️ Ville : {m.ville || "—"}</p>
+              <p className="text-center">🕊 Etat Contact : {m.etat_contact || "—"}</p>
+              <p>🏠 Cellule : {cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}</p>
+              <p>
+                👤 Conseiller :{" "}
+                {conseillers.find(c => c.id === m.conseiller_id)
+                  ? `${conseillers.find(c => c.id === m.conseiller_id).prenom} ${conseillers.find(c => c.id === m.conseiller_id).nom}`
+                  : "—"}
+              </p>
+            </div>
+    
+            {/* Bouton Détails */}
+            <button
+              onClick={() => toggleDetails(m.id)}
+              className="text-orange-500 underline text-sm mt-2"
+            >
+              {isOpen ? "Fermer détails" : "Détails"}
+            </button>
+    
+            {/* Détails */}
+            {isOpen && (
+              <div className="text-black text-sm mt-2 w-full space-y-1">
+                <p className="font-semibold text-center" style={{ color: "#2E3192" }}>
+                  💡 Statut Suivi : {m.suivi_statut || "—"}
+                </p>
+                <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                <p>🎗️ Sexe : {m.sexe || "—"}</p>
+                <p>💧 Baptême d’Eau : {m.bapteme_eau ? "Oui" : "Non"}</p>
+                <p>🔥 Baptême de Feu : {m.bapteme_esprit ? "Oui" : "Non"}</p>
+                <p>✒️ Formation : {m.Formation || "—"}</p>
+                <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>
+                <p>💢 Ministère : {formatMinistere(m.Ministere)}</p>
+                <p>❓ Besoin : {besoins}</p>
+                <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+    
+                {/* Modifier */}
+                <button
+                  onClick={() => setEditMember(m)}
+                  className="text-blue-600 text-sm mt-2 w-full"
+                >
+                  ✏️ Modifier le contact
+                </button>
+    
+                {/* Supprimer */}
+                <button
+                  onClick={() => {
+                    if (window.confirm("⚠️ Voulez-vous vraiment supprimer ce contact ?")) {
+                      handleSupprimerMembre(m.id);
+                    }
+                  }}
+                  className="flex items-center justify-center gap-1 text-red-600 text-sm mt-2 w-full"
+                >
+                  🗑️ Supprimer
+                </button>
               </div>
             )}
           </div>
-
-          <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">{isOpen ? "Fermer détails" : "Détails"}</button>
-
-          {/* Détails */}
-          {isOpen && (
-            <div className="text-black text-sm mt-2 w-full space-y-1">
-              <p className="font-semibold text-center" style={{ color: "#2E3192" }}>💡 Statut Suivi: {m.suivi_statut || "—"}</p>
-              <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-              <p>🎗️ Sexe : {m.sexe || "—"}</p>
-              <p>💧 Bapteme d'Eau: {m.bapteme_eau === true || m.bapteme_eau === "true" ? "Oui" : "Non"}</p>
-              <p>🔥 Bapteme de Feu: {m.bapteme_esprit === true || m.bapteme_esprit === "true" ? "Oui" : "Non"}</p>
-              <p>✒️ Formation : {m.Formation || "—"}</p>
-              <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>
-              <p>💢 Ministere : {formatMinistere(m.Ministere)}</p>
-              <p>❓ Besoin : {besoins}</p>
-              <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-              <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-              <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>
-              <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
-              <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
-              <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
-     
-
-              <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">✏️ Modifier le contact</button>
-       </div>
-)}
-
-              {/* ------------------ BOUTON SUPPRIMER CARTE ------------------ */}
-              <button
-              onClick={() => {
-                if (window.confirm("⚠️ Voulez-vous vraiment supprimer ce contact de la liste ?")) {
-                  handleSupprimerMembre(m.id);
-                }
-              }}
-              className="flex items-center justify-center gap-1 text-red-600 text-sm mt-2 w-full rounded-lg border border-red-600 py-1 hover:bg-red-50 transition"
-            >
-              🗑️ Supprimer
-            </button>
-          </div>
-        )} {/* <-- Fin Détails */}
-
-      </div> {/* <-- Fin nom & téléphone */}
-    </div> {/* <-- Fin carte */}
-  ); // <-- Fin return
-};  
+        </div>
+      );
+    };
 
   // -------------------- Rendu --------------------
   return (

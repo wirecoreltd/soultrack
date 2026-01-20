@@ -20,7 +20,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
     setLoading(true);
 
     try {
-      // 🔹 Vérifier doublon par numéro
+      // 🔹 Vérifier doublon par téléphone
       const { data: doublons, error: doublonError } = await supabase
         .from("membres_complets")
         .select("id")
@@ -29,20 +29,35 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
       if (doublonError) throw new Error("Erreur lors de la vérification des doublons");
 
+      let proceed = true;
+      let removeFromNouveau = false;
+
       if (doublons.length > 0) {
-        const continuer = confirm(
-          `⚠️ Ce numéro (${membre.telephone}) existe déjà dans la base. Voulez-vous quand même l'envoyer ?`
+        const choix = window.confirm(
+          `⚠️ Ce numéro (${membre.telephone}) existe déjà.\nOK = Envoyer quand même\nAnnuler = Retirer de la section Nouveau`
         );
-        if (!continuer) {
-          setLoading(false);
-          return;
+        if (!choix) {
+          proceed = false;
+          removeFromNouveau = true;
         }
       }
 
+      // 🔹 Retirer de Nouveau immédiatement si choisi
+      if (removeFromNouveau && onEnvoyer) {
+        onEnvoyer({ ...membre, retireNouveau: true });
+        setLoading(false);
+        return;
+      }
+
+      if (!proceed) {
+        setLoading(false);
+        return;
+      }
+
+      // 🔹 Récupérer responsable selon type
       let responsablePrenom = "";
       let responsableTelephone = "";
 
-      // 🔹 Récupérer responsable selon type
       if (type === "cellule") {
         const { data: cellule, error } = await supabase
           .from("cellules")
@@ -69,7 +84,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         responsableTelephone = cible.telephone;
       }
 
-      // 🔹 Mettre à jour le membre
+      // 🔹 Mettre à jour le membre dans Supabase
       const { data: updatedMember, error: updateError } = await supabase
         .from("membres_complets")
         .update({
@@ -85,11 +100,13 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         .eq("id", membre.id)
         .select()
         .single();
+
       if (updateError) throw updateError;
 
-      // 🔹 Callback pour mettre à jour la vue
+      // 🔹 Retirer immédiatement de Nouveau dans la page
       if (onEnvoyer) onEnvoyer(updatedMember);
 
+      // 🔹 Afficher le toast
       if (showToast) {
         const cibleName = type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`;
         showToast(`✅ ${membre.prenom} ${membre.nom} envoyé à ${cibleName}`);
@@ -99,14 +116,14 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       let message = `👋 Bonjour ${responsablePrenom}!\n\n`;
       message += `Une personne précieuse t’est confiée pour l’accompagnement.\n\n`;
       message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
-      message += `🎗️ Sexe: ${membre.sexe || "—"}\n`; 
+      message += `🎗️ Sexe: ${membre.sexe || "—"}\n`;
       message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
       message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
       message += `🏙️ Ville: ${membre.ville || "—"}\n`;
-      message += `✨ Raison de la venue: ${membre.statut_initial || "—"}\n`;   
-      message += `🙏 Prière du salut: ${membre.priere_salut || "—"}\n`; 
+      message += `✨ Raison de la venue: ${membre.statut_initial || "—"}\n`;
+      message += `🙏 Prière du salut: ${membre.priere_salut || "—"}\n`;
       message += `☀️ Type de conversion: ${membre.type_conversion || "—"}\n`;
-      message += `❓Besoin: ${
+      message += `❓ Besoin: ${
         membre.besoin
           ? (() => {
               try {
@@ -123,7 +140,6 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
       const phone = responsableTelephone.replace(/\D/g, "");
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
-
     } catch (err) {
       console.error("Erreur sendToWhatsapp:", err.message);
       alert(`❌ ${err.message}`);

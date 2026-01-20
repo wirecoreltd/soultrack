@@ -338,13 +338,16 @@ export default function ListMembers() {
                 {/* Supprimer */}
                 <button
                   onClick={() => {
-                    if (window.confirm("⚠️ Voulez-vous vraiment supprimer ce contact ?")) {
+                    if (window.confirm("⚠️ Suppression définitive\n\n" +
+                      "Voulez-vous vraiment supprimer ce contact ?\n\n" +
+                      "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
+                      "Cette action est irréversible.")) {
                       handleSupprimerMembre(m.id);
                     }
                   }}
                   className="flex items-center justify-center gap-1 text-red-600 text-sm mt-2 w-full"
                 >
-                  🗑️ Supprimer
+                  🗑️ Supprimer Le Contact
                 </button>
               </div>
             )}

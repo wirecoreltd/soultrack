@@ -130,29 +130,21 @@ const isDuplicateByPhone = (member) => {
   });
 };
 
-  const handleAfterSend = (member, type, cible) => {
-  const isDuplicate = isDuplicateByPhone(member);
+  // -------------------- handleAfterSend --------------------
+const handleAfterSend = (memberSent) => {
+  // 🔹 Supprime le membre de la liste des nouveaux
+  setFilteredNouveaux(prev => prev.filter(m => m.id !== memberSent.id));
 
-  console.log("DOUBLON ?", isDuplicate);
+  // 🔹 Met à jour la liste générale si besoin (optionnel)
+  setFilteredMembers(prev =>
+    prev.map(m => (m.id === memberSent.id ? { ...m, etat_contact: "Existant" } : m))
+  );
 
-  if (isDuplicate) {
-    // pour l’instant : simple info
-    showToast("⚠️ Contact déjà présent dans la base");
-    return;
+  // 🔹 Callback supplémentaire si tu veux
+  if (showToast) {
+    showToast(`✅ ${memberSent.prenom} ${memberSent.nom} a été déplacé dans les suivis`);
   }
-
-  // comportement normal
-  const updatedWithActif = { ...member, statut: "actif" };
-  updateMember(updatedWithActif);
-
-  const cibleName =
-    type === "cellule"
-      ? cible.cellule_full
-      : `${cible.prenom} ${cible.nom}`;
-
-  showToast(`✅ ${member.prenom} ${member.nom} envoyé à ${cibleName}`);
 };
-
 
   useEffect(() => {
     const fetchSessionAndProfile = async () => {

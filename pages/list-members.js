@@ -39,6 +39,7 @@ export default function ListMembers() {
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const realtimeChannelRef = useRef(null);
   const [etatContactFilter, setEtatContactFilter] = useState("");
+  const [nouveauxMembres, setNouveauxMembres] = useState([]);
 
   const statutLabels = {
     1: "En cours",
@@ -181,7 +182,6 @@ export default function ListMembers() {
         );
       };
 
-
   // -------------------- Fermer menu téléphone en cliquant dehors --------------------
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -199,6 +199,20 @@ export default function ListMembers() {
       return m.etat_contact.trim().toLowerCase() === filter.toLowerCase();
     })
   : members;
+
+    // -------------------- State local pour les nouveaux membres --------------------
+const [nouveauxMembres, setNouveauxMembres] = useState([]);
+
+// Synchroniser le state local avec les membres filtrés
+useEffect(() => {
+  setNouveauxMembres(filteredNouveaux);
+}, [filteredNouveaux]);
+
+// Callback pour supprimer un membre de la section Nouveaux
+const handleSupprimerMembre = (id) => {
+  setNouveauxMembres((prev) => prev.filter((m) => m.id !== id));
+  showToast("❌ Contact retiré de la section Nouveaux");
+};
 
 
     const searchFiltered = baseFiltered.filter((m) =>
@@ -349,10 +363,16 @@ export default function ListMembers() {
                     membre={m}
                     type={selectedTargetType[m.id]}
                     cible={selectedTargetType[m.id] === "cellule" ? cellules.find(c => c.id === selectedTargets[m.id]) : conseillers.find(c => c.id === selectedTargets[m.id])}
-                    onEnvoyer={id => handleAfterSend(id, selectedTargetType[m.id], selectedTargetType[m.id] === "cellule" ? cellules.find(c => c.id === selectedTargets[m.id]) : conseillers.find(c => c.id === selectedTargets[m.id]))}
+                    onEnvoyer={id => {
+                      handleAfterSend(id, selectedTargetType[m.id], selectedTargetType[m.id] === "cellule" ? cellules.find(c => c.id === selectedTargets[m.id]) : conseillers.find(c => c.id === selectedTargets[m.id]));
+                      // retirer automatiquement le membre de la section Nouveaux après envoi
+                      handleSupprimerMembre(m.id);
+                    }}
+                    onSupprimer={handleSupprimerMembre} // pour le bouton Supprimer
                     session={session}
                     showToast={showToast}
                   />
+
                 </div>
               )}
             </div>

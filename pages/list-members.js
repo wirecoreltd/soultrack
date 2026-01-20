@@ -202,33 +202,50 @@ export default function ListMembers() {
   }, []);
 
   // -------------------- FILTRAGE CENTRALISE OPTIMISE --------------------
-  const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
-    const baseFiltered = filter
-  ? members.filter((m) => {
-      if (!m.etat_contact) return false;
-      return m.etat_contact.trim().toLowerCase() === filter.toLowerCase();
-    })
-  : members;
+  // -------------------- FILTRAGE CENTRALISÉ --------------------
+const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
+  const baseFiltered = filter
+    ? members.filter((m) => {
+        if (!m.etat_contact) return false;
+        return m.etat_contact.trim().toLowerCase() === filter.toLowerCase();
+      })
+    : members;
 
+  const searchFiltered = baseFiltered.filter((m) =>
+    `${m.prenom || ""} ${m.nom || ""}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
 
-    const searchFiltered = baseFiltered.filter((m) =>
-      `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
-    );
+  const nouveaux = searchFiltered.filter((m) =>
+    ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+  );
 
-    const nouveaux = searchFiltered.filter((m) =>
-      ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-    );
+  const anciens = searchFiltered.filter(
+    (m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+  );
 
-    const anciens = searchFiltered.filter(
-      (m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-    );
+  return {
+    filteredMembers: searchFiltered,
+    filteredNouveaux: nouveaux,
+    filteredAnciens: anciens,
+  };
+}, [members, filter, search, refreshKey]);
 
-    return {
-      filteredMembers: searchFiltered,
-      filteredNouveaux: nouveaux,
-      filteredAnciens: anciens,
-    };
-  }, [members, filter, search, refreshKey]);
+// -------------------- ÉTAT LOCAL POUR LA SECTION "NOUVEAUX" --------------------
+const [nouveauxMembres, setNouveauxMembres] = useState([]);
+
+// Synchronisation automatique quand les filtres changent
+useEffect(() => {
+  setNouveauxMembres(filteredNouveaux);
+}, [filteredNouveaux]);
+
+// -------------------- SUPPRIMER DE LA SECTION NOUVEAUX (UI ONLY) --------------------
+const handleSupprimerMembre = (id) => {
+  setNouveauxMembres((prev) => prev.filter((m) => m.id !== id));
+  showToast("🗑️ Contact retiré de la section Nouveaux");
+};
+
 
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 

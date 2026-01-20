@@ -487,11 +487,11 @@ export default function ListMembers() {
                   <div className="flex justify-end mb-1">
                     <span
                       className="inline-block w-2.5 h-2.5 rounded-full mr-1"
-                      style={{ backgroundColor: "#2E3192" }}
+                      style={{ backgroundColor: "#FFFFFF" }}
                     />
                     <span
                       className="text-xs font-semibold"
-                      style={{ color: "#2E3192" }}
+                      style={{ color: "#FF0000" }}
                     >
                       Nouveau
                     </span>

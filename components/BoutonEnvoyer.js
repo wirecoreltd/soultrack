@@ -17,6 +17,15 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       return;
     }
 
+    // ---------------------- Gestion des doublons ----------------------
+    // On ne bloque que si c'est un nouveau et qu'il existe déjà
+    if (membre.isNouveau && membre.deja_existant) {
+      const confirmSend = window.confirm(
+        "⚠️ Ce contact existe déjà dans la base.\n\nSouhaitez-vous quand même l’envoyer au suivi ?"
+      );
+      if (!confirmSend) return; // Abandon de l'envoi
+    }
+
     setLoading(true);
 
     try {
@@ -41,7 +50,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
         responsablePrenom = resp.prenom;
         responsableTelephone = resp.telephone;
-        cible.cellule_full = cellule.cellule_full; // garantir que cellule_full est disponible
+        cible.cellule_full = cellule.cellule_full;
       }
 
       if (type === "conseiller") {
@@ -68,7 +77,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         .single();
       if (updateError) throw updateError;
 
-      // 🔹 Callback après envoi
+      // 🔹 Callback après envoi pour mise à jour instantanée
       if (onEnvoyer) onEnvoyer(updatedMember);
 
       if (showToast) {
@@ -78,6 +87,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
       // 🔹 Message WhatsApp
       let message = `👋 Bonjour ${responsablePrenom}!\n\n`;
+      message += `Je Crois que tu te portes bien par la grace de Notre Dieu.\n`;
       message += `Une personne précieuse t’est confiée pour l’accompagnement.\n\n`;
       message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
       message += `🎗️ Sexe: ${membre.sexe || "—"}\n`; 
@@ -88,17 +98,17 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       message += `🙏 Prière du salut: ${membre.priere_salut || "—"}\n`; 
       message += `☀️ Type de conversion: ${membre.type_conversion || "—"}\n`;
       message += `❓Besoin: ${
-      membre.besoin
-        ? (() => {
-            try {
-              const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
-              return Array.isArray(besoins) ? besoins.join(", ") : besoins;
-            } catch (e) {
-              return membre.besoin; // au cas où ce n'est pas du JSON
-            }
-          })()
-        : "—"
-    }\n`;
+        membre.besoin
+          ? (() => {
+              try {
+                const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
+                return Array.isArray(besoins) ? besoins.join(", ") : besoins;
+              } catch (e) {
+                return membre.besoin;
+              }
+            })()
+          : "—"
+      }\n`;
       message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;
       message += "Merci pour ton accompagnement ❤️";
 

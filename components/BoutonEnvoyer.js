@@ -17,18 +17,28 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       return;
     }
 
-    // ---------------------- Gestion des doublons ----------------------
-    // On ne bloque que si c'est un nouveau et qu'il existe déjà
-    if (membre.isNouveau && membre.deja_existant) {
-      const confirmSend = window.confirm(
-        "⚠️ Ce contact existe déjà dans la base.\n\nSouhaitez-vous quand même l’envoyer au suivi ?"
-      );
-      if (!confirmSend) return; // Abandon de l'envoi
-    }
-
     setLoading(true);
 
     try {
+      // 🔹 Vérifier doublon par numéro
+      const { data: doublons, error: doublonError } = await supabase
+        .from("membres_complets")
+        .select("id")
+        .eq("telephone", membre.telephone)
+        .neq("id", membre.id);
+
+      if (doublonError) throw new Error("Erreur lors de la vérification des doublons");
+
+      if (doublons.length > 0) {
+        const continuer = confirm(
+          `⚠️ Ce numéro (${membre.telephone}) existe déjà dans la base. Voulez-vous quand même l'envoyer ?`
+        );
+        if (!continuer) {
+          setLoading(false);
+          return;
+        }
+      }
+
       let responsablePrenom = "";
       let responsableTelephone = "";
 
@@ -59,7 +69,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         responsableTelephone = cible.telephone;
       }
 
-      // 🔹 Mettre à jour le membre dans membres_complets
+      // 🔹 Mettre à jour le membre
       const { data: updatedMember, error: updateError } = await supabase
         .from("membres_complets")
         .update({
@@ -77,7 +87,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         .single();
       if (updateError) throw updateError;
 
-      // 🔹 Callback après envoi pour mise à jour instantanée
+      // 🔹 Callback pour mettre à jour la vue
       if (onEnvoyer) onEnvoyer(updatedMember);
 
       if (showToast) {
@@ -87,7 +97,6 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
       // 🔹 Message WhatsApp
       let message = `👋 Bonjour ${responsablePrenom}!\n\n`;
-      message += `Je Crois que tu te portes bien par la grace de Notre Dieu.\n`;
       message += `Une personne précieuse t’est confiée pour l’accompagnement.\n\n`;
       message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
       message += `🎗️ Sexe: ${membre.sexe || "—"}\n`; 
@@ -103,7 +112,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
               try {
                 const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
                 return Array.isArray(besoins) ? besoins.join(", ") : besoins;
-              } catch (e) {
+              } catch {
                 return membre.besoin;
               }
             })()

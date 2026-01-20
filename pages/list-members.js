@@ -25,11 +25,10 @@ export default function ListMembers() {
   const [session, setSession] = useState(null);
   const [prenom, setPrenom] = useState("");
   const [loading, setLoading] = useState(true);
-
   const searchParams = useSearchParams();
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
 
-  // -------------------- États UI --------------------
+  // -------------------- Nouveaux états --------------------
   const [commentChanges, setCommentChanges] = useState({});
   const [statusChanges, setStatusChanges] = useState({});
   const [updating, setUpdating] = useState({});
@@ -41,27 +40,56 @@ export default function ListMembers() {
   const realtimeChannelRef = useRef(null);
   const [etatContactFilter, setEtatContactFilter] = useState("");
 
-  // ⚠️ UN SEUL STATE
-  const [nouveauxMembres, setNouveauxMembres] = useState([]);
+  const statutLabels = {
+    1: "En cours",
+    2: "En attente",
+    3: "Intégrer",
+    4: "Refus",
+  };
+
+  const statusOptions = [
+    "actif",
+    "ancien",
+    "visiteur",
+    "nouveau",
+    "veut rejoindre ICC",
+    "refus",
+    "integrer",
+    "En cours",
+    "a déjà son église",
+  ];
 
   const { members, setAllMembers, updateMember } = useMembers();
 
-  // -------------------- TOAST --------------------
   const showToast = (msg) => {
     setToastMessage(msg);
     setShowingToast(true);
     setTimeout(() => setShowingToast(false), 3500);
   };
 
-  // -------------------- FETCH MEMBRES --------------------
+  const handleCommentChange = (id, value) => {
+    setCommentChanges((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const updateSuivi = async (id) => {
+    setUpdating((prev) => ({ ...prev, [id]: true }));
+    try {
+      console.log("Update suivi pour:", id, commentChanges[id], statusChanges[id]);
+      setTimeout(() => {
+        setUpdating((prev) => ({ ...prev, [id]: false }));
+        showToast("✅ Suivi enregistré !");
+      }, 1000);
+    } catch (err) {
+      console.error("Erreur update suivi:", err);
+      setUpdating((prev) => ({ ...prev, [id]: false }));
+    }
+  };
+
+  // -------------------- FETCH --------------------
   const fetchMembers = async (profile = null) => {
     setLoading(true);
     try {
-      let query = supabase
-        .from("membres_complets")
-        .select("*")
-        .order("created_at", { ascending: false });
-
+      let query = supabase.from("membres_complets").select("*").order("created_at", { ascending: false });
       if (conseillerIdFromUrl) query = query.eq("conseiller_id", conseillerIdFromUrl);
       else if (profile?.role === "Conseiller") query = query.eq("conseiller_id", profile.id);
 
@@ -77,35 +105,38 @@ export default function ListMembers() {
   };
 
   const fetchCellules = async () => {
-    const { data } = await supabase.from("cellules").select("id, cellule_full");
+    const { data, error } = await supabase.from("cellules").select("id, cellule_full");
+    if (error) console.error("Erreur fetchCellules:", error);
     if (data) setCellules(data);
   };
 
   const fetchConseillers = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom, telephone")
-      .eq("role", "Conseiller");
+    const { data } = await supabase.from("profiles").select("id, prenom, nom, telephone").eq("role", "Conseiller");
     if (data) setConseillers(data);
   };
 
-  // -------------------- SESSION --------------------
+  const handleAfterSend = (updatedMember, type, cible) => {
+    const updatedWithActif = { ...updatedMember, statut: "actif" };
+    updateMember(updatedWithActif);
+    const cibleName = type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`;
+    showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
+  };
+
   useEffect(() => {
-    const init = async () => {
+    const fetchSessionAndProfile = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
 
       if (session?.user) {
-        const { data: profile } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("id, prenom, role")
           .eq("id", session.user.id)
           .single();
-
-        if (profile) {
-          setPrenom(profile.prenom || "");
-          await fetchMembers(profile);
-        }
+        if (!profileError) {
+          setPrenom(profileData.prenom || "");
+          await fetchMembers(profileData);
+        } else console.error(profileError);
       } else {
         await fetchMembers();
       }
@@ -114,62 +145,93 @@ export default function ListMembers() {
       fetchConseillers();
     };
 
-    init();
+    fetchSessionAndProfile();
   }, []);
 
-  // -------------------- FILTRAGE CENTRALISÉ --------------------
-  const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
-    const base = filter
-      ? members.filter(
-          (m) =>
-            m.etat_contact &&
-            m.etat_contact.trim().toLowerCase() === filter.toLowerCase()
-        )
-      : members;
+  // -------------------- Realtime --------------------
+  useEffect(() => {
+    if (realtimeChannelRef.current) {
+      try { realtimeChannelRef.current.unsubscribe(); } catch (e) {}
+      realtimeChannelRef.current = null;
+    }
 
-    const searched = base.filter((m) =>
-      `${m.prenom || ""} ${m.nom || ""}`
-        .toLowerCase()
-        .includes(search.toLowerCase())
+    const channel = supabase.channel("realtime:membres_complets");
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "membres_complets" }, () => fetchMembers());
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "cellules" }, () => { fetchCellules(); fetchMembers(); });
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { fetchConseillers(); fetchMembers(); });
+    try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
+
+    realtimeChannelRef.current = channel;
+    return () => {
+      try { if (realtimeChannelRef.current) { realtimeChannelRef.current.unsubscribe(); realtimeChannelRef.current = null; } } catch (e) {}
+    };
+  }, []);
+
+  // -------------------- Update après édition --------------------
+    // state factice pour forcer rerender
+      const [refreshKey, setRefreshKey] = useState(0);
+      
+      const onUpdateMemberHandler = (updatedMember) => {
+        updateMember(updatedMember); // Met à jour le contexte
+        setEditMember(null);         // Ferme le popup édition
+      
+        // ⚡ Si le membre édité est ouvert dans le popup détails, on le met à jour aussi
+        setPopupMember(prev =>
+          prev?.id === updatedMember.id ? { ...prev, ...updatedMember } : prev
+        );
+      };
+
+
+  // -------------------- Fermer menu téléphone en cliquant dehors --------------------
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".phone-menu")) setOpenPhoneMenuId(null);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // -------------------- FILTRAGE CENTRALISE OPTIMISE --------------------
+  const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
+    const baseFiltered = filter
+  ? members.filter((m) => {
+      if (!m.etat_contact) return false;
+      return m.etat_contact.trim().toLowerCase() === filter.toLowerCase();
+    })
+  : members;
+
+
+    const searchFiltered = baseFiltered.filter((m) =>
+      `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
     );
 
-    const nouveaux = searched.filter((m) =>
+    const nouveaux = searchFiltered.filter((m) =>
       ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
     );
 
-    const anciens = searched.filter(
+    const anciens = searchFiltered.filter(
       (m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
     );
 
-    return { filteredMembers: searched, filteredNouveaux: nouveaux, filteredAnciens: anciens };
-  }, [members, filter, search]);
+    return {
+      filteredMembers: searchFiltered,
+      filteredNouveaux: nouveaux,
+      filteredAnciens: anciens,
+    };
+  }, [members, filter, search, refreshKey]);
 
-  // -------------------- STATE GLOBAL POUR L'AFFICHAGE --------------------//
-  // --- Ici on crée displayedMembers qui contient tous les membres pour toute la page --- //
-  const [displayedMembers, setDisplayedMembers] = useState([]);
-  useEffect(() => {
-    setDisplayedMembers(filteredMembers); // synchronisation automatique
-  }, [filteredMembers]);
-
-  // -------------------- SUPPRIMER N'IMPORTE QUEL MEMBRE --------------------//
-  // --- Cette fonction supprime le membre de displayedMembers, donc de toute la page --- //
-  const handleSupprimerMembre = (id) => {
-    setDisplayedMembers((prev) => prev.filter((m) => m.id !== id));
-    showToast("🗑️ Contact retiré de la liste");
-  };
-
-  // -------------------- UTILS --------------------
-  const toggleDetails = (id) =>
-    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const getBorderColor = (m) => {
-    if (!m.etat_contact) return "#ccc";
-    const etat = m.etat_contact.trim().toLowerCase();
-    if (etat === "existant") return "#34A853";
-    if (etat === "nouveau") return "#34A85e";
-    if (etat === "inactif") return "#999999";
-    return "#ccc";
-  };
+  if (!m.etat_contact) return "#ccc"; // défaut
+
+  const etat = m.etat_contact.trim().toLowerCase(); // converti en minuscule
+
+  if (etat === "existant") return "#34A853";  // vert
+  if (etat === "nouveau") return "#34A85e";   // vert clair (ajusté)
+  if (etat === "inactif") return "#999999";   // gris
+  return "#ccc"; // autre cas
+};
 
   const formatDate = (dateStr) => {
     try { return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr }); } catch { return ""; }
@@ -201,256 +263,136 @@ export default function ListMembers() {
   });
 
   // -------------------- Rendu Carte --------------------
-const renderMemberCard = (m) => {
-  const isOpen = detailsOpen[m.id];
-  const besoins = !m.besoin
-    ? "—"
-    : Array.isArray(m.besoin)
-    ? m.besoin.join(", ")
-    : (() => {
-        try {
-          const arr = JSON.parse(m.besoin);
-          return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-        } catch {
-          return m.besoin;
-        }
-      })();
+      const renderMemberCard = (m) => {
+      const isOpen = detailsOpen[m.id];
+      const besoins = !m.besoin ? "—" : Array.isArray(m.besoin) ? m.besoin.join(", ") : (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })();
+      const formatMinistere = ministere => {
+        if (!ministere) return "—";
+        try { const parsed = typeof ministere === "string" ? JSON.parse(ministere) : ministere; return Array.isArray(parsed) ? parsed.join(", ") : "—"; } catch { return "—"; }
+      };
+    
+      return (
+        <div key={m.id} className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative" >
+          {/* Badge Nouveau */}
+          {m.isNouveau && (
+            <div className="absolute top-2 right-3 flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#2E3192" }}></span>
+              <span className="text-xs font-semibold" style={{ color: "#2E3192" }}>Nouveau</span>
+            </div>
+          )}          
+    
+          {/* Nom centré */}
+            <div className="flex flex-col items-center mt-6">
+              <h2 className="text-lg font-bold text-center">
+                {m.prenom} {m.nom}
+              </h2>
+            
+              {/* Téléphone */}
+              <div className="relative flex justify-center mt-3">
+  {m.telephone ? (
+    <>
+      <button
+        type="button"
+        onClick={e => {
+          e.stopPropagation();
+          setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
+        }}
+        className="text-orange-500 underline font-semibold text-center"
+      >
+        {m.telephone}
+      </button>
 
-  const formatMinistere = (ministere) => {
-    if (!ministere) return "—";
-    try {
-      const parsed =
-        typeof ministere === "string" ? JSON.parse(ministere) : ministere;
-      return Array.isArray(parsed) ? parsed.join(", ") : "—";
-    } catch {
-      return "—";
-    }
-  };
-
-  return (
-    <div
-      key={m.id}
-      className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative"
-    >
-      {/* Badge Nouveau */}
-      {m.isNouveau && (
-        <div className="absolute top-2 right-3 flex items-center gap-1">
-          <span
-            className="w-2.5 h-2.5 rounded-full"
-            style={{ backgroundColor: "#2E3192" }}
-          ></span>
-          <span className="text-xs font-semibold" style={{ color: "#2E3192" }}>
-            Nouveau
-          </span>
+      {openPhoneMenuId === m.id && (
+        <div
+          className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-52"
+          onClick={e => e.stopPropagation()}
+        >
+          <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
+          <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
+          <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 WhatsApp Call</a>
+          <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 WhatsApp Message</a>
         </div>
       )}
+    </>
+  ) : (
+    <span className="text-gray-400">—</span>
+  )}
+</div>
 
-      {/* Nom centré */}
-      <div className="flex flex-col items-center mt-6">
-        <h2 className="text-lg font-bold text-center">
-          {m.prenom} {m.nom}
-        </h2>
-
-        {/* Téléphone */}
-        <div className="relative flex justify-center mt-3">
-          {m.telephone ? (
-            <>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
-                }}
-                className="text-orange-500 underline font-semibold text-center"
-              >
-                {m.telephone}
-              </button>
-
-              {openPhoneMenuId === m.id && (
-                <div
-                  className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-52"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <a
-                    href={`tel:${m.telephone}`}
-                    className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                  >
-                    📞 Appeler
-                  </a>
-                  <a
-                    href={`sms:${m.telephone}`}
-                    className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                  >
-                    ✉️ SMS
-                  </a>
-                  <a
-                    href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                  >
-                    📱 WhatsApp Call
-                  </a>
-                  <a
-                    href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                  >
-                    💬 WhatsApp Message
-                  </a>
+    
+            {/* Infos principales */}
+            <div className="w-full mt-2 text-sm text-black space-y-1">
+              <p className="text-center">🏙️ Ville : {m.ville || "—"}</p>
+              <p className="text-center">🕊 Etat Contact : {m.etat_contact || "—"}</p>
+              <p>🏠 Cellule : {m.cellule_id ? `${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` : "—"}</p>
+              <p>👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
+            </div>
+    
+            {/* Select pour envoyer */}
+            <div className="mt-2 w-full">
+              <label className="font-semibold text-sm">Envoyer à :</label>
+              <select value={selectedTargetType[m.id] || ""} onChange={e => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))} className="mt-1 w-full border rounded px-2 py-1 text-sm">
+                <option value="">-- Choisir une option --</option>
+                <option value="cellule">Une Cellule</option>
+                <option value="conseiller">Un Conseiller</option>
+              </select>
+              {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
+                <select value={selectedTargets[m.id] || ""} onChange={e => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))} className="mt-1 w-full border rounded px-2 py-1 text-sm">
+                  <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
+                  {selectedTargetType[m.id] === "cellule" ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>) : null}
+                  {selectedTargetType[m.id] === "conseiller" ? conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>) : null}
+                </select>
+              )}
+              {selectedTargetType[m.id] && selectedTargets[m.id] && (
+                <div className="pt-2">
+                  <BoutonEnvoyer
+                    membre={m}
+                    type={selectedTargetType[m.id]}
+                    cible={selectedTargetType[m.id] === "cellule" ? cellules.find(c => c.id === selectedTargets[m.id]) : conseillers.find(c => c.id === selectedTargets[m.id])}
+                    onEnvoyer={id => handleAfterSend(id, selectedTargetType[m.id], selectedTargetType[m.id] === "cellule" ? cellules.find(c => c.id === selectedTargets[m.id]) : conseillers.find(c => c.id === selectedTargets[m.id]))}
+                    session={session}
+                    showToast={showToast}
+                  />
                 </div>
               )}
-            </>
-          ) : (
-            <span className="text-gray-400">—</span>
-          )}
-        </div>
-
-        {/* Infos principales */}
-        <div className="w-full mt-2 text-sm text-black space-y-1">
-          <p className="text-center">🏙️ Ville : {m.ville || "—"}</p>
-          <p className="text-center">🕊 Etat Contact : {m.etat_contact || "—"}</p>
-          <p>
-            🏠 Cellule :{" "}
-            {m.cellule_id
-              ? `${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
-              : "—"}
-          </p>
-          <p>
-            👤 Conseiller :{" "}
-            {m.conseiller_id
-              ? `${conseillers.find((c) => c.id === m.conseiller_id)?.prenom || ""} ${
-                  conseillers.find((c) => c.id === m.conseiller_id)?.nom || ""
-                }`.trim()
-              : "—"}
-          </p>
-        </div>
-
-        {/* Select pour envoyer */}
-        <div className="mt-2 w-full">
-          <label className="font-semibold text-sm">Envoyer à :</label>
-          <select
-            value={selectedTargetType[m.id] || ""}
-            onChange={(e) =>
-              setSelectedTargetType((prev) => ({ ...prev, [m.id]: e.target.value }))
-            }
-            className="mt-1 w-full border rounded px-2 py-1 text-sm"
-          >
-            <option value="">-- Choisir une option --</option>
-            <option value="cellule">Une Cellule</option>
-            <option value="conseiller">Un Conseiller</option>
-          </select>
-          {(selectedTargetType[m.id] === "cellule" ||
-            selectedTargetType[m.id] === "conseiller") && (
-            <select
-              value={selectedTargets[m.id] || ""}
-              onChange={(e) =>
-                setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))
-              }
-              className="mt-1 w-full border rounded px-2 py-1 text-sm"
-            >
-              <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
-              {selectedTargetType[m.id] === "cellule"
-                ? cellules.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.cellule_full || "—"}
-                    </option>
-                  ))
-                : null}
-              {selectedTargetType[m.id] === "conseiller"
-                ? conseillers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.prenom || "—"} {c.nom || ""}
-                    </option>
-                  ))
-                : null}
-            </select>
-          )}
-          {selectedTargetType[m.id] && selectedTargets[m.id] && (
-            <div className="pt-2">
-              <BoutonEnvoyer
-                membre={m}
-                type={selectedTargetType[m.id]}
-                cible={
-                  selectedTargetType[m.id] === "cellule"
-                    ? cellules.find((c) => c.id === selectedTargets[m.id])
-                    : conseillers.find((c) => c.id === selectedTargets[m.id])
-                }
-                onEnvoyer={(id) =>
-                  handleAfterSend(
-                    id,
-                    selectedTargetType[m.id],
-                    selectedTargetType[m.id] === "cellule"
-                      ? cellules.find((c) => c.id === selectedTargets[m.id])
-                      : conseillers.find((c) => c.id === selectedTargets[m.id])
-                  )
-                }
-                session={session}
-                showToast={showToast}
-              />
             </div>
-          )}
-        </div>
-
-        <button
-          onClick={() => toggleDetails(m.id)}
-          className="text-orange-500 underline text-sm mt-2"
-        >
-          {isOpen ? "Fermer détails" : "Détails"}
-        </button>
-
-        {isOpen && (
-          <div className="text-black text-sm mt-2 w-full space-y-1">
-            <p className="font-semibold text-center" style={{ color: "#2E3192" }}>
-              💡 Statut Suivi: {m.suivi_statut || "—"}
-            </p>
-            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-            <p>🎗️ Sexe : {m.sexe || "—"}</p>
-            <p>
-              💧 Bapteme d'Eau:{" "}
-              {m.bapteme_eau === true || m.bapteme_eau === "true" ? "Oui" : "Non"}
-            </p>
-            <p>
-              🔥 Bapteme de Feu:{" "}
-              {m.bapteme_esprit === true || m.bapteme_esprit === "true" ? "Oui" : "Non"}
-            </p>
-            <p>✒️ Formation : {m.Formation || "—"}</p>
-            <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>
-            <p>💢 Ministere : {formatMinistere(m.Ministere)}</p>
-            <p>❓ Besoin : {besoins}</p>
-            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-            <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-            <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>
-            <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
-            <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
-            <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
-
-            {/* -------------------- Modifier et Supprimer -------------------- */}
-            <button
-              onClick={() => setEditMember(m)}
-              className="text-blue-600 text-sm mt-2 w-full"
-            >
-              ✏️ Modifier le contact
-            </button>
-
-            <button
-              onClick={() => {
-                if (window.confirm("⚠️ Voulez-vous vraiment supprimer ce contact de la liste ?")) {
-                  handleSupprimerMembre(m.id); // <-- Supprime le membre
-                }
-              }}
-              className="flex items-center justify-center gap-1 text-red-600 text-sm mt-2 w-full"
-            >
-              🗑️ Supprimer
-            </button>
+    
+            <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">{isOpen ? "Fermer détails" : "Détails"}</button>
+    
+            {isOpen && (
+              <div className="text-black text-sm mt-2 w-full space-y-1">
+                <p className="font-semibold text-center" style={{ color: "#2E3192" }}>💡 Statut Suivi: {m.suivi_statut || "—"}</p>
+                <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                <p>🎗️ Sexe : {m.sexe || "—"}</p>
+                <p>💧 Bapteme d'Eau: {m.bapteme_eau === true || m.bapteme_eau === "true" ? "Oui" : "Non"}</p>
+                <p>🔥 Bapteme de Feu: {m.bapteme_esprit === true || m.bapteme_esprit === "true" ? "Oui" : "Non"}</p>
+                <p>✒️ Formation : {m.Formation || "—"}</p>
+                <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>
+                <p>💢 Ministere : {formatMinistere(m.Ministere)}</p>
+                <p>❓ Besoin : {besoins}</p>
+                <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+                <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>
+                <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
+                <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
+                <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
+                <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">✏️ Modifier le contact</button>              
+                <button
+                  onClick={() => {
+                    if (window.confirm("⚠️ Voulez-vous vraiment supprimer ce contact de la liste ?")) {
+                      handleSupprimer(m.id); // Assure-toi que handleSupprimer est passé en props
+                    }
+                  }}
+                  className="flex items-center justify-center gap-1 text-red-600 text-sm mt-2 w-full rounded-lg border border-red-600 py-1 hover:bg-red-50 transition"
+                >
+                  🗑️ Supprimer
+                </button>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
+        </div>
+      );
+    };
 
 
   // -------------------- Rendu --------------------
@@ -486,7 +428,8 @@ const renderMemberCard = (m) => {
           <span className="text-white text-sm ml-2">{filteredMembers.length} membres</span>
         </div>  
 
-{/* Toggle Vue Carte / Vue Table */}
+
+      {/* Toggle Vue Carte / Vue Table */}
       <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
@@ -494,28 +437,6 @@ const renderMemberCard = (m) => {
         >
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
-      </div>       
-
-      {/* -------------------- Liste des Membres -------------------- */}
-      <div className="w-full max-w-6xl flex flex-col gap-4">
-        {displayedMembers.map((m) => (
-          <div key={m.id} className="member-card p-4 rounded-md shadow-md bg-white flex justify-between items-center">
-            <div>
-              <p className="font-semibold">{m.prenom} {m.nom}</p>
-              <p className="text-sm text-gray-600">{m.etat_contact}</p>
-            </div>
-            <button
-              onClick={() => {
-                if (confirm("⚠️ Voulez-vous vraiment supprimer ce contact ?")) {
-                  handleSupprimerMembre(m.id);
-                }
-              }}
-              className="text-red-600 hover:text-red-800 font-semibold"
-            >
-              🗑️ Supprimer
-            </button>
-          </div>
-        ))}
       </div>
 
       {/* ==================== VUE CARTE ==================== */}

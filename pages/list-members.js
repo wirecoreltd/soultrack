@@ -329,8 +329,11 @@ const renderMemberCard = (m) => {
               <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
               <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
               <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
+     
 
               <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">✏️ Modifier le contact</button>
+       </div>
+)}
 
               {/* ------------------ BOUTON SUPPRIMER CARTE ------------------ */}
               <button

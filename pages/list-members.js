@@ -373,12 +373,7 @@ export default function ListMembers() {
         >
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
-      </div>
-
-        {/* ==================== VUE CARTE ==================== */}
-          {view === "card" ? "Vue Table" : "Vue Carte"}
-        </button>
-      </div>
+      </div>       
 
       {/* -------------------- Liste des Membres -------------------- */}
       <div className="w-full max-w-6xl flex flex-col gap-4">

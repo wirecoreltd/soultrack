@@ -484,7 +484,14 @@ export default function ListMembers() {
 
                 {/* Ligne principale */}
                 <div className="flex flex-row items-center gap-2">
-                  <div className="flex-[2] text-white font-semibold">{m.prenom} {m.nom}</div>
+                  <div className="flex-[2] text-white font-semibold flex items-center gap-2">
+                  <span>{m.prenom} {m.nom}</span>                
+                  <span className="flex items-center gap-1 text-xs font-semibold text-white">
+                  <span className="inline-block w-2 h-2 rounded-full bg-white" />
+                    Nouveau
+                  </span>
+                </div>
+
                   <div className="flex-[1] text-white">{m.telephone || "—"}</div>
                   <div className="flex-[1] text-white">{m.statut}</div>
                   <div className="flex-[2] text-white">
@@ -521,16 +528,10 @@ export default function ListMembers() {
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
                     <div className="flex-[2] text-white font-semibold flex items-center gap-2">
-                        <span>{m.prenom} {m.nom}</span>
-                      
-                        {m.isNouveau && (
-                          <span className="flex items-center gap-1 text-xs font-semibold text-white">
-                            <span className="inline-block w-2 h-2 rounded-full bg-white" />
-                            Nouveau
-                          </span>
-                        )}
-                      </div>
-                      {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                        <span>{m.prenom} {m.nom}</span>                     
+                     </div>
+
+                    {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                     </div>
                     <div className="flex-[1] text-white">{m.telephone || "—"}</div>
                     <div className="flex-[1] text-white">{m.etat_contact || "—"}</div>

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, onSupprimer, showToast }) {
+export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
   const [loading, setLoading] = useState(false);
   const [showDoublonPopup, setShowDoublonPopup] = useState(false);
   const [doublonDetected, setDoublonDetected] = useState(false);
@@ -45,7 +45,6 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       let responsablePrenom = "";
       let responsableTelephone = "";
 
-      // 🔹 Récupérer responsable
       if (type === "cellule") {
         const { data: cellule } = await supabase
           .from("cellules")
@@ -61,6 +60,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         responsableTelephone = resp.telephone;
         cible.cellule_full = cellule.cellule_full;
       }
+
       if (type === "conseiller") {
         responsablePrenom = cible.prenom;
         responsableTelephone = cible.telephone;
@@ -86,9 +86,32 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       if (onEnvoyer) onEnvoyer(updatedMember);
       if (showToast) showToast(`✅ ${membre.prenom} ${membre.nom} envoyé à ${type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`}`);
 
-      // 🔹 Message WhatsApp
-      let message = `👋 Bonjour ${responsablePrenom}!\n`;
-      message += `👤 Nom: ${membre.prenom} ${membre.nom}\n📱 Téléphone: ${membre.telephone || "—"}\n`;
+      // 🔹 Message WhatsApp complet
+      let message = `👋 Bonjour ${responsablePrenom}!\n\n`;
+      message += `Une personne précieuse t’est confiée pour l’accompagnement.\n\n`;
+      message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
+      message += `🎗️ Sexe: ${membre.sexe || "—"}\n`; 
+      message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
+      message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
+      message += `🏙️ Ville: ${membre.ville || "—"}\n`;
+      message += `✨ Raison de la venue: ${membre.statut_initial || "—"}\n`;   
+      message += `🙏 Prière du salut: ${membre.priere_salut || "—"}\n`; 
+      message += `☀️ Type de conversion: ${membre.type_conversion || "—"}\n`;
+      message += `❓Besoin: ${
+        membre.besoin
+          ? (() => {
+              try {
+                const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
+                return Array.isArray(besoins) ? besoins.join(", ") : besoins;
+              } catch {
+                return membre.besoin;
+              }
+            })()
+          : "—"
+      }\n`;
+      message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;
+      message += "Merci pour ton accompagnement ❤️";
+
       const phone = responsableTelephone.replace(/\D/g, "");
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
 
@@ -102,46 +125,36 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
     }
   };
 
-  const handleSupprimer = () => {
-    if (onSupprimer) onSupprimer(membre.id);
-    setShowDoublonPopup(false);
-    setDoublonDetected(false);
-  };
-
   return (
     <>
       <button
         onClick={handleClick}
         disabled={loading}
-        className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"}`}
+        className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg ${
+          loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
+        }`}
       >
         {loading ? "Envoi..." : "📤 Envoyer par WhatsApp"}
       </button>
 
-      {/* 🔹 Popup Doublon */}
+      {/* 🔹 Popup Doublon - Moderne */}
       {showDoublonPopup && doublonDetected && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-80 text-center">
-            <h3 className="text-lg font-bold mb-4">⚠️ Doublon détecté</h3>
-            <p className="mb-4">Ce numéro ({membre.telephone}) existe déjà dans la base.</p>
-            <div className="flex justify-between gap-2">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity">
+          <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl p-6 w-96 max-w-[90%] text-center animate-fadeIn">
+            <h3 className="text-xl font-bold mb-3 text-gray-800">⚠️ Doublon détecté</h3>
+            <p className="mb-6 text-gray-700">Ce numéro ({membre.telephone}) existe déjà dans la base.</p>
+            <div className="flex justify-center gap-3">
               <button
                 onClick={sendToWhatsapp}
-                className="flex-1 bg-green-500 text-white font-bold px-4 py-2 rounded hover:bg-green-600"
+                className="flex-1 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition"
               >
                 Envoyer quand même
               </button>
               <button
                 onClick={() => setShowDoublonPopup(false)}
-                className="flex-1 bg-gray-300 text-black font-bold px-4 py-2 rounded hover:bg-gray-400"
+                className="flex-1 bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded-lg hover:bg-gray-400 transition"
               >
                 Annuler
-              </button>
-              <button
-                onClick={handleSupprimer}
-                className="flex-1 bg-red-500 text-white font-bold px-4 py-2 rounded hover:bg-red-600"
-              >
-                Supprimer
               </button>
             </div>
           </div>

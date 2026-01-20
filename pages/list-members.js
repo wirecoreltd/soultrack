@@ -376,7 +376,12 @@ export default function ListMembers() {
                 <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
                 <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
                 <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
-                <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">✏️ Modifier le contact</button>
+                <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">✏️ Modifier le contact</button>              
+                <button onClick={() => handleSupprimer(m.id)}
+                className="text-red-600 text-sm mt-2 w-full rounded-lg border border-red-600 py-1 hover:bg-red-50 transition"
+                  >
+                    🗑️ Supprimer le contact
+                  </button>
               </div>
             )}
           </div>
@@ -522,79 +527,79 @@ export default function ListMembers() {
                   </span>
                 </div>
                 {filteredAnciens.map((m) => (
-  <div
-    key={m.id}
-    className="flex flex-row items-center px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 gap-2 border-l-4"
-    style={{ borderLeftColor: getBorderColor(m) }}
-  >
-    <div className="flex-[2] text-white font-semibold flex items-center gap-1">
-      <span>{m.prenom} {m.nom}</span>
-      {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
-    </div>
-
-    <div className="flex-[1] text-white">
-      {m.telephone || "—"}
-    </div>
-
-    <div className="flex-[1] text-white">
-      {m.etat_contact || "—"}
-    </div>
-
-    <div className="flex-[2] text-white">
-      {m.cellule_id
-        ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
-        : m.conseiller_id
-        ? `👤 ${conseillers.find((c) => c.id === m.conseiller_id)?.prenom} ${conseillers.find((c) => c.id === m.conseiller_id)?.nom}`
-        : "—"}
-    </div>
-
-    <div className="flex-[1]">
-      <button
-        onClick={() =>
-          setPopupMember(popupMember?.id === m.id ? null : { ...m })
-        }
-        className="text-orange-500 underline text-sm whitespace-nowrap"
-      >
-        {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                      </button>
+              <div
+                key={m.id}
+                className="flex flex-row items-center px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 gap-2 border-l-4"
+                style={{ borderLeftColor: getBorderColor(m) }}
+              >
+                <div className="flex-[2] text-white font-semibold flex items-center gap-1">
+                  <span>{m.prenom} {m.nom}</span>
+                  {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                </div>
+            
+                <div className="flex-[1] text-white">
+                  {m.telephone || "—"}
+                </div>
+            
+                <div className="flex-[1] text-white">
+                  {m.etat_contact || "—"}
+                </div>
+            
+                <div className="flex-[2] text-white">
+                  {m.cellule_id
+                    ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
+                    : m.conseiller_id
+                    ? `👤 ${conseillers.find((c) => c.id === m.conseiller_id)?.prenom} ${conseillers.find((c) => c.id === m.conseiller_id)?.nom}`
+                    : "—"}
+                </div>
+            
+                <div className="flex-[1]">
+                  <button
+                    onClick={() =>
+                      setPopupMember(popupMember?.id === m.id ? null : { ...m })
+                    }
+                    className="text-orange-500 underline text-sm whitespace-nowrap"
+                  >
+                    {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* =================== DETAILS MEMBER POPUP =================== */}
-         {popupMember && (
-        <DetailsMemberPopup
-          membre={popupMember}
-          onClose={() => setPopupMember(null)}
-          cellules={cellules}
-          conseillers={conseillers}
-          session={session}
-          commentChanges={commentChanges}
-          handleCommentChange={handleCommentChange}
-          statusChanges={statusChanges}
-          setStatusChanges={setStatusChanges}
-          updateSuivi={updateSuivi}
-          updating={updating}
-        />
-      )}
-
-      {editMember && (
-        <EditMemberPopup
-          member={editMember}
-          onClose={() => setEditMember(null)}
-          onUpdateMember={onUpdateMemberHandler}
-        />
-      )}
-
-      {/* Toast */}
-      {showingToast && (
-        <div className="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50">{toastMessage}</div>
-      )}
-    </div>
-  );
-}
+                  )}
+            
+                  {/* =================== DETAILS MEMBER POPUP =================== */}
+                     {popupMember && (
+                    <DetailsMemberPopup
+                      membre={popupMember}
+                      onClose={() => setPopupMember(null)}
+                      cellules={cellules}
+                      conseillers={conseillers}
+                      session={session}
+                      commentChanges={commentChanges}
+                      handleCommentChange={handleCommentChange}
+                      statusChanges={statusChanges}
+                      setStatusChanges={setStatusChanges}
+                      updateSuivi={updateSuivi}
+                      updating={updating}
+                    />
+                  )}
+            
+                  {editMember && (
+                    <EditMemberPopup
+                      member={editMember}
+                      onClose={() => setEditMember(null)}
+                      onUpdateMember={onUpdateMemberHandler}
+                    />
+                  )}
+            
+                  {/* Toast */}
+                  {showingToast && (
+                    <div className="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50">{toastMessage}</div>
+                  )}
+                </div>
+              );
+            }

@@ -23,7 +23,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
     try {
       // 🔹 Vérifier doublon par téléphone
-      const { data: existing, error: existingError } = await supabase
+      const { data: existing } = await supabase
         .from("membres_complets")
         .select("*")
         .eq("telephone", membre.telephone)
@@ -33,10 +33,12 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       if (existing) {
         setDoublonDetected(true);
         setShowDoublonPopup(true);
-        return; // stoppe l'envoi automatique
+        return; // STOPPE L'envoi automatique
       }
 
-      await proceedSend(); // si pas de doublon
+      // 🔹 Si pas de doublon, envoyer normalement
+      await proceedSend();
+
     } catch (err) {
       console.error("Erreur sendToWhatsapp:", err.message);
       alert(`❌ ${err.message}`);
@@ -50,21 +52,19 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       let responsablePrenom = "";
       let responsableTelephone = "";
 
-      // 🔹 Récupérer responsable selon type
+      // 🔹 Récupérer responsable
       if (type === "cellule") {
-        const { data: cellule, error } = await supabase
+        const { data: cellule } = await supabase
           .from("cellules")
           .select("id, responsable_id, cellule_full")
           .eq("id", cible.id)
           .single();
-        if (error || !cellule?.responsable_id) throw new Error("Responsable de cellule introuvable");
 
-        const { data: resp, error: respError } = await supabase
+        const { data: resp } = await supabase
           .from("profiles")
           .select("prenom, telephone")
           .eq("id", cellule.responsable_id)
           .single();
-        if (respError || !resp?.telephone) throw new Error("Numéro WhatsApp invalide");
 
         responsablePrenom = resp.prenom;
         responsableTelephone = resp.telephone;
@@ -72,13 +72,12 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       }
 
       if (type === "conseiller") {
-        if (!cible.telephone) throw new Error("Numéro WhatsApp invalide");
         responsablePrenom = cible.prenom;
         responsableTelephone = cible.telephone;
       }
 
       // 🔹 Mettre à jour le membre
-      const { data: updatedMember, error: updateError } = await supabase
+      const { data: updatedMember } = await supabase
         .from("membres_complets")
         .update({
           statut: "actif",
@@ -93,7 +92,6 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         .eq("id", membre.id)
         .select()
         .single();
-      if (updateError) throw updateError;
 
       if (onEnvoyer) onEnvoyer(updatedMember);
 
@@ -102,7 +100,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         showToast(`✅ ${membre.prenom} ${membre.nom} envoyé à ${cibleName}`);
       }
 
-      // 🔹 Message WhatsApp
+      // 🔹 Message WhatsApp complet
       let message = `👋 Bonjour ${responsablePrenom}!\n\n`;
       message += `Une personne précieuse t’est confiée pour l’accompagnement.\n\n`;
       message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
@@ -138,7 +136,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
   };
 
   const handleSupprimer = () => {
-    if (onSupprimer) onSupprimer(membre.id);
+    if (onSupprimer) onSupprimer(membre.id); // retire le contact de “Nouveaux”
     setShowDoublonPopup(false);
     setDoublonDetected(false);
   };
@@ -146,7 +144,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
   const handleEnvoyerDoublon = async () => {
     setShowDoublonPopup(false);
     setDoublonDetected(false);
-    await proceedSend(); // forcer l'envoi malgré doublon
+    await proceedSend(); // l’utilisateur confirme l’envoi
   };
 
   return (

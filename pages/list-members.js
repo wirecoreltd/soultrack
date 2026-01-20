@@ -227,9 +227,6 @@ const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
   };
 }, [members, filter, search, refreshKey]);
 
-// -------------------- ÉTAT LOCAL POUR LA SECTION "NOUVEAUX" --------------------
-const [nouveauxMembres, setNouveauxMembres] = useState([]);
-
 // Synchronisation automatique quand les filtres changent
 useEffect(() => {
   setNouveauxMembres(filteredNouveaux);

@@ -25,10 +25,11 @@ export default function ListMembers() {
   const [session, setSession] = useState(null);
   const [prenom, setPrenom] = useState("");
   const [loading, setLoading] = useState(true);
+
   const searchParams = useSearchParams();
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
 
-  // -------------------- Nouveaux états --------------------//
+  // -------------------- États UI --------------------
   const [commentChanges, setCommentChanges] = useState({});
   const [statusChanges, setStatusChanges] = useState({});
   const [updating, setUpdating] = useState({});
@@ -39,62 +40,28 @@ export default function ListMembers() {
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const realtimeChannelRef = useRef(null);
   const [etatContactFilter, setEtatContactFilter] = useState("");
+
+  // ⚠️ UN SEUL STATE
   const [nouveauxMembres, setNouveauxMembres] = useState([]);
 
-  const statutLabels = {
-    1: "En cours",
-    2: "En attente",
-    3: "Intégrer",
-    4: "Refus",
-  };
-
-  const statusOptions = [
-    "actif",
-    "ancien",
-    "visiteur",
-    "nouveau",
-    "veut rejoindre ICC",
-    "refus",
-    "integrer",
-    "En cours",
-    "a déjà son église",
-  ];
-
   const { members, setAllMembers, updateMember } = useMembers();
-  
-  useEffect(() => {
-    setNouveauxMembres(filteredNouveaux); // mettre à jour quand filteredNouveaux change
-  }, [filteredNouveaux]); 
-  
+
+  // -------------------- TOAST --------------------
   const showToast = (msg) => {
     setToastMessage(msg);
     setShowingToast(true);
     setTimeout(() => setShowingToast(false), 3500);
   };
 
-  const handleCommentChange = (id, value) => {
-    setCommentChanges((prev) => ({ ...prev, [id]: value }));
-  };
-
-  const updateSuivi = async (id) => {
-    setUpdating((prev) => ({ ...prev, [id]: true }));
-    try {
-      console.log("Update suivi pour:", id, commentChanges[id], statusChanges[id]);
-      setTimeout(() => {
-        setUpdating((prev) => ({ ...prev, [id]: false }));
-        showToast("✅ Suivi enregistré !");
-      }, 1000);
-    } catch (err) {
-      console.error("Erreur update suivi:", err);
-      setUpdating((prev) => ({ ...prev, [id]: false }));
-    }
-  };
-
-  // -------------------- FETCH --------------------
+  // -------------------- FETCH MEMBRES --------------------
   const fetchMembers = async (profile = null) => {
     setLoading(true);
     try {
-      let query = supabase.from("membres_complets").select("*").order("created_at", { ascending: false });
+      let query = supabase
+        .from("membres_complets")
+        .select("*")
+        .order("created_at", { ascending: false });
+
       if (conseillerIdFromUrl) query = query.eq("conseiller_id", conseillerIdFromUrl);
       else if (profile?.role === "Conseiller") query = query.eq("conseiller_id", profile.id);
 
@@ -110,38 +77,35 @@ export default function ListMembers() {
   };
 
   const fetchCellules = async () => {
-    const { data, error } = await supabase.from("cellules").select("id, cellule_full");
-    if (error) console.error("Erreur fetchCellules:", error);
+    const { data } = await supabase.from("cellules").select("id, cellule_full");
     if (data) setCellules(data);
   };
 
   const fetchConseillers = async () => {
-    const { data } = await supabase.from("profiles").select("id, prenom, nom, telephone").eq("role", "Conseiller");
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom, telephone")
+      .eq("role", "Conseiller");
     if (data) setConseillers(data);
   };
 
-  const handleAfterSend = (updatedMember, type, cible) => {
-    const updatedWithActif = { ...updatedMember, statut: "actif" };
-    updateMember(updatedWithActif);
-    const cibleName = type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`;
-    showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
-  };
-
+  // -------------------- SESSION --------------------
   useEffect(() => {
-    const fetchSessionAndProfile = async () => {
+    const init = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
 
       if (session?.user) {
-        const { data: profileData, error: profileError } = await supabase
+        const { data: profile } = await supabase
           .from("profiles")
           .select("id, prenom, role")
           .eq("id", session.user.id)
           .single();
-        if (!profileError) {
-          setPrenom(profileData.prenom || "");
-          await fetchMembers(profileData);
-        } else console.error(profileError);
+
+        if (profile) {
+          setPrenom(profile.prenom || "");
+          await fetchMembers(profile);
+        }
       } else {
         await fetchMembers();
       }
@@ -150,107 +114,59 @@ export default function ListMembers() {
       fetchConseillers();
     };
 
-    fetchSessionAndProfile();
+    init();
   }, []);
 
-  // -------------------- Realtime --------------------
-  useEffect(() => {
-    if (realtimeChannelRef.current) {
-      try { realtimeChannelRef.current.unsubscribe(); } catch (e) {}
-      realtimeChannelRef.current = null;
-    }
-
-    const channel = supabase.channel("realtime:membres_complets");
-    channel.on("postgres_changes", { event: "*", schema: "public", table: "membres_complets" }, () => fetchMembers());
-    channel.on("postgres_changes", { event: "*", schema: "public", table: "cellules" }, () => { fetchCellules(); fetchMembers(); });
-    channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { fetchConseillers(); fetchMembers(); });
-    try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
-
-    realtimeChannelRef.current = channel;
-    return () => {
-      try { if (realtimeChannelRef.current) { realtimeChannelRef.current.unsubscribe(); realtimeChannelRef.current = null; } } catch (e) {}
-    };
-  }, []);
-
-  // -------------------- Update après édition --------------------
-    // state factice pour forcer rerender
-      const [refreshKey, setRefreshKey] = useState(0);
-      
-      const onUpdateMemberHandler = (updatedMember) => {
-        updateMember(updatedMember); // Met à jour le contexte
-        setEditMember(null);         // Ferme le popup édition
-      
-        // ⚡ Si le membre édité est ouvert dans le popup détails, on le met à jour aussi
-        setPopupMember(prev =>
-          prev?.id === updatedMember.id ? { ...prev, ...updatedMember } : prev
-        );
-      };
-
-
-  // -------------------- Fermer menu téléphone en cliquant dehors --------------------
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest(".phone-menu")) setOpenPhoneMenuId(null);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // -------------------- FILTRAGE CENTRALISE OPTIMISE --------------------
   // -------------------- FILTRAGE CENTRALISÉ --------------------
-const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
-  const baseFiltered = filter
-    ? members.filter((m) => {
-        if (!m.etat_contact) return false;
-        return m.etat_contact.trim().toLowerCase() === filter.toLowerCase();
-      })
-    : members;
+  const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
+    const base = filter
+      ? members.filter(
+          (m) =>
+            m.etat_contact &&
+            m.etat_contact.trim().toLowerCase() === filter.toLowerCase()
+        )
+      : members;
 
-  const searchFiltered = baseFiltered.filter((m) =>
-    `${m.prenom || ""} ${m.nom || ""}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+    const searched = base.filter((m) =>
+      `${m.prenom || ""} ${m.nom || ""}`
+        .toLowerCase()
+        .includes(search.toLowerCase())
+    );
 
-  const nouveaux = searchFiltered.filter((m) =>
-    ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-  );
+    const nouveaux = searched.filter((m) =>
+      ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+    );
 
-  const anciens = searchFiltered.filter(
-    (m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-  );
+    const anciens = searched.filter(
+      (m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+    );
 
-  return {
-    filteredMembers: searchFiltered,
-    filteredNouveaux: nouveaux,
-    filteredAnciens: anciens,
+    return { filteredMembers: searched, filteredNouveaux: nouveaux, filteredAnciens: anciens };
+  }, [members, filter, search]);
+
+  // ✅ SYNCHRO CORRECTE
+  useEffect(() => {
+    setNouveauxMembres(filteredNouveaux);
+  }, [filteredNouveaux]);
+
+  // -------------------- SUPPRIMER (UI ONLY) --------------------
+  const handleSupprimerMembre = (id) => {
+    setNouveauxMembres((prev) => prev.filter((m) => m.id !== id));
+    showToast("🗑️ Contact retiré de la section Nouveaux");
   };
-}, [members, filter, search, refreshKey]);
 
-// Synchronisation automatique quand les filtres changent
-useEffect(() => {
-  setNouveauxMembres(filteredNouveaux);
-}, [filteredNouveaux]);
-
-// -------------------- SUPPRIMER DE LA SECTION NOUVEAUX (UI ONLY) --------------------
-const handleSupprimerMembre = (id) => {
-  setNouveauxMembres((prev) => prev.filter((m) => m.id !== id));
-  showToast("🗑️ Contact retiré de la section Nouveaux");
-};
-
-
-  const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+  // -------------------- UTILS --------------------
+  const toggleDetails = (id) =>
+    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const getBorderColor = (m) => {
-  if (!m.etat_contact) return "#ccc"; // défaut
-
-  const etat = m.etat_contact.trim().toLowerCase(); // converti en minuscule
-
-  if (etat === "existant") return "#34A853";  // vert
-  if (etat === "nouveau") return "#34A85e";   // vert clair (ajusté)
-  if (etat === "inactif") return "#999999";   // gris
-  return "#ccc"; // autre cas
-};
+    if (!m.etat_contact) return "#ccc";
+    const etat = m.etat_contact.trim().toLowerCase();
+    if (etat === "existant") return "#34A853";
+    if (etat === "nouveau") return "#34A85e";
+    if (etat === "inactif") return "#999999";
+    return "#ccc";
+  };
 
   const formatDate = (dateStr) => {
     try { return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr }); } catch { return ""; }

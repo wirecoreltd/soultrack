@@ -61,6 +61,18 @@ export default function ListMembers() {
 
   const { members, setAllMembers, updateMember } = useMembers();
 
+  // -------------------- Supprimer un membre --------------------
+  const [nouveauxMembres, setNouveauxMembres] = useState([]); // si ce n'est pas déjà défini
+  
+  useEffect(() => {
+    setNouveauxMembres(filteredNouveaux); // mettre à jour quand filteredNouveaux change
+  }, [filteredNouveaux]);
+  
+  const handleSupprimerMembre = (id) => {
+    setNouveauxMembres(prev => prev.filter(m => m.id !== id));
+    showToast("❌ Contact retiré de la section Nouveaux");
+  };
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setShowingToast(true);
@@ -378,15 +390,15 @@ export default function ListMembers() {
                 <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
                 <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">✏️ Modifier le contact</button>              
                 <button
-                  onClick={() => {
-                    if (window.confirm("⚠️ Voulez-vous vraiment supprimer ce contact de la liste ?")) {
-                      handleSupprimer(m.id); // Assure-toi que handleSupprimer est passé en props
-                    }
-                  }}
-                  className="flex items-center justify-center gap-1 text-red-600 text-sm mt-2 w-full rounded-lg border border-red-600 py-1 hover:bg-red-50 transition"
-                >
-                  🗑️ Supprimer
-                </button>
+                    onClick={() => {
+                      if (window.confirm("⚠️ Voulez-vous vraiment supprimer ce contact de la liste ?")) {
+                        handleSupprimerMembre(m.id);
+                      }
+                    }}
+                    className="flex items-center justify-center gap-1 text-red-600 text-sm mt-2 w-full"
+                  >
+                    🗑️ Supprimer
+                  </button>
               </div>
             )}
           </div>

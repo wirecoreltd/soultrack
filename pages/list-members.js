@@ -377,11 +377,16 @@ export default function ListMembers() {
                 <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
                 <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
                 <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 w-full">✏️ Modifier le contact</button>              
-                <button onClick={() => handleSupprimer(m.id)}
-                className="text-red-600 text-sm mt-2 w-full rounded-lg border border-red-600 py-1 hover:bg-red-50 transition"
-                  >
-                    🗑️ Supprimer le contact
-                  </button>
+                <button
+                  onClick={() => {
+                    if (window.confirm("⚠️ Voulez-vous vraiment supprimer ce contact de la liste ?")) {
+                      handleSupprimer(m.id); // Assure-toi que handleSupprimer est passé en props
+                    }
+                  }}
+                  className="flex items-center justify-center gap-1 text-red-600 text-sm mt-2 w-full rounded-lg border border-red-600 py-1 hover:bg-red-50 transition"
+                >
+                  🗑️ Supprimer
+                </button>
               </div>
             )}
           </div>

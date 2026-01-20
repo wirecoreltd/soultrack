@@ -64,13 +64,8 @@ export default function ListMembers() {
   
   useEffect(() => {
     setNouveauxMembres(filteredNouveaux); // mettre à jour quand filteredNouveaux change
-  }, [filteredNouveaux]);
+  }, [filteredNouveaux]); 
   
-  const handleSupprimerMembre = (id) => {
-    setNouveauxMembres(prev => prev.filter(m => m.id !== id));
-    showToast("❌ Contact retiré de la section Nouveaux");
-  };
-
   const showToast = (msg) => {
     setToastMessage(msg);
     setShowingToast(true);

@@ -18,7 +18,8 @@ export default function DetailsMemberPopup({
   setStatusChanges = () => {},
   updateSuivi = () => {},
   updating = {},
-}) {
+  onDelete, // <-- ✅ AJOUT ICI
+}) { 
   if (!membre || !membre.id) return null;
 
   const [selectedTargetType, setSelectedTargetType] = useState("");
@@ -190,7 +191,30 @@ export default function DetailsMemberPopup({
             <button onClick={() => setEditMember(membre)} className="text-blue-600 text-sm w-full">
               ✏️ Modifier le contact
             </button>
-          </div>
+            {/* 🗑️ Supprimer le contact */}
+            <div className="mt-3 w-full">
+              <button
+                onClick={() => {
+                  if (!onDelete) return;
+            
+                  const confirmDelete = window.confirm(
+                    "⚠️ Voulez-vous vraiment supprimer ce contact ? Cette action est irréversible."
+                  );
+            
+                  if (confirmDelete) {
+                    onDelete(membre.id); // <-- suppression réelle
+                    onClose(); // <-- ferme le popup après suppression
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2
+                           border border-red-600 text-red-600
+                           rounded-lg py-2 text-sm font-semibold
+                           hover:bg-red-50 transition"
+              >
+                🗑️ Supprimer le contact
+              </button>
+            </div>
+          </div>            
         </div>
 
         {/* ================= POPUP EDIT MEMBER ================= */}

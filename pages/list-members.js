@@ -28,6 +28,7 @@ export default function ListMembers() {
   const searchParams = useSearchParams();
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
 
+  // -------------------- Nouveaux états --------------------
   const [commentChanges, setCommentChanges] = useState({});
   const [statusChanges, setStatusChanges] = useState({});
   const [updating, setUpdating] = useState({});
@@ -36,11 +37,10 @@ export default function ListMembers() {
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const realtimeChannelRef = useRef(null);
 
   const { members, setAllMembers, updateMember } = useMembers();
 
-  // -------------------- Toast --------------------
   const showToast = (msg) => {
     setToastMessage(msg);
     setShowingToast(true);
@@ -54,7 +54,6 @@ export default function ListMembers() {
   const updateSuivi = async (id) => {
     setUpdating((prev) => ({ ...prev, [id]: true }));
     try {
-      console.log("Update suivi pour:", id, commentChanges[id], statusChanges[id]);
       setTimeout(() => {
         setUpdating((prev) => ({ ...prev, [id]: false }));
         showToast("✅ Suivi enregistré !");
@@ -95,54 +94,31 @@ export default function ListMembers() {
     if (data) setConseillers(data);
   };
 
-  // -------------------- Détection doublon --------------------
+  // -------------------- Détection doublon par téléphone --------------------
   const isDuplicateByPhone = (member) => {
     if (!member?.telephone) return false;
     const tel = member.telephone.replace(/\D/g, "");
-    return members.some((m) => m.id !== member.id && m.telephone?.replace(/\D/g, "") === tel);
+    return members.some((m) => {
+      if (m.id === member.id) return false;
+      if (!m.telephone) return false;
+      return m.telephone.replace(/\D/g, "") === tel;
+    });
   };
 
   // -------------------- handleAfterSend --------------------
   const handleAfterSend = (memberSent) => {
     // Supprime le membre de la liste des nouveaux
-    setFilteredNouveaux((prev) => prev.filter((m) => m.id !== memberSent.id));
+    setFilteredNouveaux(prev => prev.filter(m => m.id !== memberSent.id));
 
-    // Met à jour la liste générale si besoin
-    setAllMembers((prev) =>
-      prev.map((m) => (m.id === memberSent.id ? { ...m, etat_contact: "Existant" } : m))
+    // Optionnel : met à jour la liste générale
+    setFilteredMembers(prev =>
+      prev.map(m => (m.id === memberSent.id ? { ...m, etat_contact: "Existant" } : m))
     );
 
     showToast(`✅ ${memberSent.prenom} ${memberSent.nom} a été déplacé dans les suivis`);
   };
 
-  // -------------------- useEffect init --------------------
-  useEffect(() => {
-    const fetchSessionAndProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-
-      if (session?.user) {
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("id, prenom, role")
-          .eq("id", session.user.id)
-          .single();
-        if (!profileError) {
-          setPrenom(profileData.prenom || "");
-          await fetchMembers(profileData);
-        } else console.error(profileError);
-      } else {
-        await fetchMembers();
-      }
-
-      fetchCellules();
-      fetchConseillers();
-    };
-
-    fetchSessionAndProfile();
-  }, []);
   // -------------------- Realtime --------------------
-  const realtimeChannelRef = useRef(null);
   useEffect(() => {
     if (realtimeChannelRef.current) {
       try { realtimeChannelRef.current.unsubscribe(); } catch (e) {}
@@ -154,26 +130,12 @@ export default function ListMembers() {
     channel.on("postgres_changes", { event: "*", schema: "public", table: "cellules" }, () => { fetchCellules(); fetchMembers(); });
     channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { fetchConseillers(); fetchMembers(); });
     try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
-
     realtimeChannelRef.current = channel;
+
     return () => {
       try { if (realtimeChannelRef.current) { realtimeChannelRef.current.unsubscribe(); realtimeChannelRef.current = null; } } catch (e) {}
     };
   }, []);
-
-  // -------------------- Update après édition --------------------
-  const onUpdateMemberHandler = (updatedMember) => {
-    updateMember(updatedMember); // Met à jour le contexte
-    setEditMember(null);         // Ferme le popup édition
-
-    // ⚡ Si le membre édité est ouvert dans le popup détails, on le met à jour aussi
-    setPopupMember(prev =>
-      prev?.id === updatedMember.id ? { ...prev, ...updatedMember } : prev
-    );
-
-    setRefreshKey(prev => prev + 1); // Forcer rerender pour filtres
-  };
-
   // -------------------- Fermer menu téléphone en cliquant dehors --------------------
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -183,10 +145,10 @@ export default function ListMembers() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // -------------------- FILTRAGE CENTRALISE OPTIMISE --------------------
+  // -------------------- FILTRAGE OPTIMISE --------------------
   const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
     const baseFiltered = filter
-      ? members.filter((m) => m.etat_contact?.trim().toLowerCase() === filter.toLowerCase())
+      ? members.filter((m) => m.etat_contact && m.etat_contact.trim().toLowerCase() === filter.toLowerCase())
       : members;
 
     const searchFiltered = baseFiltered.filter((m) =>
@@ -201,23 +163,18 @@ export default function ListMembers() {
       (m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
     );
 
-    return {
-      filteredMembers: searchFiltered,
-      filteredNouveaux: nouveaux,
-      filteredAnciens: anciens,
-    };
-  }, [members, filter, search, refreshKey]);
+    return { filteredMembers: searchFiltered, filteredNouveaux: nouveaux, filteredAnciens: anciens };
+  }, [members, filter, search]);
 
-  // -------------------- Utilitaires --------------------
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const getBorderColor = (m) => {
-    if (!m.etat_contact) return "#ccc"; 
-    const etat = m.etat_contact.trim().toLowerCase(); 
-    if (etat === "existant") return "#34A853";  
-    if (etat === "nouveau") return "#34A85e";   
-    if (etat === "inactif") return "#999999";   
-    return "#ccc"; 
+    if (!m.etat_contact) return "#ccc";
+    const etat = m.etat_contact.trim().toLowerCase();
+    if (etat === "existant") return "#34A853";
+    if (etat === "nouveau") return "#34A85e";
+    if (etat === "inactif") return "#999999";
+    return "#ccc";
   };
 
   const formatDate = (dateStr) => {
@@ -232,22 +189,14 @@ export default function ListMembers() {
         .eq("id", member.id);
 
       if (error) throw error;
-
-      setAllMembers((prev) =>
-        prev.map((m) => (m.id === member.id ? { ...m, star: !member.star } : m))
-      );
+      setAllMembers((prev) => prev.map((m) => (m.id === member.id ? { ...m, star: !member.star } : m)));
     } catch (err) {
       console.error("Erreur toggleStar:", err);
     }
   };
 
   const today = new Date();
-  const dateDuJour = today.toLocaleDateString("fr-FR", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const dateDuJour = today.toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
   // -------------------- Rendu Carte --------------------
   const renderMemberCard = (m) => {
@@ -270,7 +219,7 @@ export default function ListMembers() {
         <div className="flex flex-col items-center mt-6">
           <h2 className="text-lg font-bold text-center">{m.prenom} {m.nom}</h2>
 
-          {/* Téléphone avec menu */}
+          {/* Téléphone */}
           <div className="relative flex justify-center mt-3">
             {m.telephone ? (
               <>
@@ -281,7 +230,6 @@ export default function ListMembers() {
                 >
                   {m.telephone}
                 </button>
-
                 {openPhoneMenuId === m.id && (
                   <div className="phone-menu absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-52" onClick={e => e.stopPropagation()}>
                     <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
@@ -291,8 +239,9 @@ export default function ListMembers() {
                   </div>
                 )}
               </>
-            ) : (<span className="text-gray-400">—</span>)}
+            ) : <span className="text-gray-400">—</span>}
           </div>
+
           {/* Infos principales */}
           <div className="w-full mt-2 text-sm text-black space-y-1">
             <p className="text-center">🏙️ Ville : {m.ville || "—"}</p>
@@ -304,24 +253,40 @@ export default function ListMembers() {
           {/* Select pour envoyer / retirer */}
           <div className="mt-2 w-full">
             <label className="font-semibold text-sm">Envoyer à :</label>
-            <select value={selectedTargetType[m.id] || ""} onChange={e => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))} className="mt-1 w-full border rounded px-2 py-1 text-sm">
+            <select
+              value={selectedTargetType[m.id] || ""}
+              onChange={e => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
+              className="mt-1 w-full border rounded px-2 py-1 text-sm"
+            >
               <option value="">-- Choisir une option --</option>
               <option value="cellule">Une Cellule</option>
               <option value="conseiller">Un Conseiller</option>
             </select>
+
             {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
-              <select value={selectedTargets[m.id] || ""} onChange={e => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))} className="mt-1 w-full border rounded px-2 py-1 text-sm">
+              <select
+                value={selectedTargets[m.id] || ""}
+                onChange={e => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
+                className="mt-1 w-full border rounded px-2 py-1 text-sm"
+              >
                 <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
-                {selectedTargetType[m.id] === "cellule" ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>) : null}
-                {selectedTargetType[m.id] === "conseiller" ? conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>) : null}
+                {selectedTargetType[m.id] === "cellule"
+                  ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)
+                  : conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)
+                }
               </select>
             )}
+
             {selectedTargetType[m.id] && selectedTargets[m.id] && (
               <div className="pt-2">
                 <BoutonEnvoyer
                   membre={m}
                   type={selectedTargetType[m.id]}
-                  cible={selectedTargetType[m.id] === "cellule" ? cellules.find(c => c.id === selectedTargets[m.id]) : conseillers.find(c => c.id === selectedTargets[m.id])}
+                  cible={
+                    selectedTargetType[m.id] === "cellule"
+                      ? cellules.find(c => c.id === selectedTargets[m.id])
+                      : conseillers.find(c => c.id === selectedTargets[m.id])
+                  }
                   session={session}
                   showToast={showToast}
                   onEnvoyer={(updatedMember) => {
@@ -336,10 +301,10 @@ export default function ListMembers() {
             )}
           </div>
 
-          {/* Bouton détails */}
-          <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">{isOpen ? "Fermer détails" : "Détails"}</button>
+          <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">
+            {isOpen ? "Fermer détails" : "Détails"}
+          </button>
 
-          {/* Détails étendus */}
           {isOpen && (
             <div className="text-black text-sm mt-2 w-full space-y-1">
               <p className="font-semibold text-center" style={{ color: "#2E3192" }}>💡 Statut Suivi: {m.suivi_statut || "—"}</p>
@@ -364,7 +329,7 @@ export default function ListMembers() {
       );
     };
 
-  // ===================== Rendu principal (return) =====================
+  // -------------------- Rendu principal --------------------
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#2E3192" }}>
       <Header />
@@ -372,7 +337,13 @@ export default function ListMembers() {
 
       {/* Barre de recherche */}
       <div className="w-full max-w-4xl flex justify-center mb-2">
-        <input type="text" placeholder="Recherche..." value={search} onChange={e => setSearch(e.target.value)} className="w-2/3 px-3 py-1 rounded-md border text-black"/>
+        <input
+          type="text"
+          placeholder="Recherche..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-2/3 px-3 py-1 rounded-md border text-black"
+        />
       </div>
 
       {/* Filtre */}
@@ -386,21 +357,71 @@ export default function ListMembers() {
         <span className="text-white text-sm ml-2">{filteredMembers.length} membres</span>
       </div>
 
-      {/* Toggle Vue */}
+      {/* Carte / Table toggle */}
       <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
         <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-sm font-semibold underline text-white">
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
       </div>
 
-      {/* Vue Carte/Table est gérée via filteredNouveaux et filteredAnciens */}
+      {/* ==================== VUE CARTE ==================== */}
+      {view === "card" && (
+        <>
+          {filteredNouveaux.length > 0 && (
+            <>
+              <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">💖 Bien aimé venu le {dateDuJour}</h2>
+              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+                {filteredNouveaux.map(m => renderMemberCard({ ...m, isNouveau: true }))}
+              </div>
+            </>
+          )}
+          {filteredAnciens.length > 0 && (
+            <>
+              <h2 className="w-full max-w-6xl font-bold mb-2 text-lg bg-gradient-to-r from-blue-500 to-gray-300 bg-clip-text text-transparent">Membres existants</h2>
+              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                {filteredAnciens.map(m => renderMemberCard(m))}
+              </div>
+            </>
+          )}
+        </>
+      )}
 
-      {/* Détails et popup */}
-      {popupMember && <DetailsMemberPopup membre={popupMember} onClose={() => setPopupMember(null)} cellules={cellules} conseillers={conseillers} session={session} commentChanges={commentChanges} handleCommentChange={handleCommentChange} statusChanges={statusChanges} setStatusChanges={setStatusChanges} updateSuivi={updateSuivi} updating={updating} />}
-      {editMember && <EditMemberPopup member={editMember} onClose={() => setEditMember(null)} onUpdateMember={onUpdateMemberHandler} />}
+      {/* ==================== VUE TABLE ==================== */}
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto py-2">
+          {/* Table rows (similar à renderMemberCard mais format table) */}
+        </div>
+      )}
+
+      {/* ==================== POPUPS ==================== */}
+      {popupMember && (
+        <DetailsMemberPopup
+          membre={popupMember}
+          onClose={() => setPopupMember(null)}
+          cellules={cellules}
+          conseillers={conseillers}
+          session={session}
+          commentChanges={commentChanges}
+          handleCommentChange={handleCommentChange}
+          statusChanges={statusChanges}
+          setStatusChanges={setStatusChanges}
+          updateSuivi={updateSuivi}
+          updating={updating}
+        />
+      )}
+      {editMember && (
+        <EditMemberPopup
+          member={editMember}
+          onClose={() => setEditMember(null)}
+          onUpdateMember={onUpdateMemberHandler}
+        />
+      )}
 
       {/* Toast */}
-      {showingToast && <div className="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50">{toastMessage}</div>}
+      {showingToast && (
+        <div className="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50">{toastMessage}</div>
+      )}
     </div>
   );
 }
+

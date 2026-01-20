@@ -28,7 +28,7 @@ export default function ListMembers() {
   const searchParams = useSearchParams();
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
 
-  // -------------------- Nouveaux états --------------------
+  // -------------------- Nouveaux états --------------------//
   const [commentChanges, setCommentChanges] = useState({});
   const [statusChanges, setStatusChanges] = useState({});
   const [updating, setUpdating] = useState({});

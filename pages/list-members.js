@@ -325,7 +325,8 @@ export default function ListMembers() {
               >
                 🗑️ Supprimer
               </button>
-            </div>
+            </div> 
+          </div>
           )}
         </div>
       );

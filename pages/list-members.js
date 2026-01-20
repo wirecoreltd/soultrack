@@ -480,25 +480,8 @@ export default function ListMembers() {
               <div
                 key={m.id}
                 className="flex flex-col px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 border-l-4"
-                style={{ borderLeftColor: getBorderColor(m) }}
-              >
-                {/* Badge Nouveau en haut à droite */}
-                 {m.isNouveau && (
-                  <div className="flex justify-end mb-1">
-                    <span
-                      className="inline-block w-2.5 h-2.5 rounded-full mr-1"
-                      style={{ backgroundColor: "#FFFFFF" }}
-                    />
-                    <span
-                      className="text-xs font-semibold"
-                      style={{ color: "#FF0000" }}
-                    >
-                      Nouveau
-                    </span>
-                  </div>
-                )}                    
+                style={{ borderLeftColor: getBorderColor(m) }}>                             
 
-      
                 {/* Ligne principale */}
                 <div className="flex flex-row items-center gap-2">
                   <div className="flex-[2] text-white font-semibold">{m.prenom} {m.nom}</div>

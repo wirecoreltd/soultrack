@@ -377,6 +377,28 @@ export default function ListMembers() {
         </button>
       </div>
 
+      {/* -------------------- Liste des Membres -------------------- */}
+      <div className="w-full max-w-6xl flex flex-col gap-4">
+        {displayedMembers.map((m) => (
+          <div key={m.id} className="member-card p-4 rounded-md shadow-md bg-white flex justify-between items-center">
+            <div>
+              <p className="font-semibold">{m.prenom} {m.nom}</p>
+              <p className="text-sm text-gray-600">{m.etat_contact}</p>
+            </div>
+            <button
+              onClick={() => {
+                if (confirm("⚠️ Voulez-vous vraiment supprimer ce contact ?")) {
+                  handleSupprimerMembre(m.id);
+                }
+              }}
+              className="text-red-600 hover:text-red-800 font-semibold"
+            >
+              🗑️ Supprimer
+            </button>
+          </div>
+        ))}
+      </div>
+
       {/* ==================== VUE CARTE ==================== */}
       {view === "card" && (
         <>

@@ -39,6 +39,7 @@ export default function ListMembers() {
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const realtimeChannelRef = useRef(null);
   const [etatContactFilter, setEtatContactFilter] = useState("");
+  const [nouveauxMembres, setNouveauxMembres] = useState([]);
 
   const statutLabels = {
     1: "En cours",

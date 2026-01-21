@@ -192,7 +192,7 @@ export default function DetailsMemberPopup({
               ✏️ Modifier le contact
             </button>
             {/* 🗑️ Supprimer le contact */}
-            <div className="mt-3 w-full">
+          
               <button
                 onClick={() => {
                   if (!onDelete) return;
@@ -213,7 +213,7 @@ export default function DetailsMemberPopup({
               >
                 🗑️ Supprimer le contact
               </button>
-            </div>
+            
           </div>            
         </div>
 

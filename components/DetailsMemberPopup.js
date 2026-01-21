@@ -186,31 +186,36 @@ export default function DetailsMemberPopup({
             <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>            
           </div>
 
-          {/* ✏️ Modifier le contact */}
-          <div className="mt-4 flex justify-center w-full">            
-            <button onClick={() => setEditMember(membre)} className="text-blue-600 text-sm w-full">
-              ✏️ Modifier le contact
-            <button
-              onClick={() => {
-                if (!onDelete) return;
+         {/* ✏️ Modifier / 🗑️ Supprimer */}
+            <div className="mt-4 flex flex-col gap-2 w-full">            
+              <button
+                onClick={() => setEditMember(membre)}
+                className="text-blue-600 text-sm w-full"
+              >
+                ✏️ Modifier le contact
+              </button>
             
-                const confirmDelete = window.confirm(
-                  "⚠️ Suppression définitive\n\n" +
-                  "Voulez-vous vraiment supprimer ce contact ?\n\n" +
-                  "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
-                  "Cette action est irréversible."
-                );
+              <button
+                onClick={() => {
+                  if (!onDelete) return;
             
-                if (confirmDelete) {
-                  onDelete(membre.id);
-                  onClose();
-                }
-              }}
-              className="w-full flex items-center justify-center text-red-600"
-            >
-              🗑️ Supprimer le contact
-            </button>            
-          </div>            
+                  const confirmDelete = window.confirm(
+                    "⚠️ Suppression définitive\n\n" +
+                    "Voulez-vous vraiment supprimer ce contact ?\n\n" +
+                    "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
+                    "Cette action est irréversible."
+                  );
+            
+                  if (confirmDelete) {
+                    onDelete(membre.id);
+                    onClose();
+                  }
+                }}
+                className="w-full flex items-center justify-center text-red-600"
+              >
+                🗑️ Supprimer le contact
+              </button>
+            </div>           
         </div>
 
         {/* ================= POPUP EDIT MEMBER ================= */}

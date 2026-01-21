@@ -198,7 +198,10 @@ export default function DetailsMemberPopup({
                   if (!onDelete) return;
             
                   const confirmDelete = window.confirm(
-                    "⚠️ Voulez-vous vraiment supprimer ce contact ? Cette action est irréversible."
+                    "⚠️ Suppression définitive\n\n" +
+                         "Voulez-vous vraiment supprimer ce contact ?\n\n" +
+                         "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
+                         "Cette action est irréversible."
                   );
             
                   if (confirmDelete) {
@@ -206,7 +209,7 @@ export default function DetailsMemberPopup({
                     onClose(); // <-- ferme le popup après suppression
                   }
                 }}
-                className="w-full flex items-center justify-center text-red-600>
+                className="w-full flex items-center justify-center text-red-600">
                 🗑️ Supprimer le contact
               </button>
             

@@ -298,7 +298,7 @@ export default function SuivisMembres() {
                       <option value="4">Refus</option>
                     </select>
                   ) : (
-                    <select value={statusChanges[m.id] ?? String(m.statut_suivis ?? "")} onChange={(e) => setStatusChanges(prev => ({ ...prev, [m.id]: e.target.value }))} className="w-full border rounded-lg p-2 mb-2">
+                    <select value={statusChanges[m.id] ?? String(m.suivi_statut ?? "")} onChange={(e) => setStatusChanges(prev => ({ ...prev, [m.id]: e.target.value }))} className="w-full border rounded-lg p-2 mb-2">
                       <option value="">-- Sélectionner un statut --</option>
                       <option value="2">En Attente</option>
                       <option value="3">Intégrer</option>

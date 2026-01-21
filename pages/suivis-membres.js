@@ -114,7 +114,8 @@ export default function SuivisMembres() {
 
   const getBorderColor = (m) => {
     if (!m) return "#ccc";
-    const status = m.statut_suivis ?? m.suivi_statut;
+    //const status = m.statut_suivis ?? m.suivi_statut; - ancien statut
+    const status = m.suivi_statut;
     if (status === 2) return "#FFA500";
     if (status === 3) return "#34A853";
     if (status === 4) return "#FF4B5C";
@@ -134,7 +135,9 @@ export default function SuivisMembres() {
     try {
       const payload = { updated_at: new Date() };
       if (newComment !== undefined) payload.commentaire_suivis = newComment;
-      if (newStatus !== undefined) payload.statut_suivis = Number(newStatus);
+      //if (newStatus !== undefined) payload.statut_suivis = Number(newStatus); - ancien statut
+      if (newStatus !== undefined) payload.suivi_statut = Number(newStatus);
+
 
       const { data: updatedMember, error } = await supabase
         .from("membres_complets")
@@ -158,7 +161,8 @@ export default function SuivisMembres() {
     try {
       const { data: updatedMember, error } = await supabase
         .from("membres_complets")
-        .update({ statut_suivis: 2, updated_at: new Date() })
+        //.update({ statut_suivis: 2, updated_at: new Date() }) - ancien statut
+        .update({ suivi_statut: 2, updated_at: new Date() })
         .eq("id", id)
         .select()
         .single();
@@ -172,7 +176,8 @@ export default function SuivisMembres() {
   };
 
   const filteredMembers = members.filter(m => {
-    const status = m.statut_suivis ?? 0;
+    //const status = m.statut_suivis ?? 0; - ancien statut
+    const status = m.suivi_statut ?? 0;
     if (showRefus) return status === 4;
     return status === 1 || status === 2;
   });
@@ -298,7 +303,7 @@ export default function SuivisMembres() {
                       <option value="4">Refus</option>
                     </select>
                   ) : (
-                    <select value={statusChanges[m.id] ?? String(m.statut_suivis ?? "")} onChange={(e) => setStatusChanges(prev => ({ ...prev, [m.id]: e.target.value }))} className="w-full border rounded-lg p-2 mb-2">
+                    <select value={statusChanges[m.id] ?? String(m.suivi_statut ?? "")} onChange={(e) => setStatusChanges(prev => ({ ...prev, [m.id]: e.target.value }))} className="w-full border rounded-lg p-2 mb-2">
                       <option value="">-- Sélectionner un statut --</option>
                       <option value="2">En Attente</option>
                       <option value="3">Intégrer</option>

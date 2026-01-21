@@ -190,29 +190,26 @@ export default function DetailsMemberPopup({
           <div className="mt-4 flex justify-center w-full">            
             <button onClick={() => setEditMember(membre)} className="text-blue-600 text-sm w-full">
               ✏️ Modifier le contact
-            </button>
-            {/* 🗑️ Supprimer le contact */}
-          
-              <button
-                onClick={() => {
-                  if (!onDelete) return;
+            <button
+              onClick={() => {
+                if (!onDelete) return;
             
-                  const confirmDelete = window.confirm(
-                    "⚠️ Suppression définitive\n\n" +
-                         "Voulez-vous vraiment supprimer ce contact ?\n\n" +
-                         "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
-                         "Cette action est irréversible."
-                  );
+                const confirmDelete = window.confirm(
+                  "⚠️ Suppression définitive\n\n" +
+                  "Voulez-vous vraiment supprimer ce contact ?\n\n" +
+                  "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
+                  "Cette action est irréversible."
+                );
             
-                  if (confirmDelete) {
-                    onDelete(membre.id); // <-- suppression réelle
-                    onClose(); // <-- ferme le popup après suppression
-                  }
-                }}
-                className="w-full flex items-center justify-center text-red-600">
-                🗑️ Supprimer le contact
-              </button>
-            
+                if (confirmDelete) {
+                  onDelete(membre.id);
+                  onClose();
+                }
+              }}
+              className="w-full flex items-center justify-center text-red-600"
+            >
+              🗑️ Supprimer le contact
+            </button>            
           </div>            
         </div>
 

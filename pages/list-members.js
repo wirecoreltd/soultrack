@@ -50,12 +50,28 @@ export default function ListMembers() {
   };
 
   // -------------------- Supprimer un membre --------------------
-  const handleSupprimerMembre = (id) => {
-    if (!id) return;
-    setAllMembers(prev => prev.filter(m => m.id !== id)); // supprime du contexte
-    showToast("❌ Contact supprimé de la liste");
-    if (popupMember?.id === id) setPopupMember(null); // ferme popup si ouvert
-  };
+  //const handleSupprimerMembre = (id) => {
+    //if (!id) return;
+    //setAllMembers(prev => prev.filter(m => m.id !== id)); // supprime du contexte
+   // showToast("❌ Contact supprimé de la liste");
+   // if (popupMember?.id === id) setPopupMember(null); // ferme popup si ouvert
+ // };
+ const handleSupprimerMembre = async (id) => {
+  const { error } = await supabase
+    .from("membres")
+    .update({ statut: "supprime" })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Erreur suppression :", error);
+    return;
+  }
+
+  // 🔥 Retirer immédiatement de l'UI
+  setMembers(prev => prev.filter(m => m.id !== id));
+
+  showToast("Contact supprimé définitivement");
+};
 
   // -------------------- Commentaires / suivi --------------------
   const handleCommentChange = (id, value) => {

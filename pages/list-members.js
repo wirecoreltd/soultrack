@@ -59,7 +59,7 @@ export default function ListMembers() {
  const handleSupprimerMembre = async (id) => {
   const { error } = await supabase
     .from("membres")
-    .update({ statut: "supprime" })
+    .update({ etat_contact: "supprime" })
     .eq("id", id);
 
   if (error) {
@@ -67,12 +67,12 @@ export default function ListMembers() {
     return;
   }
 
-  // 🔥 Retirer immédiatement de l'UI
-  //setMembers(prev => prev.filter(m => m.id !== id));
+  // Retirer immédiatement de l’UI
   setAllMembers(prev => prev.filter(m => m.id !== id));
 
   showToast("Contact supprimé définitivement");
 };
+
 
   // -------------------- Commentaires / suivi --------------------
   const handleCommentChange = (id, value) => {

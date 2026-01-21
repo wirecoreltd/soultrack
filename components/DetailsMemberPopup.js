@@ -190,8 +190,7 @@ export default function DetailsMemberPopup({
             <div className="mt-4 flex flex-col gap-2 w-full">            
               <button
                 onClick={() => setEditMember(membre)}
-                className="text-blue-600 text-sm w-full"
-              >
+                className="text-blue-600 text-sm w-full">
                 ✏️ Modifier le contact
               </button>
             
@@ -211,8 +210,7 @@ export default function DetailsMemberPopup({
                     onClose();
                   }
                 }}
-                className="w-full flex items-center justify-center text-red-600"
-              >
+                className="w-full flex text-sm items-center justify-center text-red-600">
                 🗑️ Supprimer le contact
               </button>
             </div>           

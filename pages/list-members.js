@@ -68,7 +68,8 @@ export default function ListMembers() {
   }
 
   // 🔥 Retirer immédiatement de l'UI
-  setMembers(prev => prev.filter(m => m.id !== id));
+  //setMembers(prev => prev.filter(m => m.id !== id));
+  setAllMembers(prev => prev.filter(m => m.id !== id));
 
   showToast("Contact supprimé définitivement");
 };
@@ -174,11 +175,22 @@ export default function ListMembers() {
     };
   }, []);
 
-  // -------------------- Filtrage --------------------
-  const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
+     // -------------------- Filtrage --------------------
+     const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
+    //const baseFiltered = filter
+    //? members.filter((m) => m.etat_contact?.trim().toLowerCase() === filter.toLowerCase())
+    //: members;
+   // 1️⃣ ON EXCLUT D’ABORD LES SUPPRIMÉS
+    const notDeleted = members.filter(
+      (m) => m.statut !== "supprime"
+    );
+    
+    // 2️⃣ ENSUITE ON APPLIQUE LES AUTRES FILTRES
     const baseFiltered = filter
-      ? members.filter((m) => m.etat_contact?.trim().toLowerCase() === filter.toLowerCase())
-      : members;
+      ? notDeleted.filter(
+          (m) => m.etat_contact?.trim().toLowerCase() === filter.toLowerCase()
+        )
+      : notDeleted;
 
     const searchFiltered = baseFiltered.filter((m) =>
       `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
@@ -341,31 +353,36 @@ export default function ListMembers() {
                 <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>
                 <p>💢 Ministère : {formatMinistere(m.Ministere)}</p>
                 <p>❓ Besoin : {besoins}</p>
-                <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-    
-                {/* Modifier */}
-                <button
-                  onClick={() => setEditMember(m)}
-                  className="text-blue-600 text-sm mt-2 w-full"
-                >
-                  ✏️ Modifier le contact
-                </button>
-    
-                {/* Supprimer */}
-                <button
-                  onClick={() => {
-                    if (window.confirm("⚠️ Suppression définitive\n\n" +
-                      "Voulez-vous vraiment supprimer ce contact ?\n\n" +
-                      "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
-                      "Cette action est irréversible.")) {
-                      handleSupprimerMembre(m.id);
-                    }
-                  }}
-                  className="flex items-center justify-center gap-1 text-red-600 text-sm mt-2 w-full"
-                >
-                  🗑️ Supprimer Le Contact
-                </button>
-              </div>
+                <p>📝 Infos : {m.infos_supplementaires || "—"}</p>    
+                <div className="flex flex-col items-center">
+                 {/* Modifier */}
+                 <button
+                   onClick={() => setEditMember(m)}
+                   className="text-blue-600 text-sm mt-2 w-full"
+                 >
+                   ✏️ Modifier le contact
+                 </button>
+               
+                 {/* Supprimer */}
+                 <button
+                   onClick={() => {
+                     if (
+                       window.confirm(
+                         "⚠️ Suppression définitive\n\n" +
+                         "Voulez-vous vraiment supprimer ce contact ?\n\n" +
+                         "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
+                         "Cette action est irréversible."
+                       )
+                     ) {
+                       handleSupprimerMembre(m.id);
+                     }
+                   }}
+                   className="text-red-600 text-sm mt-2 w-full"
+                 >
+                   🗑️ Supprimer le contact
+                 </button>
+               </div>
+
             )}
           </div>
         </div>

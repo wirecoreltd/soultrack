@@ -56,23 +56,23 @@ export default function ListMembers() {
    // showToast("❌ Contact supprimé de la liste");
    // if (popupMember?.id === id) setPopupMember(null); // ferme popup si ouvert
  // };
- const handleSupprimerMembre = async (id) => {
-  const { error } = await supabase
-    .from("membres")
-    .update({ etat_contact: "supprime" })
-    .eq("id", id);
-
-  if (error) {
-    console.error("Erreur suppression :", error);
-    return;
-  }
-
-  // Retirer immédiatement de l’UI
-  setAllMembers(prev => prev.filter(m => m.id !== id));
-
-  showToast("Contact supprimé définitivement");
-};
-
+  const handleSupprimerMembre = async (id) => {
+   // 🔹 Update dans la bonne source
+   const { error } = await supabase
+     .from("membres_complets")  // <- important
+     .update({ etat_contact: "supprime" })
+     .eq("id", id);
+ 
+   if (error) {
+     console.error("Erreur suppression :", error);
+     return;
+   }
+ 
+   // 🔹 Retirer immédiatement de l'UI
+   setAllMembers(prev => prev.filter(m => m.id !== id));
+ 
+   showToast("Contact supprimé définitivement");
+ };
 
   // -------------------- Commentaires / suivi --------------------
   const handleCommentChange = (id, value) => {
@@ -95,21 +95,28 @@ export default function ListMembers() {
 
   // -------------------- Fetch data --------------------
   const fetchMembers = async (profile = null) => {
-    setLoading(true);
-    try {
-      let query = supabase.from("membres_complets").select("*").order("created_at", { ascending: false });
-      if (conseillerIdFromUrl) query = query.eq("conseiller_id", conseillerIdFromUrl);
-      else if (profile?.role === "Conseiller") query = query.eq("conseiller_id", profile.id);
-      const { data, error } = await query;
-      if (error) throw error;
-      setAllMembers(data || []);
-    } catch (err) {
-      console.error("Erreur fetchMembers:", err);
-      setAllMembers([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    let query = supabase
+      .from("membres_complets")
+      .select("*")
+      .neq("etat_contact", "supprime")  // <- filtre ici
+      .order("created_at", { ascending: false });
+
+    if (conseillerIdFromUrl) query = query.eq("conseiller_id", conseillerIdFromUrl);
+    else if (profile?.role === "Conseiller") query = query.eq("conseiller_id", profile.id);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    setAllMembers(data || []);
+  } catch (err) {
+    console.error("Erreur fetchMembers:", err);
+    setAllMembers([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const fetchCellules = async () => {
     const { data, error } = await supabase.from("cellules").select("id, cellule_full");

@@ -114,8 +114,8 @@ export default function SuivisMembres() {
 
   const getBorderColor = (m) => {
     if (!m) return "#ccc";
-    //const status = m.statut_suivis ?? m.suivi_statut; - ancien statut
-    const status = m.suivi_statut;
+    const status = m.statut_suivis ?? m.suivi_statut;
+    //const status = m.suivi_statut;
     if (status === 2) return "#FFA500";
     if (status === 3) return "#34A853";
     if (status === 4) return "#FF4B5C";

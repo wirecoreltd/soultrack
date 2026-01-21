@@ -206,11 +206,7 @@ export default function DetailsMemberPopup({
                     onClose(); // <-- ferme le popup après suppression
                   }
                 }}
-                className="w-full flex items-center justify-center gap-2
-                           border border-red-600 text-red-600
-                           rounded-lg py-2 text-sm font-semibold
-                           hover:bg-red-50 transition"
-              >
+                className="w-full flex items-center justify-center gap-2 border border-red-600 text-red-600>
                 🗑️ Supprimer le contact
               </button>
             

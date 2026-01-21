@@ -233,9 +233,9 @@ export default function ListMembers() {
   const getBorderColor = (m) => {
     if (!m.etat_contact) return "#ccc";
     const etat = m.etat_contact.trim().toLowerCase();
-    if (etat === "existant") return "#34A853";
-    if (etat === "nouveau") return "#34A85e";
-    if (etat === "inactif") return "#999999";
+    if (etat === "Existant") return "#34A853";
+    if (etat === "Nouveau") return "#34A85e";
+    if (etat === "Inactif") return "#999999";
     return "#ccc";
   };
 

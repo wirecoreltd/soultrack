@@ -370,7 +370,12 @@ export default function ListMembers() {
                 <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>
                 <p>💢 Ministère : {formatMinistere(m.Ministere)}</p>
                 <p>❓ Besoin : {besoins}</p>
-                <p>📝 Infos : {m.infos_supplementaires || "—"}</p>    
+                <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+                <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>
+                <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
+                <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
+                <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
                 <div className="flex flex-col items-center">
                  {/* Modifier */}
                  <button

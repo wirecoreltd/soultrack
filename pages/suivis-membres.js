@@ -114,7 +114,7 @@ export default function SuivisMembres() {
 
   const getBorderColor = (m) => {
     if (!m) return "#ccc";
-    const status = m.statut_suivis ?? m.suivi_statut;
+    const status = m.suivi_statut ?? m.suivi_statut;
     if (status === 2) return "#FFA500";
     if (status === 3) return "#34A853";
     if (status === 4) return "#FF4B5C";
@@ -134,7 +134,7 @@ export default function SuivisMembres() {
     try {
       const payload = { updated_at: new Date() };
       if (newComment !== undefined) payload.commentaire_suivis = newComment;
-      if (newStatus !== undefined) payload.statut_suivis = Number(newStatus);
+      if (newStatus !== undefined) payload.suivi_statut = Number(newStatus);
 
       const { data: updatedMember, error } = await supabase
         .from("membres_complets")
@@ -172,7 +172,7 @@ export default function SuivisMembres() {
   };
 
   const filteredMembers = members.filter(m => {
-    const status = m.statut_suivis ?? 0;
+    const status = m.suivi_statut ?? 0;
     if (showRefus) return status === 4;
     return status === 1 || status === 2;
   });
@@ -353,7 +353,7 @@ export default function SuivisMembres() {
                 <div key={m.id} className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
                   <div className="flex-[2] text-white flex items-center gap-1">{m.prenom} {m.nom}</div>
                   <div className="flex-[1] text-white">{m.telephone || "—"}</div>
-                  <div className="flex-[1] text-white">{statutLabels[m.statut_suivis ?? m.suivi_statut] || "—"}</div>
+                  <div className="flex-[1] text-white">{statutLabels[m.suivi_statut ?? m.suivi_statut] || "—"}</div>
                   <div className="flex-[2] text-white">{attribue}</div>
                   <div className="flex-[1]">
                     <button onClick={() => setDetailsSuivisPopupMember(m)} className="text-orange-500 underline text-sm whitespace-nowrap">Détails</button>

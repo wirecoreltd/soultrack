@@ -176,40 +176,50 @@ export default function ListMembers() {
   }, []);
 
      // -------------------- Filtrage --------------------
-     const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
-    //const baseFiltered = filter
-    //? members.filter((m) => m.etat_contact?.trim().toLowerCase() === filter.toLowerCase())
-    //: members;
-   // 1️⃣ ON EXCLUT D’ABORD LES SUPPRIMÉS
-    const notDeleted = members.filter(
-      (m) => m.statut !== "supprime"
-    );
-    
-    // 2️⃣ ENSUITE ON APPLIQUE LES AUTRES FILTRES
-    const baseFiltered = filter
-      ? notDeleted.filter(
-          (m) => m.etat_contact?.trim().toLowerCase() === filter.toLowerCase()
-        )
-      : notDeleted;
+    const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
 
-    const searchFiltered = baseFiltered.filter((m) =>
-      `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
-    );
+     // 🔥 1️⃣ EXCLURE TOUJOURS LES SUPPRIMÉS
+     const withoutDeleted = members.filter(
+       (m) => m.etat_contact?.toLowerCase() !== "supprime"
+     );
+   
+     // 🔎 2️⃣ FILTRE ETAT CONTACT (si sélectionné)
+     const baseFiltered = filter
+       ? withoutDeleted.filter(
+           (m) =>
+             m.etat_contact?.trim().toLowerCase() === filter.toLowerCase()
+         )
+       : withoutDeleted;
+   
+     // 🔍 3️⃣ RECHERCHE TEXTE
+     const searchFiltered = baseFiltered.filter((m) =>
+       `${m.prenom || ""} ${m.nom || ""}`
+         .toLowerCase()
+         .includes(search.toLowerCase())
+     );
+   
+     // 🆕 4️⃣ NOUVEAUX
+     const nouveaux = searchFiltered.filter((m) =>
+       ["visiteur", "veut rejoindre icc", "nouveau"].includes(
+         m.statut?.toLowerCase()
+       )
+     );
+   
+     // 👥 5️⃣ ANCIENS
+     const anciens = searchFiltered.filter(
+       (m) =>
+         !["visiteur", "veut rejoindre icc", "nouveau"].includes(
+           m.statut?.toLowerCase()
+         )
+     );
+   
+     return {
+       filteredMembers: searchFiltered,
+       filteredNouveaux: nouveaux,
+       filteredAnciens: anciens,
+     };
+   }, [members, filter, search]);
 
-    const nouveaux = searchFiltered.filter((m) =>
-      ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-    );
-
-    const anciens = searchFiltered.filter(
-      (m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-    );
-
-    return {
-      filteredMembers: searchFiltered,
-      filteredNouveaux: nouveaux,
-      filteredAnciens: anciens,
-    };
-  }, [members, filter, search]);
 
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 

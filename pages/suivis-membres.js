@@ -171,8 +171,8 @@ export default function SuivisMembres() {
     }
   };
 
-  const filteredMembers = members.filter(m => {
-    const status = m.suivi_statut ?? 0;
+ const filteredMembers = members.filter(m => {
+    const status = m.statut_suivis ?? 0;
     if (showRefus) return status === 4;
     return status === 1 || status === 2;
   });

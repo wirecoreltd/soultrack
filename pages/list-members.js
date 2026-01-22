@@ -345,16 +345,65 @@ export default function ListMembers() {
     
             {/* Infos principales */}
             <div className="w-full mt-2 text-sm text-black space-y-1">
-              <p className="text-center">🏙️ Ville : {m.ville || "—"}</p>
-              <p className="text-center">🕊 Etat Contact : {m.etat_contact || "—"}</p>
-              <p>🏠 Cellule : {cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}</p>
-              <p>
-                👤 Conseiller :{" "}
-                {conseillers.find(c => c.id === m.conseiller_id)
-                  ? `${conseillers.find(c => c.id === m.conseiller_id).prenom} ${conseillers.find(c => c.id === m.conseiller_id).nom}`
-                  : "—"}
-              </p>
-            </div>
+            <p className="text-center">🏙️ Ville : {m.ville || "—"}</p>
+            <p className="text-center">🕊 Etat Contact : {m.etat_contact || "—"}</p>
+            <p>🏠 Cellule : {m.cellule_id ? `${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` : "—"}</p>
+            <p>👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
+          </div>
+
+          <div className="mt-2 w-full">
+            <label className="font-semibold text-sm">Envoyer à :</label>
+            <select
+              value={selectedTargetType[m.id] || ""}
+              onChange={e => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
+              className="mt-1 w-full border rounded px-2 py-1 text-sm"
+            >
+              <option value="">-- Choisir une option --</option>
+              <option value="cellule">Une Cellule</option>
+              <option value="conseiller">Un Conseiller</option>
+            </select>
+          
+            {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
+              <select
+                value={selectedTargets[m.id] || ""}
+                onChange={e => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
+                className="mt-1 w-full border rounded px-2 py-1 text-sm"
+              >
+                <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
+                {selectedTargetType[m.id] === "cellule"
+                  ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)
+                  : null}
+                {selectedTargetType[m.id] === "conseiller"
+                  ? conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)
+                  : null}
+              </select>
+            )}
+
+            {selectedTargetType[m.id] && selectedTargets[m.id] && (
+              <div className="pt-2">
+                <BoutonEnvoyer
+                  membre={m}
+                  type={selectedTargetType[m.id]}
+                  cible={
+                    selectedTargetType[m.id] === "cellule"
+                      ? cellules.find(c => c.id === selectedTargets[m.id])
+                      : conseillers.find(c => c.id === selectedTargets[m.id])
+                  }
+                  onEnvoyer={id =>
+                    handleAfterSend(
+                      id,
+                      selectedTargetType[m.id],
+                      selectedTargetType[m.id] === "cellule"
+                        ? cellules.find(c => c.id === selectedTargets[m.id])
+                        : conseillers.find(c => c.id === selectedTargets[m.id])
+                    )
+                  }
+                  session={session}
+                  showToast={showToast}
+                />
+              </div>
+            )}
+          </div>
     
             {/* Bouton Détails */}
             <button

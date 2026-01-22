@@ -397,34 +397,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="a déjà son église">A déjà son église</option>
               <option value="visiteur">Visiteur</option>
             </select>
-          </div>
-
-          {/* Suivi statut */}
-          <div className="flex flex-col">
-            <label className="font-medium">Suivi statut</label>
-            <select
-              value={formData.suivi_statut ?? ""}
-              onChange={(e) => setFormData(prev => ({ ...prev, suivi_statut: e.target.value }))}
-              className="input"
-            >
-              <option value="">-- Sélectionner un statut --</option>
-              <option value="En Attente">En Attente</option>
-              <option value="Intégrer">Intégrer</option>
-              <option value="Refus">Refus</option>
-            </select>
-          </div>
-
-          {/* Commentaire suivis */}
-          <div className="flex flex-col">
-            <label className="font-medium">Commentaire suivis</label>
-            <textarea
-              name="commentaire_suivis"
-              value={formData.commentaire_suivis}
-              onChange={handleChange}
-              className="input"
-              rows={2}
-            />
-          </div>
+          </div>          
         </div>
 
         {/* Buttons */}

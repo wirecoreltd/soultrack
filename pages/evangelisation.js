@@ -60,8 +60,7 @@ export default function Evangelisation() {
 
     // 🔹 Retirer le contact du state instantanément
     setContacts((prev) => prev.filter((m) => m.id !== id));
-
-    alert("✅ Contact supprimé");
+    
   } catch (err) {
     console.error(err);
     alert("❌ Erreur lors de la suppression");

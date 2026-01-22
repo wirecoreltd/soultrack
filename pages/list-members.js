@@ -58,20 +58,28 @@ export default function ListMembers() {
  
   // -------------------- Supprimer un membre (LOGIQUE) --------------------
    const handleSupprimerMembre = async (id) => {
-     if (!id) return;
-   
-     const { error } = await supabase
-       .from("membres_complets") // ✅ SOURCE DE VÉRITÉ
-       .update({ etat_contact: "supprime" }) // ✅ PAS statut
-       .eq("id", id);
-   
-     if (error) {
-       console.error("Erreur suppression :", error);
-       return;
-     }
-   
-     showToast("🗑️ Contact marqué comme supprimé");
-   };
+    const { error } = await supabase
+      .from("membres_complets")
+      .update({ etat_contact: "supprime" })
+      .eq("id", id);
+  
+    if (error) {
+      console.error("Erreur suppression :", error);
+      return;
+    }
+  
+    // ✅ MISE À JOUR IMMÉDIATE DU CONTEXT
+    setAllMembers((prev) =>
+      prev.map((m) =>
+        m.id === id
+          ? { ...m, etat_contact: "supprime" }
+          : m
+      )
+    );
+  
+    showToast("❌ Contact supprimé");
+  };
+
 
   // -------------------- Commentaires / suivi --------------------
   const handleCommentChange = (id, value) => {

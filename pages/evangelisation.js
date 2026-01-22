@@ -3,16 +3,14 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
-import LogoutLink from "../components/LogoutLink";
+import HeaderPages from "../components/HeaderPages";
 import EditEvangelisePopup from "../components/EditEvangelisePopup";
 import DetailsEvangePopup from "../components/DetailsEvangePopup";
-import HeaderPages from "../components/HeaderPages";
 
 export default function Evangelisation() {
   const router = useRouter();
 
-  const [contacts, setContacts] = useState(null);
+  const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [selectedTargetType, setSelectedTargetType] = useState("");
@@ -24,10 +22,12 @@ export default function Evangelisation() {
   const [loadingSend, setLoadingSend] = useState(false);
   const [view, setView] = useState("card");
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
-  const [doublons, setDoublons] = useState([]);
-  const phoneMenuRef = useRef(null);
+
   const [showDoublonPopup, setShowDoublonPopup] = useState(false);
   const [doublonDetected, setDoublonDetected] = useState(null);
+  const [skipDoublonCheck, setSkipDoublonCheck] = useState(false);
+
+  const phoneMenuRef = useRef(null);
 
   /* ================= FETCH ================= */
   useEffect(() => {
@@ -59,8 +59,6 @@ export default function Evangelisation() {
       setContacts([]);
       return;
     }
-
-    console.log("Contacts chargés :", data);
     setContacts(data || []);
   };
 
@@ -79,7 +77,6 @@ export default function Evangelisation() {
     setConseillers(data || []);
   };
 
-  /* ================= UTILS ================= */
   const handleCheck = (id) =>
     setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -104,31 +101,12 @@ export default function Evangelisation() {
   };
 
   /* ================= ENVOI WHATSAPP ================= */
-  const sendContacts = async (skipCheck = false) => {
+  const sendContacts = async () => {
     if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+
     setLoadingSend(true);
 
     try {
-      // 🔹 Vérification doublon (UNE SEULE FOIS)
-      if (!skipCheck) {
-        const { data: suivisData } = await supabase
-          .from("suivis_des_evangelises")
-          .select("telephone");
-
-        const existingPhones = suivisData?.map((d) => d.telephone) || [];
-        const doublon = selectedContacts.find(
-          (c) => c.telephone && existingPhones.includes(c.telephone)
-        );
-
-        if (doublon) {
-          setDoublonDetected(doublon);
-          setShowDoublonPopup(true);
-          setLoadingSend(false);
-          return; // stop ici
-        }
-      }
-
-      // 🔹 Envoi normal
       const cible =
         selectedTargetType === "cellule"
           ? cellules.find((c) => c.id == selectedTarget)
@@ -137,29 +115,28 @@ export default function Evangelisation() {
       if (!cible || !cible.telephone)
         throw new Error("Numéro de la cible invalide");
 
-      // Vérification doublons dans suivis_des_evangelises
-      const { data: suivisExisting } = await supabase
-        .from("suivis_des_evangelises")
-        .select("telephone");
+      // 🔹 1. Vérification doublon (UNE SEULE FOIS)
+      if (!skipDoublonCheck) {
+        const { data: suivisExisting } = await supabase
+          .from("suivis_des_evangelises")
+          .select("telephone");
 
-      const existingPhones = suivisExisting.map((s) => s.telephone);
+        const existingPhones = suivisExisting.map((s) => s.telephone);
+        const doublon = selectedContacts.find(
+          (c) => c.telephone && existingPhones.includes(c.telephone)
+        );
 
-      const newContacts = selectedContacts.filter(
-        (c) => !existingPhones.includes(c.telephone)
-      );
-
-      const alreadyInSuivi = selectedContacts.filter((c) =>
-        existingPhones.includes(c.telephone)
-      );
-
-      if (alreadyInSuivi.length > 0) setDoublons(alreadyInSuivi);
-
-      if (newContacts.length === 0) {
-        setLoadingSend(false);
-        return;
+        if (doublon) {
+          setDoublonDetected(doublon);
+          setShowDoublonPopup(true);
+          setLoadingSend(false);
+          return; // STOP ici tant que l'utilisateur ne clique pas sur "Envoyer quand même"
+        }
       }
 
-      // Insertion suivis_des_evangelises
+      // 🔹 2. ENVOI NORMAL
+      const newContacts = selectedContacts; // ici on envoie tout, doublon accepté si skipDoublonCheck
+
       const inserts = newContacts.map((m) => ({
         prenom: m.prenom,
         nom: m.nom,
@@ -184,7 +161,6 @@ export default function Evangelisation() {
 
       if (insertError) throw insertError;
 
-      // Mise à jour table evangelises
       const ids = newContacts.map((c) => c.id);
       const { error: updateError } = await supabase
         .from("evangelises")
@@ -193,11 +169,10 @@ export default function Evangelisation() {
 
       if (updateError) throw updateError;
 
-      // Mise à jour UI
       setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
       setCheckedContacts({});
 
-      // Message WhatsApp
+      // ===== Message WhatsApp =====
       const nomCible =
         selectedTargetType === "cellule"
           ? cible.cellule_full || "Responsable de cellule"
@@ -242,13 +217,15 @@ export default function Evangelisation() {
       alert("❌ Erreur lors de l’envoi");
     } finally {
       setLoadingSend(false);
+      setSkipDoublonCheck(false);
+      setShowDoublonPopup(false);
+      setDoublonDetected(null);
     }
   };
 
-  /* ================= POPUP DOUBLON ================= */
   const confirmSendAnyway = () => {
-    setShowDoublonPopup(false);
-    sendContacts(true); // 🔹 Ignorer doublon
+    setSkipDoublonCheck(true);
+    sendContacts();
   };
 
   /* ================= UI ================= */
@@ -294,7 +271,7 @@ export default function Evangelisation() {
 
         {hasSelectedContacts && selectedTarget && (
           <button
-            onClick={() => sendContacts()}
+            onClick={sendContacts}
             disabled={loadingSend}
             className="w-full bg-green-500 text-white font-bold px-4 py-2 rounded"
           >

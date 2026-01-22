@@ -183,37 +183,27 @@ export default function ListMembers() {
 
      // -------------------- Filtrage --------------------
     const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
-
-  // ❌ Exclure définitivement les supprimés
-  //const actifs = members.filter((m) => m.etat_contact !== "supprime");
-  const baseFiltered = filter
-    ? actifs.filter(
-        (m) =>
-          m.etat_contact?.trim().toLowerCase() === filter.toLowerCase()
-      )
-    : actifs;
-
-  const searchFiltered = baseFiltered.filter((m) =>
-    `${m.prenom || ""} ${m.nom || ""}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
+  const searchFiltered = members.filter((m) =>
+    `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
   );
 
-  const nouveaux = searchFiltered.filter((m) =>
-    ["visiteur", "veut rejoindre icc", "nouveau"].includes(m.statut)
-  );
-
-  const anciens = searchFiltered.filter(
+  const filteredNouveaux = searchFiltered.filter(
     (m) =>
-      !["visiteur", "veut rejoindre icc", "nouveau"].includes(m.statut)
+      ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+  );
+
+  const filteredAnciens = searchFiltered.filter(
+    (m) =>
+      !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
   );
 
   return {
     filteredMembers: searchFiltered,
-    filteredNouveaux: nouveaux,
-    filteredAnciens: anciens,
+    filteredNouveaux,
+    filteredAnciens,
   };
-}, [members, filter, search]);
+}, [members, search]);
+
 
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 

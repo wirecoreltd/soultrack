@@ -44,6 +44,28 @@ export default function Evangelisation() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleSupprimerMembre = async (id) => {
+    const { error } = await supabase
+      .from("membres_complets")
+      .update({ etat_contact: "supprime" })
+      .eq("id", id);
+  
+    if (error) {
+      console.error("Erreur suppression :", error);
+      return;
+    }
+  
+    // ✅ MISE À JOUR IMMÉDIATE DU CONTEXT
+    setAllMembers((prev) =>
+      prev.map((m) =>
+        m.id === id
+          ? { ...m, etat_contact: "supprime" }
+          : m
+      )
+    );  
+    showToast("❌ Contact supprimé");
+  };
+
   // ===== Fetch contacts non envoyés =====
   const fetchContacts = async () => {
   const { data, error } = await supabase
@@ -354,7 +376,25 @@ export default function Evangelisation() {
                         <p>☀️ Type : {member.type_conversion || "—"}</p>
                         <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
                         <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
-                        <button onClick={() => { setEditMember(member); setPopupMember(null); }} className="text-blue-600 text-sm mt-4 w-full text-center">✏️ Modifier le contact</button>
+                        <button onClick={() => { setEditMember(member); setPopupMember(null); }} 
+                        className="text-blue-600 text-sm mt-4 w-full text-center">✏️ Modifier le contact</button>
+                          <button
+                           onClick={() => {
+                             if (
+                               window.confirm(
+                                 "⚠️ Suppression définitive\n\n" +
+                                 "Voulez-vous vraiment supprimer ce contact ?\n\n" +
+                                 "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
+                                 "Cette action est irréversible."
+                               )
+                             ) {
+                               handleSupprimerMembre(m.id);
+                             }
+                           }}
+                           className="text-red-600 text-sm mt-2 w-full"
+                         >
+                           🗑️ Supprimer le contact
+                         </button>  
                       </div>
                     )}
                   </div>

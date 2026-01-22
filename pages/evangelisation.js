@@ -305,45 +305,7 @@ export default function Evangelisation() {
           >
             {loadingSend ? "Envoi..." : "📤 Envoyer WhatsApp"}
           </button>
-        )}
-        {/* 🔹 Popup Doublon - Moderne */}
-          {showDoublonPopup && doublonDetected && (
-            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-              <div className="bg-white rounded-xl shadow-xl p-6 w-96 max-w-[90%] text-center animate-fadeIn">
-                <h3 className="text-xl font-bold mb-3 text-gray-800">
-                  ⚠️ Doublon détecté
-                </h3>
-          
-                <p className="mb-6 text-gray-700">
-                  Ce numéro existe déjà dans les suivis :
-                  <br />
-                  <strong>{doublonDetected.telephone}</strong>
-                </p>
-          
-                <div className="flex justify-center gap-3">
-                  <button
-                    onClick={() => {
-                      setShowDoublonPopup(false);
-                      pendingSend && pendingSend();
-                    }}
-                    className="flex-1 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600"
-                  >
-                    Envoyer quand même
-                  </button>
-          
-                  <button
-                    onClick={() => setShowDoublonPopup(false)}
-                    className="flex-1 bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded-lg hover:bg-gray-400"
-                  >
-                    Annuler
-                  </button>
-                </div>
-              </div>
-            </div>
-          )} 
-
-      </div>
-      <div className="w-full max-w-6xl flex flex-col items-center">
+        )}       
 
         {/* ================= DOUBLONS ================= */}
           {doublons.length > 0 && (

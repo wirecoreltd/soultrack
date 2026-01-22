@@ -170,93 +170,93 @@ export default function Evangelisation() {
 
 const processSend = async (contactsToSend, cible) => {
   if (!contactsToSend.length) return;
-  
-      // Insert dans suivis_des_evangelises
-      const inserts = newContacts.map((m) => ({
-        prenom: m.prenom,
-        nom: m.nom,
-        telephone: m.telephone,
-        is_whatsapp: m.is_whatsapp,
-        ville: m.ville,
-        besoin: m.besoin,
-        infos_supplementaires: m.infos_supplementaires,
-        sexe: m.sexe,
-        type_conversion: m.type_conversion,
-        priere_salut: m.priere_salut,
-        status_suivis_evangelises: "Envoyé",
-        evangelise_id: m.id,
-        conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
-        cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
-        date_suivi: new Date().toISOString()
-      }));
 
-      const { error: insertError } = await supabase
-        .from("suivis_des_evangelises")
-        .insert(inserts);
+  try {
+    const inserts = contactsToSend.map((m) => ({
+      prenom: m.prenom,
+      nom: m.nom,
+      telephone: m.telephone,
+      is_whatsapp: m.is_whatsapp,
+      ville: m.ville,
+      besoin: m.besoin,
+      infos_supplementaires: m.infos_supplementaires,
+      sexe: m.sexe,
+      type_conversion: m.type_conversion,
+      priere_salut: m.priere_salut,
+      status_suivis_evangelises: "Envoyé",
+      evangelise_id: m.id,
+      conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
+      cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
+      date_suivi: new Date().toISOString()
+    }));
 
-      if (insertError) throw insertError;
+    const { error: insertError } = await supabase
+      .from("suivis_des_evangelises")
+      .insert(inserts);
 
-      // Update evangelises
-      const ids = newContacts.map((c) => c.id);
-      const { error: updateError } = await supabase
-        .from("evangelises")
-        .update({ status_suivi: "Envoyé" })
-        .in("id", ids);
+    if (insertError) throw insertError;
 
-      if (updateError) throw updateError;
+    // Update evangelises
+    const ids = contactsToSend.map((c) => c.id);
+    const { error: updateError } = await supabase
+      .from("evangelises")
+      .update({ status_suivi: "Envoyé" })
+      .in("id", ids);
 
-      // Update UI
-      setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
-      setCheckedContacts({});
+    if (updateError) throw updateError;
 
-      // Message WhatsApp
-      const nomCible =
-        selectedTargetType === "cellule"
-          ? cible.cellule_full || "Responsable de cellule"
-          : `${cible.prenom}`;
-      const isMultiple = newContacts.length > 1;
+    // Update UI
+    setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
+    setCheckedContacts({});
 
-      let message = `👋 Bonjour ${nomCible},\n\n`;
-      message += isMultiple
-        ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
-        : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
+    // Message WhatsApp
+    const nomCible =
+      selectedTargetType === "cellule"
+        ? cible.cellule_full || "Responsable de cellule"
+        : `${cible.prenom}`;
+    const isMultiple = contactsToSend.length > 1;
 
-      newContacts.forEach((m, index) => {
-        message += "────────────────────\n";
-        if (isMultiple) message += `👥 Personne ${index + 1}\n`;
-        message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
-        message += `📱 Téléphone : ${m.telephone || "—"}\n`;
-        message += `🏙️ Ville : ${m.ville || "—"}\n`;
-        message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
-        message += `🎗️ Sexe : ${m.sexe || "—"}\n`;
-        message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n`;
-        message += `☀️ Type de conversion : ${m.type_conversion || "—"}\n`;
-        message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
-        message += `📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
-      });
+    let message = `👋 Bonjour ${nomCible},\n\n`;
+    message += isMultiple
+      ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
+      : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
 
-      message +=
-        "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner\n\n";
-      message += "Que Dieu te bénisse abondamment ✨";
+    contactsToSend.forEach((m, index) => {
+      message += "────────────────────\n";
+      if (isMultiple) message += `👥 Personne ${index + 1}\n`;
+      message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
+      message += `📱 Téléphone : ${m.telephone || "—"}\n`;
+      message += `🏙️ Ville : ${m.ville || "—"}\n`;
+      message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
+      message += `🎗️ Sexe : ${m.sexe || "—"}\n`;
+      message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n`;
+      message += `☀️ Type de conversion : ${m.type_conversion || "—"}\n`;
+      message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
+      message += `📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
+    });
 
-      if (cible.telephone) {
-        window.open(
-          `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
-            message
-          )}`,
-          "_blank"
-        );
-      }
+    message +=
+      "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner\n\n";
+    message += "Que Dieu te bénisse abondamment ✨";
 
-      alert("✅ Contacts envoyés et enregistrés");
-    } catch (err) {
-      console.error("ERREUR ENVOI", err);
-      alert("❌ Erreur lors de l’envoi");
-    } finally {
-      setLoadingSend(false);
+    if (cible.telephone) {
+      window.open(
+        `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
+          message
+        )}`,
+        "_blank"
+      );
     }
-  };
 
+    alert("✅ Contacts envoyés et enregistrés");
+  } catch (err) {
+    console.error("ERREUR ENVOI", err);
+    alert("❌ Erreur lors de l’envoi");
+  } finally {
+    setLoadingSend(false);
+  }
+};
+  
   /* ================= UI ================= */
   return (
      <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">

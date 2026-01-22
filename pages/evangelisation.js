@@ -128,7 +128,6 @@ export default function Evangelisation() {
     return "#888";
   };
 
-  /* ================= ENVOI WHATSAPP ================= */
   const sendContacts = async () => {
   if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
   setLoadingSend(true);
@@ -141,35 +140,29 @@ export default function Evangelisation() {
 
     if (!cible || !cible.telephone) throw new Error("Numéro de la cible invalide");
 
-    // Vérifier doublons dans les suivis
-    const { data: suivisExisting, error: suivisError } = await supabase
+    // Vérifier doublons
+    const { data: suivisExisting } = await supabase
       .from("suivis_des_evangelises")
       .select("evangelise_id");
 
-    if (suivisError) throw suivisError;
-
     const existingIds = suivisExisting.map((s) => s.evangelise_id);
-    const newContacts = selectedContacts.filter((c) => !existingIds.includes(c.id));
-    const alreadyInSuivi = selectedContacts.filter((c) => existingIds.includes(c.id));
+    const contactsAlreadyInSuivi = selectedContacts.filter(c => existingIds.includes(c.id));
+    const contactsToSend = selectedContacts; // on envoie tout si OK
 
-    // ⚠️ Popup pour les contacts déjà en suivi
-    if (alreadyInSuivi.length > 0) {
+    // Popup pour doublons
+    if (contactsAlreadyInSuivi.length > 0) {
       const proceed = window.confirm(
-        `⚠️ Attention ! ${alreadyInSuivi.length} contact(s) sont déjà enregistrés dans les suivis.\n\n` +
-        "Cliquez OK pour envoyer quand même.\n" +
-        "Cliquez Annuler pour arrêter l’envoi."
+        `⚠️ ${contactsAlreadyInSuivi.length} contact(s) sont déjà en suivi.\n` +
+        "OK pour envoyer quand même, Annuler pour stopper."
       );
       if (!proceed) {
-        setLoadingSend(false); // stop le loader si annulé
-        return; // Annuler l’envoi
+        setLoadingSend(false);
+        return; // Stop l’envoi si Annuler
       }
     }
 
-    // Contacts à insérer dans suivis
-    const contactsToInsert = newContacts.length > 0 ? newContacts : selectedContacts;
-
-    // Préparer l'insert
-    const inserts = contactsToInsert.map((m) => ({
+    // Insert dans suivis_des_evangelises
+    const inserts = contactsToSend.map((m) => ({
       prenom: m.prenom,
       nom: m.nom,
       telephone: m.telephone,
@@ -193,8 +186,8 @@ export default function Evangelisation() {
 
     if (insertError) throw insertError;
 
-    // Update evangelises
-    const ids = contactsToInsert.map((c) => c.id);
+    // Update table evangelises
+    const ids = contactsToSend.map(c => c.id);
     const { error: updateError } = await supabase
       .from("evangelises")
       .update({ status_suivi: "Envoyé" })
@@ -202,23 +195,24 @@ export default function Evangelisation() {
 
     if (updateError) throw updateError;
 
-    // Update UI instantané
-    setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
+    // Mise à jour instantanée UI
+    setContacts(prev => prev.filter(c => !ids.includes(c.id)));
     setCheckedContacts({});
 
-    // Préparer message WhatsApp
+    // Message WhatsApp automatique
     const nomCible =
       selectedTargetType === "cellule"
         ? cible.cellule_full || "Responsable de cellule"
         : `${cible.prenom}`;
 
-    const isMultiple = contactsToInsert.length > 1;
+    const isMultiple = contactsToSend.length > 1;
+
     let message = `👋 Bonjour ${nomCible},\n\n`;
     message += isMultiple
       ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
       : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
 
-    contactsToInsert.forEach((m, index) => {
+    contactsToSend.forEach((m, index) => {
       message += "────────────────────\n";
       if (isMultiple) message += `👥 Personne ${index + 1}\n`;
       message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
@@ -232,7 +226,8 @@ export default function Evangelisation() {
       message += `📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
     });
 
-    message += "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner\n\n";
+    message +=
+      "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner\n\n";
     message += "Que Dieu te bénisse abondamment ✨";
 
     if (cible.telephone) {
@@ -242,8 +237,8 @@ export default function Evangelisation() {
       );
     }
 
-    // ✅ Message de succès
-    // alert("Contacts envoyés et enregistrés"); <- tu peux le garder si tu veux
+    // Confirmation en alert si nécessaire
+    // alert("✅ Contacts envoyés et enregistrés"); // Optionnel
   } catch (err) {
     console.error("ERREUR ENVOI", err);
     alert("❌ Erreur lors de l’envoi");
@@ -251,7 +246,6 @@ export default function Evangelisation() {
     setLoadingSend(false);
   }
 };
-
   
   /* ================= UI ================= */
   return (

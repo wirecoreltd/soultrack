@@ -26,6 +26,8 @@ export default function Evangelisation() {
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const [doublons, setDoublons] = useState([]);
   const phoneMenuRef = useRef(null);
+  const [pendingSendContacts, setPendingSendContacts] = useState(null); 
+
 
   /* ================= FETCH ================= */
   useEffect(() => {
@@ -128,33 +130,47 @@ export default function Evangelisation() {
 
   /* ================= ENVOI WHATSAPP ================= */
   const sendContacts = async () => {
-    if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
-    setLoadingSend(true);
+  if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+  setLoadingSend(true);
 
-    try {
-      const cible =
-        selectedTargetType === "cellule"
-          ? cellules.find((c) => c.id == selectedTarget)
-          : conseillers.find((c) => c.id == selectedTarget);
+  try {
+    const cible =
+      selectedTargetType === "cellule"
+        ? cellules.find((c) => c.id == selectedTarget)
+        : conseillers.find((c) => c.id == selectedTarget);
 
-      if (!cible || !cible.telephone)
-        throw new Error("Numéro de la cible invalide");
+    if (!cible || !cible.telephone) throw new Error("Numéro de la cible invalide");
 
-      // Vérifier doublons
-      const { data: suivisExisting } = await supabase
-        .from("suivis_des_evangelises")
-        .select("evangelise_id");
+    // Vérifier doublons
+    const { data: suivisExisting } = await supabase
+      .from("suivis_des_evangelises")
+      .select("evangelise_id");
 
-      const existingIds = suivisExisting.map((s) => s.evangelise_id);
-      const newContacts = selectedContacts.filter((c) => !existingIds.includes(c.id));
-      const alreadyInSuivi = selectedContacts.filter((c) => existingIds.includes(c.id));
+    const existingIds = suivisExisting.map((s) => s.evangelise_id);
+    const newContacts = selectedContacts.filter((c) => !existingIds.includes(c.id));
+    const alreadyInSuivi = selectedContacts.filter((c) => existingIds.includes(c.id));
 
-      if (alreadyInSuivi.length > 0) setDoublons(alreadyInSuivi);
-      if (newContacts.length === 0) {
-        setLoadingSend(false);
-        return;
-      }
+    if (alreadyInSuivi.length > 0) {
+      // ⚠️ Si doublons, demander confirmation
+      setDoublons(alreadyInSuivi);
+      setPendingSendContacts(newContacts); // garder les nouveaux contacts à envoyer
+      setLoadingSend(false);
+      return;
+    }
 
+    // Sinon, envoyer normalement
+    await processSend(newContacts, cible);
+  } catch (err) {
+    console.error("ERREUR ENVOI", err);
+    alert("❌ Erreur lors de l’envoi");
+  } finally {
+    setLoadingSend(false);
+  }
+};
+
+const processSend = async (contactsToSend, cible) => {
+  if (!contactsToSend.length) return;
+  
       // Insert dans suivis_des_evangelises
       const inserts = newContacts.map((m) => ({
         prenom: m.prenom,
@@ -301,33 +317,35 @@ export default function Evangelisation() {
             <div className="bg-blue-100/30 border-l-4 border-blue-500/70 p-4 mb-4 w-full max-w-6xl rounded shadow">
               <p className="font-bold text-blue-800 mb-2">⚠️ Contact déjà en suivi !</p>
               <p className="text-sm text-blue-700 mb-2">
-                Ces contacts sont déjà enregistrés dans les suivis. Vous pouvez les garder sur la page ou les retirer temporairement. (Ils restent dans les suivis jusqu’à la prochaine étape)
+                Ces contacts sont déjà enregistrés dans les suivis. Que voulez-vous faire ?
               </p>
-              {doublons.map((c) => (
-                <div key={c.id} className="flex justify-between items-center mt-2 bg-white p-2 rounded shadow-sm">
-                  <span className="font-medium">{c.prenom} {c.nom} ({c.telephone})</span>
-                  <div className="flex gap-2">
-                    <button
-                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
-                      onClick={() => setDoublons((prev) => prev.filter((d) => d.id !== c.id))}
-                    >
-                      Garder
-                    </button>
-                    <button
-                      className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 transition"
-                      onClick={() => {
-                        setDoublons((prev) => prev.filter((d) => d.id !== c.id));
-                        setContacts((prev) => prev.filter((d) => d.id !== c.id));
-                      }}
-                    >
-                      Supprimer
-                    </button>
+              <div className="flex gap-4">
+                <button
+                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                  onClick={() => setDoublons([])} // Annuler
+                >
+                  Annuler
+                </button>
+                <button
+                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                  onClick={async () => {
+                    // Envoyer quand même
+                    const cible =
+                      selectedTargetType === "cellule"
+                        ? cellules.find((c) => c.id == selectedTarget)
+                        : conseillers.find((c) => c.id == selectedTarget);
+                    await processSend([...pendingSendContacts, ...doublons], cible);
+                    setDoublons([]);
+                    setPendingSendContacts(null);
+                  }}
+                >
+                  Envoyer quand même
+                </button>  
                   </div>
                 </div>
               ))}
             </div>
           )}
-
 
         {/* Toggle Vue Carte / Vue Table */}
         <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">

@@ -26,6 +26,10 @@ export default function Evangelisation() {
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const [doublons, setDoublons] = useState([]);
   const phoneMenuRef = useRef(null);
+  const [showDoublonPopup, setShowDoublonPopup] = useState(false);
+  const [doublonDetected, setDoublonDetected] = useState(null);
+  const [skipDoublonCheck, setSkipDoublonCheck] = useState(false);
+
 
   /* ================= FETCH ================= */
   useEffect(() => {
@@ -63,6 +67,12 @@ export default function Evangelisation() {
   setContacts(data || []);
 };
 
+  const confirmSendAnyway = () => {
+  setSkipDoublonCheck(true);
+  setShowDoublonPopup(false);
+  sendContacts(); // 🔁 relance normale
+};
+  
   const fetchCellules = async () => {
     const { data } = await supabase
       .from("cellules")
@@ -105,8 +115,41 @@ export default function Evangelisation() {
   /* ================= ENVOI WHATSAPP ================= */
   const sendContacts = async () => {
   if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+
+  // 🔹 1. Vérification doublon (UNE SEULE FOIS)
+  if (!skipDoublonCheck) {
+    const { data } = await supabase
+      .from("suivis_des_evangelises")
+      .select("telephone");
+
+    const existingPhones = data?.map(d => d.telephone);
+    const doublon = selectedContacts.find(c =>
+      c.telephone && existingPhones.includes(c.telephone)
+    );
+
+    if (doublon) {
+      setDoublonDetected(doublon);
+      setShowDoublonPopup(true);
+      return; // ⛔ STOP ici
+    }
+  }
+
+  // 🔹 2. ENVOI NORMAL (TON CODE EXISTANT)
   setLoadingSend(true);
 
+  try {
+    // ⬇️ ICI TU LAISSES TON CODE ACTUEL INCHANGÉ
+    // insert suivis_des_evangelises
+    // update evangelises
+    // whatsapp
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoadingSend(false);
+    setSkipDoublonCheck(false); // reset
+  }
+};
+  
   try {
     const cible =
       selectedTargetType === "cellule"
@@ -279,43 +322,35 @@ export default function Evangelisation() {
 
       <div className="w-full max-w-6xl flex flex-col items-center">
        
-        {/* ================= DOUBLONS ================= */}
-        {doublons.length > 0 && (
-          <div className="bg-orange-100/40 border-l-4 border-orange-500/70 p-4 mb-4 w-full max-w-6xl rounded shadow">
-            <p className="font-bold text-orange-800 mb-2">⚠️ Contacts déjà en suivi</p>
-            <p className="text-sm text-orange-700 mb-3">
-              Ces contacts ont déjà été envoyés auparavant.  
-              Tu peux annuler ou choisir d’envoyer quand même.
-            </p>
-        
-            {doublons.map((c) => (
-              <div
-                key={c.id}
-                className="mt-2 bg-white p-2 rounded shadow-sm text-sm font-medium"
-              >
-                {c.prenom} {c.nom} ({c.telephone})
-              </div>
-            ))}
-        
-            <div className="flex justify-end gap-3 mt-4">
-              {/* Annuler */}
-              <button
-                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
-                onClick={() => setDoublons([])}
-              >
-                Annuler
-              </button>
-        
-              {/* Envoyer quand même */}
-              <button
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-                onClick={async () => {
-                  setDoublons([]);
-                  await forceSendContacts(); // nouvelle fonction (voir plus bas)
-                }}
-              >
-                Envoyer quand même
-              </button>
+        {/* 🔹 Popup Doublon - Moderne */}
+{showDoublonPopup && doublonDetected && (
+  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="bg-white rounded-xl shadow-xl p-6 w-96 max-w-[90%] text-center">
+      <h3 className="text-xl font-bold mb-3 text-gray-800">
+        ⚠️ Doublon détecté
+      </h3>
+
+      <p className="mb-6 text-gray-700">
+        Ce numéro existe déjà dans les suivis :
+        <br />
+        <strong>{doublonDetected.telephone}</strong>
+      </p>
+
+      <div className="flex gap-3">
+        <button
+          onClick={confirmSendAnyway}
+          className="flex-1 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600"
+        >
+          Envoyer quand même
+        </button>
+
+        <button
+          onClick={() => setShowDoublonPopup(false)}
+          className="flex-1 bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded-lg hover:bg-gray-400"
+        >
+          Annuler
+        </button>
+
             </div>
           </div>
         )}  

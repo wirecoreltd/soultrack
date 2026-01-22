@@ -59,7 +59,7 @@ export default function Evangelisation() {
     setAllMembers((prev) =>
       prev.map((m) =>
         m.id === id
-          ? { ...m, etat_contact: "supprime" }
+          ? { ...m, evangelises: "supprime" }
           : m
       )
     );  
@@ -388,7 +388,7 @@ export default function Evangelisation() {
                                  "Cette action est irréversible."
                                )
                              ) {
-                               handleSupprimerMembre(m.id);
+                               handleSupprimerMembre(member.id); 
                              }
                            }}
                            className="text-red-600 text-sm mt-2 w-full"

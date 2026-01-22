@@ -133,23 +133,23 @@ export default function Evangelisation() {
   setLoadingSend(true);
 
   try {
+    // Récupérer la cible
     const cible =
       selectedTargetType === "cellule"
-        ? cellules.find((c) => c.id == selectedTarget)
-        : conseillers.find((c) => c.id == selectedTarget);
+        ? cellules.find(c => c.id === selectedTarget)
+        : conseillers.find(c => c.id === selectedTarget);
 
     if (!cible || !cible.telephone) throw new Error("Numéro de la cible invalide");
 
-    // Vérifier doublons
+    // Vérifier doublons dans la table de suivis
     const { data: suivisExisting } = await supabase
       .from("suivis_des_evangelises")
       .select("evangelise_id");
 
-    const existingIds = suivisExisting.map((s) => s.evangelise_id);
+    const existingIds = suivisExisting.map(s => s.evangelise_id);
     const contactsAlreadyInSuivi = selectedContacts.filter(c => existingIds.includes(c.id));
-    const contactsToSend = selectedContacts; // on envoie tout si OK
 
-    // Popup pour doublons
+    // Popup si doublons
     if (contactsAlreadyInSuivi.length > 0) {
       const proceed = window.confirm(
         `⚠️ ${contactsAlreadyInSuivi.length} contact(s) sont déjà en suivi.\n` +
@@ -161,8 +161,11 @@ export default function Evangelisation() {
       }
     }
 
-    // Insert dans suivis_des_evangelises
-    const inserts = contactsToSend.map((m) => ({
+    // Tous les contacts sélectionnés seront envoyés
+    const contactsToSend = selectedContacts;
+
+    // Insertion dans suivis_des_evangelises
+    const inserts = contactsToSend.map(m => ({
       prenom: m.prenom,
       nom: m.nom,
       telephone: m.telephone,
@@ -186,7 +189,7 @@ export default function Evangelisation() {
 
     if (insertError) throw insertError;
 
-    // Update table evangelises
+    // Mettre à jour table evangelises
     const ids = contactsToSend.map(c => c.id);
     const { error: updateError } = await supabase
       .from("evangelises")
@@ -199,22 +202,19 @@ export default function Evangelisation() {
     setContacts(prev => prev.filter(c => !ids.includes(c.id)));
     setCheckedContacts({});
 
-    // Message WhatsApp automatique
-    const nomCible =
-      selectedTargetType === "cellule"
-        ? cible.cellule_full || "Responsable de cellule"
-        : `${cible.prenom}`;
-
-    const isMultiple = contactsToSend.length > 1;
+    // Construire le message WhatsApp
+    const nomCible = selectedTargetType === "cellule"
+      ? cible.cellule_full || "Responsable de cellule"
+      : `${cible.prenom}`;
 
     let message = `👋 Bonjour ${nomCible},\n\n`;
-    message += isMultiple
+    message += contactsToSend.length > 1
       ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
       : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
 
     contactsToSend.forEach((m, index) => {
       message += "────────────────────\n";
-      if (isMultiple) message += `👥 Personne ${index + 1}\n`;
+      if (contactsToSend.length > 1) message += `👥 Personne ${index + 1}\n`;
       message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
       message += `📱 Téléphone : ${m.telephone || "—"}\n`;
       message += `🏙️ Ville : ${m.ville || "—"}\n`;
@@ -230,15 +230,12 @@ export default function Evangelisation() {
       "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner\n\n";
     message += "Que Dieu te bénisse abondamment ✨";
 
-    if (cible.telephone) {
-      window.open(
-        `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`,
-        "_blank"
-      );
-    }
+    // Envoyer WhatsApp automatique
+    window.open(
+      `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`,
+      "_blank"
+    );
 
-    // Confirmation en alert si nécessaire
-    // alert("✅ Contacts envoyés et enregistrés"); // Optionnel
   } catch (err) {
     console.error("ERREUR ENVOI", err);
     alert("❌ Erreur lors de l’envoi");
@@ -246,6 +243,7 @@ export default function Evangelisation() {
     setLoadingSend(false);
   }
 };
+
   
   /* ================= UI ================= */
   return (

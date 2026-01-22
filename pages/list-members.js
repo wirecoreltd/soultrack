@@ -55,55 +55,23 @@ export default function ListMembers() {
     3: "Intégré",
     4: "Refus",
   };
-
-
-  // -------------------- Supprimer un membre --------------------
-  //const handleSupprimerMembre = (id) => {
-    //if (!id) return;
-    //setAllMembers(prev => prev.filter(m => m.id !== id)); // supprime du contexte
-   // showToast("❌ Contact supprimé de la liste");
-   // if (popupMember?.id === id) setPopupMember(null); // ferme popup si ouvert
- // };
-  const handleSupprimerMembre = async (membre) => {
-  if (!membre?.telephone) {
-    alert("Impossible de supprimer ce contact");
-    return;
-  }
-
-  // 🔎 Tous les contacts avec le même téléphone
-  const samePhoneMembers = members.filter(
-    (m) => m.telephone === membre.telephone
-  );
-
-  // 🥇 L'original = le plus ancien
-  const original = samePhoneMembers.reduce((oldest, current) =>
-    new Date(current.created_at) < new Date(oldest.created_at)
-      ? current
-      : oldest
-  );
-
-  // ❌ Blocage si original
-  if (membre.id === original.id) {
-    alert("❌ Impossible de supprimer le contact original");
-    return;
-  }
-
-  // ✅ Suppression logique du doublon
-  const { error } = await supabase
-    .from("membres_complets")
-    .update({ etat_contact: "supprime" })
-    .eq("id", membre.id);
-
-  if (error) {
-    console.error("Erreur suppression :", error);
-    return;
-  }
-
-  // 🔥 Retrait immédiat de l'UI
-  setAllMembers((prev) => prev.filter((m) => m.id !== membre.id));
-
-  showToast("🗑️ Doublon supprimé");
-};
+ 
+  // -------------------- Supprimer un membre (LOGIQUE) --------------------
+   const handleSupprimerMembre = async (id) => {
+     if (!id) return;
+   
+     const { error } = await supabase
+       .from("membres_complets") // ✅ SOURCE DE VÉRITÉ
+       .update({ etat_contact: "supprime" }) // ✅ PAS statut
+       .eq("id", id);
+   
+     if (error) {
+       console.error("Erreur suppression :", error);
+       return;
+     }
+   
+     showToast("🗑️ Contact marqué comme supprimé");
+   };
 
   // -------------------- Commentaires / suivi --------------------
   const handleCommentChange = (id, value) => {
@@ -217,10 +185,7 @@ export default function ListMembers() {
     const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
 
   // ❌ Exclure définitivement les supprimés
-  const actifs = members.filter(
-    (m) => m.etat_contact !== "supprime"
-  );
-
+  //const actifs = members.filter((m) => m.etat_contact !== "supprime");
   const baseFiltered = filter
     ? actifs.filter(
         (m) =>
@@ -341,14 +306,8 @@ export default function ListMembers() {
                     >
                       <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">📞 Appeler</a>
                       <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">✉️ SMS</a>
-                      <a
-                        href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block px-4 py-2 text-sm hover:bg-gray-100"
-                      >
-                        💬 WhatsApp
-                      </a>
+                      <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" 
+                      rel="noopener noreferrer"className="block px-4 py-2 text-sm hover:bg-gray-100">💬 WhatsApp</a>
                     </div>
                   )}
                 </>

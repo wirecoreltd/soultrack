@@ -141,38 +141,35 @@ export default function Evangelisation() {
 
     if (!cible || !cible.telephone) throw new Error("Numéro de la cible invalide");
 
-    // Vérifier doublons
-    const { data: suivisExisting } = await supabase
+    // Vérifier doublons dans les suivis
+    const { data: suivisExisting, error: suivisError } = await supabase
       .from("suivis_des_evangelises")
       .select("evangelise_id");
+
+    if (suivisError) throw suivisError;
 
     const existingIds = suivisExisting.map((s) => s.evangelise_id);
     const newContacts = selectedContacts.filter((c) => !existingIds.includes(c.id));
     const alreadyInSuivi = selectedContacts.filter((c) => existingIds.includes(c.id));
 
+    // ⚠️ Popup pour les contacts déjà en suivi
     if (alreadyInSuivi.length > 0) {
-      // ⚠️ Si doublons, demander confirmation
-      setDoublons(alreadyInSuivi);
-      setPendingSendContacts(newContacts); // garder les nouveaux contacts à envoyer
-      setLoadingSend(false);
-      return;
+      const proceed = window.confirm(
+        `⚠️ Attention ! ${alreadyInSuivi.length} contact(s) sont déjà enregistrés dans les suivis.\n\n` +
+        "Cliquez OK pour envoyer quand même.\n" +
+        "Cliquez Annuler pour arrêter l’envoi."
+      );
+      if (!proceed) {
+        setLoadingSend(false); // stop le loader si annulé
+        return; // Annuler l’envoi
+      }
     }
 
-    // Sinon, envoyer normalement
-    await processSend(newContacts, cible);
-  } catch (err) {
-    console.error("ERREUR ENVOI", err);
-    alert("❌ Erreur lors de l’envoi");
-  } finally {
-    setLoadingSend(false);
-  }
-};
+    // Contacts à insérer dans suivis
+    const contactsToInsert = newContacts.length > 0 ? newContacts : selectedContacts;
 
-const processSend = async (contactsToSend, cible) => {
-  if (!contactsToSend.length) return;
-
-  try {
-    const inserts = contactsToSend.map((m) => ({
+    // Préparer l'insert
+    const inserts = contactsToInsert.map((m) => ({
       prenom: m.prenom,
       nom: m.nom,
       telephone: m.telephone,
@@ -197,7 +194,7 @@ const processSend = async (contactsToSend, cible) => {
     if (insertError) throw insertError;
 
     // Update evangelises
-    const ids = contactsToSend.map((c) => c.id);
+    const ids = contactsToInsert.map((c) => c.id);
     const { error: updateError } = await supabase
       .from("evangelises")
       .update({ status_suivi: "Envoyé" })
@@ -205,23 +202,23 @@ const processSend = async (contactsToSend, cible) => {
 
     if (updateError) throw updateError;
 
-    // Update UI
+    // Update UI instantané
     setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
     setCheckedContacts({});
 
-    // Message WhatsApp
+    // Préparer message WhatsApp
     const nomCible =
       selectedTargetType === "cellule"
         ? cible.cellule_full || "Responsable de cellule"
         : `${cible.prenom}`;
-    const isMultiple = contactsToSend.length > 1;
 
+    const isMultiple = contactsToInsert.length > 1;
     let message = `👋 Bonjour ${nomCible},\n\n`;
     message += isMultiple
       ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
       : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
 
-    contactsToSend.forEach((m, index) => {
+    contactsToInsert.forEach((m, index) => {
       message += "────────────────────\n";
       if (isMultiple) message += `👥 Personne ${index + 1}\n`;
       message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
@@ -235,20 +232,18 @@ const processSend = async (contactsToSend, cible) => {
       message += `📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
     });
 
-    message +=
-      "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner\n\n";
+    message += "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner\n\n";
     message += "Que Dieu te bénisse abondamment ✨";
 
     if (cible.telephone) {
       window.open(
-        `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
-          message
-        )}`,
+        `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`,
         "_blank"
       );
     }
 
-    alert("✅ Contacts envoyés et enregistrés");
+    // ✅ Message de succès
+    // alert("Contacts envoyés et enregistrés"); <- tu peux le garder si tu veux
   } catch (err) {
     console.error("ERREUR ENVOI", err);
     alert("❌ Erreur lors de l’envoi");
@@ -256,6 +251,7 @@ const processSend = async (contactsToSend, cible) => {
     setLoadingSend(false);
   }
 };
+
   
   /* ================= UI ================= */
   return (

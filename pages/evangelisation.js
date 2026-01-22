@@ -26,6 +26,10 @@ export default function Evangelisation() {
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const [doublons, setDoublons] = useState([]);
   const phoneMenuRef = useRef(null);
+  const [showDoublonPopup, setShowDoublonPopup] = useState(false);
+  const [doublonDetected, setDoublonDetected] = useState(null);
+  const [pendingSend, setPendingSend] = useState(null);
+
 
   /* ================= FETCH ================= */
   useEffect(() => {
@@ -103,9 +107,43 @@ export default function Evangelisation() {
   };
 
   /* ================= ENVOI WHATSAPP ================= */
-  const sendContacts = async () => {
-    if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
-    setLoadingSend(true);
+  const sendContacts = async (forceSend = false) => {
+  if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+  setLoadingSend(true);
+
+  try {
+    // 🔍 récupérer tous les téléphones déjà suivis
+    const { data: existing } = await supabase
+      .from("suivis_des_evangelises")
+      .select("telephone");
+
+    const existingPhones = existing?.map(e => e.telephone);
+
+    const doublon = selectedContacts.find(c =>
+      existingPhones.includes(c.telephone)
+    );
+
+    // ⚠️ DOUBLON détecté
+    if (doublon && !forceSend) {
+      setDoublonDetected(doublon);
+      setPendingSend(() => () => sendContacts(true));
+      setShowDoublonPopup(true);
+      setLoadingSend(false);
+      return;
+    }
+
+    // ✅ ICI → ton code actuel d’envoi (inchangé)
+    // insert suivis_des_evangelises
+    // update evangelises
+    // whatsapp
+
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoadingSend(false);
+  }
+};
+
 
     try {
       const cible =
@@ -268,42 +306,76 @@ export default function Evangelisation() {
             {loadingSend ? "Envoi..." : "📤 Envoyer WhatsApp"}
           </button>
         )}
-      </div>
+        {/* 🔹 Popup Doublon - Moderne */}
+          {showDoublonPopup && doublonDetected && (
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl shadow-xl p-6 w-96 max-w-[90%] text-center animate-fadeIn">
+                <h3 className="text-xl font-bold mb-3 text-gray-800">
+                  ⚠️ Doublon détecté
+                </h3>
+          
+                <p className="mb-6 text-gray-700">
+                  Ce numéro existe déjà dans les suivis :
+                  <br />
+                  <strong>{doublonDetected.telephone}</strong>
+                </p>
+          
+                <div className="flex justify-center gap-3">
+                  <button
+                    onClick={() => {
+                      setShowDoublonPopup(false);
+                      pendingSend && pendingSend();
+                    }}
+                    className="flex-1 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600"
+                  >
+                    Envoyer quand même
+                  </button>
+          
+                  <button
+                    onClick={() => setShowDoublonPopup(false)}
+                    className="flex-1 bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded-lg hover:bg-gray-400"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            </div>
+          )} 
 
+      </div>
       <div className="w-full max-w-6xl flex flex-col items-center">
 
         {/* ================= DOUBLONS ================= */}
-{doublons.length > 0 && (
-  <div className="bg-blue-100/30 border-l-4 border-blue-500/70 p-4 mb-4 w-full max-w-6xl rounded shadow">
-    <p className="font-bold text-blue-800 mb-2">⚠️ Contact déjà en suivi !</p>
-    <p className="text-sm text-blue-700 mb-2">
-      Ces contacts sont déjà enregistrés dans les suivis. Vous pouvez les garder sur la page ou les retirer temporairement. (Ils restent dans les suivis jusqu’à la prochaine étape)
-    </p>
-    {doublons.map((c) => (
-      <div key={c.id} className="flex justify-between items-center mt-2 bg-white p-2 rounded shadow-sm">
-        <span className="font-medium">{c.prenom} {c.nom} ({c.telephone})</span>
-        <div className="flex gap-2">
-          <button
-            className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
-            onClick={() => setDoublons((prev) => prev.filter((d) => d.id !== c.id))}
-          >
-            Garder
-          </button>
-          <button
-            className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 transition"
-            onClick={() => {
-              setDoublons((prev) => prev.filter((d) => d.id !== c.id));
-              setContacts((prev) => prev.filter((d) => d.id !== c.id));
-            }}
-          >
-            Supprimer
-          </button>
-        </div>
-      </div>
-    ))}
-  </div>
-)}
-
+          {doublons.length > 0 && (
+            <div className="bg-blue-100/30 border-l-4 border-blue-500/70 p-4 mb-4 w-full max-w-6xl rounded shadow">
+              <p className="font-bold text-blue-800 mb-2">⚠️ Contact déjà en suivi !</p>
+              <p className="text-sm text-blue-700 mb-2">
+                Ces contacts sont déjà enregistrés dans les suivis. Vous pouvez les garder sur la page ou les retirer temporairement. (Ils restent dans les suivis jusqu’à la prochaine étape)
+              </p>
+              {doublons.map((c) => (
+                <div key={c.id} className="flex justify-between items-center mt-2 bg-white p-2 rounded shadow-sm">
+                  <span className="font-medium">{c.prenom} {c.nom} ({c.telephone})</span>
+                  <div className="flex gap-2">
+                    <button
+                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+                      onClick={() => setDoublons((prev) => prev.filter((d) => d.id !== c.id))}
+                    >
+                      Garder
+                    </button>
+                    <button
+                      className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 transition"
+                      onClick={() => {
+                        setDoublons((prev) => prev.filter((d) => d.id !== c.id));
+                        setContacts((prev) => prev.filter((d) => d.id !== c.id));
+                      }}
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
         {/* Toggle Vue Carte / Vue Table */}
         <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">

@@ -64,23 +64,46 @@ export default function ListMembers() {
    // showToast("❌ Contact supprimé de la liste");
    // if (popupMember?.id === id) setPopupMember(null); // ferme popup si ouvert
  // };
-  const handleSupprimerMembre = async (id) => {
-   // 🔹 Update dans la bonne source
-   const { error } = await supabase
-     .from("membres_complets")  // <- important
-     .update({ etat_contact: "supprime" })
-     .eq("id", id);
- 
-   if (error) {
-     console.error("Erreur suppression :", error);
-     return;
-   }
- 
-   // 🔹 Retirer immédiatement de l'UI
-   setAllMembers(prev => prev.filter(m => m.id !== id));
- 
-   showToast("Contact supprimé définitivement");
- };
+  const handleSupprimerMembre = async (membre) => {
+  if (!membre?.telephone) {
+    alert("Impossible de supprimer ce contact");
+    return;
+  }
+
+  // 🔎 Tous les contacts avec le même téléphone
+  const samePhoneMembers = members.filter(
+    (m) => m.telephone === membre.telephone
+  );
+
+  // 🥇 L'original = le plus ancien
+  const original = samePhoneMembers.reduce((oldest, current) =>
+    new Date(current.created_at) < new Date(oldest.created_at)
+      ? current
+      : oldest
+  );
+
+  // ❌ Blocage si original
+  if (membre.id === original.id) {
+    alert("❌ Impossible de supprimer le contact original");
+    return;
+  }
+
+  // ✅ Suppression logique du doublon
+  const { error } = await supabase
+    .from("membres_complets")
+    .update({ etat_contact: "supprime" })
+    .eq("id", membre.id);
+
+  if (error) {
+    console.error("Erreur suppression :", error);
+    return;
+  }
+
+  // 🔥 Retrait immédiat de l'UI
+  setAllMembers((prev) => prev.filter((m) => m.id !== membre.id));
+
+  showToast("🗑️ Doublon supprimé");
+};
 
   // -------------------- Commentaires / suivi --------------------
   const handleCommentChange = (id, value) => {
@@ -193,48 +216,39 @@ export default function ListMembers() {
      // -------------------- Filtrage --------------------
     const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
 
-     // 🔥 1️⃣ EXCLURE TOUJOURS LES SUPPRIMÉS
-     const withoutDeleted = members.filter(
-       (m) => m.etat_contact?.toLowerCase() !== "supprime"
-     );
-   
-     // 🔎 2️⃣ FILTRE ETAT CONTACT (si sélectionné)
-     const baseFiltered = filter
-       ? withoutDeleted.filter(
-           (m) =>
-             m.etat_contact?.trim().toLowerCase() === filter.toLowerCase()
-         )
-       : withoutDeleted;
-   
-     // 🔍 3️⃣ RECHERCHE TEXTE
-     const searchFiltered = baseFiltered.filter((m) =>
-       `${m.prenom || ""} ${m.nom || ""}`
-         .toLowerCase()
-         .includes(search.toLowerCase())
-     );
-   
-     // 🆕 4️⃣ NOUVEAUX
-     const nouveaux = searchFiltered.filter((m) =>
-       ["visiteur", "veut rejoindre icc", "nouveau"].includes(
-         m.statut?.toLowerCase()
-       )
-     );
-   
-     // 👥 5️⃣ ANCIENS
-     const anciens = searchFiltered.filter(
-       (m) =>
-         !["visiteur", "veut rejoindre icc", "nouveau"].includes(
-           m.statut?.toLowerCase()
-         )
-     );
-   
-     return {
-       filteredMembers: searchFiltered,
-       filteredNouveaux: nouveaux,
-       filteredAnciens: anciens,
-     };
-   }, [members, filter, search]);
+  // ❌ Exclure définitivement les supprimés
+  const actifs = members.filter(
+    (m) => m.etat_contact !== "supprime"
+  );
 
+  const baseFiltered = filter
+    ? actifs.filter(
+        (m) =>
+          m.etat_contact?.trim().toLowerCase() === filter.toLowerCase()
+      )
+    : actifs;
+
+  const searchFiltered = baseFiltered.filter((m) =>
+    `${m.prenom || ""} ${m.nom || ""}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
+
+  const nouveaux = searchFiltered.filter((m) =>
+    ["visiteur", "veut rejoindre icc", "nouveau"].includes(m.statut)
+  );
+
+  const anciens = searchFiltered.filter(
+    (m) =>
+      !["visiteur", "veut rejoindre icc", "nouveau"].includes(m.statut)
+  );
+
+  return {
+    filteredMembers: searchFiltered,
+    filteredNouveaux: nouveaux,
+    filteredAnciens: anciens,
+  };
+}, [members, filter, search]);
 
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 

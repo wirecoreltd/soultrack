@@ -46,8 +46,8 @@ export default function Evangelisation() {
 
   const handleSupprimerMembre = async (id) => {
     const { error } = await supabase
-      .from("membres_complets")
-      .update({ etat_contact: "supprime" })
+      .from("evangelises")
+      .update({ status_suivi: "supprime" })
       .eq("id", id);
   
     if (error) {

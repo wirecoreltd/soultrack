@@ -75,11 +75,9 @@ export default function ListMembers() {
           ? { ...m, etat_contact: "supprime" }
           : m
       )
-    );
-  
+    );  
     showToast("❌ Contact supprimé");
   };
-
 
   // -------------------- Commentaires / suivi --------------------
   const handleCommentChange = (id, value) => {
@@ -123,7 +121,6 @@ export default function ListMembers() {
     setLoading(false);
   }
 };
-
 
   const fetchCellules = async () => {
     const { data, error } = await supabase.from("cellules").select("id, cellule_full");
@@ -190,28 +187,43 @@ export default function ListMembers() {
   }, []);
 
      // -------------------- Filtrage --------------------
-    const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
-  const searchFiltered = members.filter((m) =>
-    `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const filteredNouveaux = searchFiltered.filter(
-    (m) =>
-      ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-  );
-
-  const filteredAnciens = searchFiltered.filter(
-    (m) =>
-      !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-  );
-
-  return {
-    filteredMembers: searchFiltered,
-    filteredNouveaux,
-    filteredAnciens,
-  };
-}, [members, search]);
-
+      const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
+  
+     // ✅ 1️⃣ EXCLURE LES SUPPRIMÉS (OBLIGATOIRE)
+     const actifs = members.filter(
+       (m) => m.etat_contact !== "supprime"
+     );
+   
+     // ✅ 2️⃣ FILTRE PAR ÉTAT (nouveau / existant / etc.)
+     const baseFiltered = filter
+       ? actifs.filter(
+           (m) =>
+             m.etat_contact?.trim().toLowerCase() === filter.toLowerCase()
+         )
+       : actifs;
+   
+     // ✅ 3️⃣ RECHERCHE TEXTE
+     const searchFiltered = baseFiltered.filter((m) =>
+       `${m.prenom || ""} ${m.nom || ""}`
+         .toLowerCase()
+         .includes(search.toLowerCase())
+     );
+   
+     // ✅ 4️⃣ LOGIQUE NOUVEAUX / ANCIENS (INCHANGÉE)
+     const nouveaux = searchFiltered.filter((m) =>
+       ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+     );
+   
+     const anciens = searchFiltered.filter(
+       (m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+     );
+   
+     return {
+       filteredMembers: searchFiltered,
+       filteredNouveaux: nouveaux,
+       filteredAnciens: anciens,
+     };
+   }, [members, filter, search]);
 
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 

@@ -438,5 +438,4 @@ export default function Evangelisation() {
     </div> {/* fermeture du container principal */}
   </div>
 );
-
-
+}

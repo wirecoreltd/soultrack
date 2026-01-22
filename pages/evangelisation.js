@@ -273,36 +273,36 @@ export default function Evangelisation() {
       <div className="w-full max-w-6xl flex flex-col items-center">
 
         {/* ================= DOUBLONS ================= */}
-{doublons.length > 0 && (
-  <div className="bg-blue-100/30 border-l-4 border-blue-500/70 p-4 mb-4 w-full max-w-6xl rounded shadow">
-    <p className="font-bold text-blue-800 mb-2">⚠️ Contact déjà en suivi !</p>
-    <p className="text-sm text-blue-700 mb-2">
-      Ces contacts sont déjà enregistrés dans les suivis. Vous pouvez les garder sur la page ou les retirer temporairement. (Ils restent dans les suivis jusqu’à la prochaine étape)
-    </p>
-    {doublons.map((c) => (
-      <div key={c.id} className="flex justify-between items-center mt-2 bg-white p-2 rounded shadow-sm">
-        <span className="font-medium">{c.prenom} {c.nom} ({c.telephone})</span>
-        <div className="flex gap-2">
-          <button
-            className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
-            onClick={() => setDoublons((prev) => prev.filter((d) => d.id !== c.id))}
-          >
-            Garder
-          </button>
-          <button
-            className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 transition"
-            onClick={() => {
-              setDoublons((prev) => prev.filter((d) => d.id !== c.id));
-              setContacts((prev) => prev.filter((d) => d.id !== c.id));
-            }}
-          >
-            Supprimer
-          </button>
-        </div>
-      </div>
-    ))}
-  </div>
-)}
+          {doublons.length > 0 && (
+            <div className="bg-blue-100/30 border-l-4 border-blue-500/70 p-4 mb-4 w-full max-w-6xl rounded shadow">
+              <p className="font-bold text-blue-800 mb-2">⚠️ Contact déjà en suivi !</p>
+              <p className="text-sm text-blue-700 mb-2">
+                Ces contacts sont déjà enregistrés dans les suivis. Vous pouvez les garder sur la page ou les retirer temporairement. (Ils restent dans les suivis jusqu’à la prochaine étape)
+              </p>
+              {doublons.map((c) => (
+                <div key={c.id} className="flex justify-between items-center mt-2 bg-white p-2 rounded shadow-sm">
+                  <span className="font-medium">{c.prenom} {c.nom} ({c.telephone})</span>
+                  <div className="flex gap-2">
+                    <button
+                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+                      onClick={() => setDoublons((prev) => prev.filter((d) => d.id !== c.id))}
+                    >
+                      Garder
+                    </button>
+                    <button
+                      className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 transition"
+                      onClick={() => {
+                        setDoublons((prev) => prev.filter((d) => d.id !== c.id));
+                        setContacts((prev) => prev.filter((d) => d.id !== c.id));
+                      }}
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
 
         {/* Toggle Vue Carte / Vue Table */}
@@ -354,13 +354,40 @@ export default function Evangelisation() {
                         <p>☀️ Type : {member.type_conversion || "—"}</p>
                         <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
                         <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
-                        <button onClick={() => { setEditMember(member); setPopupMember(null); }} className="text-blue-600 text-sm mt-4 w-full text-center">✏️ Modifier le contact</button>
+                    
+                        {/* Bouton modifier */}
+                        <button
+                          onClick={() => { setEditMember(member); setPopupMember(null); }}
+                          className="text-blue-600 text-sm mt-4 w-full text-center"
+                        >
+                          ✏️ Modifier le contact
+                        </button>
+                    
+                        {/* Bouton supprimer temporairement si le contact est déjà dans les suivis */}
+                        {doublons.some((d) => d.id === member.id) && (
+                          <div className="mt-3 space-y-1">
+                            <p className="font-bold text-blue-800">
+                              ⚠️ {doublons.length === 1 ? "Contact déjà en suivi !" : "Contacts déjà en suivi !"}
+                            </p>
+                            <p className="text-sm text-blue-700">
+                              {doublons.length === 1
+                                ? "Ce contact est déjà enregistré dans les suivis. Vous pouvez le retirer temporairement de la page."
+                                : "Ces contacts sont déjà enregistrés dans les suivis. Vous pouvez les retirer temporairement de la page."}
+                            </p>
+                            <button
+                              onClick={() => {
+                                setDoublons((prev) => prev.filter((d) => d.id !== member.id));
+                                setContacts((prev) => prev.filter((c) => c.id !== member.id));
+                              }}
+                              className="mt-2 w-full text-red-600 underline text-sm"
+                            >
+                              🗑️ Supprimer le contact
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+                    )}  
+
 
             {/* VUE TABLE */}
             {view === "table" && (

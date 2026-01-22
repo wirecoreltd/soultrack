@@ -220,8 +220,7 @@
           setDoublonDetected(null);
           setShowDoublonPopup(false);
         }
-      };
-      
+      };      
       // 🔹 Bouton “Envoyer quand même”
       const confirmSendAnyway = () => {
         sendContacts({ ignoreDoublon: true }); // passe le paramètre pour ignorer doublon

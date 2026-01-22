@@ -339,13 +339,11 @@ const processSend = async (contactsToSend, cible) => {
                     setPendingSendContacts(null);
                   }}
                 >
-                  Envoyer quand même
-                </button>  
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                   Envoyer quand même
+      </button>
+    </div>
+  </div>
+)}
 
         {/* Toggle Vue Carte / Vue Table */}
         <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">

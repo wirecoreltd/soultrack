@@ -44,21 +44,24 @@ export default function Evangelisation() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // ===== Fetch contacts non envoyés =====
   const fetchContacts = async () => {
-    const { data, error } = await supabase
-      .from("evangelises")
-      .select("*")
-      .eq("status_suivi", "Non envoyé")
-      .order("created_at", { ascending: false })
-      .limit(1000);
+  const { data, error } = await supabase
+    .from("evangelises")
+    .select("*")
+    .eq("status_suivi", "Non envoyé")
+    .order("created_at", { ascending: false }) // <-- correct
+    .limit(1000);
 
-    if (error) {
-      console.error("Erreur fetchContacts:", error);
-      setContacts([]);
-      return;
-    }
-    setContacts(data || []);
-  };
+  if (error) {
+    console.error("Erreur fetchContacts:", error);
+    setContacts([]);
+    return;
+  }
+
+  console.log("Contacts chargés :", data);
+  setContacts(data || []);
+};
 
   const fetchCellules = async () => {
     const { data } = await supabase
@@ -122,7 +125,6 @@ export default function Evangelisation() {
       const newContacts = selectedContacts.filter((c) => !existingIds.includes(c.id));
       const alreadyInSuivi = selectedContacts.filter((c) => existingIds.includes(c.id));
 
-      // Mettre les doublons dans l’état pour affichage
       if (alreadyInSuivi.length > 0) setDoublons(alreadyInSuivi);
       if (newContacts.length === 0) {
         setLoadingSend(false);
@@ -217,8 +219,10 @@ export default function Evangelisation() {
 
   /* ================= UI ================= */
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
+     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
+  
       <HeaderPages />
+  
       <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
 
       {/* Sélection cible */}
@@ -266,121 +270,125 @@ export default function Evangelisation() {
         )}
       </div>
 
-      {/* ================= DOUBLONS ================= */}
-      {doublons.length > 0 && (
-        <div className="bg-blue-100/30 border-l-4 border-blue-500/70 p-4 mb-4 w-full max-w-6xl rounded shadow">
-          <p className="font-bold text-blue-800 mb-2">⚠️ Contact déjà en suivi !</p>
-          <p className="text-sm text-blue-700 mb-2">
-            Ces contacts sont déjà enregistrés dans les suivis. Vous pouvez les garder sur la page ou les retirer temporairement.
-          </p>
-          {doublons.map((c) => (
-            <div key={c.id} className="flex justify-between items-center mt-2 bg-white p-2 rounded shadow-sm">
-              <span className="font-medium">{c.prenom} {c.nom} ({c.telephone})</span>
-              <div className="flex gap-2">
-                <button
-                  className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
-                  onClick={() => setDoublons((prev) => prev.filter((d) => d.id !== c.id))}
-                >
-                  Garder
-                </button>
-                <button
-                  className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 transition"
-                  onClick={() => {
-                    setDoublons((prev) => prev.filter((d) => d.id !== c.id));
-                    setContacts((prev) => prev.filter((d) => d.id !== c.id));
-                  }}
-                >
-                  Supprimer
-                </button>
-              </div>
-            </div>
-          ))}
+      <div className="w-full max-w-6xl flex flex-col items-center">
+
+        {/* ================= DOUBLONS ================= */}
+{doublons.length > 0 && (
+  <div className="bg-blue-100/30 border-l-4 border-blue-500/70 p-4 mb-4 w-full max-w-6xl rounded shadow">
+    <p className="font-bold text-blue-800 mb-2">⚠️ Contact déjà en suivi !</p>
+    <p className="text-sm text-blue-700 mb-2">
+      Ces contacts sont déjà enregistrés dans les suivis. Vous pouvez les garder sur la page ou les retirer temporairement. (Ils restent dans les suivis jusqu’à la prochaine étape)
+    </p>
+    {doublons.map((c) => (
+      <div key={c.id} className="flex justify-between items-center mt-2 bg-white p-2 rounded shadow-sm">
+        <span className="font-medium">{c.prenom} {c.nom} ({c.telephone})</span>
+        <div className="flex gap-2">
+          <button
+            className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+            onClick={() => setDoublons((prev) => prev.filter((d) => d.id !== c.id))}
+          >
+            Garder
+          </button>
+          <button
+            className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 transition"
+            onClick={() => {
+              setDoublons((prev) => prev.filter((d) => d.id !== c.id));
+              setContacts((prev) => prev.filter((d) => d.id !== c.id));
+            }}
+          >
+            Supprimer
+          </button>
         </div>
-      )}
-
-      {/* Toggle Vue Carte / Table */}
-      <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
-        <button
-          onClick={() => setView(view === "card" ? "table" : "card")}
-          className="text-sm font-semibold underline text-white"
-        >
-          {view === "card" ? "Vue Table" : "Vue Carte"}
-        </button>
       </div>
+    ))}
+  </div>
+)}
 
-      {/* ================= AFFICHAGE CONTACTS ================= */}
-      {contacts && (
-        <>
-          {/* VUE CARTE */}
-          {view === "card" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
-              {contacts.map((member) => (
-                <div key={member.id} className="bg-white rounded-2xl shadow-xl p-4 border-l-4 relative" style={{ borderLeftColor: getBorderColor(member) }}>
-                  <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
-                  <p className="text-center text-sm text-orange-500 underline decoration-orange-400 cursor-pointer font-semibold" onClick={() => setOpenPhoneMenuId(member.id)}>
-                    {member.telephone || "—"}
-                  </p>
 
-                  {openPhoneMenuId === member.id && (
-                    <div ref={phoneMenuRef} className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2" onClick={(e) => e.stopPropagation()}>
-                      <a href={member.telephone ? `tel:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📞 Appeler</a>
-                      <a href={member.telephone ? `sms:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>✉️ SMS</a>
-                      <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}?call` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📱 Appel WhatsApp</a>
-                      <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>💬 Message WhatsApp</a>
-                    </div>
-                  )}
+        {/* Toggle Vue Carte / Vue Table */}
+        <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
+          <button
+            onClick={() => setView(view === "card" ? "table" : "card")}
+            className="text-sm font-semibold underline text-white"
+          >
+            {view === "card" ? "Vue Table" : "Vue Carte"}
+          </button>
+        </div>
 
-                  <p className="text-center text-sm">🏙️ Ville : {member.ville || "—"}</p>
-                  <label className="flex justify-center gap-2 mt-2">
-                    <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} /> Sélectionner
-                  </label>
+        {/* ================= AFFICHAGE CONTACTS ================= */}
+        {contacts && (
+          <>  
+            {/* VUE CARTE */}
+            {view === "card" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
+                {contacts.map((member) => (
+                  <div key={member.id} className="bg-white rounded-2xl shadow-xl p-4 border-l-4 relative" style={{ borderLeftColor: getBorderColor(member) }}>
+                    <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
+                    <p className="text-center text-sm text-orange-500 underline decoration-orange-400 cursor-pointer font-semibold" onClick={() => setOpenPhoneMenuId(member.id)}>
+                      {member.telephone || "—"}
+                    </p>
 
-                  <button onClick={() => setDetailsOpen(prev => ({ ...prev, [member.id]: !prev[member.id] }))} className="text-orange-500 underline text-sm block mx-auto mt-2">
-                    {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-                  </button>
+                    {openPhoneMenuId === member.id && (
+                      <div ref={phoneMenuRef} className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2" onClick={(e) => e.stopPropagation()}>
+                        <a href={member.telephone ? `tel:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📞 Appeler</a>
+                        <a href={member.telephone ? `sms:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>✉️ SMS</a>
+                        <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}?call` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📱 Appel WhatsApp</a>
+                        <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>💬 Message WhatsApp</a>
+                      </div>
+                    )}
 
-                  {detailsOpen[member.id] && (
-                    <div className="text-sm mt-3 space-y-1">
-                      <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-                      <p>🎗️ Sexe : {member.sexe || "—"}</p>
-                      <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
-                      <p>☀️ Type : {member.type_conversion || "—"}</p>
-                      <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-                      <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
-                      <button onClick={() => { setEditMember(member); setPopupMember(null); }} className="text-blue-600 text-sm mt-4 w-full text-center">✏️ Modifier le contact</button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                    <p className="text-center text-sm">🏙️ Ville : {member.ville || "—"}</p>
+                    <label className="flex justify-center gap-2 mt-2">
+                      <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} /> Sélectionner
+                    </label>
 
-          {/* VUE TABLE */}
-          {view === "table" && (
-            <div className="w-full max-w-6xl overflow-x-auto py-2">
-              <div className="min-w-[700px] space-y-2">
-                <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
-                  <div className="flex-[2]">Nom complet</div>
-                  <div className="flex-[1]">Téléphone</div>
-                  <div className="flex-[1]">Ville</div>
-                  <div className="flex-[1] flex justify-center items-center">Sélectionner</div>
-                  <div className="flex-[1]">Action</div>
-                </div>
+                    <button onClick={() => setDetailsOpen(prev => ({ ...prev, [member.id]: !prev[member.id] }))} className="text-orange-500 underline text-sm block mx-auto mt-2">
+                      {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+                    </button>
 
-                {contacts.map((m) => (
-                  <div key={m.id} className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
-                    <div className="flex-[2] text-white flex items-center gap-1">{m.prenom} {m.nom}</div>
-                    <div className="flex-[1] text-white">{m.telephone || "—"}</div>
-                    <div className="flex-[1] text-white">{m.ville || "—"}</div>
-                    <div className="flex-[1] flex justify-center items-center"><input type="checkbox" checked={checkedContacts[m.id] || false} onChange={() => handleCheck(m.id)} /></div>
-                    <div className="flex-[1]"><button onClick={() => setPopupMember(m)} className="text-orange-500 underline text-sm">Détails</button></div>
+                    {detailsOpen[member.id] && (
+                      <div className="text-sm mt-3 space-y-1">
+                        <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+                        <p>🎗️ Sexe : {member.sexe || "—"}</p>
+                        <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
+                        <p>☀️ Type : {member.type_conversion || "—"}</p>
+                        <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
+                        <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
+                        <button onClick={() => { setEditMember(member); setPopupMember(null); }} className="text-blue-600 text-sm mt-4 w-full text-center">✏️ Modifier le contact</button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-        </>
-      )}
+            )}
+
+            {/* VUE TABLE */}
+            {view === "table" && (
+              <div className="w-full max-w-6xl overflow-x-auto py-2">
+                <div className="min-w-[700px] space-y-2">
+                  <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+                    <div className="flex-[2]">Nom complet</div>
+                    <div className="flex-[1]">Téléphone</div>
+                    <div className="flex-[1]">Ville</div>
+                    <div className="flex-[1] flex justify-center items-center">Sélectionner</div>
+                    <div className="flex-[1]">Action</div>
+                  </div>
+
+                  {contacts.map((m) => (
+                    <div key={m.id} className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
+                      <div className="flex-[2] text-white flex items-center gap-1">{m.prenom} {m.nom}</div>
+                      <div className="flex-[1] text-white">{m.telephone || "—"}</div>
+                      <div className="flex-[1] text-white">{m.ville || "—"}</div>
+                      <div className="flex-[1] flex justify-center items-center"><input type="checkbox" checked={checkedContacts[m.id] || false} onChange={() => handleCheck(m.id)} /></div>
+                      <div className="flex-[1]"><button onClick={() => setPopupMember(m)} className="text-orange-500 underline text-sm">Détails</button></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
 
       {/* POPUPS */}
       {editMember && (
@@ -405,6 +413,7 @@ export default function Evangelisation() {
           onEdit={(m) => { setEditMember(m); setPopupMember(null); }}
         />
       )}
-    </div>
+</div>
+</div>
   );
 }

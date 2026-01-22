@@ -69,7 +69,6 @@ export default function Evangelisation() {
   }
 };
 
-
   // ===== Fetch contacts non envoyés =====
   const fetchContacts = async () => {
   const { data, error } = await supabase
@@ -133,39 +132,42 @@ export default function Evangelisation() {
   setLoadingSend(true);
 
   try {
-    // Récupérer la cible
+    // 1️⃣ Identifier la cible
     const cible =
       selectedTargetType === "cellule"
-        ? cellules.find(c => c.id === selectedTarget)
-        : conseillers.find(c => c.id === selectedTarget);
+        ? cellules.find((c) => c.id == selectedTarget)
+        : conseillers.find((c) => c.id == selectedTarget);
 
-    if (!cible || !cible.telephone) throw new Error("Numéro de la cible invalide");
+    if (!cible || !cible.telephone)
+      throw new Error("Numéro de la cible invalide");
 
-    // Vérifier doublons dans la table de suivis
+    // 2️⃣ Vérifier doublons dans suivis_des_evangelises
     const { data: suivisExisting } = await supabase
       .from("suivis_des_evangelises")
       .select("evangelise_id");
 
-    const existingIds = suivisExisting.map(s => s.evangelise_id);
-    const contactsAlreadyInSuivi = selectedContacts.filter(c => existingIds.includes(c.id));
+    const existingIds = suivisExisting.map((s) => s.evangelise_id);
+    const doublonsContacts = selectedContacts.filter((c) =>
+      existingIds.includes(c.id)
+    );
 
-    // Popup si doublons
-    if (contactsAlreadyInSuivi.length > 0) {
-      const proceed = window.confirm(
-        `⚠️ ${contactsAlreadyInSuivi.length} contact(s) sont déjà en suivi.\n` +
-        "OK pour envoyer quand même, Annuler pour stopper."
+    // 3️⃣ Si doublons, demander confirmation
+    if (doublonsContacts.length > 0) {
+      const confirmSend = window.confirm(
+        `⚠️ ${doublonsContacts.length} contact(s) sont déjà dans les suivis.\n\n` +
+        "Voulez-vous envoyer quand même ?"
       );
-      if (!proceed) {
+      if (!confirmSend) {
         setLoadingSend(false);
-        return; // Stop l’envoi si Annuler
+        return; // Annuler tout
       }
     }
 
-    // Tous les contacts sélectionnés seront envoyés
-    const contactsToSend = selectedContacts;
+    // 4️⃣ Préparer contacts à envoyer (tous)
+    const newContacts = selectedContacts;
 
-    // Insertion dans suivis_des_evangelises
-    const inserts = contactsToSend.map(m => ({
+    // 5️⃣ Insertion dans suivis_des_evangelises
+    const inserts = newContacts.map((m) => ({
       prenom: m.prenom,
       nom: m.nom,
       telephone: m.telephone,
@@ -180,7 +182,7 @@ export default function Evangelisation() {
       evangelise_id: m.id,
       conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
       cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
-      date_suivi: new Date().toISOString()
+      date_suivi: new Date().toISOString(),
     }));
 
     const { error: insertError } = await supabase
@@ -189,8 +191,8 @@ export default function Evangelisation() {
 
     if (insertError) throw insertError;
 
-    // Mettre à jour table evangelises
-    const ids = contactsToSend.map(c => c.id);
+    // 6️⃣ Mettre à jour evangelises
+    const ids = newContacts.map((c) => c.id);
     const { error: updateError } = await supabase
       .from("evangelises")
       .update({ status_suivi: "Envoyé" })
@@ -198,23 +200,25 @@ export default function Evangelisation() {
 
     if (updateError) throw updateError;
 
-    // Mise à jour instantanée UI
-    setContacts(prev => prev.filter(c => !ids.includes(c.id)));
+    // 7️⃣ Mettre à jour l'UI instantanément
+    setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
     setCheckedContacts({});
 
-    // Construire le message WhatsApp
-    const nomCible = selectedTargetType === "cellule"
-      ? cible.cellule_full || "Responsable de cellule"
-      : `${cible.prenom}`;
+    // 8️⃣ Message WhatsApp automatique
+    const nomCible =
+      selectedTargetType === "cellule"
+        ? cible.cellule_full || "Responsable de cellule"
+        : `${cible.prenom}`;
+    const isMultiple = newContacts.length > 1;
 
     let message = `👋 Bonjour ${nomCible},\n\n`;
-    message += contactsToSend.length > 1
+    message += isMultiple
       ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
       : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
 
-    contactsToSend.forEach((m, index) => {
+    newContacts.forEach((m, index) => {
       message += "────────────────────\n";
-      if (contactsToSend.length > 1) message += `👥 Personne ${index + 1}\n`;
+      if (isMultiple) message += `👥 Personne ${index + 1}\n`;
       message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
       message += `📱 Téléphone : ${m.telephone || "—"}\n`;
       message += `🏙️ Ville : ${m.ville || "—"}\n`;
@@ -230,11 +234,14 @@ export default function Evangelisation() {
       "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner\n\n";
     message += "Que Dieu te bénisse abondamment ✨";
 
-    // Envoyer WhatsApp automatique
-    window.open(
-      `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`,
-      "_blank"
-    );
+    if (cible.telephone) {
+      window.open(
+        `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
+          message
+        )}`,
+        "_blank"
+      );
+    }
 
   } catch (err) {
     console.error("ERREUR ENVOI", err);
@@ -243,7 +250,6 @@ export default function Evangelisation() {
     setLoadingSend(false);
   }
 };
-
   
   /* ================= UI ================= */
   return (

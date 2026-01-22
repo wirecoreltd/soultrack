@@ -178,7 +178,7 @@ export default function DetailsMemberPopup({
           {/* ================= ALIGNÉ À GAUCHE ================= */}
           <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
             <p className="font-semibold text-center" style={{ color: "#2E3192" }}>
-            💡 Statut Suivi : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || "—"}</p>
+            💡 Statut Suivi : {statutSuiviLabels[membre.statut_suivis] || membre.suivi_statut || "—"}</p>
             <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
             <p>🎗️ Sexe : {membre.sexe || "—"}</p>
             <p>💧 Bapteme d' Eau: {membre.bapteme_eau === null ? "" : membre.bapteme_eau ? "Oui" : "Non"}</p>

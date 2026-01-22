@@ -30,7 +30,6 @@ export default function Evangelisation() {
   const [doublonDetected, setDoublonDetected] = useState(null);
   const [skipDoublonCheck, setSkipDoublonCheck] = useState(false);
 
-
   /* ================= FETCH ================= */
   useEffect(() => {
     fetchContacts();
@@ -48,31 +47,23 @@ export default function Evangelisation() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ===== Fetch contacts non envoyés =====
   const fetchContacts = async () => {
-  const { data, error } = await supabase
-    .from("evangelises")
-    .select("*")
-    .eq("status_suivi", "Non envoyé")
-    .order("created_at", { ascending: false }) // <-- correct
-    .limit(1000);
+    const { data, error } = await supabase
+      .from("evangelises")
+      .select("*")
+      .eq("status_suivi", "Non envoyé")
+      .order("created_at", { ascending: false })
+      .limit(1000);
 
-  if (error) {
-    console.error("Erreur fetchContacts:", error);
-    setContacts([]);
-    return;
-  }
+    if (error) {
+      console.error("Erreur fetchContacts:", error);
+      setContacts([]);
+      return;
+    }
 
-  console.log("Contacts chargés :", data);
-  setContacts(data || []);
-};
+    setContacts(data || []);
+  };
 
-  const confirmSendAnyway = () => {
-  setSkipDoublonCheck(true);
-  setShowDoublonPopup(false);
-  sendContacts(); // 🔁 relance normale
-};
-  
   const fetchCellules = async () => {
     const { data } = await supabase
       .from("cellules")
@@ -113,166 +104,154 @@ export default function Evangelisation() {
   };
 
   /* ================= ENVOI WHATSAPP ================= */
+  const confirmSendAnyway = () => {
+    setSkipDoublonCheck(true);
+    setShowDoublonPopup(false);
+    sendContacts();
+  };
+
   const sendContacts = async () => {
-  if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+    if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
 
-  // 🔹 1. Vérification doublon (UNE SEULE FOIS)
-  if (!skipDoublonCheck) {
-    const { data } = await supabase
-      .from("suivis_des_evangelises")
-      .select("telephone");
+    setLoadingSend(true);
 
-    const existingPhones = data?.map(d => d.telephone);
-    const doublon = selectedContacts.find(c =>
-      c.telephone && existingPhones.includes(c.telephone)
-    );
+    try {
+      // 🔹 Vérification doublon (UNE SEULE FOIS)
+      if (!skipDoublonCheck) {
+        const { data: suivisData } = await supabase
+          .from("suivis_des_evangelises")
+          .select("telephone");
 
-    if (doublon) {
-      setDoublonDetected(doublon);
-      setShowDoublonPopup(true);
-      return; // ⛔ STOP ici
-    }
-  }
+        const existingPhones = suivisData?.map((d) => d.telephone) || [];
+        const doublon = selectedContacts.find(
+          (c) => c.telephone && existingPhones.includes(c.telephone)
+        );
 
-  // 🔹 2. ENVOI NORMAL (TON CODE EXISTANT)
-  setLoadingSend(true);
+        if (doublon) {
+          setDoublonDetected(doublon);
+          setShowDoublonPopup(true);
+          setLoadingSend(false);
+          return;
+        }
+      }
 
-  try {
-    // ⬇️ ICI TU LAISSES TON CODE ACTUEL INCHANGÉ
-    // insert suivis_des_evangelises
-    // update evangelises
-    // whatsapp
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setLoadingSend(false);
-    setSkipDoublonCheck(false); // reset
-  }
-};
-  
-  try {
-    const cible =
-      selectedTargetType === "cellule"
-        ? cellules.find((c) => c.id == selectedTarget)
-        : conseillers.find((c) => c.id == selectedTarget);
+      // 🔹 Cible
+      const cible =
+        selectedTargetType === "cellule"
+          ? cellules.find((c) => c.id == selectedTarget)
+          : conseillers.find((c) => c.id == selectedTarget);
 
-    if (!cible || !cible.telephone)
-      throw new Error("Numéro de la cible invalide");
+      if (!cible || !cible.telephone)
+        throw new Error("Numéro de la cible invalide");
 
-    // ===== Vérification des doublons par téléphone =====
-    const { data: suivisExisting } = await supabase
-      .from("suivis_des_evangelises")
-      .select("telephone");
+      // 🔹 Insertion dans suivis_des_evangelises
+      const { data: suivisExisting } = await supabase
+        .from("suivis_des_evangelises")
+        .select("telephone");
 
-    const existingPhones = suivisExisting.map((s) => s.telephone);
-
-    const newContacts = selectedContacts.filter(
-      (c) => !existingPhones.includes(c.telephone)
-    );
-
-    const alreadyInSuivi = selectedContacts.filter(
-      (c) => existingPhones.includes(c.telephone)
-    );
-
-    if (alreadyInSuivi.length > 0) setDoublons(alreadyInSuivi);
-
-    if (newContacts.length === 0) {
-      setLoadingSend(false);
-      return;
-    }
-
-    // ===== Insertion dans suivis_des_evangelises =====
-    const inserts = newContacts.map((m) => ({
-      prenom: m.prenom,
-      nom: m.nom,
-      telephone: m.telephone,
-      is_whatsapp: m.is_whatsapp,
-      ville: m.ville,
-      besoin: m.besoin,
-      infos_supplementaires: m.infos_supplementaires,
-      sexe: m.sexe,
-      type_conversion: m.type_conversion,
-      priere_salut: m.priere_salut,
-      status_suivis_evangelises: "Envoyé",
-      evangelise_id: m.id,
-      conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
-      cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
-      date_suivi: new Date().toISOString()
-    }));
-
-    const { error: insertError } = await supabase
-      .from("suivis_des_evangelises")
-      .insert(inserts);
-
-    if (insertError) throw insertError;
-
-    // ===== Mise à jour de la table evangelises =====
-    const ids = newContacts.map((c) => c.id);
-    const { error: updateError } = await supabase
-      .from("evangelises")
-      .update({ status_suivi: "Envoyé" })
-      .in("id", ids);
-
-    if (updateError) throw updateError;
-
-    // ===== Mise à jour UI =====
-    setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
-    setCheckedContacts({});
-
-    // ===== Message WhatsApp =====
-    const nomCible =
-      selectedTargetType === "cellule"
-        ? cible.cellule_full || "Responsable de cellule"
-        : `${cible.prenom}`;
-    const isMultiple = newContacts.length > 1;
-
-    let message = `👋 Bonjour ${nomCible},\n\n`;
-    message += isMultiple
-      ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
-      : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
-
-    newContacts.forEach((m, index) => {
-      message += "────────────────────\n";
-      if (isMultiple) message += `👥 Personne ${index + 1}\n`;
-      message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
-      message += `📱 Téléphone : ${m.telephone || "—"}\n`;
-      message += `🏙️ Ville : ${m.ville || "—"}\n`;
-      message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
-      message += `🎗️ Sexe : ${m.sexe || "—"}\n`;
-      message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n`;
-      message += `☀️ Type de conversion : ${m.type_conversion || "—"}\n`;
-      message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
-      message += `📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
-    });
-
-    message +=
-      "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner\n\n";
-    message += "Que Dieu te bénisse abondamment ✨";
-
-    if (cible.telephone) {
-      window.open(
-        `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
-          message
-        )}`,
-        "_blank"
+      const existingPhones = suivisExisting.map((s) => s.telephone);
+      const newContacts = selectedContacts.filter(
+        (c) => !existingPhones.includes(c.telephone)
       );
-    }
 
-    alert("✅ Contacts envoyés et enregistrés");
-  } catch (err) {
-    console.error("ERREUR ENVOI", err);
-    alert("❌ Erreur lors de l’envoi");
-  } finally {
-    setLoadingSend(false);
-  }
-};
+      const alreadyInSuivi = selectedContacts.filter((c) =>
+        existingPhones.includes(c.telephone)
+      );
+      if (alreadyInSuivi.length > 0) setDoublons(alreadyInSuivi);
+
+      if (newContacts.length === 0) {
+        setLoadingSend(false);
+        return;
+      }
+
+      const inserts = newContacts.map((m) => ({
+        prenom: m.prenom,
+        nom: m.nom,
+        telephone: m.telephone,
+        is_whatsapp: m.is_whatsapp,
+        ville: m.ville,
+        besoin: m.besoin,
+        infos_supplementaires: m.infos_supplementaires,
+        sexe: m.sexe,
+        type_conversion: m.type_conversion,
+        priere_salut: m.priere_salut,
+        status_suivis_evangelises: "Envoyé",
+        evangelise_id: m.id,
+        conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
+        cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
+        date_suivi: new Date().toISOString(),
+      }));
+
+      const { error: insertError } = await supabase
+        .from("suivis_des_evangelises")
+        .insert(inserts);
+      if (insertError) throw insertError;
+
+      // 🔹 Mise à jour evangelises
+      const ids = newContacts.map((c) => c.id);
+      const { error: updateError } = await supabase
+        .from("evangelises")
+        .update({ status_suivi: "Envoyé" })
+        .in("id", ids);
+      if (updateError) throw updateError;
+
+      // 🔹 Mise à jour UI
+      setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
+      setCheckedContacts({});
+
+      // 🔹 Message WhatsApp
+      const nomCible =
+        selectedTargetType === "cellule"
+          ? cible.cellule_full || "Responsable de cellule"
+          : `${cible.prenom}`;
+      const isMultiple = newContacts.length > 1;
+
+      let message = `👋 Bonjour ${nomCible},\n\n`;
+      message += isMultiple
+        ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
+        : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
+
+      newContacts.forEach((m, index) => {
+        message += "────────────────────\n";
+        if (isMultiple) message += `👥 Personne ${index + 1}\n`;
+        message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
+        message += `📱 Téléphone : ${m.telephone || "—"}\n`;
+        message += `🏙️ Ville : ${m.ville || "—"}\n`;
+        message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
+        message += `🎗️ Sexe : ${m.sexe || "—"}\n`;
+        message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n`;
+        message += `☀️ Type de conversion : ${m.type_conversion || "—"}\n`;
+        message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
+        message += `📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
+      });
+
+      message +=
+        "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner\n\n";
+      message += "Que Dieu te bénisse abondamment ✨";
+
+      if (cible.telephone) {
+        window.open(
+          `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
+            message
+          )}`,
+          "_blank"
+        );
+      }
+
+      alert("✅ Contacts envoyés et enregistrés");
+    } catch (err) {
+      console.error("ERREUR ENVOI", err);
+      alert("❌ Erreur lors de l’envoi");
+    } finally {
+      setLoadingSend(false);
+      setSkipDoublonCheck(false);
+    }
+  };
 
   /* ================= UI ================= */
   return (
-     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
-  
+    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
       <HeaderPages />
-  
       <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
 
       {/* Sélection cible */}
@@ -297,15 +276,17 @@ export default function Evangelisation() {
             className="w-full border rounded px-3 py-2 mb-3 text-center"
           >
             <option value="">-- Choisir --</option>
-            {(selectedTargetType === "cellule" ? cellules : conseillers).map((c) => (
-              <option key={c.id} value={c.id}>
-                {selectedTargetType === "cellule"
-                  ? c.ville
-                    ? `${c.cellule_full} - ${c.ville}`
-                    : c.cellule_full
-                  : `${c.prenom} ${c.nom}`}
-              </option>
-            ))}
+            {(selectedTargetType === "cellule" ? cellules : conseillers).map(
+              (c) => (
+                <option key={c.id} value={c.id}>
+                  {selectedTargetType === "cellule"
+                    ? c.ville
+                      ? `${c.cellule_full} - ${c.ville}`
+                      : c.cellule_full
+                    : `${c.prenom} ${c.nom}`}
+                </option>
+              )
+            )}
           </select>
         )}
 

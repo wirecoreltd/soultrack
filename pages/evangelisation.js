@@ -11,7 +11,7 @@ import DetailsEvangePopup from "../components/DetailsEvangePopup";
 export default function Evangelisation() {
   const router = useRouter();
 
-  const [contacts, setContacts] = useState(null); // null = en cours de chargement
+  const [contacts, setContacts] = useState(null);
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [selectedTargetType, setSelectedTargetType] = useState("");
@@ -21,9 +21,9 @@ export default function Evangelisation() {
   const [editMember, setEditMember] = useState(null);
   const [popupMember, setPopupMember] = useState(null);
   const [loadingSend, setLoadingSend] = useState(false);
-  const [view, setView] = useState("card"); // "card" ou "table"
+  const [view, setView] = useState("card");
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
-  const [doublons, setDoublons] = useState([]); // contacts déjà en suivi
+  const [doublons, setDoublons] = useState([]);
   const phoneMenuRef = useRef(null);
 
   /* ================= FETCH ================= */
@@ -43,24 +43,24 @@ export default function Evangelisation() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // ===== Fetch contacts non envoyés =====
   const fetchContacts = async () => {
-    const { data, error } = await supabase
-      .from("evangelises")
-      .select("*")
-      .eq("statut", "evangelisé")
-      .eq("status_suivi", "Non envoyé")
-      .order("created_at", { ascending: false })
-      .limit(1000);
+  const { data, error } = await supabase
+    .from("evangelises")
+    .select("*")
+    .eq("status_suivi", "Non envoyé")
+    .order("created_at", { ascending: false }) // <-- correct
+    .limit(1000);
 
-    if (error) {
-      console.error("Erreur fetchContacts:", error);
-      setContacts([]);
-      return;
-    }
+  if (error) {
+    console.error("Erreur fetchContacts:", error);
+    setContacts([]);
+    return;
+  }
 
-    console.log("Contacts chargés :", data);
-    setContacts(data || []);
-  };
+  console.log("Contacts chargés :", data);
+  setContacts(data || []);
+};
 
   const fetchCellules = async () => {
     const { data } = await supabase
@@ -115,32 +115,22 @@ export default function Evangelisation() {
       if (!cible || !cible.telephone)
         throw new Error("Numéro de la cible invalide");
 
-      // ================= VERIFICATION CONTACTS =================
+      // Vérifier doublons
       const { data: suivisExisting } = await supabase
         .from("suivis_des_evangelises")
-        .select("evangelise_id, evangelises (telephone)");
+        .select("evangelise_id");
 
-      const existingPhones = suivisExisting.map(
-        (s) => s.evangelises?.telephone
-      );
+      const existingIds = suivisExisting.map((s) => s.evangelise_id);
+      const newContacts = selectedContacts.filter((c) => !existingIds.includes(c.id));
+      const alreadyInSuivi = selectedContacts.filter((c) => existingIds.includes(c.id));
 
-      const alreadyInSuivi = selectedContacts.filter((c) =>
-        existingPhones.includes(c.telephone)
-      );
-      const newContacts = selectedContacts.filter((c) =>
-        !existingPhones.includes(c.telephone)
-      );
-
-      if (alreadyInSuivi.length > 0) {
-        setDoublons(alreadyInSuivi);
-      }
-
+      if (alreadyInSuivi.length > 0) setDoublons(alreadyInSuivi);
       if (newContacts.length === 0) {
         setLoadingSend(false);
         return;
       }
 
-      /* ================= INSERT SUIVIS ================= */
+      // Insert dans suivis_des_evangelises
       const inserts = newContacts.map((m) => ({
         prenom: m.prenom,
         nom: m.nom,
@@ -154,10 +144,9 @@ export default function Evangelisation() {
         priere_salut: m.priere_salut,
         status_suivis_evangelises: "Envoyé",
         evangelise_id: m.id,
-        conseiller_id:
-          selectedTargetType === "conseiller" ? selectedTarget : null,
-        cellule_id:
-          selectedTargetType === "cellule" ? selectedTarget : null,
+        conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
+        cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
+        date_suivi: new Date().toISOString()
       }));
 
       const { error: insertError } = await supabase
@@ -166,9 +155,8 @@ export default function Evangelisation() {
 
       if (insertError) throw insertError;
 
-      /* ================= UPDATE EVANGELISES ================= */
+      // Update evangelises
       const ids = newContacts.map((c) => c.id);
-
       const { error: updateError } = await supabase
         .from("evangelises")
         .update({ status_suivi: "Envoyé" })
@@ -176,22 +164,18 @@ export default function Evangelisation() {
 
       if (updateError) throw updateError;
 
-      /* ================= UI IMMÉDIATE ================= */
-      setContacts((prev) =>
-        prev.filter((c) => !ids.includes(c.id))
-      );
+      // Update UI
+      setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
       setCheckedContacts({});
 
-      /* ================= MESSAGE WHATSAPP ================= */
+      // Message WhatsApp
       const nomCible =
         selectedTargetType === "cellule"
           ? cible.cellule_full || "Responsable de cellule"
           : `${cible.prenom}`;
-
       const isMultiple = newContacts.length > 1;
 
       let message = `👋 Bonjour ${nomCible},\n\n`;
-
       message += isMultiple
         ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
         : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
@@ -406,7 +390,7 @@ export default function Evangelisation() {
             )}
           </>
         )}
-      </div>
+
 
       {/* POPUPS */}
       {editMember && (
@@ -431,6 +415,7 @@ export default function Evangelisation() {
           onEdit={(m) => { setEditMember(m); setPopupMember(null); }}
         />
       )}
-    </div>
+</div>
+</div>
   );
 }

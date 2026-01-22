@@ -132,7 +132,6 @@ export default function Evangelisation() {
   setLoadingSend(true);
 
   try {
-    // 1️⃣ Identifier la cible
     const cible =
       selectedTargetType === "cellule"
         ? cellules.find((c) => c.id == selectedTarget)
@@ -141,7 +140,7 @@ export default function Evangelisation() {
     if (!cible || !cible.telephone)
       throw new Error("Numéro de la cible invalide");
 
-    // 2️⃣ Vérifier doublons dans suivis_des_evangelises
+    // Vérifier doublons
     const { data: suivisExisting } = await supabase
       .from("suivis_des_evangelises")
       .select("evangelise_id");
@@ -151,10 +150,10 @@ export default function Evangelisation() {
       existingIds.includes(c.id)
     );
 
-    // 3️⃣ Si doublons, demander confirmation
+    // Si doublons → confirmation
     if (doublonsContacts.length > 0) {
       const confirmSend = window.confirm(
-        `⚠️ ${doublonsContacts.length} contact(s) sont déjà dans les suivis.\n\n` +
+        `⚠️ ${doublonsContacts.length} contact(s) sont déjà dans les suivis.\n` +
         "Voulez-vous envoyer quand même ?"
       );
       if (!confirmSend) {
@@ -163,11 +162,11 @@ export default function Evangelisation() {
       }
     }
 
-    // 4️⃣ Préparer contacts à envoyer (tous)
-    const newContacts = selectedContacts;
+    // On envoie tous les contacts sélectionnés
+    const idsToSend = selectedContacts.map((c) => c.id);
 
-    // 5️⃣ Insertion dans suivis_des_evangelises
-    const inserts = newContacts.map((m) => ({
+    // Insert dans suivis_des_evangelises
+    const inserts = selectedContacts.map((m) => ({
       prenom: m.prenom,
       nom: m.nom,
       telephone: m.telephone,
@@ -191,34 +190,32 @@ export default function Evangelisation() {
 
     if (insertError) throw insertError;
 
-    // 6️⃣ Mettre à jour evangelises
-    const ids = newContacts.map((c) => c.id);
+    // Update evangelises
     const { error: updateError } = await supabase
       .from("evangelises")
       .update({ status_suivi: "Envoyé" })
-      .in("id", ids);
+      .in("id", idsToSend);
 
     if (updateError) throw updateError;
 
-    // 7️⃣ Mettre à jour l'UI instantanément
-    setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
+    // Mise à jour UI instantanée
+    setContacts((prev) => prev.filter((c) => !idsToSend.includes(c.id)));
     setCheckedContacts({});
 
-    // 8️⃣ Message WhatsApp automatique
+    // Message WhatsApp automatique
     const nomCible =
       selectedTargetType === "cellule"
         ? cible.cellule_full || "Responsable de cellule"
         : `${cible.prenom}`;
-    const isMultiple = newContacts.length > 1;
 
     let message = `👋 Bonjour ${nomCible},\n\n`;
-    message += isMultiple
+    message += selectedContacts.length > 1
       ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
       : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
 
-    newContacts.forEach((m, index) => {
+    selectedContacts.forEach((m, index) => {
       message += "────────────────────\n";
-      if (isMultiple) message += `👥 Personne ${index + 1}\n`;
+      if (selectedContacts.length > 1) message += `👥 Personne ${index + 1}\n`;
       message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
       message += `📱 Téléphone : ${m.telephone || "—"}\n`;
       message += `🏙️ Ville : ${m.ville || "—"}\n`;
@@ -250,6 +247,7 @@ export default function Evangelisation() {
     setLoadingSend(false);
   }
 };
+
   
   /* ================= UI ================= */
   return (

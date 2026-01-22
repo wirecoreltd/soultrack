@@ -27,7 +27,7 @@ export default function Evangelisation() {
   const [doublons, setDoublons] = useState([]);
   const [showDoublonPopup, setShowDoublonPopup] = useState(false);
   const [currentDoublon, setCurrentDoublon] = useState(null);
-
+  const existingIds = Array.isArray(suivisExisting) ? suivisExisting.map((s) => s.evangelise_id) : [];
   const phoneMenuRef = useRef(null);
 
   /* ================= FETCH ================= */

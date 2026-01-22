@@ -1,236 +1,238 @@
-      "use client";
-      
-      import { useEffect, useState, useRef } from "react";
-      import { useRouter } from "next/navigation";
-      import supabase from "../lib/supabaseClient";
-      import HeaderPages from "../components/HeaderPages";
-      import EditEvangelisePopup from "../components/EditEvangelisePopup";
-      import DetailsEvangePopup from "../components/DetailsEvangePopup";
-      
-      export default function Evangelisation() {
-        const router = useRouter();
-      
-        const [contacts, setContacts] = useState([]);
-        const [cellules, setCellules] = useState([]);
-        const [conseillers, setConseillers] = useState([]);
-        const [selectedTargetType, setSelectedTargetType] = useState("");
-        const [selectedTarget, setSelectedTarget] = useState("");
-        const [checkedContacts, setCheckedContacts] = useState({});
-        const [detailsOpen, setDetailsOpen] = useState({});
-        const [editMember, setEditMember] = useState(null);
-        const [popupMember, setPopupMember] = useState(null);
-        const [loadingSend, setLoadingSend] = useState(false);
-        const [view, setView] = useState("card");
-        const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
-      
-        const [showDoublonPopup, setShowDoublonPopup] = useState(false);
-        const [doublonDetected, setDoublonDetected] = useState(null);
-        const [skipDoublonCheck, setSkipDoublonCheck] = useState(false);
-      
-        const phoneMenuRef = useRef(null);
-      
-        /* ================= FETCH ================= */
-        useEffect(() => {
-          fetchContacts();
-          fetchCellules();
-          fetchConseillers();
-        }, []);
-      
-        useEffect(() => {
-          const handleClickOutside = (e) => {
-            if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
-              setOpenPhoneMenuId(null);
-            }
-          };
-          document.addEventListener("mousedown", handleClickOutside);
-          return () => document.removeEventListener("mousedown", handleClickOutside);
-        }, []);
-      
-        const fetchContacts = async () => {
-          const { data, error } = await supabase
-            .from("evangelises")
-            .select("*")
-            .eq("status_suivi", "Non envoyé")
-            .order("created_at", { ascending: false })
-            .limit(1000);
-      
-          if (error) {
-            console.error("Erreur fetchContacts:", error);
-            setContacts([]);
-            return;
-          }
-          setContacts(data || []);
-        };
-      
-        const fetchCellules = async () => {
-          const { data } = await supabase
-            .from("cellules")
-            .select("id, cellule_full, responsable, telephone, ville");
-          setCellules(data || []);
-        };
-      
-        const fetchConseillers = async () => {
-          const { data } = await supabase
-            .from("profiles")
-            .select("id, prenom, nom, telephone")
-            .eq("role", "Conseiller");
-          setConseillers(data || []);
-        };
-      
-        const handleCheck = (id) =>
-          setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
-      
-        const formatBesoin = (b) => {
-          if (!b) return "—";
-          if (Array.isArray(b)) return b.join(", ");
-          try {
-            const arr = JSON.parse(b);
-            return Array.isArray(arr) ? arr.join(", ") : b;
-          } catch {
-            return b;
-          }
-        };
-      
-        const selectedContacts = contacts?.filter((c) => checkedContacts[c.id]) || [];
-        const hasSelectedContacts = selectedContacts.length > 0;
-      
-        const getBorderColor = (member) => {
-          if (member.is_whatsapp) return "#25D366";
-          if (member.besoin) return "#FFB800";
-          return "#888";
-        };
-      
-        const sendContacts = async ({ ignoreDoublon = false } = {}) => {
-        if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
-      
-        setLoadingSend(true);
-      
-        try {
-          const cible =
-            selectedTargetType === "cellule"
-              ? cellules.find((c) => c.id == selectedTarget)
-              : conseillers.find((c) => c.id == selectedTarget);
-      
-          if (!cible || !cible.telephone)
-            throw new Error("Numéro de la cible invalide");
-      
-          // 🔹 Vérification doublon
-          if (!ignoreDoublon) {
-            const { data: suivisExisting } = await supabase
-              .from("suivis_des_evangelises")
-              .select("telephone");
-      
-            const existingPhones = suivisExisting.map((s) => s.telephone);
-            const doublon = selectedContacts.find(
-              (c) => c.telephone && existingPhones.includes(c.telephone)
-            );
-      
-            if (doublon) {
-              setDoublonDetected(doublon);
-              setShowDoublonPopup(true);
-              setLoadingSend(false);
-              return; // STOP ici tant que l'utilisateur n'a pas confirmé
-            }
-          }
-      
-          // 🔹 Envoi normal
-          const newContacts = selectedContacts;
-      
-          const inserts = newContacts.map((m) => ({
-            prenom: m.prenom,
-            nom: m.nom,
-            telephone: m.telephone,
-            is_whatsapp: m.is_whatsapp,
-            ville: m.ville,
-            besoin: m.besoin,
-            infos_supplementaires: m.infos_supplementaires,
-            sexe: m.sexe,
-            type_conversion: m.type_conversion,
-            priere_salut: m.priere_salut,
-            status_suivis_evangelises: "Envoyé",
-            evangelise_id: m.id,
-            conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
-            cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
-            date_suivi: new Date().toISOString(),
-          }));
-      
-          const { error: insertError } = await supabase
-            .from("suivis_des_evangelises")
-            .insert(inserts);
-      
-          if (insertError) throw insertError;
-      
-          const ids = newContacts.map((c) => c.id);
-          const { error: updateError } = await supabase
-            .from("evangelises")
-            .update({ status_suivi: "Envoyé" })
-            .in("id", ids);
-      
-          if (updateError) throw updateError;
-      
-          setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
-          setCheckedContacts({});
-      
-          // ===== Message WhatsApp =====
-          const nomCible =
-            selectedTargetType === "cellule"
-              ? cible.cellule_full || "Responsable de cellule"
-              : `${cible.prenom}`;
-          const isMultiple = newContacts.length > 1;
-      
-          let message = `👋 Bonjour ${nomCible},\n\n`;
-          message += isMultiple
-            ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
-            : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
-      
-          newContacts.forEach((m, index) => {
-            message += "────────────────────\n";
-            if (isMultiple) message += `👥 Personne ${index + 1}\n`;
-            message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
-            message += `📱 Téléphone : ${m.telephone || "—"}\n`;
-            message += `🏙️ Ville : ${m.ville || "—"}\n`;
-            message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
-            message += `🎗️ Sexe : ${m.sexe || "—"}\n`;
-            message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n`;
-            message += `☀️ Type de conversion : ${m.type_conversion || "—"}\n`;
-            message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
-            message += `📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
-          });
-      
-          message +=
-            "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner\n\n";
-          message += "Que Dieu te bénisse abondamment ✨";
-      
-          if (cible.telephone) {
-            window.open(
-              `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
-                message
-              )}`,
-              "_blank"
-            );
-          }
-      
-          alert("✅ Contacts envoyés et enregistrés");
-        } catch (err) {
-          console.error("ERREUR ENVOI", err);
-          alert("❌ Erreur lors de l’envoi");
-        } finally {
+"use client";
+
+import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import supabase from "../lib/supabaseClient";
+import EditEvangelisePopup from "../components/EditEvangelisePopup";
+import DetailsEvangePopup from "../components/DetailsEvangePopup";
+import HeaderPages from "../components/HeaderPages";
+
+export default function Evangelisation() {
+  const router = useRouter();
+
+  const [contacts, setContacts] = useState([]);
+  const [cellules, setCellules] = useState([]);
+  const [conseillers, setConseillers] = useState([]);
+  const [selectedTargetType, setSelectedTargetType] = useState("");
+  const [selectedTarget, setSelectedTarget] = useState("");
+  const [checkedContacts, setCheckedContacts] = useState({});
+  const [detailsOpen, setDetailsOpen] = useState({});
+  const [editMember, setEditMember] = useState(null);
+  const [popupMember, setPopupMember] = useState(null);
+  const [loadingSend, setLoadingSend] = useState(false);
+  const [view, setView] = useState("card");
+  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
+
+  const [showDoublonPopup, setShowDoublonPopup] = useState(false);
+  const [doublonDetected, setDoublonDetected] = useState(null);
+  const [skipDoublonCheck, setSkipDoublonCheck] = useState(false);
+
+  const phoneMenuRef = useRef(null);
+
+  /* ================= FETCH ================= */
+  useEffect(() => {
+    fetchContacts();
+    fetchCellules();
+    fetchConseillers();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+        setOpenPhoneMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const fetchContacts = async () => {
+    const { data, error } = await supabase
+      .from("evangelises")
+      .select("*")
+      .eq("status_suivi", "Non envoyé")
+      .order("created_at", { ascending: false })
+      .limit(1000);
+
+    if (error) {
+      console.error("Erreur fetchContacts:", error);
+      setContacts([]);
+      return;
+    }
+
+    setContacts(data || []);
+  };
+
+  const fetchCellules = async () => {
+    const { data } = await supabase
+      .from("cellules")
+      .select("id, cellule_full, responsable, telephone, ville");
+    setCellules(data || []);
+  };
+
+  const fetchConseillers = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom, telephone")
+      .eq("role", "Conseiller");
+    setConseillers(data || []);
+  };
+
+  /* ================= UTILS ================= */
+  const handleCheck = (id) =>
+    setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const formatBesoin = (b) => {
+    if (!b) return "—";
+    if (Array.isArray(b)) return b.join(", ");
+    try {
+      const arr = JSON.parse(b);
+      return Array.isArray(arr) ? arr.join(", ") : b;
+    } catch {
+      return b;
+    }
+  };
+
+  const selectedContacts = contacts?.filter((c) => checkedContacts[c.id]) || [];
+  const hasSelectedContacts = selectedContacts.length > 0;
+
+  const getBorderColor = (member) => {
+    if (member.is_whatsapp) return "#25D366";
+    if (member.besoin) return "#FFB800";
+    return "#888";
+  };
+
+  /* ================= ENVOI WHATSAPP ================= */
+  const sendContacts = async () => {
+    if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+
+    setLoadingSend(true);
+
+    try {
+      const cible =
+        selectedTargetType === "cellule"
+          ? cellules.find((c) => c.id == selectedTarget)
+          : conseillers.find((c) => c.id == selectedTarget);
+
+      if (!cible || !cible.telephone)
+        throw new Error("Numéro de la cible invalide");
+
+      // 🔹 Vérification doublons
+      if (!skipDoublonCheck) {
+        const { data: suivisExisting } = await supabase
+          .from("suivis_des_evangelises")
+          .select("telephone");
+
+        const existingPhones = suivisExisting.map((s) => s.telephone);
+        const doublon = selectedContacts.find(
+          (c) => c.telephone && existingPhones.includes(c.telephone)
+        );
+
+        if (doublon) {
+          setDoublonDetected(doublon);
+          setShowDoublonPopup(true);
           setLoadingSend(false);
-          setSkipDoublonCheck(false);
-          setDoublonDetected(null);
-          setShowDoublonPopup(false);
+          return;
         }
-      };      
-      // 🔹 Bouton “Envoyer quand même”
-      const confirmSendAnyway = () => {
-        sendContacts({ ignoreDoublon: true }); // passe le paramètre pour ignorer doublon
-      };
+      }
+
+      // 🔹 Envoi normal
+      const newContacts = selectedContacts; // doublon accepté si skipDoublonCheck
+
+      const inserts = newContacts.map((m) => ({
+        prenom: m.prenom,
+        nom: m.nom,
+        telephone: m.telephone,
+        is_whatsapp: m.is_whatsapp,
+        ville: m.ville,
+        besoin: m.besoin,
+        infos_supplementaires: m.infos_supplementaires,
+        sexe: m.sexe,
+        type_conversion: m.type_conversion,
+        priere_salut: m.priere_salut,
+        status_suivis_evangelises: "Envoyé",
+        evangelise_id: m.id,
+        conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
+        cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
+        date_suivi: new Date().toISOString(),
+      }));
+
+      const { error: insertError } = await supabase
+        .from("suivis_des_evangelises")
+        .insert(inserts);
+
+      if (insertError) throw insertError;
+
+      const ids = newContacts.map((c) => c.id);
+      const { error: updateError } = await supabase
+        .from("evangelises")
+        .update({ status_suivi: "Envoyé" })
+        .in("id", ids);
+
+      if (updateError) throw updateError;
+
+      setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
+      setCheckedContacts({});
+
+      // Message WhatsApp
+      const nomCible =
+        selectedTargetType === "cellule"
+          ? cible.cellule_full || "Responsable de cellule"
+          : `${cible.prenom}`;
+      const isMultiple = newContacts.length > 1;
+
+      let message = `👋 Bonjour ${nomCible},\n\n`;
+      message += isMultiple
+        ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
+        : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
+
+      newContacts.forEach((m, index) => {
+        message += "────────────────────\n";
+        if (isMultiple) message += `👥 Personne ${index + 1}\n`;
+        message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
+        message += `📱 Téléphone : ${m.telephone || "—"}\n`;
+        message += `🏙️ Ville : ${m.ville || "—"}\n`;
+        message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
+        message += `🎗️ Sexe : ${m.sexe || "—"}\n`;
+        message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n`;
+        message += `☀️ Type de conversion : ${m.type_conversion || "—"}\n`;
+        message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
+        message += `📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
+      });
+
+      message += "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner\n\n";
+      message += "Que Dieu te bénisse abondamment ✨";
+
+      if (cible.telephone) {
+        window.open(
+          `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
+            message
+          )}`,
+          "_blank"
+        );
+      }
+
+      alert("✅ Contacts envoyés et enregistrés");
+    } catch (err) {
+      console.error("ERREUR ENVOI", err);
+      alert("❌ Erreur lors de l’envoi");
+    } finally {
+      setLoadingSend(false);
+      setSkipDoublonCheck(false);
+      setShowDoublonPopup(false);
+      setDoublonDetected(null);
+    }
+  };
+
+  const confirmSendAnyway = () => {
+    setSkipDoublonCheck(true);
+    sendContacts();
+  };
 
   /* ================= UI ================= */
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
       <HeaderPages />
-
       <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
 
       {/* Sélection cible */}
@@ -282,16 +284,12 @@
       {showDoublonPopup && doublonDetected && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl p-6 w-96 max-w-[90%] text-center">
-            <h3 className="text-xl font-bold mb-3 text-gray-800">
-              ⚠️ Doublon détecté
-            </h3>
-
+            <h3 className="text-xl font-bold mb-3 text-gray-800">⚠️ Doublon détecté</h3>
             <p className="mb-6 text-gray-700">
               Ce numéro existe déjà dans les suivis :
               <br />
               <strong>{doublonDetected.telephone}</strong>
             </p>
-
             <div className="flex gap-3">
               <button
                 onClick={confirmSendAnyway}
@@ -299,7 +297,6 @@
               >
                 Envoyer quand même
               </button>
-
               <button
                 onClick={() => setShowDoublonPopup(false)}
                 className="flex-1 bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded-lg hover:bg-gray-400"
@@ -334,25 +331,73 @@
                   style={{ borderLeftColor: getBorderColor(member) }}
                 >
                   <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
-                  <p className="text-center text-sm text-orange-500 underline decoration-orange-400 cursor-pointer font-semibold" onClick={() => setOpenPhoneMenuId(member.id)}>
+                  <p
+                    className="text-center text-sm text-orange-500 underline decoration-orange-400 cursor-pointer font-semibold"
+                    onClick={() => setOpenPhoneMenuId(member.id)}
+                  >
                     {member.telephone || "—"}
                   </p>
 
                   {openPhoneMenuId === member.id && (
-                    <div ref={phoneMenuRef} className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2" onClick={(e) => e.stopPropagation()}>
-                      <a href={member.telephone ? `tel:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📞 Appeler</a>
-                      <a href={member.telephone ? `sms:${member.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>✉️ SMS</a>
-                      <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}?call` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>📱 Appel WhatsApp</a>
-                      <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}>💬 Message WhatsApp</a>
+                    <div
+                      ref={phoneMenuRef}
+                      className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <a
+                        href={member.telephone ? `tel:${member.telephone}` : "#"}
+                        className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
+                      >
+                        📞 Appeler
+                      </a>
+                      <a
+                        href={member.telephone ? `sms:${member.telephone}` : "#"}
+                        className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
+                      >
+                        ✉️ SMS
+                      </a>
+                      <a
+                        href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}?call` : "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
+                      >
+                        📱 Appel WhatsApp
+                      </a>
+                      <a
+                        href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}` : "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!member.telephone ? "opacity-50 pointer-events-none" : ""}`}
+                      >
+                        💬 Message WhatsApp
+                      </a>
                     </div>
                   )}
 
-                  <p className="text-center text-sm">🏙️ Ville : {member.ville || "—"}</p>
-                  <label className="flex justify-center gap-2 mt-2">
-                    <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} /> Sélectionner
-                  </label>
+                  <div className="flex justify-center gap-2 mt-2">
+                    <label className="flex gap-2 items-center">
+                      <input
+                        type="checkbox"
+                        checked={checkedContacts[member.id] || false}
+                        onChange={() => handleCheck(member.id)}
+                      />{" "}
+                      Sélectionner
+                    </label>
+                    <button
+                      onClick={() => setContacts((prev) => prev.filter((c) => c.id !== member.id))}
+                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition text-sm"
+                    >
+                      🗑️ Supprimer
+                    </button>
+                  </div>
 
-                  <button onClick={() => setDetailsOpen(prev => ({ ...prev, [member.id]: !prev[member.id] }))} className="text-orange-500 underline text-sm block mx-auto mt-2">
+                  <button
+                    onClick={() =>
+                      setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
+                    }
+                    className="text-orange-500 underline text-sm block mx-auto mt-2"
+                  >
                     {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                   </button>
 
@@ -364,14 +409,14 @@
                       <p>☀️ Type : {member.type_conversion || "—"}</p>
                       <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
                       <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
-                      <button onClick={() => { setEditMember(member); setPopupMember(null); }} className="text-blue-600 text-sm mt-4 w-full text-center">✏️ Modifier le contact</button>
-                      <button onClick={async () => { await supabase.from("evangelises")
-                        .update({ status_suivi: "Supprimé" })
-                        .eq("id", member.id);                    
-                        setContacts(prev => prev.filter(c => c.id !== member.id));
+                      <button
+                        onClick={() => {
+                          setEditMember(member);
+                          setPopupMember(null);
                         }}
-                        className="mt-3 w-full text-red-600 underline text-sm">
-                        🗑️ Supprimer le contact
+                        className="text-blue-600 text-sm mt-4 w-full text-center"
+                      >
+                        ✏️ Modifier le contact
                       </button>
                     </div>
                   )}
@@ -393,12 +438,26 @@
                 </div>
 
                 {contacts.map((m) => (
-                  <div key={m.id} className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
+                  <div
+                    key={m.id}
+                    className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
+                    style={{ borderLeftColor: getBorderColor(m) }}
+                  >
                     <div className="flex-[2] text-white flex items-center gap-1">{m.prenom} {m.nom}</div>
                     <div className="flex-[1] text-white">{m.telephone || "—"}</div>
                     <div className="flex-[1] text-white">{m.ville || "—"}</div>
-                    <div className="flex-[1] flex justify-center items-center"><input type="checkbox" checked={checkedContacts[m.id] || false} onChange={() => handleCheck(m.id)} /></div>
-                    <div className="flex-[1]"><button onClick={() => setPopupMember(m)} className="text-orange-500 underline text-sm">Détails</button></div>
+                    <div className="flex-[1] flex justify-center items-center">
+                      <input type="checkbox" checked={checkedContacts[m.id] || false} onChange={() => handleCheck(m.id)} />
+                    </div>
+                    <div className="flex-[1] flex gap-2">
+                      <button onClick={() => setPopupMember(m)} className="text-orange-500 underline text-sm">Détails</button>
+                      <button
+                        onClick={() => setContacts(prev => prev.filter(c => c.id !== m.id))}
+                        className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm"
+                      >
+                        🗑️ Supprimer
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

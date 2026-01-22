@@ -278,39 +278,47 @@ export default function Evangelisation() {
       </div>
 
       <div className="w-full max-w-6xl flex flex-col items-center">
-
+       
         {/* ================= DOUBLONS ================= */}
-{doublons.length > 0 && (
-  <div className="bg-blue-100/30 border-l-4 border-blue-500/70 p-4 mb-4 w-full max-w-6xl rounded shadow">
-    <p className="font-bold text-blue-800 mb-2">⚠️ Contact déjà en suivi !</p>
-    <p className="text-sm text-blue-700 mb-2">
-      Ces contacts sont déjà enregistrés dans les suivis. Vous pouvez les garder sur la page ou les retirer temporairement. (Ils restent dans les suivis jusqu’à la prochaine étape)
-    </p>
-    {doublons.map((c) => (
-      <div key={c.id} className="flex justify-between items-center mt-2 bg-white p-2 rounded shadow-sm">
-        <span className="font-medium">{c.prenom} {c.nom} ({c.telephone})</span>
-        <div className="flex gap-2">
-          <button
-            className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
-            onClick={() => setDoublons((prev) => prev.filter((d) => d.id !== c.id))}
-          >
-            Garder
-          </button>
-          <button
-            className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 transition"
-            onClick={() => {
-              setDoublons((prev) => prev.filter((d) => d.id !== c.id));
-              setContacts((prev) => prev.filter((d) => d.id !== c.id));
-            }}
-          >
-            Supprimer
-          </button>
-        </div>
-      </div>
-    ))}
-  </div>
-)}
-
+        {doublons.length > 0 && (
+          <div className="bg-orange-100/40 border-l-4 border-orange-500/70 p-4 mb-4 w-full max-w-6xl rounded shadow">
+            <p className="font-bold text-orange-800 mb-2">⚠️ Contacts déjà en suivi</p>
+            <p className="text-sm text-orange-700 mb-3">
+              Ces contacts ont déjà été envoyés auparavant.  
+              Tu peux annuler ou choisir d’envoyer quand même.
+            </p>
+        
+            {doublons.map((c) => (
+              <div
+                key={c.id}
+                className="mt-2 bg-white p-2 rounded shadow-sm text-sm font-medium"
+              >
+                {c.prenom} {c.nom} ({c.telephone})
+              </div>
+            ))}
+        
+            <div className="flex justify-end gap-3 mt-4">
+              {/* Annuler */}
+              <button
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
+                onClick={() => setDoublons([])}
+              >
+                Annuler
+              </button>
+        
+              {/* Envoyer quand même */}
+              <button
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+                onClick={async () => {
+                  setDoublons([]);
+                  await forceSendContacts(); // nouvelle fonction (voir plus bas)
+                }}
+              >
+                Envoyer quand même
+              </button>
+            </div>
+          </div>
+        )}  
 
         {/* Toggle Vue Carte / Vue Table */}
         <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
@@ -362,6 +370,14 @@ export default function Evangelisation() {
                         <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
                         <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
                         <button onClick={() => { setEditMember(member); setPopupMember(null); }} className="text-blue-600 text-sm mt-4 w-full text-center">✏️ Modifier le contact</button>
+                        <button onClick={async () => { await supabase.from("evangelises")
+                          .update({ status_suivi: "Supprimé" })
+                          .eq("id", member.id);                    
+                          setContacts(prev => prev.filter(c => c.id !== member.id));
+                          }}
+                          className="mt-3 w-full text-red-600 underline text-sm">
+                          🗑️ Supprimer le contact
+                        </button>
                       </div>
                     )}
                   </div>

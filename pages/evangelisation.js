@@ -352,6 +352,26 @@ export default function Evangelisation() {
                       <button onClick={() => { setEditMember(member); setPopupMember(null); }} className="text-blue-600 text-sm mt-4 w-full text-center">
                         ✏️ Modifier le contact
                       </button>
+                    {doublons.some((d) => d.id === member.id) && (
+      <div className="mt-3 space-y-1">
+        <p className="font-bold text-blue-800">
+          ⚠️ {doublons.length === 1 ? "Contact déjà en suivi !" : "Contacts déjà en suivi !"}
+        </p>
+        <p className="text-sm text-blue-700">
+          {doublons.length === 1
+            ? "Ce contact est déjà enregistré dans les suivis. Vous pouvez le retirer temporairement de la page."
+            : "Ces contacts sont déjà enregistrés dans les suivis. Vous pouvez les retirer temporairement de la page."}
+        </p>
+        <button
+          onClick={() => {
+            setDoublons((prev) => prev.filter((d) => d.id !== member.id));
+            setContacts((prev) => prev.filter((c) => c.id !== member.id));
+          }}
+          className="mt-2 w-full text-red-600 underline text-sm"
+        >
+          🗑️ Supprimer le contact
+        </button>
+      </div>
                     </div>
                   )}
                 </div>

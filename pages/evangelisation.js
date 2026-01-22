@@ -45,26 +45,29 @@ export default function Evangelisation() {
   }, []);
 
   const handleSupprimerMembre = async (id) => {
+  try {
+    // 🔹 Mettre à jour dans la base
     const { error } = await supabase
       .from("evangelises")
       .update({ status_suivi: "supprime" })
       .eq("id", id);
-  
+
     if (error) {
       console.error("Erreur suppression :", error);
+      alert("❌ Erreur lors de la suppression");
       return;
     }
-  
-    // ✅ MISE À JOUR IMMÉDIATE DU CONTEXT
-    setAllMembers((prev) =>
-      prev.map((m) =>
-        m.id === id
-          ? { ...m, evangelises: "supprime" }
-          : m
-      )
-    );  
-    showToast("❌ Contact supprimé");
-  };
+
+    // 🔹 Retirer le contact du state instantanément
+    setContacts((prev) => prev.filter((m) => m.id !== id));
+
+    alert("✅ Contact supprimé");
+  } catch (err) {
+    console.error(err);
+    alert("❌ Erreur lors de la suppression");
+  }
+};
+
 
   // ===== Fetch contacts non envoyés =====
   const fetchContacts = async () => {
@@ -295,36 +298,36 @@ export default function Evangelisation() {
       <div className="w-full max-w-6xl flex flex-col items-center">
 
         {/* ================= DOUBLONS ================= */}
-{doublons.length > 0 && (
-  <div className="bg-blue-100/30 border-l-4 border-blue-500/70 p-4 mb-4 w-full max-w-6xl rounded shadow">
-    <p className="font-bold text-blue-800 mb-2">⚠️ Contact déjà en suivi !</p>
-    <p className="text-sm text-blue-700 mb-2">
-      Ces contacts sont déjà enregistrés dans les suivis. Vous pouvez les garder sur la page ou les retirer temporairement. (Ils restent dans les suivis jusqu’à la prochaine étape)
-    </p>
-    {doublons.map((c) => (
-      <div key={c.id} className="flex justify-between items-center mt-2 bg-white p-2 rounded shadow-sm">
-        <span className="font-medium">{c.prenom} {c.nom} ({c.telephone})</span>
-        <div className="flex gap-2">
-          <button
-            className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
-            onClick={() => setDoublons((prev) => prev.filter((d) => d.id !== c.id))}
-          >
-            Garder
-          </button>
-          <button
-            className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 transition"
-            onClick={() => {
-              setDoublons((prev) => prev.filter((d) => d.id !== c.id));
-              setContacts((prev) => prev.filter((d) => d.id !== c.id));
-            }}
-          >
-            Supprimer
-          </button>
-        </div>
-      </div>
-    ))}
-  </div>
-)}
+          {doublons.length > 0 && (
+            <div className="bg-blue-100/30 border-l-4 border-blue-500/70 p-4 mb-4 w-full max-w-6xl rounded shadow">
+              <p className="font-bold text-blue-800 mb-2">⚠️ Contact déjà en suivi !</p>
+              <p className="text-sm text-blue-700 mb-2">
+                Ces contacts sont déjà enregistrés dans les suivis. Vous pouvez les garder sur la page ou les retirer temporairement. (Ils restent dans les suivis jusqu’à la prochaine étape)
+              </p>
+              {doublons.map((c) => (
+                <div key={c.id} className="flex justify-between items-center mt-2 bg-white p-2 rounded shadow-sm">
+                  <span className="font-medium">{c.prenom} {c.nom} ({c.telephone})</span>
+                  <div className="flex gap-2">
+                    <button
+                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+                      onClick={() => setDoublons((prev) => prev.filter((d) => d.id !== c.id))}
+                    >
+                      Garder
+                    </button>
+                    <button
+                      className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 transition"
+                      onClick={() => {
+                        setDoublons((prev) => prev.filter((d) => d.id !== c.id));
+                        setContacts((prev) => prev.filter((d) => d.id !== c.id));
+                      }}
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
 
         {/* Toggle Vue Carte / Vue Table */}
@@ -378,23 +381,21 @@ export default function Evangelisation() {
                         <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
                         <button onClick={() => { setEditMember(member); setPopupMember(null); }} 
                         className="text-blue-600 text-sm mt-4 w-full text-center">✏️ Modifier le contact</button>
-                          <button
-                           onClick={() => {
-                             if (
-                               window.confirm(
-                                 "⚠️ Suppression définitive\n\n" +
-                                 "Voulez-vous vraiment supprimer ce contact ?\n\n" +
-                                 "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
-                                 "Cette action est irréversible."
-                               )
-                             ) {
-                               handleSupprimerMembre(member.id); 
-                             }
-                           }}
-                           className="text-red-600 text-sm mt-2 w-full"
-                         >
-                           🗑️ Supprimer le contact
-                         </button>  
+                        <button
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                "⚠️ Suppression définitive\n\n" +
+                                "Voulez-vous vraiment supprimer ce contact ?\nCette action est irréversible."
+                              )
+                            ) {
+                              handleSupprimerMembre(member.id); 
+                            }
+                          }}
+                          className="text-red-600 text-sm mt-2 w-full"
+                        >
+                          🗑️ Supprimer le contact
+                        </button>  
                       </div>
                     )}
                   </div>

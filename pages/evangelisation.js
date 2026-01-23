@@ -120,77 +120,90 @@ export default function Evangelisation() {
   };
 
   /* ================= ENVOI WHATSAPP ================= */
-  // 🔹 Vérification doublons
-  const checkDoublons = async () => {
-    if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+  // State pour doublons multiples
+const [showDoublonPopup, setShowDoublonPopup] = useState(false);
+const [doublonsDetected, setDoublonsDetected] = useState([]);
+const [pendingContacts, setPendingContacts] = useState([]);
 
-    const { data: existingSuivis } = await supabase
-      .from("suivis_des_evangelises")
-      .select("telephone");
+        // Fonction de vérification des doublons avant envoi
+        const checkDoublons = async () => {
+          if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+        
+          // Récupérer tous les numéros déjà dans les suivis
+          const { data: existingSuivis } = await supabase
+            .from("suivis_des_evangelises")
+            .select("telephone");
+        
+          // Filtrer les contacts sélectionnés qui sont déjà en suivi
+          const detected = selectedContacts.filter((c) =>
+            existingSuivis.some((s) => s.telephone === c.telephone)
+          );
+        
+          if (detected.length > 0) {
+            setDoublonsDetected(detected);
+            setPendingContacts(selectedContacts);
+            setShowDoublonPopup(true);
+          } else {
+            sendToWhatsapp(selectedContacts);
+          }
+        };
+        
+        // Fonction envoi WhatsApp (appelé par popup)
+        const sendToWhatsapp = async (contactsToSend = pendingContacts) => {
+          setShowDoublonPopup(false);
+          setPendingContacts([]);
+          setLoadingSend(true);
+        
+          try {
+            const cible =
+              selectedTargetType === "cellule"
+                ? cellules.find((c) => c.id === selectedTarget)
+                : conseillers.find((c) => c.id === selectedTarget);
+        
+            if (!cible || !cible.telephone) throw new Error("Numéro cible invalide");
+        
+            // Insert dans suivis_des_evangelises
+            const inserts = contactsToSend.map((m) => ({
+              prenom: m.prenom,
+              nom: m.nom,
+              telephone: m.telephone,
+              is_whatsapp: m.is_whatsapp,
+              ville: m.ville,
+              besoin: m.besoin,
+              infos_supplementaires: m.infos_supplementaires,
+              sexe: m.sexe,
+              type_conversion: m.type_conversion,
+              priere_salut: m.priere_salut,
+              status_suivis_evangelises: "Envoyé",
+              evangelise_id: m.id,
+              conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
+              cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
+              date_suivi: new Date().toISOString()
+            }));
+        
+            const { error: insertError } = await supabase
+              .from("suivis_des_evangelises")
+              .insert(inserts);
+            if (insertError) throw insertError;
+        
+            const ids = contactsToSend.map((c) => c.id);
+            const { error: updateError } = await supabase
+              .from("evangelises")
+              .update({ status_suivi: "Envoyé" })
+              .in("id", ids);
+            if (updateError) throw updateError;
+        
+            setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
+            setCheckedContacts({});
+            alert("✅ Contacts envoyés et enregistrés");
+          } catch (err) {
+            console.error(err);
+            alert("❌ Erreur lors de l’envoi");
+          } finally {
+            setLoadingSend(false);
+          }
+        };
 
-    const doublons = selectedContacts.filter((c) =>
-      existingSuivis.some((s) => s.telephone === c.telephone)
-    );
-
-    if (doublons.length > 0) {
-      setDoublonDetected(doublons[0]);
-      setPendingContacts(selectedContacts);
-      setShowDoublonPopup(true);
-    } else {
-      sendToWhatsapp(selectedContacts);
-    }
-  };
-
-  const sendToWhatsapp = async (contactsToSend = pendingContacts) => {
-    setShowDoublonPopup(false);
-    setPendingContacts([]);
-    setLoadingSend(true);
-
-    try {
-      const cible =
-        selectedTargetType === "cellule"
-          ? cellules.find((c) => c.id === selectedTarget)
-          : conseillers.find((c) => c.id === selectedTarget);
-
-      if (!cible || !cible.telephone) throw new Error("Numéro de la cible invalide");
-
-      // 🔹 Insert dans suivis_des_evangelises
-      const inserts = contactsToSend.map((m) => ({
-        prenom: m.prenom,
-        nom: m.nom,
-        telephone: m.telephone,
-        is_whatsapp: m.is_whatsapp,
-        ville: m.ville,
-        besoin: m.besoin,
-        infos_supplementaires: m.infos_supplementaires,
-        sexe: m.sexe,
-        type_conversion: m.type_conversion,
-        priere_salut: m.priere_salut,
-        status_suivis_evangelises: "Envoyé",
-        evangelise_id: m.id,
-        conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
-        cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
-        date_suivi: new Date().toISOString()
-      }));
-
-      const { error: insertError } = await supabase
-        .from("suivis_des_evangelises")
-        .insert(inserts);
-
-      if (insertError) throw insertError;
-
-      // 🔹 Update evangelises
-      const ids = contactsToSend.map((c) => c.id);
-      const { error: updateError } = await supabase
-        .from("evangelises")
-        .update({ status_suivi: "Envoyé" })
-        .in("id", ids);
-
-      if (updateError) throw updateError;
-
-      setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
-      setCheckedContacts({});
-      alert("✅ Contacts envoyés et enregistrés");
 
       // Optionnel: ouverture WhatsApp (comme avant)
       let message = `👋 Bonjour ${selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom},\n\n`;
@@ -385,30 +398,38 @@ export default function Evangelisation() {
       )}
 
       {/* 🔹 Popup Doublon - Moderne */}
-      {showDoublonPopup && doublonDetected && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity">
-          <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl p-6 w-96 max-w-[90%] text-center animate-fadeIn">
-            <h3 className="text-xl font-bold mb-3 text-gray-800">⚠️ Doublon détecté</h3>
-            <p className="mb-6 text-gray-700">
-              Ce numéro ({doublonDetected.telephone}) existe déjà dans la base.
-            </p>
-            <div className="flex justify-center gap-3">
-              <button
-                onClick={() => sendToWhatsapp()}
-                className="flex-1 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition"
-              >
-                Envoyer quand même
-              </button>
-              <button
-                onClick={() => setShowDoublonPopup(false)}
-                className="flex-1 bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded-lg hover:bg-gray-400 transition"
-              >
-                Annuler
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {showDoublonPopup && doublonsDetected.length > 0 && (
+  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity">
+    <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl p-6 w-96 max-w-[90%] text-center animate-fadeIn">
+      <h3 className="text-xl font-bold mb-3 text-gray-800">⚠️ Contact déjà en suivi !</h3>
+      <p className="mb-4 text-gray-700">Ces contacts sont déjà enregistrés dans les suivis. 
+        Vous pouvez les garder sur la page ou les supprimer. 
+        (Ils restent dans les suivis jusqu’à la prochaine étape) :</p>
+      <ul className="text-left max-h-40 overflow-y-auto mb-6 px-4">
+        {doublonsDetected.map((d, i) => (
+          <li key={i} className="border-b py-1 text-gray-800">
+            {d.prenom} {d.nom} ({d.telephone})
+          </li>
+        ))}
+      </ul>
+      <div className="flex justify-center gap-3">
+        <button
+          onClick={() => sendToWhatsapp()}
+          className="flex-1 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition"
+        >
+          Envoyer quand même
+        </button>
+        <button
+          onClick={() => setShowDoublonPopup(false)}
+          className="flex-1 bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded-lg hover:bg-gray-400 transition"
+        >
+          Annuler
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }

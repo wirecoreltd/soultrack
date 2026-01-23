@@ -477,8 +477,7 @@ export default function SuivisEvangelisation() {
                   className="text-orange-500 underline text-sm mt-3"
                 >
                   {ouvert ? "Fermer détails" : "Détails"}
-                </button>
-              </div>
+                </button>              
 
               {/* Détails */}
               <div className={`transition-all duration-500 overflow-hidden ${ouvert ? "max-h-[1000px] mt-3" : "max-h-0"}`}>

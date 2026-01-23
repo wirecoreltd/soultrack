@@ -162,7 +162,7 @@ const [pendingContacts, setPendingContacts] = useState([]);
         
             if (!cible || !cible.telephone) throw new Error("Numéro cible invalide");
         
-            // Insert dans suivis_des_evangelises
+            // INSERT dans suivis_des_evangelises
             const inserts = contactsToSend.map((m) => ({
               prenom: m.prenom,
               nom: m.nom,
@@ -196,7 +196,7 @@ const [pendingContacts, setPendingContacts] = useState([]);
             setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
             setCheckedContacts({});
         
-            // Message WhatsApp
+            // 🔹 Construction du message WhatsApp (ici, tout est dans la fonction)
             let message = `👋 Bonjour ${selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom},\n\n`;
             message += contactsToSend.length > 1
               ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
@@ -215,6 +215,7 @@ const [pendingContacts, setPendingContacts] = useState([]);
             );
         
             alert("✅ Contacts envoyés et enregistrés");
+        
           } catch (err) {
             console.error(err);
             alert("❌ Erreur lors de l’envoi");
@@ -222,9 +223,6 @@ const [pendingContacts, setPendingContacts] = useState([]);
             setLoadingSend(false);
           }
         };
-
-
-
       // Optionnel: ouverture WhatsApp (comme avant)
       let message = `👋 Bonjour ${selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom},\n\n`;
       message += contactsToSend.length > 1

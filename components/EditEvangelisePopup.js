@@ -124,128 +124,152 @@ export default function EditEvangelisePopup({
         <div className="space-y-4">
 
           {/* Prénom */}
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-2 rounded-l">
-              <span className="text-white">👤</span>
+          <div>
+            <label className="block mb-1 font-medium text-gray-700">Prénom</label>
+            <div className="flex">
+              <div className="bg-blue-600 p-2 flex items-center justify-center">
+                <span className="text-white">👤</span>
+              </div>
+              <input
+                type="text"
+                name="prenom"
+                value={formData.prenom}
+                onChange={handleChange}
+                placeholder="Prénom"
+                className="flex-1 px-3 py-2 border-l border-gray-300 focus:ring-2 focus:ring-blue-600 outline-none text-black"
+              />
             </div>
-            <input
-              type="text"
-              name="prenom"
-              value={formData.prenom}
-              onChange={handleChange}
-              placeholder="Prénom"
-              className="w-full px-3 py-2 border rounded-r focus:ring-2 focus:ring-blue-600 outline-none text-black"
-            />
           </div>
 
           {/* Nom */}
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-2 rounded-l">
-              <span className="text-white">👤</span>
+          <div>
+            <label className="block mb-1 font-medium text-gray-700">Nom</label>
+            <div className="flex">
+              <div className="bg-blue-600 p-2 flex items-center justify-center">
+                <span className="text-white">👤</span>
+              </div>
+              <input
+                type="text"
+                name="nom"
+                value={formData.nom}
+                onChange={handleChange}
+                placeholder="Nom"
+                className="flex-1 px-3 py-2 border-l border-gray-300 focus:ring-2 focus:ring-blue-600 outline-none text-black"
+              />
             </div>
-            <input
-              type="text"
-              name="nom"
-              value={formData.nom}
-              onChange={handleChange}
-              placeholder="Nom"
-              className="w-full px-3 py-2 border rounded-r focus:ring-2 focus:ring-blue-600 outline-none text-black"
-            />
           </div>
 
           {/* Téléphone */}
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-2 rounded-l">
-              <span className="text-white">📞</span>
+          <div>
+            <label className="block mb-1 font-medium text-gray-700">Téléphone</label>
+            <div className="flex">
+              <div className="bg-blue-600 p-2 flex items-center justify-center">
+                <span className="text-white">📞</span>
+              </div>
+              <input
+                type="text"
+                name="telephone"
+                value={formData.telephone}
+                onChange={handleChange}
+                placeholder="Téléphone"
+                className="flex-1 px-3 py-2 border-l border-gray-300 focus:ring-2 focus:ring-blue-600 outline-none text-black"
+              />
             </div>
-            <input
-              type="text"
-              name="telephone"
-              value={formData.telephone}
-              onChange={handleChange}
-              placeholder="Téléphone"
-              className="w-full px-3 py-2 border rounded-r focus:ring-2 focus:ring-blue-600 outline-none text-black"
-            />
           </div>
 
           {/* Ville */}
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-2 rounded-l">
-              <span className="text-white">🏙️</span>
+          <div>
+            <label className="block mb-1 font-medium text-gray-700">Ville</label>
+            <div className="flex">
+              <div className="bg-blue-600 p-2 flex items-center justify-center">
+                <span className="text-white">🏙️</span>
+              </div>
+              <input
+                type="text"
+                name="ville"
+                value={formData.ville}
+                onChange={handleChange}
+                placeholder="Ville"
+                className="flex-1 px-3 py-2 border-l border-gray-300 focus:ring-2 focus:ring-blue-600 outline-none text-black"
+              />
             </div>
-            <input
-              type="text"
-              name="ville"
-              value={formData.ville}
-              onChange={handleChange}
-              placeholder="Ville"
-              className="w-full px-3 py-2 border rounded-r focus:ring-2 focus:ring-blue-600 outline-none text-black"
-            />
           </div>
 
           {/* WhatsApp */}
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-2 rounded-l">
-              <span className="text-white">💬</span>
+          <div>
+            <label className="block mb-1 font-medium text-gray-700">WhatsApp</label>
+            <div className="flex">
+              <div className="bg-blue-600 p-2 flex items-center justify-center">
+                <span className="text-white">💬</span>
+              </div>
+              <label className="flex-1 px-3 py-2 border-l border-gray-300 items-center flex">
+                <input
+                  type="checkbox"
+                  name="is_whatsapp"
+                  checked={formData.is_whatsapp}
+                  onChange={handleChange}
+                  className="w-4 h-4 accent-blue-600 mr-2"
+                />
+                WhatsApp
+              </label>
             </div>
-            <label className="flex items-center w-full gap-2 px-3 py-2 border rounded-r">
-              <input
-                type="checkbox"
-                name="is_whatsapp"
-                checked={formData.is_whatsapp}
-                onChange={handleChange}
-                className="w-4 h-4 accent-blue-600"
-              />
-              WhatsApp
-            </label>
           </div>
 
           {/* Sexe */}
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-2 rounded-l">
-              <span className="text-white">🎗️</span>
+          <div>
+            <label className="block mb-1 font-medium text-gray-700">Sexe</label>
+            <div className="flex">
+              <div className="bg-blue-600 p-2 flex items-center justify-center">
+                <span className="text-white">🎗️</span>
+              </div>
+              <input
+                type="text"
+                name="sexe"
+                value={formData.sexe}
+                onChange={handleChange}
+                placeholder="Sexe"
+                className="flex-1 px-3 py-2 border-l border-gray-300 focus:ring-2 focus:ring-blue-600 outline-none text-black"
+              />
             </div>
-            <input
-              type="text"
-              name="sexe"
-              value={formData.sexe}
-              onChange={handleChange}
-              placeholder="Sexe"
-              className="w-full px-3 py-2 border rounded-r focus:ring-2 focus:ring-blue-600 outline-none text-black"
-            />
           </div>
 
           {/* Prière du salut */}
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-2 rounded-l">
-              <span className="text-white">🙏</span>
+          <div>
+            <label className="block mb-1 font-medium text-gray-700">Prière du salut</label>
+            <div className="flex">
+              <div className="bg-blue-600 p-2 flex items-center justify-center">
+                <span className="text-white">🙏</span>
+              </div>
+              <select
+                name="priere_salut"
+                value={formData.priere_salut ? "oui" : "non"}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, priere_salut: e.target.value === "oui" }))
+                }
+                className="flex-1 px-3 py-2 border-l border-gray-300 focus:ring-2 focus:ring-blue-600 outline-none text-black"
+              >
+                <option value="non">Non</option>
+                <option value="oui">Oui</option>
+              </select>
             </div>
-            <select
-              name="priere_salut"
-              value={formData.priere_salut ? "oui" : "non"}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, priere_salut: e.target.value === "oui" }))
-              }
-              className="w-full px-3 py-2 border rounded-r focus:ring-2 focus:ring-blue-600 outline-none text-black"
-            >
-              <option value="non">Non</option>
-              <option value="oui">Oui</option>
-            </select>
           </div>
 
           {/* Type conversion */}
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-2 rounded-l">
-              <span className="text-white">☀️</span>
+          <div>
+            <label className="block mb-1 font-medium text-gray-700">Type de conversion</label>
+            <div className="flex">
+              <div className="bg-blue-600 p-2 flex items-center justify-center">
+                <span className="text-white">☀️</span>
+              </div>
+              <input
+                type="text"
+                name="type_conversion"
+                value={formData.type_conversion}
+                onChange={handleChange}
+                placeholder="Type de conversion"
+                className="flex-1 px-3 py-2 border-l border-gray-300 focus:ring-2 focus:ring-blue-600 outline-none text-black"
+              />
             </div>
-            <input
-              type="text"
-              name="type_conversion"
-              value={formData.type_conversion}
-              onChange={handleChange}
-              placeholder="Type de conversion"
-              className="w-full px-3 py-2 border rounded-r focus:ring-2 focus:ring-blue-600 outline-none text-black"
-            />
           </div>
 
           {/* Besoins */}
@@ -288,18 +312,21 @@ export default function EditEvangelisePopup({
           </div>
 
           {/* Infos supplémentaires */}
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-2 rounded-l">
-              <span className="text-white">📝</span>
+          <div>
+            <label className="block mb-1 font-medium text-gray-700">Infos supplémentaires</label>
+            <div className="flex">
+              <div className="bg-blue-600 p-2 flex items-center justify-center">
+                <span className="text-white">📝</span>
+              </div>
+              <textarea
+                name="infos_supplementaires"
+                value={formData.infos_supplementaires}
+                onChange={handleChange}
+                placeholder="Infos supplémentaires"
+                rows={3}
+                className="flex-1 px-3 py-2 border-l border-gray-300 focus:ring-2 focus:ring-blue-600 outline-none text-black"
+              />
             </div>
-            <textarea
-              name="infos_supplementaires"
-              value={formData.infos_supplementaires}
-              onChange={handleChange}
-              placeholder="Infos supplémentaires"
-              rows={3}
-              className="w-full px-3 py-2 border rounded-r focus:ring-2 focus:ring-blue-600 outline-none text-black"
-            />
           </div>
 
           {message && (

@@ -420,32 +420,29 @@ export default function SuivisEvangelisation() {
                   🏙️ Ville : {m.ville || "—"}
                 </p>
 
-                {/* Commentaire + statut */}
                 <div className="w-full bg-slate-50 rounded-xl p-3 mt-2">
                   <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
                     Commentaire Suivis
                   </label>
+                
                   <textarea
                     rows={2}
                     value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
                     disabled={isRefusView}
                     className={`w-full rounded-lg border px-3 py-2 ${
-                      isRefusView
-                        ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                        : ""
+                      isRefusView ? "bg-gray-200 text-gray-500 cursor-not-allowed" : ""
                     }`}
                   />
-
+                
                   <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
-                  Statut du suivis
-                    </label>
+                    Statut du suivis
+                  </label>
+                
                   <select
                     value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""}
                     disabled={isRefusView}
                     className={`mt-2 w-full rounded-lg border px-3 py-2 ${
-                      isRefusView
-                        ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                        : ""
+                      isRefusView ? "bg-gray-200 text-gray-500 cursor-not-allowed" : ""
                     }`}
                   >
                     <option value="">-- Sélectionner un statut --</option>
@@ -453,12 +450,10 @@ export default function SuivisEvangelisation() {
                     <option value="Intégré">Intégré</option>
                     <option value="Refus">Refus</option>
                   </select>
-
+                
                   <button
                     onClick={() =>
-                      isRefusView
-                        ? reactiverSuivi(m)
-                        : updateSuivi(m.id, m)
+                      isRefusView ? reactiverSuivi(m) : updateSuivi(m.id, m)
                     }
                     disabled={updating[m.id]}
                     className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all ${
@@ -474,7 +469,9 @@ export default function SuivisEvangelisation() {
                       : updating[m.id]
                         ? "Enregistrement..."
                         : "Sauvegarder"}
-                  </button>                
+                  </button>
+                </div> {/* ✅ FERMETURE MANQUANTE */}
+                
                 <button
                   onClick={() => setDetailsCarteId(ouvert ? null : m.id)}
                   className="text-orange-500 underline text-sm mt-3"

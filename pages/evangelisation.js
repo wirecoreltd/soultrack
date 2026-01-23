@@ -370,8 +370,7 @@ export default function Evangelisation() {
           <div className="bg-white rounded-xl p-6 max-w-lg w-full space-y-4 text-center">
             <h2 className="text-xl font-bold">⚠️ Doublons détectés</h2>
             <p className="text-sm">Ces contacts sont déjà enregistrés dans les suivis. 
-            Vous pouvez les garder sur la page ou les supprimer. 
-            (Ils restent dans les suivis jusqu’à la prochaine étape).
+            Vous pouvez les garder sur la page ou les supprimer.          
             </p>
 
             <ul className="text-left list-disc list-inside max-h-60 overflow-y-auto space-y-2">

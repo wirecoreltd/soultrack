@@ -474,9 +474,7 @@ export default function SuivisEvangelisation() {
                       : updating[m.id]
                         ? "Enregistrement..."
                         : "Sauvegarder"}
-                  </button>
-
-                </div>
+                  </button>                
                 <button
                   onClick={() => setDetailsCarteId(ouvert ? null : m.id)}
                   className="text-orange-500 underline text-sm mt-3"

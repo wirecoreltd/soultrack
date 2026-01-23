@@ -235,8 +235,8 @@ export default function SuivisEvangelisation() {
 
     if (error) throw error;
 
-    // 🔥 Retirer immédiatement de la vue Refus
-    setAllSuivis((prev) => prev.filter((s) => s.id !== m.id));
+    // 🔁 Recharge TOUT depuis Supabase
+    await fetchSuivis(user, cellules);
 
   } catch (err) {
     console.error("Erreur réactivation :", err.message);
@@ -245,6 +245,7 @@ export default function SuivisEvangelisation() {
     setUpdating((p) => ({ ...p, [m.id]: false }));
   }
 };
+
 
       setAllSuivis((prev) => prev.filter((s) => s.id !== id));
       return;

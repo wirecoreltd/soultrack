@@ -103,157 +103,187 @@ export default function EditEvangelisePopup({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto shadow-xl relative">
+  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+    <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden relative">
 
-        {/* Croix fermer */}
+      {/* Header */}
+      <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-4 text-white">
+        <h2 className="text-lg font-bold">
+          ✏️ Modifier {member.prenom} {member.nom}
+        </h2>
+
         <button
-          onClick={onClose} // Annuler => ferme les deux popups
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 font-bold text-lg"
+          onClick={onClose}
+          className="absolute top-3 right-4 text-white/80 hover:text-white text-2xl font-bold"
         >
           ×
         </button>
+      </div>
 
-        <h2 className="text-lg font-bold text-gray-800 text-center mb-4">
-          Modifier {member.prenom} {member.nom}
-        </h2>
+      {/* Body */}
+      <div className="p-6 max-h-[75vh] overflow-y-auto space-y-5 text-sm">
 
-        <div className="flex flex-col space-y-3 text-sm">
-          {/* Prénom / Nom */}
-          <label className="font-semibold">Prénom</label>
-          <input
-            name="prenom"
-            value={formData.prenom}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          />
+        {/* Infos principales */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="font-semibold text-gray-700">Prénom</label>
+            <input
+              name="prenom"
+              value={formData.prenom}
+              onChange={handleChange}
+              className="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
 
-          <label className="font-semibold">Nom</label>
-          <input
-            name="nom"
-            value={formData.nom}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          />
+          <div>
+            <label className="font-semibold text-gray-700">Nom</label>
+            <input
+              name="nom"
+              value={formData.nom}
+              onChange={handleChange}
+              className="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
 
-          <label className="font-semibold">Ville</label>
-          <input
-            name="ville"
-            value={formData.ville}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          />
+          <div>
+            <label className="font-semibold text-gray-700">Ville</label>
+            <input
+              name="ville"
+              value={formData.ville}
+              onChange={handleChange}
+              className="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
 
-          <label className="font-semibold">Téléphone</label>
-          <input
-            name="telephone"
-            value={formData.telephone}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          />
+          <div>
+            <label className="font-semibold text-gray-700">Téléphone</label>
+            <input
+              name="telephone"
+              value={formData.telephone}
+              onChange={handleChange}
+              className="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+        </div>
 
-          {/* WhatsApp / Prière du salut */}
-          <label className="flex items-center gap-2">
+        {/* Statuts */}
+        <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl">
+          <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
               name="is_whatsapp"
               checked={formData.is_whatsapp}
               onChange={handleChange}
+              className="w-5 h-5 accent-green-600"
             />
             WhatsApp
           </label>
 
-          <label className="flex items-center gap-2">
+          <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
               name="priere_salut"
               checked={formData.priere_salut}
               onChange={handleChange}
+              className="w-5 h-5 accent-blue-600"
             />
             Prière du salut
           </label>
+        </div>
 
-          {/* Type de conversion */}
-          <label className="font-semibold">Type de conversion</label>
+        {/* Type conversion */}
+        <div>
+          <label className="font-semibold text-gray-700">Type de conversion</label>
           <input
             name="type_conversion"
             value={formData.type_conversion}
             onChange={handleChange}
-            className="border rounded px-2 py-1"
+            className="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
           />
+        </div>
 
-          {/* Besoins */}
-          <div className="mt-2">
-            <p className="font-semibold mb-2">Besoins :</p>
+        {/* Besoins */}
+        <div>
+          <p className="font-semibold text-gray-700 mb-2">Besoins</p>
+
+          <div className="grid grid-cols-2 gap-3">
             {besoinsOptions.map((item) => (
-              <label key={item} className="flex items-center gap-3 mb-2">
+              <label
+                key={item}
+                className="flex items-center gap-3 bg-gray-50 hover:bg-blue-50 px-3 py-2 rounded-lg cursor-pointer"
+              >
                 <input
                   type="checkbox"
                   value={item}
                   checked={formData.besoin.includes(item)}
                   onChange={handleBesoinChange}
-                  className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+                  className="w-5 h-5 accent-blue-600"
                 />
                 {item}
               </label>
             ))}
 
-            {/* Autre */}
-            <label className="flex items-center gap-3 mb-2">
+            <label className="flex items-center gap-3 bg-gray-50 hover:bg-blue-50 px-3 py-2 rounded-lg cursor-pointer">
               <input
                 type="checkbox"
                 value="Autre"
                 checked={showAutre}
                 onChange={handleBesoinChange}
-                className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+                className="w-5 h-5 accent-blue-600"
               />
               Autre
             </label>
-
-            {showAutre && (
-              <input
-                type="text"
-                name="autreBesoin"
-                value={formData.autreBesoin}
-                onChange={handleChange}
-                placeholder="Précisez..."
-                className="border rounded px-2 py-1 w-full"
-              />
-            )}
           </div>
 
-          {/* Infos supplémentaires */}
-          <label className="font-semibold">Infos supplémentaires</label>
+          {showAutre && (
+            <input
+              type="text"
+              name="autreBesoin"
+              value={formData.autreBesoin}
+              onChange={handleChange}
+              placeholder="Précisez le besoin..."
+              className="w-full mt-3 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          )}
+        </div>
+
+        {/* Infos supp */}
+        <div>
+          <label className="font-semibold text-gray-700">Infos supplémentaires</label>
           <textarea
             name="infos_supplementaires"
             value={formData.infos_supplementaires}
             onChange={handleChange}
-            className="border rounded px-2 py-1"
             rows={3}
+            className="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
           />
+        </div>
 
-          {message && (
-            <p className="text-green-600 text-center font-semibold">{message}</p>
-          )}
+        {message && (
+          <p className="text-green-600 text-center font-semibold">{message}</p>
+        )}
+      </div>
 
-          {/* Boutons */}
-          <div className="flex justify-between mt-4">
-            <button
-              onClick={onClose} // Annuler
-              className="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400"
-            >
-              Annuler
-            </button>
+      {/* Footer boutons */}
+      <div className="bg-gray-100 px-6 py-4 flex justify-between">
+        <button
+          onClick={onClose}
+          className="px-5 py-2 rounded-lg bg-gray-300 hover:bg-gray-400 font-semibold"
+        >
+          Annuler
+        </button>
 
-            <button
-              onClick={handleSubmit} // Enregistrer
-              disabled={loading}
-              className={`px-4 py-2 rounded-md text-white font-bold ${
-                loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
-              }`}
-            >
-              {loading ? "Enregistrement..." : "Enregistrer"}
-            </button>
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className={`px-6 py-2 rounded-lg text-white font-bold transition ${
+            loading
+              ? "bg-gray-400"
+              : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-90"
+          }`}
+        >
+          {loading ? "Enregistrement..." : "💾 Enregistrer"}
+        </button>
           </div>
         </div>
       </div>

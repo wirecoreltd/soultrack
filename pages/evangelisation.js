@@ -27,6 +27,9 @@ export default function Evangelisation() {
   const [doublons, setDoublons] = useState([]);
   const phoneMenuRef = useRef(null);
   const [pendingSendContacts, setPendingSendContacts] = useState(null); 
+  const [showDoublonPopup, setShowDoublonPopup] = useState(false);
+  const [doublonContact, setDoublonContact] = useState(null);
+  const [forceSend, setForceSend] = useState(false);
 
 
   /* ================= FETCH ================= */
@@ -165,6 +168,31 @@ export default function Evangelisation() {
     // On envoie tous les contacts sélectionnés
     const idsToSend = selectedContacts.map((c) => c.id);
 
+    // 🔍 Vérification doublon par téléphone (sauf si forceSend)
+      if (!forceSend) {
+        const telephones = selectedContacts
+          .map((c) => c.telephone)
+          .filter(Boolean);
+      
+        const { data: doublonsTel } = await supabase
+          .from("suivis_des_evangelises")
+          .select("telephone")
+          .in("telephone", telephones);
+      
+        if (doublonsTel && doublonsTel.length > 0) {
+          const telExiste = doublonsTel[0].telephone;
+          const contact = selectedContacts.find(
+            (c) => c.telephone === telExiste
+          );
+      
+          setDoublonContact(contact);
+          setShowDoublonPopup(true);
+          setLoadingSend(false);
+          return; // ⛔ STOP ENVOI
+        }
+      }
+
+
     // Insert dans suivis_des_evangelises
     const inserts = selectedContacts.map((m) => ({
       prenom: m.prenom,
@@ -201,6 +229,14 @@ export default function Evangelisation() {
     // Mise à jour UI instantanée
     setContacts((prev) => prev.filter((c) => !idsToSend.includes(c.id)));
     setCheckedContacts({});
+
+      const envoyerQuandMeme = async () => {
+        setForceSend(true);
+        setShowDoublonPopup(false);
+        await sendContacts();
+        setForceSend(false);
+      };
+
 
     // Message WhatsApp automatique
     const nomCible =
@@ -304,38 +340,42 @@ export default function Evangelisation() {
 
       <div className="w-full max-w-6xl flex flex-col items-center">
 
-        {/* ================= DOUBLONS ================= */}
-          {doublons.length > 0 && (
-            <div className="bg-blue-100/30 border-l-4 border-blue-500/70 p-4 mb-4 w-full max-w-6xl rounded shadow">
-              <p className="font-bold text-blue-800 mb-2">⚠️ Contact déjà en suivi !</p>
-              <p className="text-sm text-blue-700 mb-2">
-                Ces contacts sont déjà enregistrés dans les suivis. Que voulez-vous faire ?
+        {/* 🔹 Popup Doublon - Moderne */}
+        {showDoublonPopup && doublonContact && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl p-6 w-96 max-w-[90%] text-center animate-fadeIn">
+              <h3 className="text-xl font-bold mb-3 text-gray-800">
+                ⚠️ Doublon détecté
+              </h3>
+        
+              <p className="mb-6 text-gray-700">
+                Ce numéro <br />
+                <span className="font-semibold text-black">
+                  {doublonContact.telephone}
+                </span>
+                <br />
+                existe déjà dans les suivis.
               </p>
-              <div className="flex gap-4">
+        
+              <div className="flex justify-center gap-3">
                 <button
-                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-                  onClick={() => setDoublons([])} // Annuler
+                  onClick={envoyerQuandMeme}
+                  className="flex-1 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition"
+                >
+                  Envoyer quand même
+                </button>
+        
+                <button
+                  onClick={() => setShowDoublonPopup(false)}
+                  className="flex-1 bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded-lg hover:bg-gray-400 transition"
                 >
                   Annuler
                 </button>
-                <button
-                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                  onClick={async () => {
-                    // Envoyer quand même
-                    const cible =
-                      selectedTargetType === "cellule"
-                        ? cellules.find((c) => c.id == selectedTarget)
-                        : conseillers.find((c) => c.id == selectedTarget);
-                    await processSend([...pendingSendContacts, ...doublons], cible);
-                    setDoublons([]);
-                    setPendingSendContacts(null);
-                  }}
-                >
-                   Envoyer quand même
-      </button>
-    </div>
-  </div>
-)}
+              </div>
+            </div>
+          </div>
+        )}
+
 
         {/* Toggle Vue Carte / Vue Table */}
         <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">

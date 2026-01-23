@@ -212,36 +212,33 @@ export default function SuivisEvangelisation() {
 
     if (error) throw error;
     
-      // 🔄 Reactiver le contact
-      const reactiverSuivi = async (m) => {
-    try {
-      setUpdating((p) => ({ ...p, [m.id]: true }));
-  
-      const { error } = await supabase
-        .from("suivis_des_evangelises")
-        .update({
-          status_suivis_evangelises: "En cours",
-        })
-        .eq("id", m.id);
-  
-      if (error) throw error;
-  
-      // 🔄 Retirer de la vue refus
-      setAllSuivis((prev) =>
-        prev.map((s) =>
-          s.id === m.id
-            ? { ...s, status_suivis_evangelises: "En cours" }
-            : s
-        )
-      );
-    } catch (err) {
-      console.error("Erreur réactivation :", err.message);
-      alert("Erreur lors de la réactivation");
-    } finally {
-      setUpdating((p) => ({ ...p, [m.id]: false }));
-    }
-  };
-
+      // ================= REACTIVER SUIVI =================
+        const reactiverSuivi = async (m) => {
+          try {
+            setUpdating((p) => ({ ...p, [m.id]: true }));
+        
+            const { error } = await supabase
+              .from("suivis_des_evangelises")
+              .update({
+                status_suivis_evangelises: "En cours",
+              })
+              .eq("id", m.id);
+        
+            if (error) throw error;
+        
+            setAllSuivis((prev) =>
+              prev.map((s) =>
+                s.id === m.id
+                  ? { ...s, status_suivis_evangelises: "En cours" }
+                  : s
+              )
+            );
+          } catch (err) {
+            console.error("Erreur réactivation :", err.message);
+          } finally {
+            setUpdating((p) => ({ ...p, [m.id]: false }));
+          }
+        };
 
     // ✅ Si intégré → upsert + retrait immédiat
     if (newStatus === "Intégré") {

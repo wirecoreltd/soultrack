@@ -308,18 +308,15 @@ export default function SuivisMembres() {
 
                   {showRefus ? (
                     <button
-  onClick={() => {
-    console.log("CLICK REACTIVER", m.id);
-    reactiverSuivi(m);
-  }}
-  disabled={updating[m.id]}
-  className="px-3 py-1 rounded bg-green-600 text-white text-sm"
->
-  🔄 Réactiver
-</button>
-
-                  )}
-                </div>
+                      onClick={() => {
+                        console.log("CLICK REACTIVER", m.id);
+                        reactiverSuivi(m);
+                      }}
+                      disabled={updating[m.id]}
+                      className="px-3 py-1 rounded bg-green-600 text-white text-sm"
+                    >
+                      🔄 Réactiver
+                    </button>                 
 
                 <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">{detailsOpen === m.id ? "Fermer détails" : "Détails"}</button>
               </div>

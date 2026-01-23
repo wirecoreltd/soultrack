@@ -12,42 +12,85 @@ import HeaderPages from "../components/HeaderPages";
 export default function Evangelisation() {
   const router = useRouter();
 
-  const [contacts, setContacts] = useState([]);
+  const [contacts, setContacts] = useState(null);
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [selectedTargetType, setSelectedTargetType] = useState("");
   const [selectedTarget, setSelectedTarget] = useState("");
   const [checkedContacts, setCheckedContacts] = useState({});
+  const [detailsOpen, setDetailsOpen] = useState({});
+  const [editMember, setEditMember] = useState(null);
+  const [popupMember, setPopupMember] = useState(null);
   const [loadingSend, setLoadingSend] = useState(false);
-
-  const [showDoublonPopup, setShowDoublonPopup] = useState(false);
-  const [doublonContact, setDoublonContact] = useState(null);
-  const [forceSend, setForceSend] = useState(false);
-
+  const [view, setView] = useState("card");
+  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
+  const [doublons, setDoublons] = useState([]);
   const phoneMenuRef = useRef(null);
 
   /* ================= FETCH ================= */
-
   useEffect(() => {
     fetchContacts();
     fetchCellules();
     fetchConseillers();
   }, []);
 
-  const fetchContacts = async () => {
-    const { data, error } = await supabase
-      .from("evangelises")
-      .select("*")
-      .eq("status_suivi", "Non envoyé")
-      .order("created_at", { ascending: false });
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+        setOpenPhoneMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-    if (!error) setContacts(data || []);
-  };
+  const handleSupprimerMembre = async (id) => {
+  try {
+    // 🔹 Mettre à jour dans la base
+    const { error } = await supabase
+      .from("evangelises")
+      .update({ status_suivi: "supprime" })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Erreur suppression :", error);
+      alert("❌ Erreur lors de la suppression");
+      return;
+    }
+
+    // 🔹 Retirer le contact du state instantanément
+    setContacts((prev) => prev.filter((m) => m.id !== id));
+    
+  } catch (err) {
+    console.error(err);
+    alert("❌ Erreur lors de la suppression");
+  }
+};
+
+
+  // ===== Fetch contacts non envoyés =====
+  const fetchContacts = async () => {
+  const { data, error } = await supabase
+    .from("evangelises")
+    .select("*")
+    .eq("status_suivi", "Non envoyé")
+    .order("created_at", { ascending: false }) // <-- correct
+    .limit(1000);
+
+  if (error) {
+    console.error("Erreur fetchContacts:", error);
+    setContacts([]);
+    return;
+  }
+
+  console.log("Contacts chargés :", data);
+  setContacts(data || []);
+};
 
   const fetchCellules = async () => {
     const { data } = await supabase
       .from("cellules")
-      .select("id, cellule_full, telephone");
+      .select("id, cellule_full, responsable, telephone, ville");
     setCellules(data || []);
   };
 
@@ -60,10 +103,8 @@ export default function Evangelisation() {
   };
 
   /* ================= UTILS ================= */
-
-  const handleCheck = (id) => {
+  const handleCheck = (id) =>
     setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
 
   const formatBesoin = (b) => {
     if (!b) return "—";
@@ -76,22 +117,16 @@ export default function Evangelisation() {
     }
   };
 
-  const selectedContacts = contacts.filter((c) => checkedContacts[c.id]);
+  const selectedContacts = contacts?.filter((c) => checkedContacts[c.id]) || [];
   const hasSelectedContacts = selectedContacts.length > 0;
 
-  /* ================= ENVOI ================= */
-
-  const envoyerQuandMeme = async () => {
-    setForceSend(true);
-    setShowDoublonPopup(false);
-
-    try {
-      await sendContacts();
-    } finally {
-      setForceSend(false);
-    }
+  const getBorderColor = (member) => {
+    if (member.is_whatsapp) return "#25D366";
+    if (member.besoin) return "#FFB800";
+    return "#888";
   };
 
+  /* ================= ENVOI WHATSAPP ================= */
   const sendContacts = async () => {
     if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
     setLoadingSend(true);
@@ -99,35 +134,29 @@ export default function Evangelisation() {
     try {
       const cible =
         selectedTargetType === "cellule"
-          ? cellules.find((c) => c.id === selectedTarget)
-          : conseillers.find((c) => c.id === selectedTarget);
+          ? cellules.find((c) => c.id == selectedTarget)
+          : conseillers.find((c) => c.id == selectedTarget);
 
-      if (!cible?.telephone) throw new Error("Numéro cible invalide");
+      if (!cible || !cible.telephone)
+        throw new Error("Numéro de la cible invalide");
 
-      const idsToSend = selectedContacts.map((c) => c.id);
+      // Vérifier doublons
+      const { data: suivisExisting } = await supabase
+        .from("suivis_des_evangelises")
+        .select("evangelise_id");
 
-      /* 🔍 DOUBLON PAR TÉLÉPHONE */
-      if (!forceSend) {
-        const telephones = selectedContacts.map((c) => c.telephone).filter(Boolean);
+      const existingIds = suivisExisting.map((s) => s.evangelise_id);
+      const newContacts = selectedContacts.filter((c) => !existingIds.includes(c.id));
+      const alreadyInSuivi = selectedContacts.filter((c) => existingIds.includes(c.id));
 
-        const { data: doublonsTel } = await supabase
-          .from("suivis_des_evangelises")
-          .select("telephone")
-          .in("telephone", telephones);
-
-        if (doublonsTel?.length > 0) {
-          const telExiste = doublonsTel[0].telephone;
-          const contact = selectedContacts.find((c) => c.telephone === telExiste);
-
-          setDoublonContact(contact);
-          setShowDoublonPopup(true);
-          setLoadingSend(false);
-          return;
-        }
+      if (alreadyInSuivi.length > 0) setDoublons(alreadyInSuivi);
+      if (newContacts.length === 0) {
+        setLoadingSend(false);
+        return;
       }
 
-      /* 🧾 INSERT SUIVIS */
-      const inserts = selectedContacts.map((m) => ({
+      // Insert dans suivis_des_evangelises
+      const inserts = newContacts.map((m) => ({
         prenom: m.prenom,
         nom: m.nom,
         telephone: m.telephone,
@@ -142,34 +171,43 @@ export default function Evangelisation() {
         evangelise_id: m.id,
         conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
         cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
-        date_suivi: new Date().toISOString(),
+        date_suivi: new Date().toISOString()
       }));
 
-      await supabase.from("suivis_des_evangelises").insert(inserts);
+      const { error: insertError } = await supabase
+        .from("suivis_des_evangelises")
+        .insert(inserts);
 
-      await supabase
+      if (insertError) throw insertError;
+
+      // Update evangelises
+      const ids = newContacts.map((c) => c.id);
+      const { error: updateError } = await supabase
         .from("evangelises")
         .update({ status_suivi: "Envoyé" })
-        .in("id", idsToSend);
+        .in("id", ids);
 
-      setContacts((prev) => prev.filter((c) => !idsToSend.includes(c.id)));
+      if (updateError) throw updateError;
+
+      // Update UI
+      setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
       setCheckedContacts({});
 
-      /* ================= MESSAGE WHATSAPP ================= */
-
+      // Message WhatsApp
       const nomCible =
         selectedTargetType === "cellule"
           ? cible.cellule_full || "Responsable de cellule"
           : `${cible.prenom}`;
+      const isMultiple = newContacts.length > 1;
 
       let message = `👋 Bonjour ${nomCible},\n\n`;
-      message += selectedContacts.length > 1
+      message += isMultiple
         ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
         : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
 
-      selectedContacts.forEach((m, index) => {
+      newContacts.forEach((m, index) => {
         message += "────────────────────\n";
-        if (selectedContacts.length > 1) message += `👥 Personne ${index + 1}\n`;
+        if (isMultiple) message += `👥 Personne ${index + 1}\n`;
         message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
         message += `📱 Téléphone : ${m.telephone || "—"}\n`;
         message += `🏙️ Ville : ${m.ville || "—"}\n`;
@@ -182,18 +220,21 @@ export default function Evangelisation() {
       });
 
       message +=
-        "Merci pour ton cœur et ton engagement à les accompagner 🙏\n\n";
+        "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner\n\n";
       message += "Que Dieu te bénisse abondamment ✨";
 
-      window.open(
-        `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
-          message
-        )}`,
-        "_blank"
-      );
+      if (cible.telephone) {
+        window.open(
+          `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
+            message
+          )}`,
+          "_blank"
+        );
+      }
 
+      alert("✅ Contacts envoyés et enregistrés");
     } catch (err) {
-      console.error(err);
+      console.error("ERREUR ENVOI", err);
       alert("❌ Erreur lors de l’envoi");
     } finally {
       setLoadingSend(false);
@@ -201,7 +242,6 @@ export default function Evangelisation() {
   };
 
   /* ================= UI ================= */
-
   return (
      <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
   
@@ -256,41 +296,37 @@ export default function Evangelisation() {
 
       <div className="w-full max-w-6xl flex flex-col items-center">
 
-        {/* 🔹 Popup Doublon - Moderne */}
-        {showDoublonPopup && doublonContact && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl p-6 w-96 max-w-[90%] text-center animate-fadeIn">
-              <h3 className="text-xl font-bold mb-3 text-gray-800">
-                ⚠️ Doublon détecté
-              </h3>
-        
-              <p className="mb-6 text-gray-700">
-                Ce numéro <br />
-                <span className="font-semibold text-black">
-                  {doublonContact.telephone}
-                </span>
-                <br />
-                existe déjà dans les suivis.
+        {/* ================= DOUBLONS ================= */}
+          {doublons.length > 0 && (
+            <div className="bg-blue-100/30 border-l-4 border-blue-500/70 p-4 mb-4 w-full max-w-6xl rounded shadow">
+              <p className="font-bold text-blue-800 mb-2">⚠️ Contact déjà en suivi !</p>
+              <p className="text-sm text-blue-700 mb-2">
+                Ces contacts sont déjà enregistrés dans les suivis. Vous pouvez les garder sur la page ou les retirer temporairement. (Ils restent dans les suivis jusqu’à la prochaine étape)
               </p>
-        
-              <div className="flex justify-center gap-3">
-                <button
-                  onClick={envoyerQuandMeme}
-                  className="flex-1 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition"
-                >
-                  Envoyer quand même
-                </button>
-        
-                <button
-                  onClick={() => setShowDoublonPopup(false)}
-                  className="flex-1 bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded-lg hover:bg-gray-400 transition"
-                >
-                  Annuler
-                </button>
-              </div>
+              {doublons.map((c) => (
+                <div key={c.id} className="flex justify-between items-center mt-2 bg-white p-2 rounded shadow-sm">
+                  <span className="font-medium">{c.prenom} {c.nom} ({c.telephone})</span>
+                  <div className="flex gap-2">
+                    <button
+                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+                      onClick={() => setDoublons((prev) => prev.filter((d) => d.id !== c.id))}
+                    >
+                      Garder
+                    </button>
+                    <button
+                      className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 transition"
+                      onClick={() => {
+                        setDoublons((prev) => prev.filter((d) => d.id !== c.id));
+                        setContacts((prev) => prev.filter((d) => d.id !== c.id));
+                      }}
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-        )}
+          )}
 
 
         {/* Toggle Vue Carte / Vue Table */}

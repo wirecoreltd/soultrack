@@ -234,7 +234,9 @@ export default function SuivisEvangelisation() {
       .eq("id", m.id);
 
     if (error) throw error;
-
+    
+    setShowRefus(false);
+    
     // 🔁 Recharge TOUT depuis Supabase
     await fetchSuivis(user, cellules);
 

@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 
-export default function addmemberpopup() {
+export default function AddMemberPopup() {
   const router = useRouter();
   const { token } = router.query;
 

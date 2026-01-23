@@ -402,21 +402,33 @@ export default function SuivisEvangelisation() {
                     rows={2}
                     value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
                     onChange={(e) => handleCommentChange(m.id, e.target.value)}
-                    className="w-full rounded-lg border px-3 py-2"
+                    disabled={showRefus}
+                    className={`w-full rounded-lg border px-3 py-2 ${
+                      showRefus
+                        ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                        : "bg-white"
+                    }`}
                   />
+
                   <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
                   Statut du suivis
                     </label>
                   <select
                     value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""}
                     onChange={(e) => handleStatusChange(m.id, e.target.value)}
-                    className="mt-2 w-full rounded-lg border px-3 py-2"
+                    disabled={showRefus}
+                    className={`mt-2 w-full rounded-lg border px-3 py-2 ${
+                      showRefus
+                        ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                        : "bg-white"
+                    }`}
                   >
                     <option value="">-- Sélectionner un statut --</option>
                     <option value="En cours">En cours</option>
                     <option value="Intégré">Intégré</option>
                     <option value="Refus">Refus</option>
                   </select>
+
 
                   <button
                     onClick={() => updateSuivi(m.id, m)}

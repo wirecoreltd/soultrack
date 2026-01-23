@@ -104,57 +104,62 @@ export default function EditEvangelisePopup({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-      <div className="bg-white w-full max-w-md rounded-md shadow-xl border-2 border-green-400 overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4 overflow-y-auto">
+      <div className="bg-white w-full max-w-md rounded-lg shadow-2xl border-2 border-green-400 relative">
 
         {/* HEADER */}
-        <div className="bg-green-600 text-white px-5 py-4 text-center font-semibold text-lg rounded-t-md">
-          Modifier le contact
+        <div className="bg-green-600 text-white px-5 py-4 text-center font-bold text-lg rounded-t-lg">
+          ✏️ Modifier le contact
         </div>
 
-        <div className="p-5 space-y-4 text-sm">
+        {/* FORM */}
+        <div className="p-5 space-y-4 max-h-[80vh] overflow-y-auto text-sm">
 
           {/* Prénom */}
-          <div>
-            <label className="block mb-1 font-medium text-gray-700">Prénom</label>
+          <div className="flex flex-col">
+            <label className="mb-1 font-medium text-gray-700">👤 Prénom</label>
             <input
               name="prenom"
               value={formData.prenom}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
+              placeholder="Prénom"
             />
           </div>
 
           {/* Nom */}
-          <div>
-            <label className="block mb-1 font-medium text-gray-700">Nom</label>
+          <div className="flex flex-col">
+            <label className="mb-1 font-medium text-gray-700">👤 Nom</label>
             <input
               name="nom"
               value={formData.nom}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
+              placeholder="Nom"
             />
           </div>
 
           {/* Téléphone */}
-          <div>
-            <label className="block mb-1 font-medium text-gray-700">Téléphone</label>
+          <div className="flex flex-col">
+            <label className="mb-1 font-medium text-gray-700">📞 Téléphone</label>
             <input
               name="telephone"
               value={formData.telephone}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
+              placeholder="Téléphone"
             />
           </div>
 
           {/* Ville */}
-          <div>
-            <label className="block mb-1 font-medium text-gray-700">Ville</label>
+          <div className="flex flex-col">
+            <label className="mb-1 font-medium text-gray-700">🏙️ Ville</label>
             <input
               name="ville"
               value={formData.ville}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
+              placeholder="Ville"
             />
           </div>
 
@@ -167,14 +172,12 @@ export default function EditEvangelisePopup({
               onChange={handleChange}
               className="w-4 h-4 accent-green-600"
             />
-            WhatsApp
+            💬 WhatsApp
           </label>
 
           {/* Prière du Salut */}
-          <div>
-            <label className="block mb-1 font-medium text-gray-700">
-              Prière du salut
-            </label>
+          <div className="flex flex-col">
+            <label className="mb-1 font-medium text-gray-700">🙏 Prière du salut</label>
             <select
               name="priere_salut"
               value={formData.priere_salut ? "oui" : "non"}
@@ -192,21 +195,20 @@ export default function EditEvangelisePopup({
           </div>
 
           {/* Type conversion */}
-          <div>
-            <label className="block mb-1 font-medium text-gray-700">
-              Type de conversion
-            </label>
+          <div className="flex flex-col">
+            <label className="mb-1 font-medium text-gray-700">🔄 Type de conversion</label>
             <input
               name="type_conversion"
               value={formData.type_conversion}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
+              placeholder="Type de conversion"
             />
           </div>
 
           {/* Besoins */}
-          <div>
-            <p className="font-medium text-gray-700 mb-1">Besoins</p>
+          <div className="flex flex-col">
+            <p className="font-medium text-gray-700 mb-1">🎯 Besoins</p>
             <div className="space-y-2">
               {besoinsOptions.map((item) => (
                 <label key={item} className="flex items-center gap-2">
@@ -220,40 +222,40 @@ export default function EditEvangelisePopup({
                   {item}
                 </label>
               ))}
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  value="Autre"
+                  checked={showAutre}
+                  onChange={handleBesoinChange}
+                  className="w-4 h-4 accent-green-600"
+                />
+                Autre
+              </label>
+
+              {showAutre && (
+                <input
+                  type="text"
+                  name="autreBesoin"
+                  value={formData.autreBesoin}
+                  onChange={handleChange}
+                  placeholder="Précisez..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
+                />
+              )}
             </div>
-
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                value="Autre"
-                checked={showAutre}
-                onChange={handleBesoinChange}
-                className="w-4 h-4 accent-green-600"
-              />
-              Autre
-            </label>
-
-            {showAutre && (
-              <input
-                type="text"
-                name="autreBesoin"
-                value={formData.autreBesoin}
-                onChange={handleChange}
-                placeholder="Précisez..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
-              />
-            )}
           </div>
 
           {/* Infos supp */}
-          <div>
-            <label className="block mb-1 font-medium text-gray-700">Infos supplémentaires</label>
+          <div className="flex flex-col">
+            <label className="mb-1 font-medium text-gray-700">📝 Infos supplémentaires</label>
             <textarea
               name="infos_supplementaires"
               value={formData.infos_supplementaires}
               onChange={handleChange}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
+              placeholder="Infos supplémentaires"
             />
           </div>
 
@@ -263,21 +265,21 @@ export default function EditEvangelisePopup({
         </div>
 
         {/* BUTTONS */}
-        <div className="p-4 flex justify-end gap-3 border-t">
+        <div className="p-4 flex justify-between border-t gap-3">
           <button
             onClick={onClose}
-            className="flex-1 text-center py-2 rounded-md border border-gray-300"
+            className="flex-1 py-2 rounded-md border border-gray-300"
           >
-            Annuler
+            ❌ Annuler
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className={`flex-1 text-center py-2 rounded-md text-white font-semibold ${
+            className={`flex-1 py-2 rounded-md text-white font-semibold ${
               loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
             }`}
           >
-            {loading ? "Enregistrement..." : "Enregistrer"}
+            {loading ? "Enregistrement..." : "💾 Enregistrer"}
           </button>
         </div>
       </div>

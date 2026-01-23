@@ -444,13 +444,7 @@ export default function Evangelisation() {
             setEditMember(null);
           }}
         />
-      )}
-
-      {showAddMember && (
-        <AddMemeberPopup
-          onClose={() => setShowAddMember(false)}
-        />
-      )}
+      )}      
 
       {popupMember && (
         <DetailsEvangePopup

@@ -239,15 +239,7 @@ export default function Evangelisation() {
 
     // Mise à jour UI instantanée
     setContacts((prev) => prev.filter((c) => !idsToSend.includes(c.id)));
-    setCheckedContacts({});
-
-      const envoyerQuandMeme = async () => {
-        setForceSend(true);
-        setShowDoublonPopup(false);
-        await sendContacts();
-        setForceSend(false);
-      };
-
+    setCheckedContacts({});   
 
     // Message WhatsApp automatique
     const nomCible =

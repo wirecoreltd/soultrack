@@ -504,102 +504,99 @@ export default function SuivisEvangelisation() {
       </div>
     )}
 
-    {/* ================= VUE TABLE ================= */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto py-2 mx-auto">
-          <div className="min-w-[900px] space-y-2">
-      
-            {/* Header */}
-            <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-gray-400">
-              <div className="flex-[2]">Nom complet</div>
-              <div className="flex-[1]">Téléphone</div>
-              <div className="flex-[1]">Attribué à</div>
-              <div className="flex-[1]">Ville</div>
-              <div className="flex-[1] text-center">Actions</div>
+    <div className="w-full max-w-6xl mx-auto">
+  {/* ================= VUE CARTE ================= */}
+  {view === "card" && (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      {suivisAffiches.map((m) => {
+        const ouvert = detailsCarteId === m.id;
+        const conseiller = conseillers.find((c) => c.id === m.conseiller_id);
+        const cellule = cellules.find((c) => c.id === m.cellule_id);
+
+        return (
+          <div
+            key={m.id}
+            className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
+            style={{ borderLeftColor: getBorderColor(m) }}
+          >
+            <div className="flex flex-col items-center">
+              {/* ... tout ton contenu de la carte ... */}
+
+              <div className={`transition-all duration-500 overflow-hidden ${ouvert ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
+                {ouvert && (
+                  <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
+                    {/* détails */}
+                  </div>
+                )}
+              </div>
             </div>
-      
-            {/* Lignes */}
-            {suivisAffiches.map((m) => {
-              const cellule = cellules.find(c => c.id === m.cellule_id);
-              const conseiller = conseillers.find(c => c.id === m.conseiller_id);
-      
-              const attribueA = cellule
-                ? `🏠 ${cellule.cellule_full}`
-                : conseiller
-                  ? `👤 ${conseiller.prenom} ${conseiller.nom}`
-                  : "—";
-      
-              return (
-                <div
-                  key={m.id}
-                  className="flex flex-col sm:flex-row items-start sm:items-center px-3 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition gap-2 border-l-4"
-                  style={{ borderLeftColor: getBorderColor(m) }}
-                >
-      
-                  {/* Nom */}
-                  <div className="flex-[2] font-bold text-white">
-                    <span className="sm:hidden text-xs text-gray-300 block">Nom</span>
-                    {m.prenom} {m.nom}
-                  </div>      
-                 
-                  {/* Téléphone */}     
-                   {/* Ville */}
-                  <div className="flex-[1] text-sm text-white">
-                    <span className="sm:hidden text-xs text-gray-300 block">Téléphone</span>
-                    {m.telephone || "—"}
-                  </div>
-                         
-                  {/* Attribué à */}
-                  <div className="flex-[1] text-sm text-white">
-                    <span className="sm:hidden text-xs text-gray-300 block">Attribué à</span>
-                    {attribueA}
-                  </div>
-      
-                  {/* Ville */}
-                  <div className="flex-[1] text-sm text-white">
-                    <span className="sm:hidden text-xs text-gray-300 block">Ville</span>
-                    {m.ville || "—"}
-                  </div>
-      
-                  {/* Actions */}
-                  <div className="flex-[1] flex sm:justify-center gap-3 text-sm">
-                    <button
-                      onClick={() => setDetailsTable(m)}
-                      className="text-orange-400 underline"
-                    >
-                      Détails
-                    </button>      
-                    
-                  </div>      
-                </div>
-              );
-            })}
           </div>
+        );
+      })}
+    </div>
+  )}
+
+  {/* ================= VUE TABLE ================= */}
+  {view === "table" && (
+    <div className="w-full max-w-6xl overflow-x-auto py-2">
+      <div className="min-w-[900px] space-y-2">
+        {/* header */}
+        <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-gray-400">
+          <div className="flex-[2]">Nom complet</div>
+          <div className="flex-[1]">Téléphone</div>
+          <div className="flex-[1]">Attribué à</div>
+          <div className="flex-[1]">Ville</div>
+          <div className="flex-[1] text-center">Actions</div>
         </div>
-      )}
 
+        {/* lignes */}
+        {suivisAffiches.map((m) => {
+          const cellule = cellules.find(c => c.id === m.cellule_id);
+          const conseiller = conseillers.find(c => c.id === m.conseiller_id);
+          const attribueA = cellule ? `🏠 ${cellule.cellule_full}` : conseiller ? `👤 ${conseiller.prenom} ${conseiller.nom}` : "—";
 
-    {view === "table" && detailsTable && (
-      <DetailsEvangePopup
-        member={detailsTable}
-        onClose={() => setDetailsTable(null)}
-        onEdit={(s) => {
-          setDetailsTable(null);
-          s.evangelises?.id && setEditingContact(s.evangelises);
-        }}
-      />
-    )}
+          return (
+            <div
+              key={m.id}
+              className="flex flex-col sm:flex-row items-start sm:items-center px-3 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition gap-2 border-l-4"
+              style={{ borderLeftColor: getBorderColor(m) }}
+            >
+              <div className="flex-[2] font-bold text-white">{m.prenom} {m.nom}</div>
+              <div className="flex-[1] text-white">{m.telephone || "—"}</div>
+              <div className="flex-[1] text-white">{attribueA}</div>
+              <div className="flex-[1] text-white">{m.ville || "—"}</div>
+              <div className="flex-[1] flex sm:justify-center gap-3 text-sm">
+                <button onClick={() => setDetailsTable(m)} className="text-orange-400 underline">Détails</button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  )}
 
-    {editingContact && (
-      <EditEvangeliseSuiviPopup
-        member={editingContact}
-        onClose={() => setEditingContact(null)}
-        onUpdateMember={() => {
-          setEditingContact(null);
-          fetchSuivis(user, cellules);
-        }}
-      />
-    )}
-  </div>
+  {/* Modals */}
+  {view === "table" && detailsTable && (
+    <DetailsEvangePopup
+      member={detailsTable}
+      onClose={() => setDetailsTable(null)}
+      onEdit={(s) => {
+        setDetailsTable(null);
+        s.evangelises?.id && setEditingContact(s.evangelises);
+      }}
+    />
+  )}
+
+  {editingContact && (
+    <EditEvangeliseSuiviPopup
+      member={editingContact}
+      onClose={() => setEditingContact(null)}
+      onUpdateMember={() => {
+        setEditingContact(null);
+        fetchSuivis(user, cellules);
+      }}
+    />
+  )}
+</div>
 );
 }

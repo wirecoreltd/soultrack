@@ -24,6 +24,8 @@ export default function SuivisEvangelisation() {
   const [user, setUser] = useState(null);
   const [phoneMenuId, setPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
+  const isRefusView = showRefus === true;
+
 
     // ================= INIT =================
 
@@ -220,6 +222,30 @@ export default function SuivisEvangelisation() {
         commentaire_evangelises: newComment,
       });
 
+      const reactiverSuivi = async (m) => {
+  try {
+    setUpdating((p) => ({ ...p, [m.id]: true }));
+
+    const { error } = await supabase
+      .from("suivis_des_evangelises")
+      .update({
+        status_suivis_evangelises: "En cours",
+      })
+      .eq("id", m.id);
+
+    if (error) throw error;
+
+    // 🔥 Retirer immédiatement de la vue Refus
+    setAllSuivis((prev) => prev.filter((s) => s.id !== m.id));
+
+  } catch (err) {
+    console.error("Erreur réactivation :", err.message);
+    alert("Erreur lors de la réactivation");
+  } finally {
+    setUpdating((p) => ({ ...p, [m.id]: false }));
+  }
+};
+
       setAllSuivis((prev) => prev.filter((s) => s.id !== id));
       return;
     }
@@ -401,16 +427,25 @@ export default function SuivisEvangelisation() {
                   <textarea
                     rows={2}
                     value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
-                    onChange={(e) => handleCommentChange(m.id, e.target.value)}
-                    className="w-full rounded-lg border px-3 py-2"
+                    disabled={isRefusView}
+                    className={`w-full rounded-lg border px-3 py-2 ${
+                      isRefusView
+                        ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                        : ""
+                    }`}
                   />
+
                   <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
                   Statut du suivis
                     </label>
                   <select
                     value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""}
-                    onChange={(e) => handleStatusChange(m.id, e.target.value)}
-                    className="mt-2 w-full rounded-lg border px-3 py-2"
+                    disabled={isRefusView}
+                    className={`mt-2 w-full rounded-lg border px-3 py-2 ${
+                      isRefusView
+                        ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                        : ""
+                    }`}
                   >
                     <option value="">-- Sélectionner un statut --</option>
                     <option value="En cours">En cours</option>
@@ -419,16 +454,27 @@ export default function SuivisEvangelisation() {
                   </select>
 
                   <button
-                    onClick={() => updateSuivi(m.id, m)}
+                    onClick={() =>
+                      isRefusView
+                        ? reactiverSuivi(m)
+                        : updateSuivi(m.id, m)
+                    }
                     disabled={updating[m.id]}
                     className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all ${
-                      updating[m.id]
-                        ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                        : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
+                      isRefusView
+                        ? "bg-green-600 text-white hover:bg-green-700"
+                        : updating[m.id]
+                          ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                          : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
                     }`}
                   >
-                    {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
+                    {isRefusView
+                      ? "🔄 Réactiver"
+                      : updating[m.id]
+                        ? "Enregistrement..."
+                        : "Sauvegarder"}
                   </button>
+
                 </div>
 
                 <button

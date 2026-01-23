@@ -12,6 +12,7 @@ import { fr } from "date-fns/locale";
 import { useSearchParams } from "next/navigation";
 import { useMembers } from "../context/MembersContext";
 import Header from "../components/Header";
+import AddMemberPopup from "../components/AddMemberPopup";
 
 export default function ListMembers() {
   const [filter, setFilter] = useState("");
@@ -27,6 +28,7 @@ export default function ListMembers() {
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
+  const [addMemberOpen, setAddMemberOpen] = useState(false);
 
   // -------------------- Nouveaux états --------------------
   const [commentChanges, setCommentChanges] = useState({});
@@ -473,12 +475,25 @@ export default function ListMembers() {
         <span className="text-white text-sm ml-2">{filteredMembers.length} membres</span>
       </div>
 
-      {/* Toggle Carte/Table */}
-      <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
-        <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-sm font-semibold underline text-white">
-          {view === "card" ? "Vue Table" : "Vue Carte"}
-        </button>
-      </div>
+      {/* Toggle Carte/Table + Add */}
+       <div className="w-full max-w-6xl flex justify-between items-center mb-4 px-2">
+         
+         {/* Toggle */}
+         <button
+           onClick={() => setView(view === "card" ? "table" : "card")}
+           className="text-sm font-semibold underline text-white"
+         >
+           {view === "card" ? "Vue Table" : "Vue Carte"}
+         </button>
+       
+         {/* Add button */}
+         <button
+           onClick={() => setAddMemberOpen(true)}
+            className="flex items-center gap-1 bg-white text-black px-3 py-1.5 rounded-full shadow hover:bg-gray-100 transition text-sm font-semibold"
+         >
+           ➕ Add
+         </button>       
+       </div> 
 
       {/* ==================== VUE CARTE ==================== */}
       {view === "card" && (
@@ -629,6 +644,17 @@ export default function ListMembers() {
           updating={updating}
         />
       )}
+
+       {addMemberOpen && (
+         <AddMemberPopup
+           onClose={() => setAddMemberOpen(false)}
+           onMemberAdded={(newMember) => {
+             setAllMembers(prev => [newMember, ...prev]); // ajout direct dans la liste
+             setAddMemberOpen(false);
+             showToast("✅ Nouveau contact ajouté");
+           }}
+         />
+       )}
 
       {editMember && (
         <EditMemberPopup

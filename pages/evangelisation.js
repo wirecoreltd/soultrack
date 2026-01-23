@@ -365,50 +365,50 @@ export default function Evangelisation() {
       )}
 
       {/* 🔹 Popup Doublon - Moderne */}
-        {showDoublonPopup && doublonsDetected.length > 0 && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-6 max-w-lg w-full space-y-4 text-center">
-              <h2 className="text-xl font-bold">⚠️ Doublons détectés</h2>
-              <p className="text-sm">Certaines personnes ont déjà été envoyées. Choisissez individuellement :</p>
-              <ul className="text-left list-disc list-inside max-h-60 overflow-y-auto space-y-2">
-                {doublonsDetected.map((d) => (
-                  <li key={d.id} className="flex flex-col sm:flex-row justify-between items-center gap-2 bg-gray-100 p-2 rounded">
-                    <span>{d.prenom} {d.nom} - {d.telephone}</span>
-                    <div className="flex gap-2 mt-2 sm:mt-0">
-                      <button
-                        onClick={() => {
-                          sendToWhatsapp([d]); // envoyer uniquement ce contact
-                          setDoublonsDetected((prev) => prev.filter((c) => c.id !== d.id));
-                        }}
-                        className="bg-green-500 text-white px-3 py-1 rounded font-semibold"
-                      >
-                        Envoyer
-                      </button>
-                      <button
-                        onClick={() => {
-                          setDoublonsDetected((prev) => prev.filter((c) => c.id !== d.id)); // retirer du popup
-                        }}
-                        className="bg-gray-300 px-3 py-1 rounded font-semibold"
-                      >
-                        Annuler
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              {doublonsDetected.length === 0 && (
-                <div className="mt-4">
-                  <button
-                    onClick={() => setShowDoublonPopup(false)}
-                    className="bg-blue-500 text-white px-4 py-2 rounded font-semibold"
-                  >
-                    Fermer
-                  </button>
-                </div>
+{showDoublonPopup && doublonsDetected.length > 0 && (
+  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="bg-white rounded-xl p-6 max-w-lg w-full space-y-4 text-center">
+      <h2 className="text-xl font-bold">⚠️ Doublons détectés</h2>
+      <p className="text-sm">Certaines personnes ont déjà été envoyées. Choisissez individuellement :</p>
+      
+      <ul className="text-left list-disc list-inside max-h-60 overflow-y-auto space-y-2">
+        {doublonsDetected.map((d) => (
+          <li key={d.id} className="flex flex-col sm:flex-row justify-between items-center gap-2 bg-gray-100 p-2 rounded">
+            <span>{d.prenom} {d.nom} - {d.telephone}</span>
+            <div className="flex gap-2 mt-2 sm:mt-0">
+              <button
+                onClick={() => {
+                  sendToWhatsapp([d]); // envoyer uniquement ce contact
+                  setDoublonsDetected((prev) => prev.filter((c) => c.id !== d.id));
+                }}
+                className="bg-green-500 text-white px-3 py-1 rounded font-semibold"
+              >
+                Envoyer
+              </button>
+              <button
+                onClick={() => {
+                  setDoublonsDetected((prev) => prev.filter((c) => c.id !== d.id)); // retirer du popup
+                }}
+                className="bg-gray-300 px-3 py-1 rounded font-semibold"
+              >
+                Annuler
+              </button>
             </div>
-          </div>
+          </li>
+        ))}
+      </ul>
+
+      {doublonsDetected.length === 0 && (
+        <div className="mt-4">
+          <button
+            onClick={() => setShowDoublonPopup(false)}
+            className="bg-blue-500 text-white px-4 py-2 rounded font-semibold"
+          >
+            Fermer
+          </button>
         </div>
       )}
     </div>
-  );
+  </div>
+)}
 }

@@ -211,6 +211,37 @@ export default function SuivisEvangelisation() {
       .eq("id", id);
 
     if (error) throw error;
+    
+      // 🔄 Reactiver le contact
+      const reactiverSuivi = async (m) => {
+    try {
+      setUpdating((p) => ({ ...p, [m.id]: true }));
+  
+      const { error } = await supabase
+        .from("suivis_des_evangelises")
+        .update({
+          status_suivis_evangelises: "En cours",
+        })
+        .eq("id", m.id);
+  
+      if (error) throw error;
+  
+      // 🔄 Retirer de la vue refus
+      setAllSuivis((prev) =>
+        prev.map((s) =>
+          s.id === m.id
+            ? { ...s, status_suivis_evangelises: "En cours" }
+            : s
+        )
+      );
+    } catch (err) {
+      console.error("Erreur réactivation :", err.message);
+      alert("Erreur lors de la réactivation");
+    } finally {
+      setUpdating((p) => ({ ...p, [m.id]: false }));
+    }
+  };
+
 
     // ✅ Si intégré → upsert + retrait immédiat
     if (newStatus === "Intégré") {
@@ -431,15 +462,25 @@ export default function SuivisEvangelisation() {
 
 
                   <button
-                    onClick={() => updateSuivi(m.id, m)}
+                    onClick={() =>
+                      showRefus
+                        ? reactiverSuivi(m)
+                        : updateSuivi(m.id, m)
+                    }
                     disabled={updating[m.id]}
                     className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all ${
                       updating[m.id]
                         ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                        : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
+                        : showRefus
+                          ? "bg-green-500 text-white hover:bg-green-600"
+                          : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
                     }`}
                   >
-                    {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
+                    {updating[m.id]
+                      ? "Traitement..."
+                      : showRefus
+                        ? "🔄 Réactiver"
+                        : "Sauvegarder"}
                   </button>
                 </div>
 

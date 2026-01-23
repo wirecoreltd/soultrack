@@ -5,10 +5,13 @@ import supabase from "../lib/supabaseClient";
 
 export default function EditEvangelisePopup({
   member,
+  cellules = [],
+  conseillers = [],
   onClose,
   onUpdateMember,
 }) {
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+
   const initialBesoin =
     typeof member.besoin === "string"
       ? JSON.parse(member.besoin || "[]")
@@ -34,6 +37,7 @@ export default function EditEvangelisePopup({
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
+
     if (value === "Autre") {
       setShowAutre(checked);
       if (!checked) {
@@ -44,6 +48,7 @@ export default function EditEvangelisePopup({
         }));
       }
     }
+
     setFormData((prev) => {
       const updated = checked
         ? [...prev.besoin, value]
@@ -62,6 +67,7 @@ export default function EditEvangelisePopup({
 
   const handleSubmit = async () => {
     setLoading(true);
+
     const cleanData = {
       prenom: formData.prenom,
       nom: formData.nom,
@@ -100,105 +106,127 @@ export default function EditEvangelisePopup({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4 py-6 overflow-auto">
-      <div className="bg-[#0A74DA] w-full max-w-md rounded-xl shadow-xl relative text-white">
-        
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4 py-6 overflow-auto">
+      <div className="bg-white w-full max-w-md rounded-xl shadow-xl relative p-6">
+
         {/* Header */}
-        <div className="px-6 py-4 flex justify-between items-center border-b border-white/20">
-          <h2 className="text-xl font-bold">✏️ Modifier le contact</h2>
-          <button onClick={onClose} className="text-white text-2xl leading-none">×</button>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-800">✏️ Modifier le contact</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-700 text-2xl leading-none"
+          >
+            ×
+          </button>
         </div>
 
-        {/* Form */}
-        <div className="p-6 space-y-4">
+        {/* Form Fields */}
+        <div className="space-y-4">
 
           {/* Prénom */}
-          <div>
-            <label className="block mb-1 font-semibold">👤 Prénom</label>
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-600 p-2 rounded-l">
+              <span className="text-white">👤</span>
+            </div>
             <input
               type="text"
               name="prenom"
               value={formData.prenom}
               onChange={handleChange}
-              placeholder="Votre prénom"
-              className="w-full px-3 py-2 bg-blue-600 placeholder-white text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
+              placeholder="Prénom"
+              className="w-full px-3 py-2 border rounded-r focus:ring-2 focus:ring-blue-600 outline-none text-black"
             />
           </div>
 
           {/* Nom */}
-          <div>
-            <label className="block mb-1 font-semibold">👤 Nom</label>
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-600 p-2 rounded-l">
+              <span className="text-white">👤</span>
+            </div>
             <input
               type="text"
               name="nom"
               value={formData.nom}
               onChange={handleChange}
-              placeholder="Votre nom"
-              className="w-full px-3 py-2 bg-blue-600 placeholder-white text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
+              placeholder="Nom"
+              className="w-full px-3 py-2 border rounded-r focus:ring-2 focus:ring-blue-600 outline-none text-black"
             />
           </div>
 
           {/* Téléphone */}
-          <div>
-            <label className="block mb-1 font-semibold">📞 Téléphone</label>
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-600 p-2 rounded-l">
+              <span className="text-white">📞</span>
+            </div>
             <input
               type="text"
               name="telephone"
               value={formData.telephone}
               onChange={handleChange}
-              placeholder="+230 5xxxxxxx"
-              className="w-full px-3 py-2 bg-blue-600 placeholder-white text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
+              placeholder="Téléphone"
+              className="w-full px-3 py-2 border rounded-r focus:ring-2 focus:ring-blue-600 outline-none text-black"
             />
           </div>
 
           {/* Ville */}
-          <div>
-            <label className="block mb-1 font-semibold">🏙️ Ville</label>
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-600 p-2 rounded-l">
+              <span className="text-white">🏙️</span>
+            </div>
             <input
               type="text"
               name="ville"
               value={formData.ville}
               onChange={handleChange}
-              placeholder="Ex : Port Louis"
-              className="w-full px-3 py-2 bg-blue-600 placeholder-white text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
+              placeholder="Ville"
+              className="w-full px-3 py-2 border rounded-r focus:ring-2 focus:ring-blue-600 outline-none text-black"
             />
           </div>
 
           {/* WhatsApp */}
           <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="is_whatsapp"
-              checked={formData.is_whatsapp}
-              onChange={handleChange}
-              className="w-4 h-4 accent-white"
-            />
-            <span>💬 WhatsApp</span>
+            <div className="bg-blue-600 p-2 rounded-l">
+              <span className="text-white">💬</span>
+            </div>
+            <label className="flex items-center w-full gap-2 px-3 py-2 border rounded-r">
+              <input
+                type="checkbox"
+                name="is_whatsapp"
+                checked={formData.is_whatsapp}
+                onChange={handleChange}
+                className="w-4 h-4 accent-blue-600"
+              />
+              WhatsApp
+            </label>
           </div>
 
           {/* Sexe */}
-          <div>
-            <label className="block mb-1 font-semibold">🎗️ Sexe</label>
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-600 p-2 rounded-l">
+              <span className="text-white">🎗️</span>
+            </div>
             <input
               type="text"
               name="sexe"
               value={formData.sexe}
               onChange={handleChange}
-              placeholder="Masculin / Féminin"
-              className="w-full px-3 py-2 bg-blue-600 placeholder-white text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
+              placeholder="Sexe"
+              className="w-full px-3 py-2 border rounded-r focus:ring-2 focus:ring-blue-600 outline-none text-black"
             />
           </div>
 
           {/* Prière du salut */}
-          <div>
-            <label className="block mb-1 font-semibold">🙏 Prière du salut</label>
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-600 p-2 rounded-l">
+              <span className="text-white">🙏</span>
+            </div>
             <select
               name="priere_salut"
               value={formData.priere_salut ? "oui" : "non"}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, priere_salut: e.target.value === "oui" }))
               }
-              className="w-full px-3 py-2 bg-blue-600 text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
+              className="w-full px-3 py-2 border rounded-r focus:ring-2 focus:ring-blue-600 outline-none text-black"
             >
               <option value="non">Non</option>
               <option value="oui">Oui</option>
@@ -206,32 +234,34 @@ export default function EditEvangelisePopup({
           </div>
 
           {/* Type conversion */}
-          <div>
-            <label className="block mb-1 font-semibold">☀️ Type de conversion</label>
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-600 p-2 rounded-l">
+              <span className="text-white">☀️</span>
+            </div>
             <input
               type="text"
               name="type_conversion"
               value={formData.type_conversion}
               onChange={handleChange}
               placeholder="Type de conversion"
-              className="w-full px-3 py-2 bg-blue-600 placeholder-white text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
+              className="w-full px-3 py-2 border rounded-r focus:ring-2 focus:ring-blue-600 outline-none text-black"
             />
           </div>
 
           {/* Besoins */}
           <div>
-            <label className="block mb-1 font-semibold">❓ Besoins</label>
+            <p className="mb-2 font-medium text-gray-700">❓ Besoins</p>
             <div className="grid grid-cols-2 gap-2">
-              {besoinsOptions.map((b) => (
-                <label key={b} className="flex items-center gap-2">
+              {besoinsOptions.map((item) => (
+                <label key={item} className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    value={b}
-                    checked={formData.besoin.includes(b)}
+                    value={item}
+                    checked={formData.besoin.includes(item)}
                     onChange={handleBesoinChange}
-                    className="w-4 h-4 accent-white"
+                    className="w-4 h-4 accent-blue-600"
                   />
-                  {b}
+                  {item}
                 </label>
               ))}
               <label className="flex items-center gap-2">
@@ -240,7 +270,7 @@ export default function EditEvangelisePopup({
                   value="Autre"
                   checked={showAutre}
                   onChange={handleBesoinChange}
-                  className="w-4 h-4 accent-white"
+                  className="w-4 h-4 accent-blue-600"
                 />
                 Autre
               </label>
@@ -252,47 +282,49 @@ export default function EditEvangelisePopup({
                 value={formData.autreBesoin}
                 onChange={handleChange}
                 placeholder="Précisez..."
-                className="w-full mt-2 px-3 py-2 bg-blue-600 placeholder-white text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
+                className="w-full mt-2 px-3 py-2 border rounded focus:ring-2 focus:ring-blue-600 outline-none text-black"
               />
             )}
           </div>
 
           {/* Infos supplémentaires */}
-          <div>
-            <label className="block mb-1 font-semibold">📝 Infos supplémentaires</label>
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-600 p-2 rounded-l">
+              <span className="text-white">📝</span>
+            </div>
             <textarea
               name="infos_supplementaires"
               value={formData.infos_supplementaires}
               onChange={handleChange}
-              placeholder="Informations additionnelles"
+              placeholder="Infos supplémentaires"
               rows={3}
-              className="w-full px-3 py-2 bg-blue-600 placeholder-white text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
+              className="w-full px-3 py-2 border rounded-r focus:ring-2 focus:ring-blue-600 outline-none text-black"
             />
           </div>
 
-          {message && <p className="text-green-400 text-center font-semibold">{message}</p>}
-
+          {message && (
+            <p className="text-green-600 text-center font-semibold">{message}</p>
+          )}
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 flex justify-end gap-3 border-t border-white/20">
+        <div className="flex justify-end gap-3 mt-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-white text-blue-600 font-medium hover:bg-gray-200"
+            className="px-5 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-medium"
           >
             Annuler
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className={`px-5 py-2 rounded-lg font-semibold ${
-              loading ? "bg-gray-400 text-white" : "bg-green-500 text-white hover:bg-green-600"
+            className={`px-6 py-2 rounded-lg text-white font-semibold ${
+              loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
             {loading ? "Enregistrement..." : "Enregistrer"}
           </button>
         </div>
-
       </div>
     </div>
   );

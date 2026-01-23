@@ -1,34 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import supabase from "../lib/supabaseClient";
 
 export default function EditEvangelisePopup({
   member,
-  cellules = [],
-  conseillers = [],
   onClose,
   onUpdateMember,
 }) {
-  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+  if (!member) return null;
 
-  const initialBesoin =
-    typeof member.besoin === "string"
-      ? JSON.parse(member.besoin || "[]")
-      : member.besoin || [];
+  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+  const initialBesoin = Array.isArray(member.besoin) ? member.besoin : [];
 
   const [formData, setFormData] = useState({
     prenom: member.prenom || "",
     nom: member.nom || "",
     telephone: member.telephone || "",
     ville: member.ville || "",
+    sexe: member.sexe || "",
+    is_whatsapp: !!member.is_whatsapp,
+    priere_salut: member.priere_salut || "",
+    type_conversion: member.type_conversion || "",
     besoin: initialBesoin,
     autreBesoin: "",
     infos_supplementaires: member.infos_supplementaires || "",
-    priere_salut: member.priere_salut || false,
-    type_conversion: member.type_conversion || "",
-    is_whatsapp: member.is_whatsapp || false,
-    sexe: member.sexe || "",
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -37,9 +32,9 @@ export default function EditEvangelisePopup({
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === "checkbox" ? checked : value
     }));
   };
 
@@ -47,224 +42,169 @@ export default function EditEvangelisePopup({
     const { value, checked } = e.target;
     if (value === "Autre") {
       setShowAutre(checked);
-      if (!checked) {
-        setFormData((prev) => ({
-          ...prev,
-          autreBesoin: "",
-          besoin: prev.besoin.filter((b) => b !== "Autre"),
-        }));
-      }
+      setFormData(prev => ({
+        ...prev,
+        besoin: checked ? [...prev.besoin, "Autre"] : prev.besoin.filter(b => b !== "Autre"),
+        autreBesoin: ""
+      }));
+      return;
     }
-    setFormData((prev) => {
-      const updated = checked
-        ? [...prev.besoin, value]
-        : prev.besoin.filter((b) => b !== value);
-      return { ...prev, besoin: updated };
-    });
-  };
-
-  const handleSubmit = async () => {
-    setLoading(true);
-
-    const cleanData = {
-      prenom: formData.prenom,
-      nom: formData.nom,
-      telephone: formData.telephone,
-      ville: formData.ville,
-      infos_supplementaires: formData.infos_supplementaires || null,
-      besoin:
-        formData.autreBesoin && showAutre
-          ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
-          : formData.besoin,
-      priere_salut: formData.priere_salut,
-      type_conversion: formData.type_conversion,
-      is_whatsapp: formData.is_whatsapp,
-      sexe: formData.sexe,
-    };
-
-    const { error, data } = await supabase
-      .from("evangelises")
-      .update(cleanData)
-      .eq("id", member.id)
-      .select()
-      .single();
-
-    if (error) {
-      alert("❌ Erreur : " + error.message);
-    } else {
-      if (onUpdateMember) onUpdateMember(data);
-      setMessage("✅ Changement enregistré !");
-      setTimeout(() => {
-        setMessage("");
-        onClose();
-      }, 1200);
-    }
-
-    setLoading(false);
+    setFormData(prev => ({
+      ...prev,
+      besoin: checked ? [...prev.besoin, value] : prev.besoin.filter(b => b !== value)
+    }));
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4 py-6 overflow-auto">
-      <div className="bg-white w-full max-w-md rounded-xl shadow-xl p-6 space-y-4 relative">
-
-        <h2 className="text-xl font-bold text-gray-800 text-center mb-4">
-          Modifier le contact
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl bg-gradient-to-b from-[rgba(46,49,146,0.16)] to-[rgba(46,49,146,0.4)]" style={{ backdropFilter: "blur(8px)" }}>
+        <button onClick={onClose} className="absolute top-4 right-4 text-red-600 font-bold text-xl">✕</button>
+        <h2 className="text-2xl font-bold text-center mb-6 text-white">
+          Modifier le contact {member.prenom} {member.nom}
         </h2>
 
-        {/* Champ fonction pour générer chaque input */}
-        {[
-          { label: "Prénom", name: "prenom", emoji: "👤", type: "text" },
-          { label: "Nom", name: "nom", emoji: "👤", type: "text" },
-          { label: "Téléphone", name: "telephone", emoji: "📞", type: "text" },
-          { label: "Ville", name: "ville", emoji: "🏙️", type: "text" },
-          { label: "Sexe", name: "sexe", emoji: "🎗️", type: "text" },
-          { label: "Type de conversion", name: "type_conversion", emoji: "☀️", type: "text" },
-        ].map((field) => (
-          <div key={field.name}>
-            <label className="block mb-1 font-medium text-gray-700">{field.label}</label>
-            <div className="flex">
-              <div className="bg-blue-600 w-12 flex items-center justify-center rounded-l">
-                <span className="text-white text-lg">{field.emoji}</span>
-              </div>
+        <div className="overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-white">
+          {["prenom", "nom", "telephone", "ville"].map(f => (
+            <div key={f} className="flex flex-col">
+              <label className="font-medium capitalize">{f}</label>
               <input
-                type={field.type}
-                name={field.name}
-                value={formData[field.name]}
+                name={f}
+                value={formData[f]}
                 onChange={handleChange}
-                placeholder={field.label}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-r focus:outline-none"
+                className="input"
               />
-            </div>
-          </div>
-        ))}
 
-        {/* WhatsApp */}
-        <div>
-          <label className="block mb-1 font-medium text-gray-700">WhatsApp</label>
-          <div className="flex items-center">
-            <div className="bg-blue-600 w-12 flex items-center justify-center rounded-l">
-              <span className="text-white text-lg">💬</span>
-            </div>
-            <input
-              type="checkbox"
-              name="is_whatsapp"
-              checked={formData.is_whatsapp}
-              onChange={handleChange}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-r focus:outline-none"
-            />
-          </div>
-        </div>
-
-        {/* Prière du salut */}
-        <div>
-          <label className="block mb-1 font-medium text-gray-700">Prière du salut</label>
-          <div className="flex">
-            <div className="bg-blue-600 w-12 flex items-center justify-center rounded-l">
-              <span className="text-white text-lg">🙏</span>
-            </div>
-            <select
-              name="priere_salut"
-              value={formData.priere_salut ? "oui" : "non"}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  priere_salut: e.target.value === "oui",
-                }))
-              }
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-r focus:outline-none"
-            >
-              <option value="non">Non</option>
-              <option value="oui">Oui</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Besoins */}
-        <div>
-          <label className="block mb-1 font-medium text-gray-700">Besoins</label>
-          {besoinsOptions.map((item) => (
-            <div key={item} className="flex items-center mb-1">
-              <div className="bg-blue-600 w-12 flex items-center justify-center rounded-l">
-                <span className="text-white text-lg">❓</span>
-              </div>
-              <label className="flex-1 flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-r cursor-pointer">
-                <input
-                  type="checkbox"
-                  value={item}
-                  checked={formData.besoin.includes(item)}
-                  onChange={handleBesoinChange}
-                  className="accent-green-600"
-                />
-                {item}
-              </label>
+              {f === "telephone" && (
+                <div className="flex items-center gap-3 mt-3">
+                  <label className="font-medium">Numéro WhatsApp</label>
+                  <input
+                    type="checkbox"
+                    name="is_whatsapp"
+                    checked={formData.is_whatsapp}
+                    onChange={handleChange}
+                    className="accent-[#25297e]"
+                  />
+                </div>
+              )}
             </div>
           ))}
-          {/* Autre */}
-          <div className="flex items-center mb-1">
-            <div className="bg-blue-600 w-12 flex items-center justify-center rounded-l">
-              <span className="text-white text-lg">❓</span>
-            </div>
-            <label className="flex-1 flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-r cursor-pointer">
-              <input
-                type="checkbox"
-                value="Autre"
-                checked={showAutre}
-                onChange={handleBesoinChange}
-                className="accent-green-600"
-              />
+
+          {/* Sexe */}
+          <div className="flex flex-col">
+            <label className="font-medium">Sexe</label>
+            <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
+              <option value="">-- Sexe --</option>
+              <option value="Homme">Homme</option>
+              <option value="Femme">Femme</option>
+            </select>
+          </div>
+
+          {/* Prière du salut */}
+          <div className="flex flex-col">
+            <label className="font-medium">Prière du salut</label>
+            <select
+              className="input"
+              name="priere_salut"
+              value={formData.priere_salut}
+              onChange={handleChange}
+            >
+              <option value="">-- Prière du salut ? --</option>
+              <option value="Oui">Oui</option>
+              <option value="Non">Non</option>
+            </select>
+
+            {formData.priere_salut === "Oui" && (
+              <select
+                className="input mt-2"
+                name="type_conversion"
+                value={formData.type_conversion}
+                onChange={handleChange}
+              >
+                <option value="">Type</option>
+                <option value="Nouveau converti">Nouveau converti</option>
+                <option value="Réconciliation">Réconciliation</option>
+              </select>
+            )}
+          </div>
+
+          {/* Besoins */}
+          <div className="flex flex-col">
+            <label className="font-medium">Besoins</label>
+            {besoinsOptions.map(b => (
+              <label key={b} className="flex items-center gap-2">
+                <input type="checkbox" value={b} checked={formData.besoin.includes(b)} onChange={handleBesoinChange} className="accent-[#25297e]" />
+                {b}
+              </label>
+            ))}
+            <label className="flex items-center gap-2">
+              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} className="accent-[#25297e]" />
               Autre
             </label>
+            {showAutre && (
+              <input name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input mt-2" placeholder="Précisez" />
+            )}
           </div>
-          {showAutre && (
-            <input
-              type="text"
-              name="autreBesoin"
-              value={formData.autreBesoin}
-              onChange={handleChange}
-              placeholder="Précisez..."
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none"
-            />
-          )}
-        </div>
 
-        {/* Infos supplémentaires */}
-        <div>
-          <label className="block mb-1 font-medium text-gray-700">Infos supplémentaires</label>
-          <div className="flex">
-            <div className="bg-blue-600 w-12 flex items-center justify-center rounded-l">
-              <span className="text-white text-lg">📝</span>
-            </div>
+          {/* Infos supplémentaires */}
+          <div className="flex flex-col">
+            <label className="font-medium">Infos supplémentaires</label>
             <textarea
               name="infos_supplementaires"
               value={formData.infos_supplementaires}
               onChange={handleChange}
+              className="input"
               rows={3}
-              placeholder="Infos supplémentaires"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-r focus:outline-none"
             />
           </div>
         </div>
 
-        {message && <p className="text-green-600 text-center font-semibold">{message}</p>}
-
-        {/* Footer */}
-        <div className="flex justify-end gap-3 mt-4">
+        {/* Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
           <button
+            type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-medium"
+            className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
           >
             Annuler
           </button>
           <button
-            onClick={handleSubmit}
+            type="button"
             disabled={loading}
-            className={`px-6 py-2 rounded-lg text-white font-semibold ${
-              loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
-            }`}
+            className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3 rounded-2xl shadow-md transition-all"
           >
-            {loading ? "Enregistrement..." : "Enregistrer"}
+            {loading ? "Enregistrement..." : "Sauvegarder"}
           </button>
         </div>
+
+        {message && (
+          <p className="text-[#25297e] font-semibold text-center mt-3">{message}</p>
+        )}
+
+        {/* Styles */}
+        <style jsx>{`
+          label {
+            font-weight: 600;
+            color: white;
+          }
+          .input {
+            width: 100%;
+            border: 1px solid #a0c4ff;
+            border-radius: 14px;
+            padding: 12px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-weight: 400;
+          }
+          select.input {
+            font-weight: 400;
+            color: white;
+          }
+          select.input option {
+            background: white;
+            color: black;
+            font-weight: 400;
+          }
+        `}</style>
       </div>
     </div>
   );

@@ -307,13 +307,17 @@ export default function SuivisMembres() {
                   )}
 
                   {showRefus ? (
-                    <button onClick={() => reactivateMember(m.id)} disabled={updating[m.id]} className={`mt-2 py-1 rounded w-full transition ${updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600 text-white"}`}>
-                      {updating[m.id] ? "Réactivation..." : "Réactiver"}
-                    </button>
-                  ) : (
-                    <button onClick={() => updateSuivi(m.id)} disabled={updating[m.id]} className={`mt-2 py-1 rounded w-full transition ${updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 text-white"}`}>
-                      {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
-                    </button>
+                    <button
+  onClick={() => {
+    console.log("CLICK REACTIVER", m.id);
+    reactiverSuivi(m);
+  }}
+  disabled={updating[m.id]}
+  className="px-3 py-1 rounded bg-green-600 text-white text-sm"
+>
+  🔄 Réactiver
+</button>
+
                   )}
                 </div>
 

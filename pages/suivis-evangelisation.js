@@ -214,15 +214,7 @@ export default function SuivisEvangelisation() {
 
     if (error) throw error;
 
-    // ✅ Si intégré → upsert + retrait immédiat
-    if (newStatus === "Intégré") {
-      await upsertMembre({
-        ...m,
-        status_suivis_evangelises: newStatus,
-        commentaire_evangelises: newComment,
-      });
-
-      const reactiverSuivi = async (m) => {
+    const reactiverSuivi = async (m) => {
   try {
     setUpdating((p) => ({ ...p, [m.id]: true }));
 
@@ -234,11 +226,9 @@ export default function SuivisEvangelisation() {
       .eq("id", m.id);
 
     if (error) throw error;
-    
-    setShowRefus(false);
-    
-    // 🔁 Recharge TOUT depuis Supabase
-    await fetchSuivis(user, cellules);
+
+    // 🔥 Retirer immédiatement de la vue Refus
+    setAllSuivis((prev) => prev.filter((s) => s.id !== m.id));
 
   } catch (err) {
     console.error("Erreur réactivation :", err.message);
@@ -248,6 +238,14 @@ export default function SuivisEvangelisation() {
   }
 };
 
+
+    // ✅ Si intégré → upsert + retrait immédiat
+    if (newStatus === "Intégré") {
+      await upsertMembre({
+        ...m,
+        status_suivis_evangelises: newStatus,
+        commentaire_evangelises: newComment,
+      });
 
       setAllSuivis((prev) => prev.filter((s) => s.id !== id));
       return;
@@ -479,7 +477,6 @@ export default function SuivisEvangelisation() {
                   </button>
 
                 </div>
-
                 <button
                   onClick={() => setDetailsCarteId(ouvert ? null : m.id)}
                   className="text-orange-500 underline text-sm mt-3"

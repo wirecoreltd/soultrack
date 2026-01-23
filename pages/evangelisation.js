@@ -446,6 +446,12 @@ export default function Evangelisation() {
         />
       )}
 
+      {showAddMember && (
+        <AddMemeberPopup
+          onClose={() => setShowAddMember(false)}
+        />
+      )}
+
       {popupMember && (
         <DetailsEvangePopup
           member={popupMember}

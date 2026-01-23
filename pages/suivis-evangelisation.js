@@ -510,10 +510,8 @@ export default function SuivisEvangelisation() {
                         >
                           ✏️ Modifier le contact
                         </button>
-        
-                    )}                 
-                  </div>
-                )}
+                      </div>
+                    )}
               </div>
             </div>
           );

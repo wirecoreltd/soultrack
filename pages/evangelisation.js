@@ -12,89 +12,42 @@ import HeaderPages from "../components/HeaderPages";
 export default function Evangelisation() {
   const router = useRouter();
 
-  const [contacts, setContacts] = useState(null);
+  const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [selectedTargetType, setSelectedTargetType] = useState("");
   const [selectedTarget, setSelectedTarget] = useState("");
   const [checkedContacts, setCheckedContacts] = useState({});
-  const [detailsOpen, setDetailsOpen] = useState({});
-  const [editMember, setEditMember] = useState(null);
-  const [popupMember, setPopupMember] = useState(null);
   const [loadingSend, setLoadingSend] = useState(false);
-  const [view, setView] = useState("card");
-  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
-  const [doublons, setDoublons] = useState([]);
-  const phoneMenuRef = useRef(null);
-  const [pendingSendContacts, setPendingSendContacts] = useState(null); 
+
   const [showDoublonPopup, setShowDoublonPopup] = useState(false);
   const [doublonContact, setDoublonContact] = useState(null);
   const [forceSend, setForceSend] = useState(false);
 
+  const phoneMenuRef = useRef(null);
 
   /* ================= FETCH ================= */
+
   useEffect(() => {
     fetchContacts();
     fetchCellules();
     fetchConseillers();
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
-        setOpenPhoneMenuId(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleSupprimerMembre = async (id) => {
-  try {
-    // 🔹 Mettre à jour dans la base
-    const { error } = await supabase
-      .from("evangelises")
-      .update({ status_suivi: "supprime" })
-      .eq("id", id);
-
-    if (error) {
-      console.error("Erreur suppression :", error);
-      alert("❌ Erreur lors de la suppression");
-      return;
-    }
-
-    // 🔹 Retirer le contact du state instantanément
-    setContacts((prev) => prev.filter((m) => m.id !== id));
-    
-  } catch (err) {
-    console.error(err);
-    alert("❌ Erreur lors de la suppression");
-  }
-};
-
-  // ===== Fetch contacts non envoyés =====
   const fetchContacts = async () => {
-  const { data, error } = await supabase
-    .from("evangelises")
-    .select("*")
-    .eq("status_suivi", "Non envoyé")
-    .order("created_at", { ascending: false }) // <-- correct
-    .limit(1000);
+    const { data, error } = await supabase
+      .from("evangelises")
+      .select("*")
+      .eq("status_suivi", "Non envoyé")
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Erreur fetchContacts:", error);
-    setContacts([]);
-    return;
-  }
-
-  console.log("Contacts chargés :", data);
-  setContacts(data || []);
-};
+    if (!error) setContacts(data || []);
+  };
 
   const fetchCellules = async () => {
     const { data } = await supabase
       .from("cellules")
-      .select("id, cellule_full, responsable, telephone, ville");
+      .select("id, cellule_full, telephone");
     setCellules(data || []);
   };
 
@@ -107,8 +60,10 @@ export default function Evangelisation() {
   };
 
   /* ================= UTILS ================= */
-  const handleCheck = (id) =>
+
+  const handleCheck = (id) => {
     setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const formatBesoin = (b) => {
     if (!b) return "—";
@@ -121,174 +76,132 @@ export default function Evangelisation() {
     }
   };
 
-  const selectedContacts = contacts?.filter((c) => checkedContacts[c.id]) || [];
+  const selectedContacts = contacts.filter((c) => checkedContacts[c.id]);
   const hasSelectedContacts = selectedContacts.length > 0;
 
-  const getBorderColor = (member) => {
-    if (member.is_whatsapp) return "#25D366";
-    if (member.besoin) return "#FFB800";
-    return "#888";
+  /* ================= ENVOI ================= */
+
+  const envoyerQuandMeme = async () => {
+    setForceSend(true);
+    setShowDoublonPopup(false);
+
+    try {
+      await sendContacts();
+    } finally {
+      setForceSend(false);
+    }
   };
 
   const sendContacts = async () => {
-  if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
-  setLoadingSend(true);
+    if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
+    setLoadingSend(true);
 
-  try {
-    const cible =
-      selectedTargetType === "cellule"
-        ? cellules.find((c) => c.id == selectedTarget)
-        : conseillers.find((c) => c.id == selectedTarget);
+    try {
+      const cible =
+        selectedTargetType === "cellule"
+          ? cellules.find((c) => c.id === selectedTarget)
+          : conseillers.find((c) => c.id === selectedTarget);
 
-    if (!cible || !cible.telephone)
-      throw new Error("Numéro de la cible invalide");
+      if (!cible?.telephone) throw new Error("Numéro cible invalide");
 
-    // Vérifier doublons
-    const { data: suivisExisting } = await supabase
-      .from("suivis_des_evangelises")
-      .select("evangelise_id");
+      const idsToSend = selectedContacts.map((c) => c.id);
 
-    const existingIds = suivisExisting.map((s) => s.evangelise_id);
-    const doublonsContacts = selectedContacts.filter((c) =>
-      existingIds.includes(c.id)
-    );
-
-    // Si doublons → confirmation
-    if (doublonsContacts.length > 0) {
-      const confirmSend = window.confirm(
-        `⚠️ ${doublonsContacts.length} contact(s) sont déjà dans les suivis.\n` +
-        "Voulez-vous envoyer quand même ?"
-      );
-      if (!confirmSend) {
-        setLoadingSend(false);
-        return; // Annuler tout
-      }
-    }
-
-    // On envoie tous les contacts sélectionnés
-    const idsToSend = selectedContacts.map((c) => c.id);
-
-    // 🔍 Vérification doublon par téléphone (sauf si forceSend)
+      /* 🔍 DOUBLON PAR TÉLÉPHONE */
       if (!forceSend) {
-        const telephones = selectedContacts
-          .map((c) => c.telephone)
-          .filter(Boolean);
-      
+        const telephones = selectedContacts.map((c) => c.telephone).filter(Boolean);
+
         const { data: doublonsTel } = await supabase
           .from("suivis_des_evangelises")
           .select("telephone")
           .in("telephone", telephones);
-      
-        if (doublonsTel && doublonsTel.length > 0) {
+
+        if (doublonsTel?.length > 0) {
           const telExiste = doublonsTel[0].telephone;
-          const contact = selectedContacts.find(
-            (c) => c.telephone === telExiste
-          );
-      
+          const contact = selectedContacts.find((c) => c.telephone === telExiste);
+
           setDoublonContact(contact);
           setShowDoublonPopup(true);
           setLoadingSend(false);
-          return; // ⛔ STOP ENVOI
+          return;
         }
       }
-    
-        const envoyerQuandMeme = async () => {
-          setForceSend(true);
-          setShowDoublonPopup(false);
-        
-          try {
-            await sendContacts();
-          } finally {
-            setForceSend(false);
-          }
-        };
 
+      /* 🧾 INSERT SUIVIS */
+      const inserts = selectedContacts.map((m) => ({
+        prenom: m.prenom,
+        nom: m.nom,
+        telephone: m.telephone,
+        is_whatsapp: m.is_whatsapp,
+        ville: m.ville,
+        besoin: m.besoin,
+        infos_supplementaires: m.infos_supplementaires,
+        sexe: m.sexe,
+        type_conversion: m.type_conversion,
+        priere_salut: m.priere_salut,
+        status_suivis_evangelises: "Envoyé",
+        evangelise_id: m.id,
+        conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
+        cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
+        date_suivi: new Date().toISOString(),
+      }));
 
-    // Insert dans suivis_des_evangelises
-    const inserts = selectedContacts.map((m) => ({
-      prenom: m.prenom,
-      nom: m.nom,
-      telephone: m.telephone,
-      is_whatsapp: m.is_whatsapp,
-      ville: m.ville,
-      besoin: m.besoin,
-      infos_supplementaires: m.infos_supplementaires,
-      sexe: m.sexe,
-      type_conversion: m.type_conversion,
-      priere_salut: m.priere_salut,
-      status_suivis_evangelises: "Envoyé",
-      evangelise_id: m.id,
-      conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
-      cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
-      date_suivi: new Date().toISOString(),
-    }));
+      await supabase.from("suivis_des_evangelises").insert(inserts);
 
-    const { error: insertError } = await supabase
-      .from("suivis_des_evangelises")
-      .insert(inserts);
+      await supabase
+        .from("evangelises")
+        .update({ status_suivi: "Envoyé" })
+        .in("id", idsToSend);
 
-    if (insertError) throw insertError;
+      setContacts((prev) => prev.filter((c) => !idsToSend.includes(c.id)));
+      setCheckedContacts({});
 
-    // Update evangelises
-    const { error: updateError } = await supabase
-      .from("evangelises")
-      .update({ status_suivi: "Envoyé" })
-      .in("id", idsToSend);
+      /* ================= MESSAGE WHATSAPP ================= */
 
-    if (updateError) throw updateError;
+      const nomCible =
+        selectedTargetType === "cellule"
+          ? cible.cellule_full || "Responsable de cellule"
+          : `${cible.prenom}`;
 
-    // Mise à jour UI instantanée
-    setContacts((prev) => prev.filter((c) => !idsToSend.includes(c.id)));
-    setCheckedContacts({});   
+      let message = `👋 Bonjour ${nomCible},\n\n`;
+      message += selectedContacts.length > 1
+        ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
+        : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
 
-    // Message WhatsApp automatique
-    const nomCible =
-      selectedTargetType === "cellule"
-        ? cible.cellule_full || "Responsable de cellule"
-        : `${cible.prenom}`;
+      selectedContacts.forEach((m, index) => {
+        message += "────────────────────\n";
+        if (selectedContacts.length > 1) message += `👥 Personne ${index + 1}\n`;
+        message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
+        message += `📱 Téléphone : ${m.telephone || "—"}\n`;
+        message += `🏙️ Ville : ${m.ville || "—"}\n`;
+        message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
+        message += `🎗️ Sexe : ${m.sexe || "—"}\n`;
+        message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n`;
+        message += `☀️ Type de conversion : ${m.type_conversion || "—"}\n`;
+        message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
+        message += `📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
+      });
 
-    let message = `👋 Bonjour ${nomCible},\n\n`;
-    message += selectedContacts.length > 1
-      ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
-      : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
+      message +=
+        "Merci pour ton cœur et ton engagement à les accompagner 🙏\n\n";
+      message += "Que Dieu te bénisse abondamment ✨";
 
-    selectedContacts.forEach((m, index) => {
-      message += "────────────────────\n";
-      if (selectedContacts.length > 1) message += `👥 Personne ${index + 1}\n`;
-      message += `👤 Nom : ${m.prenom} ${m.nom}\n`;
-      message += `📱 Téléphone : ${m.telephone || "—"}\n`;
-      message += `🏙️ Ville : ${m.ville || "—"}\n`;
-      message += `💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n`;
-      message += `🎗️ Sexe : ${m.sexe || "—"}\n`;
-      message += `🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n`;
-      message += `☀️ Type de conversion : ${m.type_conversion || "—"}\n`;
-      message += `❓ Besoin : ${formatBesoin(m.besoin)}\n`;
-      message += `📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
-    });
-
-    message +=
-      "Merci pour ton cœur, ta disponibilité et ton engagement à les accompagner\n\n";
-    message += "Que Dieu te bénisse abondamment ✨";
-
-    if (cible.telephone) {
       window.open(
         `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
           message
         )}`,
         "_blank"
       );
+
+    } catch (err) {
+      console.error(err);
+      alert("❌ Erreur lors de l’envoi");
+    } finally {
+      setLoadingSend(false);
     }
+  };
 
-  } catch (err) {
-    console.error("ERREUR ENVOI", err);
-    alert("❌ Erreur lors de l’envoi");
-  } finally {
-    setLoadingSend(false);
-  }
-};
-
-  
   /* ================= UI ================= */
+
   return (
      <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
   

@@ -200,7 +200,15 @@ export default function Evangelisation() {
       contactsToSend.forEach((m, i) => {
         message += "────────────────────\n";
         if (contactsToSend.length > 1) message += `👥 Personne ${i + 1}\n`;
-        message += `👤 Nom : ${m.prenom} ${m.nom}\n📱 Téléphone : ${m.telephone || "—"}\n🏙️ Ville : ${m.ville || "—"}\n💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n🎗️ Sexe : ${m.sexe || "—"}\n🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n☀️ Type de conversion : ${m.type_conversion || "—"}\n❓ Besoin : ${formatBesoin(m.besoin)}\n📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
+        message += `👤 Nom : ${m.prenom} ${m.nom}\n
+        📱 Téléphone : ${m.telephone || "—"}\n
+        🏙️ Ville : ${m.ville || "—"}\n
+        💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n
+        🎗️ Sexe : ${m.sexe || "—"}\n
+        🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n
+        ☀️ Type de conversion : ${m.type_conversion || "—"}\n
+        ❓ Besoin : ${formatBesoin(m.besoin)}\n
+        📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
       });
       message += "Merci pour ton engagement ✨";
 
@@ -266,6 +274,16 @@ export default function Evangelisation() {
           </button>
         )}
       </div>
+
+         {/* Toggle Vue Carte / Vue Table */}
+            <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
+              <button
+                onClick={() => setView(view === "card" ? "table" : "card")}
+                className="text-sm font-semibold underline text-white"
+              >
+                {view === "card" ? "Vue Table" : "Vue Carte"}
+              </button>
+            </div>  
 
       {/* ================= AFFICHAGE CONTACTS ================= */}
       <div className="w-full max-w-6xl flex flex-col items-center">

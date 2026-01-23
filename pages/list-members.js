@@ -478,22 +478,26 @@ export default function ListMembers() {
       {/* Toggle Carte/Table + Add */}
        <div className="w-full max-w-6xl flex justify-between items-center mb-4 px-2">
          
-         {/* Toggle */}
-         <button
-           onClick={() => setView(view === "card" ? "table" : "card")}
-           className="text-sm font-semibold underline text-white"
-         >
-           {view === "card" ? "Vue Table" : "Vue Carte"}
-         </button>
-       
-         {/* Add button */}
-         <button
-           onClick={() => setAddMemberOpen(true)}
-            className="flex items-center gap-1 bg-white text-black px-3 py-1.5 rounded-full shadow hover:bg-gray-100 transition text-sm font-semibold"
-         >
-           ➕ Add
-         </button>       
-       </div> 
+         <div className="w-full max-w-6xl flex justify-between items-center mb-4">
+  
+          {/* Toggle Vue */}
+          <button
+            onClick={() => setView(view === "card" ? "table" : "card")}
+            className="text-sm font-semibold underline text-white"
+          >
+            {view === "card" ? "Vue Table" : "Vue Carte"}
+          </button>
+        
+          {/* Ajouter un contact */}
+          <button
+            onClick={() => setShowAddMember(true)}
+            className="bg-white text-[#2E3192] px-3 py-1 rounded-lg text-sm font-semibold shadow hover:bg-gray-100 flex items-center gap-1"
+          >
+            ➕ <span>Ajouter</span>
+          </button>
+        
+        </div>
+
 
       {/* ==================== VUE CARTE ==================== */}
       {view === "card" && (

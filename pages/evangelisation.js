@@ -150,113 +150,81 @@ const [pendingContacts, setPendingContacts] = useState([]);
         
         // Fonction envoi WhatsApp (appelé par popup)
         const sendToWhatsapp = async (contactsToSend = pendingContacts) => {
-          setShowDoublonPopup(false);
-          setPendingContacts([]);
-          setLoadingSend(true);
-        
-          try {
-            const cible =
-              selectedTargetType === "cellule"
-                ? cellules.find((c) => c.id === selectedTarget)
-                : conseillers.find((c) => c.id === selectedTarget);
-        
-            if (!cible || !cible.telephone) throw new Error("Numéro cible invalide");
-        
-            // INSERT dans suivis_des_evangelises
-            const inserts = contactsToSend.map((m) => ({
-              prenom: m.prenom,
-              nom: m.nom,
-              telephone: m.telephone,
-              is_whatsapp: m.is_whatsapp,
-              ville: m.ville,
-              besoin: m.besoin,
-              infos_supplementaires: m.infos_supplementaires,
-              sexe: m.sexe,
-              type_conversion: m.type_conversion,
-              priere_salut: m.priere_salut,
-              status_suivis_evangelises: "Envoyé",
-              evangelise_id: m.id,
-              conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
-              cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
-              date_suivi: new Date().toISOString()
-            }));
-        
-            const { error: insertError } = await supabase
-              .from("suivis_des_evangelises")
-              .insert(inserts);
-            if (insertError) throw insertError;
-        
-            const ids = contactsToSend.map((c) => c.id);
-            const { error: updateError } = await supabase
-              .from("evangelises")
-              .update({ status_suivi: "Envoyé" })
-              .in("id", ids);
-            if (updateError) throw updateError;
-        
-            setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
-            setCheckedContacts({});
-        
-            // 🔹 Construction du message WhatsApp (ici, tout est dans la fonction)
-            let message = `👋 Bonjour ${selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom},\n\n`;
-            message += contactsToSend.length > 1
-              ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
-              : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
-        
-            contactsToSend.forEach((m, i) => {
-              message += "────────────────────\n";
-              if (contactsToSend.length > 1) message += `👥 Personne ${i + 1}\n`;
-              message += `👤 Nom : ${m.prenom} ${m.nom}\n📱 Téléphone : ${m.telephone || "—"}\n🏙️ Ville : ${m.ville || "—"}\n💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n🎗️ Sexe : ${m.sexe || "—"}\n🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n☀️ Type de conversion : ${m.type_conversion || "—"}\n❓ Besoin : ${formatBesoin(m.besoin)}\n📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
-            });
-            message += "Merci pour ton engagement ✨";
-        
-            window.open(
-              `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`,
-              "_blank"
-            );
-        
-            alert("✅ Contacts envoyés et enregistrés");
-        
-          } catch (err) {
-            console.error(err);
-            alert("❌ Erreur lors de l’envoi");
-          } finally {
-            setLoadingSend(false);
-          }
-        };
-      // Optionnel: ouverture WhatsApp (comme avant)
-      let message = `👋 Bonjour ${selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom},\n\n`;
-      message += contactsToSend.length > 1
-        ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
-        : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
-      contactsToSend.forEach((m, i) => {
-        message += "────────────────────\n";
-        if (contactsToSend.length > 1) message += `👥 Personne ${i + 1}\n`;
-        message += `👤 Nom : ${m.prenom} ${m.nom}\n
-        📱 Téléphone : ${m.telephone || "—"}\n
-        🏙️ Ville : ${m.ville || "—"}\n
-        💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n
-        🎗️ Sexe : ${m.sexe || "—"}\n
-        🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n
-        ☀️ Type de conversion : ${m.type_conversion || "—"}\n
-        ❓ Besoin : ${formatBesoin(m.besoin)}\n
-        📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
-      });
-      message += "Merci pour ton engagement ✨";
+  setShowDoublonPopup(false);
+  setPendingContacts([]);
+  setLoadingSend(true);
 
-      if (cible.telephone) {
-        window.open(
-          `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`,
-          "_blank"
-        );
-      }
+  try {
+    const cible =
+      selectedTargetType === "cellule"
+        ? cellules.find((c) => c.id === selectedTarget)
+        : conseillers.find((c) => c.id === selectedTarget);
 
-    } catch (err) {
-      console.error(err);
-      alert("❌ Erreur lors de l’envoi");
-    } finally {
-      setLoadingSend(false);
-    }
-  };
+    if (!cible || !cible.telephone) throw new Error("Numéro cible invalide");
+
+    // Insertion dans la base
+    const inserts = contactsToSend.map((m) => ({
+      prenom: m.prenom,
+      nom: m.nom,
+      telephone: m.telephone,
+      is_whatsapp: m.is_whatsapp,
+      ville: m.ville,
+      besoin: m.besoin,
+      infos_supplementaires: m.infos_supplementaires,
+      sexe: m.sexe,
+      type_conversion: m.type_conversion,
+      priere_salut: m.priere_salut,
+      status_suivis_evangelises: "Envoyé",
+      evangelise_id: m.id,
+      conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
+      cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
+      date_suivi: new Date().toISOString()
+    }));
+
+    const { error: insertError } = await supabase
+      .from("suivis_des_evangelises")
+      .insert(inserts);
+    if (insertError) throw insertError;
+
+    const ids = contactsToSend.map((c) => c.id);
+    const { error: updateError } = await supabase
+      .from("evangelises")
+      .update({ status_suivi: "Envoyé" })
+      .in("id", ids);
+    if (updateError) throw updateError;
+
+    setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
+    setCheckedContacts({});
+
+    // 🔹 Construction message WhatsApp (toujours DANS la fonction)
+    let message = `👋 Bonjour ${selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom},\n\n`;
+    message += contactsToSend.length > 1
+      ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
+      : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
+
+    contactsToSend.forEach((m, i) => {
+      message += "────────────────────\n";
+      if (contactsToSend.length > 1) message += `👥 Personne ${i + 1}\n`;
+      message += `👤 Nom : ${m.prenom} ${m.nom}\n📱 Téléphone : ${m.telephone || "—"}\n🏙️ Ville : ${m.ville || "—"}\n💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n🎗️ Sexe : ${m.sexe || "—"}\n🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n☀️ Type de conversion : ${m.type_conversion || "—"}\n❓ Besoin : ${formatBesoin(m.besoin)}\n📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
+    });
+
+    message += "Merci pour ton engagement ✨";
+
+    // Ouvre WhatsApp
+    window.open(
+      `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`,
+      "_blank"
+    );
+
+    alert("✅ Contacts envoyés et enregistrés");
+
+  } catch (err) {
+    console.error(err);
+    alert("❌ Erreur lors de l’envoi");
+  } finally {
+    setLoadingSend(false);
+  }
+};
 
   /* ================= UI ================= */
   return (

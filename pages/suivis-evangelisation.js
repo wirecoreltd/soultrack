@@ -502,23 +502,25 @@ export default function SuivisEvangelisation() {
                     <p>❓ Besoin : {formatBesoin(m.besoin)}</p>
                     <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                    {!showRefus && (
-                      <div className="mt-4 flex justify-center">
-                        <button
-                          onClick={() => setEditMember(m)}
-                          className="text-blue-600 text-sm mt-4"
-                        >
-                          ✏️ Modifier le contact
-                        </button>
-                      </div>
-                    )}
+                    {/* Bouton Modifier uniquement si ce n'est pas un refus */}
+                {!showRefus && (
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      onClick={() => setEditMember(m)}
+                      className="text-blue-600 text-sm mt-4"
+                    >
+                      ✏️ Modifier le contact
+                    </button>
+                  </div>
+                )}
               </div>
-            </div>
-          );
-        })}
-      </div>
-    )}
-
+            )}
+          </div>
+        </div>
+      );
+    })}
+  </div>
+)}
     {/* ================= VUE TABLE ================= */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto py-2 mx-auto">

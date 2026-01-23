@@ -191,6 +191,17 @@ export default function Evangelisation() {
           return; // ⛔ STOP ENVOI
         }
       }
+    
+        const envoyerQuandMeme = async () => {
+          setForceSend(true);
+          setShowDoublonPopup(false);
+        
+          try {
+            await sendContacts();
+          } finally {
+            setForceSend(false);
+          }
+        };
 
 
     // Insert dans suivis_des_evangelises

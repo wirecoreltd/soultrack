@@ -254,80 +254,151 @@ export default function SuivisMembres() {
       {message && <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{message.text}</div>}
 
       {/* Cards View */}
-      {view === "card" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-          {uniqueMembers.map(m => (
-            <div key={m.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
-              <div className="flex flex-col items-center">
-                <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
+{view === "card" && (
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
+    {uniqueMembers.map((m) => (
+      <div
+        key={m.id}
+        className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
+        style={{ borderLeftColor: getBorderColor(m) }}
+      >
+        <div className="flex flex-col items-center">
+          <h2 className="font-bold text-black text-base text-center mb-1">
+            {m.prenom} {m.nom}
+          </h2>
 
-                {/* Phone menu */}
-                <p
-                  className="text-orange-500 underline font-semibold mb-1 cursor-pointer"
-                  onClick={() => setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id)}
-                >
-                  {m.telephone || "—"}
-                </p>
+          {/* Phone menu */}
+          <p
+            className="text-orange-500 underline font-semibold mb-1 cursor-pointer"
+            onClick={() => setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id)}
+          >
+            {m.telephone || "—"}
+          </p>
 
-                {openPhoneMenuId === m.id && (
-                  <div ref={phoneMenuRef} className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52" onClick={(e) => e.stopPropagation()}>
-                    <a href={m.telephone ? `tel:${m.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}>📞 Appeler</a>
-                    <a href={m.telephone ? `sms:${m.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}>✉️ SMS</a>
-                    <a href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}?call` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}>📱 Appel WhatsApp</a>
-                    <a href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}>💬 Message WhatsApp</a>
-                  </div>
-                )}
-
-                <p className="text-sm text-black-700 mb-1">🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}</p>
-                <p className="text-sm text-black-700 mb-1">👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
-                <p className="text-sm text-black-700 mb-1">🏙️ Ville : {m.ville || ""}</p>    
-                {/* Commentaire & Statut */}
-                <div className="flex flex-col w-full mt-2">
-                  <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Commentaire Suivis</label>
-
-                  {showRefus ? (
-                    <textarea value={m.commentaire_suivis ?? ""} readOnly className="w-full border rounded-lg p-2 bg-gray-100 text-gray-600 cursor-not-allowed" rows={2}/>
-                  ) : (
-                    <textarea value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""} onChange={(e) => handleCommentChange(m.id, e.target.value)} className="w-full border rounded-lg p-2" rows={2}/>
-                  )}
-
-                  <label className="font-semibold mb-1 text-center mt-2">Statut Intégration</label>
-
-                  {showRefus ? (
-                    <select value="4" disabled className="w-full border rounded-lg p-2 text-red-600 bg-gray-100 cursor-not-allowed">
-                      <option value="4">Refus</option>
-                    </select>
-                  ) : (
-                    <select value={statusChanges[m.id] ?? String(m.statut_suivis ?? "")} onChange={(e) => setStatusChanges(prev => ({ ...prev, [m.id]: e.target.value }))} className="w-full border rounded-lg p-2 mb-2">
-                      <option value="">-- Sélectionner un statut --</option>
-                      <option value="2">En Attente</option>
-                      <option value="3">Intégrer</option>
-                      <option value="4">Refus</option>
-                    </select>
-                  )}
-
-                  {showRefus ? (
-                    <button
-                      onClick={() => {
-                        console.log("CLICK REACTIVER", m.id);
-                        reactiverSuivi(m);
-                      }}
-                      disabled={updating[m.id]}
-                      className="px-3 py-1 rounded bg-green-600 text-white text-sm"
-                    >
-                      🔄 Réactiver
-                    </button>                 
-
-                <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">{detailsOpen === m.id ? "Fermer détails" : "Détails"}</button>
-              </div>
-
-              <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === m.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
-                {detailsOpen === m.id && <div className="pt-2"><DetailsPopup m={m} /></div>}
-              </div>
+          {openPhoneMenuId === m.id && (
+            <div
+              ref={phoneMenuRef}
+              className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <a
+                href={m.telephone ? `tel:${m.telephone}` : "#"}
+                className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
+              >
+                📞 Appeler
+              </a>
+              <a
+                href={m.telephone ? `sms:${m.telephone}` : "#"}
+                className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
+              >
+                ✉️ SMS
+              </a>
+              <a
+                href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}?call` : "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
+              >
+                📱 Appel WhatsApp
+              </a>
+              <a
+                href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}` : "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
+              >
+                💬 Message WhatsApp
+              </a>
             </div>
-          ))}
+          )}
+
+          <p className="text-sm text-black-700 mb-1">
+            🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}
+          </p>
+          <p className="text-sm text-black-700 mb-1">
+            👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}
+          </p>
+
+          {/* Commentaire & Statut */}
+          <div className="flex flex-col w-full mt-2">
+            <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Commentaire Suivis</label>
+
+            {showRefus ? (
+              <textarea
+                value={m.commentaire_suivis ?? ""}
+                readOnly
+                className="w-full border rounded-lg p-2 bg-gray-100 text-gray-600 cursor-not-allowed"
+                rows={2}
+              />
+            ) : (
+              <textarea
+                value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
+                onChange={(e) => handleCommentChange(m.id, e.target.value)}
+                className="w-full border rounded-lg p-2"
+                rows={2}
+              />
+            )}
+
+            <label className="font-semibold mb-1 text-center mt-2">Statut Intégration</label>
+
+            {showRefus ? (
+              <select
+                value="4"
+                disabled
+                className="w-full border rounded-lg p-2 text-red-600 bg-gray-100 cursor-not-allowed"
+              >
+                <option value="4">Refus</option>
+              </select>
+            ) : (
+              <select
+                value={statusChanges[m.id] ?? String(m.statut_suivis ?? "")}
+                onChange={(e) => setStatusChanges(prev => ({ ...prev, [m.id]: e.target.value }))}
+                className="w-full border rounded-lg p-2 mb-2"
+              >
+                <option value="">-- Sélectionner un statut --</option>
+                <option value="2">En Attente</option>
+                <option value="3">Intégrer</option>
+                <option value="4">Refus</option>
+              </select>
+            )}
+
+            {showRefus ? (
+              <button
+                onClick={() => reactivateMember(m.id)}
+                disabled={updating[m.id]}
+                className={`mt-2 py-1 rounded w-full transition ${updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600 text-white"}`}
+              >
+                {updating[m.id] ? "Réactivation..." : "Réactiver"}
+              </button>
+            ) : (
+              <button
+                onClick={() => updateSuivi(m.id)}
+                disabled={updating[m.id]}
+                className={`mt-2 py-1 rounded w-full transition ${updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 text-white"}`}
+              >
+                {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
+              </button>
+            )}
+          </div>
+
+          {/* Bouton Détails */}
+          <button
+            onClick={() => toggleDetails(m.id)}
+            className="text-orange-500 underline text-sm mt-2"
+          >
+            {detailsOpen === m.id ? "Fermer détails" : "Détails"}
+          </button>
         </div>
-      )}
+
+        {/* Contenu Détails */}
+        <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === m.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
+          {detailsOpen === m.id && <div className="pt-2"><DetailsPopup m={m} /></div>}
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
 
       {/* Table View */}
       {view === "table" && (

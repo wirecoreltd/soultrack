@@ -98,7 +98,7 @@ export default function CreateConseiller() {
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
           <select value={selectedMemberId} onChange={(e) => setSelectedMemberId(e.target.value)} className="input" required>
-            <option value="">-- Sélectionnez un membre (star = Oui) --</option>
+            <option value="">-- Choisir un Serviteur --</option>
             {members.map((m) => (<option key={m.id} value={m.id}>{m.prenom} {m.nom}</option>))}
           </select>
 

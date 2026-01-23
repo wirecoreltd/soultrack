@@ -502,15 +502,14 @@ export default function SuivisEvangelisation() {
                     <p>❓ Besoin : {formatBesoin(m.besoin)}</p>
                     <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
 
-                    <button
-                    onClick={() => m.id && setEditingContact(m.evangelises)}
-                    className="text-blue-600 text-sm w-full"
-                  >
-                    ✏️ Modifier le contact
-                  </button>
-
-                    )}
-
+                    {!showRefus && m.evangelises && (
+                      <button
+                        onClick={() => setEditingContact(m.evangelises)}
+                        className="text-blue-600 text-sm underline w-full"
+                      >
+                        ✏️ Modifier le contact
+                      </button>
+                    )}                 
                   </div>
                 )}
               </div>

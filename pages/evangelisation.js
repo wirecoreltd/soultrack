@@ -195,6 +195,25 @@ const [pendingContacts, setPendingContacts] = useState([]);
         
             setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
             setCheckedContacts({});
+        
+            // Message WhatsApp
+            let message = `👋 Bonjour ${selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom},\n\n`;
+            message += contactsToSend.length > 1
+              ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
+              : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
+        
+            contactsToSend.forEach((m, i) => {
+              message += "────────────────────\n";
+              if (contactsToSend.length > 1) message += `👥 Personne ${i + 1}\n`;
+              message += `👤 Nom : ${m.prenom} ${m.nom}\n📱 Téléphone : ${m.telephone || "—"}\n🏙️ Ville : ${m.ville || "—"}\n💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n🎗️ Sexe : ${m.sexe || "—"}\n🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n☀️ Type de conversion : ${m.type_conversion || "—"}\n❓ Besoin : ${formatBesoin(m.besoin)}\n📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
+            });
+            message += "Merci pour ton engagement ✨";
+        
+            window.open(
+              `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`,
+              "_blank"
+            );
+        
             alert("✅ Contacts envoyés et enregistrés");
           } catch (err) {
             console.error(err);
@@ -203,6 +222,7 @@ const [pendingContacts, setPendingContacts] = useState([]);
             setLoadingSend(false);
           }
         };
+
 
 
       // Optionnel: ouverture WhatsApp (comme avant)

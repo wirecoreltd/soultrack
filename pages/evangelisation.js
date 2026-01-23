@@ -226,7 +226,10 @@ const [pendingContacts, setPendingContacts] = useState([]);
       message += "Merci pour ton engagement ✨";
 
       if (cible.telephone) {
-        window.open(`https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`, "_blank");
+        window.open(
+          `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`,
+          "_blank"
+        );
       }
 
     } catch (err) {

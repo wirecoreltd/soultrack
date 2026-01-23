@@ -5,13 +5,10 @@ import supabase from "../lib/supabaseClient";
 
 export default function EditEvangelisePopup({
   member,
-  cellules = [],
-  conseillers = [],
   onClose,
   onUpdateMember,
 }) {
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
-
   const initialBesoin =
     typeof member.besoin === "string"
       ? JSON.parse(member.besoin || "[]")
@@ -28,6 +25,7 @@ export default function EditEvangelisePopup({
     priere_salut: member.priere_salut || false,
     type_conversion: member.type_conversion || "",
     is_whatsapp: member.is_whatsapp || false,
+    sexe: member.sexe || "",
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -36,7 +34,6 @@ export default function EditEvangelisePopup({
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
-
     if (value === "Autre") {
       setShowAutre(checked);
       if (!checked) {
@@ -47,7 +44,6 @@ export default function EditEvangelisePopup({
         }));
       }
     }
-
     setFormData((prev) => {
       const updated = checked
         ? [...prev.besoin, value]
@@ -66,7 +62,6 @@ export default function EditEvangelisePopup({
 
   const handleSubmit = async () => {
     setLoading(true);
-
     const cleanData = {
       prenom: formData.prenom,
       nom: formData.nom,
@@ -80,6 +75,7 @@ export default function EditEvangelisePopup({
       priere_salut: formData.priere_salut,
       type_conversion: formData.type_conversion,
       is_whatsapp: formData.is_whatsapp,
+      sexe: formData.sexe,
     };
 
     const { error, data } = await supabase
@@ -104,90 +100,105 @@ export default function EditEvangelisePopup({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4 overflow-y-auto">
-      <div className="bg-white w-full max-w-md rounded-lg shadow-2xl relative">
-
-        {/* HEADER */}
-        <div className="bg-green-600 text-white px-5 py-4 text-center font-bold text-lg rounded-t-lg">
-          ✏️ Modifier le contact
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4 py-6 overflow-auto">
+      <div className="bg-[#0A74DA] w-full max-w-md rounded-xl shadow-xl relative text-white">
+        
+        {/* Header */}
+        <div className="px-6 py-4 flex justify-between items-center border-b border-white/20">
+          <h2 className="text-xl font-bold">✏️ Modifier le contact</h2>
+          <button onClick={onClose} className="text-white text-2xl leading-none">×</button>
         </div>
 
-        {/* FORM */}
-        <div className="p-5 space-y-4 max-h-[80vh] overflow-y-auto text-sm">
+        {/* Form */}
+        <div className="p-6 space-y-4">
 
           {/* Prénom */}
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">👤</span>
+          <div>
+            <label className="block mb-1 font-semibold">👤 Prénom</label>
             <input
+              type="text"
               name="prenom"
               value={formData.prenom}
               onChange={handleChange}
-              placeholder="Prénom"
-              className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
+              placeholder="Votre prénom"
+              className="w-full px-3 py-2 bg-blue-600 placeholder-white text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
             />
           </div>
 
           {/* Nom */}
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">👤</span>
+          <div>
+            <label className="block mb-1 font-semibold">👤 Nom</label>
             <input
+              type="text"
               name="nom"
               value={formData.nom}
               onChange={handleChange}
-              placeholder="Nom"
-              className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
+              placeholder="Votre nom"
+              className="w-full px-3 py-2 bg-blue-600 placeholder-white text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
             />
           </div>
 
           {/* Téléphone */}
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">📞</span>
+          <div>
+            <label className="block mb-1 font-semibold">📞 Téléphone</label>
             <input
+              type="text"
               name="telephone"
               value={formData.telephone}
               onChange={handleChange}
-              placeholder="Téléphone"
-              className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
+              placeholder="+230 5xxxxxxx"
+              className="w-full px-3 py-2 bg-blue-600 placeholder-white text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
             />
           </div>
 
           {/* Ville */}
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🏙️</span>
+          <div>
+            <label className="block mb-1 font-semibold">🏙️ Ville</label>
             <input
+              type="text"
               name="ville"
               value={formData.ville}
               onChange={handleChange}
-              placeholder="Ville"
-              className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
+              placeholder="Ex : Port Louis"
+              className="w-full px-3 py-2 bg-blue-600 placeholder-white text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
             />
           </div>
 
           {/* WhatsApp */}
-          <label className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <input
               type="checkbox"
               name="is_whatsapp"
               checked={formData.is_whatsapp}
               onChange={handleChange}
-              className="w-4 h-4 accent-green-600"
+              className="w-4 h-4 accent-white"
             />
-            💬 WhatsApp
-          </label>
+            <span>💬 WhatsApp</span>
+          </div>
 
-          {/* Prière du Salut */}
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🙏</span>
+          {/* Sexe */}
+          <div>
+            <label className="block mb-1 font-semibold">🎗️ Sexe</label>
+            <input
+              type="text"
+              name="sexe"
+              value={formData.sexe}
+              onChange={handleChange}
+              placeholder="Masculin / Féminin"
+              className="w-full px-3 py-2 bg-blue-600 placeholder-white text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
+            />
+          </div>
+
+          {/* Prière du salut */}
+          <div>
+            <label className="block mb-1 font-semibold">🙏 Prière du salut</label>
             <select
               name="priere_salut"
               value={formData.priere_salut ? "oui" : "non"}
               onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  priere_salut: e.target.value === "oui",
-                }))
+                setFormData((prev) => ({ ...prev, priere_salut: e.target.value === "oui" }))
               }
-              className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
+              className="w-full px-3 py-2 bg-blue-600 text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
             >
               <option value="non">Non</option>
               <option value="oui">Oui</option>
@@ -195,31 +206,32 @@ export default function EditEvangelisePopup({
           </div>
 
           {/* Type conversion */}
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔄</span>
+          <div>
+            <label className="block mb-1 font-semibold">☀️ Type de conversion</label>
             <input
+              type="text"
               name="type_conversion"
               value={formData.type_conversion}
               onChange={handleChange}
               placeholder="Type de conversion"
-              className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
+              className="w-full px-3 py-2 bg-blue-600 placeholder-white text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
             />
           </div>
 
           {/* Besoins */}
-          <div className="flex flex-col">
-            <p className="font-medium text-gray-700 mb-1">🎯 Besoins</p>
-            <div className="space-y-2">
-              {besoinsOptions.map((item) => (
-                <label key={item} className="flex items-center gap-2">
+          <div>
+            <label className="block mb-1 font-semibold">❓ Besoins</label>
+            <div className="grid grid-cols-2 gap-2">
+              {besoinsOptions.map((b) => (
+                <label key={b} className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    value={item}
-                    checked={formData.besoin.includes(item)}
+                    value={b}
+                    checked={formData.besoin.includes(b)}
                     onChange={handleBesoinChange}
-                    className="w-4 h-4 accent-green-600"
+                    className="w-4 h-4 accent-white"
                   />
-                  {item}
+                  {b}
                 </label>
               ))}
               <label className="flex items-center gap-2">
@@ -228,60 +240,59 @@ export default function EditEvangelisePopup({
                   value="Autre"
                   checked={showAutre}
                   onChange={handleBesoinChange}
-                  className="w-4 h-4 accent-green-600"
+                  className="w-4 h-4 accent-white"
                 />
                 Autre
               </label>
-
-              {showAutre && (
-                <input
-                  type="text"
-                  name="autreBesoin"
-                  value={formData.autreBesoin}
-                  onChange={handleChange}
-                  placeholder="Précisez..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
-                />
-              )}
             </div>
+            {showAutre && (
+              <input
+                type="text"
+                name="autreBesoin"
+                value={formData.autreBesoin}
+                onChange={handleChange}
+                placeholder="Précisez..."
+                className="w-full mt-2 px-3 py-2 bg-blue-600 placeholder-white text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
+              />
+            )}
           </div>
 
-          {/* Infos supp */}
-          <div className="relative">
-            <span className="absolute left-3 top-2 text-gray-400">📝</span>
+          {/* Infos supplémentaires */}
+          <div>
+            <label className="block mb-1 font-semibold">📝 Infos supplémentaires</label>
             <textarea
               name="infos_supplementaires"
               value={formData.infos_supplementaires}
               onChange={handleChange}
+              placeholder="Informations additionnelles"
               rows={3}
-              placeholder="Infos supplémentaires"
-              className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
+              className="w-full px-3 py-2 bg-blue-600 placeholder-white text-white rounded-lg focus:ring-2 focus:ring-white outline-none"
             />
           </div>
 
-          {message && (
-            <p className="text-center text-green-600 font-semibold">{message}</p>
-          )}
+          {message && <p className="text-green-400 text-center font-semibold">{message}</p>}
+
         </div>
 
-        {/* BUTTONS */}
-        <div className="p-4 flex justify-between gap-3 border-t">
+        {/* Footer */}
+        <div className="px-6 py-4 flex justify-end gap-3 border-t border-white/20">
           <button
             onClick={onClose}
-            className="flex-1 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
+            className="px-4 py-2 rounded-lg bg-white text-blue-600 font-medium hover:bg-gray-200"
           >
-            ❌ Annuler
+            Annuler
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className={`flex-1 py-2 rounded-md text-white font-semibold ${
-              loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
+            className={`px-5 py-2 rounded-lg font-semibold ${
+              loading ? "bg-gray-400 text-white" : "bg-green-500 text-white hover:bg-green-600"
             }`}
           >
-            {loading ? "Enregistrement..." : "💾 Enregistrer"}
+            {loading ? "Enregistrement..." : "Enregistrer"}
           </button>
         </div>
+
       </div>
     </div>
   );

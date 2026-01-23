@@ -7,7 +7,7 @@ import EditEvangelisePopup from "../components/EditEvangelisePopup";
 import DetailsEvangePopup from "../components/DetailsEvangePopup";
 
 export default function Evangelisation() {
-  const [contacts, setContacts] = useState(null);
+  const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [selectedTargetType, setSelectedTargetType] = useState("");
@@ -23,7 +23,7 @@ export default function Evangelisation() {
 
   // 🔹 Popup doublon
   const [showDoublonPopup, setShowDoublonPopup] = useState(false);
-  const [doublonDetected, setDoublonDetected] = useState(null);
+  const [doublonsDetected, setDoublonsDetected] = useState([]);
   const [pendingContacts, setPendingContacts] = useState([]);
 
   /* ================= FETCH ================= */
@@ -120,111 +120,100 @@ export default function Evangelisation() {
   };
 
   /* ================= ENVOI WHATSAPP ================= */
-  // State pour doublons multiples
-const [showDoublonPopup, setShowDoublonPopup] = useState(false);
-const [doublonsDetected, setDoublonsDetected] = useState([]);
-const [pendingContacts, setPendingContacts] = useState([]);
+  const checkDoublons = async () => {
+    if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
 
-        // Fonction de vérification des doublons avant envoi
-        const checkDoublons = async () => {
-          if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
-        
-          // Récupérer tous les numéros déjà dans les suivis
-          const { data: existingSuivis } = await supabase
-            .from("suivis_des_evangelises")
-            .select("telephone");
-        
-          // Filtrer les contacts sélectionnés qui sont déjà en suivi
-          const detected = selectedContacts.filter((c) =>
-            existingSuivis.some((s) => s.telephone === c.telephone)
-          );
-        
-          if (detected.length > 0) {
-            setDoublonsDetected(detected);
-            setPendingContacts(selectedContacts);
-            setShowDoublonPopup(true);
-          } else {
-            sendToWhatsapp(selectedContacts);
-          }
-        };
-        
-        // Fonction envoi WhatsApp (appelé par popup)
-        const sendToWhatsapp = async (contactsToSend = pendingContacts) => {
-  setShowDoublonPopup(false);
-  setPendingContacts([]);
-  setLoadingSend(true);
-
-  try {
-    const cible =
-      selectedTargetType === "cellule"
-        ? cellules.find((c) => c.id === selectedTarget)
-        : conseillers.find((c) => c.id === selectedTarget);
-
-    if (!cible || !cible.telephone) throw new Error("Numéro cible invalide");
-
-    // Insertion dans la base
-    const inserts = contactsToSend.map((m) => ({
-      prenom: m.prenom,
-      nom: m.nom,
-      telephone: m.telephone,
-      is_whatsapp: m.is_whatsapp,
-      ville: m.ville,
-      besoin: m.besoin,
-      infos_supplementaires: m.infos_supplementaires,
-      sexe: m.sexe,
-      type_conversion: m.type_conversion,
-      priere_salut: m.priere_salut,
-      status_suivis_evangelises: "Envoyé",
-      evangelise_id: m.id,
-      conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
-      cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
-      date_suivi: new Date().toISOString()
-    }));
-
-    const { error: insertError } = await supabase
+    const { data: existingSuivis } = await supabase
       .from("suivis_des_evangelises")
-      .insert(inserts);
-    if (insertError) throw insertError;
+      .select("telephone");
 
-    const ids = contactsToSend.map((c) => c.id);
-    const { error: updateError } = await supabase
-      .from("evangelises")
-      .update({ status_suivi: "Envoyé" })
-      .in("id", ids);
-    if (updateError) throw updateError;
-
-    setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
-    setCheckedContacts({});
-
-    // 🔹 Construction message WhatsApp (toujours DANS la fonction)
-    let message = `👋 Bonjour ${selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom},\n\n`;
-    message += contactsToSend.length > 1
-      ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
-      : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
-
-    contactsToSend.forEach((m, i) => {
-      message += "────────────────────\n";
-      if (contactsToSend.length > 1) message += `👥 Personne ${i + 1}\n`;
-      message += `👤 Nom : ${m.prenom} ${m.nom}\n📱 Téléphone : ${m.telephone || "—"}\n🏙️ Ville : ${m.ville || "—"}\n💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n🎗️ Sexe : ${m.sexe || "—"}\n🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n☀️ Type de conversion : ${m.type_conversion || "—"}\n❓ Besoin : ${formatBesoin(m.besoin)}\n📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
-    });
-
-    message += "Merci pour ton engagement ✨";
-
-    // Ouvre WhatsApp
-    window.open(
-      `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`,
-      "_blank"
+    const detected = selectedContacts.filter((c) =>
+      existingSuivis.some((s) => s.telephone === c.telephone)
     );
 
-    alert("✅ Contacts envoyés et enregistrés");
+    if (detected.length > 0) {
+      setDoublonsDetected(detected);
+      setPendingContacts(selectedContacts);
+      setShowDoublonPopup(true);
+    } else {
+      sendToWhatsapp(selectedContacts);
+    }
+  };
 
-  } catch (err) {
-    console.error(err);
-    alert("❌ Erreur lors de l’envoi");
-  } finally {
-    setLoadingSend(false);
-  }
-};
+  const sendToWhatsapp = async (contactsToSend = pendingContacts) => {
+    setShowDoublonPopup(false);
+    setPendingContacts([]);
+    setLoadingSend(true);
+
+    try {
+      const cible =
+        selectedTargetType === "cellule"
+          ? cellules.find((c) => c.id === selectedTarget)
+          : conseillers.find((c) => c.id === selectedTarget);
+
+      if (!cible || !cible.telephone) throw new Error("Numéro cible invalide");
+
+      // Insert dans suivis_des_evangelises
+      const inserts = contactsToSend.map((m) => ({
+        prenom: m.prenom,
+        nom: m.nom,
+        telephone: m.telephone,
+        is_whatsapp: m.is_whatsapp,
+        ville: m.ville,
+        besoin: m.besoin,
+        infos_supplementaires: m.infos_supplementaires,
+        sexe: m.sexe,
+        type_conversion: m.type_conversion,
+        priere_salut: m.priere_salut,
+        status_suivis_evangelises: "Envoyé",
+        evangelise_id: m.id,
+        conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
+        cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
+        date_suivi: new Date().toISOString()
+      }));
+
+      const { error: insertError } = await supabase
+        .from("suivis_des_evangelises")
+        .insert(inserts);
+      if (insertError) throw insertError;
+
+      const ids = contactsToSend.map((c) => c.id);
+      const { error: updateError } = await supabase
+        .from("evangelises")
+        .update({ status_suivi: "Envoyé" })
+        .in("id", ids);
+      if (updateError) throw updateError;
+
+      setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
+      setCheckedContacts({});
+
+      // Construire message WhatsApp
+      let message = `👋 Bonjour ${selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom},\n\n`;
+      message += contactsToSend.length > 1
+        ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
+        : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
+
+      contactsToSend.forEach((m, i) => {
+        message += "────────────────────\n";
+        if (contactsToSend.length > 1) message += `👥 Personne ${i + 1}\n`;
+        message += `👤 Nom : ${m.prenom} ${m.nom}\n📱 Téléphone : ${m.telephone || "—"}\n🏙️ Ville : ${m.ville || "—"}\n💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n🎗️ Sexe : ${m.sexe || "—"}\n🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n☀️ Type de conversion : ${m.type_conversion || "—"}\n❓ Besoin : ${formatBesoin(m.besoin)}\n📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
+      });
+
+      message += "Merci pour ton engagement ✨";
+
+      window.open(
+        `https://wa.me/${cible.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`,
+        "_blank"
+      );
+
+      alert("✅ Contacts envoyés et enregistrés");
+    } catch (err) {
+      console.error(err);
+      alert("❌ Erreur lors de l’envoi");
+    } finally {
+      setLoadingSend(false);
+    }
+  };
 
   /* ================= UI ================= */
   return (
@@ -277,15 +266,15 @@ const [pendingContacts, setPendingContacts] = useState([]);
         )}
       </div>
 
-         {/* Toggle Vue Carte / Vue Table */}
-            <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
-              <button
-                onClick={() => setView(view === "card" ? "table" : "card")}
-                className="text-sm font-semibold underline text-white"
-              >
-                {view === "card" ? "Vue Table" : "Vue Carte"}
-              </button>
-            </div>  
+      {/* Toggle Vue Carte / Vue Table */}
+      <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
+        <button
+          onClick={() => setView(view === "card" ? "table" : "card")}
+          className="text-sm font-semibold underline text-white"
+        >
+          {view === "card" ? "Vue Table" : "Vue Carte"}
+        </button>
+      </div>
 
       {/* ================= AFFICHAGE CONTACTS ================= */}
       <div className="w-full max-w-6xl flex flex-col items-center">
@@ -320,16 +309,7 @@ const [pendingContacts, setPendingContacts] = useState([]);
                     <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
                     <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
                     <button onClick={() => { setEditMember(member); setPopupMember(null); }} className="text-blue-600 text-sm mt-4 w-full text-center">✏️ Modifier le contact</button>
-                    <button
-                      onClick={() => {
-                        if (window.confirm("⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?")) {
-                          handleSupprimerMembre(member.id); 
-                        }
-                      }}
-                      className="text-red-600 text-sm mt-2 w-full"
-                    >
-                      🗑️ Supprimer le contact
-                    </button>
+                    <button onClick={() => { if(window.confirm("⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?")) handleSupprimerMembre(member.id); }} className="text-red-600 text-sm mt-2 w-full">🗑️ Supprimer le contact</button>
                   </div>
                 )}
               </div>
@@ -370,9 +350,7 @@ const [pendingContacts, setPendingContacts] = useState([]);
           conseillers={conseillers}
           onClose={() => setEditMember(null)}
           onUpdateMember={(updatedMember) => {
-            setContacts((prev) =>
-              prev.map((c) => (c.id === updatedMember.id ? updatedMember : c))
-            );
+            setContacts((prev) => prev.map((c) => (c.id === updatedMember.id ? updatedMember : c)));
             setEditMember(null);
           }}
         />
@@ -388,37 +366,22 @@ const [pendingContacts, setPendingContacts] = useState([]);
 
       {/* 🔹 Popup Doublon - Moderne */}
       {showDoublonPopup && doublonsDetected.length > 0 && (
-  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity">
-    <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl p-6 w-96 max-w-[90%] text-center animate-fadeIn">
-      <h3 className="text-xl font-bold mb-3 text-gray-800">⚠️ Contact déjà en suivi !</h3>
-      <p className="mb-4 text-gray-700">Ces contacts sont déjà enregistrés dans les suivis. 
-        Vous pouvez les garder sur la page ou les supprimer. 
-        (Ils restent dans les suivis jusqu’à la prochaine étape) :</p>
-      <ul className="text-left max-h-40 overflow-y-auto mb-6 px-4">
-        {doublonsDetected.map((d, i) => (
-          <li key={i} className="border-b py-1 text-gray-800">
-            {d.prenom} {d.nom} ({d.telephone})
-          </li>
-        ))}
-      </ul>
-      <div className="flex justify-center gap-3">
-        <button
-          onClick={() => sendToWhatsapp()}
-          className="flex-1 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition"
-        >
-          Envoyer quand même
-        </button>
-        <button
-          onClick={() => setShowDoublonPopup(false)}
-          className="flex-1 bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded-lg hover:bg-gray-400 transition"
-        >
-          Annuler
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-lg w-full space-y-4 text-center">
+            <h2 className="text-xl font-bold">⚠️ Doublons détectés</h2>
+            <p className="text-sm">Certaines personnes ont déjà été envoyées :</p>
+            <ul className="text-left list-disc list-inside max-h-40 overflow-y-auto">
+              {doublonsDetected.map((d) => (
+                <li key={d.id}>{d.prenom} {d.nom} - {d.telephone}</li>
+              ))}
+            </ul>
+            <div className="flex justify-center gap-4 mt-4">
+              <button onClick={() => sendToWhatsapp()} className="bg-green-500 text-white px-4 py-2 rounded font-semibold">Envoyer quand même</button>
+              <button onClick={() => setShowDoublonPopup(false)} className="bg-gray-300 px-4 py-2 rounded font-semibold">Annuler</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

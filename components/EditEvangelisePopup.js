@@ -105,7 +105,7 @@ export default function EditEvangelisePopup({
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4 overflow-y-auto">
-      <div className="bg-white w-full max-w-md rounded-lg shadow-2xl border-2 border-green-400 relative">
+      <div className="bg-white w-full max-w-md rounded-lg shadow-2xl relative">
 
         {/* HEADER */}
         <div className="bg-green-600 text-white px-5 py-4 text-center font-bold text-lg rounded-t-lg">
@@ -116,50 +116,50 @@ export default function EditEvangelisePopup({
         <div className="p-5 space-y-4 max-h-[80vh] overflow-y-auto text-sm">
 
           {/* Prénom */}
-          <div className="flex flex-col">
-            <label className="mb-1 font-medium text-gray-700">👤 Prénom</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">👤</span>
             <input
               name="prenom"
               value={formData.prenom}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
               placeholder="Prénom"
+              className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
             />
           </div>
 
           {/* Nom */}
-          <div className="flex flex-col">
-            <label className="mb-1 font-medium text-gray-700">👤 Nom</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">👤</span>
             <input
               name="nom"
               value={formData.nom}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
               placeholder="Nom"
+              className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
             />
           </div>
 
           {/* Téléphone */}
-          <div className="flex flex-col">
-            <label className="mb-1 font-medium text-gray-700">📞 Téléphone</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">📞</span>
             <input
               name="telephone"
               value={formData.telephone}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
               placeholder="Téléphone"
+              className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
             />
           </div>
 
           {/* Ville */}
-          <div className="flex flex-col">
-            <label className="mb-1 font-medium text-gray-700">🏙️ Ville</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🏙️</span>
             <input
               name="ville"
               value={formData.ville}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
               placeholder="Ville"
+              className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
             />
           </div>
 
@@ -176,8 +176,8 @@ export default function EditEvangelisePopup({
           </label>
 
           {/* Prière du Salut */}
-          <div className="flex flex-col">
-            <label className="mb-1 font-medium text-gray-700">🙏 Prière du salut</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🙏</span>
             <select
               name="priere_salut"
               value={formData.priere_salut ? "oui" : "non"}
@@ -187,7 +187,7 @@ export default function EditEvangelisePopup({
                   priere_salut: e.target.value === "oui",
                 }))
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
+              className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
             >
               <option value="non">Non</option>
               <option value="oui">Oui</option>
@@ -195,14 +195,14 @@ export default function EditEvangelisePopup({
           </div>
 
           {/* Type conversion */}
-          <div className="flex flex-col">
-            <label className="mb-1 font-medium text-gray-700">🔄 Type de conversion</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔄</span>
             <input
               name="type_conversion"
               value={formData.type_conversion}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
               placeholder="Type de conversion"
+              className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
             />
           </div>
 
@@ -247,15 +247,15 @@ export default function EditEvangelisePopup({
           </div>
 
           {/* Infos supp */}
-          <div className="flex flex-col">
-            <label className="mb-1 font-medium text-gray-700">📝 Infos supplémentaires</label>
+          <div className="relative">
+            <span className="absolute left-3 top-2 text-gray-400">📝</span>
             <textarea
               name="infos_supplementaires"
               value={formData.infos_supplementaires}
               onChange={handleChange}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
               placeholder="Infos supplémentaires"
+              className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 outline-none"
             />
           </div>
 
@@ -265,10 +265,10 @@ export default function EditEvangelisePopup({
         </div>
 
         {/* BUTTONS */}
-        <div className="p-4 flex justify-between border-t gap-3">
+        <div className="p-4 flex justify-between gap-3 border-t">
           <button
             onClick={onClose}
-            className="flex-1 py-2 rounded-md border border-gray-300"
+            className="flex-1 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
           >
             ❌ Annuler
           </button>

@@ -104,133 +104,150 @@ export default function EditEvangelisePopup({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-      <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden relative">
+  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
+    <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden grid md:grid-cols-2">
 
-        {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-4 text-white">
-          <h2 className="text-lg font-bold">
-            ✏️ Modifier {member.prenom} {member.nom}
-          </h2>
-
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-4 text-white/80 hover:text-white text-2xl font-bold"
-          >
-            ×
-          </button>
+      {/* LEFT DESIGN PANEL */}
+      <div className="hidden md:flex flex-col justify-between p-10 bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-600 text-white">
+        <div>
+          <h2 className="text-3xl font-bold mb-4">SoulTrack</h2>
+          <p className="text-white/90">
+            Mettre à jour les informations spirituelles et personnelles
+            pour un meilleur suivi.
+          </p>
         </div>
 
-        {/* Body */}
-        <div className="p-6 max-h-[75vh] overflow-y-auto space-y-5 text-sm">
+        <div className="text-sm text-white/70">
+          ✝️ Suivi — Accompagnement — Croissance
+        </div>
+      </div>
 
-          {/* Infos principales */}
+      {/* FORM PANEL */}
+      <div className="p-8 md:p-10 relative">
+
+        {/* Close */}
+        <button
+          onClick={onClose}
+          className="absolute top-5 right-6 text-gray-400 hover:text-gray-700 text-2xl"
+        >
+          ×
+        </button>
+
+        <h3 className="text-2xl font-bold text-gray-800 mb-1">
+          Modifier le contact
+        </h3>
+        <p className="text-sm text-gray-500 mb-8">
+          {member.prenom} {member.nom}
+        </p>
+
+        <div className="space-y-5 text-sm">
+
+          {/* Names */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="font-semibold text-gray-700">Prénom</label>
-              <input
-                name="prenom"
-                value={formData.prenom}
-                onChange={handleChange}
-                className="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="font-semibold text-gray-700">Nom</label>
-              <input
-                name="nom"
-                value={formData.nom}
-                onChange={handleChange}
-                className="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="font-semibold text-gray-700">Ville</label>
-              <input
-                name="ville"
-                value={formData.ville}
-                onChange={handleChange}
-                className="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="font-semibold text-gray-700">Téléphone</label>
-              <input
-                name="telephone"
-                value={formData.telephone}
-                onChange={handleChange}
-                className="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
+            <input
+              name="prenom"
+              value={formData.prenom}
+              onChange={handleChange}
+              placeholder="Prénom"
+              className="w-full px-5 py-3 rounded-full border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none"
+            />
+            <input
+              name="nom"
+              value={formData.nom}
+              onChange={handleChange}
+              placeholder="Nom"
+              className="w-full px-5 py-3 rounded-full border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none"
+            />
           </div>
 
-          {/* Statuts */}
-          <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl">
-            <label className="flex items-center gap-3 cursor-pointer">
+          {/* City / Phone */}
+          <div className="grid grid-cols-2 gap-4">
+            <input
+              name="ville"
+              value={formData.ville}
+              onChange={handleChange}
+              placeholder="Ville"
+              className="w-full px-5 py-3 rounded-full border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none"
+            />
+            <input
+              name="telephone"
+              value={formData.telephone}
+              onChange={handleChange}
+              placeholder="Téléphone"
+              className="w-full px-5 py-3 rounded-full border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none"
+            />
+          </div>
+
+          {/* Switches */}
+          <div className="flex gap-6 mt-2">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 name="is_whatsapp"
                 checked={formData.is_whatsapp}
                 onChange={handleChange}
-                className="w-5 h-5 accent-green-600"
+                className="w-5 h-5 accent-purple-600"
               />
               WhatsApp
             </label>
 
-            <label className="flex items-center gap-3 cursor-pointer">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 name="priere_salut"
                 checked={formData.priere_salut}
                 onChange={handleChange}
-                className="w-5 h-5 accent-blue-600"
+                className="w-5 h-5 accent-purple-600"
               />
               Prière du salut
             </label>
           </div>
 
-          {/* Type conversion */}
-          <div>
-            <label className="font-semibold text-gray-700">Type de conversion</label>
-            <input
-              name="type_conversion"
-              value={formData.type_conversion}
-              onChange={handleChange}
-              className="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
+          {/* Conversion */}
+          <input
+            name="type_conversion"
+            value={formData.type_conversion}
+            onChange={handleChange}
+            placeholder="Type de conversion"
+            className="w-full px-5 py-3 rounded-full border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none"
+          />
 
-          {/* Besoins */}
+          {/* Needs */}
           <div>
-            <p className="font-semibold text-gray-700 mb-2">Besoins</p>
+            <p className="text-gray-600 font-medium mb-2">Besoins</p>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-wrap gap-2">
               {besoinsOptions.map((item) => (
                 <label
                   key={item}
-                  className="flex items-center gap-3 bg-gray-50 hover:bg-blue-50 px-3 py-2 rounded-lg cursor-pointer"
+                  className={`px-4 py-2 rounded-full border cursor-pointer transition
+                    ${
+                      formData.besoin.includes(item)
+                        ? "bg-purple-600 text-white border-purple-600"
+                        : "bg-gray-100 hover:bg-gray-200"
+                    }`}
                 >
                   <input
                     type="checkbox"
                     value={item}
                     checked={formData.besoin.includes(item)}
                     onChange={handleBesoinChange}
-                    className="w-5 h-5 accent-blue-600"
+                    className="hidden"
                   />
                   {item}
                 </label>
               ))}
 
-              <label className="flex items-center gap-3 bg-gray-50 hover:bg-blue-50 px-3 py-2 rounded-lg cursor-pointer">
+              <label
+                className={`px-4 py-2 rounded-full border cursor-pointer transition
+                  ${showAutre ? "bg-purple-600 text-white border-purple-600" : "bg-gray-100 hover:bg-gray-200"}`}
+              >
                 <input
                   type="checkbox"
                   value="Autre"
                   checked={showAutre}
                   onChange={handleBesoinChange}
-                  className="w-5 h-5 accent-blue-600"
+                  className="hidden"
                 />
                 Autre
               </label>
@@ -243,50 +260,50 @@ export default function EditEvangelisePopup({
                 value={formData.autreBesoin}
                 onChange={handleChange}
                 placeholder="Précisez le besoin..."
-                className="w-full mt-3 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full mt-3 px-5 py-3 rounded-full border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none"
               />
             )}
           </div>
 
-          {/* Infos supp */}
-          <div>
-            <label className="font-semibold text-gray-700">Infos supplémentaires</label>
-            <textarea
-              name="infos_supplementaires"
-              value={formData.infos_supplementaires}
-              onChange={handleChange}
-              rows={3}
-              className="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
+          {/* Notes */}
+          <textarea
+            name="infos_supplementaires"
+            value={formData.infos_supplementaires}
+            onChange={handleChange}
+            placeholder="Infos supplémentaires..."
+            rows={3}
+            className="w-full px-5 py-3 rounded-2xl border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+          />
 
           {message && (
             <p className="text-green-600 text-center font-semibold">{message}</p>
           )}
-        </div>
 
-        {/* Footer */}
-        <div className="bg-gray-100 px-6 py-4 flex justify-between">
-          <button
-            onClick={onClose}
-            className="px-5 py-2 rounded-lg bg-gray-300 hover:bg-gray-400 font-semibold"
-          >
-            Annuler
-          </button>
+          {/* Buttons */}
+          <div className="flex justify-end gap-4 pt-4">
+            <button
+              onClick={onClose}
+              className="px-6 py-3 rounded-full bg-gray-200 hover:bg-gray-300 font-semibold"
+            >
+              Annuler
+            </button>
 
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className={`px-6 py-2 rounded-lg text-white font-bold transition ${
-              loading
-                ? "bg-gray-400"
-                : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-90"
-            }`}
-          >
-            {loading ? "Enregistrement..." : "💾 Enregistrer"}
-          </button>
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className={`px-8 py-3 rounded-full text-white font-bold shadow-lg transition
+                ${
+                  loading
+                    ? "bg-gray-400"
+                    : "bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-90"
+                }`}
+            >
+              {loading ? "Enregistrement..." : "Enregistrer"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }

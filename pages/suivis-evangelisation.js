@@ -24,6 +24,8 @@ export default function SuivisEvangelisation() {
   const [user, setUser] = useState(null);
   const [phoneMenuId, setPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
+  const [editMember, setEditMember] = useState(null);
+
 
     // ================= INIT =================
 

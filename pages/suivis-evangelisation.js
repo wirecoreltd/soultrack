@@ -23,8 +23,7 @@ export default function SuivisEvangelisation() {
   const [showRefus, setShowRefus] = useState(false);
   const [user, setUser] = useState(null);
   const [phoneMenuId, setPhoneMenuId] = useState(null);
-  const phoneMenuRef = useRef(null);
-  const [editMember, setEditMember] = useState(null);
+  const phoneMenuRef = useRef(null); 
 
 
     // ================= INIT =================
@@ -508,7 +507,7 @@ export default function SuivisEvangelisation() {
                 {!showRefus && (
                   <div className="mt-4 flex justify-center">
                     <button
-                      onClick={() => setEditingContact(m.evangelises)}
+                      onClick={() => setEditingContact(m)
                       className="text-blue-600 text-sm mt-4"
                     >
                       ✏️ Modifier le contact

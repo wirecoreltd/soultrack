@@ -508,13 +508,14 @@ export default function SuivisEvangelisation() {
                 {!showRefus && (
                   <div className="mt-4 flex justify-center">
                     <button
-                      onClick={() => setEditMember(m)}
+                      onClick={() => setEditingContact(m.evangelises)}
                       className="text-blue-600 text-sm mt-4"
                     >
                       ✏️ Modifier le contact
                     </button>
                   </div>
                 )}
+
               </div>
             )}
           </div>

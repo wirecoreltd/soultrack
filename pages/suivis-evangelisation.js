@@ -595,7 +595,6 @@ export default function SuivisEvangelisation() {
         </div>
       )}
 
-
     {view === "table" && detailsTable && (
       <DetailEvangeliseSuivisPopup
         member={detailsTable}

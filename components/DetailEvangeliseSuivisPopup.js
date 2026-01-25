@@ -9,9 +9,10 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit, o
   const [comment, setComment] = useState(member.commentaire_evangelises || "");
   const [status, setStatus] = useState(member.status_suivis_evangelises || "");
   const [saving, setSaving] = useState(false);
-
+  const isRefus = member.status_suivis_evangelises === "Refus";
   const phoneMenuRef = useRef(null);
   const popupRef = useRef(null);
+  
 
   const formatBesoin = (b) => {
     if (!b) return "—";
@@ -206,37 +207,45 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit, o
             Commentaire Suivis
           </label>
           <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            className="w-full border rounded-lg p-2"
-            rows={2}
-          />
+           value={comment}
+           onChange={(e) => setComment(e.target.value)}
+           disabled={isRefus}
+           className={`w-full border rounded-lg p-2 ${
+             isRefus ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
+           }`}
+           rows={2}
+         />
 
           <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">
             Statut du suivis
           </label>
           <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="w-full border rounded-lg p-2 mb-2"
-          >
-            <option value="">-- Sélectionner un statut --</option>
-            <option value="En cours">En cours</option>
-            <option value="Intégré">Intégré</option>
-            <option value="Refus">Refus</option>
-          </select>
+           value={status}
+           onChange={(e) => setStatus(e.target.value)}
+           disabled={isRefus}
+           className={`w-full border rounded-lg p-2 mb-2 ${
+             isRefus ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
+           }`}
+         >
+           <option value="">-- Sélectionner un statut --</option>
+           <option value="En cours">En cours</option>
+           <option value="Intégré">Intégré</option>
+           <option value="Refus">Refus</option>
+           </select>
 
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className={`mt-2 w-full font-bold py-2 rounded-lg shadow-md transition-all ${
-              saving
-                ? "bg-blue-300 cursor-not-allowed"
-                : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white"
-            }`}
-          >
-            {saving ? "Enregistrement..." : "Sauvegarder"}
-          </button>
+          {!isRefus && (
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className={`mt-2 w-full font-bold py-2 rounded-lg shadow-md transition-all ${
+                saving
+                  ? "bg-blue-300 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white"
+              }`}
+            >
+              {saving ? "Enregistrement..." : "Sauvegarder"}
+            </button>
+          )}
         </div>
 
         {/* ================= ALIGN LEFT ================= */}
@@ -249,14 +258,16 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit, o
         </div>
 
         {/* ================= CENTRÉ ================= */}
-        <div className="mt-6 flex justify-center">
-          <button
-            onClick={() => onEdit(member)}
-            className="text-blue-600 text-sm font-semibold hover:underline"
-          >
-            ✏️ Modifier le contact
-          </button>
-        </div>
+        {!isRefus && (
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={() => onEdit(member)}
+              className="text-blue-600 text-sm font-semibold hover:underline"
+            >
+              ✏️ Modifier le contact
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

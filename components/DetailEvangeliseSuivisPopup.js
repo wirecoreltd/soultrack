@@ -5,8 +5,8 @@ import React, { useRef, useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 console.log("supabase:", supabase);
 
-
-export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit, onSave })
+export default function DetailEvangeliseSuivisPopup({member, onClose, onEdit, onUpdate,})
+ 
  {
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
   const [comment, setComment] = useState(member.commentaire_evangelises || "");
@@ -108,6 +108,7 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit, o
         console.error("Erreur lors de la sauvegarde :", err);
         alert("Erreur lors de la sauvegarde. Vérifie la console.");
         setSaving(false);
+        onUpdate?.(); // ✅ déclenche le refresh parent
       }
     };
 

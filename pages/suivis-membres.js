@@ -225,10 +225,17 @@ export default function SuivisMembres() {
         <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
         <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
 
-        <div className="mt-4 flex justify-center">
-          <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-4">
-            ✏️ Modifier le contact</button>
-        </div>
+        {!showRefus && (
+  <div className="mt-4 flex justify-center">
+    <button
+      onClick={() => setEditMember(m)}
+      className="text-blue-600 text-sm mt-4"
+    >
+      ✏️ Modifier le contact
+    </button>
+  </div>
+)}
+
       </div>
     );
   };

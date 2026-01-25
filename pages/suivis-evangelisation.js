@@ -176,7 +176,6 @@ export default function SuivisEvangelisation() {
   infos_supplementaires: suivi.infos_supplementaires,
   cellule_id: suivi.cellule_id,
   conseiller_id: suivi.conseiller_id,
-commentaire_evangelises : Commentaire_Evangelisation,
   statut_initial: "intégré",
   suivi_statut: "Intégré",
   suivi_commentaire_suivis: suivi.commentaire_evangelises,

@@ -77,43 +77,37 @@ export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit, o
     }
   };
 
-  // ================= SAVE =================
-  const handleSave = () => {
-  onSave(member.id, {
-    ...member,
-    commentaire_evangelises: comment,
-    status_suivis_evangelises: status,
-  });
-};
-
-    if (!member.id) return;
-
-    setSaving(true);
-
-    try {
-      const { error } = await supabase
-        .from("suivis_des_evangelises")
-        .update({
-          commentaire_evangelises: comment,
-          status_suivis_evangelises: status,
-        })
-        .eq("id", member.id);
-
-      if (error) throw error;
-
-      // ✅ si intégré → membres + retirer de la liste
-      if (status === "Intégré") {
-        await upsertMembre(member);
+      // ================= SAVE =================
+      const handleSave = async () => {
+      if (!member.id) return;
+    
+      setSaving(true);
+    
+      try {
+        const { error } = await supabase
+          .from("suivis_des_evangelises")
+          .update({
+            commentaire_evangelises: comment,
+            status_suivis_evangelises: status,
+          })
+          .eq("id", member.id);
+    
+        if (error) throw error;
+    
+        // ✅ si intégré → membres_complets
+        if (status === "Intégré") {
+          await upsertMembre(member);
+        }
+    
+        setSaving(false);
+        onClose();
+      } catch (err) {
+        console.error("Erreur lors de la sauvegarde :", err);
+        alert("Erreur lors de la sauvegarde. Vérifie la console.");
+        setSaving(false);
       }
+    };
 
-      setSaving(false);
-      onClose();
-    } catch (err) {
-      console.error("Erreur lors de la sauvegarde :", err);
-      alert("Erreur lors de la sauvegarde. Vérifie la console.");
-      setSaving(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

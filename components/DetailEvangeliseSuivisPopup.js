@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
+import { supabase } from "../lib/supabaseClient";
 
 export default function DetailEvangeliseSuivisPopup({ member, onClose, onEdit, onSave })
  {

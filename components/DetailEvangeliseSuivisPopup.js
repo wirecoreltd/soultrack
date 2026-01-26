@@ -210,7 +210,7 @@ useEffect(() => {
           <p>👤 Conseiller : {member.conseiller_id || ""}</p>       
           <p>🏙️ Ville : {member.ville || ""}</p>
         </div>
-
+      </div>
         {/* ================= COMMENTAIRE & STATUT ================= */}
         <div className="flex flex-col w-full mt-4">
           <label className="font-semibold text-blue-700 mb-1 text-center">

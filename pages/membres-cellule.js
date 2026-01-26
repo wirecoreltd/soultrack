@@ -64,8 +64,9 @@ export default function MembresCellule() {
           .from("membres_complets")
           .select("*")
           .in("cellule_id", celluleIds)
-          .eq("statut_suivis", 3)
+          .eq("etat_contact", "Existant")
           .order("created_at", { ascending: false });
+
 
         if (profile.role === "Conseiller") {
           membresQuery = membresQuery.eq("conseiller_id", profile.id);

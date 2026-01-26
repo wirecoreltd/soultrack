@@ -221,12 +221,11 @@ export default function MembresCellule() {
                   <div className="mt-3 p-3 rounded-lg text-sm space-y-1 text-left">
                     <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🎗️ Sexe : {m.sexe || "—"}</p>
-                    <p>💧 Bapteme d'Eau : {m.bapteme_eau ? "Oui" : "Non"}</p>
-                    <p>🔥 Bapteme de Feu : {m.bapteme_esprit ? "Oui" : "Non"}</p>
+                    <p>💧 Baptême d’Eau : {m.bapteme_eau === true ? "Oui" : m.bapteme_eau === false ? "Non" : "—"}</p>
+                    <p>🔥 Baptême de Feu : {m.bapteme_esprit === true ? "Oui" : m.bapteme_esprit === false ? "Non" : "—"}</p>
                     <p>❓ Besoin : {m.besoin || "—"}</p>
                     <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                    <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                    <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>
+                    <p>🧩 Comment est-il venu : {m.venu || "—"}</p>                    
                     <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
 
                     <button

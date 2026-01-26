@@ -415,6 +415,7 @@ export default function ListMembers() {
                 <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
                 <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
                 <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
+                <p>📑 Commentaire Suivis Evangelisation : {m.Commentaire_Suivi_Evangelisation || "—"}</p>   
                 <div className="flex flex-col items-center">
                  {/* Modifier */}
                  <button

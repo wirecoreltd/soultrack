@@ -286,13 +286,13 @@ export default function SuivisEvangelisation() {
           setUpdating((p) => ({ ...p, [m.id]: false }));
         }
       };
-      const updateSuiviLocal = (id, updates) => {
-        setAllSuivis(prev =>
-          prev.map(s =>
-            s.id === id ? { ...s, ...updates } : s
-          )
-        );
-      };
+        const updateSuiviLocal = (id, updates) => {
+              setAllSuivis(prev =>
+                prev.map(s =>
+                  s.id === id ? { ...s, ...updates } : s
+                )
+              );
+            };
 
   // ================= RENDER =================
   if (loading) return <p className="text-center mt-10">Chargement...</p>;

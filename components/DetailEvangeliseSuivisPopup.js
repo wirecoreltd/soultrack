@@ -108,7 +108,9 @@ export default function DetailEvangeliseSuivisPopup({member, onClose, onEdit, on
         console.error("Erreur lors de la sauvegarde :", err);
         alert("Erreur lors de la sauvegarde. Vérifie la console.");
         setSaving(false);
-        onUpdate?.(); // ✅ déclenche le refresh parent
+        console.log("✅ handleSave OK – appel onUpdate");
+        onUpdate && onUpdate();
+
       }
     };
 

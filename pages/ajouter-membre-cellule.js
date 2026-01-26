@@ -75,22 +75,25 @@ export default function AjouterMembreCellule() {
 
     try {
       const newMemberData = {
-        nom: formData.nom,
-        prenom: formData.prenom,
-        sexe: formData.sexe,
-        telephone: formData.telephone,
-        ville: formData.ville,
-        venu: formData.venu,
-        cellule_id: formData.cellule_id,
-        statut_suivis: 3,
-        is_whatsapp: formData.is_whatsapp,
-        priere_salut: formData.priere_salut,
-        type_conversion: formData.type_conversion || null,
-        infos_supplementaires: formData.infos_supplementaires,
-        besoin: formData.besoin.join(", "),
-        autrebesoin: formData.autreBesoin || null,
-        etat_contact: "Existant",
-      };
+          nom: formData.nom,
+          prenom: formData.prenom,
+          telephone: formData.telephone,
+          ville: formData.ville,
+          venu: formData.venu,
+          cellule_id: formData.cellule_id,
+          statut_suivis: 3, // Intégrer
+          etat_contact: "Existant", 
+          is_whatsapp: formData.is_whatsapp,
+          infos_supplementaires: formData.infos_supplementaires,
+          besoin: formData.besoin.join(", "),
+          autrebesoin: formData.autreBesoin || null,
+          sexe: formData.sexe || null,
+          bapteme_eau: false,
+          bapteme_esprit: false,
+          statut_initial: formData.statut_initial || null,
+          priere_salut: formData.priere_salut || null,
+          type_conversion: formData.type_conversion || null,
+        };
 
       const { data: newMember, error } = await supabase
         .from("membres_complets")

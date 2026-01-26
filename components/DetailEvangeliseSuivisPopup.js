@@ -206,9 +206,9 @@ useEffect(() => {
         {/* ================= CENTRÉ ================= */}
         <div className="text-center mt-2 space-y-1">
           <div className="text-center mt-2 space-y-1">
-          <p>🏠 Cellule : {member.cellule_id || "—"}</p>
-          <p>👤 Conseiller : {member.conseiller_id || "—"}</p>       
-          <p className="text-center">🏙️ Ville : {member.ville || "—"}</p>
+          <p>🏠 Cellule : {member.cellule_id || ""}</p>
+          <p>👤 Conseiller : {member.conseiller_id || ""}</p>       
+          <p>🏙️ Ville : {member.ville || ""}</p>
         </div>
 
         {/* ================= COMMENTAIRE & STATUT ================= */}

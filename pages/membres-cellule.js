@@ -286,7 +286,6 @@ export default function MembresCellule() {
   </div>
 )}
 
-
       {/* POPUPS */}
       {detailsMember && (
         <MemberDetailsPopup

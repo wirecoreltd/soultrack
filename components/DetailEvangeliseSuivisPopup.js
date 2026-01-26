@@ -16,6 +16,7 @@ export default function DetailEvangeliseSuivisPopup({member, onClose, onEdit, on
   const phoneMenuRef = useRef(null);
   const popupRef = useRef(null);
   
+  console.log("DETAIL POPUP MEMBER:", member);
 
   const formatBesoin = (b) => {
     if (!b) return "—";

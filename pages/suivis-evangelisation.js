@@ -538,6 +538,7 @@ export default function SuivisEvangelisation() {
               <div className="flex-[1]">Téléphone</div>
               <div className="flex-[1]">Attribué à</div>
               <div className="flex-[1]">Ville</div>
+              < div className="flex-[1]">Statut</div>
               <div className="flex-[1] text-center">Actions</div>
             </div>
       
@@ -564,9 +565,8 @@ export default function SuivisEvangelisation() {
                     {m.prenom} {m.nom}
                   </div>      
                  
-                  {/* Téléphone */}     
-                   {/* Ville */}
-                  <div className="flex-[1] text-sm text-white">
+                  {/* Téléphone */}  
+                   <div className="flex-[1] text-sm text-white">
                     <span className="sm:hidden text-xs text-gray-300 block">Téléphone</span>
                     {m.telephone || "—"}
                   </div>
@@ -581,6 +581,12 @@ export default function SuivisEvangelisation() {
                   <div className="flex-[1] text-sm text-white">
                     <span className="sm:hidden text-xs text-gray-300 block">Ville</span>
                     {m.ville || "—"}
+                  </div>
+
+                  {/* Statut */}
+                  <div className="flex-[1] text-sm text-white">
+                    <span className="sm:hidden text-xs text-gray-300 block">Statut</span>
+                    {m.status_suivis_evangelises || "—"}
                   </div>
       
                   {/* Actions */}

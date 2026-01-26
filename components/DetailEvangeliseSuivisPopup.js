@@ -205,11 +205,21 @@ useEffect(() => {
 
         {/* ================= CENTRÉ ================= */}
         <p className="text-center mt-2">
-        <p>🏠 Cellule : {member.cellule_full}</p>
-        </p>       
-       <p className="text-center">
-         👤 Conseiller : {member.conseiller_nom || member.responsable_nom || "—"}
-       </p>
+        <p className="text-center mt-2">
+        🏠 Cellule :{" "}
+        {member.cellule_full ||
+         member.cellule_nom ||
+         member.cellule ||
+         "—"}
+      </p>      
+      <p className="text-center">
+        👤 Conseiller :{" "}
+        {member.responsable ||
+         member.conseiller_nom ||
+         member.conseiller ||
+         member.responsable_nom ||
+         "—"}      </p>
+
         <p className="text-center">🏙️ Ville : {member.ville || "—"}</p>
 
         {/* ================= COMMENTAIRE & STATUT ================= */}

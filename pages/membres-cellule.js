@@ -52,6 +52,15 @@ export default function MembresCellule() {
         const { data: cellulesData } = await celluleQuery;
         setCellules(cellulesData || []);
 
+        await supabase
+          .from("membres_complets")
+          .update({
+            statut_suivis: 3,
+            etat_contact: "Existant"
+          })
+          .eq("id", membre.id);
+
+
         const celluleIds = (cellulesData || []).map(c => c.id);
 
         if (celluleIds.length === 0) {

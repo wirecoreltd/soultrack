@@ -12,6 +12,16 @@ export default function DetailsEvangePopup({ member, onClose, onEdit }) {
   const phoneMenuRef = useRef(null);
   const popupRef = useRef(null);
 
+   const formatDateFr = (dateString) => {
+  if (!dateString) return "—";
+  const d = new Date(dateString);
+
+  const day = d.getDate().toString().padStart(2, "0");
+  const months = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+
+  return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+};
+
   const formatBesoin = (b) => {
     if (!b) return "—";
     if (Array.isArray(b)) return b.join(", ");
@@ -164,8 +174,9 @@ export default function DetailsEvangePopup({ member, onClose, onEdit }) {
               </a>
             </div>
           )}
-        </div>    
+        </div>            
           <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
+          <p className="text-[11px] text-gray-400 mb-1">Crée le {formatDateFr(member.created_at)}</p>
           <p>🏙️ Ville : {member.ville || "—"}</p>    
           <p>🎗️ Sexe : {member.sexe || "—"}</p>
           <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>

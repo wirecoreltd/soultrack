@@ -1,13 +1,14 @@
-//components/DetailEvangeliseSuivisPopup.js//
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
-console.log("supabase:", supabase);
 
-export default function DetailEvangeliseSuivisPopup({member, onClose, onEdit, onUpdate,})
- 
- {
+export default function DetailEvangeliseSuivisPopup({
+  member,
+  onClose,
+  onEdit,
+  onUpdate,
+}) {
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
   const [comment, setComment] = useState(member.commentaire_evangelises || "");
   const [status, setStatus] = useState(member.status_suivis_evangelises || "");
@@ -15,22 +16,14 @@ export default function DetailEvangeliseSuivisPopup({member, onClose, onEdit, on
   const isRefus = member.status_suivis_evangelises === "Refus";
   const phoneMenuRef = useRef(null);
   const popupRef = useRef(null);
-  
+
   console.log("DETAIL POPUP MEMBER:", member);
 
-  const formatBesoin = (b) => {
-    if (!b) return "—";
-    try {
-      const arr = JSON.parse(b);
-      return Array.isArray(arr) ? arr.join(", ") : b;
-    } catch {
-      return b;
-    }
-  };
-useEffect(() => {
-  setComment(member.commentaire_evangelises || "");
-  setStatus(member.status_suivis_evangelises || "");
-}, [member]);
+  // Mettre à jour localement quand le member change
+  useEffect(() => {
+    setComment(member.commentaire_evangelises || "");
+    setStatus(member.status_suivis_evangelises || "");
+  }, [member]);
 
   // Fermer popup si clic extérieur
   useEffect(() => {
@@ -55,7 +48,7 @@ useEffect(() => {
       document.removeEventListener("mousedown", handleClickOutsideMenu);
   }, []);
 
-  // ================= UPSERT MEMBRE (comme carte) =================
+  // ================= UPSERT MEMBRE =================
   const upsertMembre = async (suivi) => {
     try {
       const payload = {
@@ -85,43 +78,53 @@ useEffect(() => {
     }
   };
 
-      // ================= SAVE =================
-      const handleSave = async () => {
-        if (!member.id) return;
-      
-        setSaving(true);
-      
-        try {
-          const { error } = await supabase
-            .from("suivis_des_evangelises")
-            .update({
-              commentaire_evangelises: comment,
-              status_suivis_evangelises: status,
-            })
-            .eq("id", member.id);
-      
-          if (error) throw error;
-      
-          if (status === "Intégré") {
-            await upsertMembre(member);
-          }
-      
-          // ✅ ICI
-          onUpdate &&
-            onUpdate(member.id, {
-              commentaire_evangelises: comment,
-              status_suivis_evangelises: status,
-            });
-      
-          setSaving(false);
-          onClose();
-        } catch (err) {
-          console.error("Erreur lors de la sauvegarde :", err);
-          alert("Erreur lors de la sauvegarde. Vérifie la console.");
-          setSaving(false);
-        }
-      };
-  
+  // ================= SAVE =================
+  const handleSave = async () => {
+    if (!member.id) return;
+
+    setSaving(true);
+
+    try {
+      const { error } = await supabase
+        .from("suivis_des_evangelises")
+        .update({
+          commentaire_evangelises: comment,
+          status_suivis_evangelises: status,
+        })
+        .eq("id", member.id);
+
+      if (error) throw error;
+
+      if (status === "Intégré") {
+        await upsertMembre(member);
+      }
+
+      onUpdate &&
+        onUpdate(member.id, {
+          commentaire_evangelises: comment,
+          status_suivis_evangelises: status,
+        });
+
+      setSaving(false);
+      onClose();
+    } catch (err) {
+      console.error("Erreur lors de la sauvegarde :", err);
+      alert("Erreur lors de la sauvegarde. Vérifie la console.");
+      setSaving(false);
+    }
+  };
+
+  // ================= FORMAT BESOIN =================
+  const formatBesoin = (b) => {
+    if (!b) return "—";
+    try {
+      const arr = JSON.parse(b);
+      return Array.isArray(arr) ? arr.join(", ") : b;
+    } catch {
+      return b;
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div
@@ -204,44 +207,48 @@ useEffect(() => {
         )}
 
         {/* ================= CENTRÉ ================= */}
-        <div className="text-center mt-2 space-y-1">
-          <div className="text-center mt-2 space-y-1">
-          <p>🏠 Cellule : {member.cellule_id || ""}</p>
-          <p>👤 Conseiller : {member.conseiller_id || ""}</p>       
-          <p>🏙️ Ville : {member.ville || ""}</p>
-        </div>
-      </div>
+        <p className="text-center mt-2">
+          🏠 Cellule : {member.cellule?.nom || "—"}
+        </p>
+        <p className="text-center">
+          👤 Conseiller :{" "}
+          {member.conseiller
+            ? `${member.conseiller.prenom} ${member.conseiller.nom}`
+            : "—"}
+        </p>
+        <p className="text-center">🏙️ Ville : {member.ville || "—"}</p>
+
         {/* ================= COMMENTAIRE & STATUT ================= */}
         <div className="flex flex-col w-full mt-4">
           <label className="font-semibold text-blue-700 mb-1 text-center">
             Commentaire Suivis
           </label>
           <textarea
-           value={comment}
-           onChange={(e) => setComment(e.target.value)}
-           disabled={isRefus}
-           className={`w-full border rounded-lg p-2 ${
-             isRefus ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
-           }`}
-           rows={2}
-         />
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            disabled={isRefus}
+            className={`w-full border rounded-lg p-2 ${
+              isRefus ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
+            }`}
+            rows={2}
+          />
 
           <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">
             Statut du suivis
           </label>
           <select
-           value={status}
-           onChange={(e) => setStatus(e.target.value)}
-           disabled={isRefus}
-           className={`w-full border rounded-lg p-2 mb-2 ${
-             isRefus ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
-           }`}
-         >
-           <option value="">-- Sélectionner un statut --</option>
-           <option value="En cours">En cours</option>
-           <option value="Intégré">Intégré</option>
-           <option value="Refus">Refus</option>
-           </select>
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            disabled={isRefus}
+            className={`w-full border rounded-lg p-2 mb-2 ${
+              isRefus ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
+            }`}
+          >
+            <option value="">-- Sélectionner un statut --</option>
+            <option value="En cours">En cours</option>
+            <option value="Intégré">Intégré</option>
+            <option value="Refus">Refus</option>
+          </select>
 
           {!isRefus && (
             <button

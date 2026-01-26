@@ -44,9 +44,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     commentaire_suivis: member?.commentaire_suivis || "",
     bapteme_eau: member?.bapteme_eau ?? false,
     bapteme_esprit: member?.bapteme_esprit ?? false,
-    Formation: member?.Formation || "",
-    Soin_Pastoral: member?.Soin_Pastoral || "",
-    Commentaire_Suivi_Evangelisation: member?.Commentaire_Suivi_Evangelisation || "",        
+    Formation: formData.Formation || "",
+    Soin_Pastoral: formData.Soin_Pastoral || "",
+    Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || "",       
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -242,7 +242,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
           {/* Soin_Pastoral */}
           <div className="flex flex-col">
-            <label className="font-medium">Soin_Pastoral</label>
+            <label className="font-medium">Soin Pastoral</label>
             <textarea name="Soin_Pastoral" value={formData.Soin_Pastoral} onChange={handleChange} className="input" rows={2} />
           </div>
 

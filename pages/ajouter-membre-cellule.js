@@ -143,6 +143,24 @@ export default function AjouterMembreCellule() {
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
+          {/* ✅ SELECT CELLULE SI PLUSIEURS */}
+          {cellules.length > 1 && (
+            <select
+              name="cellule_id"
+              value={formData.cellule_id}
+              onChange={handleChange}
+              className="input"
+              required
+            >
+              <option value="">-- Choisir une cellule --</option>
+              {cellules.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.cellule_full}
+                </option>
+              ))}
+            </select>
+          )}
+
           {/* Prénom */}
           <input
             type="text"

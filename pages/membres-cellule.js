@@ -97,6 +97,16 @@ export default function MembresCellule() {
     return c?.cellule_full || "—";
   };
 
+  const formatBesoin = (b) => {
+    if (!b) return "—";
+    try {
+      const arr = JSON.parse(b);
+      return Array.isArray(arr) ? arr.join(", ") : b;
+    } catch {
+      return b;
+    }
+  };
+
   const getBorderColor = (m) => {
     if (m.besoin) return "#f97316";        // orange
     if (m.is_whatsapp) return "#22c55e";   // vert
@@ -223,7 +233,7 @@ export default function MembresCellule() {
                     <p>🎗️ Sexe : {m.sexe || ""}</p>
                     <p>💧 Baptême d’Eau : {toBoolean(m.bapteme_eau) ? "Oui" : "Non"}</p>
                     <p>🔥 Baptême de Feu : {toBoolean(m.bapteme_esprit) ? "Oui" : "Non"}</p>
-                    <p>❓ Besoin : {m.besoin || ""}</p>
+                    <p>❓ Besoin : {formatBesoin(m.besoin)}</p>
                     <p>📝 Infos : {m.infos_supplementaires || ""}</p>
                     <p>🧩 Comment est-il venu : {m.venu || ""}</p>                    
                     <p>📝 Commentaire Suivis : {m.commentaire_suivis || ""}</p>

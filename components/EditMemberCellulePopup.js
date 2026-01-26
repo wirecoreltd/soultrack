@@ -227,58 +227,7 @@ export default function EditMemberCellulePopup({ member, onClose, onUpdateMember
               <option value="true">Oui</option>
               <option value="false">Non</option>
             </select>
-          </div>
-
-          {/* Statut */}
-          <div>
-            <label className="font-semibold text-black block mb-1">Statut</label>
-            <select
-              name="statut"
-              value={formData.statut}
-              onChange={handleChange}
-              className="input"
-            >
-              <option value="">-- Statut --</option>
-              <option value="actif">Actif</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="ancien">Ancien</option>
-              <option value="inactif">Inactif</option>
-            </select>
-          </div>
-
-          {/* Cellule */}
-          <div>
-            <label className="font-semibold text-black block mb-1">Cellule</label>
-            <select
-              name="cellule_id"
-              value={formData.cellule_id ?? ""}
-              onChange={handleChange}
-              className="input"
-              disabled={loadingData}
-            >
-              <option value="">-- Cellule --</option>
-              {cellules.map((c) => (
-                <option key={c.id} value={c.id}>{c.cellule_full}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Conseiller */}
-          <div>
-            <label className="font-semibold text-black block mb-1">Conseiller</label>
-            <select
-              name="conseiller_id"
-              value={formData.conseiller_id ?? ""}
-              onChange={handleChange}
-              className="input"
-              disabled={loadingData}
-            >
-              <option value="">-- Conseiller --</option>
-              {conseillers.map((c) => (
-                <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
-              ))}
-            </select>
-          </div>
+          </div>          
 
           {/* Besoins */}
           <div className="flex flex-col">
@@ -314,18 +263,7 @@ export default function EditMemberCellulePopup({ member, onClose, onUpdateMember
           <div className="flex flex-col">
             <label className="font-medium">Informations supplémentaires</label>
             <textarea name="infos_supplementaires" value={formData.infos_supplementaires} onChange={handleChange} className="input" rows={2} />
-          </div>
-
-          {/* Statut initial */}
-          <div className="flex flex-col">
-            <label className="font-medium">Statut à l'arrivée</label>
-            <select name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="input">
-              <option value="">-- Sélectionner --</option>
-              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="visiteur">Visiteur</option>
-            </select>
-          </div>
+          </div>          
 
           {/* Commentaire suivis */}
           <div className="flex flex-col">

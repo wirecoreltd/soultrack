@@ -537,13 +537,19 @@ export default function SuivisEvangelisation() {
             {/* Lignes */}
             {suivisAffiches.map((m) => {
               const cellule = cellules.find(c => c.id === m.cellule_id);
-              const conseiller = conseillers.find(c => c.id === m.conseiller_id);
-      
+              const conseiller = conseillers.find(c => c.id === m.conseiller_id);      
               const attribueA = cellule
                 ? `🏠 ${cellule.cellule_full}`
                 : conseiller
                   ? `👤 ${conseiller.prenom} ${conseiller.nom}`
                   : "—";
+              const updateSuiviLocal = (id, updates) => {
+                setSuivis(prev =>
+                  prev.map(s =>
+                    s.id === id ? { ...s, ...updates } : s
+                  )
+                );
+              };
       
               return (
                 <div
@@ -606,6 +612,7 @@ export default function SuivisEvangelisation() {
           setDetailsTable(null);
           fetchSuivis(user, cellules); // 🔥 refresh instantané table
         }}
+          onUpdate={updateSuiviLocal}
       />
     )}
 

@@ -296,7 +296,7 @@ export default function SuivisEvangelisation() {
 
   // ================= RENDER =================
   if (loading) return <p className="text-center mt-10">Chargement...</p>;
-  if (!user) return <p className="text-center mt-10 text-red-600">Non connecté</p  
+  if (!user) return <p className="text-center mt-10 text-red-600">Non connecté</p>;  
 
   return (
     

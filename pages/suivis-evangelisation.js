@@ -177,7 +177,8 @@ export default function SuivisEvangelisation() {
   conseiller_id: suivi.conseiller_id,
   statut_initial: "intégré",
   suivi_statut: "Intégré",
-  suivi_commentaire_suivis: suivi.Commentaire_Suivi_Evangelisation,
+  etat_contact: "Existant",      
+  Commentaire_Suivi_Evangelisation: suivi.commentaire_evangelises,
   suivi_updated_at: new Date().toISOString(),
 };
 

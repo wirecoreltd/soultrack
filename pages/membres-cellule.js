@@ -194,11 +194,11 @@ export default function MembresCellule() {
                 </h2>
 
                 <p className="text-center text-orange-500 underline font-semibold">
-                  {m.telephone || "—"}
+                  {m.telephone || ""}
                 </p>
 
                 <p className="text-center text-sm mt-1">
-                  🏙️ {m.ville || "—"}
+                  🏙️ {m.ville || ""}
                 </p>
 
                 <p className="text-center text-sm">
@@ -220,13 +220,13 @@ export default function MembresCellule() {
                 {detailsOpen[m.id] && (
                   <div className="mt-3 p-3 rounded-lg text-sm space-y-1 text-left">
                     <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p>🎗️ Sexe : {m.sexe || "—"}</p>
-                    <p>💧 Baptême d’Eau : {m.bapteme_eau === true ? "Oui" : m.bapteme_eau === false ? "Non" : "—"}</p>
-                    <p>🔥 Baptême de Feu : {m.bapteme_esprit === true ? "Oui" : m.bapteme_esprit === false ? "Non" : "—"}</p>
-                    <p>❓ Besoin : {m.besoin || "—"}</p>
-                    <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                    <p>🧩 Comment est-il venu : {m.venu || "—"}</p>                    
-                    <p>📝 Commentaire Suivis : {m.commentaire_suivis || "—"}</p>
+                    <p>🎗️ Sexe : {m.sexe || ""}</p>
+                    <p>💧 Baptême d’Eau : {m.bapteme_eau === true ? "Oui" : m.bapteme_eau === false ? "Non" : ""}</p>
+                    <p>🔥 Baptême de Feu : {m.bapteme_esprit === true ? "Oui" : m.bapteme_esprit === false ? "Non" : ""}</p>
+                    <p>❓ Besoin : {m.besoin || ""}</p>
+                    <p>📝 Infos : {m.infos_supplementaires || ""}</p>
+                    <p>🧩 Comment est-il venu : {m.venu || ""}</p>                    
+                    <p>📝 Commentaire Suivis : {m.commentaire_suivis || ""}</p>
 
                     <button
                       onClick={() => setEditMember(m)}

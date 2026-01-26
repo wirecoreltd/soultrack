@@ -205,8 +205,8 @@ useEffect(() => {
 
         {/* ================= CENTRÉ ================= */}
         <p className="text-center mt-2">
-         🏠 Cellule : {member.cellule_nom || member.cellule || "—"}
-       </p>       
+        <p>🏠 Cellule : {member.cellule_full}</p>
+        </p>       
        <p className="text-center">
          👤 Conseiller : {member.conseiller_nom || member.responsable_nom || "—"}
        </p>

@@ -42,8 +42,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     besoin: initialBesoin,
     autreBesoin: "",
     commentaire_suivis: member?.commentaire_suivis || "",
-    bapteme_eau: member?.bapteme_eau ?? null,
-    bapteme_esprit: member?.bapteme_esprit ?? null,
+    bapteme_eau: member?.bapteme_eau ?? false,
+    bapteme_esprit: member?.bapteme_esprit ?? false,
+
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -209,8 +210,12 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           {/* Bapteme d'eau */}
           <div className="flex flex-col">
             <label className="font-medium">Bapteme d'eau</label>
-            <select name="bapteme_eau" value={formData.bapteme_eau === true ? "true" : formData.bapteme_eau === false ? "false" : ""} onChange={handleChange} className="input">
-              <option value="">-- Sélectionner --</option>
+            <select
+              name="bapteme_eau"
+              value={formData.bapteme_eau ? "true" : "false"}
+              onChange={handleChange}
+              className="input"
+            >
               <option value="true">Oui</option>
               <option value="false">Non</option>
             </select>
@@ -219,8 +224,12 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           {/* Bapteme de feu */}
           <div className="flex flex-col">
             <label className="font-medium">Bapteme de feu</label>
-            <select name="bapteme_esprit" value={formData.bapteme_esprit === true ? "true" : formData.bapteme_esprit === false ? "false" : ""} onChange={handleChange} className="input">
-              <option value="">-- Sélectionner --</option>
+            <select
+              name="bapteme_esprit"
+              value={formData.bapteme_esprit ? "true" : "false"}
+              onChange={handleChange}
+              className="input"
+            >
               <option value="true">Oui</option>
               <option value="false">Non</option>
             </select>

@@ -24,29 +24,27 @@ export default function EditMemberCellulePopup({ member, onClose, onUpdateMember
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
-
+  
   const [formData, setFormData] = useState({
     prenom: member?.prenom || "",
     nom: member?.nom || "",
     telephone: member?.telephone || "",
     ville: member?.ville || "",
-    sexe: member?.sexe || "",
-    star: !!member?.star,
-    etat_contact: member?.etat_contact || "Nouveau",
-    bapteme_eau: member?.bapteme_eau ?? null,
-    bapteme_esprit: member?.bapteme_esprit ?? null,
-    priere_salut: member?.priere_salut || "",
-    type_conversion: member?.type_conversion || "",
+    statut: member?.statut || "",
+    statut_initial: member?.statut_initial || "",
     cellule_id: member?.cellule_id ?? "",
     conseiller_id: member?.conseiller_id ?? "",
+    infos_supplementaires: member?.infos_supplementaires || "",
+    is_whatsapp: !!member?.is_whatsapp,
+    star: !!member?.star,
+    sexe: member?.sexe || "",
+    venu: member?.venu || "",   
     besoin: initialBesoin,
     autreBesoin: "",
-    venu: member?.venu || "",
-    infos_supplementaires: member?.infos_supplementaires || "",
-    statut_initial: member?.statut_initial || "",
-    suivi_statut: member?.suivi_statut || "",
     commentaire_suivis: member?.commentaire_suivis || "",
-    is_whatsapp: !!member?.is_whatsapp,
+    // ✅ Correction : initialisation booléenne pour les bapteme
+    bapteme_eau: member?.bapteme_eau ?? false,
+    bapteme_esprit: member?.bapteme_esprit ?? false,
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -79,6 +77,7 @@ export default function EditMemberCellulePopup({ member, onClose, onUpdateMember
   // -------------------- HANDLERS --------------------
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+
     if (type === "checkbox") {
       setFormData(prev => ({ ...prev, [name]: checked }));
     } else if (name === "cellule_id" && value) {
@@ -86,9 +85,10 @@ export default function EditMemberCellulePopup({ member, onClose, onUpdateMember
     } else if (name === "conseiller_id" && value) {
       setFormData(prev => ({ ...prev, conseiller_id: value, cellule_id: "" }));
     } else if (name === "bapteme_eau" || name === "bapteme_esprit") {
+      // ✅ Conversion string -> boolean
       setFormData(prev => ({
         ...prev,
-        [name]: value === "true" ? true : value === "false" ? false : null
+        [name]: value === "true"
       }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
@@ -134,22 +134,20 @@ export default function EditMemberCellulePopup({ member, onClose, onUpdateMember
         nom: formData.nom,
         telephone: formData.telephone || null,
         ville: formData.ville || null,
-        sexe: formData.sexe || null,
-        star: !!formData.star,
-        etat_contact: formData.etat_contact || "Nouveau",
-        bapteme_eau: formData.bapteme_eau,
-        bapteme_esprit: formData.bapteme_esprit,
-        priere_salut: formData.priere_salut || null,
-        type_conversion: formData.type_conversion || null,
+        statut: formData.statut || null,
+        statut_initial: formData.statut_initial || null,
         cellule_id: formData.cellule_id || null,
         conseiller_id: formData.conseiller_id || null,
-        besoin: JSON.stringify(finalBesoin),
-        venu: formData.venu || null,
         infos_supplementaires: formData.infos_supplementaires || null,
-        statut_initial: formData.statut_initial || null,
-        suivi_statut: formData.suivi_statut || null,
-        commentaire_suivis: formData.commentaire_suivis || null,
         is_whatsapp: !!formData.is_whatsapp,
+        star: !!formData.star,
+        sexe: formData.sexe || null,
+        venu: formData.venu || null,        
+        besoin: JSON.stringify(finalBesoin),
+        commentaire_suivis: formData.commentaire_suivis || null,
+        // ✅ Envoi correct en boolean
+        bapteme_eau: formData.bapteme_eau,
+        bapteme_esprit: formData.bapteme_esprit,
       };
 
       const { error } = await supabase
@@ -166,7 +164,7 @@ export default function EditMemberCellulePopup({ member, onClose, onUpdateMember
         .single();
 
       onUpdateMember?.(data);
-      onClose();
+      onClose();      
     } catch (err) {
       console.error(err);
       setMessage("❌ Une erreur est survenue lors de l’enregistrement.");
@@ -174,6 +172,7 @@ export default function EditMemberCellulePopup({ member, onClose, onUpdateMember
       setLoading(false);
     }
   };
+
   // -------------------- UI --------------------
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4">
@@ -182,7 +181,6 @@ export default function EditMemberCellulePopup({ member, onClose, onUpdateMember
         <h2 className="text-2xl font-bold text-center mb-6 text-white">
           Modifier le profil {member.prenom} {member.nom}
         </h2>
-
         <div className="overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-white">
 
           {/* Prénom / Nom / Téléphone / Ville */}
@@ -203,31 +201,15 @@ export default function EditMemberCellulePopup({ member, onClose, onUpdateMember
             </select>
           </div>
 
-          {/* Serviteur */}
-          <div className="flex flex-col">
-            <label className="font-medium">Définir en tant que serviteur</label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} className="accent-[#25297e]" />
-              Oui
-            </label>
-          </div>
-
-          {/* État du contact */}
-          <div className="flex flex-col">
-            <label className="font-medium">État du contact</label>
-            <select name="etat_contact" value={formData.etat_contact} onChange={handleChange} className="input">
-              <option value="">-- Sélectionner --</option>
-              <option value="Nouveau">Nouveau</option>
-              <option value="Existant">Existant</option>
-              <option value="Inactif">Inactif</option>
-            </select>
-          </div>
-
           {/* Bapteme d'eau */}
           <div className="flex flex-col">
             <label className="font-medium">Bapteme d'eau</label>
-            <select name="bapteme_eau" value={formData.bapteme_eau === true ? "true" : formData.bapteme_eau === false ? "false" : ""} onChange={handleChange} className="input">
-              <option value="">-- Sélectionner --</option>
+            <select
+              name="bapteme_eau"
+              value={formData.bapteme_eau.toString()}
+              onChange={handleChange}
+              className="input"
+            >
               <option value="true">Oui</option>
               <option value="false">Non</option>
             </select>
@@ -236,50 +218,67 @@ export default function EditMemberCellulePopup({ member, onClose, onUpdateMember
           {/* Bapteme de feu */}
           <div className="flex flex-col">
             <label className="font-medium">Bapteme de feu</label>
-            <select name="bapteme_esprit" value={formData.bapteme_esprit === true ? "true" : formData.bapteme_esprit === false ? "false" : ""} onChange={handleChange} className="input">
-              <option value="">-- Sélectionner --</option>
+            <select
+              name="bapteme_esprit"
+              value={formData.bapteme_esprit.toString()}
+              onChange={handleChange}
+              className="input"
+            >
               <option value="true">Oui</option>
               <option value="false">Non</option>
             </select>
           </div>
 
-          {/* Prière du salut */}
-          <div className="flex flex-col">
-            <label className="font-medium">Prière du salut</label>
+          {/* Statut */}
+          <div>
+            <label className="font-semibold text-black block mb-1">Statut</label>
             <select
+              name="statut"
+              value={formData.statut}
+              onChange={handleChange}
               className="input"
-              name="priere_salut"
-              value={formData.priere_salut}
-              required
-              onChange={(e) => {
-                const value = e.target.value;
-                setFormData({
-                  ...formData,
-                  priere_salut: value,
-                  type_conversion: value === "Oui" ? formData.type_conversion : "",
-                });
-              }}
             >
-              <option value="">-- Prière du salut ? --</option>
-              <option value="Oui">Oui</option>
-              <option value="Non">Non</option>
+              <option value="">-- Statut --</option>
+              <option value="actif">Actif</option>
+              <option value="a déjà son église">A déjà son église</option>
+              <option value="ancien">Ancien</option>
+              <option value="inactif">Inactif</option>
             </select>
+          </div>
 
-            {/* Type de conversion */}
-            {formData.priere_salut === "Oui" && (
-              <select
-                className="input mt-2"
-                name="type_conversion"
-                value={formData.type_conversion}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Type</option>
-                <option value="Nouveau converti">Nouveau converti</option>
-                <option value="Réconciliation">Réconciliation</option>
-              </select>
-            )}
-          </div>          
+          {/* Cellule */}
+          <div>
+            <label className="font-semibold text-black block mb-1">Cellule</label>
+            <select
+              name="cellule_id"
+              value={formData.cellule_id ?? ""}
+              onChange={handleChange}
+              className="input"
+              disabled={loadingData}
+            >
+              <option value="">-- Cellule --</option>
+              {cellules.map((c) => (
+                <option key={c.id} value={c.id}>{c.cellule_full}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Conseiller */}
+          <div>
+            <label className="font-semibold text-black block mb-1">Conseiller</label>
+            <select
+              name="conseiller_id"
+              value={formData.conseiller_id ?? ""}
+              onChange={handleChange}
+              className="input"
+              disabled={loadingData}
+            >
+              <option value="">-- Conseiller --</option>
+              {conseillers.map((c) => (
+                <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
+              ))}
+            </select>
+          </div>
 
           {/* Besoins */}
           <div className="flex flex-col">
@@ -298,7 +297,8 @@ export default function EditMemberCellulePopup({ member, onClose, onUpdateMember
               <input name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input mt-2" placeholder="Précisez" />
             )}
           </div>
-         {/* Comment est-il venu ? */}
+
+          {/* Venu */}
           <div className="flex flex-col">
             <label className="font-medium">Comment est-il venu ?</label>
             <select name="venu" value={formData.venu} onChange={handleChange} className="input">
@@ -310,27 +310,16 @@ export default function EditMemberCellulePopup({ member, onClose, onUpdateMember
             </select>
           </div>
 
-          {/* Informations supplémentaires */}
+          {/* Infos supplémentaires */}
           <div className="flex flex-col">
             <label className="font-medium">Informations supplémentaires</label>
-            <textarea
-              name="infos_supplementaires"
-              value={formData.infos_supplementaires}
-              onChange={handleChange}
-              className="input"
-              rows={2}
-            />
+            <textarea name="infos_supplementaires" value={formData.infos_supplementaires} onChange={handleChange} className="input" rows={2} />
           </div>
 
-          {/* Statut à l'arrivée */}
+          {/* Statut initial */}
           <div className="flex flex-col">
             <label className="font-medium">Statut à l'arrivée</label>
-            <select
-              name="statut_initial"
-              value={formData.statut_initial}
-              onChange={handleChange}
-              className="input"
-            >
+            <select name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="input">
               <option value="">-- Sélectionner --</option>
               <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
               <option value="a déjà son église">A déjà son église</option>
@@ -338,50 +327,18 @@ export default function EditMemberCellulePopup({ member, onClose, onUpdateMember
             </select>
           </div>
 
-          {/* Suivi statut */}
-          <div className="flex flex-col">
-            <label className="font-medium">Suivi statut</label>
-            <select
-              value={formData.suivi_statut ?? ""}
-              onChange={(e) => setFormData(prev => ({ ...prev, suivi_statut: e.target.value }))}
-              className="input"
-            >
-              <option value="">-- Sélectionner un statut --</option>
-              <option value="En Attente">En Attente</option>
-              <option value="Intégrer">Intégrer</option>
-              <option value="Refus">Refus</option>
-            </select>
-          </div>
-
           {/* Commentaire suivis */}
           <div className="flex flex-col">
             <label className="font-medium">Commentaire suivis</label>
-            <textarea
-              name="commentaire_suivis"
-              value={formData.commentaire_suivis}
-              onChange={handleChange}
-              className="input"
-              rows={2}
-            />
+            <textarea name="commentaire_suivis" value={formData.commentaire_suivis} onChange={handleChange} className="input" rows={2} />
           </div>
 
         </div>
 
         {/* Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
-          >
-            Annuler
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3 rounded-2xl shadow-md transition-all"
-          >
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
+          <button type="button" onClick={onClose} className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">Annuler</button>
+          <button type="button" onClick={handleSubmit} disabled={loading} className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3 rounded-2xl shadow-md transition-all">
             {loading ? "Enregistrement..." : "Sauvegarder"}
           </button>
         </div>
@@ -393,34 +350,36 @@ export default function EditMemberCellulePopup({ member, onClose, onUpdateMember
           </p>
         )}
 
-        {/* Styles */}
         <style jsx>{`
-          label {
-            font-weight: 600; /* semi-bold */
-            color: white;
-          }
+  label {
+    font-weight: 600; /* semi-bold */
+    color: white;
+  }
 
-          .input {
-            width: 100%;
-            border: 1px solid #a0c4ff;
-            border-radius: 14px;
-            padding: 12px;
-            background: rgba(255,255,255,0.1);
-            color: white;
-            font-weight: 400;
-          }
+  .input {
+    width: 100%;
+    border: 1px solid #a0c4ff;
+    border-radius: 14px;
+    padding: 12px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    font-weight: 400; /* NORMAL pour les valeurs */
+  }
 
-          select.input {
-            font-weight: 400;
-            color: white;
-          }
+  /* Texte affiché dans le select (avant ouverture) */
+  select.input {
+    font-weight: 400;
+    color: white;
+  }
 
-          select.input option {
-            background: white;
-            color: black;
-            font-weight: 400;
-          }
-        `}</style>
+  /* Options du menu déroulant (quand ouvert) */
+  select.input option {
+    background: white;
+    color: black;
+    font-weight: 400;
+  }
+`}</style>
+
       </div>
     </div>
   );

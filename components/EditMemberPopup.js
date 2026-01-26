@@ -42,9 +42,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     besoin: initialBesoin,
     autreBesoin: "",
     commentaire_suivis: member?.commentaire_suivis || "",
+    // ✅ Correction : initialisation booléenne pour les bapteme
     bapteme_eau: member?.bapteme_eau ?? false,
     bapteme_esprit: member?.bapteme_esprit ?? false,
-
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -77,6 +77,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   // -------------------- HANDLERS --------------------
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+
     if (type === "checkbox") {
       setFormData(prev => ({ ...prev, [name]: checked }));
     } else if (name === "cellule_id" && value) {
@@ -84,10 +85,10 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     } else if (name === "conseiller_id" && value) {
       setFormData(prev => ({ ...prev, conseiller_id: value, cellule_id: "" }));
     } else if (name === "bapteme_eau" || name === "bapteme_esprit") {
-      // Convertir string "true"/"false" en boolean
+      // ✅ Conversion string -> boolean
       setFormData(prev => ({
         ...prev,
-        [name]: value === "true" ? true : value === "false" ? false : null
+        [name]: value === "true"
       }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
@@ -144,6 +145,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         venu: formData.venu || null,        
         besoin: JSON.stringify(finalBesoin),
         commentaire_suivis: formData.commentaire_suivis || null,
+        // ✅ Envoi correct en boolean
         bapteme_eau: formData.bapteme_eau,
         bapteme_esprit: formData.bapteme_esprit,
       };
@@ -162,7 +164,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         .single();
 
       onUpdateMember?.(data);
-        onClose();      
+      onClose();      
     } catch (err) {
       console.error(err);
       setMessage("❌ Une erreur est survenue lors de l’enregistrement.");
@@ -179,23 +181,15 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         <h2 className="text-2xl font-bold text-center mb-6 text-white">
           Modifier le profil {member.prenom} {member.nom}
         </h2>
-         <div className="overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-white">
+        <div className="overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-white">
 
+          {/* Prénom / Nom / Téléphone / Ville */}
           {["prenom","nom","telephone","ville"].map(f => (
             <div key={f} className="flex flex-col">
               <label className="font-medium capitalize">{f}</label>
               <input name={f} value={formData[f]} onChange={handleChange} className="input" />
             </div>
           ))}
-
-          {/* Serviteur */}
-          <div className="flex flex-col">
-            <label className="font-medium">Serviteur</label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} className="accent-[#25297e]" />
-              Définir en tant que serviteur ⭐
-            </label>
-          </div>
 
           {/* Sexe */}
           <div className="flex flex-col">
@@ -205,14 +199,14 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="Homme">Homme</option>
               <option value="Femme">Femme</option>
             </select>
-          </div>          
+          </div>
 
           {/* Bapteme d'eau */}
           <div className="flex flex-col">
             <label className="font-medium">Bapteme d'eau</label>
             <select
               name="bapteme_eau"
-              value={formData.bapteme_eau ? "true" : "false"}
+              value={formData.bapteme_eau.toString()}
               onChange={handleChange}
               className="input"
             >
@@ -226,7 +220,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             <label className="font-medium">Bapteme de feu</label>
             <select
               name="bapteme_esprit"
-              value={formData.bapteme_esprit ? "true" : "false"}
+              value={formData.bapteme_esprit.toString()}
               onChange={handleChange}
               className="input"
             >
@@ -234,7 +228,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="false">Non</option>
             </select>
           </div>
-
 
           {/* Statut */}
           <div>

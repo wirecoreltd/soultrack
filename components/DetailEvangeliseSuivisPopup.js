@@ -26,6 +26,10 @@ export default function DetailEvangeliseSuivisPopup({member, onClose, onEdit, on
       return b;
     }
   };
+useEffect(() => {
+  setComment(member.commentaire_evangelises || "");
+  setStatus(member.status_suivis_evangelises || "");
+}, [member]);
 
   // Fermer popup si clic extérieur
   useEffect(() => {

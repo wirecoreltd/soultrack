@@ -234,6 +234,18 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             </select>
           </div>
 
+          {/* Formation */}
+          <div className="flex flex-col">
+            <label className="font-medium">Formation</label>
+            <textarea name="Formation" value={formData.Formation} onChange={handleChange} className="input" rows={2} />
+          </div>
+
+          {/* Soin_Pastoral */}
+          <div className="flex flex-col">
+            <label className="font-medium">Soin_Pastoral</label>
+            <textarea name="Soin_Pastoral" value={formData.Soin_Pastoral} onChange={handleChange} className="input" rows={2} />
+          </div>
+
           {/* Statut */}
           <div>
             <label className="font-semibold text-black block mb-1">Statut</label>
@@ -336,6 +348,12 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           <div className="flex flex-col">
             <label className="font-medium">Commentaire suivis</label>
             <textarea name="commentaire_suivis" value={formData.commentaire_suivis} onChange={handleChange} className="input" rows={2} />
+          </div>
+
+            {/* Commentaire suivis Evangelisation*/}
+          <div className="flex flex-col">
+            <label className="font-medium">Commentaire Suivi Evangélisation</label>
+            <textarea name="Commentaire_Suivi_Evangelisation" value={formData.Commentaire_Suivi_Evangelisation} onChange={handleChange} className="input" rows={2} />
           </div>
 
         </div>

@@ -402,9 +402,7 @@ export default function ListMembers() {
                 <p className="font-semibold text-center" style={{ color: "#2E3192" }}>
                   💡 Statut Suivi : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}</p>
                 <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                <p>🎗️ Sexe : {m.sexe || ""}</p>
-                //<p>💧 Baptême d’Eau : {m.bapteme_eau ? "Oui" : "Non"}</p>
-                //<p>🔥 Baptême de Feu : {m.bapteme_esprit ? "Oui" : "Non"}</p>
+                <p>🎗️ Sexe : {m.sexe || ""}</p>                
                 <p>💧 Baptême d’Eau : {m.bapteme_eau === true ? "Oui" : m.bapteme_eau === false ? "Non" : ""}</p>
                 <p>🔥 Baptême de Feu : {m.bapteme_esprit === true ? "Oui" : m.bapteme_esprit === false ? "Non" : ""}</p>   
                 <p>✒️ Formation : {m.Formation || ""}</p>

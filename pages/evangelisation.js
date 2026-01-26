@@ -92,6 +92,17 @@ export default function Evangelisation() {
   const selectedContacts = contacts?.filter((c) => checkedContacts[c.id]) || [];
   const hasSelectedContacts = selectedContacts.length > 0;
 
+  const formatDateFr = (dateString) => {
+  if (!dateString) return "—";
+  const d = new Date(dateString);
+
+  const day = d.getDate().toString().padStart(2, "0");
+  const months = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+
+  return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+};
+
+
   const getBorderColor = (member) => {
     if (member.is_whatsapp) return "#25D366";
     if (member.besoin) return "#FFB800";
@@ -248,7 +259,7 @@ export default function Evangelisation() {
                 {selectedTargetType === "cellule"
                   ? c.ville
                     ? `${c.cellule_full} - ${c.ville}`
-                    : c.cellule_full
+                    : c.cellule_fulls
                   : `${c.prenom} ${c.nom}`}
               </option>
             ))}
@@ -297,6 +308,7 @@ export default function Evangelisation() {
                 <label className="flex justify-center gap-2 mt-2">
                   <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} /> Sélectionner
                 </label>
+                  <p className="text-[11px] text-gray-400 text-right mt-3">Créé le {formatDateFr(member.created_at)} </p>
                 <button onClick={() => setDetailsOpen(prev => ({ ...prev, [member.id]: !prev[member.id] }))} className="text-orange-500 underline text-sm block mx-auto mt-2">
                   {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                 </button>

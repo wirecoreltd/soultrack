@@ -42,9 +42,11 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     besoin: initialBesoin,
     autreBesoin: "",
     commentaire_suivis: member?.commentaire_suivis || "",
-    // ✅ Correction : initialisation booléenne pour les bapteme
     bapteme_eau: member?.bapteme_eau ?? false,
     bapteme_esprit: member?.bapteme_esprit ?? false,
+    Formation: member?.Formation || "",
+    Soin_Pastoral: member?.Soin_Pastoral || "",
+    Commentaire_Suivi_Evangelisation: member?.Commentaire_Suivi_Evangelisation || "",        
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -148,6 +150,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         // ✅ Envoi correct en boolean
         bapteme_eau: formData.bapteme_eau,
         bapteme_esprit: formData.bapteme_esprit,
+        Formation: member?.Formation || "",
+        Soin_Pastoral: member?.Soin_Pastoral || "",
+        Commentaire_Suivi_Evangelisation: member?.Commentaire_Suivi_Evangelisation || "",    
       };
 
       const { error } = await supabase

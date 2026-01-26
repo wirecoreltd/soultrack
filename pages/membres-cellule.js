@@ -21,6 +21,7 @@ export default function MembresCellule() {
   const [detailsMember, setDetailsMember] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState({});
   const toBoolean = (val) => val === true || val === "true";  
+  const celluleIds = (cellulesData || []).map(c => c.id);
 
   // ================= FETCH =================
   useEffect(() => {
@@ -50,44 +51,37 @@ export default function MembresCellule() {
         }
 
         const { data: cellulesData } = await celluleQuery;
-        setCellules(cellulesData || []);       
-        
-        let membresQuery = supabase
-        .from("membres_complets")
-        .select("*")
-        .in("cellule_id", celluleIds)
-        .eq("statut_suivis", 3)
-        .order("created_at", { ascending: false });
-
+        setCellules(cellulesData || []);    
+                
         const celluleIds = (cellulesData || []).map(c => c.id);
 
-        if (celluleIds.length === 0) {
-          setMembres([]);
-          setMessage("Aucun membre intégré");
-          return;
-        }
-
-        let membresQuery = supabase
-          .from("membres_complets")
-          .select("*")
-          .in("cellule_id", celluleIds)
-          .eq("statut_suivis", 3)   // ⛔ PROBLÈME
-          .order("created_at", { ascending: false });
-
-
-
-        if (profile.role === "Conseiller") {
-          membresQuery = membresQuery.eq("conseiller_id", profile.id);
-        }
-
-        const { data: membresData, error } = await membresQuery;
-        if (error) throw error;
-
-        setMembres(membresData || []);
-
-        if (!membresData || membresData.length === 0) {
-          setMessage("Aucun membre intégré trouvé");
-        }
+            if (celluleIds.length === 0) {
+              setMembres([]);
+              setMessage("Aucun membre intégré");
+              return;
+            }
+            
+            // requête membres (UNE SEULE FOIS)
+            let membresQuery = supabase
+              .from("membres_complets")
+              .select("*")
+              .in("cellule_id", celluleIds)
+              .eq("statut_suivis", 3)
+              .order("created_at", { ascending: false });
+            
+            // filtre conseiller si besoin
+            if (profile.role === "Conseiller") {
+              membresQuery = membresQuery.eq("conseiller_id", profile.id);
+            }
+            
+            const { data: membresData, error } = await membresQuery;
+            if (error) throw error;
+            
+            setMembres(membresData || []);
+            
+            if (!membresData || membresData.length === 0) {
+              setMessage("Aucun membre intégré trouvé");
+            }
 
       } catch (err) {
         console.error(err);

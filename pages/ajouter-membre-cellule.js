@@ -62,10 +62,12 @@ export default function AjouterMembreCellule() {
         nom: formData.nom,
         prenom: formData.prenom,
         telephone: formData.telephone,
+        sexe: formData.sexe,
         ville: formData.ville,
         venu: formData.venu,
         cellule_id: formData.cellule_id,
         statut_suivis: 3, // Intégrer
+        etat_contact: "Existant",
         is_whatsapp: formData.is_whatsapp,
         infos_supplementaires: formData.infos_supplementaires,
         besoin: formData.besoin.join(", "), // convertir tableau en string

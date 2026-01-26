@@ -19,6 +19,32 @@ export default function DetailEvangeliseSuivisPopup({
 
   console.log("DETAIL POPUP MEMBER:", member);
 
+   // Charger cellule et conseiller depuis Supabase
+  useEffect(() => {
+    const fetchRelations = async () => {
+      // Cellule
+      if (member.cellule_id) {
+        const { data: celluleData } = await supabase
+          .from("cellules")
+          .select("nom")
+          .eq("id", member.cellule_id)
+          .single();
+        if (celluleData) setCelluleNom(celluleData.nom);
+      }
+
+      // Conseiller
+      if (member.conseiller_id) {
+        const { data: conseillerData } = await supabase
+          .from("users")
+          .select("prenom, nom")
+          .eq("id", member.conseiller_id)
+          .single();
+        if (conseillerData) setConseillerNom(`${conseillerData.prenom} ${conseillerData.nom}`);
+      }
+    };
+    fetchRelations();
+  }, [member.cellule_id, member.conseiller_id]);
+
   // Mettre à jour localement quand le member change
   useEffect(() => {
     setComment(member.commentaire_evangelises || "");

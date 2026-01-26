@@ -124,7 +124,6 @@ export default function SuivisEvangelisation() {
   }
 };
 
-
   // ================= HELPERS =================
   const getBorderColor = (m) => {
     const status = m.status_suivis_evangelises;
@@ -178,7 +177,7 @@ export default function SuivisEvangelisation() {
   conseiller_id: suivi.conseiller_id,
   statut_initial: "intégré",
   suivi_statut: "Intégré",
-  suivi_commentaire_suivis: suivi.commentaire_evangelises,
+  suivi_commentaire_suivis: suivi.Commentaire_Suivi_Evangelisation,
   suivi_updated_at: new Date().toISOString(),
 };
 

@@ -31,7 +31,7 @@ export default function AjouterMembreCellule() {
       const userId = localStorage.getItem("userId");
       const { data, error } = await supabase
         .from("cellules")
-        .select("id, cellule")
+        .select("id, ville, cellule")
         .eq("responsable_id", userId);
 
       if (error || !data || data.length === 0) {
@@ -155,7 +155,7 @@ export default function AjouterMembreCellule() {
               <option value="">-- Choisir une cellule --</option>
               {cellules.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.cellule_full}
+                  {c.ville} - {c.cellule}
                 </option>
               ))}
             </select>

@@ -50,16 +50,14 @@ export default function MembresCellule() {
         }
 
         const { data: cellulesData } = await celluleQuery;
-        setCellules(cellulesData || []);
-
-        await supabase
-          .from("membres_complets")
-          .update({
-            statut_suivis: 3,
-            etat_contact: "Existant"
-          })
-          .eq("id", membre.id);
-
+        setCellules(cellulesData || []);       
+        
+        let membresQuery = supabase
+        .from("membres_complets")
+        .select("*")
+        .in("cellule_id", celluleIds)
+        .eq("statut_suivis", 3)
+        .order("created_at", { ascending: false });
 
         const celluleIds = (cellulesData || []).map(c => c.id);
 

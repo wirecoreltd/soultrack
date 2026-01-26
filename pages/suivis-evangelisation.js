@@ -286,11 +286,17 @@ export default function SuivisEvangelisation() {
           setUpdating((p) => ({ ...p, [m.id]: false }));
         }
       };
-
+      const updateSuiviLocal = (id, updates) => {
+        setAllSuivis(prev =>
+          prev.map(s =>
+            s.id === id ? { ...s, ...updates } : s
+          )
+        );
+      };
 
   // ================= RENDER =================
   if (loading) return <p className="text-center mt-10">Chargement...</p>;
-  if (!user) return <p className="text-center mt-10 text-red-600">Non connecté</p>;
+  if (!user) return <p className="text-center mt-10 text-red-600">Non connecté</p  
 
   return (
     
@@ -542,14 +548,7 @@ export default function SuivisEvangelisation() {
                 ? `🏠 ${cellule.cellule_full}`
                 : conseiller
                   ? `👤 ${conseiller.prenom} ${conseiller.nom}`
-                  : "—";
-              const updateSuiviLocal = (id, updates) => {
-                setSuivis(prev =>
-                  prev.map(s =>
-                    s.id === id ? { ...s, ...updates } : s
-                  )
-                );
-              };
+                  : "—";              
       
               return (
                 <div
@@ -608,11 +607,10 @@ export default function SuivisEvangelisation() {
           setDetailsTable(null);
           s.evangelises?.id && setEditingContact(s.evangelises);
         }}
-        onUpdate={() => {
+        onUpdate={(id, updates) => {
+          updateSuiviLocal(id, updates);
           setDetailsTable(null);
-          fetchSuivis(user, cellules); // 🔥 refresh instantané table
         }}
-          onUpdate={updateSuiviLocal}
       />
     )}
 

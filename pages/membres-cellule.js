@@ -20,8 +20,7 @@ export default function MembresCellule() {
   const [editMember, setEditMember] = useState(null);
   const [detailsMember, setDetailsMember] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState({});
-  const toBoolean = (val) => val === true || val === "true";  
-  const celluleIds = (cellulesData || []).map(c => c.id);
+  const toBoolean = (val) => val === true || val === "true";   
 
   // ================= FETCH =================
   useEffect(() => {

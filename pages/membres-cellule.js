@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
-import EditMemberPopup from "../components/EditMemberPopup";
+import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
 import MemberDetailsPopup from "../components/MemberDetailsPopup";
 import HeaderPages from "../components/HeaderPages";
 
@@ -296,7 +296,7 @@ export default function MembresCellule() {
       )}
 
       {editMember && (
-        <EditMemberPopup
+        <EditMemberCellulePopup
           member={editMember}
           onClose={() => setEditMember(null)}
           onUpdateMember={handleUpdateMember}

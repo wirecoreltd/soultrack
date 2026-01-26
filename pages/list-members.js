@@ -56,6 +56,16 @@ export default function ListMembers() {
     3: "Intégré",
     4: "Refus",
   };
+
+ const formatDateFr = (dateString) => {
+  if (!dateString) return "—";
+  const d = new Date(dateString);
+
+  const day = d.getDate().toString().padStart(2, "0");
+  const months = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+
+  return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+};
  
   // -------------------- Supprimer un membre (LOGIQUE) --------------------
    const handleSupprimerMembre = async (id) => {
@@ -388,7 +398,11 @@ export default function ListMembers() {
               </div>
             )}
           </div>
-    
+             
+            <p className="text-[11px] text-gray-400 text-center mt-3">
+            Créé le {formatDateFr(m.created_at)}
+            </p>
+             
             {/* Bouton Détails */}
             <button
               onClick={() => toggleDetails(m.id)}

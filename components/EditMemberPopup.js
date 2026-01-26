@@ -39,6 +39,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     star: !!member?.star,
     sexe: member?.sexe || "",
     venu: member?.venu || "",
+    raison_venue: member?.raison_venue || "intégré",
     besoin: initialBesoin,
     autreBesoin: "",
     commentaire_suivis: member?.commentaire_suivis || "",
@@ -46,6 +47,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     bapteme_esprit: member?.bapteme_esprit ?? false,
     Formation: member?.Formation || "",
     Soin_Pastoral: member?.Soin_Pastoral || "",
+    Ministere: member?.Ministere || "",
     Commentaire_Suivi_Evangelisation: member?.Commentaire_Suivi_Evangelisation || "",
     priere_salut: member?.priere_salut || "",
     type_conversion: member?.type_conversion || "",
@@ -141,12 +143,14 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         star: !!formData.star,
         sexe: formData.sexe || null,
         venu: formData.venu || null,
+        raison_venue: formData.raison_venue || "intégré",
         besoin: JSON.stringify(finalBesoin),
         commentaire_suivis: formData.commentaire_suivis || null,
         bapteme_eau: formData.bapteme_eau,
         bapteme_esprit: formData.bapteme_esprit,
         Formation: formData.Formation || "",
         Soin_Pastoral: formData.Soin_Pastoral || "",
+        Ministere: formData.Ministere || "",
         Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || "",
         priere_salut: formData.priere_salut || "",
         type_conversion: formData.type_conversion || "",
@@ -203,73 +207,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             </select>
           </div>
 
-          {/* Bapteme d'eau */}
-          <div className="flex flex-col">
-            <label className="font-medium">Bapteme d'eau</label>
-            <select name="bapteme_eau" value={formData.bapteme_eau.toString()} onChange={handleChange} className="input">
-              <option value="true">Oui</option>
-              <option value="false">Non</option>
-            </select>
-          </div>
-
-          {/* Bapteme de feu */}
-          <div className="flex flex-col">
-            <label className="font-medium">Bapteme de feu</label>
-            <select name="bapteme_esprit" value={formData.bapteme_esprit.toString()} onChange={handleChange} className="input">
-              <option value="true">Oui</option>
-              <option value="false">Non</option>
-            </select>
-          </div>
-
-          {/* Formation */}
-          <div className="flex flex-col">
-            <label className="font-medium">Formation</label>
-            <textarea name="Formation" value={formData.Formation} onChange={handleChange} className="input" rows={2} />
-          </div>
-
-          {/* Soin Pastoral */}
-          <div className="flex flex-col">
-            <label className="font-medium">Soin Pastoral</label>
-            <textarea name="Soin_Pastoral" value={formData.Soin_Pastoral} onChange={handleChange} className="input" rows={2} />
-          </div>
-
-          {/* Commentaire Suivi Evangelisation */}
-          <div className="flex flex-col">
-            <label className="font-medium">Commentaire Suivi Evangelisation</label>
-            <textarea name="Commentaire_Suivi_Evangelisation" value={formData.Commentaire_Suivi_Evangelisation} onChange={handleChange} className="input" rows={2} />
-          </div>
-
-          {/* Prière du salut */}
-          <label className="text-sm sm:text-base font-semibold">Prière du salut</label>
-          <select
-            className="input"
-            value={formData.priere_salut}
-            onChange={(e) => {
-              const value = e.target.value;
-              setFormData({ ...formData, priere_salut: value, type_conversion: value === "Oui" ? formData.type_conversion : "" });
-            }}
-          >
-            <option value="">-- Choisir --</option>
-            <option value="Oui">Oui</option>
-            <option value="Non">Non</option>
-          </select>
-
-          {/* Type de conversion */}
-          {formData.priere_salut === "Oui" && (
-            <>
-              <label className="text-sm sm:text-base font-semibold">Type de conversion</label>
-              <select
-                className="input"
-                value={formData.type_conversion}
-                onChange={(e) => setFormData({ ...formData, type_conversion: e.target.value })}
-              >
-                <option value="">-- Choisir --</option>
-                <option value="Nouveau converti">Nouveau converti</option>
-                <option value="Réconciliation">Réconciliation</option>
-              </select>
-            </>
-          )}
-
           {/* WhatsApp */}
           <label className="flex items-center gap-2 text-sm sm:text-base">
             <input
@@ -280,32 +217,122 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             Numéro WhatsApp
           </label>
 
+          {/* Baptêmes */}
+          <div className="flex flex-col">
+            <label>Bapteme d'eau</label>
+            <select name="bapteme_eau" value={formData.bapteme_eau.toString()} onChange={handleChange} className="input">
+              <option value="true">Oui</option>
+              <option value="false">Non</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col">
+            <label>Bapteme de feu</label>
+            <select name="bapteme_esprit" value={formData.bapteme_esprit.toString()} onChange={handleChange} className="input">
+              <option value="true">Oui</option>
+              <option value="false">Non</option>
+            </select>
+          </div>
+
+          {/* Formation / Soin / Ministère */}
+          <div className="flex flex-col">
+            <label>Formation</label>
+            <textarea name="Formation" value={formData.Formation} onChange={handleChange} className="input" rows={2} />
+          </div>
+          <div className="flex flex-col">
+            <label>Soin Pastoral</label>
+            <textarea name="Soin_Pastoral" value={formData.Soin_Pastoral} onChange={handleChange} className="input" rows={2} />
+          </div>
+          <div className="flex flex-col">
+            <label>Ministère</label>
+            <input name="Ministere" value={formData.Ministere} onChange={handleChange} className="input" />
+          </div>
+
+          {/* Besoins */}
+          <div className="flex flex-col">
+            <label>Besoins</label>
+            {besoinsOptions.map(b => (
+              <label key={b} className="flex items-center gap-2">
+                <input type="checkbox" value={b} checked={formData.besoin.includes(b)} onChange={handleBesoinChange} />
+                {b}
+              </label>
+            ))}
+            <label className="flex items-center gap-2">
+              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} />
+              Autre
+            </label>
+            {showAutre && (
+              <input name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input mt-2" placeholder="Précisez" />
+            )}
+          </div>
+
+          {/* Infos */}
+          <div className="flex flex-col">
+            <label>Informations supplémentaires</label>
+            <textarea name="infos_supplementaires" value={formData.infos_supplementaires} onChange={handleChange} className="input" rows={2} />
+          </div>
+
+          {/* Comment est-il venu / Raison */}
+          <div className="flex flex-col">
+            <label>Comment est-il venu ?</label>
+            <select name="venu" value={formData.venu} onChange={handleChange} className="input">
+              <option value="">-- Sélectionner --</option>
+              <option value="invité">Invité</option>
+              <option value="réseaux">Réseaux</option>
+              <option value="evangélisation">Évangélisation</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
+          <div className="flex flex-col">
+            <label>Raison de la venue</label>
+            <input name="raison_venue" value={formData.raison_venue} onChange={handleChange} className="input" />
+          </div>
+
+          {/* Prière du salut / Type conversion */}
+          <label>Prière du salut</label>
+          <select name="priere_salut" value={formData.priere_salut} onChange={(e) => {
+            const value = e.target.value;
+            setFormData({ ...formData, priere_salut: value, type_conversion: value === "Oui" ? formData.type_conversion : "" });
+          }} className="input">
+            <option value="">-- Choisir --</option>
+            <option value="Oui">Oui</option>
+            <option value="Non">Non</option>
+          </select>
+          {formData.priere_salut === "Oui" && (
+            <select name="type_conversion" value={formData.type_conversion} onChange={(e) => setFormData({ ...formData, type_conversion: e.target.value })} className="input">
+              <option value="">-- Choisir --</option>
+              <option value="Nouveau converti">Nouveau converti</option>
+              <option value="Réconciliation">Réconciliation</option>
+            </select>
+          )}
+
+          {/* Commentaires */}
+          <div className="flex flex-col">
+            <label>Commentaire Suivis</label>
+            <textarea name="commentaire_suivis" value={formData.commentaire_suivis} onChange={handleChange} className="input" rows={2} />
+          </div>
+          <div className="flex flex-col">
+            <label>Commentaire Suivi Evangelisation</label>
+            <textarea name="Commentaire_Suivi_Evangelisation" value={formData.Commentaire_Suivi_Evangelisation} onChange={handleChange} className="input" rows={2} />
+          </div>
+
         </div>
 
         {/* Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
-          <button type="button" onClick={onClose} className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">Annuler</button>
-          <button type="button" onClick={handleSubmit} disabled={loading} className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3 rounded-2xl shadow-md transition-all">
+          <button type="button" onClick={onClose} className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md">Annuler</button>
+          <button type="button" onClick={handleSubmit} disabled={loading} className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md">
             {loading ? "Enregistrement..." : "Sauvegarder"}
           </button>
         </div>
 
-        {/* Message succès ou erreur */}
         {message && <p className="text-[#25297e] font-semibold text-center mt-3">{message}</p>}
 
         <style jsx>{`
+          .input { width: 100%; border: 1px solid #a0c4ff; border-radius: 14px; padding: 12px; background: rgba(255,255,255,0.1); color: white; }
+          select.input, textarea.input, input.input { font-weight: 400; color: white; }
+          select.input option { background: white; color: black; }
           label { font-weight: 600; color: white; }
-          .input {
-            width: 100%;
-            border: 1px solid #a0c4ff;
-            border-radius: 14px;
-            padding: 12px;
-            background: rgba(255,255,255,0.1);
-            color: white;
-            font-weight: 400;
-          }
-          select.input { font-weight: 400; color: white; }
-          select.input option { background: white; color: black; font-weight: 400; }
         `}</style>
 
       </div>

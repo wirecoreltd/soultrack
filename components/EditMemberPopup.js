@@ -38,8 +38,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     is_whatsapp: !!member?.is_whatsapp,
     star: !!member?.star,
     sexe: member?.sexe || "",
-    venu: member?.venu || "",
-    raison_venue: member?.raison_venue || "intégré",
+    venu: member?.venu || "",   
     besoin: initialBesoin,
     autreBesoin: "",
     commentaire_suivis: member?.commentaire_suivis || "",
@@ -142,8 +141,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         is_whatsapp: !!formData.is_whatsapp,
         star: !!formData.star,
         sexe: formData.sexe || null,
-        venu: formData.venu || null,
-        raison_venue: formData.raison_venue || "intégré",
+        venu: formData.venu || null,        
         besoin: JSON.stringify(finalBesoin),
         commentaire_suivis: formData.commentaire_suivis || null,
         bapteme_eau: formData.bapteme_eau,
@@ -282,12 +280,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="evangélisation">Évangélisation</option>
               <option value="autre">Autre</option>
             </select>
-          </div>
-          <div className="flex flex-col">
-            <label>Raison de la venue</label>
-            <input name="raison_venue" value={formData.raison_venue} onChange={handleChange} className="input" />
-          </div>
-
+          
           {/* Prière du salut / Type conversion */}
           <label>Prière du salut</label>
           <select name="priere_salut" value={formData.priere_salut} onChange={(e) => {

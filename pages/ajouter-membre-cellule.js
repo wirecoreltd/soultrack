@@ -298,7 +298,7 @@ export default function AjouterMembreCellule() {
                 className="input mt-1"
               />
             )}     
-            
+            </div>
           <textarea
             name="infos_supplementaires"
             placeholder="Informations supplémentaires..."

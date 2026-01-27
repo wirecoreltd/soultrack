@@ -286,9 +286,14 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
             <div className="flex flex-col gap-2">
               <label className="font-medium">Ministère</label>
           
-              <div className="grid grid-cols-[1fr_auto] gap-y-2">
-                {ministereOptions.map((m) => (
-                  <label className="flex items-center gap-4">
+              <div className="flex flex-col gap-2 pr-6">
+                {ministereOptions.map(m => (
+                  <label
+                    key={m}
+                    className="grid grid-cols-[1fr_24px] items-center"
+                  >
+                    <span>{m}</span>
+          
                     <input
                       type="checkbox"
                       value={m}
@@ -302,14 +307,13 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
                             : prev.Ministere.filter(v => v !== value),
                         }));
                       }}
-                      className="accent-[#25297e]"
+                      className="accent-[#25297e] w-4 h-4"
                     />
-                    <span>{m}</span>
                   </label>
                 ))}
           
                 {/* AUTRE */}
-                <label className="contents">
+                <label className="grid grid-cols-[1fr_24px] items-center">
                   <span>Autre</span>
                   <input
                     type="checkbox"
@@ -322,24 +326,22 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
                           ? [...prev.Ministere, "Autre"]
                           : prev.Ministere.filter(v => v !== "Autre"),
                       }));
-                      if (!checked) setAutreMinistere("");
                     }}
-                    className="accent-[#25297e]"
+                    className="accent-[#25297e] w-4 h-4"
                   />
                 </label>
-              </div>
           
-              {formData.Ministere.includes("Autre") && (
-                <input
-                  type="text"
-                  className="input mt-2"
-                  placeholder="Précisez le ministère"
-                  value={autreMinistere}
-                  onChange={(e) => setAutreMinistere(e.target.value)}
-                />
-              )}
+                {formData.Ministere.includes("Autre") && (
+                  <input
+                    type="text"
+                    placeholder="Précisez le ministère"
+                    className="input mt-2"
+                  />
+                )}
+              </div>
             </div>
-          )}    
+          )}
+
 
           {/* État du contact */}
           <div className="flex flex-col">

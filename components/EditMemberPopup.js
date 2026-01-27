@@ -294,57 +294,66 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </div>            
                         
             {/* Ministere */}    
-            {formData.star && (
-              <div className="flex flex-col gap-2">
-                <label className="font-medium">Ministère</label>
-            
-                {/* Checkboxes ministères */}
-                {ministereOptions.map((m) => (
-                  <label key={m} className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      value={m}
-                      checked={formData.Ministere.includes(m)}
-                      onChange={(e) => {
-                        const { checked, value } = e.target;
-                        setFormData(prev => ({
-                          ...prev,
-                          Ministere: checked
-                            ? [...prev.Ministere, value]
-                            : prev.Ministere.filter(v => v !== value),
-                        }));
-                      }}
-                      className="accent-[#25297e]"
-                    />
-                    <span>{m}</span>
-                  </label>
-                ))}
-            
-                {/* Case Autre */}
-                <label className="flex items-center gap-3 mt-2">
+           {formData.star && (
+            <div className="flex flex-col gap-2">
+              <label className="font-medium">Ministère</label>
+          
+              {/* Checkboxes ministères */}
+              {ministereOptions.map((m) => (
+                <label key={m} className="flex items-center gap-3">
                   <input
                     type="checkbox"
-                    checked={!!formData.Autre_Ministere} // coche si champ rempli
+                    value={m}
+                    checked={formData.Ministere.includes(m)}
                     onChange={(e) => {
-                      if (!e.target.checked) setFormData(prev => ({ ...prev, Autre_Ministere: "" }));
+                      const { checked, value } = e.target;
+                      setFormData(prev => ({
+                        ...prev,
+                        Ministere: checked
+                          ? [...prev.Ministere, value]
+                          : prev.Ministere.filter(v => v !== value),
+                      }));
                     }}
                     className="accent-[#25297e]"
                   />
-                  <span>Autre</span>
+                  <span>{m}</span>
                 </label>
-            
-                {/* Champ texte Autre */}
-                {formData.Autre_Ministere !== "" && (
-                  <input
-                    type="text"
-                    className="input mt-2"
-                    placeholder="Précisez le ministère"
-                    value={formData.Autre_Ministere}
-                    onChange={(e) =>
-                      setFormData(prev => ({ ...prev, Autre_Ministere: e.target.value }))
-                    }
-                  />
-                )}
+              ))}
+          
+              {/* Case Autre */}
+              <label className="flex items-center gap-3 mt-2">
+                <input
+                  type="checkbox"
+                  checked={!!formData.Autre_Ministere} // coche si champ rempli
+                  onChange={(e) => {
+                    if (!e.target.checked) setFormData(prev => ({ ...prev, Autre_Ministere: "" }));
+                  }}
+                  className="accent-[#25297e]"
+                />
+                <span>Autre</span>
+              </label>
+          
+              {/* Champ texte Autre */}
+              {formData.Autre_Ministere !== "" && (
+                <input
+                  type="text"
+                  className="input mt-2"
+                  placeholder="Précisez le ministère"
+                  value={formData.Autre_Ministere}
+                  onChange={(e) =>
+                    setFormData(prev => ({ ...prev, Autre_Ministere: e.target.value }))
+                  }
+                />
+              )}
+          
+              {/* Affichage fusionné à titre visuel */}
+              <p className="mt-1 text-white/80">
+                <strong>Affichage :</strong>{" "}
+                {[...formData.Ministere, formData.Autre_Ministere].filter(Boolean).join(", ")}
+              </p>
+            </div>
+          )}  
+
             
                 {/* Affichage fusionné à titre visuel */}
                 <p className="mt-1 text-white/80">

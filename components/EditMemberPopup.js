@@ -185,11 +185,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           Ministere: formData.star ? JSON.stringify(finalMinistere) : null,
           Autre_Ministere: finalAutreMinistere,
         };
-
       }
-
-
-
       const payload = {
         prenom: formData.prenom,
         nom: formData.nom,

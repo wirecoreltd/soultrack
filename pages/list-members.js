@@ -380,11 +380,10 @@ export default function ListMembers() {
           </div>
               
               <div className="flex justify-end text-right mt-3">
-    <p className="self-end text-[11px] text-gray-400 mt-3">
-  Créé le {formatDateFr(m.date_suivi)}
-</p>
-
-  </div>                  
+              <p className="w-full text-right text-[11px] text-gray-400 mt-3">
+            Créé le {formatDateFr(m.created_at)}
+          </p>
+            </div>                  
 
             {/* Bouton Détails */}
             <button

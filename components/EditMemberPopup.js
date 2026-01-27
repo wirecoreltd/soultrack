@@ -365,18 +365,7 @@ const handleSubmit = async () => {
         }
       />
     )}
-
-    {/* Affichage fusionné */}
-    <p className="mt-1 text-white/80">
-      <strong>Affichage :</strong>{" "}
-      {[...formData.Ministere.filter(m => m !== "Autre"), formData.Autre_Ministere]
-        .filter(Boolean)
-        .join(", ")}
-    </p>
-  </div>
-)}
-      
-                
+                      
           {/* État du contact */}
           <div className="flex flex-col">
             <label className="font-medium">État du contact</label>

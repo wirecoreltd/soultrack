@@ -437,7 +437,7 @@ export default function SuivisEvangelisation() {
                 <p className="text-sm text-black-700 mb-2">
                   🏙️ Ville : {m.ville || "—"}
                 </p> 
-                <p className="text-[11px] text-gray-400 text-right mt-3">Créé le {formatDateFr(member.created_at)} </p>
+                <p className="text-[11px] text-gray-400 text-right mt-3">Créé le {formatDateFr(m.created_at)} </p>
 
                 {/* Commentaire + statut */}
                 <div className="w-full bg-slate-50 rounded-xl p-3 mt-2">

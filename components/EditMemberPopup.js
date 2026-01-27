@@ -7,7 +7,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   if (!member) return null;
 
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
-  const [autreMinistere, setAutreMinistere] = useState("");
+  const [autreMinistere, setAutreMinistere] = useState(
+  member?.Autre_Ministere || ""
+  );
 
   const parseBesoin = (b) => {
     if (!b) return [];
@@ -99,6 +101,17 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     return () => { mounted = false; };
   }, []);
 
+  useEffect(() => {
+  if (member?.Autre_Ministere) {
+    setFormData(prev => ({
+      ...prev,
+      Ministere: prev.Ministere.includes("Autre")
+        ? prev.Ministere
+        : [...prev.Ministere, "Autre"],
+    }));
+  }
+}, [member]);
+
   // -------------------- HANDLERS --------------------
   const handleChange = (e) => {
   const { name, value, type, checked } = e.target;
@@ -162,12 +175,14 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       } else {
         finalBesoin = finalBesoin.filter(b => b !== "Autre");
       }
-      let finalMinistere = [...formData.Ministere];
 
-if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
-  finalMinistere = finalMinistere.filter(m => m !== "Autre");
-  finalMinistere.push(autreMinistere.trim());
-}
+      let finalMinistere = formData.Ministere.filter(m => m !== "Autre");
+      
+      if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
+        finalMinistere = finalMinistere.filter(m => m !== "Autre");
+        finalMinistere.push(autreMinistere.trim());
+      }
+
 
 
       const payload = {
@@ -195,6 +210,8 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
         Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
         Soin_Pastoral: formData.Soin_Pastoral || null,        
         Ministere: formData.star? JSON.stringify(finalMinistere): null,
+        Autre_Ministere: AutreMinistere?.trim() || null,
+
       };
 
       const { error } = await supabase

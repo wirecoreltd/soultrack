@@ -177,11 +177,15 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         finalBesoin = finalBesoin.filter(b => b !== "Autre");
       }
 
-      let finalMinistere = formData.Ministere.filter(m => m !== "Autre");
-      
-      if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
-        finalMinistere = finalMinistere.filter(m => m !== "Autre");
-        finalMinistere.push(autreMinistere.trim());
+      let finalMinistere = [...formData.Ministere];
+        let finalAutreMinistere = formData.Autre_Ministere?.trim() || null;
+        
+        const payload = {
+          ...
+          Ministere: formData.star ? JSON.stringify(finalMinistere) : null,
+          Autre_Ministere: finalAutreMinistere,
+        };
+
       }
 
 
@@ -210,8 +214,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         Formation: formData.Formation || null,        
         Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
         Soin_Pastoral: formData.Soin_Pastoral || null,        
-        Ministere: formData.star? JSON.stringify(finalMinistere): null,
-        Autre_Ministere: autreMinistere?.trim() || null,
+        Ministere: formData.star ? JSON.stringify(finalMinistere) : null,
+        Autre_Ministere: finalAutreMinistere,
 
       };
 
@@ -297,37 +301,28 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               onChange={handleChange}
               className="accent-[#25297e]"
             />
-          </div>
-            
-          {/* Ministere */}                  
+          </div>            
+                        
+            {/* Ministere */}    
             {formData.star && (
               <div className="flex flex-col gap-2">
                 <label className="font-medium">Ministère</label>
             
-                {( [...formData.Ministere.filter(m => m !== "Autre"), ...(formData.Autre_Ministere ? [formData.Autre_Ministere] : [])] ).map((m, idx) => (
-                  <label key={idx} className="flex items-center gap-3">
+                {/* Checkboxes ministères */}
+                {ministereOptions.map((m) => (
+                  <label key={m} className="flex items-center gap-3">
                     <input
                       type="checkbox"
                       value={m}
-                      checked={
-                        formData.Ministere.includes(m) ||
-                        formData.Autre_Ministere === m
-                      }
+                      checked={formData.Ministere.includes(m)}
                       onChange={(e) => {
                         const { checked, value } = e.target;
-                        if (value === formData.Autre_Ministere) {
-                          // décocher ou modifier le champ "Autre_Ministere"
-                          if (!checked) {
-                            setFormData(prev => ({ ...prev, Autre_Ministere: "" }));
-                          }
-                        } else {
-                          setFormData(prev => ({
-                            ...prev,
-                            Ministere: checked
-                              ? [...prev.Ministere, value]
-                              : prev.Ministere.filter(v => v !== value),
-                          }));
-                        }
+                        setFormData(prev => ({
+                          ...prev,
+                          Ministere: checked
+                            ? [...prev.Ministere, value]
+                            : prev.Ministere.filter(v => v !== value),
+                        }));
                       }}
                       className="accent-[#25297e]"
                     />
@@ -335,11 +330,11 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
                   </label>
                 ))}
             
-                {/* OPTION AUTRE pour ajouter un nouveau ministère si nécessaire */}
+                {/* Case Autre */}
                 <label className="flex items-center gap-3 mt-2">
                   <input
                     type="checkbox"
-                    checked={!!formData.Autre_Ministere && !formData.Ministere.includes(formData.Autre_Ministere)}
+                    checked={!!formData.Autre_Ministere} // coche si champ rempli
                     onChange={(e) => {
                       if (!e.target.checked) setFormData(prev => ({ ...prev, Autre_Ministere: "" }));
                     }}
@@ -348,8 +343,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
                   <span>Autre</span>
                 </label>
             
-                {/* CHAMP TEXTE AUTRE */}
-                {formData.Ministere.includes("Autre") || formData.Autre_Ministere ? (
+                {/* Champ texte Autre */}
+                {formData.Autre_Ministere !== "" && (
                   <input
                     type="text"
                     className="input mt-2"
@@ -359,9 +354,16 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
                       setFormData(prev => ({ ...prev, Autre_Ministere: e.target.value }))
                     }
                   />
-                ) : null}
+                )}
+            
+                {/* Affichage fusionné à titre visuel */}
+                <p className="mt-1 text-white/80">
+                  <strong>Affichage :</strong>{" "}
+                  {[...formData.Ministere, formData.Autre_Ministere].filter(Boolean).join(", ")}
+                </p>
               </div>
             )}
+
 
           {/* État du contact */}
           <div className="flex flex-col">

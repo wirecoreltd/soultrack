@@ -66,23 +66,28 @@ export default function ListMembers() {
   };
 
   const formatMinistere = (ministereJson, autreMinistere) => {
-    let ministereList = [];
+  let ministereList = [];
 
-    if (ministereJson) {
-      try {
-        const parsed = typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
-        ministereList = Array.isArray(parsed) ? parsed : [parsed];
-      } catch {
-        ministereList = [ministereJson];
-      }
+  // Parser le champ Ministere
+  if (ministereJson) {
+    try {
+      const parsed = typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
+      ministereList = Array.isArray(parsed) ? parsed : [parsed];
+      // On retire explicitement "Autre" si présent
+      ministereList = ministereList.filter(m => m.toLowerCase() !== "autre");
+    } catch {
+      if (ministereJson.toLowerCase() !== "autre") ministereList = [ministereJson];
     }
+  }
 
-    if (autreMinistere?.trim()) {
-      ministereList.push(autreMinistere.trim());
-    }
+  // Ajouter la valeur réelle du champ Autre_Ministere si rempli
+  if (autreMinistere?.trim()) {
+    ministereList.push(autreMinistere.trim());
+  }
 
-    return ministereList.join(", ");
-  };
+  return ministereList.join(", ");
+};
+
 
   // -------------------- Supprimer un membre --------------------
   const handleSupprimerMembre = async (id) => {

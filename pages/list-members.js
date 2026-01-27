@@ -66,6 +66,29 @@ export default function ListMembers() {
 
   return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
 };
+
+ const formatMinistere = (ministereJson, autreMinistere) => {
+  let ministereList = [];
+
+  // Parse Ministere s'il existe
+  if (ministereJson) {
+    try {
+      const parsed = typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
+      if (Array.isArray(parsed)) ministereList = parsed;
+      else ministereList = [parsed];
+    } catch {
+      ministereList = [ministereJson];
+    }
+  }
+
+  // Ajouter Autre_Ministere si rempli
+  if (autreMinistere?.trim()) {
+    ministereList.push(autreMinistere.trim());
+  }
+
+  // Retourner sous forme d'une seule ligne
+  return ministereList.join(", ");
+};
  
   // -------------------- Supprimer un membre (LOGIQUE) --------------------
    const handleSupprimerMembre = async (id) => {
@@ -422,7 +445,7 @@ export default function ListMembers() {
                 <p>🔥 Baptême de Feu : {toBoolean(m.bapteme_esprit) ? "Oui" : "Non"}</p> 
                 <p>✒️ Formation : {m.Formation || ""}</p>
                 <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>
-                <p>💢 Ministère : {formatMinistere(m.Ministere)}</p>
+                <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere)}</p>
                 <p>❓ Besoin : {besoins}</p>
                 <p>📝 Infos : {m.infos_supplementaires || ""}</p>
                 <p>🧩 Comment est-il venu : {m.venu || ""}</p>

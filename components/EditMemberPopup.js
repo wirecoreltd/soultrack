@@ -7,6 +7,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   if (!member) return null;
 
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+  const [autreMinistere, setAutreMinistere] = useState("");
 
   const parseBesoin = (b) => {
     if (!b) return [];
@@ -161,6 +162,13 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       } else {
         finalBesoin = finalBesoin.filter(b => b !== "Autre");
       }
+      let finalMinistere = [...formData.Ministere];
+
+if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
+  finalMinistere = finalMinistere.filter(m => m !== "Autre");
+  finalMinistere.push(autreMinistere.trim());
+}
+
 
       const payload = {
         prenom: formData.prenom,
@@ -185,10 +193,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         is_whatsapp: !!formData.is_whatsapp,
         Formation: formData.Formation || null,        
         Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
-        Soin_Pastoral: formData.Soin_Pastoral || null,
-        Ministere: formData.star
-            ? JSON.stringify(formData.Ministere)
-            : null,
+        Soin_Pastoral: formData.Soin_Pastoral || null,        
+        Ministere: formData.star? JSON.stringify(finalMinistere): null,
       };
 
       const { error } = await supabase
@@ -225,32 +231,31 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         <div className="overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-white">
 
           {["prenom", "nom", "telephone", "ville"].map((f) => (
-  <div key={f} className="flex flex-col">
-    <label className="font-medium capitalize">{f}</label>
-
-    <input
-      name={f}
-      value={formData[f]}
-      onChange={handleChange}
-      className="input"
-    />
-
-    {/* Checkbox WhatsApp sous téléphone */}
-    {f === "telephone" && (
-      <div className="flex items-center gap-3 mt-3">
-        <label className="font-medium">Numéro Whatsapp</label>
-        <input
-          type="checkbox"
-          name="is_whatsapp"
-          checked={formData.is_whatsapp}
-          onChange={handleChange}
-          className="accent-[#25297e]"
-        />
-      </div>
-    )}
-  </div>
-))}
-
+            <div key={f} className="flex flex-col">
+              <label className="font-medium capitalize">{f}</label>
+          
+              <input
+                name={f}
+                value={formData[f]}
+                onChange={handleChange}
+                className="input"
+              />
+          
+              {/* Checkbox WhatsApp sous téléphone */}
+              {f === "telephone" && (
+                <div className="flex items-center gap-3 mt-3">
+                  <label className="font-medium">Numéro Whatsapp</label>
+                  <input
+                    type="checkbox"
+                    name="is_whatsapp"
+                    checked={formData.is_whatsapp}
+                    onChange={handleChange}
+                    className="accent-[#25297e]"
+                  />
+                </div>
+              )}
+            </div>
+          ))}
 
           {/* Sexe */}
           <div className="flex flex-col">
@@ -263,49 +268,78 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </div>
 
           {/* Serviteur */}         
-<div className="flex items-center gap-3 mt-3">
-  <label className="font-medium">
-    Définir en tant que serviteur
-  </label>
-  <input
-    type="checkbox"
-    name="star"
-    checked={formData.star}
-    onChange={handleChange}
-    className="accent-[#25297e]"
-  />
-</div>
-
-              {formData.star && (
-  <div className="flex flex-col gap-2">
-    <label className="font-medium">Ministère</label>
-
-    {ministereOptions.map(m => (
-      <label
-        key={m}
-        className="flex items-center justify-between"
-      >
-        <span>{m}</span>
-        <input
-          type="checkbox"
-          value={m}
-          checked={formData.Ministere.includes(m)}
-          onChange={(e) => {
-            const { value, checked } = e.target;
-            setFormData(prev => ({
-              ...prev,
-              Ministere: checked
-                ? [...prev.Ministere, value]
-                : prev.Ministere.filter(v => v !== value),
-            }));
-          }}
-          className="accent-[#25297e]"
-        />
-      </label>
-    ))}
-  </div>
-)}
-      
+          <div className="flex items-center gap-3 mt-3">
+            <label className="font-medium">
+              Définir en tant que serviteur
+            </label>
+            <input
+              type="checkbox"
+              name="star"
+              checked={formData.star}
+              onChange={handleChange}
+              className="accent-[#25297e]"
+            />
+          </div>
+            
+            {/* Ministere */}    
+            {formData.star && (
+            <div className="flex flex-col gap-2">
+              <label className="font-medium">Ministère</label>
+          
+              <div className="grid grid-cols-[1fr_auto] gap-y-2">
+                {ministereOptions.map((m) => (
+                  <label key={m} className="contents">
+                    <span>{m}</span>
+                    <input
+                      type="checkbox"
+                      value={m}
+                      checked={formData.Ministere.includes(m)}
+                      onChange={(e) => {
+                        const { value, checked } = e.target;
+                        setFormData(prev => ({
+                          ...prev,
+                          Ministere: checked
+                            ? [...prev.Ministere, value]
+                            : prev.Ministere.filter(v => v !== value),
+                        }));
+                      }}
+                      className="accent-[#25297e]"
+                    />
+                  </label>
+                ))}
+          
+                {/* AUTRE */}
+                <label className="contents">
+                  <span>Autre</span>
+                  <input
+                    type="checkbox"
+                    checked={formData.Ministere.includes("Autre")}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setFormData(prev => ({
+                        ...prev,
+                        Ministere: checked
+                          ? [...prev.Ministere, "Autre"]
+                          : prev.Ministere.filter(v => v !== "Autre"),
+                      }));
+                      if (!checked) setAutreMinistere("");
+                    }}
+                    className="accent-[#25297e]"
+                  />
+                </label>
+              </div>
+          
+              {formData.Ministere.includes("Autre") && (
+                <input
+                  type="text"
+                  className="input mt-2"
+                  placeholder="Précisez le ministère"
+                  value={autreMinistere}
+                  onChange={(e) => setAutreMinistere(e.target.value)}
+                />
+              )}
+            </div>
+          )}    
 
           {/* État du contact */}
           <div className="flex flex-col">

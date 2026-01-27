@@ -286,12 +286,11 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
             <div className="flex flex-col gap-2">
               <label className="font-medium">Ministère</label>
           
-              <div className="flex flex-col gap-2 pr-6">
+              <div className="flex flex-col gap-2">
                 {ministereOptions.map(m => (
                   <label
                     key={m}
-                    className="grid grid-cols-[1fr_24px] items-center"
-                  >
+                    className="grid grid-cols-[auto_20px] items-center gap-3 max-w-fit">
                     <span>{m}</span>
           
                     <input

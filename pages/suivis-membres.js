@@ -222,7 +222,7 @@ export default function SuivisMembres() {
 
     return (
       <div className="text-black text-sm space-y-2 w-full">
-        <p>📅 Crée le : {formatDateFr(m.created_at)}</p>   
+        <p>📅 {m.sexe === "Femme" ? "Arrivée" : "Arrivé"} le : {formatDateFr(m.created_at)}</p> 
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
         <p>🎗️ Sexe : {m.sexe || ""}</p>
         <p>💧 Baptême d'Eau : {m.bapteme_eau ? "Oui" : "Non"}</p>
@@ -336,6 +336,8 @@ export default function SuivisMembres() {
           <p className="text-sm text-black-700 mb-1">
             👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}
           </p>
+            
+          <p className="self-end text-[11px] text-gray-400 mt-3">Créé le {formatDateFr(m.date_premiere_visite)}</p>
 
           {/* Commentaire & Statut */}
           <div className="flex flex-col w-full mt-2">
@@ -397,10 +399,8 @@ export default function SuivisMembres() {
                 {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
               </button>
             )}
-          </div>
-         
-          <p className="self-end text-[11px] text-gray-400 mt-3">Créé le {formatDateFr(m.date_premiere_visite)}</p>
-  
+          </div>       
+            
           {/* Bouton Détails */}
           <button
             onClick={() => toggleDetails(m.id)}

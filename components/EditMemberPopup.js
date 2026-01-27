@@ -288,8 +288,7 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
           
               <div className="grid grid-cols-[1fr_auto] gap-y-2">
                 {ministereOptions.map((m) => (
-                  <label key={m} className="contents">
-                    <span>{m}</span>
+                  <label className="flex items-center gap-4">
                     <input
                       type="checkbox"
                       value={m}
@@ -305,6 +304,7 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
                       }}
                       className="accent-[#25297e]"
                     />
+                    <span>{m}</span>
                   </label>
                 ))}
           

@@ -160,8 +160,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     }));
   };
 
-  // -------------------- SUBMIT --------------------
-  // -------------------- SUBMIT --------------------
+  // -------------------- SUBMIT -------------------- 
 const handleSubmit = async () => {
   setMessage("");
 
@@ -360,18 +359,8 @@ const handleSubmit = async () => {
                 {[...formData.Ministere, formData.Autre_Ministere].filter(Boolean).join(", ")}
               </p>
             </div>
-          )}  
-
-            
-                {/* Affichage fusionné à titre visuel */}
-                <p className="mt-1 text-white/80">
-                  <strong>Affichage :</strong>{" "}
-                  {[...formData.Ministere, formData.Autre_Ministere].filter(Boolean).join(", ")}
-                </p>
-              </div>
-            )}
-
-
+          )}          
+                
           {/* État du contact */}
           <div className="flex flex-col">
             <label className="font-medium">État du contact</label>

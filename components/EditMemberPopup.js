@@ -53,6 +53,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     Formation: member?.Formation || "",
     Soin_Pastoral: member?.Soin_Pastoral || "",
     Ministere: parseBesoin(member?.Ministere),
+    Autre_Ministere: parseBesoin(member?.Autre_Ministere),
     Commentaire_Suivi_Evangelisation: member?.Commentaire_Suivi_Evangelisation || "",
 
   });

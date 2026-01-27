@@ -429,15 +429,15 @@ export default function SuivisEvangelisation() {
                   </div>
 
                 <p className="text-sm text-black-700 mb-1">
-                  🏠 Cellule : {cellule?.cellule_full || "—"}
+                  🏠 Cellule : {cellule?.cellule_full || ""}
                 </p>
                 <p className="text-sm text-black-700 mb-2">
-                  👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : "—"}
+                  👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : ""}
                 </p>
                 <p className="text-sm text-black-700 mb-2">
-                  🏙️ Ville : {m.ville || "—"}
+                  🏙️ Ville : {m.ville || ""}
                 </p> 
-                <p className="text-[11px] text-gray-400 text-right mt-3">Créé le {formatDateFr(m.created_at)} </p>
+                <p className="text-[11px] text-gray-400 text-right mt-3">Créé le {formatDateFr(m.date_suivi} </p>
 
                 {/* Commentaire + statut */}
                 <div className="w-full bg-slate-50 rounded-xl p-3 mt-2">
@@ -512,11 +512,11 @@ export default function SuivisEvangelisation() {
                 {ouvert && (
                   <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
                     <p>📅 {m.sexe === "Femme" ? "Évangélisée" : "Évangélisé"} le : {formatDateFr(m.Date_Evangelise)}</p>                
-                    <p>🎗️ Sexe : {m.sexe || "—"}</p>
+                    <p>🎗️ Sexe : {m.sexe || ""}</p>
                     <p>🙏 Prière salut : {m.priere_salut ? "Oui" : "Non"}</p>
-                    <p>☀️ Type : {m.type_conversion || "—"}</p>
+                    <p>☀️ Type : {m.type_conversion || ""}</p>
                     <p>❓ Besoin : {formatBesoin(m.besoin)}</p>
-                    <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                    <p>📝 Infos : {m.infos_supplementaires || ""}</p>
 
                     {/* Bouton Modifier uniquement si ce n'est pas un refus */}
                 {!showRefus && (

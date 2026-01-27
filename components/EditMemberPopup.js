@@ -216,7 +216,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         Soin_Pastoral: formData.Soin_Pastoral || null,        
         Ministere: formData.star ? JSON.stringify(finalMinistere) : null,
         Autre_Ministere: finalAutreMinistere,
-
       };
 
       const { error } = await supabase

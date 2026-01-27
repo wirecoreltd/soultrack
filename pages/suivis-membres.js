@@ -181,6 +181,12 @@ export default function SuivisMembres() {
   return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
 };
 
+  const formatOuiNon = (value) => {
+  if (value === true || value === "Oui") return "Oui";
+  if (value === false || value === "Non") return "Non";
+  return "Non"; // par défaut
+};
+
   const filteredMembers = members.filter(m => {
     const status = m.statut_suivis ?? 0;
     if (showRefus) return status === 4;
@@ -225,12 +231,8 @@ export default function SuivisMembres() {
         <p>📅 {m.sexe === "Femme" ? "Arrivée" : "Arrivé"} le : {formatDateFr(m.created_at)}</p> 
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
         <p>🎗️ Sexe : {m.sexe || ""}</p>
-        {m.bapteme_eau !== null && m.bapteme_eau !== undefined && (
-          <p>💧 Baptême d'Eau : {m.bapteme_eau ? "Oui" : "Non"}</p>
-        )}
-        {m.bapteme_esprit !== null && m.bapteme_esprit !== undefined && (
-          <p>🔥 Baptême de Feu : {m.bapteme_esprit ? "Oui" : "Non"}</p>
-        )}
+        <p>💧 Baptême d'Eau : {formatOuiNon(m.bapteme_eau)}</p>
+        <p>🔥 Baptême de Feu : {formatOuiNon(m.bapteme_esprit)}</p>
         <p>✒️ Formation : {m.Formation || "—"}</p>  
         <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>      
         <p>❓ Besoin : {formatArrayField(m.besoin)}</p>

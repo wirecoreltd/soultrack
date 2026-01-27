@@ -397,8 +397,8 @@ export default function ListMembers() {
                   💡 Statut Suivi : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}</p>
                 <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                 <p>🎗️ Sexe : {m.sexe || ""}</p>
-                <p>💧 Baptême d’Eau : {m.bapteme_eau) || ""}</p>          
-                <p>🔥 Baptême de Feu : {m.bapteme_esprit) || ""}</p>  
+                <p>💧 Baptême d’Eau : {m.bapteme_eau || "—"}</p>
+                <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
                 <p>✒️ Formation : {m.Formation || ""}</p>
                 <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>
                 <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere) || "—"}</p>

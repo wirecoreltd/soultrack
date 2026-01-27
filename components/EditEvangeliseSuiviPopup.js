@@ -167,6 +167,7 @@ export default function EditEvangeliseSuiviPopup({
           {/* Sexe */}
           <select
             className="input select-black"
+            name="Sexe
             value={formData.sexe || ""}
             onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}
             required
@@ -181,6 +182,7 @@ export default function EditEvangeliseSuiviPopup({
           {/* Prière du salut */}
           <select
             className="input select-black"
+            name="Prière du salut"
             value={formData.priere_salut ? "Oui" : "Non"}
             required
             onChange={(e) => {
@@ -203,6 +205,7 @@ export default function EditEvangeliseSuiviPopup({
           {formData.priere_salut && (
             <select
               className="input select-black"
+              name="Type de conversion"
               value={formData.type_conversion || ""}
               onChange={(e) =>
                 setFormData({ ...formData, type_conversion: e.target.value })

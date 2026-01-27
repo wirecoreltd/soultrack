@@ -231,6 +231,16 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             </select>
           </div>
 
+            {/* Etat Contact*/}
+          <div className="flex flex-col">
+            <label>Etat Contact</label>
+            <select name="etat_contact" value={formData.etat_contact.toString()} onChange={handleChange} className="input">
+              <option value="Nouveau">Nouveau</option>
+              <option value="Existant">Existant</option>
+              <option value="Inactif">Inactif</option>
+            </select>
+          </div>
+
           {/* Formation / Soin / Ministère */}
           <div className="flex flex-col">
             <label>Formation</label>

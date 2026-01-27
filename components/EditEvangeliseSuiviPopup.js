@@ -167,7 +167,7 @@ export default function EditEvangeliseSuiviPopup({
           {/* Sexe */}
           <select
             className="input select-black"
-            name="Sexe
+            name="Sexe"
             value={formData.sexe || ""}
             onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}
             required

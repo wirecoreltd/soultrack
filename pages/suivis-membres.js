@@ -398,7 +398,7 @@ export default function SuivisMembres() {
               </button>
             )}
           </div>
-          //<p className="text-[11px] text-gray-400 text-right mt-3">Créé le {formatDateFr(m.date_premiere_visite)} </p>
+         
           <p className="self-end text-[11px] text-gray-400 mt-3">Créé le {formatDateFr(m.date_premiere_visite)}</p>
   
           {/* Bouton Détails */}

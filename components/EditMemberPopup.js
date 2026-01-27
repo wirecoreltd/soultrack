@@ -230,8 +230,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       setMessage("❌ Une erreur est survenue lors de l’enregistrement.");
     } finally {
       setLoading(false);
-    }
-  };
+    } 
   // -------------------- UI --------------------
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4">

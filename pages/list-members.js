@@ -85,19 +85,10 @@ const formatMinistere = (ministereJson, autreMinistere) => {
     ministereList.push(autreMinistere.trim());
   }
 
-  return ministereList.join(", ");
-};
-    }
-  }
-
-  // Ajouter Autre_Ministere si rempli
-  if (autreMinistere?.trim()) {
-    ministereList.push(autreMinistere.trim());
-  }
-
   // Retourner sous forme d'une seule ligne
   return ministereList.join(", ");
 };
+
 
     }
   }

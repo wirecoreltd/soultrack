@@ -228,13 +228,13 @@ export default function SuivisMembres() {
         <p>💧 Baptême d'Eau : {m.bapteme_eau ? "Oui" : "Non"}</p>
         <p>🔥 Baptême de Feu : {m.bapteme_esprit ? "Oui" : "Non"}</p>
         <p>✒️ Formation : {m.Formation || "—"}</p>  
-        <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>      
+        <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>      
         <p>❓ Besoin : {formatArrayField(m.besoin)}</p>
         <p>📝 Infos : {m.infos_supplementaires || ""}</p>
         <p>🧩 Comment est-il venu : {m.venu || ""}</p>
         <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? ""}</p>
-        <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
-        <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
+        <p>🙏 Prière du salut : {m.priere_salut || ""}</p>
+        <p>☀️ Type de conversion : {m.type_conversion || ""}</p>
 
         {!showRefus && (
   <div className="mt-4 flex justify-center">
@@ -438,7 +438,7 @@ export default function SuivisMembres() {
               const attribue = m.conseiller_id
                 ? `👤 ${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim()
                 : m.cellule_id
-                ? `🏠 ${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}`
+                ? `🏠 ${cellules.find(c => c.id === m.cellule_id)?.cellule_full || ""}`
                 : "—";
 
               return (

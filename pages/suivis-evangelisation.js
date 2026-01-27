@@ -512,8 +512,7 @@ export default function SuivisEvangelisation() {
               <div className={`transition-all duration-500 overflow-hidden ${ouvert ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
                 {ouvert && (
                   <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
-                    <p>📅 {m.date_evangelises? `${m.sexe === "Femme" ? "Évangélisée" : "Évangélisé"} le ${formatDateFr(m.date_evangelises)}`
-                      : "📅 Date d’évangélisation inconnue"}</p>                 
+                    <p>📅 {m.sexe === "Femme" ? "Évangélisée" : "Évangélisé"} le : {formatDateFr(m.Date_Evangelise)}</p>                
                     <p>🎗️ Sexe : {m.sexe || "—"}</p>
                     <p>🙏 Prière salut : {m.priere_salut ? "Oui" : "Non"}</p>
                     <p>☀️ Type : {m.type_conversion || "—"}</p>

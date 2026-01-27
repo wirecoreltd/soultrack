@@ -321,6 +321,9 @@ export default function ListMembers() {
             <div className="w-full mt-2 text-sm text-black space-y-1">
             <p className="text-center">🏙️ Ville : {m.ville || "—"}</p>
             <p className="text-center">🕊 Etat Contact : {m.etat_contact || "—"}</p>
+            <div className="w-full flex justify-end mt-3">
+                <p className="text-[11px] text-gray-400">
+                  Créé le {formatDateFr(m.created_at)}</p></div>   
             <p>🏠 Cellule : {m.cellule_id ? `${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` : "—"}</p>
             <p>👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
           </div>
@@ -377,14 +380,8 @@ export default function ListMembers() {
                 />
               </div>
             )}
-          </div>
-              
-              <div className="w-full flex justify-end mt-3">
-                <p className="text-[11px] text-gray-400">
-                  Créé le {formatDateFr(m.created_at)}
-                </p>
-              </div>                
-
+          </div>          
+                            
             {/* Bouton Détails */}
             <button
               onClick={() => toggleDetails(m.id)}

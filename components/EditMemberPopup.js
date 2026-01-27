@@ -281,67 +281,67 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
             />
           </div>
             
-            {/* Ministere */}    
-            {formData.star && (
+          {/* Ministere */}    
+          {formData.star && (
             <div className="flex flex-col gap-2">
               <label className="font-medium">Ministère</label>
           
-              <div className="flex flex-col gap-2">
-                {ministereOptions.map(m => (
-                  <label
-                    key={m}
-                    className="grid grid-cols-[auto_20px] items-center gap-3 max-w-fit">
-                    <span>{m}</span>
-          
-                    <input
-                      type="checkbox"
-                      value={m}
-                      checked={formData.Ministere.includes(m)}
-                      onChange={(e) => {
-                        const { value, checked } = e.target;
-                        setFormData(prev => ({
-                          ...prev,
-                          Ministere: checked
-                            ? [...prev.Ministere, value]
-                            : prev.Ministere.filter(v => v !== value),
-                        }));
-                      }}
-                      className="accent-[#25297e] w-4 h-4"
-                    />
-                  </label>
-                ))}
-          
-                {/* AUTRE */}
-                <label className="grid grid-cols-[1fr_24px] items-center">
-                  <span>Autre</span>
+              {ministereOptions.map((m) => (
+                <label
+                  key={m}
+                  className="flex items-center gap-3"
+                >
                   <input
                     type="checkbox"
-                    checked={formData.Ministere.includes("Autre")}
+                    value={m}
+                    checked={formData.Ministere.includes(m)}
                     onChange={(e) => {
-                      const checked = e.target.checked;
+                      const { value, checked } = e.target;
                       setFormData(prev => ({
                         ...prev,
                         Ministere: checked
-                          ? [...prev.Ministere, "Autre"]
-                          : prev.Ministere.filter(v => v !== "Autre"),
+                          ? [...prev.Ministere, value]
+                          : prev.Ministere.filter(v => v !== value),
                       }));
                     }}
-                    className="accent-[#25297e] w-4 h-4"
+                    className="accent-[#25297e]"
                   />
+                  <span>{m}</span>
                 </label>
+              ))}
           
-                {formData.Ministere.includes("Autre") && (
-                  <input
-                    type="text"
-                    placeholder="Précisez le ministère"
-                    className="input mt-2"
-                  />
-                )}
-              </div>
+              {/* OPTION AUTRE */}
+              <label className="flex items-center gap-3 mt-2">
+                <input
+                  type="checkbox"
+                  checked={formData.Ministere.includes("Autre")}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setFormData(prev => ({
+                      ...prev,
+                      Ministere: checked
+                        ? [...prev.Ministere, "Autre"]
+                        : prev.Ministere.filter(v => v !== "Autre"),
+                    }));
+                    if (!checked) setAutreMinistere("");
+                  }}
+                  className="accent-[#25297e]"
+                />
+                <span>Autre</span>
+              </label>
+          
+              {/* CHAMP TEXTE AUTRE */}
+              {formData.Ministere.includes("Autre") && (
+                <input
+                  type="text"
+                  className="input mt-2"
+                  placeholder="Précisez le ministère"
+                  value={autreMinistere}
+                  onChange={(e) => setAutreMinistere(e.target.value)}
+                />
+              )}
             </div>
           )}
-
-
           {/* État du contact */}
           <div className="flex flex-col">
             <label className="font-medium">État du contact</label>

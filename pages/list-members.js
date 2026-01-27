@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { useEffect, useState, useRef, useMemo } from "react";
 import supabase from "../lib/supabaseClient";
@@ -27,7 +27,7 @@ export default function ListMembers() {
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
- const toBoolean = (val) => val === true || val === "true"
+  const toBoolean = (val) => val === true || val === "true";
 
   // -------------------- Nouveaux états --------------------
   const [commentChanges, setCommentChanges] = useState({});
@@ -50,76 +50,55 @@ export default function ListMembers() {
     setTimeout(() => setShowingToast(false), 3500);
   };
 
-   const statutSuiviLabels = {
+  const statutSuiviLabels = {
     1: "Envoyé",
     2: "En attente",
     3: "Intégré",
     4: "Refus",
   };
 
- const formatDateFr = (dateString) => {
-  if (!dateString) return "—";
-  const d = new Date(dateString);
+  const formatDateFr = (dateString) => {
+    if (!dateString) return "—";
+    const d = new Date(dateString);
+    const day = d.getDate().toString().padStart(2, "0");
+    const months = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  };
 
-  const day = d.getDate().toString().padStart(2, "0");
-  const months = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+  const formatMinistere = (ministereJson, autreMinistere) => {
+    let ministereList = [];
 
-  return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
-};
-const formatMinistere = (ministereJson, autreMinistere) => {
-  let ministereList = [];
-
-  // Parser Ministere
-  if (ministereJson) {
-    try {
-      const parsed = typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
-      if (Array.isArray(parsed)) ministereList = parsed;
-      else ministereList = [parsed];
-    } catch {
-      ministereList = [ministereJson];
+    if (ministereJson) {
+      try {
+        const parsed = typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
+        ministereList = Array.isArray(parsed) ? parsed : [parsed];
+      } catch {
+        ministereList = [ministereJson];
+      }
     }
-  }
 
-  // Ajouter Autre_Ministere si rempli
-  if (autreMinistere?.trim()) {
-    ministereList.push(autreMinistere.trim());
-  }
-
-  // Retourner sous forme d'une seule ligne
-  return ministereList.join(", ");
-};
+    if (autreMinistere?.trim()) {
+      ministereList.push(autreMinistere.trim());
     }
-  }
 
-  // Ajouter Autre_Ministere si rempli
-  if (autreMinistere?.trim()) {
-    ministereList.push(autreMinistere.trim());
-  }
+    return ministereList.join(", ");
+  };
 
-  // Retourner sous forme d'une seule ligne
-  return ministereList.join(", ");
-};
- 
-  // -------------------- Supprimer un membre (LOGIQUE) --------------------
-   const handleSupprimerMembre = async (id) => {
+  // -------------------- Supprimer un membre --------------------
+  const handleSupprimerMembre = async (id) => {
     const { error } = await supabase
       .from("membres_complets")
       .update({ etat_contact: "supprime" })
       .eq("id", id);
-  
+
     if (error) {
       console.error("Erreur suppression :", error);
       return;
     }
-  
-    // ✅ MISE À JOUR IMMÉDIATE DU CONTEXT
+
     setAllMembers((prev) =>
-      prev.map((m) =>
-        m.id === id
-          ? { ...m, etat_contact: "supprime" }
-          : m
-      )
-    );  
+      prev.map((m) => (m.id === id ? { ...m, etat_contact: "supprime" } : m))
+    );
     showToast("❌ Contact supprimé");
   };
 
@@ -144,27 +123,27 @@ const formatMinistere = (ministereJson, autreMinistere) => {
 
   // -------------------- Fetch data --------------------
   const fetchMembers = async (profile = null) => {
-  setLoading(true);
-  try {
-    let query = supabase
-      .from("membres_complets")
-      .select("*")
-      .neq("etat_contact", "supprime")  // <- filtre ici
-      .order("created_at", { ascending: false });
+    setLoading(true);
+    try {
+      let query = supabase
+        .from("membres_complets")
+        .select("*")
+        .neq("etat_contact", "supprime")
+        .order("created_at", { ascending: false });
 
-    if (conseillerIdFromUrl) query = query.eq("conseiller_id", conseillerIdFromUrl);
-    else if (profile?.role === "Conseiller") query = query.eq("conseiller_id", profile.id);
+      if (conseillerIdFromUrl) query = query.eq("conseiller_id", conseillerIdFromUrl);
+      else if (profile?.role === "Conseiller") query = query.eq("conseiller_id", profile.id);
 
-    const { data, error } = await query;
-    if (error) throw error;
-    setAllMembers(data || []);
-  } catch (err) {
-    console.error("Erreur fetchMembers:", err);
-    setAllMembers([]);
-  } finally {
-    setLoading(false);
-  }
-};
+      const { data, error } = await query;
+      if (error) throw error;
+      setAllMembers(data || []);
+    } catch (err) {
+      console.error("Erreur fetchMembers:", err);
+      setAllMembers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchCellules = async () => {
     const { data, error } = await supabase.from("cellules").select("id, cellule_full");
@@ -173,7 +152,10 @@ const formatMinistere = (ministereJson, autreMinistere) => {
   };
 
   const fetchConseillers = async () => {
-    const { data } = await supabase.from("profiles").select("id, prenom, nom, telephone").eq("role", "Conseiller");
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom, telephone")
+      .eq("role", "Conseiller");
     if (data) setConseillers(data);
   };
 
@@ -230,53 +212,30 @@ const formatMinistere = (ministereJson, autreMinistere) => {
     };
   }, []);
 
-     // -------------------- Filtrage --------------------
-      const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
-  
-     // ✅ 1️⃣ EXCLURE LES SUPPRIMÉS (OBLIGATOIRE)
-     const actifs = members.filter(
-       (m) => m.etat_contact !== "supprime"
-     );
-   
-     // ✅ 2️⃣ FILTRE PAR ÉTAT (nouveau / existant / etc.)
-     const baseFiltered = filter
-       ? actifs.filter(
-           (m) =>
-             m.etat_contact?.trim().toLowerCase() === filter.toLowerCase()
-         )
-       : actifs;
-   
-     // ✅ 3️⃣ RECHERCHE TEXTE
-     const searchFiltered = baseFiltered.filter((m) =>
-       `${m.prenom || ""} ${m.nom || ""}`
-         .toLowerCase()
-         .includes(search.toLowerCase())
-     );
-   
-     // ✅ 4️⃣ LOGIQUE NOUVEAUX / ANCIENS (INCHANGÉE)
-     const nouveaux = searchFiltered.filter((m) =>
-       ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-     );
-   
-     const anciens = searchFiltered.filter(
-       (m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
-     );
-   
-     return {
-       filteredMembers: searchFiltered,
-       filteredNouveaux: nouveaux,
-       filteredAnciens: anciens,
-     };
-   }, [members, filter, search]);
+  // -------------------- Filtrage --------------------
+  const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
+    const actifs = members.filter((m) => m.etat_contact !== "supprime");
+    const baseFiltered = filter
+      ? actifs.filter((m) => m.etat_contact?.trim().toLowerCase() === filter.toLowerCase())
+      : actifs;
+    const searchFiltered = baseFiltered.filter((m) =>
+      `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
+    );
+    const nouveaux = searchFiltered.filter((m) =>
+      ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+    );
+    const anciens = searchFiltered.filter((m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut));
+    return { filteredMembers: searchFiltered, filteredNouveaux: nouveaux, filteredAnciens: anciens };
+  }, [members, filter, search]);
 
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const getBorderColor = (m) => {
     if (!m.etat_contact) return "#ccc";
     const etat = m.etat_contact.trim().toLowerCase();
-    if (etat === "Existant") return "#34A853";
-    if (etat === "Nouveau") return "#34A85e";
-    if (etat === "Inactif") return "#999999";
+    if (etat === "existant") return "#34A853";
+    if (etat === "nouveau") return "#34A85e";
+    if (etat === "inactif") return "#999999";
     return "#ccc";
   };
 
@@ -286,40 +245,23 @@ const formatMinistere = (ministereJson, autreMinistere) => {
 
   const today = new Date();
   const dateDuJour = today.toLocaleDateString("fr-FR", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
   });
 
-      // -------------------- Rendu Carte --------------------
-    const renderMemberCard = (m) => {
-      const isOpen = detailsOpen[m.id];
-    
-      const besoins = !m.besoin
-        ? "—"
-        : Array.isArray(m.besoin)
+  // -------------------- renderMemberCard --------------------
+  const renderMemberCard = (m) => {
+    const isOpen = detailsOpen[m.id];
+
+    const besoins = !m.besoin
+      ? "—"
+      : Array.isArray(m.besoin)
         ? m.besoin.join(", ")
         : (() => {
-            try {
-              const arr = JSON.parse(m.besoin);
-              return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-            } catch {
-              return m.besoin;
-            }
+            try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; }
+            catch { return m.besoin; }
           })();
-    
-      const formatMinistere = (ministere) => {
-        if (!ministere) return "—";
-        try {
-          const parsed = typeof ministere === "string" ? JSON.parse(ministere) : ministere;
-          return Array.isArray(parsed) ? parsed.join(", ") : "—";
-        } catch {
-          return "—";
-        }
-      };
-    
-      return (
+
+    return (
         <div key={m.id} className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative">
           
           {/* Badge Nouveau */}

@@ -378,11 +378,18 @@ export default function ListMembers() {
               </div>
             )}
           </div>
+              
+              <div className="flex justify-end mt-3">
+                <p className="text-[11px] text-gray-400">
+                  Créé le {formatDateFr(m.created_at)}
+                </p>
+              </div>
              
             <p className="text-[11px] text-gray-400 text-right mt-3">
             Créé le {formatDateFr(m.created_at)}
             </p>
-             
+
+
             {/* Bouton Détails */}
             <button
               onClick={() => toggleDetails(m.id)}

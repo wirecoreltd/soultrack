@@ -178,12 +178,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       }
 
       let finalMinistere = [...formData.Ministere];
-      let finalAutreMinistere = formData.Autre_Ministere?.trim() || null;
-        
-        const payload = {
-          ...
-          Ministere: formData.star ? JSON.stringify(finalMinistere) : null,
-          Autre_Ministere: finalAutreMinistere,
+      let finalAutreMinistere = formData.Autre_Ministere?.trim() || null;       
+       
         };
       }
       const payload = {

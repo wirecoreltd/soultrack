@@ -183,8 +183,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         suivi_statut: formData.suivi_statut || null,
         commentaire_suivis: formData.commentaire_suivis || null,
         is_whatsapp: !!formData.is_whatsapp,
-        Formation: formData.Formation || null,
-        Commentaire_Suivi_Evangelisation: member?.Commentaire_Suivi_Evangelisation || "",
+        Formation: formData.Formation || null,        
+        Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
         Soin_Pastoral: formData.Soin_Pastoral || null,
         Ministere: formData.star
             ? JSON.stringify(formData.Ministere)

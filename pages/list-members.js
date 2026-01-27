@@ -66,10 +66,10 @@ export default function ListMembers() {
 
   return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
 };
-
- const formatMinistere = (ministereJson, autreMinistere) => {
+const formatMinistere = (ministereJson, autreMinistere) => {
   let ministereList = [];
 
+  // Parser Ministere
   if (ministereJson) {
     try {
       const parsed = typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
@@ -80,14 +80,13 @@ export default function ListMembers() {
     }
   }
 
-  // Ajouter Autre_Ministere seulement s'il n'est pas vide
+  // Ajouter Autre_Ministere si rempli
   if (autreMinistere?.trim()) {
     ministereList.push(autreMinistere.trim());
   }
 
   return ministereList.join(", ");
 };
-
     }
   }
 

@@ -30,16 +30,28 @@ export default function DetailsMemberPopup({
   const phoneMenuRef = useRef(null);
 
    // ---------------- HELPERS ----------------
-  const formatMinistere = (ministere) => {
-      if (!ministere) return "—";
-    
-      try {
-        const parsed = typeof ministere === "string" ? JSON.parse(ministere) : ministere;
-        return Array.isArray(parsed) ? parsed.join(", ") : parsed;
-      } catch {
-        return "—";
-      }
-    };
+  const formatMinistere = (ministereJson, autreMinistere) => {
+  let ministereList = [];
+
+  // Parser le champ Ministere
+  if (ministereJson) {
+    try {
+      const parsed = typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
+      ministereList = Array.isArray(parsed) ? parsed : [parsed];
+      // On retire explicitement "Autre" si présent
+      ministereList = ministereList.filter(m => m.toLowerCase() !== "autre");
+    } catch {
+      if (ministereJson.toLowerCase() !== "autre") ministereList = [ministereJson];
+    }
+  }
+
+  // Ajouter la valeur réelle du champ Autre_Ministere si rempli
+  if (autreMinistere?.trim()) {
+    ministereList.push(autreMinistere.trim());
+  }
+
+  return ministereList.join(", ");
+};
     const formatArrayField = (field) => {
       if (!field) return "—";
       try {
@@ -185,7 +197,7 @@ export default function DetailsMemberPopup({
             <p>🔥 Bapteme de Feu: {membre.bapteme_esprit === null ? "" : membre.bapteme_esprit ? "Oui" : "Non"}</p>
             <p>✒️ Formation : {membre.Formation || "—"}</p>  
             <p>❤️‍🩹 Soin Pastoral : {membre.Soin_Pastoral || "—"}</p>
-            <p>💢 Ministere : {formatMinistere(membre.Ministere)}</p>
+             <p>💢 Ministère : {formatMinistere(membre.Ministere, membre.Autre_Ministere) || "—"}</p>
             <p>❓ Besoin : {formatArrayField(membre.besoin)}</p>
             <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
             <p>🧩 Comment est-il venu : {membre.venu || "—"}</p>

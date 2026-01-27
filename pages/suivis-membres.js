@@ -225,8 +225,12 @@ export default function SuivisMembres() {
         <p>📅 {m.sexe === "Femme" ? "Arrivée" : "Arrivé"} le : {formatDateFr(m.created_at)}</p> 
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
         <p>🎗️ Sexe : {m.sexe || ""}</p>
-        <p>💧 Baptême d'Eau : {m.bapteme_eau ? "Oui" : "Non"}</p>
-        <p>🔥 Baptême de Feu : {m.bapteme_esprit ? "Oui" : "Non"}</p>
+        {m.bapteme_eau !== null && m.bapteme_eau !== undefined && (
+          <p>💧 Baptême d'Eau : {m.bapteme_eau ? "Oui" : "Non"}</p>
+        )}
+        {m.bapteme_esprit !== null && m.bapteme_esprit !== undefined && (
+          <p>🔥 Baptême de Feu : {m.bapteme_esprit ? "Oui" : "Non"}</p>
+        )}
         <p>✒️ Formation : {m.Formation || "—"}</p>  
         <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>      
         <p>❓ Besoin : {formatArrayField(m.besoin)}</p>

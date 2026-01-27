@@ -88,8 +88,6 @@ const formatMinistere = (ministereJson, autreMinistere) => {
   // Retourner sous forme d'une seule ligne
   return ministereList.join(", ");
 };
-
-
     }
   }
 

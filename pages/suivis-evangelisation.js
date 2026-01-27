@@ -143,6 +143,16 @@ export default function SuivisEvangelisation() {
     }
   };
 
+  const formatDateFr = (dateString) => {
+  if (!dateString) return "—";
+  const d = new Date(dateString);
+
+  const day = d.getDate().toString().padStart(2, "0");
+  const months = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+
+  return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+};
+
   const switchView = () => {
     setView(view === "card" ? "table" : "card");
     setDetailsCarteId(null);
@@ -429,6 +439,7 @@ export default function SuivisEvangelisation() {
                 <p className="text-sm text-black-700 mb-2">
                   🏙️ Ville : {m.ville || "—"}
                 </p>
+                <p className="text-[11px] text-gray-400 text-right mt-3">Créé le {formatDateFr(member.Date_Evangelise)} </p>
 
                 {/* Commentaire + statut */}
                 <div className="w-full bg-slate-50 rounded-xl p-3 mt-2">

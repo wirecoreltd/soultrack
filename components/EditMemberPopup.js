@@ -177,8 +177,8 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         finalBesoin = finalBesoin.filter(b => b !== "Autre");
       }
 
-      let finalMinistere = [...formData.Ministere];
-      let finalAutreMinistere = formData.Autre_Ministere?.trim() || null;    
+       let finalMinistere = formData.Ministere;
+       let finalAutreMinistere = formData.Autre_Ministere?.trim() || null;  
                
       const payload = {
         prenom: formData.prenom,

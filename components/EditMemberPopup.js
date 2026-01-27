@@ -50,6 +50,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     Formation: member?.Formation || "",
     Soin_Pastoral: member?.Soin_Pastoral || "",
     Ministere: parseBesoin(member?.Ministere),
+    Commentaire_Suivi_Evangelisation: member?.Commentaire_Suivi_Evangelisation || "",
 
   });
   
@@ -183,8 +184,9 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         commentaire_suivis: formData.commentaire_suivis || null,
         is_whatsapp: !!formData.is_whatsapp,
         Formation: formData.Formation || null,
-          Soin_Pastoral: formData.Soin_Pastoral || null,
-          Ministere: formData.star
+        Commentaire_Suivi_Evangelisation: member?.Commentaire_Suivi_Evangelisation || "",
+        Soin_Pastoral: formData.Soin_Pastoral || null,
+        Ministere: formData.star
             ? JSON.stringify(formData.Ministere)
             : null,
       };
@@ -504,6 +506,17 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
             />
           </div>
 
+                {/* Commentaire suivis Evangélisation */}
+          <div className="flex flex-col">
+            <label className="font-medium">Commentaire suivis Evangélisation</label>
+            <textarea
+              name="Commentaire_Suivi_Evangelisation"
+              value={formData.Commentaire_Suivi_Evangelisation}
+              onChange={handleChange}
+              className="input"
+              rows={2}
+            />
+          </div>
         </div>
 
         {/* Buttons */}

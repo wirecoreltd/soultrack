@@ -7,9 +7,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   if (!member) return null;
 
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
-  const [autreMinistere, setAutreMinistere] = useState(
-  member?.Autre_Ministere || member?.autre_ministere || ""
-);
+  const [autreMinistere, setAutreMinistere] = useState("");
 
   const parseBesoin = (b) => {
     if (!b) return [];
@@ -53,7 +51,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     Formation: member?.Formation || "",
     Soin_Pastoral: member?.Soin_Pastoral || "",
     Ministere: parseBesoin(member?.Ministere),
-    Autre_Ministere: parseBesoin(member?.Autre_Ministere),
     Commentaire_Suivi_Evangelisation: member?.Commentaire_Suivi_Evangelisation || "",
 
   });
@@ -102,17 +99,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     return () => { mounted = false; };
   }, []);
 
-  useEffect(() => {
-  if (member?.Autre_Ministere) {
-    setFormData(prev => ({
-      ...prev,
-      Ministere: prev.Ministere.includes("Autre")
-        ? prev.Ministere
-        : [...prev.Ministere, "Autre"],
-    }));
-  }
-}, [member]);
-
   // -------------------- HANDLERS --------------------
   const handleChange = (e) => {
   const { name, value, type, checked } = e.target;
@@ -160,84 +146,79 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     }));
   };
 
-  // -------------------- SUBMIT -------------------- 
-const handleSubmit = async () => {
-  setMessage("");
+  // -------------------- SUBMIT --------------------
+  const handleSubmit = async () => {
+    setMessage("");
+    if (!formData.prenom.trim()) return setMessage("❌ Le prénom est obligatoire.");
+    if (!formData.nom.trim()) return setMessage("❌ Le nom est obligatoire.");
 
-  if (!formData.prenom.trim()) return setMessage("❌ Le prénom est obligatoire.");
-  if (!formData.nom.trim()) return setMessage("❌ Le nom est obligatoire.");
+    setLoading(true);
 
-  setLoading(true);
+    try {
+      let finalBesoin = [...formData.besoin];
+      if (showAutre && formData.autreBesoin.trim()) {
+        finalBesoin = finalBesoin.filter(b => b !== "Autre");
+        finalBesoin.push(formData.autreBesoin.trim());
+      } else {
+        finalBesoin = finalBesoin.filter(b => b !== "Autre");
+      }
+      let finalMinistere = [...formData.Ministere];
 
-  try {
-    // ----- Besoin -----
-    let finalBesoin = [...formData.besoin];
-    if (showAutre && formData.autreBesoin.trim()) {
-      finalBesoin = finalBesoin.filter(b => b !== "Autre");
-      finalBesoin.push(formData.autreBesoin.trim());
-    } else {
-      finalBesoin = finalBesoin.filter(b => b !== "Autre");
+if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
+  finalMinistere = finalMinistere.filter(m => m !== "Autre");
+  finalMinistere.push(autreMinistere.trim());
+}
+
+
+      const payload = {
+        prenom: formData.prenom,
+        nom: formData.nom,
+        telephone: formData.telephone || null,
+        ville: formData.ville || null,
+        sexe: formData.sexe || null,
+        star: !!formData.star,
+        etat_contact: formData.etat_contact || "Nouveau",
+        bapteme_eau: formData.bapteme_eau,
+        bapteme_esprit: formData.bapteme_esprit,
+        priere_salut: formData.priere_salut || null,
+        type_conversion: formData.type_conversion || null,
+        cellule_id: formData.cellule_id || null,
+        conseiller_id: formData.conseiller_id || null,
+        besoin: JSON.stringify(finalBesoin),
+        venu: formData.venu || null,
+        infos_supplementaires: formData.infos_supplementaires || null,
+        statut_initial: formData.statut_initial || null,
+        suivi_statut: formData.suivi_statut || null,
+        commentaire_suivis: formData.commentaire_suivis || null,
+        is_whatsapp: !!formData.is_whatsapp,
+        Formation: formData.Formation || null,        
+        Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
+        Soin_Pastoral: formData.Soin_Pastoral || null,        
+        Ministere: formData.star? JSON.stringify(finalMinistere): null,
+      };
+
+      const { error } = await supabase
+        .from("membres_complets")
+        .update(payload)
+        .eq("id", member.id);
+
+      if (error) throw error;
+
+      const { data } = await supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("id", member.id)
+        .single();
+
+      onUpdateMember?.(data);
+      onClose();
+    } catch (err) {
+      console.error(err);
+      setMessage("❌ Une erreur est survenue lors de l’enregistrement.");
+    } finally {
+      setLoading(false);
     }
-
-    // ----- Ministère -----
-    let finalMinistere = [...formData.Ministere]; // uniquement les cases cochées
-    let finalAutreMinistere = formData.Autre_Ministere?.trim() || null; // texte libre
-
-    // ----- Payload -----
-    const payload = {
-      prenom: formData.prenom,
-      nom: formData.nom,
-      telephone: formData.telephone || null,
-      ville: formData.ville || null,
-      sexe: formData.sexe || null,
-      star: !!formData.star,
-      etat_contact: formData.etat_contact || "Nouveau",
-      bapteme_eau: formData.bapteme_eau,
-      bapteme_esprit: formData.bapteme_esprit,
-      priere_salut: formData.priere_salut || null,
-      type_conversion: formData.type_conversion || null,
-      cellule_id: formData.cellule_id || null,
-      conseiller_id: formData.conseiller_id || null,
-      besoin: JSON.stringify(finalBesoin),
-      venu: formData.venu || null,
-      infos_supplementaires: formData.infos_supplementaires || null,
-      statut_initial: formData.statut_initial || null,
-      suivi_statut: formData.suivi_statut || null,
-      commentaire_suivis: formData.commentaire_suivis || null,
-      is_whatsapp: !!formData.is_whatsapp,
-      Formation: formData.Formation || null,
-      Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
-      Soin_Pastoral: formData.Soin_Pastoral || null,
-      Ministere: formData.star ? JSON.stringify(finalMinistere) : null,
-      Autre_Ministere: finalAutreMinistere,
-    };
-
-    // ----- Update dans Supabase -----
-    const { error } = await supabase
-      .from("membres_complets")
-      .update(payload)
-      .eq("id", member.id);
-
-    if (error) throw error;
-
-    // ----- Récupérer le membre mis à jour -----
-    const { data } = await supabase
-      .from("membres_complets")
-      .select("*")
-      .eq("id", member.id)
-      .single();
-
-    onUpdateMember?.(data);
-    onClose();
-
-  } catch (err) {
-    console.error(err);
-    setMessage("❌ Une erreur est survenue lors de l’enregistrement.");
-  } finally {
-    setLoading(false);
-  }
-};
-      
+  };
   // -------------------- UI --------------------
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4">
@@ -298,21 +279,24 @@ const handleSubmit = async () => {
               onChange={handleChange}
               className="accent-[#25297e]"
             />
-          </div>            
-                        
-            {/* Ministère */}
+          </div>
+            
+          {/* Ministere */}    
+          {formData.star && (
             <div className="flex flex-col gap-2">
               <label className="font-medium">Ministère</label>
-            
-              {/* Checkboxes ministères */}
+          
               {ministereOptions.map((m) => (
-                <label key={m} className="flex items-center gap-3">
+                <label
+                  key={m}
+                  className="flex items-center gap-3"
+                >
                   <input
                     type="checkbox"
                     value={m}
                     checked={formData.Ministere.includes(m)}
                     onChange={(e) => {
-                      const { checked, value } = e.target;
+                      const { value, checked } = e.target;
                       setFormData(prev => ({
                         ...prev,
                         Ministere: checked
@@ -325,43 +309,39 @@ const handleSubmit = async () => {
                   <span>{m}</span>
                 </label>
               ))}
-            
-              {/* Case Autre */}
+          
+              {/* OPTION AUTRE */}
               <label className="flex items-center gap-3 mt-2">
                 <input
                   type="checkbox"
-                  checked={showAutre}
+                  checked={formData.Ministere.includes("Autre")}
                   onChange={(e) => {
                     const checked = e.target.checked;
-                    setShowAutre(checked);
-            
                     setFormData(prev => ({
                       ...prev,
-                      Autre_Ministere: checked ? prev.Autre_Ministere : "",
                       Ministere: checked
-                        ? prev.Ministere.includes("Autre") ? prev.Ministere : [...prev.Ministere, "Autre"]
-                        : prev.Ministere.filter(m => m !== "Autre")
+                        ? [...prev.Ministere, "Autre"]
+                        : prev.Ministere.filter(v => v !== "Autre"),
                     }));
+                    if (!checked) setAutreMinistere("");
                   }}
                   className="accent-[#25297e]"
                 />
                 <span>Autre</span>
               </label>
-            
-              {/* Champ texte Autre */}
-              {showAutre && (
+          
+              {/* CHAMP TEXTE AUTRE */}
+              {formData.Ministere.includes("Autre") && (
                 <input
                   type="text"
                   className="input mt-2"
                   placeholder="Précisez le ministère"
-                  value={formData.Autre_Ministere}
-                  onChange={(e) =>
-                    setFormData(prev => ({ ...prev, Autre_Ministere: e.target.value }))
-                  }
+                  value={autreMinistere}
+                  onChange={(e) => setAutreMinistere(e.target.value)}
                 />
               )}
             </div>
-  
+          )}
           {/* État du contact */}
           <div className="flex flex-col">
             <label className="font-medium">État du contact</label>
@@ -632,4 +612,3 @@ const handleSubmit = async () => {
     </div>
   );
 }
-

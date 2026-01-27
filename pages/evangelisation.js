@@ -180,6 +180,7 @@ export default function Evangelisation() {
         evangelise_id: m.id,
         conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
         cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
+        Date_Evangelise: m.created_at, 
         date_suivi: new Date().toISOString()
       }));
 

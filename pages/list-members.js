@@ -70,7 +70,6 @@ export default function ListMembers() {
  const formatMinistere = (ministereJson, autreMinistere) => {
   let ministereList = [];
 
-  // Parse Ministere s'il existe
   if (ministereJson) {
     try {
       const parsed = typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
@@ -78,6 +77,17 @@ export default function ListMembers() {
       else ministereList = [parsed];
     } catch {
       ministereList = [ministereJson];
+    }
+  }
+
+  // Ajouter Autre_Ministere seulement s'il n'est pas vide
+  if (autreMinistere?.trim()) {
+    ministereList.push(autreMinistere.trim());
+  }
+
+  return ministereList.join(", ");
+};
+
     }
   }
 
@@ -445,7 +455,7 @@ export default function ListMembers() {
                 <p>🔥 Baptême de Feu : {toBoolean(m.bapteme_esprit) ? "Oui" : "Non"}</p> 
                 <p>✒️ Formation : {m.Formation || ""}</p>
                 <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>
-                <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere)}</p>
+                <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere) || "—"}</p>
                 <p>❓ Besoin : {besoins}</p>
                 <p>📝 Infos : {m.infos_supplementaires || ""}</p>
                 <p>🧩 Comment est-il venu : {m.venu || ""}</p>

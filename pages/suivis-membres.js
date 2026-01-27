@@ -177,6 +177,17 @@ export default function SuivisMembres() {
     return status === 1 || status === 2;
   });
 
+  const formatDateFr = (dateString) => {
+  if (!dateString) return "—";
+  const d = new Date(dateString);
+
+  const day = d.getDate().toString().padStart(2, "0");
+  const months = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+
+  return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+};
+
+
   const uniqueMembers = Array.from(new Map(filteredMembers.map(i => [i.id, i])).values());
 
   const DetailsPopup = ({ m }) => {
@@ -212,6 +223,7 @@ export default function SuivisMembres() {
 
     return (
       <div className="text-black text-sm space-y-2 w-full">
+        <p>📅 Crée le : {formatDateFr(m.created_at)}</p>   
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
         <p>🎗️ Sexe : {m.sexe || ""}</p>
         <p>💧 Baptême d'Eau : {m.bapteme_eau ? "Oui" : "Non"}</p>

@@ -98,6 +98,18 @@ const formatMinistere = (ministereJson, autreMinistere) => {
   // Retourner sous forme d'une seule ligne
   return ministereList.join(", ");
 };
+
+    }
+  }
+
+  // Ajouter Autre_Ministere si rempli
+  if (autreMinistere?.trim()) {
+    ministereList.push(autreMinistere.trim());
+  }
+
+  // Retourner sous forme d'une seule ligne
+  return ministereList.join(", ");
+};
  
   // -------------------- Supprimer un membre (LOGIQUE) --------------------
    const handleSupprimerMembre = async (id) => {

@@ -171,12 +171,6 @@ export default function SuivisMembres() {
     }
   };
 
-  const filteredMembers = members.filter(m => {
-    const status = m.statut_suivis ?? 0;
-    if (showRefus) return status === 4;
-    return status === 1 || status === 2;
-  });
-
   const formatDateFr = (dateString) => {
   if (!dateString) return "—";
   const d = new Date(dateString);
@@ -187,7 +181,12 @@ export default function SuivisMembres() {
   return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
 };
 
-
+  const filteredMembers = members.filter(m => {
+    const status = m.statut_suivis ?? 0;
+    if (showRefus) return status === 4;
+    return status === 1 || status === 2;
+  });
+  
   const uniqueMembers = Array.from(new Map(filteredMembers.map(i => [i.id, i])).values());
 
   const DetailsPopup = ({ m }) => {
@@ -399,7 +398,7 @@ export default function SuivisMembres() {
               </button>
             )}
           </div>
-
+          <p className="text-[11px] text-gray-400 text-right mt-3">Créé le {formatDateFr(m.date_premiere_visite)} </p>
           {/* Bouton Détails */}
           <button
             onClick={() => toggleDetails(m.id)}

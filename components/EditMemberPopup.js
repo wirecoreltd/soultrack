@@ -300,71 +300,67 @@ const handleSubmit = async () => {
             />
           </div>            
                         
-            {/* Ministere */}    
-           {formData.star && (
-              <div className="flex flex-col gap-2">
-                <label className="font-medium">Ministère</label>
+            {/* Ministère */}
+            <div className="flex flex-col gap-2">
+              <label className="font-medium">Ministère</label>
             
-                {/* Checkboxes ministères */}
-                {ministereOptions.map((m) => (
-                  <label key={m} className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      value={m}
-                      checked={formData.Ministere.includes(m)}
-                      onChange={(e) => {
-                        const { checked, value } = e.target;
-                        setFormData(prev => ({
-                          ...prev,
-                          Ministere: checked
-                            ? [...prev.Ministere, value]
-                            : prev.Ministere.filter(v => v !== value),
-                        }));
-                      }}
-                      className="accent-[#25297e]"
-                    />
-                    <span>{m}</span>
-                  </label>
-                ))}
+              {/* Checkboxes ministères */}
+              {ministereOptions.map((m) => (
+                <label key={m} className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    value={m}
+                    checked={formData.Ministere.includes(m)}
+                    onChange={(e) => {
+                      const { checked, value } = e.target;
+                      setFormData(prev => ({
+                        ...prev,
+                        Ministere: checked
+                          ? [...prev.Ministere, value]
+                          : prev.Ministere.filter(v => v !== value),
+                      }));
+                    }}
+                    className="accent-[#25297e]"
+                  />
+                  <span>{m}</span>
+                </label>
+              ))}
             
-                {/* Case Autre */}
-                  <label className="flex items-center gap-3 mt-2">
-                    <input
-                      type="checkbox"
-                      checked={showAutre} 
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setShowAutre(checked);
-                        if (!checked) setFormData(prev => ({ ...prev, Autre_Ministere: "" }));
-                        if (checked && !formData.Ministere.includes("Autre")) {
-                          setFormData(prev => ({
-                            ...prev,
-                            Ministere: [...prev.Ministere, "Autre"]
-                          }));
-                        } else if (!checked) {
-                          setFormData(prev => ({
-                            ...prev,
-                            Ministere: prev.Ministere.filter(m => m !== "Autre")
-                          }));
-                        }
-                      }}
-                      className="accent-[#25297e]"
-                    />
-                    <span>Autre</span>
-                  </label>
-                  
-                  {/* Champ texte Autre */}
-                  {showAutre && (
-                    <input
-                      type="text"
-                      className="input mt-2"
-                      placeholder="Précisez le ministère"
-                      value={formData.Autre_Ministere}
-                      onChange={(e) =>
-                        setFormData(prev => ({ ...prev, Autre_Ministere: e.target.value }))
-                      }
-                    />
-                  )}
+              {/* Case Autre */}
+              <label className="flex items-center gap-3 mt-2">
+                <input
+                  type="checkbox"
+                  checked={showAutre}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setShowAutre(checked);
+            
+                    setFormData(prev => ({
+                      ...prev,
+                      Autre_Ministere: checked ? prev.Autre_Ministere : "",
+                      Ministere: checked
+                        ? prev.Ministere.includes("Autre") ? prev.Ministere : [...prev.Ministere, "Autre"]
+                        : prev.Ministere.filter(m => m !== "Autre")
+                    }));
+                  }}
+                  className="accent-[#25297e]"
+                />
+                <span>Autre</span>
+              </label>
+            
+              {/* Champ texte Autre */}
+              {showAutre && (
+                <input
+                  type="text"
+                  className="input mt-2"
+                  placeholder="Précisez le ministère"
+                  value={formData.Autre_Ministere}
+                  onChange={(e) =>
+                    setFormData(prev => ({ ...prev, Autre_Ministere: e.target.value }))
+                  }
+                />
+              )}
+            </div>
   
           {/* État du contact */}
           <div className="flex flex-col">

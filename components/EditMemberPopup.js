@@ -328,44 +328,43 @@ const handleSubmit = async () => {
     ))}
 
     {/* Case Autre */}
-    <label className="flex items-center gap-3 mt-2">
-      <input
-        type="checkbox"
-        checked={showAutre} // coche seulement si showAutre est true
-        onChange={(e) => {
-          const checked = e.target.checked;
-          setShowAutre(checked);
-          if (!checked) setFormData(prev => ({ ...prev, Autre_Ministere: "" }));
-          if (checked && !formData.Ministere.includes("Autre")) {
-            setFormData(prev => ({
-              ...prev,
-              Ministere: [...prev.Ministere, "Autre"]
-            }));
-          } else if (!checked) {
-            setFormData(prev => ({
-              ...prev,
-              Ministere: prev.Ministere.filter(m => m !== "Autre")
-            }));
-          }
-        }}
-        className="accent-[#25297e]"
-      />
-      <span>Autre</span>
-    </label>
+<label className="flex items-center gap-3 mt-2">
+  <input
+    type="checkbox"
+    checked={showAutre} 
+    onChange={(e) => {
+      const checked = e.target.checked;
+      setShowAutre(checked);
+      if (!checked) setFormData(prev => ({ ...prev, Autre_Ministere: "" }));
+      if (checked && !formData.Ministere.includes("Autre")) {
+        setFormData(prev => ({
+          ...prev,
+          Ministere: [...prev.Ministere, "Autre"]
+        }));
+      } else if (!checked) {
+        setFormData(prev => ({
+          ...prev,
+          Ministere: prev.Ministere.filter(m => m !== "Autre")
+        }));
+      }
+    }}
+    className="accent-[#25297e]"
+  />
+  <span>Autre</span>
+</label>
 
-    {/* Champ texte Autre */}
-    {showAutre && (
-      <input
-        type="text"
-        className="input mt-2"
-        placeholder="Précisez le ministère"
-        value={formData.Autre_Ministere}
-        onChange={(e) =>
-          setFormData(prev => ({ ...prev, Autre_Ministere: e.target.value }))
-        }
-      />
-    )}
-                      
+{/* Champ texte Autre */}
+{showAutre && (
+  <input
+    type="text"
+    className="input mt-2"
+    placeholder="Précisez le ministère"
+    value={formData.Autre_Ministere}
+    onChange={(e) =>
+      setFormData(prev => ({ ...prev, Autre_Ministere: e.target.value }))
+    }
+  />
+)}         
           {/* État du contact */}
           <div className="flex flex-col">
             <label className="font-medium">État du contact</label>

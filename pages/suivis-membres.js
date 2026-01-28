@@ -22,23 +22,29 @@ export default function SuivisMembres() {
   const [DetailsSuivisPopupMember, setDetailsSuivisPopupMember] = useState(null);
   const [statusChanges, setStatusChanges] = useState({});
   const [commentChanges, setCommentChanges] = useState({});
-  const [updating, setUpdating] = useState({});
-  const [view, setView] = useState("card");
+  const [updating, setUpdating] = useState({});  
   const [editMember, setEditMember] = useState(null);
   const [showRefus, setShowRefus] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(null);
-
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
-
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
 
+    const [view, setView] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("members_view") || "card";
+    }
+    return "card";
+  });
+  
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => (prev === id ? null : id));
 
   const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
   const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
+
+  useEffect(() => {localStorage.setItem("members_view", view);}, [view]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {

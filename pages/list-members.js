@@ -340,6 +340,42 @@ export default function ListMembers() {
             <p>👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
           </div>
 
+              {/* Bouton Marquer comme membre */}
+              <div className="flex justify-end mt-2">
+                <button
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        "⚠️ Confirmation\n\nCe contact n’a plus besoin d’être suivi.\nVoulez-vous vraiment le déplacer dans les membres existants ?"
+                      )
+                    ) {
+                      // Mettre à jour le contact dans Supabase
+                      supabase
+                        .from("membres_complets")
+                        .update({ etat_contact: "existant" })
+                        .eq("id", m.id)
+                        .then(({ error, data }) => {
+                          if (error) {
+                            console.error("Erreur mise à jour :", error);
+                            showToast("❌ Erreur lors du déplacement");
+                          } else {
+                            // Mettre à jour localement
+                            setAllMembers((prev) =>
+                              prev.map((mem) =>
+                                mem.id === m.id ? { ...mem, etat_contact: "existant" } : mem
+                              )
+                            );
+                            showToast("✅ Contact déplacé dans membres existants");
+                          }
+                        });
+                    }
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm font-semibold"
+                >
+                  ✅ Marquer comme membre
+                </button>
+              </div>  
+
           <div className="mt-2 w-full">
             <label className="font-semibold text-sm">Envoyer à :</label>
             <select

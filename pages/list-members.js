@@ -18,8 +18,7 @@ export default function ListMembers() {
   const [search, setSearch] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
-  const [conseillers, setConseillers] = useState([]);
-  const [view, setView] = useState("card");
+  const [conseillers, setConseillers] = useState([]);  
   const [popupMember, setPopupMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
   const [session, setSession] = useState(null);
@@ -41,6 +40,13 @@ export default function ListMembers() {
   const realtimeChannelRef = useRef(null);
   const [etatContactFilter, setEtatContactFilter] = useState("");
 
+  const [view, setView] = useState(() => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("members_view") || "card";
+  }
+  return "card";
+});
+  
   const { members, setAllMembers, updateMember } = useMembers();
 
   // -------------------- Toast --------------------
@@ -170,6 +176,8 @@ export default function ListMembers() {
     const cibleName = type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`;
     showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
   };
+
+  useEffect(() => {localStorage.setItem("members_view", view);}, [view]);
 
   // -------------------- useEffect initial --------------------
   useEffect(() => {

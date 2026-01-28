@@ -419,9 +419,9 @@ export default function ListMembers() {
             )}
           </div> 
 
-{/* Bouton Marquer comme membre — seulement pour les contacts "Nouveau" */}
+              {/* Bouton Marquer comme membre — seulement pour les contacts "Nouveau" */}
                 {m.etat_contact?.trim().toLowerCase() === "nouveau" && (
-                  <div className="w-full flex justify-end mt-2">
+                  <div className="w-full flex justify-end mt-4">
                     <button
                       onClick={() => {
                         if (
@@ -462,7 +462,7 @@ export default function ListMembers() {
             {/* Bouton Détails */}
             <button
               onClick={() => toggleDetails(m.id)}
-              className="text-orange-500 underline text-sm mt-2"
+              className="text-orange-500 underline text-sm mt-3"
             >
               {isOpen ? "Fermer détails" : "Détails"}
             </button>

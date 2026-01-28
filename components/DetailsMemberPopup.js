@@ -180,30 +180,34 @@ export default function DetailsMemberPopup({
         </div>
 
         {/* ================= BOUTON MARQUER ================= */}
-        {m.etat_contact?.trim().toLowerCase() === "nouveau" && (
-  <button
-    onClick={async () => {
-      try {
-        const { error } = await supabase
-          .from("membres_complets")
-          .update({ etat_contact: "existant" })
-          .eq("id", m.id); // ✅ 'm' est accessible ici
+       {membre.etat_contact?.trim().toLowerCase() === "nouveau" && (
+          <button
+            onClick={async () => {
+              try {
+                const { error } = await supabase
+                  .from("membres_complets")
+                  .update({ etat_contact: "existant" })
+                  .eq("id", membre.id);
+        
+                if (error) throw error;
+        
+                setAllMembers(prev =>
+                  prev.map(mem =>
+                    mem.id === membre.id
+                      ? { ...mem, etat_contact: "existant" }
+                      : mem
+                  )
+                );
+              } catch (err) {
+                console.error("Erreur marquer membre :", err);
+              }
+            }}
+            className="mt-4 w-full bg-green-600 text-white py-2 rounded-lg text-sm font-semibold"
+          >
+            ✅ Marquer comme membre
+          </button>
+        )}
 
-        if (error) throw error;
-
-        setAllMembers(prev =>
-          prev.map(mem =>
-            mem.id === m.id ? { ...mem, etat_contact: "existant" } : mem
-          )
-        );
-      } catch (err) {
-        console.error(err);
-      }
-    }}
-  >
-    Marquer comme membre
-  </button>
-)}
 
 
 

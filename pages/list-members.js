@@ -309,8 +309,8 @@ export default function ListMembers() {
           {/* Badge Nouveau */}
           {m.isNouveau && (
             <div className="absolute top-2 right-3 flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#2E3192" }} />
-              <span className="rounded shadow text-xs font-semibold" style={{ color: "#2E3192" }}>
+              <span className="inline-flex items-center gap-2 text-xs font-semibold text-white bg-blue-600 px-3 py-1 rounded-md shadow">
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-white" />
                 Nouveau
               </span>
             </div>

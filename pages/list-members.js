@@ -239,8 +239,10 @@ export default function ListMembers() {
       `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
     );
     const nouveaux = searchFiltered.filter((m) =>
-      ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut)
+      ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut) &&
+      m.etat_contact !== "existant"
     );
+
     const anciens = searchFiltered.filter((m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut));
     return { filteredMembers: searchFiltered, filteredNouveaux: nouveaux, filteredAnciens: anciens };
   }, [members, filter, search]);

@@ -310,7 +310,7 @@ export default function ListMembers() {
           {m.isNouveau && (
             <div className="absolute top-2 right-3 flex items-center gap-1">
               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#2E3192" }} />
-              <span className="text-xs font-semibold" style={{ color: "#2E3192" }}>
+              <span className="rounded shadow text-xs font-semibold" style={{ color: "#2E3192" }}>
                 Nouveau
               </span>
             </div>
@@ -407,7 +407,7 @@ export default function ListMembers() {
 
 
           <div className="mt-2 w-full">
-            <label className="font-semibold text-sm">Envoyer à :</label>
+            <label className="font-semibold text-sm">Envoyer ce contact en suivi :</label>
             <select
               value={selectedTargetType[m.id] || ""}
               onChange={e => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}

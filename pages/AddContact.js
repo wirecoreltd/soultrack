@@ -101,7 +101,7 @@ export default function AddContact() {
     type="text"
     value={formData.prenom}
     onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
-    className="input mt-1"
+    className="input mt-1 mb-3"
     required
   />
 

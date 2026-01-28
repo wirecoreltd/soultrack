@@ -231,19 +231,26 @@ export default function ListMembers() {
 
   // -------------------- Filtrage --------------------
   const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
-    const actifs = members.filter((m) => m.etat_contact !== "supprime");
-    const baseFiltered = filter
-      ? actifs.filter((m) => m.etat_contact?.trim().toLowerCase() === filter.toLowerCase())
-      : actifs;
-    const searchFiltered = baseFiltered.filter((m) =>
-      `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
-    );
-      const nouveaux = searchFiltered.filter(m => m.etat_contact?.trim().toLowerCase() === "nouveau");
+  const actifs = members.filter((m) => m.etat_contact !== "supprime");
+  const baseFiltered = filter
+    ? actifs.filter((m) => m.etat_contact?.trim().toLowerCase() === filter.toLowerCase())
+    : actifs;
 
-  // Section Membres existants : etat_contact = "existant" ou "ancien"
-  const existants = searchFiltered.filter(m =>
-    ["existant", "ancien"].includes(m.etat_contact?.trim().toLowerCase())
+  const searchFiltered = baseFiltered.filter((m) =>
+    `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
   );
+
+  const nouveaux = searchFiltered.filter(
+    (m) => m.etat_contact?.trim().toLowerCase() === "nouveau"
+  );
+
+  const existants = searchFiltered.filter(
+    (m) => ["existant", "ancien"].includes(m.etat_contact?.trim().toLowerCase())
+  );
+
+  return { filteredMembers: searchFiltered, filteredNouveaux: nouveaux, filteredAnciens: existants };
+}, [members, filter, search]);
+
 
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 

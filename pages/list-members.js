@@ -12,6 +12,7 @@ import { fr } from "date-fns/locale";
 import { useSearchParams } from "next/navigation";
 import { useMembers } from "../context/MembersContext";
 import Header from "../components/Header";
+import { useRouter } from "next/navigation";
 
 export default function ListMembers() {
   const [filter, setFilter] = useState("");
@@ -41,6 +42,7 @@ export default function ListMembers() {
   const [etatContactFilter, setEtatContactFilter] = useState("");  
   const [selectedMember, setSelectedMember] = useState(null);
   
+  const router = useRouter();
 
   const [view, setView] = useState(() => {
   if (typeof window !== "undefined") {
@@ -478,10 +480,18 @@ export default function ListMembers() {
         <span className="text-white text-sm ml-2">{filteredMembers.length} membres</span>
       </div>
 
-      {/* Toggle Carte/Table */}
-      <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
+      <div className="w-full max-w-6xl flex justify-between items-center mb-4">
+        {/* Toggle Carte/Table */}
         <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-sm font-semibold underline text-white">
           {view === "card" ? "Vue Table" : "Vue Carte"}
+        </button>
+      
+        {/* Bouton Ajouter un membre */}
+        <button
+          onClick={() => router.push("/add-member")}
+          className="bg-white text-blue-900 font-semibold px-4 py-2 rounded shadow hover:bg-gray-200 transition"
+        >
+          ➕ Ajouter un membre
         </button>
       </div>
 

@@ -553,7 +553,7 @@ export default function ListMembers() {
       
         {/* Bouton Ajouter un membre */}
         <button
-          onClick={() => router.push("/add-contact")}
+          onClick={() => router.push("/addcontact")}
           className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
         >
           ➕ Ajouter un membre

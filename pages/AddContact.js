@@ -111,7 +111,7 @@ export default function AddContact() {
     type="text"
     value={formData.nom}
     onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-    className="input mt-1"
+    className="input mt-1 mb-3"
     required
   />
 
@@ -121,7 +121,7 @@ export default function AddContact() {
     type="text"
     value={formData.telephone}
     onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
-    className="input mt-1"
+    className="input mt-1 mb-3"
   />
 
   {/* WhatsApp */}
@@ -141,7 +141,7 @@ export default function AddContact() {
     type="text"
     value={formData.ville}
     onChange={(e) => setFormData({ ...formData, ville: e.target.value })}
-    className="input mt-1"
+    className="input mt-1 mb-3"
   />
 
   {/* Sexe */}

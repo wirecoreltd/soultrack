@@ -347,10 +347,15 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
             </select>
           </div>
 
-          {/* Bapteme d'eau */}
+            {/* Bapteme de d'eau */}
           <div className="flex flex-col">
-            <label className="font-medium">Bapteme d'eau</label>
-            <select name="bapteme_eau" value={formData.bapteme_eau === true ? "true" : formData.bapteme_eau === false ? "false" : ""} onChange={handleChange} className="input">
+            <label className="font-medium">Baptême d'eau</label>
+            <select
+              name="bapteme_eau"
+              value={formData.bapteme_eau ?? ""}
+              onChange={handleChange}
+              className="input"
+            >
               <option value="">-- Sélectionner --</option>
               <option value="Oui">Oui</option>
               <option value="Non">Non</option>
@@ -359,13 +364,19 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
 
           {/* Bapteme de feu */}
           <div className="flex flex-col">
-            <label className="font-medium">Bapteme de feu</label>
-            <select name="bapteme_esprit" value={formData.bapteme_esprit === true ? "true" : formData.bapteme_esprit === false ? "false" : ""} onChange={handleChange} className="input">
+            <label className="font-medium">Baptême d'eau</label>
+            <select
+              name="bapteme_eau"
+              value={formData.bapteme_eau ?? ""}
+              onChange={handleChange}
+              className="input"
+            >
               <option value="">-- Sélectionner --</option>
               <option value="Oui">Oui</option>
               <option value="Non">Non</option>
             </select>
           </div>
+
 
            {/* Formation*/}
           <div className="flex flex-col">

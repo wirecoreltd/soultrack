@@ -12,8 +12,7 @@ export default function SuivisEvangelisation() {
   const [allSuivis, setAllSuivis] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [cellules, setCellules] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [view, setView] = useState("card");
+  const [loading, setLoading] = useState(true);  
   const [updating, setUpdating] = useState({});
   const [detailsCarteId, setDetailsCarteId] = useState(null);
   const [detailsTable, setDetailsTable] = useState(null);
@@ -24,7 +23,14 @@ export default function SuivisEvangelisation() {
   const [user, setUser] = useState(null);
   const [phoneMenuId, setPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null); 
+  const [view, setView] = useState(() => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("members_view") || "card";
+  }
+  return "card";
+});
 
+  useEffect(() => {localStorage.setItem("members_view", view);}, [view]);
 
     // ================= INIT =================
 

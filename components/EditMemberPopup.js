@@ -364,18 +364,19 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
 
           {/* Bapteme de feu */}
           <div className="flex flex-col">
-            <label className="font-medium">Baptême d'eau</label>
-            <select
-              name="bapteme_eau"
-              value={formData.bapteme_eau ?? ""}
-              onChange={handleChange}
-              className="input"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="Oui">Oui</option>
-              <option value="Non">Non</option>
-            </select>
-          </div>
+              <label className="font-medium">Baptême de feu</label>
+              <select
+                name="bapteme_esprit"
+                value={formData.bapteme_esprit ?? ""}
+                onChange={handleChange}
+                className="input"
+              >
+                <option value="">-- Sélectionner --</option>
+                <option value="Oui">Oui</option>
+                <option value="Non">Non</option>
+              </select>
+            </div>
+
 
 
            {/* Formation*/}

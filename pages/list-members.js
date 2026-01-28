@@ -310,7 +310,7 @@ export default function ListMembers() {
           {m.isNouveau && (
             <div className="absolute top-2 right-3 flex items-center gap-1">
               <span className="inline-flex items-center gap-2 text-xs font-semibold text-blue-600 bg-white px-3 py-1 rounded-md shadow">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-white" />
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-600" />
                 Nouveau
               </span>
             </div>

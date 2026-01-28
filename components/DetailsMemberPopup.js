@@ -15,7 +15,7 @@ export default function DetailsMemberPopup({
   updateSuivi,
   onDelete,
 }) {
-  if (!membre?.id) return null;
+  if (!membre || !membre.id) return null;
 
   const [selectedTargetType, setSelectedTargetType] = useState("");
   const [selectedTarget, setSelectedTarget] = useState(null);
@@ -25,6 +25,23 @@ export default function DetailsMemberPopup({
   const phoneMenuRef = useRef(null);
 
   // ---------------- HELPERS ----------------
+  const statutSuiviLabels = {
+    1: "Envoyé",
+    2: "En attente",
+    3: "Intégré",
+    4: "Refus",
+  };
+
+  const formatArrayField = (field) => {
+    if (!field) return "—";
+    try {
+      const parsed = typeof field === "string" ? JSON.parse(field) : field;
+      return Array.isArray(parsed) ? parsed.join(", ") : parsed;
+    } catch {
+      return "—";
+    }
+  };
+
   const formatMinistere = (ministereJson, autreMinistere) => {
     let list = [];
     if (ministereJson) {
@@ -40,16 +57,6 @@ export default function DetailsMemberPopup({
     return list.join(", ") || "—";
   };
 
-  const formatArrayField = (field) => {
-    if (!field) return "—";
-    try {
-      const parsed = typeof field === "string" ? JSON.parse(field) : field;
-      return Array.isArray(parsed) ? parsed.join(", ") : parsed;
-    } catch {
-      return "—";
-    }
-  };
-
   // Fermer menu téléphone
   useEffect(() => {
     const close = (e) => {
@@ -62,30 +69,24 @@ export default function DetailsMemberPopup({
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6 relative">
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
 
         {/* Fermer */}
-        <button onClick={onClose} className="absolute top-3 right-3 text-gray-500">
-          ✖
-        </button>
+        <button onClick={onClose} className="absolute top-3 right-3 text-gray-500">✖</button>
 
         {/* ================= HEADER ================= */}
         <div className="flex flex-col items-center text-center">
-          <h2 className="text-lg font-semibold">
+          <h2 className="text-lg font-bold">
             {membre.prenom} {membre.nom} {membre.star && "⭐"}
           </h2>
-
-          <p className="text-xs text-gray-500 self-end mt-1">
-            créé le : {new Date(membre.created_at).toLocaleDateString()}
-          </p>
 
           {/* Téléphone */}
           {membre.telephone && (
             <div className="relative mt-1" ref={phoneMenuRef}>
               <button
                 onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
-                className="text-orange-500 underline text-lg font-medium"
+                className="text-lg text-orange-500 underline font-semibold"
               >
                 {membre.telephone}
               </button>
@@ -107,28 +108,25 @@ export default function DetailsMemberPopup({
           )}
         </div>
 
-        {/* ================= INFOS PRINCIPALES ================= */}
-        <div className="mt-4 space-y-1 text-sm">
-          <p><span className="font-medium">🏙️ Ville :</span> {membre.ville || "—"}</p>
-
-          <p><span className="font-medium">🏠 Cellule :</span>{" "}
-            {membre.cellule_id
-              ? cellules.find(c => c.id === membre.cellule_id)?.cellule_full || "—"
-              : "—"}
+        {/* ================= INFOS ================= */}
+        <div className="mt-4 text-sm space-y-1">
+          <p className="text-center">🏙️ Ville : {membre.ville || "—"}</p>
+          <p className="text-center">🕊 Etat Contact : {membre.etat_contact || "—"}</p>
+          <p className="text-right text-[11px] text-gray-400">
+            Créé le {new Date(membre.created_at).toLocaleDateString("fr-FR")}
           </p>
-
-          <p><span className="font-medium">👤 Conseiller :</span>{" "}
+          <p>🏠 Cellule : {cellules.find(c => c.id === membre.cellule_id)?.cellule_full || "—"}</p>
+          <p>
+            👤 Conseiller :{" "}
             {membre.conseiller_id
-              ? `${conseillers.find(c => c.id === membre.conseiller_id)?.prenom || ""} ${
-                  conseillers.find(c => c.id === membre.conseiller_id)?.nom || ""
-                }`.trim() || "—"
+              ? `${conseillers.find(c => c.id === membre.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === membre.conseiller_id)?.nom || ""}`
               : "—"}
           </p>
         </div>
 
         {/* ================= ENVOYER À ================= */}
         <div className="mt-4">
-          <label className="text-sm font-medium">Envoyer à :</label>
+          <label className="font-semibold text-sm">Envoyer pour suivi :</label>
 
           <select
             value={selectedTargetType}
@@ -146,7 +144,7 @@ export default function DetailsMemberPopup({
 
           {selectedTargetType && (
             <select
-              value={selectedTarget || ""}
+              className="mt-2 w-full border rounded px-2 py-1 text-sm"
               onChange={(e) => {
                 const id = e.target.value;
                 setSelectedTarget(id);
@@ -156,17 +154,13 @@ export default function DetailsMemberPopup({
                     : conseillers.find(c => c.id === id)
                 );
               }}
-              className="mt-2 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Sélectionner --</option>
-              {selectedTargetType === "cellule" &&
-                cellules.map(c => (
-                  <option key={c.id} value={c.id}>{c.cellule_full}</option>
-                ))}
-              {selectedTargetType === "conseiller" &&
-                conseillers.map(c => (
-                  <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
-                ))}
+              {(selectedTargetType === "cellule" ? cellules : conseillers).map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.cellule_full || `${c.prenom || ""} ${c.nom || ""}`}
+                </option>
+              ))}
             </select>
           )}
 
@@ -177,68 +171,59 @@ export default function DetailsMemberPopup({
                 type={selectedTargetType}
                 cible={cibleComplete}
                 session={session}
-                onEnvoyer={(data) => handleAfterSend?.(data, selectedTargetType, cibleComplete)}
+                onEnvoyer={handleAfterSend}
                 showToast={showToast}
               />
             </div>
           )}
         </div>
 
-        {/* ================= MARQUER COMME MEMBRE ================= */}
-        {membre.etat_contact === "nouveau" && (
-          <div className="flex justify-end mt-4">
+        {/* ================= BOUTON MARQUER ================= */}
+        {membre.etat_contact?.trim().toLowerCase() === "nouveau" && (
+          <div className="flex justify-end mt-6">
             <button
-              onClick={() => updateSuivi(membre.id, 3)}
-              className="text-green-600 text-sm font-medium"
+              onClick={() => {
+                if (window.confirm("Ce contact n’a plus besoin d’être suivi.\nLe déplacer vers membres existants ?")) {
+                  updateSuivi(membre.id, "existant");
+                }
+              }}
+              className="bg-white text-green-600 px-3 py-1 rounded-md text-sm font-medium shadow-sm hover:shadow transition"
             >
               ✅ Marquer comme membre
             </button>
           </div>
         )}
 
-        {/* ================= ETAT CONTACT ================= */}
-        <div className="mt-4 flex justify-between items-center text-sm">
-          <span className="font-medium">🕊 Etat Contact :</span>
-          <select
-            value={membre.statut_suivis || ""}
-            onChange={(e) => updateSuivi(membre.id, Number(e.target.value))}
-            className="border rounded px-2 py-1 text-sm"
-          >
-            <option value="1">Envoyé</option>
-            <option value="2">En attente</option>
-            <option value="3">Intégré</option>
-            <option value="4">Refus</option>
-          </select>
-        </div>
-
-        {/* ================= AUTRES INFOS ================= */}
-        <div className="mt-4 space-y-1 text-sm">
-          <p><span className="font-medium">💬 WhatsApp :</span> {membre.is_whatsapp ? "Oui" : "Non"}</p>
-          <p><span className="font-medium">🎗️ Sexe :</span> {membre.sexe || "—"}</p>
-          <p><span className="font-medium">💧 Baptême d'eau :</span> {membre.bapteme_eau ? "Oui" : "Non"}</p>
-          <p><span className="font-medium">🔥 Baptême de feu :</span> {membre.bapteme_esprit ? "Oui" : "Non"}</p>
-          <p><span className="font-medium">✒️ Formation :</span> {membre.Formation || "—"}</p>
-          <p><span className="font-medium">❤️‍🩹 Soin Pastoral :</span> {membre.Soin_Pastoral || "—"}</p>
-          <p><span className="font-medium">💢 Ministère :</span> {formatMinistere(membre.Ministere, membre.Autre_Ministere)}</p>
-          <p><span className="font-medium">❓ Besoin :</span> {formatArrayField(membre.besoin)}</p>
-          <p><span className="font-medium">📝 Infos :</span> {membre.infos_supplementaires || "—"}</p>
+        {/* ================= DÉTAILS ================= */}
+        <div className="mt-5 text-sm space-y-1">
+          <p className="font-semibold text-center text-blue-700">
+            💡 Statut Suivi : {statutSuiviLabels[membre.statut_suivis] || "—"}
+          </p>
+          <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
+          <p>🎗️ Sexe : {membre.sexe || "—"}</p>
+          <p>💧 Baptême d’Eau : {membre.bapteme_eau ? "Oui" : "Non"}</p>
+          <p>🔥 Baptême de Feu : {membre.bapteme_esprit ? "Oui" : "Non"}</p>
+          <p>✒️ Formation : {membre.Formation || "—"}</p>
+          <p>❤️‍🩹 Soin Pastoral : {membre.Soin_Pastoral || "—"}</p>
+          <p>💢 Ministère : {formatMinistere(membre.Ministere, membre.Autre_Ministere)}</p>
+          <p>❓ Besoin : {formatArrayField(membre.besoin)}</p>
+          <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
         </div>
 
         {/* ================= ACTIONS ================= */}
-        <div className="mt-5 space-y-2">
-          <button onClick={() => setEditMember(membre)} className="text-blue-600 text-sm w-full">
+        <div className="mt-5 flex flex-col gap-2">
+          <button onClick={() => setEditMember(membre)} className="text-blue-600 text-sm">
             ✏️ Modifier le contact
           </button>
 
           <button
             onClick={() => {
-              if (!onDelete) return;
-              if (confirm("⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?")) {
+              if (window.confirm("Supprimer définitivement ce contact ?")) {
                 onDelete(membre.id);
                 onClose();
               }
             }}
-            className="text-red-600 text-sm w-full"
+            className="text-red-600 text-sm"
           >
             🗑️ Supprimer le contact
           </button>
@@ -248,7 +233,7 @@ export default function DetailsMemberPopup({
           <EditMemberPopup
             member={editMember}
             onClose={() => setEditMember(null)}
-            onUpdateMember={() => setEditMember(null)}
+            onUpdateMember={onClose}
           />
         )}
       </div>

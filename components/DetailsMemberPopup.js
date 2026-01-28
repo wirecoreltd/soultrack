@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import BoutonEnvoyer from "./BoutonEnvoyer";
 import EditMemberPopup from "./EditMemberPopup";
-import { supabase } from "../lib/supabaseClient";
+import supabase from "../lib/supabaseClient";
 
 export default function DetailsMemberPopup({
   membre,

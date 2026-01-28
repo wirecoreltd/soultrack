@@ -38,8 +38,7 @@ export default function ListMembers() {
   const [showingToast, setShowingToast] = useState(false);
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const realtimeChannelRef = useRef(null);
-  const [etatContactFilter, setEtatContactFilter] = useState("");
-  const [members, setMembers] = useState([]);
+  const [etatContactFilter, setEtatContactFilter] = useState("");  
   const [selectedMember, setSelectedMember] = useState(null);
   
 
@@ -641,12 +640,21 @@ export default function ListMembers() {
           member={editMember}
           onClose={() => setEditMember(null)}
           onUpdateMember={(updatedMember) => {
+            // 🔄 Mise à jour globale (table + card)
             updateMember(updatedMember);
+      
+            // ❌ Ferme le popup d’édition
             setEditMember(null);
-            setPopupMember(prev => prev?.id === updatedMember.id ? { ...prev, ...updatedMember } : prev);
+      
+            // 🔁 Met à jour le popup détails s’il est ouvert
+            setPopupMember(prev =>
+              prev && prev.id === updatedMember.id
+                ? { ...prev, ...updatedMember }
+                : prev
+            );
           }}
         />
-      )}
+      )}  
 
       {/* Toast */}
       {showingToast && (

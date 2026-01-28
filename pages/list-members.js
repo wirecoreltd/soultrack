@@ -317,13 +317,13 @@ export default function ListMembers() {
           )}
     
           {/* Nom */}
-          <div className="flex flex-col items-center mt-4">
+          <div className="flex flex-col items-center mt-8">
             <h2 className="text-base font-bold text-center">
               {m.prenom} {m.nom}
             </h2>
     
             {/* Téléphone */}
-            <div className="relative flex justify-center mt-3">
+            <div className="relative flex justify-center mt-2">
               {m.telephone ? (
                 <>
                   <button
@@ -332,7 +332,7 @@ export default function ListMembers() {
                       e.stopPropagation();
                       setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
                     }}
-                    className="text-orange-500 underline font-semibold"
+                    className="text-orange-500 underline font-semibold text-base"
                   >
                     {m.telephone}
                   </button>

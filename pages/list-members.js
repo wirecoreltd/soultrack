@@ -317,8 +317,8 @@ export default function ListMembers() {
           )}
     
           {/* Nom */}
-          <div className="flex flex-col items-center mt-6">
-            <h2 className="text-lg font-bold text-center">
+          <div className="flex flex-col items-center mt-4">
+            <h2 className="text-base font-bold text-center">
               {m.prenom} {m.nom}
             </h2>
     

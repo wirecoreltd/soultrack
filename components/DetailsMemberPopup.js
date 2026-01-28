@@ -181,48 +181,30 @@ export default function DetailsMemberPopup({
 
         {/* ================= BOUTON MARQUER ================= */}
         {m.etat_contact?.trim().toLowerCase() === "nouveau" && (
-  <div className="w-full flex justify-end mt-4">
-    <button
-      onClick={async () => {
-        const confirm = window.confirm(
-          "⚠️ Confirmation\n\nCe contact n’a plus besoin d’être suivi.\nVoulez-vous vraiment le déplacer dans les membres existants ?"
+  <button
+    onClick={async () => {
+      try {
+        const { error } = await supabase
+          .from("membres_complets")
+          .update({ etat_contact: "existant" })
+          .eq("id", m.id); // ✅ 'm' est accessible ici
+
+        if (error) throw error;
+
+        setAllMembers(prev =>
+          prev.map(mem =>
+            mem.id === m.id ? { ...mem, etat_contact: "existant" } : mem
+          )
         );
-        if (!confirm) return;
-
-        try {
-          const { error } = await supabase
-            .from("membres_complets")
-            .update({ etat_contact: "existant" })
-            .eq("id", m.id);
-
-          if (error) throw error;
-
-          // ✅ Mise à jour globale
-          setAllMembers(prev =>
-            prev.map(mem =>
-              mem.id === m.id ? { ...mem, etat_contact: "existant" } : mem
-            )
-          );
-
-          // ✅ Mise à jour popup si ouvert
-          setPopupMember(prev =>
-            prev && prev.id === m.id
-              ? { ...prev, etat_contact: "existant" }
-              : prev
-          );
-
-          showToast("✅ Contact déplacé dans membres existants");
-        } catch (err) {
-          console.error("Erreur mise à jour :", err);
-          showToast("❌ Erreur lors du déplacement");
-        }
-      }}
-      className="ml-auto bg-white text-green-600 px-3 py-1 rounded-md text-xs font-semibold shadow-sm hover:shadow-md transition-shadow"
-    >
-      ✅ Marquer comme membre
-    </button>
-  </div>
+      } catch (err) {
+        console.error(err);
+      }
+    }}
+  >
+    Marquer comme membre
+  </button>
 )}
+
 
 
 

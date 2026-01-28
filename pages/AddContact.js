@@ -119,14 +119,15 @@ export default function AddContact() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
           {/* Prénom */}
-          <label className="text-sm sm:text-base font-semibold mb-1">Prénom</label>
-          <input
-            type="text"
-            value={formData.prenom}
-            onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
-            className="input"
-            required
-          />
+          <div className="flex flex-col">
+            <label className="text-sm font-medium mb-1">
+              Prénom
+            </label>
+            <input
+              type="text"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+            />
+          </div>
 
           {/* Nom */}
           <label className="text-sm sm:text-base font-semibold mb-1">Nom</label>

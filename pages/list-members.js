@@ -366,44 +366,42 @@ export default function ListMembers() {
           </div>
 
               {/* Bouton Marquer comme membre */}
-                <div className="flex justify-end mt-2">
-                  <button
-                    onClick={() => {
-                      if (
-                        window.confirm(
-                          "⚠️ Confirmation\n\nCe contact n’a plus besoin d’être suivi.\nVoulez-vous vraiment le déplacer dans les membres existants ?"
-                        )
-                      ) {
-                        supabase
-                          .from("membres_complets")
-                          .update({ etat_contact: "existant" })
-                          .eq("id", m.id)
-                          .then(({ error, data }) => {
-                            if (error) {
-                              console.error("Erreur mise à jour :", error);
-                              showToast("❌ Erreur lors du déplacement");
-                            } else {
-                              setAllMembers((prev) =>
-                                prev.map((mem) =>
-                                  mem.id === m.id ? { ...mem, etat_contact: "existant" } : mem
-                                )
-                              );
-                              // ✅ Toast stylisé comme un petit badge/bouton
-                              showToast(
-                                <span className="inline-block bg-white text-green-600 px-2 py-1 rounded shadow text-xs font-semibold">
-                                  ✅ Contact déplacé dans membres existants
-                                </span>
-                              );
-                            }
-                          });
-                      }
-                    }}
-                    className="bg-white text-green-600 px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    ✅ Marquer comme membre
-                  </button>
-                </div>
-  
+<div className="w-full flex justify-end mt-2">
+  <button
+    onClick={() => {
+      if (
+        window.confirm(
+          "⚠️ Confirmation\n\nCe contact n’a plus besoin d’être suivi.\nVoulez-vous vraiment le déplacer dans les membres existants ?"
+        )
+      ) {
+        supabase
+          .from("membres_complets")
+          .update({ etat_contact: "existant" })
+          .eq("id", m.id)
+          .then(({ error, data }) => {
+            if (error) {
+              console.error("Erreur mise à jour :", error);
+              showToast("❌ Erreur lors du déplacement");
+            } else {
+              setAllMembers((prev) =>
+                prev.map((mem) =>
+                  mem.id === m.id ? { ...mem, etat_contact: "existant" } : mem
+                )
+              );
+              showToast(
+                <span className="inline-block bg-white text-green-600 px-2 py-1 rounded shadow text-xs font-semibold">
+                  ✅ Contact déplacé dans membres existants
+                </span>
+              );
+            }
+          });
+      }
+    }}
+    className="ml-auto bg-white text-green-600 px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
+  >
+    ✅ Marquer comme membre
+  </button>
+</div>  
 
           <div className="mt-2 w-full">
             <label className="font-semibold text-sm">Envoyer à :</label>

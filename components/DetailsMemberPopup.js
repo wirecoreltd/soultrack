@@ -13,6 +13,7 @@ export default function DetailsMemberPopup({
   handleAfterSend,
   showToast,
   updateSuivi,
+  setAllMembers,
   onDelete,
 }) {
   if (!membre || !membre.id) return null;
@@ -182,10 +183,32 @@ export default function DetailsMemberPopup({
         {membre.etat_contact?.trim().toLowerCase() === "nouveau" && (
           <div className="flex justify-end mt-6">
             <button
-              onClick={() => {
-                if (window.confirm("Ce contact n’a plus besoin d’être suivi.\nLe déplacer vers membres existants ?")) {
-                  updateSuivi(membre.id, "existant");
+              onClick={async () => {
+                const confirm = window.confirm(
+                  "⚠️ Confirmation\n\nCe contact n’a plus besoin d’être suivi.\nVoulez-vous le déplacer dans les membres existants ?"
+                );
+                if (!confirm) return;
+            
+                const { error } = await supabase
+                  .from("membres_complets")
+                  .update({ etat_contact: "existant" })
+                  .eq("id", membre.id);
+            
+                if (error) {
+                  console.error(error);
+                  showToast("❌ Erreur lors du déplacement");
+                  return;
                 }
+            
+                // ✅ MET À JOUR LA LISTE LOCALE (CRUCIAL)
+                setAllMembers((prev) =>
+                  prev.map((m) =>
+                    m.id === membre.id ? { ...m, etat_contact: "existant" } : m
+                  )
+                );
+            
+                showToast("✅ Contact déplacé dans membres existants");
+                onClose(); // optionnel mais recommandé
               }}
               className="bg-white text-green-600 px-3 py-1 rounded-md text-sm font-medium shadow-sm hover:shadow transition"
             >

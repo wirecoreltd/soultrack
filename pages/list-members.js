@@ -24,7 +24,6 @@ export default function ListMembers() {
   const [session, setSession] = useState(null);
   const [prenom, setPrenom] = useState("");
   const [loading, setLoading] = useState(true);
-  const [members, setMembers] = useState([]);
   const searchParams = useSearchParams();
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
   const toBoolean = (val) => val === true || val === "true";
@@ -40,6 +39,9 @@ export default function ListMembers() {
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const realtimeChannelRef = useRef(null);
   const [etatContactFilter, setEtatContactFilter] = useState("");
+  const [members, setMembers] = useState([]);
+  const [selectedMember, setSelectedMember] = useState(null);
+  
 
   const [view, setView] = useState(() => {
   if (typeof window !== "undefined") {

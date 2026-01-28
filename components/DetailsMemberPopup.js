@@ -199,6 +199,8 @@ export default function DetailsMemberPopup({
                       : mem
                   )
                 );
+                onClose();
+                
               } catch (err) {
                 console.error("Erreur marquer membre :", err);
               }

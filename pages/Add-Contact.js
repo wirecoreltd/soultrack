@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 
-export default function AddContact() {
+export default function Add-Contact() {
   const router = useRouter();
 
   const [etatContact, setEtatContact] = useState("Nouveau"); // Menu déroulant en haut

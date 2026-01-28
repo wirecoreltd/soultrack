@@ -1,14 +1,13 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/router";
-import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 
 export default function AddContact() {
   const router = useRouter();
 
-  const [etatContact, setEtatContact] = useState("Nouveau"); // Menu déroulant en haut
   const [formData, setFormData] = useState({
+    etat_contact: "Nouveau", // Nouveau par défaut
     sexe: "",
     nom: "",
     prenom: "",
@@ -27,7 +26,7 @@ export default function AddContact() {
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+  const besoinsOptions = ["Finances", "Santé", "Travail", "Enfants", "Famille"];
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
@@ -55,20 +54,20 @@ export default function AddContact() {
     const dataToSend = {
       ...formData,
       besoin: finalBesoin,
-      etat_contact: etatContact, // Ici on prend le choix du menu déroulant
     };
-
     delete dataToSend.besoinLibre;
 
     try {
-      const { error } = await supabase.from("membres_complets").insert([dataToSend]);
-      if (error) throw error;
-
+      await supabase.from("membres_complets").insert([dataToSend]);
       setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      setTimeout(() => {
+        setSuccess(false);
+        router.push("/list-members"); // retour après ajout
+      }, 1000);
 
-      // Reset form
+      // Reset du formulaire
       setFormData({
+        etat_contact: "Nouveau",
         sexe: "",
         nom: "",
         prenom: "",
@@ -84,29 +83,13 @@ export default function AddContact() {
         type_conversion: "",
       });
       setShowBesoinLibre(false);
+
     } catch (err) {
       alert(err.message);
     }
   };
 
-  const handleCancel = () => {
-    setFormData({
-      sexe: "",
-      nom: "",
-      prenom: "",
-      telephone: "",
-      ville: "",
-      statut: "",
-      venu: "",
-      besoin: [],
-      besoinLibre: "",
-      is_whatsapp: false,
-      infos_supplementaires: "",
-      priere_salut: "",
-      type_conversion: "",
-    });
-    setShowBesoinLibre(false);
-  };
+  const handleCancel = () => router.push("/list-members");
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-4 sm:p-6">
@@ -118,57 +101,60 @@ export default function AddContact() {
           ← Retour
         </button>
 
-        <div className="flex justify-center mb-4 sm:mb-6">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={70} height={70} className="sm:w-[80px] sm:h-[60px]" />
-        </div>
-
         <h1 className="text-2xl sm:text-3xl font-bold text-center mb-4">Ajouter un contact</h1>
 
-        {/* Menu déroulant pour choisir Nouveau ou Existant */}
-        <label className="text-sm sm:text-base font-semibold mb-3">
-          Type de contact
-          <select
-            value={etatContact}
-            onChange={(e) => setEtatContact(e.target.value)}
-            className="input mt-1"
-          >
-            <option value="Nouveau">Nouveau</option>
-            <option value="Existant">Existant</option>
-          </select>
-        </label>
-
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
+          {/* Nouveau / Existant */}
+          <div className="flex items-center gap-3">
+            <label className="w-32 text-sm font-semibold">État contact</label>
+            <select
+              className="input flex-1"
+              value={formData.etat_contact}
+              onChange={(e) => setFormData({ ...formData, etat_contact: e.target.value })}
+              required
+            >
+              <option value="Nouveau">Nouveau</option>
+              <option value="Existant">Existant</option>
+            </select>
+          </div>
+
           {/* Prénom */}
-          <label className="text-sm sm:text-base font-semibold">Prénom</label>
-          <input
-            type="text"
-            value={formData.prenom}
-            onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
-            className="input"
-            required
-          />
+          <div className="flex items-center gap-3">
+            <label className="w-32 text-sm font-semibold">Prénom</label>
+            <input
+              type="text"
+              value={formData.prenom}
+              onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
+              className="input flex-1"
+              required
+            />
+          </div>
 
           {/* Nom */}
-          <label className="text-sm sm:text-base font-semibold">Nom</label>
-          <input
-            type="text"
-            value={formData.nom}
-            onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-            className="input"
-            required
-          />
+          <div className="flex items-center gap-3">
+            <label className="w-32 text-sm font-semibold">Nom</label>
+            <input
+              type="text"
+              value={formData.nom}
+              onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+              className="input flex-1"
+              required
+            />
+          </div>
 
           {/* Téléphone */}
-          <label className="text-sm sm:text-base font-semibold">Téléphone</label>
-          <input
-            type="text"
-            value={formData.telephone}
-            onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
-            className="input"
-          />
+          <div className="flex items-center gap-3">
+            <label className="w-32 text-sm font-semibold">Téléphone</label>
+            <input
+              type="text"
+              value={formData.telephone}
+              onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+              className="input flex-1"
+            />
+          </div>
 
           {/* WhatsApp */}
-          <label className="flex items-center gap-2 text-sm sm:text-base">
+          <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
               checked={formData.is_whatsapp}
@@ -178,83 +164,93 @@ export default function AddContact() {
           </label>
 
           {/* Ville */}
-          <label className="text-sm sm:text-base font-semibold">Ville</label>
-          <input
-            type="text"
-            value={formData.ville}
-            onChange={(e) => setFormData({ ...formData, ville: e.target.value })}
-            className="input"
-          />
+          <div className="flex items-center gap-3">
+            <label className="w-32 text-sm font-semibold">Ville</label>
+            <input
+              type="text"
+              value={formData.ville}
+              onChange={(e) => setFormData({ ...formData, ville: e.target.value })}
+              className="input flex-1"
+            />
+          </div>
 
           {/* Sexe */}
-          <label className="text-sm sm:text-base font-semibold">Sexe</label>
-          <select
-            value={formData.sexe}
-            onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}
-            className="input"
-            required
-          >
-            <option value="">-- Choisir --</option>
-            <option value="Homme">Homme</option>
-            <option value="Femme">Femme</option>
-          </select>
+          <div className="flex items-center gap-3">
+            <label className="w-32 text-sm font-semibold">Sexe</label>
+            <select
+              className="input flex-1"
+              value={formData.sexe}
+              onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}
+              required
+            >
+              <option value="">-- Choisir --</option>
+              <option value="Homme">Homme</option>
+              <option value="Femme">Femme</option>
+            </select>
+          </div>
 
           {/* Raison de la venue */}
-          <label className="text-sm sm:text-base font-semibold">Raison de la venue</label>
-          <select
-            value={formData.statut}
-            onChange={(e) => setFormData({ ...formData, statut: e.target.value })}
-            className="input"
-            required
-          >
-            <option value="">-- Choisir --</option>
-            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-            <option value="a déjà son église">A déjà son église</option>
-            <option value="nouveau">Nouveau</option>
-            <option value="visiteur">Visiteur</option>
-          </select>
+          <div className="flex items-center gap-3">
+            <label className="w-32 text-sm font-semibold">Raison</label>
+            <select
+              className="input flex-1"
+              value={formData.statut}
+              onChange={(e) => setFormData({ ...formData, statut: e.target.value })}
+              required
+            >
+              <option value="">-- Choisir --</option>
+              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+              <option value="a déjà son église">A déjà son église</option>
+              <option value="nouveau">Nouveau</option>
+              <option value="visiteur">Visiteur</option>
+            </select>
+          </div>
 
           {/* Comment est-il venu */}
-          <label className="text-sm sm:text-base font-semibold">Comment est-il venu ?</label>
-          <select
-            value={formData.venu}
-            onChange={(e) => setFormData({ ...formData, venu: e.target.value })}
-            className="input"
-            required
-          >
-            <option value="">-- Choisir --</option>
-            <option value="invité">Invité</option>
-            <option value="réseaux">Réseaux</option>
-            <option value="evangélisation">Évangélisation</option>
-            <option value="autre">Autre</option>
-          </select>
+          <div className="flex items-center gap-3">
+            <label className="w-32 text-sm font-semibold">Venue par</label>
+            <select
+              className="input flex-1"
+              value={formData.venu}
+              onChange={(e) => setFormData({ ...formData, venu: e.target.value })}
+              required
+            >
+              <option value="">-- Choisir --</option>
+              <option value="invité">Invité</option>
+              <option value="réseaux">Réseaux</option>
+              <option value="evangélisation">Évangélisation</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
 
           {/* Prière du salut */}
-          <label className="text-sm sm:text-base font-semibold">Prière du salut</label>
-          <select
-            className="input"
-            value={formData.priere_salut}
-            required
-            onChange={(e) => {
-              const value = e.target.value;
-              setFormData({
-                ...formData,
-                priere_salut: value,
-                type_conversion: value === "Oui" ? formData.type_conversion : "",
-              });
-            }}
-          >
-            <option value="">-- Choisir --</option>
-            <option value="Oui">Oui</option>
-            <option value="Non">Non</option>
-          </select>
+          <div className="flex items-center gap-3">
+            <label className="w-32 text-sm font-semibold">Salut reçu ?</label>
+            <select
+              className="input flex-1"
+              value={formData.priere_salut}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData({
+                  ...formData,
+                  priere_salut: value,
+                  type_conversion: value === "Oui" ? formData.type_conversion : "",
+                });
+              }}
+              required
+            >
+              <option value="">-- Choisir --</option>
+              <option value="Oui">Oui</option>
+              <option value="Non">Non</option>
+            </select>
+          </div>
 
           {/* Type de conversion */}
           {formData.priere_salut === "Oui" && (
-            <>
-              <label className="text-sm sm:text-base font-semibold">Type de conversion</label>
+            <div className="flex items-center gap-3">
+              <label className="w-32 text-sm font-semibold">Conversion</label>
               <select
-                className="input"
+                className="input flex-1"
                 value={formData.type_conversion}
                 onChange={(e) => setFormData({ ...formData, type_conversion: e.target.value })}
                 required
@@ -263,45 +259,47 @@ export default function AddContact() {
                 <option value="Nouveau converti">Nouveau converti</option>
                 <option value="Réconciliation">Réconciliation</option>
               </select>
-            </>
+            </div>
           )}
 
           {/* Besoins */}
-          <p className="text-sm sm:text-base font-semibold mb-1">Besoins</p>
-          {besoinsOptions.map(item => (
-            <label key={item} className="flex items-center gap-1 mb-2 text-sm sm:text-base">
+          <p className="text-sm font-semibold mt-2 mb-1">Besoins</p>
+          <div className="flex flex-wrap gap-2">
+            {besoinsOptions.map(item => (
+              <label key={item} className="flex items-center gap-1 text-sm">
+                <input
+                  type="checkbox"
+                  value={item}
+                  checked={formData.besoin.includes(item)}
+                  onChange={handleBesoinChange}
+                  className="w-4 h-4 rounded border-gray-400"
+                />
+                {item}
+              </label>
+            ))}
+            <label className="flex items-center gap-1 text-sm">
               <input
                 type="checkbox"
-                value={item}
-                checked={formData.besoin.includes(item)}
+                value="Autre"
+                checked={showBesoinLibre}
                 onChange={handleBesoinChange}
-                className="w-4 h-4 sm:w-5 sm:h-5 rounded border-gray-400 cursor-pointer"
+                className="w-4 h-4 rounded border-gray-400"
               />
-              {item}
+              Autre
             </label>
-          ))}
-          <label className="flex items-center gap-3 mb-2 text-sm sm:text-base">
-            <input
-              type="checkbox"
-              value="Autre"
-              checked={showBesoinLibre}
-              onChange={handleBesoinChange}
-              className="w-4 h-4 sm:w-5 sm:h-5 rounded border-gray-400 cursor-pointer"
-            />
-            Autre
-          </label>
-          {showBesoinLibre && (
-            <input
-              type="text"
-              placeholder="Précisez..."
-              value={formData.besoinLibre}
-              onChange={(e) => setFormData({ ...formData, besoinLibre: e.target.value })}
-              className="input mt-1"
-            />
-          )}
+            {showBesoinLibre && (
+              <input
+                type="text"
+                placeholder="Précisez..."
+                value={formData.besoinLibre}
+                onChange={(e) => setFormData({ ...formData, besoinLibre: e.target.value })}
+                className="input mt-1"
+              />
+            )}
+          </div>
 
-          {/* Informations supplémentaires */}
-          <label className="text-sm sm:text-base font-semibold">Informations supplémentaires</label>
+          {/* Infos supplémentaires */}
+          <label className="text-sm font-semibold mt-2">Infos supplémentaires</label>
           <textarea
             placeholder="..."
             rows={2}
@@ -310,28 +308,39 @@ export default function AddContact() {
             className="input"
           />
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">
-            <button type="button" onClick={handleCancel} className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
+          {/* Boutons */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-3">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            >
               Annuler
             </button>
-            <button type="submit" className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            >
               Ajouter
             </button>
           </div>
-        </form>
 
-        {success && <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">✅ Contact ajouté avec succès !</p>}
+          {success && (
+            <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
+              ✅ Contact ajouté avec succès !
+            </p>
+          )}
+
+        </form>
 
         <style jsx>{`
           .input {
             width: 100%;
             border: 1px solid #ccc;
             border-radius: 12px;
-            padding: 12px;
-            text-align: left;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            color: black;
+            padding: 10px;
             font-size: 0.95rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           }
         `}</style>
       </div>

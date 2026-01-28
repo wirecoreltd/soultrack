@@ -706,6 +706,7 @@ export default function ListMembers() {
           statusChanges={statusChanges}
           setStatusChanges={setStatusChanges}
           updateSuivi={updateSuivi}
+          setAllMembers={setAllMembers} 
           updating={updating}
         />
       )}

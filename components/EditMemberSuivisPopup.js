@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
+export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember }) {
   if (!member) return null;
 
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+  const [autreMinistere, setAutreMinistere] = useState("");
 
   const parseBesoin = (b) => {
     if (!b) return [];
@@ -50,6 +51,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     Formation: member?.Formation || "",
     Soin_Pastoral: member?.Soin_Pastoral || "",
     Ministere: parseBesoin(member?.Ministere),
+    Commentaire_Suivi_Evangelisation: member?.Commentaire_Suivi_Evangelisation || "",
 
   });
   
@@ -114,13 +116,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   } else if (name === "conseiller_id" && value) {
     setFormData(prev => ({ ...prev, conseiller_id: value, cellule_id: "" }));
-
-  } else if (name === "bapteme_eau" || name === "bapteme_esprit") {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value === "true" ? true : value === "false" ? false : null
-    }));
-
+  
   } else {
     setFormData(prev => ({ ...prev, [name]: value }));
   }
@@ -160,6 +156,13 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       } else {
         finalBesoin = finalBesoin.filter(b => b !== "Autre");
       }
+      let finalMinistere = [...formData.Ministere];
+
+if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
+  finalMinistere = finalMinistere.filter(m => m !== "Autre");
+  finalMinistere.push(autreMinistere.trim());
+}
+
 
       const payload = {
         prenom: formData.prenom,
@@ -182,11 +185,10 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
         suivi_statut: formData.suivi_statut || null,
         commentaire_suivis: formData.commentaire_suivis || null,
         is_whatsapp: !!formData.is_whatsapp,
-        Formation: formData.Formation || null,
-          Soin_Pastoral: formData.Soin_Pastoral || null,
-          Ministere: formData.star
-            ? JSON.stringify(formData.Ministere)
-            : null,
+        Formation: formData.Formation || null,        
+        Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
+        Soin_Pastoral: formData.Soin_Pastoral || null,        
+        Ministere: formData.star? JSON.stringify(finalMinistere): null,
       };
 
       const { error } = await supabase
@@ -257,7 +259,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="Homme">Homme</option>
               <option value="Femme">Femme</option>
             </select>
-          </div>            
+          </div>          
 
           {/* Bapteme d'eau */}
           <div className="flex flex-col">
@@ -280,16 +282,16 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
           </div>
 
            {/* Formation*/}
-            <div className="flex flex-col">
-              <label className="font-medium">Formation</label>
-              <textarea
-                name="Formation"
-                value={formData.Formation}
-                onChange={handleChange}
-                className="input"
-                rows={2}
-              />
-            </div>
+          <div className="flex flex-col">
+            <label className="font-medium">Formation</label>
+            <textarea
+              name="Formation"
+              value={formData.Formation}
+              onChange={handleChange}
+              className="input"
+              rows={2}
+            />
+          </div>
 
           {/* Soin Pastoral*/}
           <div className="flex flex-col">
@@ -340,7 +342,29 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               </select>
             )}
           </div>
-          
+
+          {/* Cellule */}
+          <div className="flex flex-col">
+            <label className="font-medium">Cellule</label>
+            <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input" disabled={loadingData}>
+              <option value="">-- Cellule --</option>
+              {cellules.map(c => (
+                <option key={c.id} value={c.id}>{c.cellule_full}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Conseiller */}
+          <div className="flex flex-col">
+            <label className="font-medium">Conseiller</label>
+            <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input" disabled={loadingData}>
+              <option value="">-- Conseiller --</option>
+              {conseillers.map(c => (
+                <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Besoins */}
           <div className="flex flex-col">
             <label className="font-medium">Besoins</label>
@@ -358,8 +382,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <input name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input mt-2" placeholder="Précisez" />
             )}
           </div>
-             
-          {/* Comment est-il venu ? */}
+                       {/* Comment est-il venu ? */}
           <div className="flex flex-col">
             <label className="font-medium">Comment est-il venu ?</label>
             <select name="venu" value={formData.venu} onChange={handleChange} className="input">
@@ -369,7 +392,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="evangélisation">Évangélisation</option>
               <option value="autre">Autre</option>
             </select>
-          </div>  
+          </div>
 
           {/* Informations supplémentaires */}
           <div className="flex flex-col">
@@ -385,7 +408,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
           {/* Statut à l'arrivée */}
           <div className="flex flex-col">
-            <label className="font-medium">Raison de la venue</label>
+            <label className="font-medium">Statut à l'arrivée</label>
             <select
               name="statut_initial"
               value={formData.statut_initial}
@@ -397,7 +420,34 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               <option value="a déjà son église">A déjà son église</option>
               <option value="visiteur">Visiteur</option>
             </select>
-          </div>          
+          </div>
+
+          {/* Suivi statut */}
+          <div className="flex flex-col">
+            <label className="font-medium">Suivi statut</label>
+            <select
+              value={formData.suivi_statut ?? ""}
+              onChange={(e) => setFormData(prev => ({ ...prev, suivi_statut: e.target.value }))}
+              className="input"
+            >
+              <option value="">-- Sélectionner un statut --</option>
+              <option value="En Attente">En Attente</option>
+              <option value="Intégrer">Intégrer</option>
+              <option value="Refus">Refus</option>
+            </select>
+          </div>
+
+          {/* Commentaire suivis */}
+          <div className="flex flex-col">
+            <label className="font-medium">Commentaire suivis</label>
+            <textarea
+              name="commentaire_suivis"
+              value={formData.commentaire_suivis}
+              onChange={handleChange}
+              className="input"
+              rows={2}
+            />
+          </div>                
         </div>
 
         {/* Buttons */}

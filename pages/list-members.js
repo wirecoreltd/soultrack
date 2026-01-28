@@ -370,7 +370,7 @@ export default function ListMembers() {
                         });
                     }
                   }}
-                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm font-semibold"
+                  className="bg-white text-green-600 px-3 py-1 rounded-md text-sm font-semibold text-right"
                 >
                   ✅ Marquer comme membre
                 </button>

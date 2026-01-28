@@ -16,15 +16,25 @@ export default function Evangelisation() {
   const [detailsOpen, setDetailsOpen] = useState({});
   const [editMember, setEditMember] = useState(null);
   const [popupMember, setPopupMember] = useState(null);
-  const [loadingSend, setLoadingSend] = useState(false);
-  const [view, setView] = useState("card");
+  const [loadingSend, setLoadingSend] = useState(false);  
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
-
+  
   // 🔹 Popup doublon
   const [showDoublonPopup, setShowDoublonPopup] = useState(false);
   const [doublonsDetected, setDoublonsDetected] = useState([]);
   const [pendingContacts, setPendingContacts] = useState([]);
+
+  const [view, setView] = useState(() => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("members_view") || "card";
+  }
+  return "card";
+});
+
+  useEffect(() => {
+  localStorage.setItem("members_view", view);
+}, [view]);
 
   /* ================= FETCH ================= */
   useEffect(() => {

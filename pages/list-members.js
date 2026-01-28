@@ -238,16 +238,32 @@ export default function ListMembers() {
     const searchFiltered = baseFiltered.filter((m) =>
       `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
     );
-    const nouveaux = searchFiltered.filter((m) =>
-      ["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut) &&
-      m.etat_contact !== "existant"
-    );
+      const nouveaux = searchFiltered.filter(m => m.etat_contact?.trim().toLowerCase() === "nouveau");
 
-    const anciens = searchFiltered.filter((m) => !["visiteur", "veut rejoindre ICC", "nouveau"].includes(m.statut));
-    return { filteredMembers: searchFiltered, filteredNouveaux: nouveaux, filteredAnciens: anciens };
-  }, [members, filter, search]);
+  // Section Membres existants : etat_contact = "existant" ou "ancien"
+  const existants = searchFiltered.filter(m =>
+    ["existant", "ancien"].includes(m.etat_contact?.trim().toLowerCase())
+  );
 
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+
+    const handleMarquerCommeMembre = async (id) => {
+  try {
+    const { error } = await supabase
+      .from("membres_complets")
+      .update({ etat_contact: "existant" })
+      .eq("id", id);
+
+    if (error) throw error;
+
+    // Mettre à jour localement
+    setAllMembers(prev => prev.map(m => m.id === id ? { ...m, etat_contact: "existant" } : m));
+    showToast("✅ Ce contact est maintenant membre existant");
+  } catch (err) {
+    console.error("Erreur mise à jour statut :", err);
+  }
+};
+
 
   const getBorderColor = (m) => {
     if (!m.etat_contact) return "#ccc";

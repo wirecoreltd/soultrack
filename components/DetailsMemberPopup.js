@@ -180,42 +180,49 @@ export default function DetailsMemberPopup({
         </div>
 
         {/* ================= BOUTON MARQUER ================= */}
-        {membre.etat_contact?.trim().toLowerCase() === "nouveau" && (
-          <div className="flex justify-end mt-6">
+        {m.etat_contact?.trim().toLowerCase() === "nouveau" && (
+          <div className="w-full flex justify-end mt-4">
             <button
               onClick={async () => {
                 const confirm = window.confirm(
-                  "⚠️ Confirmation\n\nCe contact n’a plus besoin d’être suivi.\nVoulez-vous le déplacer dans les membres existants ?"
+                  "⚠️ Confirmation\n\nCe contact n’a plus besoin d’être suivi.\nVoulez-vous vraiment le déplacer dans les membres existants ?"
                 );
                 if (!confirm) return;
-            
+        
                 const { error } = await supabase
                   .from("membres_complets")
                   .update({ etat_contact: "existant" })
-                  .eq("id", membre.id);
-            
+                  .eq("id", m.id);
+        
                 if (error) {
                   console.error(error);
                   showToast("❌ Erreur lors du déplacement");
                   return;
                 }
-            
-                // ✅ MET À JOUR LA LISTE LOCALE (CRUCIAL)
-                setAllMembers((prev) =>
-                  prev.map((m) =>
-                    m.id === membre.id ? { ...m, etat_contact: "existant" } : m
+        
+                // ✅ Mise à jour globale
+                setAllMembers(prev =>
+                  prev.map(mem =>
+                    mem.id === m.id ? { ...mem, etat_contact: "existant" } : mem
                   )
                 );
-            
+        
+                // ✅ Mise à jour du popup s’il est ouvert
+                setPopupMember(prev =>
+                  prev && prev.id === m.id
+                    ? { ...prev, etat_contact: "existant" }
+                    : prev
+                );
+        
                 showToast("✅ Contact déplacé dans membres existants");
-                onClose(); // optionnel mais recommandé
               }}
-              className="bg-white text-green-600 px-3 py-1 rounded-md text-sm font-medium shadow-sm hover:shadow transition"
+              className="ml-auto bg-white text-green-600 px-3 py-1 rounded-md text-xs font-semibold shadow-sm hover:shadow-md transition-shadow"
             >
               ✅ Marquer comme membre
             </button>
           </div>
         )}
+
 
         {/* ================= DÉTAILS ================= */}
         <div className="mt-5 text-sm space-y-1">

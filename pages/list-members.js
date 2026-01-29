@@ -532,67 +532,68 @@ export default function ListMembers() {
                 <p>📑 Commentaire Suivis Evangelisation : {m.Commentaire_Suivi_Evangelisation || ""}</p>   
                 <div className="flex flex-col items-center">
                     
-                 <div className="flex flex-col items-center w-full p-4 bg-white rounded-lg shadow-md space-y-3">
-                    {/* Modifier */}
+                 <div className="flex flex-col items-center w-full p-4 bg-white rounded-lg shadow-md space-y-2">
+                  {/* Modifier */}
+                  <button
+                    onClick={() => setEditMember(m)}
+                    className="w-full text-orange-500 text-sm font-semibold py-2 rounded-md hover:bg-orange-50 transition"
+                  >
+                    ✏️ Modifier le contact
+                  </button>
+                
+                  {/* ✅ Intégration terminée — visible uniquement pour les Conseillers */}
+                  {userRole === "Conseiller" && m.integration_fini !== "fini" && (
                     <button
-                      onClick={() => setEditMember(m)}
-                      className="w-full text-blue-600 text-sm font-semibold py-2 rounded-md hover:bg-blue-50 transition"
-                    >
-                      ✏️ Modifier le contact
-                    </button>
-                  
-                    {/* ✅ Intégration terminée — visible uniquement pour les Conseillers */}
-                    {userRole === "Conseiller" && m.integration_fini !== "fini" && (
-                      <button
-                        onClick={async () => {
-                          const confirmAction = window.confirm(
-                            "⚠️ Confirmation\n\nCe contact ne sera plus attribué à vous.\nVoulez-vous continuer ?"
-                          );
-                          if (!confirmAction) return;
-                  
-                          try {
-                            const { error } = await supabase
-                              .from("membres_complets")
-                              .update({
-                                integration_fini: "fini",
-                                conseiller_id: null,
-                              })
-                              .eq("id", m.id);
-                  
-                            if (error) throw error;
-                  
-                            setAllMembers(prev => prev.filter(mem => mem.id !== m.id));
-                            showToast("✅ Intégration terminée. Contact détaché.");
-                          } catch (err) {
-                            console.error("Erreur intégration :", err);
-                            showToast("❌ Erreur lors de l'opération");
-                          }
-                        }}
-                        className="ml-auto bg-blue-500 text-white w-full py-2 rounded-md font-semibold shadow-sm hover:bg-blue-600 transition"
-                      >
-                        ✅ Intégration terminée
-                      </button>
-                    )}
-                  
-                    {/* Supprimer */}
-                    <button
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            "⚠️ Suppression définitive\n\n" +
-                            "Voulez-vous vraiment supprimer ce contact ?\n\n" +
-                            "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
-                            "Cette action est irréversible."
-                          )
-                        ) {
-                          handleSupprimerMembre(m.id);
+                      onClick={async () => {
+                        const confirmAction = window.confirm(
+                          "⚠️ Confirmation\n\nCe contact ne sera plus attribué à vous.\nVoulez-vous continuer ?"
+                        );
+                        if (!confirmAction) return;
+                
+                        try {
+                          const { error } = await supabase
+                            .from("membres_complets")
+                            .update({
+                              integration_fini: "fini",
+                              conseiller_id: null,
+                            })
+                            .eq("id", m.id);
+                
+                          if (error) throw error;
+                
+                          setAllMembers(prev => prev.filter(mem => mem.id !== m.id));
+                          showToast("✅ Intégration terminée. Contact détaché.");
+                        } catch (err) {
+                          console.error("Erreur intégration :", err);
+                          showToast("❌ Erreur lors de l'opération");
                         }
                       }}
-                      className="w-full text-red-600 text-sm font-semibold py-2 rounded-md hover:bg-red-50 transition"
+                      className="ml-auto bg-blue-500 text-white w-full py-2 rounded-md font-semibold shadow-sm hover:bg-blue-600 transition"
                     >
-                      🗑️ Supprimer le contact
+                      ✅ Intégration terminée
                     </button>
-                     </div>  
+                  )}
+                
+                  {/* Supprimer */}
+                  <button
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          "⚠️ Suppression définitive\n\n" +
+                          "Voulez-vous vraiment supprimer ce contact ?\n\n" +
+                          "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
+                          "Cette action est irréversible."
+                        )
+                      ) {
+                        handleSupprimerMembre(m.id);
+                      }
+                    }}
+                    className="w-full text-red-600 text-xs font-semibold py-1.5 rounded-md hover:bg-red-50 transition"
+                  >
+                    🗑️ Supprimer le contact
+                  </button>
+                </div>
+  
                </div>
              </div>
             )}

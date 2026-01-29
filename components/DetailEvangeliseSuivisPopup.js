@@ -2,7 +2,6 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
-import EditEvangeliseSuiviPopup from "../components/EditEvangeliseSuiviPopup";
 
 export default function DetailEvangeliseSuivisPopup({
   member,
@@ -91,7 +90,6 @@ export default function DetailEvangeliseSuivisPopup({
         conseiller_id: suivi.conseiller_id,
         statut_initial: "intégré",
         suivi_statut: "Intégré",
-        etat_contact: "Existant",
         suivi_commentaire_suivis: comment,
         suivi_updated_at: new Date().toISOString(),
       };
@@ -302,9 +300,6 @@ export default function DetailEvangeliseSuivisPopup({
           <p>📝 Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
         </div>
 
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-lg">
-
         {/* ================= CENTRÉ ================= */}
         {!isRefus && (
           <div className="mt-6 flex justify-center">
@@ -316,19 +311,7 @@ export default function DetailEvangeliseSuivisPopup({
             </button>
           </div>
         )}
-
-      </div> {/* bg-white */}
-    </div>   {/* fixed */}
-
-    {editingContact && (
-      <EditEvangeliseSuiviPopup
-        member={editingContact}
-        onClose={() => setEditingContact(null)}
-        onUpdateMember={() => {
-          setEditingContact(null);
-          fetchSuivis(user, cellules);
-        }}
-      />
-    )}
-  </>
-);
+      </div>
+    </div>
+  );
+}

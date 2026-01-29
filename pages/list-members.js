@@ -52,21 +52,6 @@ export default function ListMembers() {
   return "card";
 });  
 
-if (error) {
-  console.error(error);
-  showToast("❌ Erreur lors de l'opération");
-  return;
-}
-
-showToast("✅ Intégration terminée");
-setMembers(prev => prev.filter(mem => mem.id !== m.id));
-
-  const { members, setAllMembers, updateMember } = useMembers();
-
-  const { error } = await supabase.rpc("terminer_integration", {
-  membre_id: m.id,
-});
-
   // -------------------- Toast --------------------
   const showToast = (msg) => {
     setToastMessage(msg);

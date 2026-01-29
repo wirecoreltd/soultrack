@@ -303,27 +303,29 @@ export default function DetailEvangeliseSuivisPopup({
         </div>
 
         {/* ================= CENTRÉ ================= */}
-        {!isRefus && (
-          <div className="mt-6 flex justify-center">
-            <button
-              onClick={() => onEdit(member)}
-              className="text-blue-600 text-sm font-semibold hover:underline"
-            >
-              ✏️ Modifier le contact
-          </button>
-        </div>
+         {!isRefus && (
+            <div className="mt-6 flex justify-center">
+              <button
+                onClick={() => onEdit(member)}
+                className="text-blue-600 text-sm font-semibold hover:underline"
+              >
+                ✏️ Modifier le contact
+              </button>
+            </div>
+          )}
+  
+        </div> {/* 🔴 FERME le div bg-white */}
+      </div>   {/* 🔴 FERME le div fixed */}
+  
+      {editingContact && (
+        <EditEvangeliseSuiviPopup
+          member={editingContact}
+          onClose={() => setEditingContact(null)}
+          onUpdateMember={() => {
+            setEditingContact(null);
+            fetchSuivis(user, cellules);
+          }}
+        />
       )}
-    </div>
-
-    {editingContact && (
-      <EditEvangeliseSuiviPopup
-        member={editingContact}
-        onClose={() => setEditingContact(null)}
-        onUpdateMember={() => {
-          setEditingContact(null);
-          fetchSuivis(user, cellules);
-        }}
-      />
-    )}
-  </>
-);
+    </>
+  );

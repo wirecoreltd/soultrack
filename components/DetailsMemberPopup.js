@@ -112,8 +112,8 @@ export default function DetailsMemberPopup({
 
         {/* ================= INFOS ================= */}
         <div className="mt-4 text-sm space-y-1">
-          <p className="text-center">🏙️ Ville : {membre.ville || "—"}</p>
-          <p className="text-center">🕊 Etat Contact : {membre.etat_contact || "—"}</p>
+          <p className="text-center">🏙️ Ville : {membre.ville || ""}</p>
+          <p className="text-center">🕊 Etat Contact : {membre.etat_contact || ""}</p>
           <p className="text-right text-[11px] text-gray-400">
             Créé le {new Date(membre.created_at).toLocaleDateString("fr-FR")}
           </p>
@@ -218,17 +218,23 @@ export default function DetailsMemberPopup({
         {/* ================= DÉTAILS ================= */}
         <div className="mt-5 text-sm space-y-1">
           <p className="font-semibold text-center text-blue-700">
-            💡 Statut Suivi : {statutSuiviLabels[membre.statut_suivis] || "—"}
+            💡 Statut Suivi : {statutSuiviLabels[membre.statut_suivis] || ""}
           </p>
           <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
-          <p>🎗️ Sexe : {membre.sexe || "—"}</p>
+          <p>🎗️ Sexe : {membre.sexe || ""}</p>
           <p>💧 Baptême d’Eau : {membre.bapteme_eau ? "Oui" : "Non"}</p>
           <p>🔥 Baptême de Feu : {membre.bapteme_esprit ? "Oui" : "Non"}</p>
-          <p>✒️ Formation : {membre.Formation || "—"}</p>
-          <p>❤️‍🩹 Soin Pastoral : {membre.Soin_Pastoral || "—"}</p>
+          <p>✒️ Formation : {membre.Formation || ""}</p>
+          <p>❤️‍🩹 Soin Pastoral : {membre.Soin_Pastoral || ""}</p>
           <p>💢 Ministère : {formatMinistere(membre.Ministere, membre.Autre_Ministere)}</p>
           <p>❓ Besoin : {formatArrayField(membre.besoin)}</p>
-          <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
+          <p>📝 Infos : {membre.infos_supplementaires || ""}</p>
+          <p>🧩 Comment est-il venu : {m.venu || ""}</p>
+          <p>✨ Raison de la venue : {m.statut_initial || ""}</p>
+          <p>🙏 Prière du salut : {m.priere_salut || ""}</p>
+          <p>☀️ Type de conversion : {m.type_conversion || ""}</p>
+          <p>📝 Commentaire Suivis : {m.commentaire_suivis || ""}</p>
+          <p>📑 Commentaire Suivis Evangelisation : {m.Commentaire_Suivi_Evangelisation || ""}</p>     
         </div>
 
         {/* ================= ACTIONS ================= */}

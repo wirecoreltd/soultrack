@@ -181,7 +181,9 @@ export default function ListMembers() {
     const cibleName = type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`;
     showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
   };
-
+  
+console.log("USER ROLE:", userRole);
+console.log("MEMBRE ID:", m.id);  
   
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -541,7 +543,7 @@ export default function ListMembers() {
                  >
                    ✏️ Modifier le contact
                  </button>   
-                     
+                   
                   {/* Integration terminer */}
                   {userRole === "Conseiller" && m.integration_fini !== "fini" && (
                   <button
@@ -582,7 +584,6 @@ export default function ListMembers() {
                     ✅ Intégration terminée
                   </button>
                 )}
-
                 
                  {/* Supprimer */}                  
                   <button

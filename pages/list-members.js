@@ -533,14 +533,14 @@ export default function ListMembers() {
                 <div className="flex flex-col items-center">
                     
                  {/* Modifier */}
-                 <button
-                   onClick={() => setEditMember(m)}
-                   className="text-blue-600 text-sm mt-2 w-full"
-                 >
-                   ✏️ Modifier le contact
-                 </button>   
-                   
-                {/* ✅ Intégration terminée — visible uniquement pour les Conseillers */}
+                  <button
+                    onClick={() => setEditMember(m)}
+                    className="text-blue-600 text-sm mt-4 w-full"
+                  >
+                    ✏️ Modifier le contact
+                  </button>   
+                  
+                  {/* ✅ Intégration terminée — visible uniquement pour les Conseillers */}
                   {userRole === "Conseiller" && m.integration_fini !== "fini" && (
                     <button
                       onClick={async () => {
@@ -570,33 +570,31 @@ export default function ListMembers() {
                           showToast("❌ Erreur lors de l'opération");
                         }
                       }}
-                      className="ml-auto bg-white text-green-600 px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
+                      className="ml-auto bg-white text-green-600 px-3 py-2 my-3 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
                     >
                       ✅ Intégration terminée
                     </button>
                   )}
-
-
-
-                
-                 {/* Supprimer */}                  
+                  
+                  {/* Supprimer */}                  
                   <button
-                   onClick={() => {
-                     if (
-                       window.confirm(
-                         "⚠️ Suppression définitive\n\n" +
-                         "Voulez-vous vraiment supprimer ce contact ?\n\n" +
-                         "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
-                         "Cette action est irréversible."
-                       )
-                     ) {
-                       handleSupprimerMembre(m.id);
-                     }
-                   }}
-                   className="text-red-600 text-sm mt-2 w-full"
-                 >
-                   🗑️ Supprimer le contact
-                 </button>
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          "⚠️ Suppression définitive\n\n" +
+                          "Voulez-vous vraiment supprimer ce contact ?\n\n" +
+                          "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
+                          "Cette action est irréversible."
+                        )
+                      ) {
+                        handleSupprimerMembre(m.id);
+                      }
+                    }}
+                    className="text-red-600 text-sm mt-4 w-full"
+                  >
+                    🗑️ Supprimer le contact
+                  </button>
+
                </div>
              </div>
             )}

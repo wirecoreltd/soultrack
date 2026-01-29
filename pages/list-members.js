@@ -494,26 +494,63 @@ export default function ListMembers() {
                    className="text-blue-600 text-sm mt-2 w-full"
                  >
                    ✏️ Modifier le contact
-                 </button>
-               
+                 </button>               
+                
                  {/* Supprimer */}
-                 <button
-                   onClick={() => {
-                     if (
-                       window.confirm(
-                         "⚠️ Suppression définitive\n\n" +
-                         "Voulez-vous vraiment supprimer ce contact ?\n\n" +
-                         "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
-                         "Cette action est irréversible."
-                       )
-                     ) {
-                       handleSupprimerMembre(m.id);
-                     }
-                   }}
-                   className="text-red-600 text-sm mt-2 w-full"
-                 >
-                   🗑️ Supprimer le contact
-                 </button>
+                    <button
+                      onClick={async () => {
+                        // Étape 1 : Demander la raison via prompt
+                        const raison = window.prompt(
+                          "⚠️ Suppression définitive\n\n" +
+                          "Veuillez indiquer la raison pour supprimer ce contact :"
+                        );
+                    
+                        // Si l'utilisateur annule ou ne saisit rien, on stop
+                        if (!raison || raison.trim() === "") {
+                          alert("❌ La suppression nécessite une raison.");
+                          return;
+                        }
+                    
+                        // Étape 2 : Confirmer suppression
+                        const confirmSuppr = window.confirm(
+                          "⚠️ Confirmer suppression\n\n" +
+                          "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
+                          "Cette action est irréversible."
+                        );
+                    
+                        if (!confirmSuppr) return;
+                    
+                        // Étape 3 : Supprimer dans Supabase avec la raison
+                        try {
+                          const { error } = await supabase
+                            .from("membres_complets")
+                            .update({ raison_supprime: raison })
+                            .delete()
+                            .eq("id", m.id);
+                    
+                          if (error) throw error;
+                    
+                          // Optionnel : mettre à jour localement
+                          onDelete(m.id);
+                    
+                          // Fermer le popup
+                          onClose();
+                    
+                          // Message de succès
+                          showToast(
+                            <span className="inline-block bg-white text-green-600 px-2 py-1 rounded shadow text-xs font-semibold">
+                              ✅ Contact supprimé avec succès
+                            </span>
+                          );
+                        } catch (err) {
+                          console.error("Erreur suppression :", err);
+                          showToast("❌ Erreur lors de la suppression");
+                        }
+                      }}
+                      className="text-red-600 text-sm mt-2 w-full"
+                    >
+                      🗑️ Supprimer le contact
+                    </button>
                </div>
              </div>
             )}

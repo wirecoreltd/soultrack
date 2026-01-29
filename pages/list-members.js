@@ -28,8 +28,7 @@ export default function ListMembers() {
   const searchParams = useSearchParams();
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
   const toBoolean = (val) => val === true || val === "true";
-  const [members, setMembers] = useState([]);
-
+  
   // -------------------- Nouveaux états --------------------
   const [commentChanges, setCommentChanges] = useState({});
   const [statusChanges, setStatusChanges] = useState({});
@@ -51,16 +50,6 @@ export default function ListMembers() {
   }
   return "card";
 });
-
-  const updateMember = (updatedMember) => {
-  setMembers(prev =>
-    prev.map(m =>
-      m.id === updatedMember.id
-        ? { ...m, ...updatedMember }
-        : m
-    )
-  );
-};
   
   const { members, setAllMembers, updateMember } = useMembers();
 

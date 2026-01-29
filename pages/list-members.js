@@ -570,7 +570,7 @@ export default function ListMembers() {
                           showToast("❌ Erreur lors de l'opération");
                         }
                       }}
-                      className="mt-4 bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
+                      className="ml-auto bg-white text-bleu-600 px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
                     >
                       ✅ Intégration terminée
                     </button>

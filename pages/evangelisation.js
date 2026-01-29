@@ -323,8 +323,8 @@ export default function Evangelisation() {
                 <button onClick={() => setDetailsOpen(prev => ({ ...prev, [member.id]: !prev[member.id] }))} className="text-orange-500 underline text-sm block mx-auto mt-2">
                   {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                 </button>
-               {detailsOpen[member.id] && (
-                  {detailsOpen[member.id] && (
+
+               {detailsOpen[member.id] && (                  
                   <div className="text-sm mt-3 space-y-1">
                     <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🎗️ Sexe : {member.sexe || "—"}</p>

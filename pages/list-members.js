@@ -592,9 +592,7 @@ export default function ListMembers() {
                     >
                       🗑️ Supprimer le contact
                     </button>
-                  </div>
-
-  
+                  </div>  
                </div>
              </div>
             )}

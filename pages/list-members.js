@@ -367,16 +367,25 @@ export default function ListMembers() {
 
           <div className="mt-2 w-full">
             <label className="font-semibold text-sm">Envoyer ce contact en suivi :</label>
+          
+            {/* Sélecteur principal */}
             <select
               value={selectedTargetType[m.id] || ""}
-              onChange={e => setSelectedTargetType(prev => ({ ...prev, [m.id]: e.target.value }))}
+              onChange={e => {
+                const val = e.target.value;
+                setSelectedTargetType(prev => ({ ...prev, [m.id]: val }));
+                // réinitialiser la cible si on change de type
+                setSelectedTargets(prev => ({ ...prev, [m.id]: "" }));
+              }}
               className="mt-1 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Choisir une option --</option>
               <option value="cellule">Une Cellule</option>
               <option value="conseiller">Un Conseiller</option>
+              <option value="numero">Saisir un numéro</option>
             </select>
           
+            {/* Si Cellule ou Conseiller → afficher un select */}
             {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
               <select
                 value={selectedTargets[m.id] || ""}
@@ -384,15 +393,25 @@ export default function ListMembers() {
                 className="mt-1 w-full border rounded px-2 py-1 text-sm"
               >
                 <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
-                {selectedTargetType[m.id] === "cellule"
-                  ? cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)
-                  : null}
-                {selectedTargetType[m.id] === "conseiller"
-                  ? conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)
-                  : null}
+                {selectedTargetType[m.id] === "cellule" &&
+                  cellules.map(c => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)}
+                {selectedTargetType[m.id] === "conseiller" &&
+                  conseillers.map(c => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)}
               </select>
             )}
-
+          
+            {/* Si Numéro → afficher un input */}
+            {selectedTargetType[m.id] === "numero" && (
+              <input
+                type="tel"
+                placeholder="Saisir un numéro"
+                value={selectedTargets[m.id] || ""}
+                onChange={e => setSelectedTargets(prev => ({ ...prev, [m.id]: e.target.value }))}
+                className="mt-1 w-full border rounded px-2 py-1 text-sm"
+              />
+            )}
+          
+            {/* Bouton Envoyer */}
             {selectedTargetType[m.id] && selectedTargets[m.id] && (
               <div className="pt-2">
                 <BoutonEnvoyer
@@ -401,7 +420,9 @@ export default function ListMembers() {
                   cible={
                     selectedTargetType[m.id] === "cellule"
                       ? cellules.find(c => c.id === selectedTargets[m.id])
-                      : conseillers.find(c => c.id === selectedTargets[m.id])
+                      : selectedTargetType[m.id] === "conseiller"
+                      ? conseillers.find(c => c.id === selectedTargets[m.id])
+                      : selectedTargets[m.id] // ici le numéro saisi
                   }
                   onEnvoyer={id =>
                     handleAfterSend(
@@ -409,7 +430,9 @@ export default function ListMembers() {
                       selectedTargetType[m.id],
                       selectedTargetType[m.id] === "cellule"
                         ? cellules.find(c => c.id === selectedTargets[m.id])
-                        : conseillers.find(c => c.id === selectedTargets[m.id])
+                        : selectedTargetType[m.id] === "conseiller"
+                        ? conseillers.find(c => c.id === selectedTargets[m.id])
+                        : selectedTargets[m.id] // le numéro
                     )
                   }
                   session={session}
@@ -417,7 +440,7 @@ export default function ListMembers() {
                 />
               </div>
             )}
-          </div> 
+          </div>
 
               {/* Bouton Marquer comme membre — seulement pour les contacts "Nouveau" */}
                 {m.etat_contact?.trim().toLowerCase() === "nouveau" && (

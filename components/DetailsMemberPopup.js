@@ -267,26 +267,25 @@ export default function DetailsMemberPopup({
             </button>
           
             {/* ✅ Intégration terminée — visible uniquement pour les Conseillers et si non terminé */}
-            {session?.user_role === "Conseiller" && membre.integration_fini !== "fini" && (
+            {userRole === "Conseiller" && membre.integration_fini !== "fini" && (
               <button
                 onClick={async () => {
                   const confirmAction = window.confirm(
                     "⚠️ Confirmation\n\nCe contact ne sera plus attribué à vous.\nVoulez-vous continuer ?"
                   );
                   if (!confirmAction) return;
-          
+            
                   try {
                     const { error } = await supabase
                       .from("membres_complets")
                       .update({ integration_fini: "fini", conseiller_id: null })
                       .eq("id", membre.id);
-          
+            
                     if (error) throw error;
-          
-                    // Supprimer le membre côté UI
+            
                     setAllMembers(prev => prev.filter(mem => mem.id !== membre.id));
                     onClose();
-          
+            
                     showToast(
                       <span className="inline-block bg-white text-blue-600 px-2 py-1 rounded shadow text-xs font-semibold">
                         ✅ Intégration terminée. Contact détaché.
@@ -302,6 +301,7 @@ export default function DetailsMemberPopup({
                 ✅ Intégration terminée
               </button>
             )}
+
           
             {/* Supprimer */}
             <button

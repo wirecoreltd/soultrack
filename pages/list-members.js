@@ -61,6 +61,11 @@ if (error) {
 showToast("✅ Intégration terminée");
 setMembers(prev => prev.filter(mem => mem.id !== m.id));
 
+  const { members, setAllMembers, updateMember } = useMembers();
+
+  const { error } = await supabase.rpc("terminer_integration", {
+  membre_id: m.id,
+});
 
   // -------------------- Toast --------------------
   const showToast = (msg) => {
@@ -550,38 +555,37 @@ setMembers(prev => prev.filter(mem => mem.id !== m.id));
                  </button>   
                    
                   {/* ✅ Intégration terminée — visible uniquement pour les Conseillers */}
-                      {userRole === "Conseiller" && m.integration_fini !== "fini" && (
-                        <button
-                          onClick={async () => {
-                            const confirmAction = window.confirm(
-                              "⚠️ Confirmation\n\nCe contact ne sera plus attribué à vous.\nVoulez-vous continuer ?"
+                    {userRole === "Conseiller" && m.integration_fini !== "fini" && (
+                      <button
+                        onClick={async () => {
+                          const confirmAction = window.confirm(
+                            "⚠️ Confirmation\n\nCe contact ne sera plus attribué à vous.\nVoulez-vous continuer ?"
+                          );
+                          if (!confirmAction) return;
+                    
+                          try {
+                            const { error } = await supabase.rpc("terminer_integration", {
+                              membre_id: m.id,
+                            });
+                    
+                            if (error) throw error;
+                    
+                            // 🔄 Mise à jour instantanée UI
+                            setAllMembers(prev =>
+                              prev.filter(mem => mem.id !== m.id)
                             );
-                            if (!confirmAction) return;
-                      
-                            try {
-                              const { error } = await supabase.rpc("terminer_integration", {
-                                membre_id: m.id,
-                              });
-                      
-                              if (error) throw error;
-                      
-                              // 🔄 Mise à jour instantanée côté UI
-                              setAllMembers(prev =>
-                                prev.filter(mem => mem.id !== m.id)
-                              );
-                      
-                              showToast("✅ Intégration terminée. Contact détaché.");
-                            } catch (err) {
-                              console.error("Erreur intégration :", err);
-                              showToast("❌ Erreur lors de l'opération");
-                            }
-                          }}
-                          className="mt-4 bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
-                        >
-                          ✅ Intégration terminée
-                        </button>
-                      )}
-
+                    
+                            showToast("✅ Intégration terminée. Contact détaché.");
+                          } catch (err) {
+                            console.error("Erreur intégration :", err);
+                            showToast("❌ Erreur lors de l'opération");
+                          }
+                        }}
+                        className="mt-4 bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        ✅ Intégration terminée
+                      </button>
+                    )}
                 
                  {/* Supprimer */}                  
                   <button

@@ -180,39 +180,38 @@ export default function DetailsMemberPopup({
           )}
         </div>
 
-        {/* ================= BOUTON MARQUER ================= */}
-    
-{membre.etat_contact?.trim().toLowerCase() === "nouveau" && (
-  <div className="mt-4 flex justify-end">
-    <button
-      onClick={async () => {
-        try {
-          const { error } = await supabase
-            .from("membres_complets")
-            .update({ etat_contact: "existant" })
-            .eq("id", membre.id);
-
-          if (error) throw error;
-
-          setAllMembers(prev =>
-            prev.map(mem =>
-              mem.id === membre.id
-                ? { ...mem, etat_contact: "existant" }
-                : mem
-            )
-          );
-
-          onClose();
-        } catch (err) {
-          console.error("Erreur marquer membre :", err);
-        }
-      }}
-      className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold"
-    >
-      ✅ Marquer comme membre
-    </button>
-  </div>
-)}
+        {/* ================= BOUTON MARQUER ================= */}    
+        {membre.etat_contact?.trim().toLowerCase() === "nouveau" && (
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={async () => {
+                try {
+                  const { error } = await supabase
+                    .from("membres_complets")
+                    .update({ etat_contact: "existant" })
+                    .eq("id", membre.id);
+        
+                  if (error) throw error;
+        
+                  setAllMembers(prev =>
+                    prev.map(mem =>
+                      mem.id === membre.id
+                        ? { ...mem, etat_contact: "existant" }
+                        : mem
+                    )
+                  );
+        
+                  onClose();
+                } catch (err) {
+                  console.error("Erreur marquer membre :", err);
+                }
+              }}
+              className="bg-white text-green-600 px-4 py-2 rounded-lg text-sm font-semibold"
+            >
+              ✅ Marquer comme membre
+            </button>
+          </div>
+        )}
 
 
         {/* ================= DÉTAILS ================= */}

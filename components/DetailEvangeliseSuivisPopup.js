@@ -310,12 +310,12 @@ export default function DetailEvangeliseSuivisPopup({
               className="text-blue-600 text-sm font-semibold hover:underline"
             >
               ✏️ Modifier le contact
-            </button>
-          </div>
-        )}
-      </div>
+          </button>
+        </div>
+      )}
     </div>
-{editingContact && (
+
+    {editingContact && (
       <EditEvangeliseSuiviPopup
         member={editingContact}
         onClose={() => setEditingContact(null)}
@@ -325,5 +325,5 @@ export default function DetailEvangeliseSuivisPopup({
         }}
       />
     )}
-  );
-}
+  </>
+);

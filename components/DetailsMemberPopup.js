@@ -11,6 +11,7 @@ export default function DetailsMemberPopup({
   cellules = [],
   conseillers = [],
   session,
+  userRole,
   handleAfterSend,
   showToast,
   updateSuivi,

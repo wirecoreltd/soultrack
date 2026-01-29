@@ -204,8 +204,9 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
         .eq("id", member.id)
         .single();
 
-      onUpdateMember?.(data);
+      onUpdateMember(data);
       onClose();
+      
     } catch (err) {
       console.error(err);
       setMessage("❌ Une erreur est survenue lors de l’enregistrement.");

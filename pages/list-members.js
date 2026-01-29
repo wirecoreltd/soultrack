@@ -712,27 +712,25 @@ export default function ListMembers() {
       )}
 
       {editMember && (
-  <EditMemberPopup
-    member={editMember}
-    onClose={() => setEditMember(null)}
-    onUpdateMember={(updatedMember) => {
-      // ✅ On utilise uniquement updateMember du contexte
-      updateMember(updatedMember);
-
-      // Mettre à jour le popup si on est en train de le voir
-      setPopupMember(prev =>
-        prev && prev.id === updatedMember.id
-          ? { ...prev, ...updatedMember }
-          : prev
-      );
-
-      // Fermer le popup d'édition
-      setEditMember(null);
-    }}
-  />
-)}
-
- 
+        <EditMemberPopup
+          member={editMember}
+          onClose={() => setEditMember(null)}
+          onUpdateMember={(updatedMember) => {
+            // Mettre à jour dans le contexte
+            updateMember(updatedMember);
+      
+            // Si le popup détail est ouvert pour ce membre, le mettre à jour
+            setPopupMember(prev =>
+              prev && prev.id === updatedMember.id
+                ? { ...prev, ...updatedMember }
+                : prev
+            );
+      
+            // Fermer le popup édition
+            setEditMember(null);
+          }}
+        />
+      )} 
 
       {/* Toast */}
       {showingToast && (

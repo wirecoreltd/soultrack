@@ -369,8 +369,7 @@ export default function Evangelisation() {
       "
     >
       🗑️ Supprimer le contact
-    </button>
-  </div>
+    </button>  
 </div>
 
                 )}

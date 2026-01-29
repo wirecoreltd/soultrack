@@ -181,6 +181,27 @@ export default function ListMembers() {
     showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
   };
 
+  
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError || !user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      setUserRole(profile?.role || null);
+    };
+
+    fetchUserRole();
+  }, []);
+
   useEffect(() => {localStorage.setItem("members_view", view);}, [view]);
 
   // -------------------- useEffect initial --------------------

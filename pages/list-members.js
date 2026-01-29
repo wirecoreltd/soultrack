@@ -536,7 +536,7 @@ export default function ListMembers() {
                     {/* Modifier */}
                     <button
                       onClick={() => setEditMember(m)}
-                      className="w-full text-orange-500 text-sm font-semibold py-2 rounded-md"
+                      className="w-full text-orange-500 text-sm py-2 rounded-md"
                     >
                       ✏️ Modifier le contact
                     </button>

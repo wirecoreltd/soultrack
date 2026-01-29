@@ -716,21 +716,30 @@ export default function ListMembers() {
           member={editMember}
           onClose={() => setEditMember(null)}
           onUpdateMember={(updatedMember) => {
-            // Mettre à jour dans le contexte
+            // 1️⃣ Mise à jour du membre dans le contexte
             updateMember(updatedMember);
       
-            // Si le popup détail est ouvert pour ce membre, le mettre à jour
+            // 2️⃣ Forcer un nouveau tableau pour que React détecte bien le changement
+            setAllMembers(prev =>
+              prev.map(m => (m.id === updatedMember.id ? { ...m, ...updatedMember } : m))
+            );
+      
+            // 3️⃣ Mettre à jour le popup si on est en train de le voir
             setPopupMember(prev =>
               prev && prev.id === updatedMember.id
                 ? { ...prev, ...updatedMember }
                 : prev
             );
       
-            // Fermer le popup édition
+            // 4️⃣ Fermer le popup d'édition
             setEditMember(null);
+      
+            // 5️⃣ Optionnel : toast pour confirmation
+            showToast("✅ Contact mis à jour avec succès !");
           }}
         />
-      )} 
+      )}
+
 
       {/* Toast */}
       {showingToast && (

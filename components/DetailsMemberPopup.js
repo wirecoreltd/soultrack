@@ -229,12 +229,12 @@ export default function DetailsMemberPopup({
           <p>💢 Ministère : {formatMinistere(membre.Ministere, membre.Autre_Ministere)}</p>
           <p>❓ Besoin : {formatArrayField(membre.besoin)}</p>
           <p>📝 Infos : {membre.infos_supplementaires || ""}</p>
-          <p>🧩 Comment est-il venu : {m.venu || ""}</p>
-          <p>✨ Raison de la venue : {m.statut_initial || ""}</p>
-          <p>🙏 Prière du salut : {m.priere_salut || ""}</p>
-          <p>☀️ Type de conversion : {m.type_conversion || ""}</p>
-          <p>📝 Commentaire Suivis : {m.commentaire_suivis || ""}</p>
-          <p>📑 Commentaire Suivis Evangelisation : {m.Commentaire_Suivi_Evangelisation || ""}</p>     
+          <p>🧩 Comment est-il venu : {membre.venu || ""}</p>
+          <p>✨ Raison de la venue : {membre.statut_initial || ""}</p>
+          <p>🙏 Prière du salut : {membre.priere_salut || ""}</p>
+          <p>☀️ Type de conversion : {membre.type_conversion || ""}</p>
+          <p>📝 Commentaire Suivis : {membre.commentaire_suivis || ""}</p>
+          <p>📑 Commentaire Suivis Evangelisation : {membre.Commentaire_Suivi_Evangelisation || ""}</p>     
         </div>
 
         {/* ================= ACTIONS ================= */}

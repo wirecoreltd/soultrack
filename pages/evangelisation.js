@@ -323,48 +323,48 @@ export default function Evangelisation() {
                 <button onClick={() => setDetailsOpen(prev => ({ ...prev, [member.id]: !prev[member.id] }))} className="text-orange-500 underline text-sm block mx-auto mt-2">
                   {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                 </button>
-                {detailsOpen[member.id] && (
-                  <div className="text-sm mt-3 space-y-1">
-                    <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p>🎗️ Sexe : {member.sexe || "—"}</p>
-                    <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
-                    <p>☀️ Type : {member.type_conversion || "—"}</p>
-                    <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-                    <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
-                
-                    {/* Actions – carte unique */}
-                    <div className="mt-4">
-                      <div className="bg-gray-50 rounded-xl shadow-md p-4 space-y-4">
-                        {/* Modifier */}
-                        <button
-                          onClick={() => {
-                            setEditMember(member);
-                            setPopupMember(null);
-                          }}
-                          className="w-full py-2 rounded-lg bg-white text-orange-500 font-semibold shadow-sm hover:shadow-md transition-all"
-                        >
-                          ✏️ Modifier le contact
-                        </button>
-                
-                        {/* Supprimer */}
-                        <button
-                          onClick={() => {
-                            if (
-                              window.confirm(
-                                "⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?"
-                              )
-                            ) {
-                              handleSupprimerMembre(member.id);
-                            }
-                          }}
-                          className="w-full py-2 rounded-lg bg-white text-red-600 text-xs font-semibold shadow-sm hover:shadow-md transition-all"
-                        >
-                          🗑️ Supprimer le contact
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+               {detailsOpen[member.id] && (
+  <div className="text-sm mt-3 space-y-1">
+    <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+    <p>🎗️ Sexe : {member.sexe || "—"}</p>
+    <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
+    <p>☀️ Type : {member.type_conversion || "—"}</p>
+    <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
+    <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
+
+    {/* CARTE UNIQUE – ACTIONS */}
+    <div className="mt-4 bg-gray-50 rounded-xl shadow-md p-4">
+      <div className="flex flex-col gap-4">
+        {/* Modifier */}
+        <button
+          onClick={() => {
+            setEditMember(member);
+            setPopupMember(null);
+          }}
+          className="w-full py-2 rounded-lg bg-white text-orange-500 font-semibold shadow-sm hover:shadow-md transition-all"
+        >
+          ✏️ Modifier le contact
+        </button>
+
+        {/* Supprimer */}
+        <button
+          onClick={() => {
+            if (
+              window.confirm(
+                "⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?"
+              )
+            ) {
+              handleSupprimerMembre(member.id);
+            }
+          }}
+          className="w-full py-2 rounded-lg bg-white text-red-600 text-xs font-semibold shadow-sm hover:shadow-md transition-all"
+        >
+          🗑️ Supprimer le contact
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
               </div>
             ))}

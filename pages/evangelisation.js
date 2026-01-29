@@ -342,7 +342,7 @@ export default function Evangelisation() {
                             setEditMember(member);
                             setPopupMember(null);
                           }}
-                          className="w-full py-2 rounded-lg bg-white text-orange-500"
+                          className="w-full py-2 rounded-lg text-orange-500"
                         >
                           ✏️ Modifier le contact
                         </button>
@@ -358,7 +358,7 @@ export default function Evangelisation() {
                               handleSupprimerMembre(member.id);
                             }
                           }}
-                          className="w-full py-2 rounded-lg bg-white text-red-600 text-xs"
+                          className="w-full py-2 rounded-lg text-red-600 text-xs"
                         >
                           🗑️ Supprimer le contact
                         </button>

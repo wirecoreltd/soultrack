@@ -715,14 +715,9 @@ export default function ListMembers() {
         <EditMemberPopup
           member={editMember}
           onClose={() => setEditMember(null)}
-          onUpdateMember={(updatedMember) => {
-            // 🔄 Mise à jour globale (table + card)
+          onUpdateMember={(updatedMember) => {            
             updateMember(updatedMember);
       
-            // ❌ Ferme le popup d’édition
-            setEditMember(null);
-      
-            // 🔁 Met à jour le popup détails s’il est ouvert
             setPopupMember(prev =>
               prev && prev.id === updatedMember.id
                 ? { ...prev, ...updatedMember }
@@ -730,7 +725,8 @@ export default function ListMembers() {
             );
           }}
         />
-      )}  
+      )}
+ 
 
       {/* Toast */}
       {showingToast && (

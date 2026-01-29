@@ -181,38 +181,53 @@ export default function DetailsMemberPopup({
         </div>
 
         {/* ================= BOUTON MARQUER ================= */}    
-        {membre.etat_contact?.trim().toLowerCase() === "nouveau" && (
-          <div className="mt-4 flex justify-end">
-            <button
-              onClick={async () => {
-                try {
-                  const { error } = await supabase
-                    .from("membres_complets")
-                    .update({ etat_contact: "existant" })
-                    .eq("id", membre.id);
-        
-                  if (error) throw error;
-        
-                  setAllMembers(prev =>
-                    prev.map(mem =>
-                      mem.id === membre.id
-                        ? { ...mem, etat_contact: "existant" }
-                        : mem
-                    )
-                  );
-        
-                  onClose();
-                } catch (err) {
-                  console.error("Erreur marquer membre :", err);
-                }
-              }}
-              className="ml-auto bg-white text-green-600 px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
-            >
-              ✅ Marquer comme membre
-            </button>
-          </div>
-        )}
-
+            {membre.etat_contact?.trim().toLowerCase() === "nouveau" && (
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={async () => {
+                    // Message de confirmation avant action
+                    const confirmMove = window.confirm(
+                      "⚠️ Confirmation\n\nCe contact n’a plus besoin d’être suivi.\nVoulez-vous vraiment le déplacer dans les membres existants ?"
+                    );
+                    if (!confirmMove) return; // Si l'utilisateur annule, ne rien faire
+            
+                    try {
+                      const { error } = await supabase
+                        .from("membres_complets")
+                        .update({ etat_contact: "existant" })
+                        .eq("id", membre.id);
+            
+                      if (error) throw error;
+            
+                      // Mise à jour locale
+                      setAllMembers(prev =>
+                        prev.map(mem =>
+                          mem.id === membre.id
+                            ? { ...mem, etat_contact: "existant" }
+                            : mem
+                        )
+                      );
+            
+                      // Fermer le popup si nécessaire
+                      onClose();
+            
+                      // Optionnel : message toast de succès
+                      showToast(
+                        <span className="inline-block bg-white text-green-600 px-2 py-1 rounded shadow text-xs font-semibold">
+                          ✅ Contact déplacé dans membres existants
+                        </span>
+                      );
+                    } catch (err) {
+                      console.error("Erreur marquer membre :", err);
+                      showToast("❌ Erreur lors du déplacement");
+                    }
+                  }}
+                  className="ml-auto bg-white text-green-600 px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
+                >
+                  ✅ Marquer comme membre
+                </button>
+              </div>
+            )}
 
         {/* ================= DÉTAILS ================= */}
         <div className="mt-5 text-sm space-y-1">

@@ -536,7 +536,7 @@ export default function ListMembers() {
                     {/* Modifier */}
                     <button
                       onClick={() => setEditMember(m)}
-                      className="w-full text-orange-500 text-sm font-semibold py-2 rounded-md hover:bg-orange-50 transition"
+                      className="w-full text-orange-500 text-sm font-semibold py-2 rounded-md"
                     >
                       ✏️ Modifier le contact
                     </button>
@@ -568,7 +568,7 @@ export default function ListMembers() {
                             showToast("❌ Erreur lors de l'opération");
                           }
                         }}
-                        className="ml-auto bg-white text-blue-600 w-full py-2 rounded-md font-semibold shadow-sm hover:shadow-md transition"
+                        className="ml-auto bg-white text-blue-600 w-full py-2 rounded-md font-semibold shadow-sm"
                       >
                         ✅ Intégration terminée
                       </button>
@@ -588,7 +588,7 @@ export default function ListMembers() {
                           handleSupprimerMembre(m.id);
                         }
                       }}
-                      className="w-full text-red-600 text-xs font-semibold py-1.5 rounded-md hover:bg-red-50 transition"
+                      className="w-full text-red-600 text-xs font-semibold py-1.5 rounded-md"
                     >
                       🗑️ Supprimer le contact
                     </button>

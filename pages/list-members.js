@@ -712,28 +712,26 @@ export default function ListMembers() {
       )}
 
       {editMember && (
-        <EditMemberPopup
-          member={editMember}
-          onClose={() => setEditMember(null)}
-          onUpdateMember={(updatedMember) => {
-            // 1️⃣ Mise à jour du membre dans le contexte
-            updateMember(updatedMember);
-      
-            // 2️⃣ Forcer un nouveau tableau pour que useMemo recalcule filteredNouveaux/filteredAnciens
-            setAllMembers(prev =>
-              prev.map(m => (m.id === updatedMember.id ? { ...m, ...updatedMember } : m))
-            );
-      
-            // 3️⃣ Fermer le popup
-            setEditMember(null);
-      
-            // 4️⃣ Optionnel : toast
-            showToast("✅ Contact mis à jour !");
-          }}
-        />
-      )}
+  <EditMemberPopup
+    member={editMember}
+    onClose={() => setEditMember(null)}
+    onUpdateMember={(updatedMember) => {
+      // 1️⃣ Mettre à jour le membre dans le contexte
+      updateMember(updatedMember);
 
+      // 2️⃣ Forcer un nouveau tableau pour que useMemo recalcule la table
+      setAllMembers(prev =>
+        [...prev.map(m => (m.id === updatedMember.id ? { ...m, ...updatedMember } : m))]
+      );
 
+      // 3️⃣ Fermer le popup
+      setEditMember(null);
+
+      // 4️⃣ Optionnel : toast
+      showToast("✅ Contact mis à jour !");
+    }}
+  />
+)}
 
       {/* Toast */}
       {showingToast && (

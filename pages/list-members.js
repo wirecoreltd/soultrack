@@ -50,13 +50,7 @@ export default function ListMembers() {
     return localStorage.getItem("members_view") || "card";
   }
   return "card";
-});
-  
-  const { members, setAllMembers, updateMember } = useMembers();
-
-  const { error } = await supabase.rpc("terminer_integration", {
-  membre_id: m.id,
-});
+});  
 
 if (error) {
   console.error(error);

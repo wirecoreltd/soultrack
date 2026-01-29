@@ -265,24 +265,17 @@ export default function DetailsMemberPopup({
             ✏️ Modifier le contact
           </button>
 
-                 {/* Supprimer */}
-                <button
-                   onClick={() => {
-                     if (
-                       window.confirm(
-                         "⚠️ Suppression définitive\n\n" +
-                         "Voulez-vous vraiment supprimer ce contact ?\n\n" +
-                         "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
-                         "Cette action est irréversible."
-                       )
-                     ) {
-                       handleSupprimerMembre(m.id);
-                     }
-                   }}
-                   className="text-red-600 text-sm mt-2 w-full"
-                 >
-                   🗑️ Supprimer le contact
-                 </button>
+          <button
+            onClick={() => {
+              if (window.confirm("Supprimer définitivement ce contact ?")) {
+                onDelete(membre.id);
+                onClose();
+              }
+            }}
+            className="text-red-600 text-sm"
+          >
+            🗑️ Supprimer le contact
+          </button>
         </div>
 
         {editMember && (

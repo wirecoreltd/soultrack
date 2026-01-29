@@ -26,7 +26,25 @@ export default function DetailsMemberPopup({
   const [editMember, setEditMember] = useState(null);
   const phoneMenuRef = useRef(null);
 
-  // ---------------- HELPERS ----------------
+  // Bloquer le scroll de la page derrière
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
+
+  // Fermer menu téléphone si clic en dehors
+  useEffect(() => {
+    const close = (e) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+        setOpenPhoneMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+
   const statutSuiviLabels = {
     1: "Envoyé",
     2: "En attente",
@@ -59,25 +77,20 @@ export default function DetailsMemberPopup({
     return list.join(", ") || "—";
   };
 
-  // Fermer menu téléphone
-  useEffect(() => {
-    const close = (e) => {
-      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
-        setOpenPhoneMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, []);
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
+      {/* Popup scrollable */}
+      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative max-h-[90vh] overflow-y-auto">
+        
+        {/* Bouton fermer */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 text-lg font-bold"
+        >
+          ✖
+        </button>
 
-        {/* Fermer */}
-        <button onClick={onClose} className="absolute top-3 right-3 text-gray-500">✖</button>
-
-        {/* ================= HEADER ================= */}
+        {/* Header */}
         <div className="flex flex-col items-center text-center">
           <h2 className="text-lg font-bold">
             {membre.prenom} {membre.nom} {membre.star && "⭐"}
@@ -110,7 +123,7 @@ export default function DetailsMemberPopup({
           )}
         </div>
 
-        {/* ================= INFOS ================= */}
+        {/* Infos principales */}
         <div className="mt-4 text-sm space-y-1">
           <p className="text-center">🏙️ Ville : {membre.ville || ""}</p>
           <p className="text-center">🕊 Etat Contact : {membre.etat_contact || ""}</p>
@@ -126,10 +139,9 @@ export default function DetailsMemberPopup({
           </p>
         </div>
 
-        {/* ================= ENVOYER À ================= */}
+        {/* Envoyer pour suivi */}
         <div className="mt-4">
           <label className="font-semibold text-sm">Envoyer pour suivi :</label>
-
           <select
             value={selectedTargetType}
             onChange={(e) => {
@@ -180,56 +192,52 @@ export default function DetailsMemberPopup({
           )}
         </div>
 
-        {/* ================= BOUTON MARQUER ================= */}    
-            {membre.etat_contact?.trim().toLowerCase() === "nouveau" && (
-              <div className="mt-4 flex justify-end">
-                <button
-                  onClick={async () => {
-                    // Message de confirmation avant action
-                    const confirmMove = window.confirm(
-                      "⚠️ Confirmation\n\nCe contact n’a plus besoin d’être suivi.\nVoulez-vous vraiment le déplacer dans les membres existants ?"
-                    );
-                    if (!confirmMove) return; // Si l'utilisateur annule, ne rien faire
-            
-                    try {
-                      const { error } = await supabase
-                        .from("membres_complets")
-                        .update({ etat_contact: "existant" })
-                        .eq("id", membre.id);
-            
-                      if (error) throw error;
-            
-                      // Mise à jour locale
-                      setAllMembers(prev =>
-                        prev.map(mem =>
-                          mem.id === membre.id
-                            ? { ...mem, etat_contact: "existant" }
-                            : mem
-                        )
-                      );
-            
-                      // Fermer le popup si nécessaire
-                      onClose();
-            
-                      // Optionnel : message toast de succès
-                      showToast(
-                        <span className="inline-block bg-white text-green-600 px-2 py-1 rounded shadow text-xs font-semibold">
-                          ✅ Contact déplacé dans membres existants
-                        </span>
-                      );
-                    } catch (err) {
-                      console.error("Erreur marquer membre :", err);
-                      showToast("❌ Erreur lors du déplacement");
-                    }
-                  }}
-                  className="ml-auto bg-white text-green-600 px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
-                >
-                  ✅ Marquer comme membre
-                </button>
-              </div>
-            )}
+        {/* Bouton Marquer comme membre */}
+        {membre.etat_contact?.trim().toLowerCase() === "nouveau" && (
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={async () => {
+                const confirmMove = window.confirm(
+                  "⚠️ Confirmation\n\nCe contact n’a plus besoin d’être suivi.\nVoulez-vous vraiment le déplacer dans les membres existants ?"
+                );
+                if (!confirmMove) return;
 
-        {/* ================= DÉTAILS ================= */}
+                try {
+                  const { error } = await supabase
+                    .from("membres_complets")
+                    .update({ etat_contact: "existant" })
+                    .eq("id", membre.id);
+
+                  if (error) throw error;
+
+                  setAllMembers(prev =>
+                    prev.map(mem =>
+                      mem.id === membre.id
+                        ? { ...mem, etat_contact: "existant" }
+                        : mem
+                    )
+                  );
+
+                  onClose();
+
+                  showToast(
+                    <span className="inline-block bg-white text-green-600 px-2 py-1 rounded shadow text-xs font-semibold">
+                      ✅ Contact déplacé dans membres existants
+                    </span>
+                  );
+                } catch (err) {
+                  console.error("Erreur marquer membre :", err);
+                  showToast("❌ Erreur lors du déplacement");
+                }
+              }}
+              className="ml-auto bg-white text-green-600 px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
+            >
+              ✅ Marquer comme membre
+            </button>
+          </div>
+        )}
+
+        {/* Détails */}
         <div className="mt-5 text-sm space-y-1">
           <p className="font-semibold text-center text-blue-700">
             💡 Statut Suivi : {statutSuiviLabels[membre.statut_suivis] || ""}
@@ -248,10 +256,10 @@ export default function DetailsMemberPopup({
           <p>🙏 Prière du salut : {membre.priere_salut || ""}</p>
           <p>☀️ Type de conversion : {membre.type_conversion || ""}</p>
           <p>📝 Commentaire Suivis : {membre.commentaire_suivis || ""}</p>
-          <p>📑 Commentaire Suivis Evangelisation : {membre.Commentaire_Suivi_Evangelisation || ""}</p>     
+          <p>📑 Commentaire Suivis Evangelisation : {membre.Commentaire_Suivi_Evangelisation || ""}</p>
         </div>
 
-        {/* ================= ACTIONS ================= */}
+        {/* Actions */}
         <div className="mt-5 flex flex-col gap-2">
           <button onClick={() => setEditMember(membre)} className="text-blue-600 text-sm">
             ✏️ Modifier le contact

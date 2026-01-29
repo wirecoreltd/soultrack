@@ -525,16 +525,19 @@ export default function SuivisEvangelisation() {
                     <p>📝 Infos : {m.infos_supplementaires || ""}</p>
 
                     {/* Bouton Modifier uniquement si ce n'est pas un refus */}
-                {!showRefus && (
-                  <div className="mt-4 flex justify-center">
-                    <button
-                      onClick={() => setEditingContact(m)}
-                      className="text-blue-600 text-sm mt-4"
-                    >
-                      ✏️ Modifier le contact
-                    </button>
-                  </div>
-                )}
+                      {!showRefus && (
+                        <div className="mt-4 flex justify-center">
+                          <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 px-6 py-3">
+                            <button
+                              onClick={() => setEditingContact(m)}
+                              className="text-orange-500 text-sm font-semibold"
+                            >
+                              ✏️ Modifier le contact
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
               </div>
             )}
           </div>

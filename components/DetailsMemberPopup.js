@@ -261,69 +261,79 @@ export default function DetailsMemberPopup({
         </div>
 
         {/* Actions */}
-          <div className="mt-5 flex flex-col gap-2">
-            {/* Modifier */}
-            <button onClick={() => setEditMember(membre)} className="text-orange-500 text-sm font-semibold">
-              ✏️ Modifier le contact
-            </button>
-          
-            {/* ✅ Intégration terminée — visible uniquement pour les Conseillers et si non terminé */}
-            {userRole === "Conseiller" && membre.integration_fini !== "fini" && (
-              <button
-                onClick={async () => {
-                  const confirmAction = window.confirm(
-                    "⚠️ Confirmation\n\nCe contact ne sera plus attribué à vous.\nVoulez-vous continuer ?"
-                  );
-                  if (!confirmAction) return;
-            
-                  try {
-                    const { error } = await supabase
-                      .from("membres_complets")
-                      .update({ integration_fini: "fini", conseiller_id: null })
-                      .eq("id", membre.id);
-            
-                    if (error) throw error;
-            
-                    setAllMembers(prev => prev.filter(mem => mem.id !== membre.id));
-                    onClose();
-            
-                    showToast(
-                      <span className="inline-block bg-white text-blue-600 px-2 py-1 rounded shadow text-xs font-semibold">
-                        ✅ Intégration terminée. Contact détaché.
-                      </span>
-                    );
-                  } catch (err) {
-                    console.error("Erreur intégration :", err);
-                    showToast("❌ Erreur lors de l'opération");
-                  }
-                }}
-                className="ml-auto bg-white text-blue-600 px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition"
-              >
-                ✅ Intégration terminée
-              </button>
-            )}
+          {/* Actions */}
+<div className="mt-5 flex flex-col gap-3">
+  {/* Modifier le contact */}
+  <div className="bg-white shadow-md rounded-xl p-2 flex justify-center">
+    <button
+      onClick={() => setEditMember(membre)}
+      className="text-orange-500 font-semibold text-sm"
+    >
+      ✏️ Modifier le contact
+    </button>
+  </div>
 
-          
-            {/* Supprimer */}
-            <button
-              onClick={() => {
-                if (
-                  window.confirm(
-                    "⚠️ Suppression définitive\n\n" +
-                    "Voulez-vous vraiment supprimer ce contact ?\n\n" +
-                    "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
-                    "Cette action est irréversible."
-                  )
-                ) {
-                  onDelete(membre.id);
-                  onClose();
-                }
-              }}
-              className="text-red-600 text-xs font-semibold"
-            >
-              🗑️ Supprimer le contact
-            </button>
-          </div>
+  {/* Intégration terminée - visible pour Conseiller */}
+  {userRole === "Conseiller" && membre.integration_fini !== "fini" && (
+    <div className="bg-white shadow-md rounded-xl p-2 flex justify-center">
+      <button
+        onClick={async () => {
+          const confirmAction = window.confirm(
+            "⚠️ Confirmation\n\nCe contact ne sera plus attribué à vous.\nVoulez-vous continuer ?"
+          );
+          if (!confirmAction) return;
+
+          try {
+            const { error } = await supabase
+              .from("membres_complets")
+              .update({ integration_fini: "fini", conseiller_id: null })
+              .eq("id", membre.id);
+
+            if (error) throw error;
+
+            setAllMembers(prev => prev.filter(mem => mem.id !== membre.id));
+            onClose();
+
+            showToast(
+              <span className="inline-block bg-white text-blue-600 px-2 py-1 rounded shadow text-xs font-semibold">
+                ✅ Intégration terminée. Contact détaché.
+              </span>
+            );
+          } catch (err) {
+            console.error("Erreur intégration :", err);
+            showToast("❌ Erreur lors de l'opération");
+          }
+        }}
+        className="text-blue-600 font-semibold text-sm"
+      >
+        ✅ Intégration terminée
+      </button>
+    </div>
+  )}
+
+  {/* Supprimer le contact */}
+  <div className="bg-white shadow-md rounded-xl p-2 flex justify-center">
+    <button
+      onClick={() => {
+        if (
+          window.confirm(
+            "⚠️ Suppression définitive\n\n" +
+              "Voulez-vous vraiment supprimer ce contact ?\n\n" +
+              "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
+              "Cette action est irréversible."
+          )
+        ) {
+          onDelete(membre.id);
+          onClose();
+        }
+      }}
+      className="text-red-500 font-semibold text-xs"
+    >
+      🗑️ Supprimer le contact
+    </button>
+  </div>
+</div>
+
         {editMember && (
           <EditMemberPopup
             member={editMember}

@@ -498,61 +498,22 @@ export default function ListMembers() {
                 
                  {/* Supprimer */}                  
                   <button
-                    onClick={async () => {
-                      const raison = window.prompt(
-                        "⚠️ Suppression définitive\n\n" +
-                        "Veuillez indiquer la raison pour supprimer ce contact :"
-                      );
-                  
-                      if (!raison || raison.trim() === "") {
-                        alert("❌ La suppression nécessite une raison.");
-                        return;
-                      }
-                  
-                      const confirmSuppr = window.confirm(
-                        "⚠️ Confirmer suppression\n\n" +
-                        "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
-                        "Cette action est irréversible."
-                      );
-                  
-                      if (!confirmSuppr) return;
-                  
-                      try {
-                        // 1️⃣ Mettre à jour la raison
-                        const { error: errorUpdate } = await supabase
-                          .from("membres_complets")
-                          .update({ raison_supprime: raison })
-                          .eq("id", m.id);
-                  
-                        if (errorUpdate) throw errorUpdate;
-                  
-                        // 2️⃣ Supprimer le contact
-                        const { error: errorDelete } = await supabase
-                          .from("membres_complets")
-                          .delete()
-                          .eq("id", m.id);
-                  
-                        if (errorDelete) throw errorDelete;
-                  
-                        // Mise à jour locale
-                        onDelete(m.id);
-                        onClose();
-                  
-                        showToast(
-                          <span className="inline-block bg-white text-green-600 px-2 py-1 rounded shadow text-xs font-semibold">
-                            ✅ Contact supprimé avec succès
-                          </span>
-                        );
-                      } catch (err) {
-                        console.error("Erreur suppression :", err);
-                        showToast("❌ Erreur lors de la suppression");
-                      }
-                    }}
-                    className="text-red-600 text-sm mt-2 w-full"
-                  >
-                    🗑️ Supprimer le contact
-                  </button>
-
+                   onClick={() => {
+                     if (
+                       window.confirm(
+                         "⚠️ Suppression définitive\n\n" +
+                         "Voulez-vous vraiment supprimer ce contact ?\n\n" +
+                         "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
+                         "Cette action est irréversible."
+                       )
+                     ) {
+                       handleSupprimerMembre(m.id);
+                     }
+                   }}
+                   className="text-red-600 text-sm mt-2 w-full"
+                 >
+                   🗑️ Supprimer le contact
+                 </button>
                </div>
              </div>
             )}

@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
+import EditEvangeliseSuiviPopup from "../components/EditEvangeliseSuiviPopup";
 
 export default function DetailEvangeliseSuivisPopup({
   member,
@@ -314,5 +315,15 @@ export default function DetailEvangeliseSuivisPopup({
         )}
       </div>
     </div>
+{editingContact && (
+      <EditEvangeliseSuiviPopup
+        member={editingContact}
+        onClose={() => setEditingContact(null)}
+        onUpdateMember={() => {
+          setEditingContact(null);
+          fetchSuivis(user, cellules);
+        }}
+      />
+    )}
   );
 }

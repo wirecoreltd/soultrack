@@ -779,6 +779,7 @@ export default function ListMembers() {
           cellules={cellules}
           conseillers={conseillers}
           session={session}
+          userRole={userRole} 
           onDelete={handleSupprimerMembre}
           commentChanges={commentChanges}
           handleCommentChange={handleCommentChange}

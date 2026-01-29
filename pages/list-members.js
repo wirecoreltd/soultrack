@@ -719,26 +719,20 @@ export default function ListMembers() {
             // 1️⃣ Mise à jour du membre dans le contexte
             updateMember(updatedMember);
       
-            // 2️⃣ Forcer un nouveau tableau pour que React détecte bien le changement
+            // 2️⃣ Forcer un nouveau tableau pour que useMemo recalcule filteredNouveaux/filteredAnciens
             setAllMembers(prev =>
               prev.map(m => (m.id === updatedMember.id ? { ...m, ...updatedMember } : m))
             );
       
-            // 3️⃣ Mettre à jour le popup si on est en train de le voir
-            setPopupMember(prev =>
-              prev && prev.id === updatedMember.id
-                ? { ...prev, ...updatedMember }
-                : prev
-            );
-      
-            // 4️⃣ Fermer le popup d'édition
+            // 3️⃣ Fermer le popup
             setEditMember(null);
       
-            // 5️⃣ Optionnel : toast pour confirmation
-            showToast("✅ Contact mis à jour avec succès !");
+            // 4️⃣ Optionnel : toast
+            showToast("✅ Contact mis à jour !");
           }}
         />
       )}
+
 
 
       {/* Toast */}

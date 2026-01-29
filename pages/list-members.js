@@ -42,6 +42,7 @@ export default function ListMembers() {
   const realtimeChannelRef = useRef(null);
   const [etatContactFilter, setEtatContactFilter] = useState("");  
   const [selectedMember, setSelectedMember] = useState(null);
+  const { members, setAllMembers } = useMembers();
   
   const router = useRouter();
 

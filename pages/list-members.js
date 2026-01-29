@@ -182,9 +182,6 @@ export default function ListMembers() {
     showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
   };
   
-console.log("USER ROLE:", userRole);
-console.log("MEMBRE ID:", m.id);  
-  
   useEffect(() => {
     const fetchUserRole = async () => {
       const {

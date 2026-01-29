@@ -712,20 +712,26 @@ export default function ListMembers() {
       )}
 
       {editMember && (
-        <EditMemberPopup
-          member={editMember}
-          onClose={() => setEditMember(null)}
-          onUpdateMember={(updatedMember) => {            
-            updateMember(updatedMember);
-      
-            setPopupMember(prev =>
-              prev && prev.id === updatedMember.id
-                ? { ...prev, ...updatedMember }
-                : prev
-            );
-          }}
-        />
-      )}
+  <EditMemberPopup
+    member={editMember}
+    onClose={() => setEditMember(null)}
+    onUpdateMember={(updatedMember) => {
+      // ✅ On utilise uniquement updateMember du contexte
+      updateMember(updatedMember);
+
+      // Mettre à jour le popup si on est en train de le voir
+      setPopupMember(prev =>
+        prev && prev.id === updatedMember.id
+          ? { ...prev, ...updatedMember }
+          : prev
+      );
+
+      // Fermer le popup d'édition
+      setEditMember(null);
+    }}
+  />
+)}
+
  
 
       {/* Toast */}

@@ -206,7 +206,7 @@ export default function DetailsMemberPopup({
                   console.error("Erreur marquer membre :", err);
                 }
               }}
-              className="bg-white text-green-600 px-4 py-2 rounded-lg text-sm font-semibold"
+              className="ml-auto bg-white text-green-600 px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
             >
               ✅ Marquer comme membre
             </button>

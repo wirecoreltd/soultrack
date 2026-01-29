@@ -331,9 +331,45 @@ export default function Evangelisation() {
                     <p>☀️ Type : {member.type_conversion || "—"}</p>
                     <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
                     <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
-                    <button onClick={() => { setEditMember(member); setPopupMember(null); }} className="text-blue-600 text-sm mt-4 w-full text-center">✏️ Modifier le contact</button>
-                    <button onClick={() => { if(window.confirm("⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?")) handleSupprimerMembre(member.id); }} className="text-red-600 text-sm mt-2 w-full">🗑️ Supprimer le contact</button>
-                  </div>
+                    <div className="mt-4 space-y-3">
+                      {/* Modifier */}
+                      <button
+                        onClick={() => {
+                          setEditMember(member);
+                          setPopupMember(null);
+                        }}
+                        className="
+                          w-full py-2 rounded-lg
+                          bg-white text-orange-500 font-semibold
+                          shadow-md hover:shadow-lg
+                          transition-all
+                        "
+                      >
+                        ✏️ Modifier le contact
+                      </button>
+                    
+                      {/* Supprimer */}
+                      <button
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              "⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?"
+                            )
+                          ) {
+                            handleSupprimerMembre(member.id);
+                          }
+                        }}
+                        className="
+                          w-full py-2 rounded-lg
+                          bg-white text-red-600 text-xs font-semibold
+                          shadow-md hover:shadow-lg
+                          transition-all
+                        "
+                      >
+                        🗑️ Supprimer le contact
+                      </button>
+                    </div>
+
                 )}
               </div>
             ))}

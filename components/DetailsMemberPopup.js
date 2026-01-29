@@ -325,9 +325,7 @@ export default function DetailsMemberPopup({
             >
               🗑️ Supprimer le contact
             </button>
-          </div>
-          </div>
-
+          </div>        
 
         {editMember && (
           <EditMemberPopup

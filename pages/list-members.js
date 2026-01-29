@@ -511,13 +511,44 @@ export default function ListMembers() {
                 <p>📝 Commentaire Suivis : {m.commentaire_suivis || ""}</p>
                 <p>📑 Commentaire Suivis Evangelisation : {m.Commentaire_Suivi_Evangelisation || ""}</p>   
                 <div className="flex flex-col items-center">
+                    
                  {/* Modifier */}
                  <button
                    onClick={() => setEditMember(m)}
                    className="text-blue-600 text-sm mt-2 w-full"
                  >
                    ✏️ Modifier le contact
-                 </button>               
+                 </button>   
+                     
+                  {/* Integration terminer */}
+                  {userRole === "Conseiller" && membre.integration_fini !== "fini" && (
+                      <button
+                        onClick={async () => {
+                          const confirm = window.confirm(
+                            "⚠️ Confirmer : ce contact ne sera plus attribué à vous ?"
+                          );
+                          if (!confirm) return;
+                    
+                          try {
+                            const { error } = await supabase
+                              .from("membres_complets")
+                              .update({ integration_fini: "fini", conseiller_id: null })
+                              .eq("id", membre.id);
+                    
+                            if (error) throw error;
+                    
+                            showToast("✅ Intégration terminée et contact détaché.");
+                            onClose(); // optionnel
+                          } catch (err) {
+                            console.error(err);
+                            showToast("❌ Erreur lors de l'opération");
+                          }
+                        }}
+                        className="mt-4 bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md font-semibold shadow-sm"
+                      >
+                        ✅ Intégration terminée
+                      </button>
+                    )}
                 
                  {/* Supprimer */}                  
                   <button

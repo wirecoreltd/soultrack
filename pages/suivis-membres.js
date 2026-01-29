@@ -249,16 +249,14 @@ export default function SuivisMembres() {
         <p>☀️ Type de conversion : {m.type_conversion || ""}</p>
 
         {!showRefus && (
-  <div className="mt-4 flex justify-center">
-    <button
-      onClick={() => setEditMember(m)}
-      className="text-blue-600 text-sm mt-4"
-    >
-      ✏️ Modifier le contact
-    </button>
-  </div>
-)}
-
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => setEditMember(m)}
+              className="w-full py-2 rounded-lg bg-white text-orange-500 font-semibold shadow-md hover:shadow-lg transition-all ">
+              ✏️ Modifier le contact
+            </button>
+          </div>
+        )}
       </div>
     );
   };

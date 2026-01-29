@@ -561,14 +561,8 @@ export default function ListMembers() {
                   
                           if (error) throw error;
                   
-                          // 🔹 Mise à jour instantanée côté UI
-                          setAllMembers(prev =>
-                            prev.map(mem =>
-                              mem.id === m.id
-                                ? { ...mem, integration_fini: "fini", conseiller_id: null }
-                                : mem
-                            )
-                          );
+                          // 🔹 Suppression immédiate du membre côté UI
+                          setAllMembers(prev => prev.filter(mem => mem.id !== m.id));
                   
                           showToast("✅ Intégration terminée. Contact détaché.");
                         } catch (err) {
@@ -581,6 +575,7 @@ export default function ListMembers() {
                       ✅ Intégration terminée
                     </button>
                   )}
+
 
                 
                  {/* Supprimer */}                  

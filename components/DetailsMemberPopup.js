@@ -267,7 +267,11 @@ export default function DetailsMemberPopup({
 
           <button
             onClick={() => {
-              if (window.confirm("Supprimer définitivement ce contact ?")) {
+              if (window.confirm("⚠️ Suppression définitive\n\n" +
+                    "Voulez-vous vraiment supprimer ce contact ?\n\n" +
+                    "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
+                    "Cette action est irréversible."            
+                                )) {
                 onDelete(membre.id);
                 onClose();
               }

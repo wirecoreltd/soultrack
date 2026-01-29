@@ -543,34 +543,46 @@ export default function ListMembers() {
                  </button>   
                      
                   {/* Integration terminer */}
-                  {userRole === "Conseiller" && membre.integration_fini !== "fini" && (
-                      <button
-                        onClick={async () => {
-                          const confirm = window.confirm(
-                            "⚠️ Confirmer : ce contact ne sera plus attribué à vous ?"
-                          );
-                          if (!confirm) return;
-                    
-                          try {
-                            const { error } = await supabase
-                              .from("membres_complets")
-                              .update({ integration_fini: "fini", conseiller_id: null })
-                              .eq("id", membre.id);
-                    
-                            if (error) throw error;
-                    
-                            showToast("✅ Intégration terminée et contact détaché.");
-                            onClose(); // optionnel
-                          } catch (err) {
-                            console.error(err);
-                            showToast("❌ Erreur lors de l'opération");
-                          }
-                        }}
-                        className="mt-4 bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md font-semibold shadow-sm"
-                      >
-                        ✅ Intégration terminée
-                      </button>
-                    )}
+                  {userRole === "Conseiller" && m.integration_fini !== "fini" && (
+                  <button
+                    onClick={async () => {
+                      const confirm = window.confirm(
+                        "⚠️ Confirmer : ce contact ne sera plus attribué à vous ?"
+                      );
+                      if (!confirm) return;
+                
+                      try {
+                        const { error } = await supabase
+                          .from("membres_complets")
+                          .update({
+                            integration_fini: "fini",
+                            conseiller_id: null,
+                          })
+                          .eq("id", m.id);
+                
+                        if (error) throw error;
+                
+                        // ✅ mise à jour instantanée locale
+                        setAllMembers(prev =>
+                          prev.map(mem =>
+                            mem.id === m.id
+                              ? { ...mem, integration_fini: "fini", conseiller_id: null }
+                              : mem
+                          )
+                        );
+                
+                        showToast("✅ Intégration terminée. Contact détaché.");
+                      } catch (err) {
+                        console.error(err);
+                        showToast("❌ Erreur lors de l'opération");
+                      }
+                    }}
+                    className="mt-4 bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md font-semibold shadow-sm"
+                  >
+                    ✅ Intégration terminée
+                  </button>
+                )}
+
                 
                  {/* Supprimer */}                  
                   <button

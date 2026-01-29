@@ -249,10 +249,11 @@ export default function SuivisMembres() {
         <p>☀️ Type de conversion : {m.type_conversion || ""}</p>
 
         {!showRefus && (
-          <div className="mt-4 flex justify-center">
+          <div className="mt-4 bg-gray-50 rounded-xl shadow-md p-4">
             <button
               onClick={() => setEditMember(m)}
-              className="w-full py-2 rounded-lg bg-white text-orange-500 font-semibold shadow-md hover:shadow-lg transition-all ">
+              className="w-full py-2 rounded-lg bg-white text-orange-500 font-semibold shadow-sm hover:shadow-md transition-all"
+            >
               ✏️ Modifier le contact
             </button>
           </div>

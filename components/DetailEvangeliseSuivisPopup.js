@@ -90,6 +90,7 @@ export default function DetailEvangeliseSuivisPopup({
         conseiller_id: suivi.conseiller_id,
         statut_initial: "intégré",
         suivi_statut: "Intégré",
+        etat_contact: "Existant",
         suivi_commentaire_suivis: comment,
         suivi_updated_at: new Date().toISOString(),
       };

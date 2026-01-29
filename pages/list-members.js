@@ -540,7 +540,7 @@ export default function ListMembers() {
                    ✏️ Modifier le contact
                  </button>   
                    
-                  {/* ✅ Intégration terminée — visible uniquement pour les Conseillers */}
+                {/* ✅ Intégration terminée — visible uniquement pour les Conseillers */}
                   {userRole === "Conseiller" && m.integration_fini !== "fini" && (
                     <button
                       onClick={async () => {
@@ -570,11 +570,12 @@ export default function ListMembers() {
                           showToast("❌ Erreur lors de l'opération");
                         }
                       }}
-                      className="ml-auto bg-white text-bleu-600 px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
+                      className="ml-auto bg-blue-500 text-white px-3 py-1 my-3 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow cursor-default"
                     >
                       ✅ Intégration terminée
                     </button>
                   )}
+
 
 
                 

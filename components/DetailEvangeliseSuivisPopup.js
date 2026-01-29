@@ -302,30 +302,33 @@ export default function DetailEvangeliseSuivisPopup({
           <p>📝 Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
         </div>
 
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+
         {/* ================= CENTRÉ ================= */}
-         {!isRefus && (
-            <div className="mt-6 flex justify-center">
-              <button
-                onClick={() => onEdit(member)}
-                className="text-blue-600 text-sm font-semibold hover:underline"
-              >
-                ✏️ Modifier le contact
-              </button>
-            </div>
-          )}
-  
-        </div> {/* 🔴 FERME le div bg-white */}
-      </div>   {/* 🔴 FERME le div fixed */}
-  
-      {editingContact && (
-        <EditEvangeliseSuiviPopup
-          member={editingContact}
-          onClose={() => setEditingContact(null)}
-          onUpdateMember={() => {
-            setEditingContact(null);
-            fetchSuivis(user, cellules);
-          }}
-        />
-      )}
-    </>
-  );
+        {!isRefus && (
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={() => onEdit(member)}
+              className="text-blue-600 text-sm font-semibold hover:underline"
+            >
+              ✏️ Modifier le contact
+            </button>
+          </div>
+        )}
+
+      </div> {/* bg-white */}
+    </div>   {/* fixed */}
+
+    {editingContact && (
+      <EditEvangeliseSuiviPopup
+        member={editingContact}
+        onClose={() => setEditingContact(null)}
+        onUpdateMember={() => {
+          setEditingContact(null);
+          fetchSuivis(user, cellules);
+        }}
+      />
+    )}
+  </>
+);;

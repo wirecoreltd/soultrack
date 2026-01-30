@@ -27,15 +27,20 @@ export default function DetailEvangeliseSuivisPopup({
 
   /* ================= CLOSE PHONE MENU ON OUTSIDE CLICK ================= */
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
-        setOpenPhoneMenu(false);
-      }
-    };
+  const handleClickOutside = (e) => {
+    if (
+      phoneMenuRef.current &&
+      !phoneMenuRef.current.contains(e.target)
+    ) {
+      setOpenPhoneMenu(false);
+    }
+  };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  document.addEventListener("mousedown", handleClickOutside);
+  return () =>
+    document.removeEventListener("mousedown", handleClickOutside);
+}, []);
+
 
   /* ================= SAVE ================= */
   const handleSave = async () => {
@@ -103,14 +108,14 @@ export default function DetailEvangeliseSuivisPopup({
 
           {/* PHONE */}
           {member.telephone && (
-            <div className="relative text-center" ref={phoneMenuRef}>
+            <div ref={phoneMenuRef} className="relative text-center">
               <button
                 onClick={() => setOpenPhoneMenu((prev) => !prev)}
                 className="text-orange-500 font-semibold underline"
               >
                 {member.telephone}
               </button>
-
+          
               {openPhoneMenu && (
                 <div className="absolute left-1/2 -translate-x-1/2 mt-2 bg-white border rounded-lg shadow w-56 z-50">
                   <a
@@ -119,12 +124,14 @@ export default function DetailEvangeliseSuivisPopup({
                   >
                     📞 Appeler
                   </a>
+          
                   <a
                     href={`sms:${member.telephone}`}
                     className="block px-4 py-2 hover:bg-gray-100 text-black"
                   >
                     ✉️ SMS
                   </a>
+          
                   <a
                     href={`https://wa.me/${member.telephone.replace(/\D/g, "")}`}
                     target="_blank"
@@ -133,11 +140,9 @@ export default function DetailEvangeliseSuivisPopup({
                   >
                     💬 WhatsApp
                   </a>
+          
                   <a
-                    href={`https://wa.me/${member.telephone.replace(
-                      /\D/g,
-                      ""
-                    )}?text=Bonjour`}
+                    href={`https://wa.me/${member.telephone.replace(/\D/g, "")}?text=Bonjour`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block px-4 py-2 hover:bg-gray-100 text-black"
@@ -148,6 +153,7 @@ export default function DetailEvangeliseSuivisPopup({
               )}
             </div>
           )}
+
 
           {/* INFOS */}
           <div className="text-sm text-center mt-3 space-y-1">

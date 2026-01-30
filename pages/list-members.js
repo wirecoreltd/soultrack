@@ -802,12 +802,21 @@ export default function ListMembers() {
         <EditMemberPopup
           member={editMember}
           onClose={() => setEditMember(null)}
-          onUpdateMember={(updatedMember) => {    
-            updateMember(updatedMember);
+          onUpdateMember={(updatedMember) => {
+            // 1️⃣ Mettre à jour la vue locale instantanément
             setAllMembers(prev =>
-              [...prev.map(m => (m.id === updatedMember.id ? { ...m, ...updatedMember } : m))]
+              prev.map(m => (m.id === updatedMember.id ? updatedMember : m))
             );
+      
+            // 2️⃣ Si tu as une fonction pour mettre à jour un membre spécifique ailleurs
+            if (typeof updateMember === "function") {
+              updateMember(updatedMember);
+            }
+      
+            // 3️⃣ Fermer le popup
             setEditMember(null);
+      
+            // 4️⃣ Afficher un message toast
             showToast("✅ Contact mis à jour !");
           }}
         />

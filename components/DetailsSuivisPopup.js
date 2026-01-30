@@ -5,6 +5,8 @@ import EditMemberSuivisPopup from "./EditMemberSuivisPopup";
 
 export default function DetailsSuivisPopup({
   m,
+  cellules,
+  conseillers,
   onClose,
   commentChanges,
   statusChanges,
@@ -20,6 +22,9 @@ export default function DetailsSuivisPopup({
   const [editMember, setEditMember] = useState(null);
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
   const phoneMenuRef = useRef(null);
+
+  const cellule = cellules?.find(c => c.id === m.cellule_id);
+  const conseiller = conseillers?.find(c => c.id === m.conseiller_id);
 
   // Bloquer scroll de la page derrière
   useEffect(() => {
@@ -101,8 +106,8 @@ export default function DetailsSuivisPopup({
           )}
 
           <p className="mt-2">🏙️ Ville : {m.ville || "—"}</p>
-          <p>🏠 Cellule : {m.cellule_full || "—"}</p>
-          <p>👤 Conseiller : {m.responsable || "—"}</p>
+          <p>🏠 Cellule : {cellule?.cellule_full || "—"}</p>
+          <p>👤 Conseiller :{" "}{conseiller? `${conseiller.prenom} ${conseiller.nom}`: "—"}</p>
 
           {/* Commentaire & Statut */}
           <div className="flex flex-col w-full mt-4">

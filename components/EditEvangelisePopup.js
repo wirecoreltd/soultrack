@@ -142,26 +142,41 @@ export default function EditEvangelisePopup({
             WhatsApp
           </label>
 
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="priere_salut"
-              checked={formData.priere_salut}
-              onChange={handleChange}
-              className="accent-[#25297e]"
-            />
-            Prière du salut
-          </label>
-
-          {formData.priere_salut && (
-            <input
-              name="type_conversion"
-              value={formData.type_conversion}
-              onChange={handleChange}
-              placeholder="Type de conversion"
+          {/* Prière du salut */}
+          <select
+            className="input"
+            value={formData.priere_salut}
+            required
+            onChange={(e) => {
+              const value = e.target.value;
+              setFormData({
+                ...formData,
+                priere_salut: value,
+                type_conversion: value === "Oui" ? formData.type_conversion : "",
+              });
+            }}
+          >
+            <option value="">-- Prière du salut ? --</option>
+            <option value="Oui">Oui</option>
+            <option value="Non">Non</option>
+          </select>
+          
+          {/* Type de conversion */}
+          {formData.priere_salut === "Oui" && (
+            <select
               className="input"
-            />
+              value={formData.type_conversion}
+              onChange={(e) =>
+                setFormData({ ...formData, type_conversion: e.target.value })
+              }
+              required
+            >
+              <option value="">Type</option>
+              <option value="Nouveau converti">Nouveau converti</option>
+              <option value="Réconciliation">Réconciliation</option>
+            </select>
           )}
+
 
           <div className="flex flex-col">
             <label className="font-semibold">Besoins</label>

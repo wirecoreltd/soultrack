@@ -105,6 +105,14 @@ export default function ListConseillers() {
         </p>
       </div>
 
+        {/* Bouton Ajouter un membre */}
+                <button
+                  onClick={() => router.push("/create-conseiller")}
+                  className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+                >
+                  ➕ Ajouter un Conseiller 
+                </button>
+
       {/* Liste cartes */}
       <div className="w-full max-w-6xl">
         {loading ? (

@@ -25,19 +25,22 @@ export default function DetailEvangeliseSuivisPopup({
   const cellule = cellules?.find(c => c.id === member.cellule_id);
   const conseiller = conseillers?.find(c => c.id === member.conseiller_id);
 
+  const phoneMenuRef = useRef(null);
+  const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
+
+
   /* ================= CLOSE ON OUTSIDE CLICK ================= */
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (editingEvangelise) return; // 🛑 sous-popup ouvert
+  const handleClickOutside = (e) => {
+    if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+      setOpenPhoneMenu(false);
+    }
+  };
 
-      if (popupRef.current && !popupRef.current.contains(e.target)) {
-        onClose();
-      }
-    };
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, []);
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onClose, editingEvangelise]);
 
   /* ================= PHONE MENU ================= */
   useEffect(() => {
@@ -133,21 +136,54 @@ export default function DetailEvangeliseSuivisPopup({
                 href={member.telephone ? `tel:${member.telephone}` : "#"}
                 className="block px-4 py-2 hover:bg-gray-100"
               >
-                📞 Appeler
-              </a>
-              <a
-                href={
-                  member.telephone
-                    ? `https://wa.me/${member.telephone.replace(/\D/g, "")}`
-                    : "#"
-                }
-                target="_blank"
-                className="block px-4 py-2 hover:bg-gray-100"
-              >
-                💬 WhatsApp
-              </a>
-            </div>
-          )}
+                {/* 📞 Téléphone */}
+                  {member.telephone && (
+                    <div className="relative mt-1 text-center" ref={phoneMenuRef}>
+                      <button
+                        onClick={() => setOpenPhoneMenu((prev) => !prev)}
+                        className="text-orange-500 underline font-semibold"
+                      >
+                        {member.telephone}
+                      </button>
+                  
+                      {openPhoneMenu && (
+                        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white border rounded-lg shadow w-56 z-50">
+                          <a
+                            href={`tel:${member.telephone}`}
+                            className="block px-4 py-2 hover:bg-gray-100 text-black"
+                          >
+                            📞 Appeler
+                          </a>
+                  
+                          <a
+                            href={`sms:${member.telephone}`}
+                            className="block px-4 py-2 hover:bg-gray-100 text-black"
+                          >
+                            ✉️ SMS
+                          </a>
+                  
+                          <a
+                            href={`https://wa.me/${member.telephone.replace(/\D/g, "")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block px-4 py-2 hover:bg-gray-100 text-black"
+                          >
+                            💬 WhatsApp
+                          </a>
+                  
+                          <a
+                            href={`https://wa.me/${member.telephone.replace(/\D/g, "")}?text=Bonjour`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block px-4 py-2 hover:bg-gray-100 text-black"
+                          >
+                            📱 Message WhatsApp
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
 
           {/* INFOS */}
           <div className="text-sm text-center mt-3 space-y-1">
@@ -210,7 +246,7 @@ export default function DetailEvangeliseSuivisPopup({
                 onClick={() => setEditingEvangelise(member)}
                 className="w-full py-2 rounded-md bg-white text-orange-500 shadow-md"
               >
-                ✏️ Modifier évangélisation
+                ✏️ Modifier le contact
               </button>
             </div>
           )}

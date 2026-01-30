@@ -799,28 +799,21 @@ export default function ListMembers() {
       )}
 
       {editMember && (
-        <EditMemberPopup
-          member={editMember}
-          onClose={() => setEditMember(null)}
-          onUpdateMember={(updatedMember) => {
-            // 1️⃣ Mettre à jour la vue locale instantanément
-            setAllMembers(prev =>
-              prev.map(m => (m.id === updatedMember.id ? updatedMember : m))
-            );
-      
-            // 2️⃣ Si tu as une fonction pour mettre à jour un membre spécifique ailleurs
-            if (typeof updateMember === "function") {
-              updateMember(updatedMember);
-            }
-      
-            // 3️⃣ Fermer le popup
-            setEditMember(null);
-      
-            // 4️⃣ Afficher un message toast
-            showToast("✅ Contact mis à jour !");
-          }}
-        />
-      )}
+  <EditMemberPopup
+    member={editMember}
+    onClose={() => setEditMember(null)}
+    onUpdateMember={(updatedMember) => {
+      // Remplacer le membre dans la table avec le nouvel objet complet
+      setAllMembers(prev =>
+        prev.map(m => (m.id === updatedMember.id ? { ...updatedMember } : m))
+      );
+
+      setEditMember(null);
+      showToast("✅ Contact mis à jour !");
+    }}
+  />
+)}
+
 
       {/* Toast */}
       {showingToast && (

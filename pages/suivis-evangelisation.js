@@ -632,7 +632,8 @@ export default function SuivisEvangelisation() {
     {editingContact && (
       <EditEvangeliseSuiviPopup
         member={editingContact}
-        onClose={() => setEditingContact(null)}
+        onClose={() => setEditingContact(null)}  
+        closeDetails={() => setDetailsTable(null)} 
         onUpdateMember={(updates) => {
         updateSuiviLocal(editingContact.id, updates);
           setEditingContact(null);

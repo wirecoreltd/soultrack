@@ -105,10 +105,10 @@ export default function ListConseillers() {
       </div>
 
       {/* Bouton Ajouter un conseiller */}
-      <div className="flex w-full mb-6">
+      <div className="w-full max-w-6xl flex justify-end mb-6">
         <button
           onClick={() => router.push("/create-conseiller")}
-          className="ml-auto text-white font-semibold px-4 py-2 rounded shadow text-sm"
+          className="text-white font-semibold px-4 py-2 rounded shadow text-sm hover:shadow-lg transition"
         >
           ➕ Ajouter un Conseiller
         </button>

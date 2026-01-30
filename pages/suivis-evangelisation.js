@@ -301,13 +301,13 @@ export default function SuivisEvangelisation() {
           setUpdating((p) => ({ ...p, [m.id]: false }));
         }
       };
+        
         const updateSuiviLocal = (id, updates) => {
-              setAllSuivis(prev =>
-                prev.map(s =>
-                  s.id === id ? { ...s, ...updates } : s
-                )
-              );
-            };
+        setAllSuivis(prev =>
+          prev.map(s => (s.id === id ? { ...s, ...updates } : s))
+        );
+      };
+
 
   // ================= RENDER =================
   if (loading) return <p className="text-center mt-10">Chargement...</p>;
@@ -646,7 +646,8 @@ export default function SuivisEvangelisation() {
       <EditEvangeliseSuiviPopup
         member={editingContact}
         onClose={() => setEditingContact(null)}
-        onUpdateMember={() => {
+        onUpdateMember={(updates) => {
+        updateSuiviLocal(editingContact.id, updates);
           setEditingContact(null);
           fetchSuivis(user, cellules);
         }}

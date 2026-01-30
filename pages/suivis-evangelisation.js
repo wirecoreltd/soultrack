@@ -319,7 +319,7 @@ export default function SuivisEvangelisation() {
     
     <HeaderPages />
     
-    <h1 className="text-3xl font-bold text-white mb-6">📋 Suivis des Évangélisés</h1>
+    <h1 className="text-3xl font-bold text-white mb-6">Suivis des Évangélisés</h1>
 
     {/* Toggle Vue / Refus */}
     <div className="mb-6 flex justify-between w-full max-w-6xl">
@@ -434,76 +434,76 @@ export default function SuivisEvangelisation() {
                     )}
                   </div>
 
-                <p className="text-sm text-black-700 mb-1">
+                <p className="text-sm text-black-700 mb-4">
                   🏠 Cellule : {cellule?.cellule_full || ""}
                 </p>
                 <p className="text-sm text-black-700 mb-2">
                   👤 Conseiller : {conseiller ? `${conseiller.prenom} ${conseiller.nom}` : ""}
                 </p>
-                <p className="text-sm text-black-700 mb-2">
+                <p className="text-sm text-black-700 mt-4 mb-2">
                   🏙️ Ville : {m.ville || ""}
                 </p> 
-                <p className="self-end text-[11px] text-gray-400 mt-3">Créé le {formatDateFr(m.date_suivi)}</p>
+                <p className="self-end text-[11px] text-gray-400 mt-2">Créé le {formatDateFr(m.date_suivi)}</p>
 
                 {/* Commentaire + statut */}
-                <div className="w-full rounded-xl p-3 mt-2">
-                  <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
-                    Commentaire Suivis
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
-                    onChange={(e) => handleCommentChange(m.id, e.target.value)}
-                    disabled={showRefus}
-                    className={`w-full rounded-lg border px-3 py-2 ${
-                      showRefus
-                        ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                        : "bg-white"
-                    }`}
-                  />
-
-                  <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
-                  Statut du suivis
+                  <div className="w-full rounded-xl p-3 mt-2">
+                    <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2 text-sm">
+                      Commentaire Suivis
                     </label>
-                  <select
-                    value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""}
-                    onChange={(e) => handleStatusChange(m.id, e.target.value)}
-                    disabled={showRefus}
-                    className={`mt-2 w-full rounded-lg border px-3 py-2 ${
-                      showRefus
-                        ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                        : "bg-white"
-                    }`}
-                  >
-                    <option value="">-- Sélectionner un statut --</option>
-                    <option value="En cours">En cours</option>
-                    <option value="Intégré">Intégré</option>
-                    <option value="Refus">Refus</option>
-                  </select>
-
-
-                  <button
-                    onClick={() =>
-                      showRefus
-                        ? reactiverSuivi(m)
-                        : updateSuivi(m.id, m)
-                    }
-                    disabled={updating[m.id]}
-                    className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all ${
-                      updating[m.id]
-                        ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                    <textarea
+                      rows={2}
+                      value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
+                      onChange={(e) => handleCommentChange(m.id, e.target.value)}
+                      disabled={showRefus}
+                      className={`w-full rounded-lg border px-3 py-2 text-sm ${
+                        showRefus
+                          ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                          : "bg-white"
+                      }`}
+                    />
+                  
+                    <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2 text-sm">
+                      Statut du suivis
+                    </label>
+                    <select
+                      value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""}
+                      onChange={(e) => handleStatusChange(m.id, e.target.value)}
+                      disabled={showRefus}
+                      className={`mt-2 w-full rounded-lg border px-3 py-2 text-sm ${
+                        showRefus
+                          ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                          : "bg-white"
+                      }`}
+                    >
+                      <option value="">-- Sélectionner un statut --</option>
+                      <option value="En cours">En cours</option>
+                      <option value="Intégré">Intégré</option>
+                      <option value="Refus">Refus</option>
+                    </select>
+                  
+                    <button
+                      onClick={() =>
+                        showRefus
+                          ? reactiverSuivi(m)
+                          : updateSuivi(m.id, m)
+                      }
+                      disabled={updating[m.id]}
+                      className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all ${
+                        updating[m.id]
+                          ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                          : showRefus
+                            ? "bg-green-500 text-white hover:bg-green-600"
+                            : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
+                      }`}
+                    >
+                      {updating[m.id]
+                        ? "Traitement..."
                         : showRefus
-                          ? "bg-green-500 text-white hover:bg-green-600"
-                          : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
-                    }`}
-                  >
-                    {updating[m.id]
-                      ? "Traitement..."
-                      : showRefus
-                        ? "🔄 Réactiver"
-                        : "Sauvegarder"}
-                  </button>
-                </div>
+                          ? "🔄 Réactiver"
+                          : "Sauvegarder"}
+                    </button>
+                  </div>
+
 
                 <button
                   onClick={() => setDetailsCarteId(ouvert ? null : m.id)}

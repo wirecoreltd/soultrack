@@ -25,10 +25,6 @@ export default function DetailEvangeliseSuivisPopup({
   const cellule = cellules?.find(c => c.id === member.cellule_id);
   const conseiller = conseillers?.find(c => c.id === member.conseiller_id);
 
-  const phoneMenuRef = useRef(null);
-  const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
-
-
   /* ================= CLOSE ON OUTSIDE CLICK ================= */
   useEffect(() => {
   const handleClickOutside = (e) => {

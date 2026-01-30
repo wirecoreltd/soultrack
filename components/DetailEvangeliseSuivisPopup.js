@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
@@ -25,7 +24,7 @@ export default function DetailEvangeliseSuivisPopup({
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (editingEvangelise) return; // 🛑 sous-popup ouvert
-    
+
       if (popupRef.current && !popupRef.current.contains(e.target)) {
         onClose();
       }
@@ -33,7 +32,7 @@ export default function DetailEvangeliseSuivisPopup({
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onClose]);
+  }, [onClose, editingEvangelise]);
 
   /* ================= PHONE MENU ================= */
   useEffect(() => {
@@ -90,143 +89,142 @@ export default function DetailEvangeliseSuivisPopup({
 
   /* ================= RENDER ================= */
   return (
-  <>
-    {/* OVERLAY */}
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-      {/* POPUP */}
-      <div
-        ref={popupRef}
-        onMouseDown={(e) => e.stopPropagation()}
-        className="bg-white rounded-lg p-6 w-96 relative shadow-xl max-h-[90vh] overflow-y-auto"
-      >
-        {/* CLOSE */}
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-gray-500 font-bold"
+    <>
+      {/* OVERLAY */}
+      <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+        {/* POPUP */}
+        <div
+          ref={popupRef}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="bg-white rounded-lg p-6 w-96 relative shadow-xl max-h-[90vh] overflow-y-auto"
         >
-          ✖
-        </button>
-
-        <h2 className="text-lg font-bold text-center mb-3">
-          {member.prenom} {member.nom}
-        </h2>
-
-        {/* PHONE */}
-        <p
-          onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
-          className="text-center text-orange-500 font-semibold underline cursor-pointer"
-        >
-          {member.telephone || "—"}
-        </p>
-
-        {openPhoneMenu && (
-          <div
-            ref={phoneMenuRef}
-            onMouseDown={(e) => e.stopPropagation()}
-            className="absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
+          {/* CLOSE */}
+          <button
+            onClick={onClose}
+            className="absolute top-2 right-2 text-gray-500 font-bold"
           >
-            <a
-              href={member.telephone ? `tel:${member.telephone}` : "#"}
-              className="block px-4 py-2 hover:bg-gray-100"
-            >
-              📞 Appeler
-            </a>
-            <a
-              href={
-                member.telephone
-                  ? `https://wa.me/${member.telephone.replace(/\D/g, "")}`
-                  : "#"
-              }
-              target="_blank"
-              className="block px-4 py-2 hover:bg-gray-100"
-            >
-              💬 WhatsApp
-            </a>
-          </div>
-        )}
+            ✖
+          </button>
 
-        {/* INFOS */}
-        <div className="text-sm text-center mt-3 space-y-1">
-          <p>🏠 Cellule : {member.cellule?.nom || "—"}</p>
-          <p>
-            👤 Conseiller :{" "}
-            {member.conseiller
-              ? `${member.conseiller.prenom} ${member.conseiller.nom}`
-              : "—"}
+          <h2 className="text-lg font-bold text-center mb-3">
+            {member.prenom} {member.nom}
+          </h2>
+
+          {/* PHONE */}
+          <p
+            onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
+            className="text-center text-orange-500 font-semibold underline cursor-pointer"
+          >
+            {member.telephone || "—"}
           </p>
-          <p>🏙️ Ville : {member.ville || "—"}</p>
-        </div>
 
-        {/* COMMENT / STATUS */}
-        <div className="mt-4">
-          <label className="block text-center font-semibold mb-1">
-            Commentaire
-          </label>
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            disabled={isRefus}
-            className="w-full border rounded p-2"
-            rows={2}
-          />
+          {openPhoneMenu && (
+            <div
+              ref={phoneMenuRef}
+              onMouseDown={(e) => e.stopPropagation()}
+              className="absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
+            >
+              <a
+                href={member.telephone ? `tel:${member.telephone}` : "#"}
+                className="block px-4 py-2 hover:bg-gray-100"
+              >
+                📞 Appeler
+              </a>
+              <a
+                href={
+                  member.telephone
+                    ? `https://wa.me/${member.telephone.replace(/\D/g, "")}`
+                    : "#"
+                }
+                target="_blank"
+                className="block px-4 py-2 hover:bg-gray-100"
+              >
+                💬 WhatsApp
+              </a>
+            </div>
+          )}
 
-          <label className="block text-center font-semibold mt-2 mb-1">
-            Statut
-          </label>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            disabled={isRefus}
-            className="w-full border rounded p-2"
-          >
-            <option value="">-- Choisir --</option>
-            <option value="En cours">En cours</option>
-            <option value="Intégré">Intégré</option>
-            <option value="Refus">Refus</option>
-          </select>
+          {/* INFOS */}
+          <div className="text-sm text-center mt-3 space-y-1">
+            <p>🏠 Cellule : {member.cellule?.nom || "—"}</p>
+            <p>
+              👤 Conseiller :{" "}
+              {member.conseiller
+                ? `${member.conseiller.prenom} ${member.conseiller.nom}`
+                : "—"}
+            </p>
+            <p>🏙️ Ville : {member.ville || "—"}</p>
+          </div>
+
+          {/* COMMENT / STATUS */}
+          <div className="mt-4">
+            <label className="block text-center font-semibold mb-1">
+              Commentaire
+            </label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              disabled={isRefus}
+              className="w-full border rounded p-2"
+              rows={2}
+            />
+
+            <label className="block text-center font-semibold mt-2 mb-1">
+              Statut
+            </label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              disabled={isRefus}
+              className="w-full border rounded p-2"
+            >
+              <option value="">-- Choisir --</option>
+              <option value="En cours">En cours</option>
+              <option value="Intégré">Intégré</option>
+              <option value="Refus">Refus</option>
+            </select>
+
+            {!isRefus && (
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="mt-3 w-full bg-blue-500 text-white py-2 rounded"
+              >
+                {saving ? "Enregistrement..." : "Sauvegarder"}
+              </button>
+            )}
+          </div>
+
+          {/* EXTRA */}
+          <div className="mt-4 text-sm space-y-1">
+            <p>🎗️ Sexe : {member.sexe || "—"}</p>
+            <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
+            <p>☀️ Type : {member.type_conversion || "—"}</p>
+            <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
+            <p>📝 Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
+          </div>
 
           {!isRefus && (
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="mt-3 w-full bg-blue-500 text-white py-2 rounded"
-            >
-              {saving ? "Enregistrement..." : "Sauvegarder"}
-            </button>
+            <div className="mt-5 flex justify-center">
+              <button
+                onClick={() => setEditingEvangelise(member)}
+                className="text-green-600 font-semibold hover:underline"
+              >
+                ✏️ Modifier évangélisation
+              </button>
+            </div>
           )}
         </div>
-
-        {/* EXTRA */}
-        <div className="mt-4 text-sm space-y-1">
-          <p>🎗️ Sexe : {member.sexe || "—"}</p>
-          <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
-          <p>☀️ Type : {member.type_conversion || "—"}</p>
-          <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-          <p>📝 Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
-        </div>
-
-        {!isRefus && (
-          <div className="mt-5 flex justify-center">
-            <button
-              onClick={() => setEditingEvangelise(member)}
-              className="text-green-600 font-semibold hover:underline"
-            >
-              ✏️ Modifier évangélisation
-            </button>
-          </div>
-        )}
       </div>
-    </div>
 
-    {/* SOUS-POPUP */}
-    {editingEvangelise && (
-      <EditEvangeliseSuiviPopup
-        member={editingEvangelise}
-        onClose={() => setEditingEvangelise(null)}
-        onUpdate={() => setEditingEvangelise(null)}
-      />
-    )}
-  </>
-);   
-
-       
+      {/* SOUS-POPUP */}
+      {editingEvangelise && (
+        <EditEvangeliseSuiviPopup
+          member={editingEvangelise}
+          onClose={() => setEditingEvangelise(null)}
+          onUpdate={() => setEditingEvangelise(null)}
+        />
+      )}
+    </>
+  );
+}

@@ -25,6 +25,10 @@ export default function DetailEvangeliseSuivisPopup({
   const cellule = cellules?.find(c => c.id === member.cellule_id);
   const conseiller = conseillers?.find(c => c.id === member.conseiller_id);
 
+  const phoneMenuRef = useRef(null);
+  const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
+
+
   /* ================= CLOSE ON OUTSIDE CLICK ================= */
   useEffect(() => {
   const handleClickOutside = (e) => {
@@ -40,15 +44,16 @@ export default function DetailEvangeliseSuivisPopup({
 
   /* ================= PHONE MENU ================= */
   useEffect(() => {
-    const handleClickOutsideMenu = (e) => {
-      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
-        setOpenPhoneMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutsideMenu);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutsideMenu);
-  }, []);
+  const handleClickOutside = (e) => {
+    if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+      setOpenPhoneMenu(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, []);
+
 
   /* ================= SAVE ================= */
   const handleSave = async () => {
@@ -137,7 +142,7 @@ export default function DetailEvangeliseSuivisPopup({
                     <div className="relative mt-1 text-center" ref={phoneMenuRef}>
                       <button
                         onClick={() => setOpenPhoneMenu((prev) => !prev)}
-                        className="text-orange-500 underline font-semibold"
+                        className="text-orange-500 font-semibold underline"
                       >
                         {member.telephone}
                       </button>
@@ -179,6 +184,7 @@ export default function DetailEvangeliseSuivisPopup({
                       )}
                     </div>
                   )}
+
 
           {/* INFOS */}
           <div className="text-sm text-center mt-3 space-y-1">

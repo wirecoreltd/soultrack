@@ -24,10 +24,13 @@ export default function DetailEvangeliseSuivisPopup({
   /* ================= CLOSE ON OUTSIDE CLICK ================= */
   useEffect(() => {
     const handleClickOutside = (e) => {
+      if (editingEvangelise) return; // 🛑 sous-popup ouvert
+    
       if (popupRef.current && !popupRef.current.contains(e.target)) {
         onClose();
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);

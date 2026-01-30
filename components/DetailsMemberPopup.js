@@ -328,12 +328,28 @@ export default function DetailsMemberPopup({
           </div>        
 
         {editMember && (
-          <EditMemberPopup
-            member={editMember}
-            onClose={() => setEditMember(null)}
-            onUpdateMember={onClose}
-          />
-        )}
+  <EditMemberPopup
+    member={editMember}
+    onClose={() => setEditMember(null)}
+    onUpdateMember={(updatedMember) => {
+      // 1️⃣ Mise à jour instantanée dans allMembers
+      setAllMembers(prev =>
+        prev.map(m => (m.id === updatedMember.id ? updatedMember : m))
+      );
+
+      // 2️⃣ Fermer le popup
+      setEditMember(null);
+
+      // 3️⃣ Afficher le toast
+      showToast(
+        <span className="inline-block bg-white text-green-600 px-2 py-1 rounded shadow text-xs font-semibold">
+          ✅ Contact mis à jour !
+        </span>
+      );
+    }}
+  />
+)}
+
       </div>
     </div>
   );

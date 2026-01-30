@@ -6,6 +6,8 @@ import EditEvangeliseSuiviPopup from "./EditEvangeliseSuiviPopup";
 
 export default function DetailEvangeliseSuivisPopup({
   member,
+  cellules,
+  conseillers,
   onClose,
   onUpdate,
 }) {
@@ -19,6 +21,9 @@ export default function DetailEvangeliseSuivisPopup({
   const [editingEvangelise, setEditingEvangelise] = useState(null);
 
   const isRefus = member.status_suivis_evangelises === "Refus";
+
+  const cellule = cellules?.find(c => c.id === m.cellule_id);
+  const conseiller = conseillers?.find(c => c.id === m.conseiller_id);
 
   /* ================= CLOSE ON OUTSIDE CLICK ================= */
   useEffect(() => {
@@ -146,13 +151,8 @@ export default function DetailEvangeliseSuivisPopup({
 
           {/* INFOS */}
           <div className="text-sm text-center mt-3 space-y-1">
-            <p>🏠 Cellule : {member.cellule?.nom || "—"}</p>
-            <p>
-              👤 Conseiller :{" "}
-              {member.conseiller
-                ? `${member.conseiller.prenom} ${member.conseiller.nom}`
-                : "—"}
-            </p>
+            <p>🏠 Cellule : {cellule?.cellule_full || "—"}</p>
+            <p>👤 Conseiller :{" "}{conseiller? `${conseiller.prenom} ${conseiller.nom}`: "—"}</p>
             <p>🏙️ Ville : {member.ville || "—"}</p>
           </div>
 

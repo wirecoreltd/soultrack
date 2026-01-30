@@ -83,11 +83,11 @@ export default function ListConseillers() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+    <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "#333699" }}>
       <HeaderPages />
 
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">📋 Liste des Conseillers</h1>
+        <h1 className="text-3xl font-bold text-white mb-2">Liste des Conseillers</h1>
         <p className="text-white text-lg max-w-xl mx-auto italic">
           Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
         </p>

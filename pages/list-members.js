@@ -799,21 +799,18 @@ export default function ListMembers() {
       )}
 
       {editMember && (
-  <EditMemberPopup
-    member={editMember}
-    onClose={() => setEditMember(null)}
-    onUpdateMember={(updatedMember) => {
-      // Remplacer le membre dans la table avec le nouvel objet complet
-      setAllMembers(prev =>
-        prev.map(m => (m.id === updatedMember.id ? { ...updatedMember } : m))
-      );
-
-      setEditMember(null);
-      showToast("✅ Contact mis à jour !");
-    }}
-  />
-)}
-
+        <EditMemberPopup
+          member={editMember}
+          onClose={() => setEditMember(null)}
+          onUpdateMember={(updatedMember) => {
+            setAllMembers(prev =>
+              prev.map(m => (m.id === updatedMember.id ? { ...m, ...updatedMember } : m))
+            );
+            setEditMember(null);
+            showToast("✅ Contact mis à jour !");
+          }}
+        />
+      )}
 
       {/* Toast */}
       {showingToast && (

@@ -91,8 +91,9 @@ export default function DetailEvangeliseSuivisPopup({
       <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
         <div
           ref={popupRef}
-          className="bg-white rounded-lg p-6 w-96 relative shadow-xl max-h-[90vh] overflow-y-auto"
+          className="bg-white rounded-lg p-6 w-96 relative shadow-xl"
         >
+
           {/* CLOSE */}
           <button
             onClick={onClose}

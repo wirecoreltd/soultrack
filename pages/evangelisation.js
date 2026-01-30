@@ -335,7 +335,7 @@ export default function Evangelisation() {
                 
                     {/* CARTE UNIQUE – ACTIONS */}
                     <div className="mt-3 bg-gray-50 rounded-xl shadow-md p-4">
-                      <div className="flex flex-col gap-4">
+                      <div className="flex flex-col gap-2">
                         {/* Modifier */}
                         <button
                           onClick={() => {

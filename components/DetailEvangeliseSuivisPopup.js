@@ -304,6 +304,11 @@ export default function DetailEvangeliseSuivisPopup({
           <p>📝 Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
         </div>
 
+       return (
+  <>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+
         {/* ================= CENTRÉ ================= */}
         {!isRefus && (
           <div className="mt-6 flex justify-center">
@@ -315,17 +320,20 @@ export default function DetailEvangeliseSuivisPopup({
             </button>
           </div>
         )}
+
       </div>
     </div>
+
     {editingEvangelise && (
-    <EditEvangelisePopup
-      member={editingEvangelise}
-      onClose={() => setEditingEvangelise(null)}
-      onUpdate={() => {
-        setEditingEvangelise(null);
-        fetchSuivis(user, cellules); // si tu veux rafraîchir
-      }}
-    />
-  )}
-  );
-}
+      <EditEvangelisePopup
+        member={editingEvangelise}
+        onClose={() => setEditingEvangelise(null)}
+        onUpdate={() => {
+          setEditingEvangelise(null);
+          fetchSuivis(user, cellules);
+        }}
+      />
+    )}
+  </>
+);
+

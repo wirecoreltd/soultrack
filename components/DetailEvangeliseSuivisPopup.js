@@ -23,7 +23,7 @@ export default function DetailEvangeliseSuivisPopup({
   const isRefus = member.status_suivis_evangelises === "Refus";
 
   const cellule = cellules?.find(c => c.id === member.cellule_id);
-  const conseiller = conseillers?.find(c => c.id === mmember.conseiller_id);
+  const conseiller = conseillers?.find(c => c.id === member.conseiller_id);
 
   /* ================= CLOSE ON OUTSIDE CLICK ================= */
   useEffect(() => {

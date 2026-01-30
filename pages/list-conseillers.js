@@ -1,150 +1,124 @@
 "use client";
-
-import { useEffect, useState } from "react";
-import React from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import LogoutLink from "../components/LogoutLink";
-import HeaderPages from "../components/HeaderPages";
 
-export default function ListConseillers() {
-  const [conseillers, setConseillers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [prenom, setPrenom] = useState("");
+export default function CreateConseiller() {
   const router = useRouter();
+  const [members, setMembers] = useState([]);
+  const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [formData, setFormData] = useState({
+    prenom: "",
+    nom: "",
+    telephone: "",
+    email: "",
+    password: "",
+  });
+  const [responsableId, setResponsableId] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const fetchConseillers = async () => {
+  // ➤ Récupérer l'utilisateur connecté et son ID (responsable)
+  useEffect(() => {
+    async function fetchUser() {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) return console.error(error);
+      if (!session?.user) return setMessage("❌ Vous devez être connecté");
+      setResponsableId(session.user.id);
+    }
+    fetchUser();
+  }, []);
+
+  // ➤ Récupérer les membres avec star = true
+  useEffect(() => {
+    async function fetchStarMembers() {
+      const { data, error } = await supabase
+        .from("membres_complets")
+        .select("id, prenom, nom, telephone")
+        .eq("star", true);
+      if (error) console.error(error);
+      else setMembers(data);
+    }
+    fetchStarMembers();
+  }, []);
+
+  // ➤ Remplissage automatique des infos
+  useEffect(() => {
+    if (!selectedMemberId) {
+      setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
+      return;
+    }
+    const member = members.find((m) => m.id === selectedMemberId);
+    if (member) {
+      setFormData({ ...formData, prenom: member.prenom, nom: member.nom, telephone: member.telephone });
+    }
+  }, [selectedMemberId]);
+
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedMemberId || !formData.email || !formData.password) {
+      setMessage("❌ Remplissez tous les champs !");
+      return;
+    }
     setLoading(true);
+    setMessage("⏳ Création en cours...");
+
     try {
-      // 1️⃣ Récupérer l'utilisateur pour bienvenue
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error("Utilisateur non connecté");
-
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("prenom, role")
-        .eq("id", user.id)
-        .single();
-      if (profileError || !profileData) throw profileError;
-
-      setPrenom(profileData.prenom || "cher membre");
-
-      // 2️⃣ Récupérer tous les conseillers
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, email, telephone, responsable_id")
-        .eq("role", "Conseiller");
-      if (profilesError) throw profilesError;
-      if (!profiles || profiles.length === 0) {
-        setConseillers([]);
-        setLoading(false);
-        return;
-      }
-
-      const conseillersIds = profiles.map((p) => p.id);
-
-      // 3️⃣ Récupérer membres attribués à chaque conseiller
-      const { data: membres, error: membresError } = await supabase
-        .from("membres_complets") // source de vérité
-        .select("id, conseiller_id")
-        .in("conseiller_id", conseillersIds);
-      if (membresError) throw membresError;
-
-      // 4️⃣ Compter contacts attribués uniques par conseiller
-      const contactSetMap = {};
-      membres?.forEach((m) => {
-        if (!m.conseiller_id) return;
-        if (!contactSetMap[m.conseiller_id]) contactSetMap[m.conseiller_id] = new Set();
-        contactSetMap[m.conseiller_id].add(m.id);
+      const res = await fetch("/api/create-conseiller", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...formData, responsable_id: responsableId }),
       });
 
-      // 5️⃣ Récupérer responsables
-      const responsablesIds = profiles.map((p) => p.responsable_id).filter(Boolean);
-      let responsableMap = {};
-      if (responsablesIds.length > 0) {
-        const { data: responsables } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom")
-          .in("id", responsablesIds);
-        responsables?.forEach((r) => {
-          responsableMap[r.id] = `${r.prenom} ${r.nom}`;
-        });
+      const data = await res.json().catch(() => null);
+
+      if (res.ok) {
+        setMessage("✅ Conseiller créé avec succès !");
+        setSelectedMemberId("");
+        setFormData({ prenom: "", nom: "", telephone: "", email: "", password: "" });
+      } else {
+        setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
       }
-
-      // 6️⃣ Fusionner infos pour affichage
-      const list = profiles.map((p) => ({
-        ...p,
-        responsable_nom: p.responsable_id ? (responsableMap[p.responsable_id] || "Aucun") : "Aucun",
-        totalContacts: contactSetMap[p.id]?.size || 0, // 🔔 Contacts attribués exacts
-      }));
-
-      setConseillers(list);
-
     } catch (err) {
-      console.error("Erreur fetchConseillers :", err);
-      setConseillers([]);
+      setMessage("❌ " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchConseillers();
-  }, []);
-
   return (
-    <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-  
-      <HeaderPages />
+    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
+      <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
+        <button onClick={() => router.back()} className="absolute top-4 left-4 text-gray-700 hover:text-gray-900">← Retour</button>
+        <div className="flex justify-center mb-6"><Image src="/logo.png" alt="Logo" width={80} height={80} /></div>
+        <h1 className="text-3xl font-bold text-center mb-6">Créer un Conseiller</h1>
 
-      <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">📋 Liste des Conseillers</h1>
-        <p className="text-white text-lg max-w-xl mx-auto italic">
-          Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
-        </p>
-      </div>
+        <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
+          <select value={selectedMemberId} onChange={(e) => setSelectedMemberId(e.target.value)} className="input" required>
+            <option value="">-- Choisir un Serviteur --</option>
+            {members.map((m) => (<option key={m.id} value={m.id}>{m.prenom} {m.nom}</option>))}
+          </select>
 
-        {/* Bouton Ajouter un conseiller */}
-<div className="flex mt-6 mb-6 w-full">
-  <button
-    onClick={() => router.push("/create-conseiller")}
-    className="ml-auto text-white font-semibold px-4 py-2 rounded shadow text-sm"
-  >
-    ➕ Ajouter un Conseiller
-  </button>
-</div>
+          <input name="prenom" placeholder="Prénom" value={formData.prenom} readOnly className="input" />
+          <input name="nom" placeholder="Nom" value={formData.nom} readOnly className="input" />
+          <input name="telephone" placeholder="Téléphone" value={formData.telephone} readOnly className="input" />
+          <input name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="input" required />
+          <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
 
-
-
-      {/* Liste cartes */}
-      <div className="w-full max-w-6xl">
-        {loading ? (
-          <p className="text-center text-white">Chargement...</p>
-        ) : conseillers.length === 0 ? (
-          <p className="text-center text-white">Aucun conseiller trouvé.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
-            {conseillers.map((c) => (
-              <div key={c.id} className="bg-white rounded-2xl shadow-lg w-full overflow-hidden transition hover:shadow-2xl">
-                <div className="w-full h-[6px] bg-blue-500 rounded-t-2xl" />
-                <div className="p-4 flex flex-col items-center">
-                  <h2 className="font-bold text-black text-base text-center mb-1">{c.prenom} {c.nom}</h2>
-                  <p className="text-sm text-gray-700 mb-1">📞 {c.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">✉️ {c.email || "—"}</p>
-                  <p className="text-sm text-gray-700 mt-2">👤 Responsable : <span className="font-semibold">{c.responsable_nom}</span></p>
-                  <p className="text-sm text-gray-800 mt-2 font-semibold">🔔 Contacts assignés : {c.totalContacts}</p>
-                  <button
-                    onClick={() => router.push(`/list-members?conseiller_id=${c.id}`)}
-                    className="mt-2 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                  >
-                    Voir les contacts
-                  </button>
-                </div>
-              </div>
-            ))}
+          <div className="flex gap-4 mt-4">
+            <button type="button" onClick={() => router.push("/")} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-3 rounded-2xl">Annuler</button>
+            <button type="submit" disabled={loading} className="flex-1 bg-blue-400 hover:bg-blue-500 text-white py-3 rounded-2xl">{loading ? "Création..." : "Créer"}</button>
           </div>
-        )}
+        </form>
+
+        {message && <p className="mt-4 text-center text-sm text-gray-700">{message}</p>}
+
+        <style jsx>{`
+          .input { width:100%; border:1px solid #ccc; border-radius:12px; padding:12px; color:black; }
+        `}</style>
       </div>
     </div>
   );

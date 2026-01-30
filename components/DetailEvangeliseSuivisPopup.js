@@ -184,7 +184,6 @@ export default function DetailEvangeliseSuivisPopup({
                     </div>
                   )}
 
-
           {/* INFOS */}
           <div className="text-sm text-center mt-3 space-y-1">
             <p>🏠 Cellule : {cellule?.cellule_full || "—"}</p>

@@ -36,10 +36,11 @@ export default function DetailEvangeliseSuivisPopup({
     }
   };
 
-  document.addEventListener("mousedown", handleClickOutside);
+  window.addEventListener("mousedown", handleClickOutside, true); // 👈 capture
   return () =>
-    document.removeEventListener("mousedown", handleClickOutside);
+    window.removeEventListener("mousedown", handleClickOutside, true);
 }, []);
+
 
 
   /* ================= SAVE ================= */
@@ -118,41 +119,25 @@ export default function DetailEvangeliseSuivisPopup({
           
               {openPhoneMenu && (
                 <div className="absolute left-1/2 -translate-x-1/2 mt-2 bg-white border rounded-lg shadow w-56 z-50">
-                  <a
-                    href={`tel:${member.telephone}`}
-                    className="block px-4 py-2 hover:bg-gray-100 text-black"
-                  >
+                  <a href={`tel:${member.telephone}`} className="block px-4 py-2 hover:bg-gray-100">
                     📞 Appeler
                   </a>
-          
-                  <a
-                    href={`sms:${member.telephone}`}
-                    className="block px-4 py-2 hover:bg-gray-100 text-black"
-                  >
+                  <a href={`sms:${member.telephone}`} className="block px-4 py-2 hover:bg-gray-100">
                     ✉️ SMS
                   </a>
-          
                   <a
                     href={`https://wa.me/${member.telephone.replace(/\D/g, "")}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block px-4 py-2 hover:bg-gray-100 text-black"
+                    className="block px-4 py-2 hover:bg-gray-100"
                   >
                     💬 WhatsApp
-                  </a>
-          
-                  <a
-                    href={`https://wa.me/${member.telephone.replace(/\D/g, "")}?text=Bonjour`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block px-4 py-2 hover:bg-gray-100 text-black"
-                  >
-                    📱 Message WhatsApp
                   </a>
                 </div>
               )}
             </div>
           )}
+
 
 
           {/* INFOS */}

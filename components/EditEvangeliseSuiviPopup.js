@@ -180,39 +180,40 @@ export default function EditEvangeliseSuiviPopup({
           </select>
 
           {/* Prière du salut */}
-            <select
-              className="input"
-              value={formData.priere_salut ? "Oui" : "Non"}
-              required
-              onChange={(e) => {
-                const value = e.target.value === "Oui"; // true si "Oui", false si "Non"
-                setFormData({
-                  ...formData,
-                  priere_salut: value,
-                  type_conversion: value ? formData.type_conversion : "",
-                });
-              }}
-            >
-              <option value="">-- Prière du salut ? --</option>
-              <option value="Oui">Oui</option>
-              <option value="Non">Non</option>
-            </select>
-            
-            {/* Type de conversion */}
-            {formData.priere_salut && (
-              <select
-                className="input"
-                value={formData.type_conversion}
-                onChange={(e) =>
-                  setFormData({ ...formData, type_conversion: e.target.value })
-                }
-                required
-              >
-                <option value="">Type</option>
-                <option value="Nouveau converti">Nouveau converti</option>
-                <option value="Réconciliation">Réconciliation</option>
-              </select>
-            )}
+<select
+  className="input select-black"
+  value={formData.priere_salut ? "Oui" : "Non"} // affichage
+  required
+  onChange={(e) => {
+    const value = e.target.value === "Oui"; // ✅ conversion en boolean
+    setFormData({
+      ...formData,
+      priere_salut: value,
+      type_conversion: value ? formData.type_conversion : "", // si Non, reset type
+    });
+  }}
+>
+  <option value="" className="text-white">-- Prière du salut ? --</option>
+  <option value="Oui" className="text-black">Oui</option>
+  <option value="Non" className="text-black">Non</option>
+</select>
+
+{/* Type de conversion */}
+{formData.priere_salut && (
+  <select
+    className="input select-black"
+    value={formData.type_conversion}
+    onChange={(e) =>
+      setFormData({ ...formData, type_conversion: e.target.value })
+    }
+    required
+  >
+    <option value="" className="text-white">Type</option>
+    <option value="Nouveau converti" className="text-black">Nouveau converti</option>
+    <option value="Réconciliation" className="text-black">Réconciliation</option>
+  </select>
+)}
+
 
           {/* Besoins */}
           <div className="flex flex-col">

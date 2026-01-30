@@ -325,7 +325,7 @@ export default function Evangelisation() {
                 </button>
 
                {detailsOpen[member.id] && (                  
-                  <div className="text-sm mt-3 space-y-1">
+                  <div className="text-sm mt-2 space-y-1">
                     <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🎗️ Sexe : {member.sexe || "—"}</p>
                     <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
@@ -334,7 +334,7 @@ export default function Evangelisation() {
                     <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
                 
                     {/* CARTE UNIQUE – ACTIONS */}
-                    <div className="mt-4 bg-gray-50 rounded-xl shadow-md p-4">
+                    <div className="mt-3 bg-gray-50 rounded-xl shadow-md p-4">
                       <div className="flex flex-col gap-4">
                         {/* Modifier */}
                         <button

@@ -610,6 +610,8 @@ export default function SuivisEvangelisation() {
    {view === "table" && detailsTable && (
     <DetailEvangeliseSuivisPopup
       member={detailsTable}
+      cellules={cellules}
+      conseillers={conseillers}
       onClose={() => setDetailsTable(null)}
       onUpdate={(id, updates) => {
         // 🔹 Met à jour localement la liste

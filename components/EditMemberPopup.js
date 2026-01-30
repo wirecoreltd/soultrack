@@ -142,80 +142,80 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   // -------------------- SUBMIT --------------------
   const handleSubmit = async () => {
-    setMessage("");
-    if (!formData.prenom.trim()) return setMessage("❌ Le prénom est obligatoire.");
-    if (!formData.nom.trim()) return setMessage("❌ Le nom est obligatoire.");
+  setMessage("");
+  if (!formData.prenom.trim()) return setMessage("❌ Le prénom est obligatoire.");
+  if (!formData.nom.trim()) return setMessage("❌ Le nom est obligatoire.");
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      let finalBesoin = [...formData.besoin];
-      if (showAutre && formData.autreBesoin.trim()) {
-        finalBesoin = finalBesoin.filter(b => b !== "Autre");
-        finalBesoin.push(formData.autreBesoin.trim());
-      } else {
-        finalBesoin = finalBesoin.filter(b => b !== "Autre");
-      }
-      let finalMinistere = [...formData.Ministere];
-
-if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
-  finalMinistere = finalMinistere.filter(m => m !== "Autre");
-  finalMinistere.push(autreMinistere.trim());
-}
-
-
-      const payload = {
-        prenom: formData.prenom,
-        nom: formData.nom,
-        telephone: formData.telephone || null,
-        ville: formData.ville || null,
-        sexe: formData.sexe || null,
-        star: !!formData.star,
-        etat_contact: formData.etat_contact || "Nouveau",
-        bapteme_eau: formData.bapteme_eau,
-        bapteme_esprit: formData.bapteme_esprit,
-        priere_salut: formData.priere_salut || null,
-        type_conversion: formData.type_conversion || null,
-        cellule_id: formData.cellule_id || null,
-        conseiller_id: formData.conseiller_id || null,
-        besoin: JSON.stringify(finalBesoin),
-        venu: formData.venu || null,
-        infos_supplementaires: formData.infos_supplementaires || null,
-        statut_initial: formData.statut_initial || null,
-        suivi_statut: formData.suivi_statut || null,
-        commentaire_suivis: formData.commentaire_suivis || null,
-        is_whatsapp: !!formData.is_whatsapp,
-        Formation: formData.Formation || null,        
-        Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
-        Soin_Pastoral: formData.Soin_Pastoral || null,        
-        Ministere: formData.star? JSON.stringify(finalMinistere): null,
-      };
-
-      const { error } = await supabase
-        .from("membres_complets")
-        .update(payload)
-        .eq("id", member.id);
-
-      if (error) throw error;
-
-      // Après update Supabase
-      const { data } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("id", member.id)
-        .single();      
-     
-      onUpdateMember(data);  
-      onClose();
-
-      
-    } catch (err) {
-      console.error(err);
-      setMessage("❌ Une erreur est survenue lors de l’enregistrement.");
-    } finally {
-      setLoading(false);
+  try {
+    // Préparer les besoins et ministère
+    let finalBesoin = [...formData.besoin];
+    if (showAutre && formData.autreBesoin.trim()) {
+      finalBesoin = finalBesoin.filter(b => b !== "Autre");
+      finalBesoin.push(formData.autreBesoin.trim());
+    } else {
+      finalBesoin = finalBesoin.filter(b => b !== "Autre");
     }
-  };
+
+    let finalMinistere = [...formData.Ministere];
+    if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
+      finalMinistere = finalMinistere.filter(m => m !== "Autre");
+      finalMinistere.push(autreMinistere.trim());
+    }
+
+    const payload = {
+      prenom: formData.prenom,
+      nom: formData.nom,
+      telephone: formData.telephone || null,
+      ville: formData.ville || null,
+      sexe: formData.sexe || null,
+      star: !!formData.star,
+      etat_contact: formData.etat_contact || "Nouveau",
+      bapteme_eau: formData.bapteme_eau,
+      bapteme_esprit: formData.bapteme_esprit,
+      priere_salut: formData.priere_salut || null,
+      type_conversion: formData.type_conversion || null,
+      cellule_id: formData.cellule_id || null,
+      conseiller_id: formData.conseiller_id || null,
+      besoin: JSON.stringify(finalBesoin),
+      venu: formData.venu || null,
+      infos_supplementaires: formData.infos_supplementaires || null,
+      statut_initial: formData.statut_initial || null,
+      suivi_statut: formData.suivi_statut || null,
+      commentaire_suivis: formData.commentaire_suivis || null,
+      is_whatsapp: !!formData.is_whatsapp,
+      Formation: formData.Formation || null,
+      Soin_Pastoral: formData.Soin_Pastoral || null,
+      Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
+      Ministere: formData.star ? JSON.stringify(finalMinistere) : null,
+    };
+
+    // Enregistrer dans Supabase
+    const { error } = await supabase
+      .from("membres_complets")
+      .update(payload)
+      .eq("id", member.id);
+
+    if (error) throw error;
+
+    // On renvoie directement l'objet mis à jour pour le parent
+    const updatedMember = {
+      ...member,
+      ...payload
+    };
+
+    onUpdateMember(updatedMember); // <-- mise à jour instantanée
+    onClose();
+    
+  } catch (err) {
+    console.error(err);
+    setMessage("❌ Une erreur est survenue lors de l’enregistrement.");
+  } finally {
+    setLoading(false);
+  }
+};
+
   // -------------------- UI --------------------
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4">

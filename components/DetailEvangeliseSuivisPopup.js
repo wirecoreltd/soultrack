@@ -222,7 +222,16 @@ export default function DetailEvangeliseSuivisPopup({
         <EditEvangeliseSuiviPopup
           member={editingEvangelise}
           onClose={() => setEditingEvangelise(null)}
-          onUpdate={() => setEditingEvangelise(null)}
+          onUpdateMember={(updates) => {
+            // 🔹 Mettre à jour le détail local du parent
+            if (onUpdate) onUpdate(member.id, updates);
+      
+            // 🔹 Fermer le sous-popup
+            setEditingEvangelise(null);
+      
+            // 🔹 Fermer le popup principal
+            onClose();
+          }}
         />
       )}
     </>

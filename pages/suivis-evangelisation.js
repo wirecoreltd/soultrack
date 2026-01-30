@@ -628,19 +628,24 @@ export default function SuivisEvangelisation() {
       )}
 
    {view === "table" && detailsTable && (
-      <DetailEvangeliseSuivisPopup
-        member={detailsTable}
-        onClose={() => setDetailsTable(null)}
-        onEdit={(s) => {
-          setDetailsTable(null);
-          s.evangelises?.id && setEditingContact(s.evangelises);
-        }}
-        onUpdate={(id, updates) => {
-          updateSuiviLocal(id, updates);
-          setDetailsTable(null);
-        }}
-      />
-    )}
+    <DetailEvangeliseSuivisPopup
+      member={detailsTable}
+      onClose={() => setDetailsTable(null)}
+      onUpdate={(id, updates) => {
+        // 🔹 Met à jour localement la liste
+        updateSuiviLocal(id, updates);
+  
+        // 🔹 Ferme le popup principal
+        setDetailsTable(null);
+      }}
+      // 🔹 sous-popup éditer
+      onEdit={(member) => {
+        // 🔹 ouvre le sous-popup
+        setEditingContact(member);
+      }}
+    />
+  )}
+
 
     {editingContact && (
       <EditEvangeliseSuiviPopup

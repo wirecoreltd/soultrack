@@ -306,16 +306,16 @@ export default function Evangelisation() {
             {contacts.map((member) => (
               <div key={member.id} className="bg-white rounded-2xl shadow-xl p-4 border-l-4 relative" style={{ borderLeftColor: getBorderColor(member) }}>
                 <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
-                <p className="text-center text-sm text-orange-500 underline cursor-pointer" onClick={() => setOpenPhoneMenuId(member.id)}>{member.telephone || "—"}</p>
+                <p className="text-center text-sm text-orange-500 font-semibold underline cursor-pointer" onClick={() => setOpenPhoneMenuId(member.id)}>{member.telephone || "—"}</p>
                 {openPhoneMenuId === member.id && (
-                  <div ref={phoneMenuRef} className="phone-menu absolute mt-2 bg-white font-semibold rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2" onClick={(e) => e.stopPropagation()}>
+                  <div ref={phoneMenuRef} className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2" onClick={(e) => e.stopPropagation()}>
                     <a href={member.telephone ? `tel:${member.telephone}` : "#"} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
                     <a href={member.telephone ? `sms:${member.telephone}` : "#"} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
                     <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}?call` : "#"} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Appel WhatsApp</a>
                     <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}` : "#"} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 Message WhatsApp</a>
                   </div>
                 )}
-                <p className="text-center text-sm">🏙️ Ville : {member.ville || "—"}</p>
+                <p className="text-center mt-3 text-sm">🏙️ Ville : {member.ville || "—"}</p>
                 <label className="flex justify-center gap-2 mt-4">
                   <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} /> Sélectionner
                 </label>

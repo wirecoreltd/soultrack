@@ -198,14 +198,16 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
 
       if (error) throw error;
 
+      // Après update Supabase
       const { data } = await supabase
         .from("membres_complets")
         .select("*")
         .eq("id", member.id)
-        .single();
-
-      onUpdateMember(data);
+        .single();      
+     
+      onUpdateMember(data);  
       onClose();
+
       
     } catch (err) {
       console.error(err);

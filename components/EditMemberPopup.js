@@ -122,7 +122,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   }
 };
 
-
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
     if (value === "Autre") {
@@ -149,7 +148,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   setLoading(true);
 
   try {
-    // Préparer les besoins et ministère
     let finalBesoin = [...formData.besoin];
     if (showAutre && formData.autreBesoin.trim()) {
       finalBesoin = finalBesoin.filter(b => b !== "Autre");
@@ -191,7 +189,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       Ministere: formData.star ? JSON.stringify(finalMinistere) : null,
     };
 
-    // Enregistrer dans Supabase
+    // 1️⃣ Update
     const { error } = await supabase
       .from("membres_complets")
       .update(payload)
@@ -199,15 +197,19 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
     if (error) throw error;
 
-    // On renvoie directement l'objet mis à jour pour le parent
-    const updatedMember = {
-      ...member,
-      ...payload
-    };
+    // 2️⃣ Récupérer le membre exact depuis Supabase
+    const { data: updatedMember, error: selectError } = await supabase
+      .from("membres_complets")
+      .select("*")
+      .eq("id", member.id)
+      .single();
 
-    onUpdateMember(updatedMember); // <-- mise à jour instantanée
+    if (selectError) throw selectError;
+
+    // 3️⃣ Passer au parent → mise à jour instantanée de la table
+    onUpdateMember(updatedMember);
     onClose();
-    
+
   } catch (err) {
     console.error(err);
     setMessage("❌ Une erreur est survenue lors de l’enregistrement.");
@@ -215,6 +217,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     setLoading(false);
   }
 };
+
 
   // -------------------- UI --------------------
   return (

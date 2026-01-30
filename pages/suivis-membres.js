@@ -270,7 +270,7 @@ return (
 
       {/* Title */}
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">📋 Suivis des Membres</h1>
+        <h1 className="text-3xl font-bold text-white mb-2">Suivis des Membres</h1>
         <p className="text-white text-lg max-w-xl mx-auto italic">Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️</p>
       </div>
 

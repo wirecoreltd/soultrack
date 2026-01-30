@@ -172,10 +172,10 @@ export default function DetailsSuivisPopup({
           </div>
 
           {/* Modifier le contact */}
-          <div className="mt-4 flex justify-center w-full">
+          <div className="mt-4 rounded-xl w-full shadow-md p-4 bg-white">
             <button
               onClick={() => setEditMember(m)}
-              className="text-blue-600 text-sm w-full"
+              className="w-full py-2 rounded-md bg-white text-orange-500 shadow-md"
             >
               ✏️ Modifier le contact
             </button>

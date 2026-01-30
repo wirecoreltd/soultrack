@@ -239,7 +239,7 @@ export default function Evangelisation() {
 
   /* ================= UI ================= */
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-r from-blue-800 to-cyan-400">
+    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
       <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
 

@@ -3,55 +3,40 @@
 import { useEffect, useState } from "react";
 import React from "react";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import LogoutLink from "../components/LogoutLink";
 import HeaderPages from "../components/HeaderPages";
 
 export default function ListConseillers() {
   const [conseillers, setConseillers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [prenom, setPrenom] = useState("");
+  const [search, setSearch] = useState("");
   const router = useRouter();
 
   const fetchConseillers = async () => {
     setLoading(true);
     try {
-      // 1️⃣ Récupérer l'utilisateur pour bienvenue
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error("Utilisateur non connecté");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Utilisateur non connecté");
 
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profiles } = await supabase
         .from("profiles")
-        .select("prenom, role")
-        .eq("id", user.id)
-        .single();
-      if (profileError || !profileData) throw profileError;
-
-      setPrenom(profileData.prenom || "cher membre");
-
-      // 2️⃣ Récupérer tous les conseillers
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, email, telephone, responsable_id")
+        .select("id, prenom, nom, email, telephone, role, responsable_id")
         .eq("role", "Conseiller");
-      if (profilesError) throw profilesError;
-      if (!profiles || profiles.length === 0) {
+
+      if (!profiles) {
         setConseillers([]);
         setLoading(false);
         return;
       }
 
+      // Compter contacts
       const conseillersIds = profiles.map((p) => p.id);
-
-      // 3️⃣ Récupérer membres attribués à chaque conseiller
-      const { data: membres, error: membresError } = await supabase
-        .from("membres_complets") // source de vérité
+      const { data: membres } = await supabase
+        .from("membres_complets")
         .select("id, conseiller_id")
         .in("conseiller_id", conseillersIds);
-      if (membresError) throw membresError;
 
-      // 4️⃣ Compter contacts attribués uniques par conseiller
       const contactSetMap = {};
       membres?.forEach((m) => {
         if (!m.conseiller_id) return;
@@ -59,7 +44,6 @@ export default function ListConseillers() {
         contactSetMap[m.conseiller_id].add(m.id);
       });
 
-      // 5️⃣ Récupérer responsables
       const responsablesIds = profiles.map((p) => p.responsable_id).filter(Boolean);
       let responsableMap = {};
       if (responsablesIds.length > 0) {
@@ -72,15 +56,13 @@ export default function ListConseillers() {
         });
       }
 
-      // 6️⃣ Fusionner infos pour affichage
       const list = profiles.map((p) => ({
         ...p,
         responsable_nom: p.responsable_id ? (responsableMap[p.responsable_id] || "Aucun") : "Aucun",
-        totalContacts: contactSetMap[p.id]?.size || 0, // 🔔 Contacts attribués exacts
+        totalContacts: contactSetMap[p.id]?.size || 0,
       }));
 
       setConseillers(list);
-
     } catch (err) {
       console.error("Erreur fetchConseillers :", err);
       setConseillers([]);
@@ -93,9 +75,15 @@ export default function ListConseillers() {
     fetchConseillers();
   }, []);
 
+  // 🔹 Filtrer les conseillers selon la recherche
+  const filteredConseillers = conseillers.filter(
+    (c) =>
+      c.prenom.toLowerCase().includes(search.toLowerCase()) ||
+      c.nom.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-  
       <HeaderPages />
 
       <div className="text-center mb-6">
@@ -105,26 +93,36 @@ export default function ListConseillers() {
         </p>
       </div>
 
-        {/* Bouton Ajouter un conseiller */}
-          <div className="flex mt-6">
-            <button
-              onClick={() => router.push("/create-conseiller")}
-              className="ml-auto text-white font-semibold px-4 py-2 rounded shadow text-sm"
-            >
-              ➕ Ajouter un Conseiller
-            </button>
-          </div>
+      {/* Barre de recherche */}
+      <div className="w-full max-w-4xl flex justify-center mb-4">
+        <input
+          type="text"
+          placeholder="Recherche..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-2/3 px-3 py-2 rounded-md border text-black"
+        />
+      </div>
 
+      {/* Bouton Ajouter un conseiller */}
+      <div className="flex w-full mb-6">
+        <button
+          onClick={() => router.push("/create-conseiller")}
+          className="ml-auto text-white font-semibold px-4 py-2 rounded shadow text-sm"
+        >
+          ➕ Ajouter un Conseiller
+        </button>
+      </div>
 
       {/* Liste cartes */}
       <div className="w-full max-w-6xl">
         {loading ? (
           <p className="text-center text-white">Chargement...</p>
-        ) : conseillers.length === 0 ? (
+        ) : filteredConseillers.length === 0 ? (
           <p className="text-center text-white">Aucun conseiller trouvé.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
-            {conseillers.map((c) => (
+            {filteredConseillers.map((c) => (
               <div key={c.id} className="bg-white rounded-2xl shadow-lg w-full overflow-hidden transition hover:shadow-2xl">
                 <div className="w-full h-[6px] bg-blue-500 rounded-t-2xl" />
                 <div className="p-4 flex flex-col items-center">

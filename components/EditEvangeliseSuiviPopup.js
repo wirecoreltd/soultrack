@@ -180,39 +180,39 @@ export default function EditEvangeliseSuiviPopup({
           </select>
 
           {/* Prière du salut */}
-<select
-  className="input"
-  value={formData.priere_salut ? "Oui" : "Non"}
-  required
-  onChange={(e) => {
-    const value = e.target.value;
-    setFormData({
-      ...formData,
-      priere_salut: value === "Oui", // <-- ici on convertit en boolean
-      type_conversion: value === "Oui" ? formData.type_conversion : "",
-    });
-  }}
->
-  <option value="">-- Prière du salut ? --</option>
-  <option value="Oui">Oui</option>
-  <option value="Non">Non</option>
-</select>
-
-{/* Type de conversion */}
-{formData.priere_salut && (
-  <select
-    className="input"
-    value={formData.type_conversion || ""}
-    onChange={(e) =>
-      setFormData({ ...formData, type_conversion: e.target.value })
-    }
-    required
-  >
-    <option value="">Type</option>
-    <option value="Nouveau converti">Nouveau converti</option>
-    <option value="Réconciliation">Réconciliation</option>
-  </select>
-)}
+            <select
+              className="input"
+              value={formData.priere_salut ? "Oui" : "Non"}
+              required
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData({
+                  ...formData,
+                  priere_salut: value === "Oui", // conversion en boolean pour Supabase
+                  type_conversion: value === "Oui" ? formData.type_conversion : "",
+                });
+              }}
+            >
+              <option value="" className="text-black">-- Prière du salut ? --</option>
+              <option value="Oui" className="text-black">Oui</option>
+              <option value="Non" className="text-black">Non</option>
+            </select>
+            
+            {/* Type de conversion */}
+            {formData.priere_salut && (
+              <select
+                className="input"
+                value={formData.type_conversion || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, type_conversion: e.target.value })
+                }
+                required
+              >
+                <option value="" className="text-black">Type</option>
+                <option value="Nouveau converti" className="text-black">Nouveau converti</option>
+                <option value="Réconciliation" className="text-black">Réconciliation</option>
+              </select>
+            )}
 
           {/* Besoins */}
           <div className="flex flex-col">

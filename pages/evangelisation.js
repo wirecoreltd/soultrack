@@ -316,7 +316,7 @@ export default function Evangelisation() {
                   </div>
                 )}
                 <p className="text-center text-sm">🏙️ Ville : {member.ville || "—"}</p>
-                <label className="flex justify-center gap-2 mt-2">
+                <label className="flex justify-center gap-2 mt-4">
                   <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} /> Sélectionner
                 </label>
                   <p className="text-[11px] text-gray-400 text-right mt-3">Créé le {formatDateFr(member.created_at)} </p>

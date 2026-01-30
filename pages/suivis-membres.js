@@ -249,10 +249,10 @@ return (
         <p>☀️ Type de conversion : {m.type_conversion || ""}</p>
 
         {!showRefus && (
-          <div className="mt-4 rounded-xl shadow-md p-4">
+          <div className="mt-4 rounded-xl w-full shadow-md p-4 bg-white">
             <button
               onClick={() => setEditMember(m)}
-              className="w-full py-2 rounded-lg bg-white text-orange-500 font-semibold shadow-sm"
+              className="w-full py-2 rounded-md bg-white text-orange-500 shadow-md"
             >
               ✏️ Modifier le contact
             </button>

@@ -205,10 +205,10 @@ export default function DetailEvangeliseSuivisPopup({
           </div>
 
           {!isRefus && (
-            <div className="mt-5 flex justify-center">
+            <div className="mt-4 rounded-xl w-full p-4 bg-white">
               <button
                 onClick={() => setEditingEvangelise(member)}
-                className="text-green-600 font-semibold hover:underline"
+                className="w-full py-2 rounded-md bg-white text-orange-500 shadow-md"
               >
                 ✏️ Modifier évangélisation
               </button>

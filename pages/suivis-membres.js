@@ -233,202 +233,161 @@ export default function SuivisMembres() {
     };  
 
     return (
-      <div className="text-black text-sm space-y-2 w-full">
-        <p>📅 {m.sexe === "Femme" ? "Arrivée" : "Arrivé"} le : {formatDateFr(m.created_at)}</p> 
-        <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-        <p>🎗️ Sexe : {m.sexe || ""}</p>
-        <p>💧 Baptême d'Eau : {m.bapteme_eau || ""}</p>
-        <p>🔥 Baptême de Feu : {m.bapteme_esprit || ""}</p>        
-        <p>✒️ Formation : {m.Formation || "—"}</p>  
-        <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>      
-        <p>❓ Besoin : {formatArrayField(m.besoin)}</p>
-        <p>📝 Infos : {m.infos_supplementaires || ""}</p>
-        <p>🧩 Comment est-il venu : {m.venu || ""}</p>
-        <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? ""}</p>
-        <p>🙏 Prière du salut : {m.priere_salut || ""}</p>
-        <p>☀️ Type de conversion : {m.type_conversion || ""}</p>
-
-        {!showRefus && (
-          <div className="mt-4 bg-gray-50 rounded-xl shadow-md p-4">
-            <button
-              onClick={() => setEditMember(m)}
-              className="w-full py-2 rounded-lg bg-white text-orange-500 font-semibold shadow-sm hover:shadow-md transition-all"
-            >
-              ✏️ Modifier le contact
-            </button>
+      <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+    
+        {/* Header avec logo et infos */}
+        <HeaderPages />
+    
+        {/* Title */}
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold text-white mb-2">📋 Suivis des Membres</h1>
+          <p className="text-white text-lg max-w-xl mx-auto italic">Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️</p>
+        </div>
+    
+        {/* View & Filter Buttons */}
+        <div className="mb-4 flex justify-between w-full max-w-6xl">
+          <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline hover:text-black-200">{view === "card" ? "Vue Table" : "Vue Carte"}</button>
+          <button onClick={() => setShowRefus(prev => !prev)} className="text-orange-400 text-sm underline hover:text-orange-500">{showRefus ? "Voir tous les suivis" : "Voir les refus"}</button>
+        </div>
+    
+        {message && <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{message.text}</div>}
+    
+        {/* Cards View */}
+        {view === "card" && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
+            {uniqueMembers.map((m) => (
+              <div
+                key={m.id}
+                className="bg-white rounded-2xl shadow-md w-full transition-all duration-300 p-4 border-l-4"
+                style={{ borderLeftColor: getBorderColor(m) }}
+              >
+                <div className="flex flex-col items-center">
+    
+                  {/* Nom */}
+                  <h2 className="font-bold text-black text-base text-center mb-1">
+                    {m.prenom} {m.nom}
+                  </h2>
+    
+                  {/* Phone menu */}
+                  <p
+                    className="text-orange-500 underline font-semibold mb-1 cursor-pointer"
+                    onClick={() => setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id)}
+                  >
+                    {m.telephone || "—"}
+                  </p>
+    
+                  {openPhoneMenuId === m.id && (
+                    <div
+                      ref={phoneMenuRef}
+                      className="absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <a href={m.telephone ? `tel:${m.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}>📞 Appeler</a>
+                      <a href={m.telephone ? `sms:${m.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}>✉️ SMS</a>
+                      <a href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}?call` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}>📱 Appel WhatsApp</a>
+                      <a href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}>💬 Message WhatsApp</a>
+                    </div>
+                  )}
+    
+                  {/* Infos principales */}
+                  <p className="text-sm text-black mb-1">🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}</p>
+                  <p className="text-sm text-black mb-1">👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
+                  <p className="self-end text-[11px] text-gray-400 mt-3">Créé le {formatDateFr(m.date_premiere_visite)}</p>
+    
+                  {/* Commentaire & Statut */}
+                  <div className="flex flex-col w-full mt-2">
+                    <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Commentaire Suivis</label>
+    
+                    {showRefus ? (
+                      <textarea
+                        value={m.commentaire_suivis ?? ""}
+                        readOnly
+                        className="w-full border rounded-lg p-2 bg-gray-100 text-gray-600 cursor-not-allowed"
+                        rows={2}
+                      />
+                    ) : (
+                      <textarea
+                        value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
+                        onChange={(e) => handleCommentChange(m.id, e.target.value)}
+                        className="w-full border rounded-lg p-2"
+                        rows={2}
+                      />
+                    )}
+    
+                    <label className="font-semibold mb-1 text-center mt-2">Statut Intégration</label>
+    
+                    {showRefus ? (
+                      <select
+                        value="4"
+                        disabled
+                        className="w-full border rounded-lg p-2 text-red-600 bg-gray-100 cursor-not-allowed"
+                      >
+                        <option value="4">Refus</option>
+                      </select>
+                    ) : (
+                      <select
+                        value={statusChanges[m.id] ?? String(m.statut_suivis ?? "")}
+                        onChange={(e) => setStatusChanges(prev => ({ ...prev, [m.id]: e.target.value }))}
+                        className="w-full border rounded-lg p-2 mb-2"
+                      >
+                        <option value="">-- Sélectionner un statut --</option>
+                        <option value="2">En Attente</option>
+                        <option value="3">Intégrer</option>
+                        <option value="4">Refus</option>
+                      </select>
+                    )}
+    
+                    {showRefus ? (
+                      <button
+                        onClick={() => reactivateMember(m.id)}
+                        disabled={updating[m.id]}
+                        className={`mt-2 py-1 rounded w-full transition ${updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600 text-white"}`}
+                      >
+                        {updating[m.id] ? "Réactivation..." : "Réactiver"}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => updateSuivi(m.id)}
+                        disabled={updating[m.id]}
+                        className={`mt-2 py-1 rounded w-full transition ${updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 text-white"}`}
+                      >
+                        {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
+                      </button>
+                    )}
+                  </div>
+    
+                  {/* Bouton Modifier */}
+                  {!showRefus && (
+                    <div className="mt-4 w-full bg-gray-50 rounded-xl shadow-md p-4">
+                      <button
+                        onClick={() => setEditMember(m)}
+                        className="w-full py-2 rounded-lg bg-white text-orange-500 font-semibold shadow-sm hover:shadow-md transition-all"
+                      >
+                        ✏️ Modifier le contact
+                      </button>
+                    </div>
+                  )}
+    
+                  {/* Bouton Détails */}
+                  <button
+                    onClick={() => toggleDetails(m.id)}
+                    className="text-orange-500 underline text-sm mt-2"
+                  >
+                    {detailsOpen === m.id ? "Fermer détails" : "Détails"}
+                  </button>
+                </div>
+    
+                {/* Contenu Détails */}
+                <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === m.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
+                  {detailsOpen === m.id && <div className="pt-2"><DetailsPopup m={m} /></div>}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
     );
-  };
 
-  return (
-    <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-
-      {/* Header avec logo et infos */}
-      <HeaderPages />
-
-      {/* Title */}
-      <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">📋 Suivis des Membres</h1>
-        <p className="text-white text-lg max-w-xl mx-auto italic">Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️</p>
-      </div>
-
-      {/* View & Filter Buttons */}
-      <div className="mb-4 flex justify-between w-full max-w-6xl">
-        <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline hover:text-black-200">{view === "card" ? "Vue Table" : "Vue Carte"}</button>
-        <button onClick={() => setShowRefus(prev => !prev)} className="text-orange-400 text-sm underline hover:text-orange-500">{showRefus ? "Voir tous les suivis" : "Voir les refus"}</button>
-      </div>
-
-      {message && <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{message.text}</div>}
-
-      {/* Cards View */}
-{view === "card" && (
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-    {uniqueMembers.map((m) => (
-      <div
-        key={m.id}
-        className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
-        style={{ borderLeftColor: getBorderColor(m) }}
-      >
-        <div className="flex flex-col items-center">
-          <h2 className="font-bold text-black text-base text-center mb-1">
-            {m.prenom} {m.nom}
-          </h2>
-
-          {/* Phone menu */}
-          <p
-            className="text-orange-500 underline font-semibold mb-1 cursor-pointer"
-            onClick={() => setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id)}
-          >
-            {m.telephone || "—"}
-          </p>
-
-          {openPhoneMenuId === m.id && (
-            <div
-              ref={phoneMenuRef}
-              className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <a
-                href={m.telephone ? `tel:${m.telephone}` : "#"}
-                className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
-              >
-                📞 Appeler
-              </a>
-              <a
-                href={m.telephone ? `sms:${m.telephone}` : "#"}
-                className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
-              >
-                ✉️ SMS
-              </a>
-              <a
-                href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}?call` : "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
-              >
-                📱 Appel WhatsApp
-              </a>
-              <a
-                href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}` : "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
-              >
-                💬 Message WhatsApp
-              </a>
-            </div>
-          )}
-
-          <p className="text-sm text-black-700 mb-1">
-            🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}
-          </p>
-          <p className="text-sm text-black-700 mb-1">
-            👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}
-          </p>
-            
-          <p className="self-end text-[11px] text-gray-400 mt-3">Créé le {formatDateFr(m.date_premiere_visite)}</p>
-
-          {/* Commentaire & Statut */}
-          <div className="flex flex-col w-full mt-2">
-            <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Commentaire Suivis</label>
-
-            {showRefus ? (
-              <textarea
-                value={m.commentaire_suivis ?? ""}
-                readOnly
-                className="w-full border rounded-lg p-2 bg-gray-100 text-gray-600 cursor-not-allowed"
-                rows={2}
-              />
-            ) : (
-              <textarea
-                value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
-                onChange={(e) => handleCommentChange(m.id, e.target.value)}
-                className="w-full border rounded-lg p-2"
-                rows={2}
-              />
-            )}
-
-            <label className="font-semibold mb-1 text-center mt-2">Statut Intégration</label>
-
-            {showRefus ? (
-              <select
-                value="4"
-                disabled
-                className="w-full border rounded-lg p-2 text-red-600 bg-gray-100 cursor-not-allowed"
-              >
-                <option value="4">Refus</option>
-              </select>
-            ) : (
-              <select
-                value={statusChanges[m.id] ?? String(m.statut_suivis ?? "")}
-                onChange={(e) => setStatusChanges(prev => ({ ...prev, [m.id]: e.target.value }))}
-                className="w-full border rounded-lg p-2 mb-2"
-              >
-                <option value="">-- Sélectionner un statut --</option>
-                <option value="2">En Attente</option>
-                <option value="3">Intégrer</option>
-                <option value="4">Refus</option>
-              </select>
-            )}
-
-            {showRefus ? (
-              <button
-                onClick={() => reactivateMember(m.id)}
-                disabled={updating[m.id]}
-                className={`mt-2 py-1 rounded w-full transition ${updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600 text-white"}`}
-              >
-                {updating[m.id] ? "Réactivation..." : "Réactiver"}
-              </button>
-            ) : (
-              <button
-                onClick={() => updateSuivi(m.id)}
-                disabled={updating[m.id]}
-                className={`mt-2 py-1 rounded w-full transition ${updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 text-white"}`}
-              >
-                {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
-              </button>
-            )}
-          </div>       
-            
-          {/* Bouton Détails */}
-          <button
-            onClick={() => toggleDetails(m.id)}
-            className="text-orange-500 underline text-sm mt-2"
-          >
-            {detailsOpen === m.id ? "Fermer détails" : "Détails"}
-          </button>
-        </div>
-
-        {/* Contenu Détails */}
-        <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === m.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
-          {detailsOpen === m.id && <div className="pt-2"><DetailsPopup m={m} /></div>}
-        </div>
-      </div>
-    ))}
-  </div>
-)}
 
 
       {/* Table View */}

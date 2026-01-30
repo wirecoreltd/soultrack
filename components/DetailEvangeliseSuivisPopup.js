@@ -3,7 +3,7 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
-import EditEvangelisePopup from "./EditEvangelisePopup";
+import EditEvangeliseSuiviPopup from "./EditEvangeliseSuiviPopup";
 
 export default function DetailEvangeliseSuivisPopup({
   member,
@@ -212,7 +212,7 @@ export default function DetailEvangeliseSuivisPopup({
       </div>
 
       {editingEvangelise && (
-        <EditEvangelisePopup
+        <EditEvangeliseSuiviPopup
           member={editingEvangelise}
           onClose={() => setEditingEvangelise(null)}
           onUpdate={() => setEditingEvangelise(null)}

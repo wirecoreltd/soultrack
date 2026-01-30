@@ -612,7 +612,10 @@ export default function SuivisEvangelisation() {
       member={detailsTable}
       cellules={cellules}
       conseillers={conseillers}
-      onClose={() => setDetailsTable(null)}
+       onClose={() => {
+      setEditingContact(null);      // ferme Edit
+      setDetailsTable(null);        // ferme Details aussi
+    }}
       onUpdate={(id, updates) => {
         // 🔹 Met à jour localement la liste
         updateSuiviLocal(id, updates);

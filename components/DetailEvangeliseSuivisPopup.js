@@ -22,38 +22,20 @@ export default function DetailEvangeliseSuivisPopup({
 
   const isRefus = member.status_suivis_evangelises === "Refus";
 
-  const cellule = cellules?.find(c => c.id === member.cellule_id);
-  const conseiller = conseillers?.find(c => c.id === member.conseiller_id);
+  const cellule = cellules?.find((c) => c.id === member.cellule_id);
+  const conseiller = conseillers?.find((c) => c.id === member.conseiller_id);
 
-  const phoneMenuRef = useRef(null);
-  const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
-
-
-  /* ================= CLOSE ON OUTSIDE CLICK ================= */
+  /* ================= CLOSE PHONE MENU ON OUTSIDE CLICK ================= */
   useEffect(() => {
-  const handleClickOutside = (e) => {
-    if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
-      setOpenPhoneMenu(false);
-    }
-  };
+    const handleClickOutside = (e) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+        setOpenPhoneMenu(false);
+      }
+    };
 
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => document.removeEventListener("mousedown", handleClickOutside);
-}, []);
-
-
-  /* ================= PHONE MENU ================= */
-  useEffect(() => {
-  const handleClickOutside = (e) => {
-    if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
-      setOpenPhoneMenu(false);
-    }
-  };
-
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => document.removeEventListener("mousedown", handleClickOutside);
-}, []);
-
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   /* ================= SAVE ================= */
   const handleSave = async () => {
@@ -120,76 +102,62 @@ export default function DetailEvangeliseSuivisPopup({
           </h2>
 
           {/* PHONE */}
-          <p
-            onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
-            className="text-center text-orange-500 font-semibold underline cursor-pointer"
-          >
-            {member.telephone || "—"}
-          </p>
-
-          {openPhoneMenu && (
-            <div
-              ref={phoneMenuRef}
-              onMouseDown={(e) => e.stopPropagation()}
-              className="absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
-            >
-              <a
-                href={member.telephone ? `tel:${member.telephone}` : "#"}
-                className="block px-4 py-2 hover:bg-gray-100"
+          {member.telephone && (
+            <div className="relative text-center" ref={phoneMenuRef}>
+              <button
+                onClick={() => setOpenPhoneMenu((prev) => !prev)}
+                className="text-orange-500 font-semibold underline"
               >
-                {/* 📞 Téléphone */}
-                  {member.telephone && (
-                    <div className="relative mt-1 text-center" ref={phoneMenuRef}>
-                      <button
-                        onClick={() => setOpenPhoneMenu((prev) => !prev)}
-                        className="text-orange-500 font-semibold underline"
-                      >
-                        {member.telephone}
-                      </button>
-                  
-                      {openPhoneMenu && (
-                        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white border rounded-lg shadow w-56 z-50">
-                          <a
-                            href={`tel:${member.telephone}`}
-                            className="block px-4 py-2 hover:bg-gray-100 text-black"
-                          >
-                            📞 Appeler
-                          </a>
-                  
-                          <a
-                            href={`sms:${member.telephone}`}
-                            className="block px-4 py-2 hover:bg-gray-100 text-black"
-                          >
-                            ✉️ SMS
-                          </a>
-                  
-                          <a
-                            href={`https://wa.me/${member.telephone.replace(/\D/g, "")}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block px-4 py-2 hover:bg-gray-100 text-black"
-                          >
-                            💬 WhatsApp
-                          </a>
-                  
-                          <a
-                            href={`https://wa.me/${member.telephone.replace(/\D/g, "")}?text=Bonjour`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block px-4 py-2 hover:bg-gray-100 text-black"
-                          >
-                            📱 Message WhatsApp
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                {member.telephone}
+              </button>
 
+              {openPhoneMenu && (
+                <div className="absolute left-1/2 -translate-x-1/2 mt-2 bg-white border rounded-lg shadow w-56 z-50">
+                  <a
+                    href={`tel:${member.telephone}`}
+                    className="block px-4 py-2 hover:bg-gray-100 text-black"
+                  >
+                    📞 Appeler
+                  </a>
+                  <a
+                    href={`sms:${member.telephone}`}
+                    className="block px-4 py-2 hover:bg-gray-100 text-black"
+                  >
+                    ✉️ SMS
+                  </a>
+                  <a
+                    href={`https://wa.me/${member.telephone.replace(/\D/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block px-4 py-2 hover:bg-gray-100 text-black"
+                  >
+                    💬 WhatsApp
+                  </a>
+                  <a
+                    href={`https://wa.me/${member.telephone.replace(
+                      /\D/g,
+                      ""
+                    )}?text=Bonjour`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block px-4 py-2 hover:bg-gray-100 text-black"
+                  >
+                    📱 Message WhatsApp
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* INFOS */}
           <div className="text-sm text-center mt-3 space-y-1">
             <p>🏠 Cellule : {cellule?.cellule_full || "—"}</p>
-            <p>👤 Conseiller :{" "}{conseiller? `${conseiller.prenom} ${conseiller.nom}`: "—"}</p>
+            <p>
+              👤 Conseiller :{" "}
+              {conseiller
+                ? `${conseiller.prenom} ${conseiller.nom}`
+                : "—"}
+            </p>
             <p>🏙️ Ville : {member.ville || "—"}</p>
           </div>
 
@@ -238,7 +206,10 @@ export default function DetailEvangeliseSuivisPopup({
             <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
             <p>☀️ Type : {member.type_conversion || "—"}</p>
             <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-            <p>📝 Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
+            <p>
+              📝 Infos supplémentaires :{" "}
+              {member.infos_supplementaires || "—"}
+            </p>
           </div>
 
           {!isRefus && (
@@ -260,13 +231,8 @@ export default function DetailEvangeliseSuivisPopup({
           member={editingEvangelise}
           onClose={() => setEditingEvangelise(null)}
           onUpdateMember={(updates) => {
-            // 🔹 Mettre à jour le détail local du parent
             if (onUpdate) onUpdate(member.id, updates);
-      
-            // 🔹 Fermer le sous-popup
             setEditingEvangelise(null);
-      
-            // 🔹 Fermer le popup principal
             onClose();
           }}
         />

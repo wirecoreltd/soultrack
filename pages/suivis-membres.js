@@ -263,7 +263,7 @@ return (
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+    <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "#333699" }}>
 
       {/* Header avec logo et infos */}
       <HeaderPages />

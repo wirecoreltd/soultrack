@@ -1,61 +1,27 @@
+
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import EditEvangelisePopup from "./EditEvangelisePopup";
 
-
 export default function DetailEvangeliseSuivisPopup({
   member,
   onClose,
-  onEdit,
   onUpdate,
 }) {
+  const popupRef = useRef(null);
+  const phoneMenuRef = useRef(null);
+
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
   const [comment, setComment] = useState(member.commentaire_evangelises || "");
   const [status, setStatus] = useState(member.status_suivis_evangelises || "");
   const [saving, setSaving] = useState(false);
-  const isRefus = member.status_suivis_evangelises === "Refus";
-  const phoneMenuRef = useRef(null);
-  const popupRef = useRef(null);
   const [editingEvangelise, setEditingEvangelise] = useState(null);
 
+  const isRefus = member.status_suivis_evangelises === "Refus";
 
-  console.log("DETAIL POPUP MEMBER:", member);
-
-   // Charger cellule et conseiller depuis Supabase
-  useEffect(() => {
-    const fetchRelations = async () => {
-      // Cellule
-      if (member.cellule_id) {
-        const { data: celluleData } = await supabase
-          .from("cellules")
-          .select("nom")
-          .eq("id", member.cellule_id)
-          .single();
-        if (celluleData) setCelluleNom(celluleData.nom);
-      }
-
-      // Conseiller
-      if (member.conseiller_id) {
-        const { data: conseillerData } = await supabase
-          .from("users")
-          .select("prenom, nom")
-          .eq("id", member.conseiller_id)
-          .single();
-        if (conseillerData) setConseillerNom(`${conseillerData.prenom} ${conseillerData.nom}`);
-      }
-    };
-    fetchRelations();
-  }, [member.cellule_id, member.conseiller_id]);
-
-  // Mettre à jour localement quand le member change
-  useEffect(() => {
-    setComment(member.commentaire_evangelises || "");
-    setStatus(member.status_suivis_evangelises || "");
-  }, [member]);
-
-  // Fermer popup si clic extérieur
+  /* ================= CLOSE ON OUTSIDE CLICK ================= */
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (popupRef.current && !popupRef.current.contains(e.target)) {
@@ -66,7 +32,7 @@ export default function DetailEvangeliseSuivisPopup({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
-  // Fermer menu téléphone
+  /* ================= PHONE MENU ================= */
   useEffect(() => {
     const handleClickOutsideMenu = (e) => {
       if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
@@ -78,40 +44,9 @@ export default function DetailEvangeliseSuivisPopup({
       document.removeEventListener("mousedown", handleClickOutsideMenu);
   }, []);
 
-  // ================= UPSERT MEMBRE =================
-  const upsertMembre = async (suivi) => {
-    try {
-      const payload = {
-        suivi_int_id: Number(suivi.id),
-        nom: suivi.nom,
-        prenom: suivi.prenom,
-        telephone: suivi.telephone,
-        ville: suivi.ville,
-        sexe: suivi.sexe,
-        besoin: suivi.besoin,
-        infos_supplementaires: suivi.infos_supplementaires,
-        cellule_id: suivi.cellule_id,
-        conseiller_id: suivi.conseiller_id,
-        statut_initial: "intégré",
-        suivi_statut: "Intégré",
-        suivi_commentaire_suivis: comment,
-        suivi_updated_at: new Date().toISOString(),
-      };
-
-      const { error } = await supabase
-        .from("membres_complets")
-        .upsert(payload, { onConflict: "suivi_int_id" });
-
-      if (error) console.error("UPSERT MEMBRE ERROR:", error);
-    } catch (err) {
-      console.error("Erreur upsert membre:", err.message);
-    }
-  };
-
-  // ================= SAVE =================
+  /* ================= SAVE ================= */
   const handleSave = async () => {
     if (!member.id) return;
-
     setSaving(true);
 
     try {
@@ -125,26 +60,21 @@ export default function DetailEvangeliseSuivisPopup({
 
       if (error) throw error;
 
-      if (status === "Intégré") {
-        await upsertMembre(member);
-      }
-
       onUpdate &&
         onUpdate(member.id, {
           commentaire_evangelises: comment,
           status_suivis_evangelises: status,
         });
 
-      setSaving(false);
       onClose();
     } catch (err) {
-      console.error("Erreur lors de la sauvegarde :", err);
-      alert("Erreur lors de la sauvegarde. Vérifie la console.");
+      console.error(err);
+      alert("Erreur lors de la sauvegarde");
+    } finally {
       setSaving(false);
     }
   };
 
-  // ================= FORMAT BESOIN =================
   const formatBesoin = (b) => {
     if (!b) return "—";
     try {
@@ -155,156 +85,120 @@ export default function DetailEvangeliseSuivisPopup({
     }
   };
 
+  /* ================= RENDER ================= */
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div
-        ref={popupRef}
-        className="bg-white rounded-lg p-6 w-96 relative shadow-xl max-h-[90vh] overflow-y-auto"
-      >
-        {/* Fermer */}
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-gray-500 font-bold hover:text-gray-700"
+    <>
+      <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+        <div
+          ref={popupRef}
+          className="bg-white rounded-lg p-6 w-96 relative shadow-xl max-h-[90vh] overflow-y-auto"
         >
-          ✖
-        </button>
-
-        {/* ================= CENTRÉ ================= */}
-        <h2 className="text-lg font-bold text-gray-800 text-center mb-4">
-          {member.prenom} {member.nom}
-        </h2>
-
-        {/* Téléphone */}
-        <p
-          onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
-          className="text-center text-orange-500 font-semibold underline cursor-pointer"
-        >
-          {member.telephone || "—"}
-        </p>
-
-        {/* MENU TELEPHONE */}
-        {openPhoneMenu && (
-          <div
-            ref={phoneMenuRef}
-            className="absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
-            onClick={(e) => e.stopPropagation()}
+          {/* CLOSE */}
+          <button
+            onClick={onClose}
+            className="absolute top-2 right-2 text-gray-500 font-bold"
           >
-            <a
-              href={member.telephone ? `tel:${member.telephone}` : "#"}
-              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
-                !member.telephone ? "opacity-50 pointer-events-none" : ""
-              }`}
+            ✖
+          </button>
+
+          <h2 className="text-lg font-bold text-center mb-3">
+            {member.prenom} {member.nom}
+          </h2>
+
+          {/* PHONE */}
+          <p
+            onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
+            className="text-center text-orange-500 font-semibold underline cursor-pointer"
+          >
+            {member.telephone || "—"}
+          </p>
+
+          {openPhoneMenu && (
+            <div
+              ref={phoneMenuRef}
+              className="absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
             >
-              📞 Appeler
-            </a>
-            <a
-              href={member.telephone ? `sms:${member.telephone}` : "#"}
-              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
-                !member.telephone ? "opacity-50 pointer-events-none" : ""
-              }`}
-            >
-              ✉️ SMS
-            </a>
-            <a
-              href={
-                member.telephone
-                  ? `https://wa.me/${member.telephone.replace(/\D/g, "")}?call`
-                  : "#"
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
-                !member.telephone ? "opacity-50 pointer-events-none" : ""
-              }`}
-            >
-              📱 Appel WhatsApp
-            </a>
-            <a
-              href={
-                member.telephone
-                  ? `https://wa.me/${member.telephone.replace(/\D/g, "")}`
-                  : "#"
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
-                !member.telephone ? "opacity-50 pointer-events-none" : ""
-              }`}
-            >
-              💬 Message WhatsApp
-            </a>
+              <a
+                href={member.telephone ? `tel:${member.telephone}` : "#"}
+                className="block px-4 py-2 hover:bg-gray-100"
+              >
+                📞 Appeler
+              </a>
+              <a
+                href={
+                  member.telephone
+                    ? `https://wa.me/${member.telephone.replace(/\D/g, "")}`
+                    : "#"
+                }
+                target="_blank"
+                className="block px-4 py-2 hover:bg-gray-100"
+              >
+                💬 WhatsApp
+              </a>
+            </div>
+          )}
+
+          {/* INFOS */}
+          <div className="text-sm text-center mt-3 space-y-1">
+            <p>🏠 Cellule : {member.cellule?.nom || "—"}</p>
+            <p>
+              👤 Conseiller :{" "}
+              {member.conseiller
+                ? `${member.conseiller.prenom} ${member.conseiller.nom}`
+                : "—"}
+            </p>
+            <p>🏙️ Ville : {member.ville || "—"}</p>
           </div>
-        )}
 
-        {/* ================= CENTRÉ ================= */}
-        <p className="text-center mt-2">
-          🏠 Cellule : {member.cellule?.nom || "—"}
-        </p>
-        <p className="text-center">
-          👤 Conseiller :{" "}
-          {member.conseiller
-            ? `${member.conseiller.prenom} ${member.conseiller.nom}`
-            : "—"}
-        </p>
-        <p className="text-center">🏙️ Ville : {member.ville || "—"}</p>
+          {/* COMMENT / STATUS */}
+          <div className="mt-4">
+            <label className="block text-center font-semibold mb-1">
+              Commentaire
+            </label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              disabled={isRefus}
+              className="w-full border rounded p-2"
+              rows={2}
+            />
 
-        {/* ================= COMMENTAIRE & STATUT ================= */}
-        <div className="flex flex-col w-full mt-4">
-          <label className="font-semibold text-blue-700 mb-1 text-center">
-            Commentaire Suivis
-          </label>
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            disabled={isRefus}
-            className={`w-full border rounded-lg p-2 ${
-              isRefus ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
-            }`}
-            rows={2}
-          />
+            <label className="block text-center font-semibold mt-2 mb-1">
+              Statut
+            </label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              disabled={isRefus}
+              className="w-full border rounded p-2"
+            >
+              <option value="">-- Choisir --</option>
+              <option value="En cours">En cours</option>
+              <option value="Intégré">Intégré</option>
+              <option value="Refus">Refus</option>
+            </select>
 
-          <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">
-            Statut du suivis
-          </label>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            disabled={isRefus}
-            className={`w-full border rounded-lg p-2 mb-2 ${
-              isRefus ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
-            }`}
-          >
-            <option value="">-- Sélectionner un statut --</option>
-            <option value="En cours">En cours</option>
-            <option value="Intégré">Intégré</option>
-            <option value="Refus">Refus</option>
-          </select>
+            {!isRefus && (
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="mt-3 w-full bg-blue-500 text-white py-2 rounded"
+              >
+                {saving ? "Enregistrement..." : "Sauvegarder"}
+              </button>
+            )}
+          </div>
+
+          {/* EXTRA */}
+          <div className="mt-4 text-sm space-y-1">
+            <p>🎗️ Sexe : {member.sexe || "—"}</p>
+            <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
+            <p>☀️ Type : {member.type_conversion || "—"}</p>
+            <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
+            <p>📝 Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
+          </div>
 
           {!isRefus && (
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className={`mt-2 w-full font-bold py-2 rounded-lg shadow-md transition-all ${
-                saving
-                  ? "bg-blue-300 cursor-not-allowed"
-                  : "bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white"
-              }`}
-            >
-              {saving ? "Enregistrement..." : "Sauvegarder"}
-            </button>
-          )}
-        </div>
-
-        {/* ================= ALIGN LEFT ================= */}
-        <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
-          <p>🎗️ Sexe : {member.sexe || "—"}</p>
-          <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
-          <p>☀️ Type : {member.type_conversion || "—"}</p>
-          <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-          <p>📝 Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
-        </div>
-
-       {!isRefus && (
             <div className="mt-5 flex justify-center">
               <button
                 onClick={() => setEditingEvangelise(member)}
@@ -327,4 +221,6 @@ export default function DetailEvangeliseSuivisPopup({
     </>
   );
 }
+          
 
+       

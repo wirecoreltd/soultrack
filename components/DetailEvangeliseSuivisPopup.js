@@ -2,6 +2,8 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
+import EditEvangelisePopup from "./EditEvangelisePopup";
+
 
 export default function DetailEvangeliseSuivisPopup({
   member,
@@ -16,6 +18,8 @@ export default function DetailEvangeliseSuivisPopup({
   const isRefus = member.status_suivis_evangelises === "Refus";
   const phoneMenuRef = useRef(null);
   const popupRef = useRef(null);
+  const [editingEvangelise, setEditingEvangelise] = useState(null);
+
 
   console.log("DETAIL POPUP MEMBER:", member);
 
@@ -304,14 +308,24 @@ export default function DetailEvangeliseSuivisPopup({
         {!isRefus && (
           <div className="mt-6 flex justify-center">
             <button
-              onClick={() => onEdit(member)}
-              className="text-blue-600 text-sm font-semibold hover:underline"
+              onClick={() => setEditingEvangelise(member)}
+              className="text-green-600 text-sm font-semibold hover:underline"
             >
-              ✏️ Modifier le contact
+              ✏️ Modifier évangélisation
             </button>
           </div>
         )}
       </div>
     </div>
+    {editingEvangelise && (
+    <EditEvangelisePopup
+      member={editingEvangelise}
+      onClose={() => setEditingEvangelise(null)}
+      onUpdate={() => {
+        setEditingEvangelise(null);
+        fetchSuivis(user, cellules); // si tu veux rafraîchir
+      }}
+    />
+  )}
   );
 }

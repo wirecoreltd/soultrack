@@ -446,7 +446,7 @@ export default function SuivisEvangelisation() {
                 <p className="self-end text-[11px] text-gray-400 mt-3">Créé le {formatDateFr(m.date_suivi)}</p>
 
                 {/* Commentaire + statut */}
-                <div className="w-full bg-slate-50 rounded-xl p-3 mt-2">
+                <div className="w-full rounded-xl p-3 mt-2">
                   <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2">
                     Commentaire Suivis
                   </label>
@@ -516,7 +516,7 @@ export default function SuivisEvangelisation() {
               {/* Détails */}
               <div className={`transition-all duration-500 overflow-hidden ${ouvert ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
                 {ouvert && (
-                  <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
+                  <div className="rounded-xl p-3 text-sm space-y-2">
                     <p>📅 {m.sexe === "Femme" ? "Évangélisée" : "Évangélisé"} le : {formatDateFr(m.Date_Evangelise)}</p>                
                     <p>🎗️ Sexe : {m.sexe || ""}</p>
                     <p>🙏 Prière salut : {m.priere_salut ? "Oui" : "Non"}</p>

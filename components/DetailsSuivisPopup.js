@@ -175,7 +175,7 @@ export default function DetailsSuivisPopup({
           <div className="mt-4 rounded-xl w-full shadow-md p-4 bg-white">
             <button
               onClick={() => setEditMember(m)}
-              className="w-full py-2 rounded-md bg-white text-orange-500 shadow-md"
+              className="w-full py-2 rounded-md bg-white text-orange-500"
             >
               ✏️ Modifier le contact
             </button>

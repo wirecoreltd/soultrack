@@ -186,10 +186,10 @@ export default function DetailsEvangePopup({ member, onClose, onEdit }) {
         </div>
 
         {/* ====== CENTRÉ ====== */}
-        <div className="mt-6 flex justify-center">
+        <div className="mt-4 rounded-xl w-full shadow-md p-4 bg-white">
           <button
             onClick={() => onEdit(member)}
-            className="text-blue-600 text-sm font-semibold hover:underline"
+            className="w-full py-2 rounded-md bg-white text-orange-500 shadow-md"
           >
             ✏️ Modifier le contact
           </button>

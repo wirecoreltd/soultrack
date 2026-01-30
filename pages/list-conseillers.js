@@ -105,13 +105,16 @@ export default function ListConseillers() {
         </p>
       </div>
 
-        {/* Bouton Ajouter un membre */}
-                <button
-                  onClick={() => router.push("/create-conseiller")}
-                  className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-                >
-                  ➕ Ajouter un Conseiller 
-                </button>
+        {/* Bouton Ajouter un conseiller */}
+          <div className="flex mt-6">
+            <button
+              onClick={() => router.push("/create-conseiller")}
+              className="ml-auto text-white font-semibold px-4 py-2 rounded shadow text-sm"
+            >
+              ➕ Ajouter un Conseiller
+            </button>
+          </div>
+
 
       {/* Liste cartes */}
       <div className="w-full max-w-6xl">

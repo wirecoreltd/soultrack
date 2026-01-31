@@ -372,6 +372,11 @@ export default function ListMembers() {
                       <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">📞 Appeler</a>
                       <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">✉️ SMS</a>
                       <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" 
+                      <a href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}?call` : "#"}target="_blank"rel="noopener noreferrer"
+                        className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
+                      >
+                        📱 Appel WhatsApp
+                      </a>  
                       rel="noopener noreferrer"className="block px-4 py-2 text-sm hover:bg-gray-100">💬 WhatsApp</a>
                     </div>
                   )}

@@ -84,7 +84,6 @@ export default function ListCellules() {
       {/* 🔘 BOUTONS */}
       {userRole && (
         <div className="max-w-5xl mx-auto mb-4 flex justify-end gap-4">
-
           {canCreateResponsable && (
             <button
               onClick={() => router.push("/admin/create-internal-user")}
@@ -102,47 +101,48 @@ export default function ListCellules() {
               ➕ Créer une cellule
             </button>
           )}
-
         </div>
       )}
 
-      {/* 📋 Table */}
-      <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xl">
-        <div className="grid grid-cols-[2fr_2fr_2fr_2fr_auto] gap-4 px-4 py-2 bg-purple-600 text-white font-semibold">
-          <span>Zone / Ville</span>
-          <span>Nom de la cellule</span>
-          <span>Responsable</span>
-          <span>Téléphone</span>
-          <span className="text-center">Actions</span>
-        </div>
+      {/* 📋 Table Visuelle */}
+      <div className="w-full max-w-5xl mx-auto overflow-x-auto py-2">
+        <div className="min-w-[700px] space-y-2">
 
-        {cellules.length === 0 && (
-          <div className="text-center py-6 text-gray-500">
-            Aucune cellule attribuée.
+          {/* Header */}
+          <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-purple-700">
+            <div className="flex-[2]">Zone / Ville</div>
+            <div className="flex-[2]">Nom de la cellule</div>
+            <div className="flex-[2]">Responsable</div>
+            <div className="flex-[2]">Téléphone</div>
+            <div className="flex-[1] flex justify-center items-center">Actions</div>
           </div>
-        )}
 
-        {cellules.map((c) => (
-          <div
-            key={c.id}
-            className="grid grid-cols-[2fr_2fr_2fr_2fr_auto] gap-4 px-4 py-3 border-b border-gray-200 hover:bg-purple-50 transition-all"
-          >
-            <span>{c.ville}</span>
-            <span className="font-semibold text-gray-700">{c.cellule}</span>
-            <span className="text-purple-700 font-medium">{c.responsable}</span>
-            <span>{c.telephone}</span>
-
-            <div className="flex justify-center">
-              <button
-                onClick={() => setSelectedCellule(c)}
-                className="text-blue-600 hover:text-blue-800 text-xl"
-                title="Modifier"
-              >
-                ✏️
-              </button>
+          {/* Lignes */}
+          {(cellules.length === 0 ? [{ville: "—", cellule: "—", responsable: "—", telephone: "—"}] : cellules).map((c, index) => (
+            <div
+              key={index}
+              className={`flex flex-row items-center px-2 py-2 rounded-lg ${
+                index % 2 === 0 ? "bg-white/10" : "bg-white/20"
+              } transition duration-150 gap-2 border-l-4`}
+              style={{ borderLeftColor: index % 2 === 0 ? "#06B6D4" : "#F59E0B" }}
+            >
+              <div className="flex-[2] text-white">{c.ville}</div>
+              <div className="flex-[2] text-white font-semibold">{c.cellule}</div>
+              <div className="flex-[2] text-white font-medium">{c.responsable}</div>
+              <div className="flex-[2] text-white">{c.telephone}</div>
+              <div className="flex-[1] flex justify-center items-center">
+                <button
+                  onClick={() => c.id && setSelectedCellule(c)}
+                  className="text-blue-600 hover:text-blue-800 text-xl"
+                  title="Modifier"
+                >
+                  ✏️
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+
+        </div>
       </div>
 
       {/* ✏️ MODAL */}

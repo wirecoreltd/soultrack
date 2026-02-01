@@ -142,10 +142,9 @@ export default function MembresCellule() {
 
   // ================= RENDER =================
   return (
-    <div
-      className="min-h-screen p-6" style={{ bg-[#333699] }} >
+    <div className="min-h-screen p-6" style={{ backgroundColor: "#333699" }}>
       
-<HeaderPages />
+      <HeaderPages />
 
       <h1 className="text-white text-2xl font-bold text-center mb-4">{" "}
   {cellules.length > 1

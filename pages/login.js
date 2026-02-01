@@ -64,6 +64,9 @@ export default function LoginPage() {
         case "ResponsableCellule":
           router.push("/cellules-hub");
           break;
+        case "SuperviseurCellule":
+          router.push("/cellules-hub");
+          break;
         case "Conseiller":
           router.push("/conseiller-hub");
           break;

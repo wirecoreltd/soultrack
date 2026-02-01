@@ -68,7 +68,7 @@ export default function ListMembers() {
 
 
   const statutSuiviLabels = {
-    1: "Envoyé",
+    1: "En Suivis",
     2: "En attente",
     3: "Intégré",
     4: "Refus",

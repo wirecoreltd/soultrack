@@ -99,7 +99,7 @@ export default function ListCellules() {
   }
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
+    <div className="min-h-screen p-6 bg-[#333699]">
 
            <HeaderPages />
     

@@ -70,7 +70,7 @@ export default function ListCellules() {
   };
 
   if (loading)
-    return <p className="text-center mt-10 text-lg">Chargement...</p>;
+    return <p className="text-center mt-10 text-lg text-white">Chargement...</p>;
   if (message)
     return <p className="text-center mt-10 text-red-600">{message}</p>;
 

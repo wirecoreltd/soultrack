@@ -1,12 +1,3 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import supabase from "../../lib/supabaseClient";
-import EditCelluleModal from "../../components/EditCelluleModal";
-import HeaderPages from "../../components/HeaderPages";
-
 export default function ListCellules() {
   const router = useRouter();
 
@@ -16,6 +7,7 @@ export default function ListCellules() {
   const [selectedCellule, setSelectedCellule] = useState(null);
   const [userRole, setUserRole] = useState(null);
 
+  // 🔹 useEffect pour fetch cellules
   useEffect(() => {
     fetchCellules();
   }, []);
@@ -25,56 +17,46 @@ export default function ListCellules() {
     setMessage("");
 
     try {
-      // 🔐 User connecté
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
-      if (userError || !user) throw userError;
+      if (!user) throw new Error("Utilisateur non connecté");
 
-      // 👤 Profil
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile } = await supabase
         .from("profiles")
         .select("id, role")
         .eq("id", user.id)
         .single();
 
-      if (profileError) throw profileError;
-
-      // ✅ rôle NORMALISÉ
       const role = profile.role?.trim();
       setUserRole(role);
 
-      // 📦 Requête cellules
       let query = supabase
         .from("cellules")
-        .select(`
-          id,
-          cellule,
-          ville,
-          responsable,
-          telephone,
-          responsable_id
-        `)
+        .select(`id, cellule, ville, responsable, telephone, responsable_id`)
         .order("ville", { ascending: true });
 
-      // 🔒 Responsable → uniquement ses cellules
       if (role === "ResponsableCellule") {
         query = query.eq("responsable_id", profile.id);
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-
+      const { data } = await query;
       setCellules(data || []);
     } catch (err) {
-      console.error("❌ Erreur récupération cellules :", err);
+      console.error(err);
       setMessage("Erreur lors de la récupération des cellules.");
     } finally {
       setLoading(false);
     }
   };
+
+  // 🔹 Permissions à utiliser dans JSX
+  const canCreateResponsable =
+    userRole === "Administrateur" || userRole === "SuperviseurCellule";
+
+  const canCreateCellule =
+    userRole === "Administrateur" ||
+    userRole === "SuperviseurCellule" ||
+    userRole === "ResponsableCellule";
 
   const handleUpdated = (updated) => {
     setCellules((prev) =>
@@ -82,55 +64,44 @@ export default function ListCellules() {
     );
   };
 
-  if (loading) {
-    return (
-      <p className="text-center mt-10 text-lg">
-        Chargement des cellules...
-      </p>
-    );
-  }
-
-  if (message) {
-    return (
-      <p className="text-center text-red-600 mt-10">
-        {message}
-      </p>
-    );
-  }
+  if (loading) return <p className="text-center mt-10 text-lg">Chargement...</p>;
+  if (message) return <p className="text-center mt-10 text-red-600">{message}</p>;
 
   return (
-    <div className="min-h-screen p-6 bg-[#333699]">
+    <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
 
-           <HeaderPages />
-    
-        <h1 className="text-4xl text-white text-center mb-4">Liste de Cellules</h1>     
+      <HeaderPages />
 
-      {/* 🔘 BOUTONS (LOGIQUE CORRECTE) */}     
-        {userRole && (
-          <div className="max-w-5xl mx-auto mb-4 flex justify-end gap-4">
-        
-            {canCreateResponsable && (
-              <button
-                onClick={() => router.push("/admin/create-internal-user")}
-                className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-purple-600 hover:bg-purple-700 transition"
-              >
-                ➕ Créer un responsable
-              </button>
-            )}
-        
-            {canCreateCellule && (
-              <button
-                onClick={() => router.push("/admin/create-cellule")}
-                className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-green-600 hover:bg-green-700 transition"
-              >
-                ➕ Créer une cellule
-              </button>
-            )}
-        
-          </div>
-        )}
+      <h1 className="text-3xl font-bold text-center mt-2 text-purple-700">
+        Liste des cellules
+      </h1>
 
-      {/* 📋 TABLE */}
+      {/* 🔘 BOUTONS */}
+      {userRole && (
+        <div className="max-w-5xl mx-auto mb-4 flex justify-end gap-4">
+
+          {canCreateResponsable && (
+            <button
+              onClick={() => router.push("/admin/create-internal-user")}
+              className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-purple-600 hover:bg-purple-700 transition"
+            >
+              ➕ Créer un responsable
+            </button>
+          )}
+
+          {canCreateCellule && (
+            <button
+              onClick={() => router.push("/admin/create-cellule")}
+              className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-green-600 hover:bg-green-700 transition"
+            >
+              ➕ Créer une cellule
+            </button>
+          )}
+
+        </div>
+      )}
+
+      {/* 📋 Table */}
       <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xl">
         <div className="grid grid-cols-[2fr_2fr_2fr_2fr_auto] gap-4 px-4 py-2 bg-purple-600 text-white font-semibold">
           <span>Zone / Ville</span>
@@ -169,7 +140,6 @@ export default function ListCellules() {
         ))}
       </div>
 
-      {/* ✏️ MODAL */}
       {selectedCellule && (
         <EditCelluleModal
           cellule={selectedCellule}

@@ -1,3 +1,12 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import supabase from "../../lib/supabaseClient";
+import EditCelluleModal from "../../components/EditCelluleModal";
+import HeaderPages from "../../components/HeaderPages";
+
 export default function ListCellules() {
   const router = useRouter();
 
@@ -17,10 +26,11 @@ export default function ListCellules() {
     setMessage("");
 
     try {
+      // 🔐 User connecté
       const { data: { user } } = await supabase.auth.getUser();
-
       if (!user) throw new Error("Utilisateur non connecté");
 
+      // 👤 Profil
       const { data: profile } = await supabase
         .from("profiles")
         .select("id, role")
@@ -30,11 +40,13 @@ export default function ListCellules() {
       const role = profile.role?.trim();
       setUserRole(role);
 
+      // 📦 Requête cellules
       let query = supabase
         .from("cellules")
         .select(`id, cellule, ville, responsable, telephone, responsable_id`)
         .order("ville", { ascending: true });
 
+      // 🔒 Responsable → uniquement ses cellules
       if (role === "ResponsableCellule") {
         query = query.eq("responsable_id", profile.id);
       }
@@ -140,6 +152,7 @@ export default function ListCellules() {
         ))}
       </div>
 
+      {/* ✏️ MODAL */}
       {selectedCellule && (
         <EditCelluleModal
           cellule={selectedCellule}

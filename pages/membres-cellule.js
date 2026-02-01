@@ -143,9 +143,7 @@ export default function MembresCellule() {
   // ================= RENDER =================
   return (
     <div
-      className="min-h-screen p-6"
-      style={{ background: "linear-gradient(135deg,#2E3192,#92EFFD)" }}
-    >
+      className="min-h-screen p-6" style={{ bg-[#333699] }} >
       
 <HeaderPages />
 

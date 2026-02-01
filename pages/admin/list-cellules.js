@@ -8,52 +8,95 @@ import EditCelluleModal from "../../components/EditCelluleModal";
 
 export default function ListCellules() {
   const router = useRouter();
+
   const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [selectedCellule, setSelectedCellule] = useState(null);
 
   useEffect(() => {
-    const fetchCellules = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from("cellules")
-          .select(`
-            id,
-            cellule,
-            ville,
-            responsable,
-            telephone
-          `);
-
-        if (error) throw error;
-        setCellules(data || []);
-      } catch (err) {
-        console.error("❌ Erreur récupération cellules:", err);
-        setMessage("Erreur lors de la récupération des cellules.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchCellules();
   }, []);
 
-  // Mise à jour instantanée
+  const fetchCellules = async () => {
+    setLoading(true);
+    setMessage("");
+
+    try {
+      // 🔐 Utilisateur connecté
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) throw userError;
+
+      // 👤 Profil utilisateur
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, role")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // 📦 Requête cellules
+      let query = supabase
+        .from("cellules")
+        .select(`
+          id,
+          cellule,
+          ville,
+          responsable,
+          telephone,
+          responsable_id
+        `)
+        .order("ville", { ascending: true });
+
+      // 🔒 Filtrage si Responsable de cellule
+      if (profile.role === "ResponsableCellule") {
+        query = query.eq("responsable_id", profile.id);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      setCellules(data || []);
+    } catch (err) {
+      console.error("❌ Erreur récupération cellules :", err);
+      setMessage("Erreur lors de la récupération des cellules.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔄 Mise à jour instantanée après édition
   const handleUpdated = (updated) => {
-    setCellules(prev =>
-      prev.map(c => (c.id === updated.id ? updated : c))
+    setCellules((prev) =>
+      prev.map((c) => (c.id === updated.id ? updated : c))
     );
   };
 
-  if (loading) return <p className="text-center mt-10 text-lg">Chargement...</p>;
-  if (message) return <p className="text-center text-red-600 mt-10">{message}</p>;
+  if (loading) {
+    return (
+      <p className="text-center mt-10 text-lg">
+        Chargement des cellules...
+      </p>
+    );
+  }
+
+  if (message) {
+    return (
+      <p className="text-center text-red-600 mt-10">
+        {message}
+      </p>
+    );
+  }
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
 
-      {/* Bouton retour */}
+      {/* ⬅️ Retour */}
       <button
         onClick={() => router.back()}
         className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700"
@@ -61,7 +104,7 @@ export default function ListCellules() {
         ← Retour
       </button>
 
-      {/* Logo + Titre */}
+      {/* 🏷️ Logo + Titre */}
       <div className="flex flex-col items-center mb-6">
         <Image src="/logo.png" alt="Logo" width={80} height={80} />
         <h1 className="text-3xl font-bold text-center mt-2 text-purple-700">
@@ -69,7 +112,7 @@ export default function ListCellules() {
         </h1>
       </div>
 
-      {/* Boutons */}
+      {/* ➕ Boutons admin */}
       <div className="max-w-5xl mx-auto mb-4 flex justify-end gap-4">
         <button
           onClick={() => router.push("/admin/create-internal-user")}
@@ -86,7 +129,7 @@ export default function ListCellules() {
         </button>
       </div>
 
-      {/* Table */}
+      {/* 📋 Table */}
       <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xl">
         <div className="grid grid-cols-[2fr_2fr_2fr_2fr_auto] gap-4 px-4 py-2 bg-purple-600 text-white font-semibold">
           <span>Zone / Ville</span>
@@ -96,13 +139,19 @@ export default function ListCellules() {
           <span className="text-center">Actions</span>
         </div>
 
+        {cellules.length === 0 && (
+          <div className="text-center py-6 text-gray-500">
+            Aucune cellule attribuée.
+          </div>
+        )}
+
         {cellules.map((c) => (
           <div
             key={c.id}
             className="grid grid-cols-[2fr_2fr_2fr_2fr_auto] gap-4 px-4 py-3 border-b border-gray-200 hover:bg-purple-50 transition-all"
           >
             <span>{c.ville}</span>
-            <span className="font-semibold text-gray-700">{c.cellule}</span>            
+            <span className="font-semibold text-gray-700">{c.cellule}</span>
             <span className="text-purple-700 font-medium">{c.responsable}</span>
             <span>{c.telephone}</span>
 
@@ -110,6 +159,7 @@ export default function ListCellules() {
               <button
                 onClick={() => setSelectedCellule(c)}
                 className="text-blue-600 hover:text-blue-800 text-xl"
+                title="Modifier la cellule"
               >
                 ✏️
               </button>
@@ -118,7 +168,7 @@ export default function ListCellules() {
         ))}
       </div>
 
-      {/* Popup */}
+      {/* ✏️ Popup édition */}
       {selectedCellule && (
         <EditCelluleModal
           cellule={selectedCellule}

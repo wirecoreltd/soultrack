@@ -105,8 +105,7 @@ export default function ListCellules() {
     
         <h1 className="text-3xl font-bold text-center mt-2 text-purple-700">
           Liste des cellules
-        </h1>
-      </div>
+        </h1>      
 
       {/* 🔘 BOUTONS (LOGIQUE CORRECTE) */}
       {userRole && (

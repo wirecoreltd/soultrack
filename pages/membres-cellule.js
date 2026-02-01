@@ -147,21 +147,22 @@ export default function MembresCellule() {
       
 <HeaderPages />
 
-      <h1 className="text-white text-2xl font-bold text-center mb-4">
-        👥 Membres intégrés de mes cellules
-      </h1>
+      <h1 className="text-white text-2xl font-bold text-center mb-4">{" "}
+  {cellules.length > 1
+    ? "Membres de mes cellules"
+    : "Membre de ma cellule"}
+    </h1>
       
       {/* Barre de recherche */}
-<div className="w-full max-w-4xl flex justify-center mb-2">
-  <input
-    type="text"
-    placeholder="Recherche..."
-    value={search}
-    onChange={e => setSearch(e.target.value)}
-    className="w-2/3 px-3 py-1 rounded-md border text-black focus:outline-none"
-  />
-</div>
-
+        <div className="w-full max-w-4xl flex justify-center mb-2">
+          <input
+            type="text"
+            placeholder="Recherche..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-2/3 px-3 py-1 rounded-md border text-black focus:outline-none"
+          />
+        </div>
       
       {/* Filtre sous la barre de recherche */}
       <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">
@@ -186,8 +187,7 @@ export default function MembresCellule() {
         >
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
-      </div>
-    
+      </div>    
          
       {/* ================= VUE CARTE ================= */}
       {view === "card" && (

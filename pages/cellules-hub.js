@@ -40,7 +40,7 @@ export default function CellulesHub() {
   }, []);
 
   return (
-    <AccessGuard allowedRoles={["Administrateur", "ResponsableCellule"]}>
+    <AccessGuard allowedRoles={["Administrateur", "ResponsableCellule", "SuperviseurCellule"]}>
       <div
         className="min-h-screen flex flex-col items-center p-6"
         style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}

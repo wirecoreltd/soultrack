@@ -103,9 +103,7 @@ export default function ListCellules() {
 
            <HeaderPages />
     
-        <h1 className="text-3xl font-bold text-center mt-2 text-purple-700">
-          Liste des cellules
-        </h1>      
+        <h1 className="text-4xl text-white text-center mb-4">Liste de Cellules</h1>     
 
       {/* 🔘 BOUTONS (LOGIQUE CORRECTE) */}
       {userRole && (
@@ -116,7 +114,7 @@ export default function ListCellules() {
             userRole === "SuperviseurCellule") && (
             <button
               onClick={() => router.push("/admin/create-internal-user")}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl shadow-md transition"
+              className="text-white font-semibold px-4 py-2 rounded shadow text-sm
             >
               ➕ Créer un responsable
             </button>
@@ -128,7 +126,7 @@ export default function ListCellules() {
             userRole === "ResponsableCellule") && (
             <button
               onClick={() => router.push("/admin/create-cellule")}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl shadow-md transition"
+              className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
             >
               ➕ Créer une cellule
             </button>

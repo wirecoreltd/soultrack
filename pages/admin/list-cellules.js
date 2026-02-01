@@ -75,7 +75,7 @@ export default function ListCellules() {
     return <p className="text-center mt-10 text-red-600">{message}</p>;
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
+    <div className="min-h-screen p-6 bg-[#333699]">
 
       <HeaderPages />
 
@@ -97,7 +97,7 @@ export default function ListCellules() {
           {canCreateCellule && (
             <button
               onClick={() => router.push("/admin/create-cellule")}
-              className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-green-600 hover:bg-green-700 transition"
+              className="text-white font-semibold px-4 py-2 rounded shadow text-sm hover:shadow-lg transition"
             >
               ➕ Créer une cellule
             </button>

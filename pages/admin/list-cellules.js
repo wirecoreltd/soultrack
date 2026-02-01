@@ -105,35 +105,30 @@ export default function ListCellules() {
     
         <h1 className="text-4xl text-white text-center mb-4">Liste de Cellules</h1>     
 
-      {/* 🔘 BOUTONS (LOGIQUE CORRECTE) */}
-      {userRole && (
-        <div className="max-w-5xl mx-auto mb-4 flex justify-end gap-4">
-
-          {/* ➕ Créer un responsable : Admin + Superviseur */}
-          {(userRole === "Administrateur" ||
-            userRole === "SuperviseurCellule") && (
-            <button
-              onClick={() => router.push("/admin/create-internal-user")}
-              className="text-white font-semibold px-4 py-2 rounded shadow text-sm
-            >
-              ➕ Créer un responsable
-            </button>
-          )}
-
-          {/* ➕ Créer une cellule : TOUS */}
-          {(userRole === "Administrateur" ||
-            userRole === "SuperviseurCellule" ||
-            userRole === "ResponsableCellule") && (
-            <button
-              onClick={() => router.push("/admin/create-cellule")}
-              className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-            >
-              ➕ Créer une cellule
-            </button>
-          )}
-
-        </div>
-      )}
+      {/* 🔘 BOUTONS (LOGIQUE CORRECTE) */}     
+        {userRole && (
+          <div className="max-w-5xl mx-auto mb-4 flex justify-end gap-4">
+        
+            {canCreateResponsable && (
+              <button
+                onClick={() => router.push("/admin/create-internal-user")}
+                className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-purple-600 hover:bg-purple-700 transition"
+              >
+                ➕ Créer un responsable
+              </button>
+            )}
+        
+            {canCreateCellule && (
+              <button
+                onClick={() => router.push("/admin/create-cellule")}
+                className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-green-600 hover:bg-green-700 transition"
+              >
+                ➕ Créer une cellule
+              </button>
+            )}
+        
+          </div>
+        )}
 
       {/* 📋 TABLE */}
       <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xl">

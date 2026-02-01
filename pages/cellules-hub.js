@@ -46,9 +46,8 @@ export default function CellulesHub() {
         style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
       >
         <HeaderPages />
-        
-       {/* Liste des Cellules */}
 
+          {/* Liste des Cellules */}
         <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6 flex-wrap">
           <Link
             href="/admin/list-cellules"
@@ -58,8 +57,20 @@ export default function CellulesHub() {
             <div className="text-lg font-bold text-gray-800 text-center">
               Liste des Cellules
             </div>
-          </Link>    
-                 
+          </Link> 
+
+              {/*Ajouter une  Cellule */}
+        <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6 flex-wrap">
+          <Link
+            href="/ajouter-membre-cellule"
+            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+          >
+            <div className="text-5xl mb-2">➕</div>
+            <div className="text-lg font-bold text-gray-800 text-center">
+              Ajouter un membre à la Cellule
+            </div>
+          </Link> 
+          
           <Link
             href="/membres-cellule"
             className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"

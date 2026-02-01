@@ -15,7 +15,6 @@ export default function ListCellules() {
   const [selectedCellule, setSelectedCellule] = useState(null);
   const [userRole, setUserRole] = useState(null);
 
-
   useEffect(() => {
     fetchCellules();
   }, []);
@@ -25,7 +24,7 @@ export default function ListCellules() {
     setMessage("");
 
     try {
-      // 🔐 Utilisateur connecté
+      // 🔐 User connecté
       const {
         data: { user },
         error: userError,
@@ -33,7 +32,7 @@ export default function ListCellules() {
 
       if (userError || !user) throw userError;
 
-      // 👤 Profil utilisateur
+      // 👤 Profil
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id, role")
@@ -41,6 +40,10 @@ export default function ListCellules() {
         .single();
 
       if (profileError) throw profileError;
+
+      // ✅ rôle NORMALISÉ
+      const role = profile.role?.trim();
+      setUserRole(role);
 
       // 📦 Requête cellules
       let query = supabase
@@ -55,8 +58,8 @@ export default function ListCellules() {
         `)
         .order("ville", { ascending: true });
 
-      // 🔒 Filtrage si Responsable de cellule
-      if (profile.role === "ResponsableCellule") {
+      // 🔒 Responsable → uniquement ses cellules
+      if (role === "ResponsableCellule") {
         query = query.eq("responsable_id", profile.id);
       }
 
@@ -72,7 +75,6 @@ export default function ListCellules() {
     }
   };
 
-  // 🔄 Mise à jour instantanée après édition
   const handleUpdated = (updated) => {
     setCellules((prev) =>
       prev.map((c) => (c.id === updated.id ? updated : c))
@@ -114,34 +116,37 @@ export default function ListCellules() {
         </h1>
       </div>
 
-      {/* ➕ Boutons admin */}
-      <div className="max-w-5xl mx-auto mb-4 flex justify-end gap-4">
+      {/* 🔘 BOUTONS (LOGIQUE CORRECTE) */}
+      {userRole && (
+        <div className="max-w-5xl mx-auto mb-4 flex justify-end gap-4">
 
-  {/* ➕ Créer un responsable */}
-  {(userRole === "Administrateur" || userRole === "SuperviseurCellule") && (
-    <button
-      onClick={() => router.push("/admin/create-internal-user")}
-      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl shadow-md transition"
-    >
-      ➕ Créer un responsable
-    </button>
-  )}
+          {/* ➕ Créer un responsable : Admin + Superviseur */}
+          {(userRole === "Administrateur" ||
+            userRole === "SuperviseurCellule") && (
+            <button
+              onClick={() => router.push("/admin/create-internal-user")}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl shadow-md transition"
+            >
+              ➕ Créer un responsable
+            </button>
+          )}
 
-  {/* ➕ Créer une cellule (visible pour TOUS) */}
-  {(userRole === "Administrateur" ||
-    userRole === "SuperviseurCellule" ||
-    userRole === "ResponsableCellule") && (
-    <button
-      onClick={() => router.push("/admin/create-cellule")}
-      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl shadow-md transition"
-    >
-      ➕ Créer une cellule
-    </button>
-  )}
+          {/* ➕ Créer une cellule : TOUS */}
+          {(userRole === "Administrateur" ||
+            userRole === "SuperviseurCellule" ||
+            userRole === "ResponsableCellule") && (
+            <button
+              onClick={() => router.push("/admin/create-cellule")}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl shadow-md transition"
+            >
+              ➕ Créer une cellule
+            </button>
+          )}
 
-</div>
+        </div>
+      )}
 
-      {/* 📋 Table */}
+      {/* 📋 TABLE */}
       <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xl">
         <div className="grid grid-cols-[2fr_2fr_2fr_2fr_auto] gap-4 px-4 py-2 bg-purple-600 text-white font-semibold">
           <span>Zone / Ville</span>
@@ -171,7 +176,7 @@ export default function ListCellules() {
               <button
                 onClick={() => setSelectedCellule(c)}
                 className="text-blue-600 hover:text-blue-800 text-xl"
-                title="Modifier la cellule"
+                title="Modifier"
               >
                 ✏️
               </button>
@@ -180,7 +185,7 @@ export default function ListCellules() {
         ))}
       </div>
 
-      {/* ✏️ Popup édition */}
+      {/* ✏️ MODAL */}
       {selectedCellule && (
         <EditCelluleModal
           cellule={selectedCellule}

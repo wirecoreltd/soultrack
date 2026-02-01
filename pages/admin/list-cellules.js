@@ -115,23 +115,23 @@ export default function ListCellules() {
       </div>
 
       {/* ➕ Boutons admin */}
-      {(userRole === "Administrateur" || userRole === "SuperviseurCellule") && (
-  <div className="max-w-5xl mx-auto mb-4 flex justify-end gap-4">
-    <button
-      onClick={() => router.push("/admin/create-internal-user")}
-      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl shadow-md transition"
-    >
-      ➕ Créer un responsable
-    </button>
-
-    <button
-      onClick={() => router.push("/admin/create-cellule")}
-      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl shadow-md transition"
-    >
-      ➕ Créer une cellule
-    </button>
-  </div>
-)}
+      <div className="max-w-5xl mx-auto mb-4 flex justify-end gap-4">        
+          {(userRole === "Administrateur" || userRole === "SuperviseurCellule") && (
+            <button
+              onClick={() => router.push("/admin/create-internal-user")}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl shadow-md transition"
+            >
+              ➕ Créer un responsable
+            </button>
+          )}
+        
+          <button
+            onClick={() => router.push("/admin/create-cellule")}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl shadow-md transition"
+          >
+            ➕ Créer une cellule
+          </button>        
+        </div>
 
       {/* 📋 Table */}
       <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xl">

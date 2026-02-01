@@ -95,7 +95,7 @@ export default function ListCellules() {
           {canCreateResponsable && (
             <button
               onClick={() => router.push("/admin/create-internal-user")}
-              className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-purple-600 hover:bg-purple-700 transition"
+              className=className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
             >
               ➕ Créer un responsable
             </button>
@@ -104,7 +104,7 @@ export default function ListCellules() {
           {canCreateCellule && (
             <button
               onClick={() => router.push("/admin/create-cellule")}
-              className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-green-600 hover:bg-green-700 transition"
+              className=className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
             >
               ➕ Créer une cellule
             </button>

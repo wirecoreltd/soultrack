@@ -79,9 +79,7 @@ export default function ListCellules() {
 
       <HeaderPages />
 
-      <h1 className="text-3xl font-bold text-center mt-2 text-purple-700">
-        Liste des cellules
-      </h1>
+      <h1 className="text-4xl text-white text-center mb-4">Liste de Cellules</h1>
 
       {/* 🔘 BOUTONS */}
       {userRole && (

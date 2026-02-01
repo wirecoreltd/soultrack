@@ -47,60 +47,61 @@ export default function CellulesHub() {
       >
         <HeaderPages />
 
-          {/* Liste des Cellules */}
-        <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6 flex-wrap">
-          <Link
-            href="/admin/list-cellules"
-            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
-          >
-            <div className="text-5xl mb-2">🏠</div>
-            <div className="text-lg font-bold text-gray-800 text-center">
-              Liste des Cellules
+         {/* Liste des Cellules */}
+            <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6 flex-wrap">
+            
+              <Link
+                href="/admin/list-cellules"
+                className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+              >
+                <div className="text-5xl mb-2">🏠</div>
+                <div className="text-lg font-bold text-gray-800 text-center">
+                  Liste des Cellules
+                </div>
+              </Link>
+            
+              <Link
+                href="/ajouter-membre-cellule"
+                className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+              >
+                <div className="text-5xl mb-2">➕</div>
+                <div className="text-lg font-bold text-gray-800 text-center">
+                  Ajouter un membre à la Cellule
+                </div>
+              </Link>
+            
+              <Link
+                href="/membres-cellule"
+                className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+              >
+                <div className="text-5xl mb-2">👥</div>
+                <div className="text-lg font-bold text-gray-800 text-center">
+                  Membres de la Cellule
+                </div>
+              </Link>
+            
+              <Link
+                href="/suivis-evangelisation"
+                className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-orange-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+              >
+                <div className="text-5xl mb-2">📋</div>
+                <div className="text-lg font-bold text-gray-800 text-center">
+                  Suivis des évangélisés
+                </div>
+              </Link>
+            
+              <Link
+                href="/suivis-membres"
+                className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+              >
+                <div className="text-5xl mb-2">📋</div>
+                <div className="text-lg font-bold text-gray-800 text-center">
+                  Suivis des membres
+                </div>
+              </Link>
+            
             </div>
-          </Link> 
 
-              {/*Ajouter une  Cellule */}
-        <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6 flex-wrap">
-          <Link
-            href="/ajouter-membre-cellule"
-            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
-          >
-            <div className="text-5xl mb-2">➕</div>
-            <div className="text-lg font-bold text-gray-800 text-center">
-              Ajouter un membre à la Cellule
-            </div>
-          </Link> 
-          
-          <Link
-            href="/membres-cellule"
-            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
-          >
-            <div className="text-5xl mb-2">👥</div>
-            <div className="text-lg font-bold text-gray-800 text-center">
-              Membres de la Cellule
-            </div>
-          </Link>
-
-          <Link
-            href="/suivis-evangelisation"
-            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-orange-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
-          >
-            <div className="text-5xl mb-2">📋</div>
-            <div className="text-lg font-bold text-gray-800 text-center">
-              Suivis des évangélisés
-            </div>
-          </Link>
-
-          <Link
-            href="/suivis-membres"
-            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
-          >
-            <div className="text-5xl mb-2">📋</div>
-            <div className="text-lg font-bold text-gray-800 text-center">
-              Suivis des membres
-            </div>
-          </Link>
-        </div>
 
         {/* 🔹 Bouton popup ajouté sous les cartes */}
         <div className="w-full max-w-md mb-10">

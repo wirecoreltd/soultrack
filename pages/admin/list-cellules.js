@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 import EditCelluleModal from "../../components/EditCelluleModal";
 import HeaderPages from "../../components/HeaderPages";
@@ -16,7 +15,6 @@ export default function ListCellules() {
   const [selectedCellule, setSelectedCellule] = useState(null);
   const [userRole, setUserRole] = useState(null);
 
-  // 🔹 useEffect pour fetch cellules
   useEffect(() => {
     fetchCellules();
   }, []);
@@ -26,11 +24,9 @@ export default function ListCellules() {
     setMessage("");
 
     try {
-      // 🔐 User connecté
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Utilisateur non connecté");
 
-      // 👤 Profil
       const { data: profile } = await supabase
         .from("profiles")
         .select("id, role")
@@ -40,13 +36,11 @@ export default function ListCellules() {
       const role = profile.role?.trim();
       setUserRole(role);
 
-      // 📦 Requête cellules
       let query = supabase
         .from("cellules")
         .select(`id, cellule, ville, responsable, telephone, responsable_id`)
         .order("ville", { ascending: true });
 
-      // 🔒 Responsable → uniquement ses cellules
       if (role === "ResponsableCellule") {
         query = query.eq("responsable_id", profile.id);
       }
@@ -61,7 +55,6 @@ export default function ListCellules() {
     }
   };
 
-  // 🔹 Permissions à utiliser dans JSX
   const canCreateResponsable =
     userRole === "Administrateur" || userRole === "SuperviseurCellule";
 
@@ -76,8 +69,10 @@ export default function ListCellules() {
     );
   };
 
-  if (loading) return <p className="text-center mt-10 text-lg">Chargement...</p>;
-  if (message) return <p className="text-center mt-10 text-red-600">{message}</p>;
+  if (loading)
+    return <p className="text-center mt-10 text-lg">Chargement...</p>;
+  if (message)
+    return <p className="text-center mt-10 text-red-600">{message}</p>;
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
@@ -95,7 +90,7 @@ export default function ListCellules() {
           {canCreateResponsable && (
             <button
               onClick={() => router.push("/admin/create-internal-user")}
-              className=className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+              className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-purple-600 hover:bg-purple-700 transition"
             >
               ➕ Créer un responsable
             </button>
@@ -104,7 +99,7 @@ export default function ListCellules() {
           {canCreateCellule && (
             <button
               onClick={() => router.push("/admin/create-cellule")}
-              className=className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+              className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-green-600 hover:bg-green-700 transition"
             >
               ➕ Créer une cellule
             </button>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 import EditCelluleModal from "../../components/EditCelluleModal";
+import HeaderPages from "../../components/HeaderPages";
 
 export default function ListCellules() {
   const router = useRouter();
@@ -100,19 +101,10 @@ export default function ListCellules() {
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
 
-      {/* ⬅️ Retour */}
-      <button
-        onClick={() => router.back()}
-        className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700"
-      >
-        ← Retour
-      </button>
-
-      {/* 🏷️ Logo + Titre */}
-      <div className="flex flex-col items-center mb-6">
-        <Image src="/logo.png" alt="Logo" width={80} height={80} />
+           <HeaderPages />
+    
         <h1 className="text-3xl font-bold text-center mt-2 text-purple-700">
-          🏠 Liste des cellules
+          Liste des cellules
         </h1>
       </div>
 

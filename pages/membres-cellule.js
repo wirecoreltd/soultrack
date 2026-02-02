@@ -316,20 +316,21 @@ export default function MembresCellule() {
         />
       )}
 
-      {editMember && (
-        <EditMemberCellulePopup
-          member={editMember}
-          onClose={() => {
-            setEditMember(null);
-            setDetailsMember(null); // <-- ferme aussi la popup détails
-          }}
-          onUpdateMember={(updatedMember) => {
-            handleUpdateMember(updatedMember);
-            setEditMember(null);
-            setDetailsMember(null); // <-- ferme aussi la popup détails
-          }}
-        />
-      )}
+      // Dans la section POPUPS
+        {editMember && (
+          <EditMemberCellulePopup
+            member={editMember}
+            onClose={() => {
+              setEditMember(null);
+              setDetailsMember(null); // <-- ferme aussi la popup détails
+            }}
+            onUpdateMember={(updatedMember) => {
+              handleUpdateMember(updatedMember);
+              setEditMember(null);
+              setDetailsMember(null); // <-- ferme aussi la popup détails
+            }}
+          />
+        )}
     </div>
   );
 }

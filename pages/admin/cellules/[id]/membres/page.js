@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import supabase from "../../../../../lib/supabaseClient"; // adapte si nécessaire
 import HeaderPages from "../../../../../components/HeaderPages";
 import EditMemberCellulePopup from "../../../../../components/EditMemberCellulePopup";
-import MemberDetailsPopup from "../../../../../components/MemberDetailsPopup";
+import DetailsCelluleMemberPopup from "../../../../../components/DetailsCelluleMemberPopup";
 
 export default function MembresParCellule() {
   const router = useRouter();
@@ -197,7 +197,7 @@ export default function MembresParCellule() {
       )}
 
       {detailsMember && (
-        <MemberDetailsPopup
+        <DetailsCelluleMemberPopup
           member={detailsMember}
           onClose={() => setDetailsMember(null)}
           getCelluleNom={() => cellule?.cellule || "—"}

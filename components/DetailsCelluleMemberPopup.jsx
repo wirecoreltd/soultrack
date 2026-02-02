@@ -38,10 +38,10 @@ export default function DetailsCelluleMemberPopup({ member, onClose, getCelluleN
         </div>
 
         {/* Bouton Modifier */}
-        <div className="mt-4 rounded-xl w-full shadow-md p-4 bg-white">
+        <div className="mt-4 rounded-xl w-full p-4 bg-white">
           <button
             onClick={() => onEdit(member)} // <-- on passe au parent
-            className="w-full py-2 rounded-md bg-white text-orange-500"
+            className="w-full py-2 rounded-md bg-white text-orange-500 shadow-md"
             >
             ✏️ Modifier le contact
           </button>

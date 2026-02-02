@@ -24,6 +24,15 @@ export default function MembresCellule() {
   const [openPhoneId, setOpenPhoneId] = useState(null);
   const phoneMenuRef = useRef(null);
 
+  // ------------------- 
+  const [view, setView] = useState(() => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("membresCelluleView") || "card";
+  }
+  return "card";
+});
+
+
   // ------------------- Close both popups -------------------
   const closeAllPopups = () => {
     setEditMember(null);
@@ -194,6 +203,18 @@ export default function MembresCellule() {
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
       </div>    
+
+      <button
+        onClick={() => {
+          const newView = view === "card" ? "table" : "card";
+          setView(newView);
+          localStorage.setItem("membresCelluleView", newView); // <-- sauvegarde
+        }}
+        className="text-sm font-semibold underline text-white"
+      >
+        {view === "card" ? "Vue Table" : "Vue Carte"}
+      </button>
+
 
       {/* ================= VUE CARTE ================= */}
       {view === "card" && (

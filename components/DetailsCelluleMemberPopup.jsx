@@ -1,7 +1,7 @@
 // components/MemberDetailsPopup.jsx
 "use client";
 
-export default function MemberDetailsPopup({ member, onClose }) {
+export default function DetailsCelluleMemberPopup({ member, onClose }) {
   if (!member) return null;
 
   return (
@@ -18,14 +18,20 @@ export default function MemberDetailsPopup({ member, onClose }) {
         <h2 className="text-2xl font-bold text-center mb-4">
           {member.prenom} {member.nom}
         </h2>
-
-        <div className="flex flex-col gap-2 text-sm">
-          <p>📞 Téléphone : {member.telephone || "—"}</p>
-          <p>🏙 Ville : {member.ville || "—"}</p>
+         <p>📞 Téléphone : {member.telephone || "—"}</p>
+         <p>🏙️ Ville : {member.ville || "—"}</p>
+         <p>🏠 Cellule : {member.cellule_nom || member.suivi_cellule_nom || "—"}</p>      
+        
+        <div className="flex flex-col gap-2 text-sm">         
           <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-          <p>📌 Cellule : {member.cellule_nom || member.suivi_cellule_nom || "—"}</p>
-          <p>📝 Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
-          <p>🎯 Besoin : {member.besoin ? JSON.parse(member.besoin).join(", ") : "—"}</p>
+          <p>🎗️ Sexe : {member.sexe || "—"}</p>
+          <p>💧 Baptême d’Eau : {toBoolean(member.bapteme_eau) ? "Oui" : "Non"}</p>
+          <p>🔥 Baptême de Feu : {toBoolean(member.bapteme_esprit) ? "Oui" : "Non"}</p>
+          <p>❓ Besoin : {member.besoin ? JSON.parse(member.besoin).join(", ") : "—"}</p>
+          <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
+          <p>🧩 Comment est-il venu : {member.venu || ""}</p>                    
+          <p>📝 Commentaire Suivis : {member.commentaire_suivis || ""}</p>
+          
         </div>
 
         <div className="flex justify-center mt-4">

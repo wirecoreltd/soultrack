@@ -315,8 +315,7 @@ export default function MembresCellule() {
           getCelluleNom={getCelluleNom}              
         />
       )}
-
-      // Dans la section POPUPS
+      
         {editMember && (
           <EditMemberCellulePopup
             member={editMember}

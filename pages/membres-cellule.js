@@ -5,7 +5,7 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
-import MemberDetailsPopup from "../components/MemberDetailsPopup";
+import MemberDetailsPopup from "../components/DetailsCelluleMemberPopup";
 import HeaderPages from "../components/HeaderPages";
 
 export default function MembresCellule() {
@@ -297,7 +297,7 @@ export default function MembresCellule() {
 
       {/* POPUPS */}
       {detailsMember && (
-        <MemberDetailsPopup
+        <DetailsCelluleMemberPopup
           member={detailsMember}
           onClose={() => setDetailsMember(null)}
           getCelluleNom={getCelluleNom}

@@ -26,33 +26,35 @@ function CelluleRow({ c, router }) {
       className={`flex flex-row items-center px-2 py-1 rounded-lg transition duration-150 gap-2 border-l-4 ${
         c.index % 2 === 0 ? "bg-white/10" : "bg-white/20"
       }`}
-      style={{ borderLeftColor: c.index % 2 === 0 ? "#06B6D4" : "#F59E0B" }}
+      style={{ borderLeftColor: "#F59E0B" }}
     >
       <div className="flex-[2] text-white text-sm">{c.ville}</div>
       <div className="flex-[2] text-white font-semibold text-sm">{c.cellule}</div>
       <div className="flex-[2] text-white font-medium text-sm">{c.responsable}</div>
 
       {/* Téléphone */}
-      <div className="flex-[2] flex flex-col justify-center items-center relative text-sm">
-        <p
-          className="text-center text-sm text-orange-500 underline cursor-pointer"
-          onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
-        >
-          {c.telephone || "—"}
-        </p>
-        {openPhoneMenu && (
-          <div
-            ref={phoneMenuRef}
-            className="absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
-            onClick={(e) => e.stopPropagation()}
+        <div className="flex-[2] flex flex-col items-center justify-center relative text-sm leading-tight">
+          <span
+            className="text-orange-500 underline cursor-pointer"
+            onClick={() => setOpenPhoneMenu(true)}
           >
-            <a href={c.telephone ? `tel:${c.telephone}` : "#"} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
-            <a href={c.telephone ? `sms:${c.telephone}` : "#"} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
-            <a href={c.telephone ? `https://wa.me/${c.telephone.replace(/\D/g,"")}?call` : "#"} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Appel WhatsApp</a>
-            <a href={c.telephone ? `https://wa.me/${c.telephone.replace(/\D/g,"")}` : "#"} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 Message WhatsApp</a>
-          </div>
-        )}
-      </div>
+            {c.telephone || "—"}
+          </span>
+        
+          {openPhoneMenu && (
+            <div
+              ref={phoneMenuRef}
+              className="absolute top-full mt-1 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <a href={`tel:${c.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
+              <a href={`sms:${c.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
+              <a href={`https://wa.me/${c.telephone?.replace(/\D/g,"")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Appel WhatsApp</a>
+              <a href={`https://wa.me/${c.telephone?.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 Message WhatsApp</a>
+            </div>
+          )}
+        </div>
+
 
       {/* Membres */}
       <div className="flex-[1] flex justify-center items-center text-sm text-white">

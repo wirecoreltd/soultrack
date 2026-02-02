@@ -319,10 +319,14 @@ export default function MembresCellule() {
       {editMember && (
         <EditMemberCellulePopup
           member={editMember}
-          onClose={closeAllPopups}          // ← ferme les 2 popups
+          onClose={() => {
+            setEditMember(null);
+            setDetailsMember(null); // <-- ferme aussi la popup détails
+          }}
           onUpdateMember={(updatedMember) => {
-            handleUpdateMember(updatedMember); // met à jour les données
-            closeAllPopups();                  // ferme les 2 popups
+            handleUpdateMember(updatedMember);
+            setEditMember(null);
+            setDetailsMember(null); // <-- ferme aussi la popup détails
           }}
         />
       )}

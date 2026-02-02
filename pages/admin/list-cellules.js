@@ -20,57 +20,53 @@ export default function ListCellules() {
   }, []);
 
   const fetchCellules = async () => {
-  setLoading(true);
-  setMessage("");
+    setLoading(true);
+    setMessage("");
 
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Utilisateur non connecté");
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Utilisateur non connecté");
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, role")
-      .eq("id", user.id)
-      .single();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, role")
+        .eq("id", user.id)
+        .single();
 
-    const role = profile.role?.trim();
-    setUserRole(role);
+      const role = profile.role?.trim();
+      setUserRole(role);
 
-    let query = supabase
-      .from("cellules")
-      .select("id, cellule, ville, responsable, telephone, responsable_id")
-      .order("ville", { ascending: true });
+      let query = supabase
+        .from("cellules")
+        .select("id, cellule, ville, responsable, telephone, responsable_id")
+        .order("ville", { ascending: true });
 
-    if (role === "ResponsableCellule") {
-      query = query.eq("responsable_id", profile.id);
+      if (role === "ResponsableCellule") {
+        query = query.eq("responsable_id", profile.id);
+      }
+
+      const { data } = await query;
+      if (!data) throw new Error("Erreur récupération cellules");
+      
+      // 🔥 OPTION 2 : compter membres par cellule (plus permissif)
+      const cellulesWithCount = await Promise.all(
+        data.map(async (c) => {
+          const { count } = await supabase
+            .from("membres_complets")
+            .select("id", { count: "exact", head: true })
+            .eq("cellule_id", c.id); // on ne filtre pas sur statut_suivis
+          return { ...c, membre_count: count || 0 };
+        })
+      );
+
+      setCellules(cellulesWithCount);
+    } catch (err) {
+      console.error(err);
+      setMessage("Erreur lors de la récupération des cellules.");
+    } finally {
+      setLoading(false);
     }
-
-    const { data: cellulesData } = await query;
-
-    // 🔢 COMPTER LES MEMBRES PAR CELLULE
-    const cellulesWithCount = await Promise.all(
-      (cellulesData || []).map(async (c) => {
-        const { count } = await supabase
-          .from("evangelises")
-          .select("id", { count: "exact", head: true })
-          .eq("cellule_id", c.id);
-
-        return {
-          ...c,
-          membersCount: count || 0,
-        };
-      })
-    );
-
-    setCellules(cellulesWithCount);
-  } catch (err) {
-    console.error(err);
-    setMessage("Erreur lors de la récupération des cellules.");
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const canCreateResponsable =
     userRole === "Administrateur" || userRole === "SuperviseurCellule";
@@ -88,17 +84,15 @@ export default function ListCellules() {
 
   if (loading)
     return <p className="text-center mt-10 text-lg text-white">Chargement...</p>;
-
   if (message)
     return <p className="text-center mt-10 text-red-600">{message}</p>;
 
   return (
     <div className="min-h-screen p-6 bg-[#333699]">
+
       <HeaderPages />
 
-      <h1 className="text-4xl text-white text-center mb-4">
-        Liste de Cellules
-      </h1>
+      <h1 className="text-4xl text-white text-center mb-4">Liste de Cellules</h1>
 
       {/* 🔘 BOUTONS */}
       {userRole && (
@@ -123,7 +117,7 @@ export default function ListCellules() {
         </div>
       )}
 
-      {/* 📋 TABLE VISUELLE */}
+      {/* 📋 Table Visuelle */}
       <div className="w-full max-w-5xl mx-auto overflow-x-auto py-2">
         <div className="min-w-[700px] space-y-2">
 
@@ -133,47 +127,42 @@ export default function ListCellules() {
             <div className="flex-[2]">Nom de la cellule</div>
             <div className="flex-[2]">Responsable</div>
             <div className="flex-[2]">Téléphone</div>
-            <div className="flex-[1] text-center">Membres</div>
+            <div className="flex-[1] flex justify-center items-center">Membres</div>
             <div className="flex-[1] flex justify-center items-center">Actions</div>
           </div>
 
           {/* Lignes */}
           {(cellules.length === 0
-            ? [{ ville: "—", cellule: "—", responsable: "—", telephone: "—" }]
+            ? [{ville: "—", cellule: "—", responsable: "—", telephone: "—", membre_count: 0}]
             : cellules
           ).map((c, index) => (
             <div
-              key={c.id || index}
+              key={index}
               className={`flex flex-row items-center px-2 py-2 rounded-lg ${
                 index % 2 === 0 ? "bg-white/10" : "bg-white/20"
               } transition duration-150 gap-2 border-l-4`}
-              style={{
-                borderLeftColor: index % 2 === 0 ? "#06B6D4" : "#F59E0B",
-              }}
+              style={{ borderLeftColor: index % 2 === 0 ? "#06B6D4" : "#F59E0B" }}
             >
               <div className="flex-[2] text-white">{c.ville}</div>
-              <div className="flex-[2] text-white font-semibold">
-                {c.cellule}
-              </div>
-              <div className="flex-[2] text-white font-medium">
-                {c.responsable}
-              </div>
-              <div className="flex-[2] text-white">
-                {c.telephone}
+              <div className="flex-[2] text-white font-semibold">{c.cellule}</div>
+              <div className="flex-[2] text-white font-medium">{c.responsable}</div>
+              <div className="flex-[2] text-white">{c.telephone}</div>
+
+              {/* Membres count + bouton voir la liste 👥 */}
+              <div className="flex-[1] flex justify-center items-center gap-2">
+                <span className="text-white font-semibold">{c.membre_count}</span>
+                {c.id && (
+                  <button
+                    onClick={() => router.push(`/admin/cellules/${c.id}/membres`)}
+                    className="text-white text-xl hover:scale-110 transition"
+                    title="Voir les membres"
+                  >
+                    👥
+                  </button>
+                )}
               </div>
 
-              {/* 👥 MEMBRES (CLIQUABLE) */}
-              <div
-                className="flex-[1] text-white text-center font-semibold cursor-pointer hover:text-cyan-300 transition"
-                title="Voir les membres"
-                onClick={() =>
-                  c.id && router.push(`/admin/membres-cellule?cellule_id=${c.id}`)
-                }
-              >
-                {c.membres?.[0]?.count ?? 0} 👥
-              </div>
-
-              {/* ✏️ ACTIONS */}
+              {/* Actions */}
               <div className="flex-[1] flex justify-center items-center">
                 <button
                   onClick={() => c.id && setSelectedCellule(c)}
@@ -185,6 +174,7 @@ export default function ListCellules() {
               </div>
             </div>
           ))}
+
         </div>
       </div>
 

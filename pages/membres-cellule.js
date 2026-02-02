@@ -156,7 +156,7 @@ export default function MembresCellule() {
         <div className="w-full max-w-4xl flex justify-center mb-2">
           <input
             type="text"
-            placeholder="Recherche..."
+            placeholder="Recherche Par Nom..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-2/3 px-3 py-1 rounded-md border text-black focus:outline-none"

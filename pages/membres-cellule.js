@@ -370,7 +370,8 @@ export default function MembresCellule() {
         <DetailsCelluleMemberPopup
           member={detailsMember}
           onClose={() => setDetailsMember(null)}
-          getCelluleNom={getCelluleNom}
+          getCelluleNom={getCelluleNom
+          toBoolean={toBoolean}              
         />
       )}
 

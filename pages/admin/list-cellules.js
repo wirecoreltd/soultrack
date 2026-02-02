@@ -47,14 +47,21 @@ export default function ListCellules() {
 
       const { data } = await query;
       if (!data) throw new Error("Erreur récupération cellules");
-      
-      // 🔥 OPTION 2 : compter membres par cellule (plus permissif)
+
+      // 🔥 COMPTE MEMBRES (même logique que dans MembresCellule)
       const cellulesWithCount = await Promise.all(
         data.map(async (c) => {
-          const { count } = await supabase
+          let membresQuery = supabase
             .from("membres_complets")
             .select("id", { count: "exact", head: true })
-            .eq("cellule_id", c.id); // on ne filtre pas sur statut_suivis
+            .eq("cellule_id", c.id)
+            .eq("statut_suivis", 3); // 🔹 même filtre que MembresCellule
+
+          if (role === "ResponsableCellule") {
+            membresQuery = membresQuery.eq("responsable_id", profile.id);
+          }
+
+          const { count } = await membresQuery;
           return { ...c, membre_count: count || 0 };
         })
       );

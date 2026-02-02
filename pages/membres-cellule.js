@@ -308,28 +308,28 @@ export default function MembresCellule() {
       )}
 
       {/* POPUPS */}
-      {detailsMember && (
-        <DetailsCelluleMemberPopup
-          member={detailsMember}
-          onClose={() => setDetailsMember(null)}
-          getCelluleNom={getCelluleNom}              
+      <DetailsCelluleMemberPopup
+        member={detailsMember}
+        onClose={() => setDetailsMember(null)}
+        getCelluleNom={getCelluleNom}
+        onEdit={(m) => {
+          setEditMember(m);       // ouvre la popup d’édition
+          setDetailsMember(null); // ferme la popup détails
+        }}
+      />
+      
+      {editMember && (
+        <EditMemberCellulePopup
+          member={editMember}
+          onClose={() => setEditMember(null)}
+          onUpdateMember={(updated) => {
+            handleUpdateMember(updated); // met à jour la liste
+            setEditMember(null);         // ferme popup édition
+            setDetailsMember(null);      // assure fermeture popup détails
+          }}
         />
       )}
-      
-        {editMember && (
-          <EditMemberCellulePopup
-            member={editMember}
-            onClose={() => {
-              setEditMember(null);
-              setDetailsMember(null); // <-- ferme aussi la popup détails
-            }}
-            onUpdateMember={(updatedMember) => {
-              handleUpdateMember(updatedMember);
-              setEditMember(null);
-              setDetailsMember(null); // <-- ferme aussi la popup détails
-            }}
-          />
-        )}
+
     </div>
   );
 }

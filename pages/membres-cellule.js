@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
 import DetailsCelluleMemberPopup from "../components/DetailsCelluleMemberPopup";
 import HeaderPages from "../components/HeaderPages";
-import { useEffect, useState, useRef } from "react";
 
 export default function MembresCellule() {
   const [membres, setMembres] = useState([]);

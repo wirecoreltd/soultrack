@@ -33,7 +33,7 @@ function CelluleRow({ c, router }) {
       <div className="flex-[2] text-white font-medium text-sm">{c.responsable}</div>
 
       {/* Téléphone */}
-      <div className="flex-[2] relative text-sm">
+      <div className="flex-[2] flex flex-col justify-center items-center relative text-sm">
         <p
           className="text-center text-sm text-orange-500 font-semibold underline cursor-pointer"
           onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
@@ -55,18 +55,18 @@ function CelluleRow({ c, router }) {
       </div>
 
       {/* Membres */}
-      <div className="flex-[1] flex justify-center items-center text-sm text-white font-semibold">
-        {c.membre_count} personne{c.membre_count > 1 ? "s" : ""}
+      <div className="flex-[1] flex justify-center items-center text-sm text-white">
+        {c.membre_count}
       </div>
 
       {/* Voir les membres */}
       <div className="flex-[1] flex justify-center items-center">
         {c.id && (
           <p
-            className="text-white text-sm underline cursor-pointer hover:text-orange-500 transition"
+            className="text-sm underline text-orange-500"
             onClick={() => router.push(`/admin/cellules/${c.id}/membres`)}
           >
-            Voir les membres
+            Détails
           </p>
         )}
       </div>
@@ -177,7 +177,7 @@ export default function ListCellules() {
             <div className="flex-[2]">Nom de la cellule</div>
             <div className="flex-[2]">Responsable</div>
             <div className="flex-[2]">Téléphone</div>
-            <div className="flex-[1] flex justify-center items-center">Membres</div>
+            <div className="flex-[1] flex justify-center items-center">Count</div>
             <div className="flex-[1] flex justify-center items-center">Actions</div>
           </div>
 

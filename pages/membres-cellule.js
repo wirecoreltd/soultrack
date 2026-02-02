@@ -21,6 +21,20 @@ export default function MembresCellule() {
   const [detailsMember, setDetailsMember] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState({});
   const toBoolean = (val) => val === true || val === "true";   
+  const [openPhoneId, setOpenPhoneId] = useState(null);
+  const phoneMenuRef = useRef(null);
+
+  // ================= 
+  useEffect(() => {
+  const handleClickOutside = (e) => {
+    if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+      setOpenPhoneId(null);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, []);
 
   // ================= FETCH =================
   useEffect(() => {
@@ -131,7 +145,6 @@ export default function MembresCellule() {
     )
   );
 
-
   if (loading) {
     return <p className="text-white mt-10 text-center">Chargement...</p>;
   }
@@ -153,39 +166,37 @@ export default function MembresCellule() {
     </h1>          
       
       {/* Recherche + filtre (centrés) */}
-<div className="w-full flex flex-col items-center mb-4 gap-2">
-
-  {/* Barre de recherche */}
-  <input
-    type="text"
-    placeholder="Recherche..."
-    value={search}
-    onChange={e => setSearch(e.target.value)}
-    className="w-full max-w-md px-3 py-2 rounded-md border text-black focus:outline-none"
-  />
-
-  {/* Filtre */}
-  <div className="flex items-center gap-3">
-    <select
-      value={filterCellule}
-      onChange={e => setFilterCellule(e.target.value)}
-      className="px-3 py-2 rounded-md border text-black text-sm"
-    >
-      <option value="">-- Toutes les cellules --</option>
-      {cellules.map(c => (
-        <option key={c.id} value={c.id}>
-          {c.cellule_full}
-        </option>
-      ))}
-    </select>
-
-    <span className="text-white text-sm">
-      {filteredMembres.length} membres
-    </span>
-  </div>
-
-</div>
-
+        <div className="w-full flex flex-col items-center mb-4 gap-2">
+        
+          {/* Barre de recherche */}
+          <input
+            type="text"
+            placeholder="Recherche..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full max-w-md px-3 py-2 rounded-md border text-black focus:outline-none"
+          />
+        
+          {/* Filtre */}
+          <div className="flex items-center gap-3">
+            <select
+              value={filterCellule}
+              onChange={e => setFilterCellule(e.target.value)}
+              className="px-3 py-2 rounded-md border text-black text-sm"
+            >
+              <option value="">-- Toutes les cellules --</option>
+              {cellules.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.cellule_full}
+                </option>
+              ))}
+            </select>
+        
+            <span className="text-white text-sm">
+              {filteredMembres.length} membres
+            </span>
+          </div>
+        </div>
       
       {/* Toggle Vue Carte / Vue Table */}
       <div className="w-full max-w-6xl flex justify-center mb-6">
@@ -211,9 +222,59 @@ export default function MembresCellule() {
                   {m.prenom} {m.nom}
                 </h2>
 
-                <p className="text-center text-orange-500 underline font-semibold">
-                  {m.telephone || ""}
-                </p>
+                {/* Téléphone */}
+                  <div className="relative text-center">
+                    <p
+                      className="text-orange-500 underline cursor-pointer font-semibold"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenPhoneId(openPhoneId === m.id ? null : m.id);
+                      }}
+                    >
+                      {m.telephone || "—"}
+                    </p>
+                  
+                    {openPhoneId === m.id && (
+                      <div
+                        ref={phoneMenuRef}
+                        className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <a
+                          href={`tel:${m.telephone}`}
+                          className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                        >
+                          📞 Appeler
+                        </a>
+                  
+                        <a
+                          href={`sms:${m.telephone}`}
+                          className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                        >
+                          ✉️ SMS
+                        </a>
+                  
+                        <a
+                          href={`https://wa.me/${m.telephone?.replace(/\D/g, "")}?call`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                        >
+                          📱 Appel WhatsApp
+                        </a>
+                  
+                        <a
+                          href={`https://wa.me/${m.telephone?.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                        >
+                          💬 Message WhatsApp
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
 
                 <p className="text-center text-sm mt-1">
                   🏙️ {m.ville || ""}
@@ -261,48 +322,48 @@ export default function MembresCellule() {
       )}
 
       {/* ================= VUE TABLE ================= */}
-{view === "table" && (
-  <div className="w-full max-w-6xl overflow-x-auto py-2 mx-auto">
-    <div className="min-w-[700px] space-y-2">
-      
-      {/* Header table */}
-      <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
-        <div className="flex-[2]">Nom complet</div>
-        <div className="flex-[1]">Téléphone</div>
-        <div className="flex-[1]">Ville</div>
-        <div className="flex-[1] flex justify-center items-center">Cellule</div>
-        <div className="flex-[1]">Action</div>
-      </div>
-
-      {/* Lignes */}
-      {filteredMembres.map(m => (
-        <div
-          key={m.id}
-          className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
-          style={{ borderLeftColor: getBorderColor(m) }}
-        >
-          <div className="flex-[2] text-white flex items-center gap-1">
-            {m.prenom} {m.nom}
+        {view === "table" && (
+          <div className="w-full max-w-6xl overflow-x-auto py-2 mx-auto">
+            <div className="min-w-[700px] space-y-2">
+              
+              {/* Header table */}
+              <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+                <div className="flex-[2]">Nom complet</div>
+                <div className="flex-[1]">Téléphone</div>
+                <div className="flex-[1]">Ville</div>
+                <div className="flex-[1] flex justify-center items-center">Cellule</div>
+                <div className="flex-[1]">Action</div>
+              </div>
+        
+              {/* Lignes */}
+              {filteredMembres.map(m => (
+                <div
+                  key={m.id}
+                  className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
+                  style={{ borderLeftColor: getBorderColor(m) }}
+                >
+                  <div className="flex-[2] text-white flex items-center gap-1">
+                    {m.prenom} {m.nom}
+                  </div>
+                  <div className="flex-[1] text-white">{m.telephone || "—"}</div>
+                  <div className="flex-[1] text-white">{m.ville || "—"}</div>
+                  <div className="flex-[1] text-white flex justify-center items-center">
+                    {getCelluleNom(m.cellule_id)}
+                  </div>
+                  <div className="flex-[1]">
+                    <button
+                      onClick={() => setDetailsMember(m)}
+                      className="text-orange-500 underline text-sm"
+                    >
+                      Détails
+                    </button>
+                  </div>
+                </div>
+              ))}
+        
+            </div>
           </div>
-          <div className="flex-[1] text-white">{m.telephone || "—"}</div>
-          <div className="flex-[1] text-white">{m.ville || "—"}</div>
-          <div className="flex-[1] text-white flex justify-center items-center">
-            {getCelluleNom(m.cellule_id)}
-          </div>
-          <div className="flex-[1]">
-            <button
-              onClick={() => setDetailsMember(m)}
-              className="text-orange-500 underline text-sm"
-            >
-              Détails
-            </button>
-          </div>
-        </div>
-      ))}
-
-    </div>
-  </div>
-)}
+        )}
 
       {/* POPUPS */}
       {detailsMember && (

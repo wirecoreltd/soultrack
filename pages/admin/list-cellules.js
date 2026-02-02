@@ -139,69 +139,53 @@ export default function ListCellules() {
           </div>
 
           {/* Lignes */}
-          {(cellules.length === 0
-            ? [{ville: "—", cellule: "—", responsable: "—", telephone: "—", membre_count: 0}]
-            : cellules
-          ).map((c, index) => (
-            <div
-              key={index}
-              className={`flex flex-row items-center px-2 py-2 rounded-lg ${
-                index % 2 === 0 ? "bg-white/10" : "bg-white/20"
-              } transition duration-150 gap-2 border-l-4`}
-              style={{ borderLeftColor: index % 2 === 0 ? "#06B6D4" : "#F59E0B" }}
-            >
-              <div className="flex-[2] text-white">{c.ville}</div>
-              <div className="flex-[2] text-white font-semibold">{c.cellule}</div>
-              <div className="flex-[2] text-white font-medium">{c.responsable}</div>
-              <div className="flex-[2] text-white">{c.telephone}</div>
-          
-              {/* Nombre de personnes */}
-              <div className="flex-[1] flex justify-center items-center">
-                <span className="text-white font-semibold">
-                  {c.membre_count} personne{c.membre_count > 1 ? "s" : ""}
-                </span>
-              </div>
-          
-              {/* Bouton Voir les membres */}
-              <div className="flex-[1] flex justify-center items-center">
-                {c.id && (
-                  <button
-                    onClick={() => router.push(`/admin/cellules/${c.id}/membres`)}
-                    className="text-white font-medium px-2 py-1 rounded bg-blue-600 hover:bg-blue-700 transition text-sm"
-                    title="Consulter les membres de cette cellule"
-                  >
-                    Voir les membres
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+         {(cellules.length === 0
+  ? [{ville: "—", cellule: "—", responsable: "—", telephone: "—", membre_count: 0}]
+  : cellules
+).map((c, index) => (
+  <div
+    key={index}
+    className={`flex flex-row items-center px-2 py-2 rounded-lg ${
+      index % 2 === 0 ? "bg-white/10" : "bg-white/20"
+    } transition duration-150 gap-2 border-l-4`}
+    style={{ borderLeftColor: index % 2 === 0 ? "#06B6D4" : "#F59E0B" }}
+  >
+    <div className="flex-[2] text-white">{c.ville}</div>
+    <div className="flex-[2] text-white font-semibold">{c.cellule}</div>
+    <div className="flex-[2] text-white font-medium">{c.responsable}</div>
+    <div className="flex-[2] text-white">{c.telephone}</div>
 
+    {/* Nombre de personnes */}
+    <div className="flex-[1] flex justify-center items-center">
+      <span className="text-white font-semibold">
+        {c.membre_count} personne{c.membre_count > 1 ? "s" : ""}
+      </span>
+    </div>
 
-              {/* Actions */}
-              <div className="flex-[1] flex justify-center items-center">
-                <button
-                  onClick={() => c.id && setSelectedCellule(c)}
-                  className="text-blue-600 hover:text-blue-800 text-xl"
-                  title="Modifier"
-                >
-                  ✏️
-                </button>
-              </div>
-            </div>
-          ))}
-
-        </div>
-      </div>
-
-      {/* ✏️ MODAL */}
-      {selectedCellule && (
-        <EditCelluleModal
-          cellule={selectedCellule}
-          onClose={() => setSelectedCellule(null)}
-          onUpdated={handleUpdated}
-        />
+    {/* Bouton Voir les membres */}
+    <div className="flex-[1] flex justify-center items-center">
+      {c.id && (
+        <button
+          onClick={() => router.push(`/admin/cellules/${c.id}/membres`)}
+          className="text-white font-medium px-2 py-1 rounded bg-blue-600 hover:bg-blue-700 transition text-sm"
+          title="Consulter les membres de cette cellule"
+        >
+          Voir les membres
+        </button>
       )}
+    </div>
+  </div>
+))}
+
+{/* ✏️ MODAL */}
+{selectedCellule && (
+  <EditCelluleModal
+    cellule={selectedCellule}
+    onClose={() => setSelectedCellule(null)}
+    onUpdated={handleUpdated}
+  />
+)}
+
     </div>
   );
 }

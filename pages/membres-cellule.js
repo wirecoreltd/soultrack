@@ -150,18 +150,7 @@ export default function MembresCellule() {
   {cellules.length > 1
     ? "Membres de mes cellules"
     : "Membre de ma cellule"}
-    </h1>
-      
-      {/* Barre de recherche */}
-        <div className="w-full max-w-4xl flex justify-center mb-2">
-          <input
-            type="text"
-            placeholder="Recherche Par Nom..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-2/3 px-3 py-1 rounded-md border text-black focus:outline-none"
-          />
-        </div>
+    </h1>          
       
       {/* Recherche + filtre (centrés) */}
 <div className="w-full flex flex-col items-center mb-4 gap-2">

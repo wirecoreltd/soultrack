@@ -1,6 +1,12 @@
 // components/MemberDetailsPopup.jsx
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import supabase from "../../lib/supabaseClient";
+import EditCelluleModal from "../../components/EditCelluleModal";
+
+
 export default function DetailsCelluleMemberPopup({ member, onClose }) {
   if (!member) return null;
 

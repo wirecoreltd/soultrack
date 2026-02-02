@@ -35,7 +35,7 @@ function CelluleRow({ c, router }) {
       {/* Téléphone */}
       <div className="flex-[2] flex flex-col justify-center items-center relative text-sm">
         <p
-          className="text-center text-sm text-orange-500 font-semibold underline cursor-pointer"
+          className="text-center text-sm text-orange-500 underline cursor-pointer"
           onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
         >
           {c.telephone || "—"}
@@ -63,7 +63,7 @@ function CelluleRow({ c, router }) {
       <div className="flex-[1] flex justify-center items-center">
         {c.id && (
           <p
-            className="text-sm underline text-orange-500"
+            className="text-sm underline text-orange-500 cursor-pointer"
             onClick={() => router.push(`/admin/cellules/${c.id}/membres`)}
           >
             Détails

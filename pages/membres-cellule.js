@@ -163,20 +163,40 @@ export default function MembresCellule() {
           />
         </div>
       
-      {/* Filtre sous la barre de recherche */}
-      <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">
-        <select
-          value={filterCellule}
-          onChange={e => setFilterCellule(e.target.value)}
-          className="px-3 py-1 rounded-md border text-black text-sm"
-        >
-          <option value="">-- Toutes les cellules --</option>
-          {cellules.map(c => (
-            <option key={c.id} value={c.id}>{c.cellule_full}</option>
-          ))}
-        </select>
-        <span className="text-white text-sm ml-2">{filteredMembres.length} membres</span>
-      </div>
+      {/* Recherche + filtre (centrés) */}
+<div className="w-full flex flex-col items-center mb-4 gap-2">
+
+  {/* Barre de recherche */}
+  <input
+    type="text"
+    placeholder="Recherche..."
+    value={search}
+    onChange={e => setSearch(e.target.value)}
+    className="w-full max-w-md px-3 py-2 rounded-md border text-black focus:outline-none"
+  />
+
+  {/* Filtre */}
+  <div className="flex items-center gap-3">
+    <select
+      value={filterCellule}
+      onChange={e => setFilterCellule(e.target.value)}
+      className="px-3 py-2 rounded-md border text-black text-sm"
+    >
+      <option value="">-- Toutes les cellules --</option>
+      {cellules.map(c => (
+        <option key={c.id} value={c.id}>
+          {c.cellule_full}
+        </option>
+      ))}
+    </select>
+
+    <span className="text-white text-sm">
+      {filteredMembres.length} membres
+    </span>
+  </div>
+
+</div>
+
       
       {/* Toggle Vue Carte / Vue Table */}
       <div className="w-full max-w-6xl flex justify-center mb-6">

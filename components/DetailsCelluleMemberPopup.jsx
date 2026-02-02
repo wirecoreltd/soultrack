@@ -3,20 +3,15 @@
 import { useState } from "react";
 import EditMemberCellulePopup from "./EditMemberCellulePopup";
 
-export default function DetailsCelluleMemberPopup({ member, onClose, getCelluleNom }) {
-  const [editMember, setEditMember] = useState(null);
-
+export default function DetailsCelluleMemberPopup({ member, onClose, getCelluleNom, onEdit }) {
   if (!member) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl overflow-y-auto max-h-[95vh] relative">
-
-        {/* Croix pour fermer */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-red-500 font-bold text-xl hover:text-red-700"
-          aria-label="Fermer"
         >
           ✕
         </button>
@@ -34,8 +29,8 @@ export default function DetailsCelluleMemberPopup({ member, onClose, getCelluleN
         <div className="flex flex-col gap-2 text-sm mt-3">         
           <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
           <p>🎗️ Sexe : {member.sexe || "—"}</p>
-          <p>💧 Baptême d’Eau : {member.bapteme_eau || "—"}</p>
-          <p>🔥 Baptême de Feu : {member.bapteme_esprit || "—"}</p>
+          <p>💧 Baptême d’Eau : {member.bapteme_eau ? "Oui" : "Non"}</p>
+          <p>🔥 Baptême de Feu : {member.bapteme_esprit ? "Oui" : "Non"}</p>
           <p>❓ Besoin : {member.besoin ? JSON.parse(member.besoin).join(", ") : "—"}</p>
           <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
           <p>🧩 Comment est-il venu : {member.venu || ""}</p>                    
@@ -43,28 +38,14 @@ export default function DetailsCelluleMemberPopup({ member, onClose, getCelluleN
         </div>
 
         {/* Bouton Modifier */}
-        <div className="flex flex-col items-center w-full p-4 bg-white rounded-lg shadow-md space-y-2">
+        <div className="flex justify-center mt-4">
           <button
-            onClick={() => setEditMember(member)}
-            className="w-full text-orange-500 text-sm py-2 rounded-md"
+            onClick={() => onEdit(member)} // <-- on passe au parent
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-2xl"
           >
             ✏️ Modifier le contact
           </button>
         </div>
-
-        {/* Popup d'édition */}
-        {editMember && (
-          <EditMemberCellulePopup
-            member={editMember}
-            onClose={() => setEditMember(null)}
-            onUpdateMember={(updated) => {
-              setEditMember(null);
-              if (typeof member.onUpdateMember === "function") {
-                member.onUpdateMember(updated);
-              }
-            }}
-          />
-        )}
       </div>
     </div>
   );

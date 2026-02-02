@@ -275,11 +275,9 @@ export default function MembresCellule() {
                     )}
                   </div>
 
-
                 <p className="text-center text-sm mt-1">
                   🏙️ {m.ville || ""}
                 </p>
-
                 <p className="text-center text-sm">
                   🏠 {getCelluleNom(m.cellule_id)}
                 </p>
@@ -364,24 +362,23 @@ export default function MembresCellule() {
             </div>
           </div>
         )}
-
-      {/* POPUPS */}
-      {detailsMember && (
-        <DetailsCelluleMemberPopup
-          member={detailsMember}
-          onClose={() => setDetailsMember(null)}
-          getCelluleNom={getCelluleNom
-          toBoolean={toBoolean}              
-        />
-      )}
-
-      {editMember && (
-        <EditMemberCellulePopup
-          member={editMember}
-          onClose={() => setEditMember(null)}
-          onUpdateMember={handleUpdateMember}
-        />
-      )}
+        
+        {/* POPUPS */}
+        {detailsMember && (
+          <DetailsCelluleMemberPopup
+            member={detailsMember}
+            onClose={() => setDetailsMember(null)}
+            getCelluleNom={getCelluleNom}              
+          />
+        )}
+        
+        {editMember && (
+          <EditMemberCellulePopup
+            member={editMember}
+            onClose={() => setEditMember(null)}
+            onUpdateMember={handleUpdateMember}
+          />
+        )}
     </div>
   );
 }

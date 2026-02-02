@@ -172,11 +172,9 @@ export default function ListCellules() {
                   >
                     Voir les membres
                   </button>
-                )}
-              </div>
+                )}             
             </div>
           ))}
-
 
               {/* Actions */}
               <div className="flex-[1] flex justify-center items-center">

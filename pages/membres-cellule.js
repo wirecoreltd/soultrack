@@ -21,8 +21,8 @@ export default function MembresCellule() {
   const [detailsMember, setDetailsMember] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState({});
   const toBoolean = (val) => val === true || val === "true";   
-  const [openPhoneId, setOpenPhoneId] = useState(null);
-  const phoneMenuRef = useRef(null);
+  //const [openPhoneId, setOpenPhoneId] = useState(null);
+  //const phoneMenuRef = useRef(null);
 
   // ================= 
   useEffect(() => {

@@ -5,7 +5,7 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
-import MemberDetailsPopup from "../components/DetailsCelluleMemberPopup";
+import DetailsCelluleMemberPopup from "../components/DetailsCelluleMemberPopup";
 import HeaderPages from "../components/HeaderPages";
 
 export default function MembresCellule() {

@@ -38,7 +38,15 @@ export default function ListCellules() {
 
       let query = supabase
         .from("cellules")
-        .select(`id, cellule, ville, responsable, telephone, responsable_id`)
+        .select(`
+          id,
+          cellule,
+          ville,
+          responsable,
+          telephone,
+          responsable_id,
+          membres:evangelises(count)
+        `)
         .order("ville", { ascending: true });
 
       if (role === "ResponsableCellule") {
@@ -71,15 +79,17 @@ export default function ListCellules() {
 
   if (loading)
     return <p className="text-center mt-10 text-lg text-white">Chargement...</p>;
+
   if (message)
     return <p className="text-center mt-10 text-red-600">{message}</p>;
 
   return (
     <div className="min-h-screen p-6 bg-[#333699]">
-
       <HeaderPages />
 
-      <h1 className="text-4xl text-white text-center mb-4">Liste de Cellules</h1>
+      <h1 className="text-4xl text-white text-center mb-4">
+        Liste de Cellules
+      </h1>
 
       {/* 🔘 BOUTONS */}
       {userRole && (
@@ -104,44 +114,68 @@ export default function ListCellules() {
         </div>
       )}
 
-      {/* 📋 Table Visuelle */}
-<div className="w-full max-w-5xl mx-auto overflow-x-auto py-2">
-  <div className="min-w-[700px] space-y-2">
+      {/* 📋 TABLE VISUELLE */}
+      <div className="w-full max-w-5xl mx-auto overflow-x-auto py-2">
+        <div className="min-w-[700px] space-y-2">
 
-    {/* Header */}
-    <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
-      <div className="flex-[2]">Zone / Ville</div>
-      <div className="flex-[2]">Nom de la cellule</div>
-      <div className="flex-[2]">Responsable</div>
-      <div className="flex-[2]">Téléphone</div>
-      <div className="flex-[1] flex justify-center items-center">Actions</div>
-    </div>
+          {/* Header */}
+          <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+            <div className="flex-[2]">Zone / Ville</div>
+            <div className="flex-[2]">Nom de la cellule</div>
+            <div className="flex-[2]">Responsable</div>
+            <div className="flex-[2]">Téléphone</div>
+            <div className="flex-[1] text-center">Membres</div>
+            <div className="flex-[1] flex justify-center items-center">Actions</div>
+          </div>
 
-    {/* Lignes */}
-    {(cellules.length === 0 ? [{ville: "—", cellule: "—", responsable: "—", telephone: "—"}] : cellules).map((c, index) => (
-      <div
-        key={index}
-        className={`flex flex-row items-center px-2 py-2 rounded-lg ${
-          index % 2 === 0 ? "bg-white/10" : "bg-white/20"
-        } transition duration-150 gap-2 border-l-4`}
-        style={{ borderLeftColor: index % 2 === 0 ? "#06B6D4" : "#F59E0B" }}
-      >
-        <div className="flex-[2] text-white">{c.ville}</div>
-        <div className="flex-[2] text-white font-semibold">{c.cellule}</div>
-        <div className="flex-[2] text-white font-medium">{c.responsable}</div>
-        <div className="flex-[2] text-white">{c.telephone}</div>
-        <div className="flex-[1] flex justify-center items-center">
-          <button
-            onClick={() => c.id && setSelectedCellule(c)}
-            className="text-blue-600 hover:text-blue-800 text-xl"
-            title="Modifier"
-          >
-            ✏️
-          </button>
+          {/* Lignes */}
+          {(cellules.length === 0
+            ? [{ ville: "—", cellule: "—", responsable: "—", telephone: "—" }]
+            : cellules
+          ).map((c, index) => (
+            <div
+              key={c.id || index}
+              className={`flex flex-row items-center px-2 py-2 rounded-lg ${
+                index % 2 === 0 ? "bg-white/10" : "bg-white/20"
+              } transition duration-150 gap-2 border-l-4`}
+              style={{
+                borderLeftColor: index % 2 === 0 ? "#06B6D4" : "#F59E0B",
+              }}
+            >
+              <div className="flex-[2] text-white">{c.ville}</div>
+              <div className="flex-[2] text-white font-semibold">
+                {c.cellule}
+              </div>
+              <div className="flex-[2] text-white font-medium">
+                {c.responsable}
+              </div>
+              <div className="flex-[2] text-white">
+                {c.telephone}
+              </div>
+
+              {/* 👥 MEMBRES (CLIQUABLE) */}
+              <div
+                className="flex-[1] text-white text-center font-semibold cursor-pointer hover:text-cyan-300 transition"
+                title="Voir les membres"
+                onClick={() =>
+                  c.id && router.push(`/admin/membres-cellule?cellule_id=${c.id}`)
+                }
+              >
+                {c.membres?.[0]?.count ?? 0} 👥
+              </div>
+
+              {/* ✏️ ACTIONS */}
+              <div className="flex-[1] flex justify-center items-center">
+                <button
+                  onClick={() => c.id && setSelectedCellule(c)}
+                  className="text-blue-600 hover:text-blue-800 text-xl"
+                  title="Modifier"
+                >
+                  ✏️
+                </button>
               </div>
             </div>
           ))}
-
         </div>
       </div>
 

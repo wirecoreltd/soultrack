@@ -6,7 +6,9 @@ import supabase from "../../lib/supabaseClient";
 import EditCelluleModal from "../../components/EditCelluleModal";
 import HeaderPages from "../../components/HeaderPages";
 
-// Sous-composant pour chaque ligne
+/* =========================
+   Ligne Cellule
+========================= */
 function CelluleRow({ c, router }) {
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
   const phoneMenuRef = useRef(null);
@@ -23,64 +25,67 @@ function CelluleRow({ c, router }) {
 
   return (
     <div
-      className={`flex flex-row items-center px-2 py-1 rounded-lg transition duration-150 gap-2 border-l-4 ${
-        c.index % 2 === 0 ? "bg-white/10" : "bg-white/20"
-      }`}
+      className="flex flex-row items-center px-2 py-2 rounded-lg gap-2 bg-white/15 border-l-4"
       style={{ borderLeftColor: "#F59E0B" }}
     >
       <div className="flex-[2] text-white text-sm">{c.ville}</div>
       <div className="flex-[2] text-white font-semibold text-sm">{c.cellule}</div>
-      <div className="flex-[2] text-white font-medium text-sm">{c.responsable}</div>
+      <div className="flex-[2] text-white text-sm">{c.responsable}</div>
 
       {/* Téléphone */}
-        <div className="flex-[2] flex items-center justify-center relative text-sm">
-          <span
-            className="text-orange-500 underline cursor-pointer leading-none"
-            onClick={() => setOpenPhoneMenu(true)}
-          >
-            {c.telephone || "—"}
-          </span>
-        
-          {openPhoneMenu && (
-            <div
-              ref={phoneMenuRef}
-              className="absolute top-full mt-1 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
-            >
-              <a href={`tel:${c.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
-              <a href={`sms:${c.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
-              <a href={`https://wa.me/${c.telephone?.replace(/\D/g,"")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Appel WhatsApp</a>
-              <a href={`https://wa.me/${c.telephone?.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 Message WhatsApp</a>
-            </div>
-          )}
-        </div>
+      <div className="flex-[2] flex justify-center relative text-sm">
+        <span
+          className="text-orange-400 underline cursor-pointer"
+          onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
+        >
+          {c.telephone || "—"}
+        </span>
 
-      {/* Membres */}
-      <div className="flex-[1] flex justify-center items-center text-sm text-white">
+        {openPhoneMenu && (
+          <div
+            ref={phoneMenuRef}
+            className="absolute top-full mt-1 bg-white rounded-lg shadow-lg border z-50 w-56"
+          >
+            <a href={`tel:${c.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">📞 Appeler</a>
+            <a href={`sms:${c.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">✉️ SMS</a>
+            <a href={`https://wa.me/${c.telephone?.replace(/\D/g, "")}?call`} target="_blank" className="block px-4 py-2 text-sm hover:bg-gray-100">📱 Appel WhatsApp</a>
+            <a href={`https://wa.me/${c.telephone?.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 text-sm hover:bg-gray-100">💬 Message WhatsApp</a>
+          </div>
+        )}
+      </div>
+
+      {/* Count */}
+      <div className="flex-[1] flex justify-center text-white text-sm">
         {c.membre_count}
       </div>
 
-      {/* Voir les membres */}
-      <div className="flex-[1] flex justify-center items-center">
-        {c.id && (
-          <p
-            className="text-sm underline text-orange-500 cursor-pointer"
-            onClick={() => router.push(`/admin/cellules/${c.id}/membres`)}
-          >
-            Détails
-          </p>
-        )}
+      {/* Action */}
+      <div className="flex-[1] flex justify-center">
+        <span
+          className="text-orange-400 underline cursor-pointer text-sm"
+          onClick={() => router.push(`/admin/cellules/${c.id}/membres`)}
+        >
+          Détails
+        </span>
       </div>
     </div>
   );
 }
 
+/* =========================
+   Page principale
+========================= */
 export default function ListCellules() {
   const router = useRouter();
+
   const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
-  const [selectedCellule, setSelectedCellule] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [selectedCellule, setSelectedCellule] = useState(null);
+
+  // 🔥 états manquants (corrige le crash)
+  const [search, setSearch] = useState("");
+  const [filterCellule, setFilterCellule] = useState("");
 
   useEffect(() => {
     fetchCellules();
@@ -88,144 +93,129 @@ export default function ListCellules() {
 
   const fetchCellules = async () => {
     setLoading(true);
-    setMessage("");
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Utilisateur non connecté");
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, role")
-        .eq("id", user.id)
-        .single();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, role")
+      .eq("id", user.id)
+      .single();
 
-      const role = profile.role?.trim();
-      setUserRole(role);
+    setUserRole(profile.role);
 
-      let query = supabase
-        .from("cellules")
-        .select("id, cellule, ville, responsable, telephone, responsable_id")
-        .order("ville", { ascending: true });
+    let query = supabase
+      .from("cellules")
+      .select("id, cellule, ville, responsable, telephone, responsable_id")
+      .order("ville");
 
-      if (role === "ResponsableCellule") query = query.eq("responsable_id", profile.id);
-
-      const { data } = await query;
-
-      const cellulesWithCount = await Promise.all(
-        data.map(async (c, index) => {
-          const { count } = await supabase
-            .from("membres_complets")
-            .select("id", { count: "exact", head: true })
-            .eq("cellule_id", c.id)
-            .eq("statut_suivis", 3);
-
-          return { ...c, membre_count: count || 0, index };
-        })
-      );
-
-      setCellules(cellulesWithCount);
-    } catch (err) {
-      console.error(err);
-      setMessage("Erreur lors de la récupération des cellules.");
-    } finally {
-      setLoading(false);
+    if (profile.role === "ResponsableCellule") {
+      query = query.eq("responsable_id", profile.id);
     }
+
+    const { data } = await query;
+
+    const withCount = await Promise.all(
+      data.map(async (c) => {
+        const { count } = await supabase
+          .from("membres_complets")
+          .select("id", { count: "exact", head: true })
+          .eq("cellule_id", c.id)
+          .eq("statut_suivis", 3);
+
+        return { ...c, membre_count: count || 0 };
+      })
+    );
+
+    setCellules(withCount);
+    setLoading(false);
   };
 
-  const canCreateResponsable = userRole === "Administrateur" || userRole === "SuperviseurCellule";
-  const canCreateCellule = userRole === "Administrateur" || userRole === "SuperviseurCellule" || userRole === "ResponsableCellule";
+  /* =========================
+     Recherche + Filtre
+  ========================= */
+  const cellulesFiltrees = cellules.filter((c) => {
+    const matchSearch =
+      c.cellule?.toLowerCase().includes(search.toLowerCase()) ||
+      c.ville?.toLowerCase().includes(search.toLowerCase()) ||
+      c.responsable?.toLowerCase().includes(search.toLowerCase());
 
-  const handleUpdated = (updated) => {
-    setCellules(prev => prev.map(c => c.id === updated.id ? updated : c));
-  };
+    const matchFilter = filterCellule ? c.id === filterCellule : true;
 
-  if (loading) return <p className="text-center mt-10 text-lg text-white">Chargement...</p>;
-  if (message) return <p className="text-center mt-10 text-red-600">{message}</p>;
+    return matchSearch && matchFilter;
+  });
+
+  if (loading) {
+    return <p className="text-center mt-10 text-white">Chargement...</p>;
+  }
 
   return (
     <div className="min-h-screen p-6 bg-[#333699]">
       <HeaderPages />
-      <h1 className="text-4xl text-white text-center mb-4">Liste de Cellules</h1>
 
-  {/* Barre de recherche */}
-      <div className="w-full max-w-4xl flex justify-center mb-2">
+      <h1 className="text-4xl text-white text-center mb-4">
+        Liste des cellules
+      </h1>
+
+      {/* Recherche */}
+      <div className="flex justify-center mb-3">
         <input
           type="text"
           placeholder="Recherche..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-2/3 px-3 py-1 rounded-md border text-black focus:outline-none"
+          className="w-full max-w-md px-3 py-2 rounded-md text-black"
         />
       </div>
 
       {/* Filtre */}
-      <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">
+      <div className="flex justify-center mb-6">
         <select
           value={filterCellule}
           onChange={(e) => setFilterCellule(e.target.value)}
-          className="px-3 py-1 rounded-md border text-black text-sm"
+          className="px-3 py-2 rounded-md text-black"
         >
-          <option value="">-- Toutes les cellules --</option>
+          <option value="">Toutes les cellules</option>
           {cellules.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.cellule_full}
+              {c.cellule}
             </option>
           ))}
         </select>
-        <span className="text-white text-sm ml-2">{filteredMembres.length} membres</span>
-      </div>  
-
-      {userRole && (
-        <div className="max-w-5xl mx-auto mb-4 flex justify-end gap-4">
-          {canCreateResponsable && (
-            <button
-              onClick={() => router.push("/admin/create-internal-user")}
-              className="text-white font-semibold px-4 py-2 rounded shadow text-sm hover:shadow-lg transition"
-            >
-              ➕ Créer un responsable
-            </button>
-          )}
-          {canCreateCellule && (
-            <button
-              onClick={() => router.push("/admin/create-cellule")}
-              className="text-white font-semibold px-4 py-2 rounded shadow text-sm hover:shadow-lg transition"
-            >
-              ➕ Créer une cellule
-            </button>
-          )}
-        </div>
-      )}
-
-      <div className="w-full max-w-5xl mx-auto overflow-x-auto py-2">
-        <div className="min-w-[700px] space-y-1">
-          {/* Header */}
-          <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
-            <div className="flex-[2]">Zone / Ville</div>
-            <div className="flex-[2]">Nom de la cellule</div>
-            <div className="flex-[2]">Responsable</div>
-            <div className="flex-[2]">Téléphone</div>
-            <div className="flex-[1] flex justify-center items-center">Count</div>
-            <div className="flex-[1] flex justify-center items-center">Actions</div>
-          </div>
-
-          {/* Lignes */}
-          {cellules.length === 0 ? (
-            <p className="text-white text-center mt-4">Aucune cellule</p>
-          ) : (
-            cellules.map(c => <CelluleRow key={c.id} c={c} router={router} />)
-          )}
-
-          {/* Modal */}
-          {selectedCellule && (
-            <EditCelluleModal
-              cellule={selectedCellule}
-              onClose={() => setSelectedCellule(null)}
-              onUpdated={handleUpdated}
-            />
-          )}
-        </div>
       </div>
+
+      {/* Tableau */}
+      <div className="max-w-6xl mx-auto space-y-2">
+        <div className="hidden sm:flex text-sm font-semibold text-white border-b pb-2">
+          <div className="flex-[2]">Ville</div>
+          <div className="flex-[2]">Cellule</div>
+          <div className="flex-[2]">Responsable</div>
+          <div className="flex-[2] text-center">Téléphone</div>
+          <div className="flex-[1] text-center">Count</div>
+          <div className="flex-[1] text-center">Action</div>
+        </div>
+
+        {cellulesFiltrees.length === 0 ? (
+          <p className="text-white text-center mt-6">Aucune cellule</p>
+        ) : (
+          cellulesFiltrees.map((c) => (
+            <CelluleRow key={c.id} c={c} router={router} />
+          ))
+        )}
+      </div>
+
+      {selectedCellule && (
+        <EditCelluleModal
+          cellule={selectedCellule}
+          onClose={() => setSelectedCellule(null)}
+          onUpdated={(updated) =>
+            setCellules((prev) =>
+              prev.map((c) => (c.id === updated.id ? updated : c))
+            )
+          }
+        />
+      )}
     </div>
   );
 }

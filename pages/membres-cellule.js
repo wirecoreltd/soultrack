@@ -24,17 +24,23 @@ export default function MembresCellule() {
   const [openPhoneId, setOpenPhoneId] = useState(null);
   const phoneMenuRef = useRef(null);
 
-  // ================= 
-  useEffect(() => {
-  const handleClickOutside = (e) => {
-    if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
-      setOpenPhoneId(null);
-    }
+  // ------------------- Close both popups -------------------
+  const closeAllPopups = () => {
+    setEditMember(null);
+    setDetailsMember(null);
   };
 
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => document.removeEventListener("mousedown", handleClickOutside);
-}, []);
+  // ================= 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+        setOpenPhoneId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // ================= FETCH =================
   useEffect(() => {
@@ -47,14 +53,12 @@ export default function MembresCellule() {
         const user = sessionData?.session?.user;
         if (!user) throw new Error("Non connecté");
 
-        // -------- PROFIL --------
         const { data: profile } = await supabase
           .from("profiles")
           .select("id, role")
           .eq("id", user.id)
           .single();
 
-        // -------- CELLULES --------
         let celluleQuery = supabase
           .from("cellules")
           .select("id, cellule_full, responsable_id");
@@ -68,33 +72,31 @@ export default function MembresCellule() {
                 
         const celluleIds = (cellulesData || []).map(c => c.id);
 
-            if (celluleIds.length === 0) {
-              setMembres([]);
-              setMessage("Aucun membre intégré");
-              return;
-            }
-            
-            // requête membres (UNE SEULE FOIS)
-            let membresQuery = supabase
-              .from("membres_complets")
-              .select("*")
-              .in("cellule_id", celluleIds)
-              .eq("statut_suivis", 3)
-              .order("created_at", { ascending: false });
-            
-            // filtre conseiller si besoin
-            if (profile.role === "Conseiller") {
-              membresQuery = membresQuery.eq("conseiller_id", profile.id);
-            }
-            
-            const { data: membresData, error } = await membresQuery;
-            if (error) throw error;
-            
-            setMembres(membresData || []);
-            
-            if (!membresData || membresData.length === 0) {
-              setMessage("Aucun membre intégré trouvé");
-            }
+        if (celluleIds.length === 0) {
+          setMembres([]);
+          setMessage("Aucun membre intégré");
+          return;
+        }
+        
+        let membresQuery = supabase
+          .from("membres_complets")
+          .select("*")
+          .in("cellule_id", celluleIds)
+          .eq("statut_suivis", 3)
+          .order("created_at", { ascending: false });
+        
+        if (profile.role === "Conseiller") {
+          membresQuery = membresQuery.eq("conseiller_id", profile.id);
+        }
+        
+        const { data: membresData, error } = await membresQuery;
+        if (error) throw error;
+        
+        setMembres(membresData || []);
+        
+        if (!membresData || membresData.length === 0) {
+          setMessage("Aucun membre intégré trouvé");
+        }
 
       } catch (err) {
         console.error(err);
@@ -124,9 +126,9 @@ export default function MembresCellule() {
   };
 
   const getBorderColor = (m) => {
-    if (m.besoin) return "#f97316";        // orange
-    if (m.is_whatsapp) return "#22c55e";   // vert
-    return "#3b82f6";                      // bleu par défaut
+    if (m.besoin) return "#f97316";
+    if (m.is_whatsapp) return "#22c55e";
+    return "#3b82f6";
   };
 
   const handleUpdateMember = (updated) => {
@@ -136,68 +138,53 @@ export default function MembresCellule() {
   };
 
   const filteredMembres = membres
-  .filter(m =>
-    (!filterCellule || m.cellule_id === filterCellule) &&
-    (!search || 
-      m.prenom.toLowerCase().includes(search.toLowerCase()) ||
-      m.nom.toLowerCase().includes(search.toLowerCase()) ||
-      (m.telephone && m.telephone.includes(search))
-    )
-  );
+    .filter(m =>
+      (!filterCellule || m.cellule_id === filterCellule) &&
+      (!search || 
+        m.prenom.toLowerCase().includes(search.toLowerCase()) ||
+        m.nom.toLowerCase().includes(search.toLowerCase()) ||
+        (m.telephone && m.telephone.includes(search))
+      )
+    );
 
-  if (loading) {
-    return <p className="text-white mt-10 text-center">Chargement...</p>;
-  }
-
-  if (message) {
-    return <p className="text-white mt-10 text-center">{message}</p>;
-  }
+  if (loading) return <p className="text-white mt-10 text-center">Chargement...</p>;
+  if (message) return <p className="text-white mt-10 text-center">{message}</p>;
 
   // ================= RENDER =================
   return (
     <div className="min-h-screen p-6" style={{ backgroundColor: "#333699" }}>
-      
       <HeaderPages />
 
-      <h1 className="text-white text-2xl font-bold text-center mb-4">{" "}
-  {cellules.length > 1
-    ? "Membres de mes cellules"
-    : "Membre de ma cellule"}
-    </h1>          
-      
-      {/* Recherche + filtre (centrés) */}
-        <div className="w-full flex flex-col items-center mb-4 gap-2">
-        
-          {/* Barre de recherche */}
-          <input
-            type="text"
-            placeholder="Recherche..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full max-w-md px-3 py-2 rounded-md border text-black focus:outline-none"
-          />
-        
-          {/* Filtre */}
-          <div className="flex items-center gap-3">
-            <select
-              value={filterCellule}
-              onChange={e => setFilterCellule(e.target.value)}
-              className="px-3 py-2 rounded-md border text-black text-sm"
-            >
-              <option value="">-- Toutes les cellules --</option>
-              {cellules.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.cellule_full}
-                </option>
-              ))}
-            </select>
-        
-            <span className="text-white text-sm">
-              {filteredMembres.length} membres
-            </span>
-          </div>
+      <h1 className="text-white text-2xl font-bold text-center mb-4">
+        {cellules.length > 1 ? "Membres de mes cellules" : "Membre de ma cellule"}
+      </h1>          
+
+      {/* Recherche + filtre */}
+      <div className="w-full flex flex-col items-center mb-4 gap-2">
+        <input
+          type="text"
+          placeholder="Recherche..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-full max-w-md px-3 py-2 rounded-md border text-black focus:outline-none"
+        />
+        <div className="flex items-center gap-3">
+          <select
+            value={filterCellule}
+            onChange={e => setFilterCellule(e.target.value)}
+            className="px-3 py-2 rounded-md border text-black text-sm"
+          >
+            <option value="">-- Toutes les cellules --</option>
+            {cellules.map(c => (
+              <option key={c.id} value={c.id}>
+                {c.cellule_full}
+              </option>
+            ))}
+          </select>
+          <span className="text-white text-sm">{filteredMembres.length} membres</span>
         </div>
-      
+      </div>
+
       {/* Toggle Vue Carte / Vue Table */}
       <div className="w-full max-w-6xl flex justify-center mb-6">
         <button
@@ -207,7 +194,7 @@ export default function MembresCellule() {
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
       </div>    
-         
+
       {/* ================= VUE CARTE ================= */}
       {view === "card" && (
         <div className="flex justify-center">
@@ -223,71 +210,36 @@ export default function MembresCellule() {
                 </h2>
 
                 {/* Téléphone */}
-                  <div className="relative text-center">
-                    <p
-                      className="text-orange-500 underline cursor-pointer font-semibold"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpenPhoneId(openPhoneId === m.id ? null : m.id);
-                      }}
+                <div className="relative text-center">
+                  <p
+                    className="text-orange-500 underline cursor-pointer font-semibold"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenPhoneId(openPhoneId === m.id ? null : m.id);
+                    }}
+                  >
+                    {m.telephone || "—"}
+                  </p>
+                  {openPhoneId === m.id && (
+                    <div
+                      ref={phoneMenuRef}
+                      className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      {m.telephone || "—"}
-                    </p>
-                  
-                    {openPhoneId === m.id && (
-                      <div
-                        ref={phoneMenuRef}
-                        className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <a
-                          href={`tel:${m.telephone}`}
-                          className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                        >
-                          📞 Appeler
-                        </a>
-                  
-                        <a
-                          href={`sms:${m.telephone}`}
-                          className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                        >
-                          ✉️ SMS
-                        </a>
-                  
-                        <a
-                          href={`https://wa.me/${m.telephone?.replace(/\D/g, "")}?call`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                        >
-                          📱 Appel WhatsApp
-                        </a>
-                  
-                        <a
-                          href={`https://wa.me/${m.telephone?.replace(/\D/g, "")}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                        >
-                          💬 Message WhatsApp
-                        </a>
-                      </div>
-                    )}
-                  </div>
+                      <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
+                      <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
+                      <a href={`https://wa.me/${m.telephone?.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Appel WhatsApp</a>
+                      <a href={`https://wa.me/${m.telephone?.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 Message WhatsApp</a>
+                    </div>
+                  )}
+                </div>
 
-                <p className="text-center text-sm mt-1">
-                  🏙️ {m.ville || ""}
-                </p>
-                <p className="text-center text-sm">
-                  🏠 {getCelluleNom(m.cellule_id)}
-                </p>
+                <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
+                <p className="text-center text-sm">🏠 {getCelluleNom(m.cellule_id)}</p>
 
                 <button
                   onClick={() =>
-                    setDetailsOpen(prev => ({
-                      ...prev,
-                      [m.id]: !prev[m.id]
-                    }))
+                    setDetailsOpen(prev => ({ ...prev, [m.id]: !prev[m.id] }))
                   }
                   className="text-orange-500 underline mt-2 block mx-auto text-sm"
                 >
@@ -320,65 +272,60 @@ export default function MembresCellule() {
       )}
 
       {/* ================= VUE TABLE ================= */}
-        {view === "table" && (
-          <div className="w-full max-w-6xl overflow-x-auto py-2 mx-auto">
-            <div className="min-w-[700px] space-y-2">
-              
-              {/* Header table */}
-              <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
-                <div className="flex-[2]">Nom complet</div>
-                <div className="flex-[1]">Téléphone</div>
-                <div className="flex-[1]">Ville</div>
-                <div className="flex-[1] flex justify-center items-center">Cellule</div>
-                <div className="flex-[1]">Action</div>
-              </div>
-        
-              {/* Lignes */}
-              {filteredMembres.map(m => (
-                <div
-                  key={m.id}
-                  className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
-                  style={{ borderLeftColor: getBorderColor(m) }}
-                >
-                  <div className="flex-[2] text-white flex items-center gap-1">
-                    {m.prenom} {m.nom}
-                  </div>
-                  <div className="flex-[1] text-white">{m.telephone || "—"}</div>
-                  <div className="flex-[1] text-white">{m.ville || "—"}</div>
-                  <div className="flex-[1] text-white flex justify-center items-center">
-                    {getCelluleNom(m.cellule_id)}
-                  </div>
-                  <div className="flex-[1]">
-                    <button
-                      onClick={() => setDetailsMember(m)}
-                      className="text-orange-500 underline text-sm"
-                    >
-                      Détails
-                    </button>
-                  </div>
-                </div>
-              ))}
-        
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto py-2 mx-auto">
+          <div className="min-w-[700px] space-y-2">
+            <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+              <div className="flex-[2]">Nom complet</div>
+              <div className="flex-[1]">Téléphone</div>
+              <div className="flex-[1]">Ville</div>
+              <div className="flex-[1] flex justify-center items-center">Cellule</div>
+              <div className="flex-[1]">Action</div>
             </div>
+
+            {filteredMembres.map(m => (
+              <div
+                key={m.id}
+                className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
+                style={{ borderLeftColor: getBorderColor(m) }}
+              >
+                <div className="flex-[2] text-white flex items-center gap-1">{m.prenom} {m.nom}</div>
+                <div className="flex-[1] text-white">{m.telephone || "—"}</div>
+                <div className="flex-[1] text-white">{m.ville || "—"}</div>
+                <div className="flex-[1] text-white flex justify-center items-center">{getCelluleNom(m.cellule_id)}</div>
+                <div className="flex-[1]">
+                  <button
+                    onClick={() => setDetailsMember(m)}
+                    className="text-orange-500 underline text-sm"
+                  >
+                    Détails
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        )}
-        
-        {/* POPUPS */}
-        {detailsMember && (
-          <DetailsCelluleMemberPopup
-            member={detailsMember}
-            onClose={() => setDetailsMember(null)}
-            getCelluleNom={getCelluleNom}              
-          />
-        )}
-        
-        {editMember && (
-          <EditMemberCellulePopup
-            member={editMember}
-            onClose={() => setEditMember(null)}
-            onUpdateMember={handleUpdateMember}
-          />
-        )}
+        </div>
+      )}
+
+      {/* POPUPS */}
+      {detailsMember && (
+        <DetailsCelluleMemberPopup
+          member={detailsMember}
+          onClose={() => setDetailsMember(null)}
+          getCelluleNom={getCelluleNom}              
+        />
+      )}
+
+      {editMember && (
+        <EditMemberCellulePopup
+          member={editMember}
+          onClose={closeAllPopups}          // ← ferme les 2 popups
+          onUpdateMember={(updatedMember) => {
+            handleUpdateMember(updatedMember); // met à jour les données
+            closeAllPopups();                  // ferme les 2 popups
+          }}
+        />
+      )}
     </div>
   );
 }

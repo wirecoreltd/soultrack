@@ -33,9 +33,9 @@ function CelluleRow({ c, router }) {
       <div className="flex-[2] text-white font-medium text-sm">{c.responsable}</div>
 
       {/* Téléphone */}
-        <div className="flex-[2] flex flex-col items-center justify-center relative text-sm leading-tight">
+        <div className="flex-[2] flex items-center justify-center relative text-sm">
           <span
-            className="text-orange-500 underline cursor-pointer"
+            className="text-orange-500 underline cursor-pointer leading-none"
             onClick={() => setOpenPhoneMenu(true)}
           >
             {c.telephone || "—"}
@@ -45,7 +45,6 @@ function CelluleRow({ c, router }) {
             <div
               ref={phoneMenuRef}
               className="absolute top-full mt-1 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
-              onClick={(e) => e.stopPropagation()}
             >
               <a href={`tel:${c.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
               <a href={`sms:${c.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
@@ -54,7 +53,6 @@ function CelluleRow({ c, router }) {
             </div>
           )}
         </div>
-
 
       {/* Membres */}
       <div className="flex-[1] flex justify-center items-center text-sm text-white">

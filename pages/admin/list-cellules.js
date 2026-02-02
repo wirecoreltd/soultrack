@@ -17,7 +17,9 @@ export default function ListCellules() {
   const [search, setSearch] = useState("");
   const [filterCellule, setFilterCellule] = useState("");
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
-  const phoneMenuRef = useRef(null);
+
+  // Ref global pour fermer le popup téléphone au clic dehors
+  const phoneMenuRefs = useRef({});
 
   useEffect(() => {
     fetchCellules();
@@ -25,7 +27,7 @@ export default function ListCellules() {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (phoneMenuRef.current && !phoneMenuRef.current.contains(event.target)) {
+      if (!Object.values(phoneMenuRefs.current).some(ref => ref?.contains(event.target))) {
         setOpenPhoneMenuId(null);
       }
     };
@@ -62,7 +64,7 @@ export default function ListCellules() {
       const { data } = await query;
       if (!data) throw new Error("Erreur récupération cellules");
 
-      // 🔥 COMPTE MEMBRES
+      // Compte membres
       const cellulesWithCount = await Promise.all(
         data.map(async (c) => {
           const { count } = await supabase
@@ -70,7 +72,6 @@ export default function ListCellules() {
             .select("id", { count: "exact", head: true })
             .eq("cellule_id", c.id)
             .eq("statut_suivis", 3);
-
           return { ...c, membre_count: count || 0 };
         })
       );
@@ -102,7 +103,6 @@ export default function ListCellules() {
 
   return (
     <div className="min-h-screen p-6 bg-[#333699]">
-
       <HeaderPages />
 
       <h1 className="text-4xl text-white text-center mb-4">Liste de Cellules</h1>
@@ -118,7 +118,7 @@ export default function ListCellules() {
         />
       </div>
 
-      {/* Filtre sous la barre de recherche */}
+      {/* Filtre */}
       <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">
         <select
           value={filterCellule}
@@ -133,7 +133,7 @@ export default function ListCellules() {
         <span className="text-white text-sm ml-2">{filteredMembres.length} membres</span>
       </div>
 
-      {/* 📋 Table */}
+      {/* Tableau */}
       <div className="w-full max-w-6xl mx-auto overflow-x-auto py-2">
         <div className="min-w-[700px] space-y-2">
 
@@ -151,11 +151,11 @@ export default function ListCellules() {
           {filteredMembres.length === 0 ? (
             <div className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 transition duration-150 gap-2 border-l-4" style={{ borderLeftColor: "#06B6D4" }}>
               <div className="flex-[2] text-white">—</div>
-              <div className="flex-[2] text-white font-semibold">—</div>
+              <div className="flex-[2] text-white">—</div>
               <div className="flex-[2] text-white font-medium">—</div>
-              <div className="flex-[2] flex flex-col justify-center items-center text-white">—</div>
-              <div className="flex-[1] flex justify-center items-center text-white font-semibold">0</div>
-              <div className="flex-[1] flex justify-center items-center text-orange-500 font-semibold">—</div>
+              <div className="flex-[2] flex justify-center items-center text-white">—</div>
+              <div className="flex-[1] flex justify-center items-center text-white">0</div>
+              <div className="flex-[1] flex justify-center items-center text-orange-500">—</div>
             </div>
           ) : (
             filteredMembres.map((c, index) => (
@@ -167,20 +167,20 @@ export default function ListCellules() {
                 style={{ borderLeftColor: index % 2 === 0 ? "#06B6D4" : "#F59E0B" }}
               >
                 <div className="flex-[2] text-white">{c.ville}</div>
-                <div className="flex-[2] text-white font-semibold">{c.cellule}</div>
+                <div className="flex-[2] text-white">{c.cellule}</div>
                 <div className="flex-[2] text-white font-medium">{c.responsable}</div>
 
                 {/* Téléphone */}
                 <div className="flex-[2] flex flex-col justify-center items-center relative">
                   <p
-                    className="text-center text-orange-500 font-semibold underline cursor-pointer"
+                    className="text-center text-orange-500 underline cursor-pointer"
                     onClick={() => setOpenPhoneMenuId(c.id)}
                   >
                     {c.telephone || "—"}
                   </p>
                   {openPhoneMenuId === c.id && (
                     <div
-                      ref={phoneMenuRef}
+                      ref={(el) => phoneMenuRefs.current[c.id] = el}
                       className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -222,7 +222,9 @@ export default function ListCellules() {
                 </div>
 
                 {/* Détails */}
-                <div className="flex-[1] flex justify-center items-center text-orange-500 font-semibold">
+                <div className="flex-[1] flex justify-center items-center text-orange-500 font-semibold cursor-pointer"
+                  onClick={() => setSelectedCellule(c)}
+                >
                   Détails
                 </div>
               </div>
@@ -243,4 +245,3 @@ export default function ListCellules() {
     </div>
   );
 }
-

@@ -5,7 +5,7 @@ import { useRouter } from "next/router"; // Pages Router
 import supabase from "../../../../../lib/supabaseClient";
 import HeaderPages from "../../../../../components/HeaderPages";
 import EditMemberCellulePopup from "../../../../../components/EditMemberCellulePopup";
-import MemberDetailsPopup from "../../../../../components/MemberDetailsPopup";
+import DetailsCelluleMemberPopup from "../../../../../components/DetailsCelluleMemberPopup";
 
 export default function MembresParCellule() {
   const router = useRouter();
@@ -180,7 +180,7 @@ export default function MembresParCellule() {
       )}
 
       {detailsMember && (
-        <MemberDetailsPopup
+        <DetailsCelluleMemberPopup
           member={detailsMember}
           onClose={() => setDetailsMember(null)}
           getCelluleNom={() => cellule?.cellule || "—"}

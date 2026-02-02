@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import supabase from "../../../lib/supabaseClient";
-import HeaderPages from "../../../components/HeaderPages";
-import EditMemberCellulePopup from "../../../components/EditMemberCellulePopup";
-import MemberDetailsPopup from "../../../components/MemberDetailsPopup";
+import supabase from "../../lib/supabaseClient";
+import HeaderPages from "../../components/HeaderPages";
+import EditMemberCellulePopup from "../../components/EditMemberCellulePopup";
+import MemberDetailsPopup from "../../components/MemberDetailsPopup";
 
 export default function MembresParCellule({ params }) {
   const router = useRouter();

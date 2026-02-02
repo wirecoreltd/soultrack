@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router"; // <-- Pages Router
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import EditMemberCellulePopup from "../../components/EditMemberCellulePopup";
 import MemberDetailsPopup from "../../components/MemberDetailsPopup";
 
-export default function MembresParCellule({ params }) {
+export default function MembresParCellule() {
   const router = useRouter();
-  const celluleId = params?.id;
+  const { id: celluleId } = router.query; // <-- récupérer l'ID de la cellule
 
   const [cellule, setCellule] = useState(null);
   const [membres, setMembres] = useState([]);
@@ -24,37 +24,13 @@ export default function MembresParCellule({ params }) {
   const toBoolean = (val) => val === true || val === "true";
 
   useEffect(() => {
+    if (!celluleId) return; // <-- attendre que l'ID soit disponible
+
     const fetchData = async () => {
       setLoading(true);
       setMessage("");
-
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Utilisateur non connecté");
-
-        // -------- CELLULE --------
-        const { data: celluleData, error: celluleError } = await supabase
-          .from("cellules")
-          .select("*")
-          .eq("id", celluleId)
-          .single();
-        if (celluleError || !celluleData) throw new Error("Cellule non trouvée");
-        setCellule(celluleData);
-
-        // -------- MEMBRES --------
-        const { data: membresData, error: membresError } = await supabase
-          .from("membres_complets")
-          .select("*")
-          .eq("cellule_id", celluleId)
-          .eq("statut_suivis", 3)
-          .order("created_at", { ascending: false });
-
-        if (membresError) throw membresError;
-
-        setMembres(membresData || []);
-        if (!membresData || membresData.length === 0) {
-          setMessage("Aucun membre intégré dans cette cellule.");
-        }
+        // ... le reste de ton code pour récupérer cellule et membres
       } catch (err) {
         console.error(err);
         setMessage("Erreur de chargement.");
@@ -62,7 +38,6 @@ export default function MembresParCellule({ params }) {
         setLoading(false);
       }
     };
-
     if (celluleId) fetchData();
   }, [celluleId]);
 

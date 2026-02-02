@@ -238,4 +238,9 @@ export default function ListCellules() {
             />
           )}
 
-        </di
+        </div>
+      </div>
+    </div>
+  );
+}
+

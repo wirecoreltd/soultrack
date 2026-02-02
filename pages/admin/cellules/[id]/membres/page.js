@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import supabase from "../../../../../lib/supabaseClient"; // adapte le chemin si nécessaire
-import HeaderPages from "../../../../../components/HeaderPages";
-import EditMemberCellulePopup from "../../../../../components/EditMemberCellulePopup";
-import MemberDetailsPopup from "../../../../../components/MemberDetailsPopup";
+import { useRouter } from "next/router";
+import supabase from "../../../lib/supabaseClient";
+import HeaderPages from "../../../components/HeaderPages";
+import EditMemberCellulePopup from "../../../components/EditMemberCellulePopup";
+import MemberDetailsPopup from "../../../components/MemberDetailsPopup";
 
-export default function MembresParCellule({ params }) {
+export default function MembresParCellule() {
   const router = useRouter();
-  const celluleId = params?.id;
+  const { id: celluleId } = router.query; // 🔹 Pages Router
 
   const [cellule, setCellule] = useState(null);
   const [membres, setMembres] = useState([]);
@@ -24,24 +24,24 @@ export default function MembresParCellule({ params }) {
   const toBoolean = (val) => val === true || val === "true";
 
   useEffect(() => {
+    if (!celluleId) return;
+
     const fetchData = async () => {
       setLoading(true);
       setMessage("");
 
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Utilisateur non connecté");
-
-        // -------- CELLULE --------
+        // CELLULE
         const { data: celluleData, error: celluleError } = await supabase
           .from("cellules")
           .select("*")
           .eq("id", celluleId)
           .single();
+
         if (celluleError || !celluleData) throw new Error("Cellule non trouvée");
         setCellule(celluleData);
 
-        // -------- MEMBRES --------
+        // MEMBRES
         const { data: membresData, error: membresError } = await supabase
           .from("membres_complets")
           .select("*")
@@ -51,9 +51,10 @@ export default function MembresParCellule({ params }) {
 
         if (membresError) throw membresError;
 
-        setMembres(membresData || []);
         if (!membresData || membresData.length === 0) {
           setMessage("Aucun membre intégré dans cette cellule.");
+        } else {
+          setMembres(membresData);
         }
       } catch (err) {
         console.error(err);
@@ -63,7 +64,7 @@ export default function MembresParCellule({ params }) {
       }
     };
 
-    if (celluleId) fetchData();
+    fetchData();
   }, [celluleId]);
 
   const handleUpdateMember = (updated) => {
@@ -83,14 +84,14 @@ export default function MembresParCellule({ params }) {
   if (message) return <p className="text-white mt-10 text-center">{message}</p>;
 
   return (
-    <div className="min-h-screen p-6" style={{ backgroundColor: "#333699" }}>
+    <div className="min-h-screen p-6 bg-[#333699]">
       <HeaderPages />
 
       <h1 className="text-white text-2xl font-bold text-center mb-4">
         Membres de la cellule : {cellule?.cellule || "—"}
       </h1>
 
-      {/* Barre de recherche */}
+      {/* Recherche */}
       <div className="w-full max-w-4xl flex justify-center mb-4">
         <input
           type="text"
@@ -101,7 +102,7 @@ export default function MembresParCellule({ params }) {
         />
       </div>
 
-      {/* Toggle Vue Carte / Table */}
+      {/* Vue carte / table */}
       <div className="w-full max-w-6xl flex justify-center mb-6">
         <button
           onClick={() => setView(view === "card" ? "table" : "card")}
@@ -111,7 +112,7 @@ export default function MembresParCellule({ params }) {
         </button>
       </div>
 
-      {/* ========== VUE CARTE ========== */}
+      {/* Carte */}
       {view === "card" && (
         <div className="flex justify-center">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
@@ -125,56 +126,22 @@ export default function MembresParCellule({ params }) {
                 <p className="text-center text-orange-500 underline font-semibold">{m.telephone || ""}</p>
                 <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
                 <p className="text-center text-sm">🏠 {cellule?.cellule || "—"}</p>
-
-                <button
-                  onClick={() =>
-                    setDetailsOpen(prev => ({ ...prev, [m.id]: !prev[m.id] }))
-                  }
-                  className="text-orange-500 underline mt-2 block mx-auto text-sm"
-                >
-                  {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
-                </button>
-
-                {detailsOpen[m.id] && (
-                  <div className="mt-3 p-3 rounded-lg text-sm space-y-1 text-left">
-                    <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p>🎗️ Sexe : {m.sexe || ""}</p>
-                    <p>💧 Baptême d’Eau : {toBoolean(m.bapteme_eau) ? "Oui" : "Non"}</p>
-                    <p>🔥 Baptême de Feu : {toBoolean(m.bapteme_esprit) ? "Oui" : "Non"}</p>
-                    <p>❓ Besoin : {m.besoin || "—"}</p>
-                    <p>📝 Infos : {m.infos_supplementaires || ""}</p>
-                    <p>🧩 Comment est-il venu : {m.venu || ""}</p>
-                    <p>📝 Commentaire Suivis : {m.commentaire_suivis || ""}</p>
-
-                    <button
-                      onClick={() => setEditMember(m)}
-                      className="text-blue-600 text-sm mt-2 block mx-auto underline"
-                    >
-                      ✏️ Modifier le contact
-                    </button>
-                  </div>
-                )}
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* ========== VUE TABLE ========== */}
+      {/* Table */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto py-2 mx-auto">
           <div className="min-w-[700px] space-y-2">
-
-            {/* Header table */}
             <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
               <div className="flex-[2]">Nom complet</div>
               <div className="flex-[1]">Téléphone</div>
               <div className="flex-[1]">Ville</div>
               <div className="flex-[1] flex justify-center items-center">Cellule</div>
-              <div className="flex-[1]">Action</div>
             </div>
-
-            {/* Lignes */}
             {filteredMembres.map(m => (
               <div
                 key={m.id}
@@ -185,36 +152,10 @@ export default function MembresParCellule({ params }) {
                 <div className="flex-[1] text-white">{m.telephone || "—"}</div>
                 <div className="flex-[1] text-white">{m.ville || "—"}</div>
                 <div className="flex-[1] text-white flex justify-center items-center">{cellule?.cellule || "—"}</div>
-                <div className="flex-[1]">
-                  <button
-                    onClick={() => setDetailsMember(m)}
-                    className="text-orange-500 underline text-sm"
-                  >
-                    Détails
-                  </button>
-                </div>
               </div>
             ))}
-
           </div>
         </div>
-      )}
-
-      {/* POPUPS */}
-      {detailsMember && (
-        <MemberDetailsPopup
-          member={detailsMember}
-          onClose={() => setDetailsMember(null)}
-          getCelluleNom={() => cellule?.cellule || "—"}
-        />
-      )}
-
-      {editMember && (
-        <EditMemberCellulePopup
-          member={editMember}
-          onClose={() => setEditMember(null)}
-          onUpdateMember={handleUpdateMember}
-        />
       )}
     </div>
   );

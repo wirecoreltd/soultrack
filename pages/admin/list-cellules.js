@@ -139,43 +139,113 @@ export default function ListCellules() {
         </div>
 
         {/* Lignes */}
-        {(cellules.length === 0
-          ? [{ville: "—", cellule: "—", responsable: "—", telephone: "—", membre_count: 0}]
-          : cellules
-        ).map((c, index) => (
+       {/* Lignes */}
+{(cellules.length === 0
+  ? [{ville: "—", cellule: "—", responsable: "—", telephone: "—", membre_count: 0}]
+  : cellules
+).map((c, index) => {
+  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
+  const phoneMenuRef = useRef(null);
+
+  // Fermer le menu si on clique à l'extérieur
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+        setOpenPhoneMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div
+      key={index}
+      className={`flex flex-row items-center px-2 py-2 rounded-lg ${
+        index % 2 === 0 ? "bg-white/10" : "bg-white/20"
+      } gap-2 border-l-4`}
+      style={{ borderLeftColor: index % 2 === 0 ? "#06B6D4" : "#F59E0B" }}
+    >
+      <div className="flex-[2] text-white text-sm">{c.ville}</div>
+      <div className="flex-[2] text-white font-semibold text-sm">{c.cellule}</div>
+      <div className="flex-[2] text-white font-medium text-sm">{c.responsable}</div>
+
+      {/* Téléphone avec popup */}
+      <div className="flex-[2] relative text-sm">
+        <p
+          className="text-center text-sm text-orange-500 font-semibold underline cursor-pointer"
+          onClick={() =>
+            setOpenPhoneMenuId(openPhoneMenuId === c.id ? null : c.id)
+          }
+        >
+          {c.telephone || "—"}
+        </p>
+        {openPhoneMenuId === c.id && (
           <div
-            key={index}
-            className={`flex flex-row items-center px-2 py-2 rounded-lg ${
-              index % 2 === 0 ? "bg-white/10" : "bg-white/20"
-            } transition duration-150 gap-2 border-l-4`}
-            style={{ borderLeftColor: index % 2 === 0 ? "#06B6D4" : "#F59E0B" }}
+            ref={phoneMenuRef}
+            className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
+            onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex-[2] text-white">{c.ville}</div>
-            <div className="flex-[2] text-white font-semibold">{c.cellule}</div>
-            <div className="flex-[2] text-white font-medium">{c.responsable}</div>
-            <div className="flex-[2] text-white">{c.telephone}</div>
-
-            {/* Nombre de personnes */}
-            <div className="flex-[1] flex justify-center items-center">
-              <span className="text-white font-semibold">
-                {c.membre_count} personne{c.membre_count > 1 ? "s" : ""}
-              </span>
-            </div>
-
-            {/* Bouton Voir les membres */}
-            <div className="flex-[1] flex justify-center items-center">
-              {c.id && (
-                <button
-                  onClick={() => router.push(`/admin/cellules/${c.id}/membres`)}
-                  className="text-white font-medium px-2 py-1 rounded bg-blue-600 hover:bg-blue-700 transition text-sm"
-                  title="Consulter les membres de cette cellule"
-                >
-                  Voir les membres
-                </button>
-              )}
-            </div>
+            <a
+              href={c.telephone ? `tel:${c.telephone}` : "#"}
+              className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+            >
+              📞 Appeler
+            </a>
+            <a
+              href={c.telephone ? `sms:${c.telephone}` : "#"}
+              className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+            >
+              ✉️ SMS
+            </a>
+            <a
+              href={
+                c.telephone
+                  ? `https://wa.me/${c.telephone.replace(/\D/g, "")}?call`
+                  : "#"
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+            >
+              📱 Appel WhatsApp
+            </a>
+            <a
+              href={
+                c.telephone
+                  ? `https://wa.me/${c.telephone.replace(/\D/g, "")}`
+                  : "#"
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+            >
+              💬 Message WhatsApp
+            </a>
           </div>
-        ))}
+        )}
+      </div>
+
+      {/* Nombre de membres */}
+      <div className="flex-[1] flex justify-center items-center text-sm text-white font-semibold">
+        {c.membre_count} personne{c.membre_count > 1 ? "s" : ""}
+      </div>
+
+      {/* Voir les membres (texte souligné, orange au hover) */}
+      <div className="flex-[1] flex justify-center items-center">
+        {c.id && (
+          <p
+            className="text-white text-sm underline cursor-pointer hover:text-orange-500 transition"
+            onClick={() => router.push(`/admin/cellules/${c.id}/membres`)}
+          >
+            Voir les membres
+          </p>
+        )}
+      </div>
+    </div>
+  );
+})}
+
       </div>
     </div>
 

@@ -20,48 +20,57 @@ export default function ListCellules() {
   }, []);
 
   const fetchCellules = async () => {
-    setLoading(true);
-    setMessage("");
+  setLoading(true);
+  setMessage("");
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Utilisateur non connecté");
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Utilisateur non connecté");
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, role")
-        .eq("id", user.id)
-        .single();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, role")
+      .eq("id", user.id)
+      .single();
 
-      const role = profile.role?.trim();
-      setUserRole(role);
+    const role = profile.role?.trim();
+    setUserRole(role);
 
-      let query = supabase
-        .from("cellules")
-        .select(`
-          id,
-          cellule,
-          ville,
-          responsable,
-          telephone,
-          responsable_id,
-          membres:evangelises(count)
-        `)
-        .order("ville", { ascending: true });
+    let query = supabase
+      .from("cellules")
+      .select("id, cellule, ville, responsable, telephone, responsable_id")
+      .order("ville", { ascending: true });
 
-      if (role === "ResponsableCellule") {
-        query = query.eq("responsable_id", profile.id);
-      }
-
-      const { data } = await query;
-      setCellules(data || []);
-    } catch (err) {
-      console.error(err);
-      setMessage("Erreur lors de la récupération des cellules.");
-    } finally {
-      setLoading(false);
+    if (role === "ResponsableCellule") {
+      query = query.eq("responsable_id", profile.id);
     }
-  };
+
+    const { data: cellulesData } = await query;
+
+    // 🔢 COMPTER LES MEMBRES PAR CELLULE
+    const cellulesWithCount = await Promise.all(
+      (cellulesData || []).map(async (c) => {
+        const { count } = await supabase
+          .from("evangelises")
+          .select("id", { count: "exact", head: true })
+          .eq("cellule_id", c.id);
+
+        return {
+          ...c,
+          membersCount: count || 0,
+        };
+      })
+    );
+
+    setCellules(cellulesWithCount);
+  } catch (err) {
+    console.error(err);
+    setMessage("Erreur lors de la récupération des cellules.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const canCreateResponsable =
     userRole === "Administrateur" || userRole === "SuperviseurCellule";

@@ -30,8 +30,8 @@ export default function DetailsCelluleMemberPopup({ member, onClose }) {
         <div className="flex flex-col gap-2 text-sm">         
           <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
           <p>🎗️ Sexe : {member.sexe || "—"}</p>
-          <p>💧 Baptême d’Eau : {m.bapteme_eau || "—"}</p>
-          <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
+          <p>💧 Baptême d’Eau : {member.bapteme_eau || "—"}</p>
+          <p>🔥 Baptême de Feu : {member.bapteme_esprit || "—"}</p>
           <p>❓ Besoin : {member.besoin ? JSON.parse(member.besoin).join(", ") : "—"}</p>
           <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
           <p>🧩 Comment est-il venu : {member.venu || ""}</p>                    

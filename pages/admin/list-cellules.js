@@ -154,20 +154,29 @@ export default function ListCellules() {
               <div className="flex-[2] text-white font-semibold">{c.cellule}</div>
               <div className="flex-[2] text-white font-medium">{c.responsable}</div>
               <div className="flex-[2] text-white">{c.telephone}</div>
-
-              {/* Membres count + bouton voir la liste 👥 */}
-              <div className="flex-[1] flex justify-center items-center gap-2">
-                <span className="text-white font-semibold">{c.membre_count}</span>
+          
+              {/* Nombre de personnes */}
+              <div className="flex-[1] flex justify-center items-center">
+                <span className="text-white font-semibold">
+                  {c.membre_count} personne{c.membre_count > 1 ? "s" : ""}
+                </span>
+              </div>
+          
+              {/* Bouton Voir les membres */}
+              <div className="flex-[1] flex justify-center items-center">
                 {c.id && (
                   <button
                     onClick={() => router.push(`/admin/cellules/${c.id}/membres`)}
-                    className="text-white text-xl hover:scale-110 transition"
-                    title="Voir les membres"
+                    className="text-white font-medium px-2 py-1 rounded bg-blue-600 hover:bg-blue-700 transition text-sm"
+                    title="Consulter les membres de cette cellule"
                   >
-                    👥
+                    Voir les membres
                   </button>
                 )}
               </div>
+            </div>
+          ))}
+
 
               {/* Actions */}
               <div className="flex-[1] flex justify-center items-center">

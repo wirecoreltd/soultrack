@@ -148,6 +148,34 @@ export default function ListCellules() {
       <HeaderPages />
       <h1 className="text-4xl text-white text-center mb-4">Liste de Cellules</h1>
 
+  {/* Barre de recherche */}
+      <div className="w-full max-w-4xl flex justify-center mb-2">
+        <input
+          type="text"
+          placeholder="Recherche..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-2/3 px-3 py-1 rounded-md border text-black focus:outline-none"
+        />
+      </div>
+
+      {/* Filtre */}
+      <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">
+        <select
+          value={filterCellule}
+          onChange={(e) => setFilterCellule(e.target.value)}
+          className="px-3 py-1 rounded-md border text-black text-sm"
+        >
+          <option value="">-- Toutes les cellules --</option>
+          {cellules.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.cellule_full}
+            </option>
+          ))}
+        </select>
+        <span className="text-white text-sm ml-2">{filteredMembres.length} membres</span>
+      </div>  
+
       {userRole && (
         <div className="max-w-5xl mx-auto mb-4 flex justify-end gap-4">
           {canCreateResponsable && (

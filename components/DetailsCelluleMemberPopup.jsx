@@ -43,10 +43,10 @@ export default function DetailsCelluleMemberPopup({ member, onClose, getCelluleN
         </div>
 
         {/* Bouton Modifier */}
-        <div className="flex justify-center mt-4">
+        <div className="flex flex-col items-center w-full p-4 bg-white rounded-lg shadow-md space-y-2">
           <button
             onClick={() => setEditMember(member)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-2xl"
+            className="w-full text-orange-500 text-sm py-2 rounded-md"
           >
             ✏️ Modifier le contact
           </button>

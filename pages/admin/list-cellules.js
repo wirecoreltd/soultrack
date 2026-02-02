@@ -29,7 +29,7 @@ function CelluleRow({ c, router }) {
       style={{ borderLeftColor: "#F59E0B" }}
     >
       <div className="flex-[2] text-white text-sm">{c.ville}</div>
-      <div className="flex-[2] text-white font-semibold text-sm">{c.cellule}</div>
+      <div className="flex-[2] text-white font-semibold text-sm">{c.cellule_full}</div>
       <div className="flex-[2] text-white text-sm">{c.responsable}</div>
 
       {/* Téléphone */}
@@ -83,7 +83,7 @@ export default function ListCellules() {
   const [userRole, setUserRole] = useState(null);
   const [selectedCellule, setSelectedCellule] = useState(null);
 
-  // 🔥 états manquants (corrige le crash)
+  // 🔍 Recherche & filtre
   const [search, setSearch] = useState("");
   const [filterCellule, setFilterCellule] = useState("");
 
@@ -107,8 +107,8 @@ export default function ListCellules() {
 
     let query = supabase
       .from("cellules")
-      .select("id, cellule, ville, responsable, telephone, responsable_id")
-      .order("ville");
+      .select("id, cellule_full, ville, responsable, telephone, responsable_id")
+      .order("cellule_full");
 
     if (profile.role === "ResponsableCellule") {
       query = query.eq("responsable_id", profile.id);
@@ -134,14 +134,16 @@ export default function ListCellules() {
 
   /* =========================
      Recherche + Filtre
+     (cellule_full uniquement)
   ========================= */
   const cellulesFiltrees = cellules.filter((c) => {
-    const matchSearch =
-      c.cellule?.toLowerCase().includes(search.toLowerCase()) ||
-      c.ville?.toLowerCase().includes(search.toLowerCase()) ||
-      c.responsable?.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = c.cellule_full
+      ?.toLowerCase()
+      .includes(search.toLowerCase());
 
-    const matchFilter = filterCellule ? c.id === filterCellule : true;
+    const matchFilter = filterCellule
+      ? c.cellule_full === filterCellule
+      : true;
 
     return matchSearch && matchFilter;
   });
@@ -162,7 +164,7 @@ export default function ListCellules() {
       <div className="flex justify-center mb-3">
         <input
           type="text"
-          placeholder="Recherche..."
+          placeholder="Chercher par cellule..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full max-w-md px-3 py-2 rounded-md text-black"
@@ -178,8 +180,8 @@ export default function ListCellules() {
         >
           <option value="">Toutes les cellules</option>
           {cellules.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.cellule}
+            <option key={c.id} value={c.cellule_full}>
+              {c.cellule_full}
             </option>
           ))}
         </select>

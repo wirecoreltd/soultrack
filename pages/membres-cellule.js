@@ -7,6 +7,7 @@ import LogoutLink from "../components/LogoutLink";
 import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
 import DetailsCelluleMemberPopup from "../components/DetailsCelluleMemberPopup";
 import HeaderPages from "../components/HeaderPages";
+import { useEffect, useState, useRef } from "react";
 
 export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
@@ -21,8 +22,8 @@ export default function MembresCellule() {
   const [detailsMember, setDetailsMember] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState({});
   const toBoolean = (val) => val === true || val === "true";   
-  //const [openPhoneId, setOpenPhoneId] = useState(null);
-  //const phoneMenuRef = useRef(null);
+  const [openPhoneId, setOpenPhoneId] = useState(null);
+  const phoneMenuRef = useRef(null);
 
   // ================= 
   useEffect(() => {

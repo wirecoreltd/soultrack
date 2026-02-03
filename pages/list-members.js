@@ -157,15 +157,22 @@ export default function ListMembers() {
   setLoading(true);
   try {
     let query = supabase
-      .from("membres_complets")
-      .select("*")
-      .neq("etat_contact", "supprime")
-      // Filtre automatique par église de l'utilisateur
-      .eq("eglise_id", profile?.eglise_id || "") 
-      .order("created_at", { ascending: false });
+  .from("membres_complets")
+  .select("*")
+  .neq("etat_contact", "supprime")
+  // Filtre par église uniquement si profile.eglise_id existe
+if (profile?.eglise_id) {
+  query = query.eq("eglise_id", profile.eglise_id);
+}
 
-    if (conseillerIdFromUrl) query = query.eq("conseiller_id", conseillerIdFromUrl);
-    else if (profile?.role === "Conseiller") query = query.eq("conseiller_id", profile.id);
+if (conseillerIdFromUrl) {
+  query = query.eq("conseiller_id", conseillerIdFromUrl);
+} else if (profile?.role === "Conseiller") {
+  query = query.eq("conseiller_id", profile.id);
+}
+
+query = query.order("created_at", { ascending: false });
+
 
     const { data, error } = await query;
     if (error) throw error;

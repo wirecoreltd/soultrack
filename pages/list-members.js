@@ -188,12 +188,21 @@ export default function ListMembers() {
     showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
   };
 
-  useEffect(() => {
+    useEffect(() => {
     const handleClickOutside = (e) => {
-      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+      if (
+        phoneMenuRef.current &&
+        !phoneMenuRef.current.contains(e.target)
+      ) {
         setOpenPhoneId(null);
       }
     };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -403,8 +412,7 @@ export default function ListMembers() {
                         >
                           💬 Message WhatsApp
                         </a>
-                      </div>
-                    </div>
+                      </div>                    
                     )}
                   </>
                 ) : (

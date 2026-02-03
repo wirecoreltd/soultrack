@@ -307,7 +307,7 @@ return (
                   {openPhoneMenuId === m.id && (
                     <div
                       ref={phoneMenuRef}
-                      className="phone-menu absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56"                     
+                      className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <a

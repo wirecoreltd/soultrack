@@ -10,8 +10,17 @@ import DetailsSuivisPopup from "../components/DetailsSuivisPopup";
 import { useMembers } from "../context/MembersContext";
 import { useRouter } from "next/navigation";
 import HeaderPages from "../components/HeaderPages";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function SuivisMembres() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
+      <SuivisMembresContent />
+    </ProtectedRoute>
+  );
+}
+
+  function SuivisMembresContent() {
   const router = useRouter();
   const { members, setAllMembers, updateMember } = useMembers();
 

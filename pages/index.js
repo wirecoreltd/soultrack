@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import supabase from "../lib/supabaseClient";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 const roleCards = {
   Administrateur: [
@@ -29,8 +30,23 @@ const roleCards = {
 };
 
 export default function IndexPage() {
+    return (
+    <ProtectedRoute allowedRoles={[
+      "Administrateur",
+      "ResponsableIntegration",
+      "ResponsableEvangelisation",
+      "ResponsableCellule",
+      "SuperviseurCellule",
+      "Conseiller"
+    ]}>
+      <IndexContent />  {/* ← Nouveau composant séparé pour le contenu */}
+    </ProtectedRoute>
+  );
+}
+  function IndexContent() {
   const [roles, setRoles] = useState([]);
   const router = useRouter();
+
 
   useEffect(() => {
     const storedRoles = localStorage.getItem("userRole");

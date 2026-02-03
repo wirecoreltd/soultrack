@@ -157,13 +157,24 @@ export default function ListMembers() {
   setLoading(true);
   try {
     let query = supabase
-      .from("membres_complets")
-      .select("*")
-      .neq("etat_contact", "supprime");
+  .from("membres_complets")
+  .select("*")
+  .neq("etat_contact", "supprime");
 
-    // ⚡ Filtre église : seulement pour Conseiller ou ResponsableCellule
-    if (profile?.eglise_id && ["Conseiller", "ResponsableCellule"].includes(profile.role)) {
-      query = query.eq("eglise_id", profile.eglise_id);
+// ⚡ Filtre église pour **tous les profils**, admin inclus
+if (profile?.eglise_id) {
+  query = query.eq("eglise_id", profile.eglise_id);
+}
+
+// Filtre supplémentaire par conseiller si l'URL contient conseiller_id
+if (conseillerIdFromUrl) {
+  query = query.eq("conseiller_id", conseillerIdFromUrl);
+} else if (profile?.role === "Conseiller") {
+  query = query.eq("conseiller_id", profile.id);
+}
+
+query = query.order("created_at", { ascending: false });
+
     }
 
     // Filtre par conseiller si l'URL contient conseiller_id

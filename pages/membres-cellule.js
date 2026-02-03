@@ -6,9 +6,18 @@ import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
 import DetailsCelluleMemberPopup from "../components/DetailsCelluleMemberPopup";
+import ProtectedRoute from "../components/ProtectedRoute"
 import HeaderPages from "../components/HeaderPages";
 
 export default function MembresCellule() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableCellule", "SuperviseurCellule"]}>
+      <MembresCelluleContent />
+    </ProtectedRoute>
+  );
+}
+
+  function MembresCelluleContent() {
   const [membres, setMembres] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [filterCellule, setFilterCellule] = useState("");

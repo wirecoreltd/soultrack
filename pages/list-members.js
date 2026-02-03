@@ -173,16 +173,7 @@ if (conseillerIdFromUrl) {
 } else if (profile?.role === "Conseiller") {
   query = query.eq("conseiller_id", profile.id);
 }
-
-query = query.order("created_at", { ascending: false });
-
-    }
-
-    // Filtre par conseiller si l'URL contient conseiller_id
-    if (conseillerIdFromUrl) {
-      query = query.eq("conseiller_id", conseillerIdFromUrl);
-    } else if (profile?.role === "Conseiller") {
-      query = query.eq("conseiller_id", profile.id);
+query = query.order("created_at", { ascending: false });    
     }
 
     const { data, error } = await query.order("created_at", { ascending: false });

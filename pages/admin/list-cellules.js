@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
 import EditCelluleModal from "../../components/EditCelluleModal";
 import HeaderPages from "../../components/HeaderPages";
+import ProtectedRoute from "../../components/ProtectedRoute"; 
 
 /* =========================
    Ligne Cellule
@@ -76,8 +77,15 @@ function CelluleRow({ c, router }) {
    Page principale
 ========================= */
 export default function ListCellules() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableCellule", "SuperviseurCellule"]}>
+      <ListCellulesContent />
+    </ProtectedRoute>
+  );
+}
+  
+  function ListCellulesContent() {
   const router = useRouter();
-
   const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);

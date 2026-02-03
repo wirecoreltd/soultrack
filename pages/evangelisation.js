@@ -5,8 +5,17 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import EditEvangelisePopup from "../components/EditEvangelisePopup";
 import DetailsEvangePopup from "../components/DetailsEvangePopup";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function Evangelisation() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableEvangelisation"]}>
+      <EvangelisationContent />
+    </ProtectedRoute>
+  );
+}
+
+  function EvangelisationContent() {
   const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);

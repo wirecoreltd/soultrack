@@ -190,19 +190,18 @@ export default function ListMembers() {
 
     useEffect(() => {
     const handleClickOutside = (e) => {
-      if (
-        phoneMenuRef.current &&
-        !phoneMenuRef.current.contains(e.target)
-      ) {
+      // si on clique EN DEHORS d’un menu téléphone
+      if (!e.target.closest(".phone-menu-container")) {
         setOpenPhoneId(null);
       }
     };
+  
     document.addEventListener("mousedown", handleClickOutside);
+  
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -366,7 +365,7 @@ export default function ListMembers() {
             </h2>
     
             {/* Téléphone */}
-              <div className="relative text-center mt-2">
+              <div className="relative text-center mt-2 phone-menu-container">
                 {m.telephone ? (
                   <>
                     <p
@@ -382,7 +381,7 @@ export default function ListMembers() {
                     {openPhoneId === m.id && (
                       <div
                         className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56"
-                        onClick={(e) => e.stopPropagation()}
+                        //onClick={(e) => e.stopPropagation()}
                       >
                         <a
                           href={`tel:${m.telephone}`}

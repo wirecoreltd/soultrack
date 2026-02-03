@@ -53,11 +53,9 @@ export default function ListMembers() {
   const [selectedMember, setSelectedMember] = useState(null);
   const { members, setAllMembers } = useMembers();
   const [openPhoneId, setOpenPhoneId] = useState(null);
-  const phoneMenuRef = useRef(null);  
+  const phoneMenuRef = useRef(null);
+  
   const router = useRouter();
-  const [egliseId, setEgliseId] = useState(null);
-  const [loading, setLoading] = useState(true);
-    
 
   const [view, setView] = useState(() => {
   if (typeof window !== "undefined") {
@@ -199,50 +197,6 @@ export default function ListMembers() {
     showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
   };
 
-    const [members, setMembers] = useState([]);
-
-useEffect(() => {
-  if (!egliseId) return; // n’exécute que si on a l’eglise_id
-
-  const fetchMembers = async () => {
-    const { data, error } = await supabase
-      .from("membres_complets")
-      .select("*")
-      .eq("eglise_id", egliseId)  // 🔹 filtre correct
-      .order("created_at", { ascending: false });
-
-    if (!error) setMembers(data);
-    else console.error("Erreur récupération membres :", error.message);
-  };
-
-  fetchMembers();
-}, [egliseId]);
-
-    //---------Récupérer l’eglise_id---------//
-    const [egliseId, setEgliseId] = useState(null);
-const [loading, setLoading] = useState(true);
-
-useEffect(() => {
-  const fetchEgliseId = async () => {
-    const { data: session } = await supabase.auth.getSession();
-    if (!session?.session?.user) return;
-
-    const { data: profile, error } = await supabase
-      .from("profiles")
-      .select("eglise_id")
-      .eq("id", session.session.user.id)
-      .single();
-
-    if (!error && profile) setEgliseId(profile.eglise_id);
-    else console.error("Erreur récupération eglise_id :", error?.message);
-
-    setLoading(false);
-  };
-
-  fetchEgliseId();
-}, []);
-
-    
     useEffect(() => {
     const handleClickOutside = (e) => {
       // si on clique EN DEHORS d’un menu téléphone

@@ -154,27 +154,30 @@ export default function ListMembers() {
 
   // -------------------- Fetch data --------------------
   const fetchMembers = async (profile = null) => {
-    setLoading(true);
-    try {
-      let query = supabase
-        .from("membres_complets")
-        .select("*")
-        .neq("etat_contact", "supprime")
-        .order("created_at", { ascending: false });
+  setLoading(true);
+  try {
+    let query = supabase
+      .from("membres_complets")
+      .select("*")
+      .neq("etat_contact", "supprime")
+      // Filtre automatique par église de l'utilisateur
+      .eq("eglise_id", profile?.eglise_id || "") 
+      .order("created_at", { ascending: false });
 
-      if (conseillerIdFromUrl) query = query.eq("conseiller_id", conseillerIdFromUrl);
-      else if (profile?.role === "Conseiller") query = query.eq("conseiller_id", profile.id);
+    if (conseillerIdFromUrl) query = query.eq("conseiller_id", conseillerIdFromUrl);
+    else if (profile?.role === "Conseiller") query = query.eq("conseiller_id", profile.id);
 
-      const { data, error } = await query;
-      if (error) throw error;
-      setAllMembers(data || []);
-    } catch (err) {
-      console.error("Erreur fetchMembers:", err);
-      setAllMembers([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const { data, error } = await query;
+    if (error) throw error;
+    setAllMembers(data || []);
+  } catch (err) {
+    console.error("Erreur fetchMembers:", err);
+    setAllMembers([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const fetchCellules = async () => {
     const { data, error } = await supabase.from("cellules").select("id, cellule_full");

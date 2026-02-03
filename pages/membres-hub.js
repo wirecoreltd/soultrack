@@ -7,8 +7,16 @@ import SendLinkPopup from "../components/SendLinkPopup";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import HeaderPages from "../components/HeaderPages";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function MembresHub() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
+      <MembresHubContent />
+    </ProtectedRoute>
+  );
+}
+  function MembresHubContent() {
   const router = useRouter();
   const [userName, setUserName] = useState("");
 

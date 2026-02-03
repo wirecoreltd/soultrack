@@ -163,8 +163,8 @@ export default function ListMembers() {
 
     // Filtre par église uniquement pour les utilisateurs "Conseiller" ou "ResponsableCellule"
     if (profile && ["Conseiller", "ResponsableCellule"].includes(profile.role) && profile.eglise_id) {
-      query = query.eq("eglise_id", profile.eglise_id);
-    }
+  query = query.eq("eglise_id", profile.eglise_id);
+}
 
     // Filtre par conseiller si besoin
     if (conseillerIdFromUrl) {
@@ -247,30 +247,44 @@ export default function ListMembers() {
 
   // -------------------- useEffect initial --------------------
   useEffect(() => {
-    const fetchSessionAndProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
+  const fetchSessionAndProfile = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    setSession(session);
 
-      if (session?.user) {
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("id, prenom, role")
-          .eq("id", session.user.id)
-          .single();
-        if (!profileError) {
-          setPrenom(profileData.prenom || "");
-          await fetchMembers(profileData);
-        } else console.error(profileError);
-      } else {
-        await fetchMembers();
+    if (session?.user) {
+      const { data: profileData, error } = await supabase
+        .from("profiles")
+        .select("id, prenom, role, eglise_id")
+        .eq("id", session.user.id)
+        .single();
+
+      if (error) {
+        console.error(error);
+        await fetchMembers(); // fallback
+        return;
       }
 
-      fetchCellules();
-      fetchConseillers();
-    };
+      if (!profileData) {
+        await fetchMembers(); // fallback
+        return;
+      }
 
-    fetchSessionAndProfile();
-  }, []);
+      // stocker profile avec eglise_id
+      setPrenom(profileData.prenom || "");
+      
+      // ⚡ Appliquer filtre église seulement si eglise_id existe
+      await fetchMembers(profileData); 
+    } else {
+      await fetchMembers(); // aucun filtre si pas de session
+    }
+
+    fetchCellules();
+    fetchConseillers();
+  };
+
+  fetchSessionAndProfile();
+}, []);
+
 
   // -------------------- Realtime --------------------
   useEffect(() => {

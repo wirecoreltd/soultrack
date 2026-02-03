@@ -365,7 +365,7 @@ export default function Evangelisation() {
                     </div>
                   </div>
                 )}
-              </div> {/* <-- cette div ferme chaque membre */}
+              </div>
             ))}
           </div>
         )}

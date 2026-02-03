@@ -39,33 +39,35 @@ export default function AddEvangelise({ onNewEvangelise }) {
     "Paix",
   ];
 
-  // 🔹 Récupérer eglise_id de l'utilisateur connecté
+  // ✅ Récupérer l'eglise_id de l'utilisateur connecté
   useEffect(() => {
     const fetchUserEglise = async () => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) return;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+      if (!userId) return;
 
       const { data: profile, error } = await supabase
         .from("profiles")
         .select("eglise_id")
-        .eq("id", session.session.user.id)
+        .eq("id", userId)
         .single();
 
       if (!error && profile) {
-        setFormData(prev => ({ ...prev, eglise_id: profile.eglise_id }));
+        setFormData((prev) => ({ ...prev, eglise_id: profile.eglise_id }));
+      } else {
+        console.error("Erreur récupération eglise_id :", error?.message);
       }
     };
 
     fetchUserEglise();
   }, []);
 
-  // 🔹 Vérification du token
+  // ✅ Vérification du token
   useEffect(() => {
     if (!token) return;
 
     const verifyToken = async () => {
       setLoading(true);
-
       const { data, error } = await supabase
         .from("access_tokens")
         .select("*")
@@ -73,9 +75,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
         .gte("expires_at", new Date().toISOString())
         .single();
 
-      if (error || !data) {
-        setErrorMsg("Lien invalide ou expiré.");
-      }
+      if (error || !data) setErrorMsg("Lien invalide ou expiré.");
       setLoading(false);
     };
 
@@ -84,11 +84,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
   const handleBesoinChange = (value) => {
     let updated = [...formData.besoin];
-    if (updated.includes(value)) {
-      updated = updated.filter((b) => b !== value);
-    } else {
-      updated.push(value);
-    }
+    if (updated.includes(value)) updated = updated.filter((b) => b !== value);
+    else updated.push(value);
     setFormData({ ...formData, besoin: updated });
   };
 
@@ -96,9 +93,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     e.preventDefault();
 
     const finalBesoins = [...formData.besoin];
-    if (showOtherField && otherBesoin.trim()) {
-      finalBesoins.push(otherBesoin.trim());
-    }
+    if (showOtherField && otherBesoin.trim()) finalBesoins.push(otherBesoin.trim());
 
     const finalData = {
       nom: formData.nom.trim(),
@@ -108,15 +103,18 @@ export default function AddEvangelise({ onNewEvangelise }) {
       statut: "evangelisé",
       sexe: formData.sexe || null,
       priere_salut: formData.priere_salut === "Oui",
-      type_conversion: formData.priere_salut === "Oui" ? formData.type_conversion || null : null,
+      type_conversion:
+        formData.priere_salut === "Oui" ? formData.type_conversion || null : null,
       besoin: finalBesoins,
       infos_supplementaires: formData.infos_supplementaires || null,
       is_whatsapp: formData.is_whatsapp,
       eglise_id: formData.eglise_id,
+      token: token || null, // conserve le token pour le lien
     };
 
+    console.log("Données envoyées :", finalData); // ✅ Vérifie ici
+
     try {
-      // 🔹 Insert évangélisé
       const { data: newEvangelise, error: insertError } = await supabase
         .from("evangelises")
         .insert([finalData])
@@ -125,53 +123,12 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
       if (insertError) throw insertError;
 
-      // 🔹 Mise à jour rapport du jour
-      const today = new Date().toISOString().slice(0, 10);
-      const hommes = formData.sexe === "Homme" ? 1 : 0;
-      const femmes = formData.sexe === "Femme" ? 1 : 0;
-      const priere = formData.priere_salut === "Oui" ? 1 : 0;
-      const nouveau_converti =
-        formData.type_conversion === "Nouveau converti" ? 1 : 0;
-      const reconciliation =
-        formData.type_conversion === "Réconciliation" ? 1 : 0;
-
-      const { data: existingReport, error: fetchError } = await supabase
-        .from("rapport_evangelisation")
-        .select("*")
-        .eq("date", today)
-        .single();
-
-      if (fetchError && fetchError.code !== "PGRST116") throw fetchError;
-
-      if (existingReport) {
-        await supabase
-          .from("rapport_evangelisation")
-          .update({
-            hommes: existingReport.hommes + hommes,
-            femmes: existingReport.femmes + femmes,
-            priere: existingReport.priere + priere,
-            nouveau_converti: existingReport.nouveau_converti + nouveau_converti,
-            reconciliation: existingReport.reconciliation + reconciliation,
-          })
-          .eq("date", today);
-      } else {
-        await supabase.from("rapport_evangelisation").insert([{
-          date: today,
-          hommes,
-          femmes,
-          priere,
-          nouveau_converti,
-          reconciliation,
-        }]);
-      }
-
-      // 🔹 Ajouter le nouvel évangélisé dans la table affichée
       if (onNewEvangelise) onNewEvangelise(newEvangelise);
 
-      // 🔹 Reset form (garder eglise_id)
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-      setFormData(prev => ({
+
+      setFormData((prev) => ({
         nom: "",
         prenom: "",
         telephone: "",
@@ -183,7 +140,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
         besoin: [],
         infos_supplementaires: "",
         is_whatsapp: false,
-        eglise_id: prev.eglise_id,
+        eglise_id: prev.eglise_id, // garde l'id de l'église
       }));
       setShowOtherField(false);
       setOtherBesoin("");
@@ -193,7 +150,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
   };
 
   const handleCancel = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       nom: "",
       prenom: "",
       telephone: "",
@@ -207,14 +164,13 @@ export default function AddEvangelise({ onNewEvangelise }) {
       is_whatsapp: false,
       eglise_id: prev.eglise_id,
     }));
+
     setShowOtherField(false);
     setOtherBesoin("");
   };
 
-  if (loading)
-    return <p className="text-center mt-10">Vérification du lien...</p>;
-  if (errorMsg)
-    return <p className="text-center mt-10 text-red-600">{errorMsg}</p>;
+  if (loading) return <p className="text-center mt-10">Vérification du lien...</p>;
+  if (errorMsg) return <p className="text-center mt-10 text-red-600">{errorMsg}</p>;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
@@ -228,15 +184,13 @@ export default function AddEvangelise({ onNewEvangelise }) {
         </h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
-          {/* 🔹 Tous les inputs, selects, checkbox et textarea */}
+          {/* Formulaire complet */}
           <input
             className="input"
             type="text"
             placeholder="Prénom"
             value={formData.prenom}
-            onChange={(e) =>
-              setFormData({ ...formData, prenom: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
             required
           />
           <input
@@ -244,9 +198,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
             type="text"
             placeholder="Nom"
             value={formData.nom}
-            onChange={(e) =>
-              setFormData({ ...formData, nom: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
             required
           />
           <input
@@ -254,27 +206,21 @@ export default function AddEvangelise({ onNewEvangelise }) {
             type="text"
             placeholder="Téléphone"
             value={formData.telephone}
-            onChange={(e) =>
-              setFormData({ ...formData, telephone: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
           />
           <input
             className="input"
             type="text"
             placeholder="Ville"
             value={formData.ville}
-            onChange={(e) =>
-              setFormData({ ...formData, ville: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, ville: e.target.value })}
           />
 
           <label className="flex items-center gap-2 text-gray-700">
             <input
               type="checkbox"
               checked={formData.is_whatsapp}
-              onChange={(e) =>
-                setFormData({ ...formData, is_whatsapp: e.target.checked })
-              }
+              onChange={(e) => setFormData({ ...formData, is_whatsapp: e.target.checked })}
               className="w-5 h-5 accent-indigo-600 cursor-pointer"
             />
             WhatsApp
@@ -283,9 +229,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
           <select
             className="input"
             value={formData.sexe}
-            onChange={(e) =>
-              setFormData({ ...formData, sexe: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}
             required
           >
             <option value="">Sexe</option>
@@ -315,9 +259,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
             <select
               className="input"
               value={formData.type_conversion}
-              onChange={(e) =>
-                setFormData({ ...formData, type_conversion: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, type_conversion: e.target.value })}
               required
             >
               <option value="">Type</option>
@@ -366,9 +308,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
             placeholder="Informations supplémentaires..."
             rows={3}
             value={formData.infos_supplementaires}
-            onChange={(e) =>
-              setFormData({ ...formData, infos_supplementaires: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, infos_supplementaires: e.target.value })}
             className="input"
           />
 

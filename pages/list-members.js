@@ -161,19 +161,15 @@ export default function ListMembers() {
       .from("membres_complets")
       .select("*")
       .neq("etat_contact", "supprime")
-      // 🔒 ne jamais afficher sans église
       .not("eglise_id", "is", null)
-      // 🔒 uniquement l’église du profil
       .eq("eglise_id", profile.eglise_id);
 
-    // 🎯 Filtres conseiller
     if (conseillerIdFromUrl) {
       query = query.eq("conseiller_id", conseillerIdFromUrl);
     } else if (profile?.role === "Conseiller") {
       query = query.eq("conseiller_id", profile.id);
     }
 
-    // 📅 ordre final
     const { data, error } = await query.order("created_at", {
       ascending: false,
     });
@@ -188,6 +184,7 @@ export default function ListMembers() {
     setLoading(false);
   }
 };
+
 
 
   const fetchCellules = async () => {

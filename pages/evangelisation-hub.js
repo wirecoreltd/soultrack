@@ -9,8 +9,17 @@ import SendLinkPopup from "../components/SendLinkPopup";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import HeaderPages from "../components/HeaderPages";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function EvangelisationHub() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableEvangelisation"]}>
+      <EvangelisationHubContent />
+    </ProtectedRoute>
+  );
+}
+  
+function EvangelisationHubContent() {
   const router = useRouter();
   const [userName, setUserName] = useState("");
 

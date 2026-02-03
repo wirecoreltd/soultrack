@@ -41,7 +41,7 @@ export default function IndexPage() {
 
       if (!data?.session) {
         // Pas connecté → signup
-        router.replace("/signup-eglise");
+        router.replace("/SignupEglise");
         return;
       }
 

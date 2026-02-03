@@ -159,14 +159,15 @@ export default function ListMembers() {
     let query = supabase
   .from("membres_complets")
   .select("*")
-  .neq("etat_contact", "supprime");
+  .neq("etat_contact", "supprime")
 
-// ⚡ Filtre église pour **tous les profils**, admin inclus
-if (profile?.eglise_id) {
-  query = query.eq("eglise_id", profile.eglise_id);
-}
+  // 🔒 1️⃣ N'affiche JAMAIS les membres sans église
+  .not("eglise_id", "is", null)
 
-// Filtre supplémentaire par conseiller si l'URL contient conseiller_id
+  // 🔒 2️⃣ Limite STRICTEMENT à l’église du profil connecté
+  .eq("eglise_id", profile.eglise_id);
+
+// 🎯 Filtres conseiller (inchangés)
 if (conseillerIdFromUrl) {
   query = query.eq("conseiller_id", conseillerIdFromUrl);
 } else if (profile?.role === "Conseiller") {

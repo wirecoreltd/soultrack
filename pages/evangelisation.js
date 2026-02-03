@@ -328,48 +328,48 @@ export default function Evangelisation() {
                   {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                 </button>
 
-               {detailsOpen[member.id] && (                  
-                  <div className="text-sm mt-2 space-y-1">
-                    <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p>🎗️ Sexe : {member.sexe || "—"}</p>
-                    <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
-                    <p>☀️ Type : {member.type_conversion || "—"}</p>
-                    <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
-                    <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
-                
-                    {/* CARTE UNIQUE – ACTIONS */}
-                    <div className="mt-3">
-                      <div className="flex flex-col gap-2">
-                        {/* Modifier */}
-                        <button
-                          onClick={() => {
-                            setEditMember(member);
-                            setPopupMember(null);
-                          }}
-                          className="text-orange-500 underline text-sm"
-                        >
-                          ✏️ Modifier le contact
-                        </button>
-                
-                        {/* Supprimer */}
-                        <button
-                          onClick={() => {
-                            if (
-                              window.confirm(
-                                "⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?"
-                              )
-                            ) {
-                              handleSupprimerMembre(member.id);
-                            }
-                          }}
-                          className="w-full py-2 rounded-lg text-red-600 text-xs"
-                        >
-                          🗑️ Supprimer le contact
-                        </button>
-                      </div>
+               {detailsOpen[member.id] && (
+                <div className="text-sm mt-2 space-y-1">
+                  <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+                  <p>🎗️ Sexe : {member.sexe || "—"}</p>
+                  <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
+                  <p>☀️ Type : {member.type_conversion || "—"}</p>
+                  <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
+                  <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
+              
+                  {/* CARTE UNIQUE – ACTIONS */}
+                  <div className="mt-3 bg-gray-50 rounded-xl shadow-md p-4">
+                    <div className="flex flex-col gap-2">
+                      {/* Modifier */}
+                      <button
+                        onClick={() => {
+                          setEditMember(member);
+                          setPopupMember(null);
+                        }}
+                        className="w-full py-2 rounded-lg text-orange-500"
+                      >
+                        ✏️ Modifier le contact
+                      </button>
+              
+                      {/* Supprimer */}
+                      <button
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              "⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?"
+                            )
+                          ) {
+                            handleSupprimerMembre(member.id);
+                          }
+                        }}
+                        className="w-full py-2 rounded-lg text-red-600"
+                      >
+                        🗑️ Supprimer le contact
+                      </button>
                     </div>
                   </div>
-                )}
+                </div>
+              )}
 
         {/* VUE TABLE */}
         {contacts && view === "table" && (

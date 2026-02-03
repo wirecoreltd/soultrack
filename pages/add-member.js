@@ -31,6 +31,26 @@ export default function AddMember() {
 
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
 
+  useEffect(() => {
+  const fetchUserEglise = async () => {
+    // Récupérer la session de l'utilisateur qui a généré le lien
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session?.user) return;
+
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("eglise_id")
+      .eq("id", session.session.user.id)
+      .single();
+
+    if (!error && profile) {
+      setFormData(prev => ({ ...prev, eglise_id: profile.eglise_id }));
+    }
+  };
+
+  fetchUserEglise();
+}, []);
+
   // Vérification du token
   useEffect(() => {
     if (!token) return;
@@ -79,6 +99,7 @@ export default function AddMember() {
     ...formData,
     besoin: finalBesoin,
     etat_contact: "Nouveau", // statut par défaut
+     eglise_id: formData.eglise_id,
   };
 
   delete dataToSend.besoinLibre;

@@ -157,24 +157,24 @@ export default function ListMembers() {
   setLoading(true);
   try {
     let query = supabase
-  .from("membres_complets")
-  .select("*")
-  .neq("etat_contact", "supprime")
-  // Filtre par église uniquement si profile.eglise_id existe
-if (profile?.eglise_id) {
-  query = query.eq("eglise_id", profile.eglise_id);
-}
+      .from("membres_complets")
+      .select("*")
+      .neq("etat_contact", "supprime");
 
-if (conseillerIdFromUrl) {
-  query = query.eq("conseiller_id", conseillerIdFromUrl);
-} else if (profile?.role === "Conseiller") {
-  query = query.eq("conseiller_id", profile.id);
-}
+    // Filtre par église uniquement pour les utilisateurs "Conseiller" ou "ResponsableCellule"
+    if (profile && ["Conseiller", "ResponsableCellule"].includes(profile.role) && profile.eglise_id) {
+      query = query.eq("eglise_id", profile.eglise_id);
+    }
 
-query = query.order("created_at", { ascending: false });
+    // Filtre par conseiller si besoin
+    if (conseillerIdFromUrl) {
+      query = query.eq("conseiller_id", conseillerIdFromUrl);
+    } else if (profile?.role === "Conseiller") {
+      query = query.eq("conseiller_id", profile.id);
+    }
 
+    const { data, error } = await query.order("created_at", { ascending: false });
 
-    const { data, error } = await query;
     if (error) throw error;
     setAllMembers(data || []);
   } catch (err) {
@@ -184,6 +184,7 @@ query = query.order("created_at", { ascending: false });
     setLoading(false);
   }
 };
+
 
 
   const fetchCellules = async () => {

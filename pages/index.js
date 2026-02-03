@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Header from "../components/Header";
 import supabase from "../lib/supabaseClient";
-import ProtectedRoute from "../components/ProtectedRoute";
+import Header from "../components/Header";
 
+// Définition des cartes par rôle
 const roleCards = {
   Administrateur: [
     { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#0E7490" },
@@ -30,53 +30,45 @@ const roleCards = {
 };
 
 export default function IndexPage() {
-   const router = useRouter();
+  const router = useRouter();
+  const [roles, setRoles] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkSession = async () => {
+    const init = async () => {
+      // Vérifier session
       const { data } = await supabase.auth.getSession();
 
-      if (data?.session) {
-        router.replace("/dashboard");
+      if (!data?.session) {
+        // Pas connecté → signup
+        router.replace("/signup-eglise");
+        return;
       }
+
+      // Récupérer rôle stocké localement ou depuis Supabase
+      const storedRoles = localStorage.getItem("userRole");
+      if (storedRoles) {
+        try {
+          const parsedRoles = JSON.parse(storedRoles);
+          setRoles(Array.isArray(parsedRoles) ? parsedRoles : [parsedRoles]);
+        } catch {
+          setRoles([storedRoles]);
+        }
+      }
+
+      setLoading(false);
     };
 
-    checkSession();
+    init();
   }, [router]);
-    return (
-    <ProtectedRoute allowedRoles={[
-      "Administrateur",
-      "ResponsableIntegration",
-      "ResponsableEvangelisation",
-      "ResponsableCellule",
-      "SuperviseurCellule",
-      "Conseiller"
-    ]}>
-      <IndexContent />  {/* ← Nouveau composant séparé pour le contenu */}
-    </ProtectedRoute>
-  );
-}
-  function IndexContent() {
-  const [roles, setRoles] = useState([]);
-  const router = useRouter();
-
-
-  useEffect(() => {
-    const storedRoles = localStorage.getItem("userRole");
-    if (storedRoles) {
-      try {
-        const parsedRoles = JSON.parse(storedRoles);
-        setRoles(Array.isArray(parsedRoles) ? parsedRoles : [parsedRoles]);
-      } catch {
-        setRoles([storedRoles]);
-      }
-    }
-  }, []);
 
   const handleRedirect = (path) => {
     router.push(path.startsWith("/") ? path : "/" + path);
   };
 
+  if (loading) return null; // peut mettre un loader ici
+
+  // Construire cartes à afficher
   let cardsToShow = [];
   if (roles.includes("Administrateur")) {
     Object.values(roleCards).forEach((cards) => {
@@ -100,12 +92,12 @@ export default function IndexPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 text-center space-y-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-      
-      {/* Header avec logo et infos */}
+    <div
+      className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+    >
       <Header />
 
-      {/* Cartes des fonctionnalités */}
       <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl">
         {cardsToShow.map((card) => (
           <div
@@ -120,7 +112,6 @@ export default function IndexPage() {
         ))}
       </div>
 
-      {/* Verset biblique */}
       <div className="text-white text-lg italic max-w-2xl mt-6 leading-relaxed tracking-wide font-light">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         1 Corinthiens 12:14 ❤️

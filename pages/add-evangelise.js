@@ -7,7 +7,7 @@ import supabase from "../lib/supabaseClient";
 
 export default function AddEvangelise({ onNewEvangelise }) {
   const router = useRouter();
-  const { token } = router.query;
+  const { token } = router.query; // pour vérification du lien si nécessaire
 
   const [formData, setFormData] = useState({
     nom: "",
@@ -39,21 +39,21 @@ export default function AddEvangelise({ onNewEvangelise }) {
     "Paix",
   ];
 
-  // ✅ Récupérer l'eglise_id de l'utilisateur connecté
+  // Récupérer eglise_id de l'utilisateur connecté
   useEffect(() => {
     const fetchUserEglise = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id;
-      if (!userId) return;
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) return;
 
       const { data: profile, error } = await supabase
         .from("profiles")
         .select("eglise_id")
-        .eq("id", userId)
+        .eq("id", session.session.user.id)
         .single();
 
       if (!error && profile) {
         setFormData((prev) => ({ ...prev, eglise_id: profile.eglise_id }));
+        console.log("Eglise ID récupéré :", profile.eglise_id);
       } else {
         console.error("Erreur récupération eglise_id :", error?.message);
       }
@@ -62,12 +62,13 @@ export default function AddEvangelise({ onNewEvangelise }) {
     fetchUserEglise();
   }, []);
 
-  // ✅ Vérification du token
+  // Vérification du token (si tu souhaites maintenir le lien)
   useEffect(() => {
     if (!token) return;
 
     const verifyToken = async () => {
       setLoading(true);
+
       const { data, error } = await supabase
         .from("access_tokens")
         .select("*")
@@ -75,7 +76,9 @@ export default function AddEvangelise({ onNewEvangelise }) {
         .gte("expires_at", new Date().toISOString())
         .single();
 
-      if (error || !data) setErrorMsg("Lien invalide ou expiré.");
+      if (error || !data) {
+        setErrorMsg("Lien invalide ou expiré.");
+      }
       setLoading(false);
     };
 
@@ -84,8 +87,11 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
   const handleBesoinChange = (value) => {
     let updated = [...formData.besoin];
-    if (updated.includes(value)) updated = updated.filter((b) => b !== value);
-    else updated.push(value);
+    if (updated.includes(value)) {
+      updated = updated.filter((b) => b !== value);
+    } else {
+      updated.push(value);
+    }
     setFormData({ ...formData, besoin: updated });
   };
 
@@ -93,7 +99,9 @@ export default function AddEvangelise({ onNewEvangelise }) {
     e.preventDefault();
 
     const finalBesoins = [...formData.besoin];
-    if (showOtherField && otherBesoin.trim()) finalBesoins.push(otherBesoin.trim());
+    if (showOtherField && otherBesoin.trim()) {
+      finalBesoins.push(otherBesoin.trim());
+    }
 
     const finalData = {
       nom: formData.nom.trim(),
@@ -108,11 +116,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
       besoin: finalBesoins,
       infos_supplementaires: formData.infos_supplementaires || null,
       is_whatsapp: formData.is_whatsapp,
-      eglise_id: formData.eglise_id,
-      token: token || null, // conserve le token pour le lien
+      eglise_id: formData.eglise_id, // ✅ envoyé correctement
     };
-
-    console.log("Données envoyées :", finalData); // ✅ Vérifie ici
 
     try {
       const { data: newEvangelise, error: insertError } = await supabase
@@ -123,11 +128,13 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
       if (insertError) throw insertError;
 
+      // ⚡ Ajouter le nouvel évangélisé dans la table affichée
       if (onNewEvangelise) onNewEvangelise(newEvangelise);
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
+      // Reset form
       setFormData((prev) => ({
         nom: "",
         prenom: "",
@@ -140,12 +147,13 @@ export default function AddEvangelise({ onNewEvangelise }) {
         besoin: [],
         infos_supplementaires: "",
         is_whatsapp: false,
-        eglise_id: prev.eglise_id, // garde l'id de l'église
+        eglise_id: prev.eglise_id, // conserver l'id de l'église
       }));
       setShowOtherField(false);
       setOtherBesoin("");
     } catch (err) {
-      alert(err.message);
+      alert("Erreur lors de l'ajout : " + err.message);
+      console.error(err);
     }
   };
 
@@ -162,9 +170,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
       besoin: [],
       infos_supplementaires: "",
       is_whatsapp: false,
-      eglise_id: prev.eglise_id,
+      eglise_id: prev.eglise_id, // conserver l'id
     }));
-
     setShowOtherField(false);
     setOtherBesoin("");
   };
@@ -184,7 +191,6 @@ export default function AddEvangelise({ onNewEvangelise }) {
         </h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
-          {/* Formulaire complet */}
           <input
             className="input"
             type="text"
@@ -320,7 +326,6 @@ export default function AddEvangelise({ onNewEvangelise }) {
             >
               Annuler
             </button>
-
             <button
               type="submit"
               className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:scale-105 text-white font-bold py-3 rounded-2xl shadow-md transition-all"

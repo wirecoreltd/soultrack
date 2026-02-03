@@ -39,6 +39,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     "Paix",
   ];
 
+  // Récupérer eglise_id de l'utilisateur connecté
   useEffect(() => {
   const fetchUserEglise = async () => {
     const { data: session } = await supabase.auth.getSession();
@@ -185,6 +186,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
         besoin: [],
         infos_supplementaires: "",
         is_whatsapp: false,
+        eglise_id: formData.eglise_id,
       });
       setShowOtherField(false);
       setOtherBesoin("");
@@ -206,6 +208,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
       besoin: [],
       infos_supplementaires: "",
       is_whatsapp: false,
+      eglise_id: prev.eglise_id,
     });
 
     setShowOtherField(false);

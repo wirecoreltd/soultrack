@@ -371,12 +371,6 @@ export default function Evangelisation() {
                   </div>
                 )}
 
-
-              </div>
-            ))}
-          </div>
-        )}
-
         {/* VUE TABLE */}
         {contacts && view === "table" && (
           <div className="w-full max-w-6xl overflow-x-auto py-2">

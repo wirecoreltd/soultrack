@@ -404,13 +404,13 @@ export default function ListMembers() {
                           💬 Message WhatsApp
                         </a>
                       </div>
+                    </div>
                     )}
                   </>
                 ) : (
                   <span className="text-gray-400">—</span>
                 )}
               </div>
-
     
             {/* Infos principales */}
             <div className="w-full mt-2 text-sm text-black space-y-1">

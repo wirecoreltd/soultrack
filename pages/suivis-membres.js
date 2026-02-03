@@ -296,50 +296,51 @@ return (
                     {m.prenom} {m.nom}
                   </h2>
         
-                  {/* Phone menu */}
-                  <p
-                    className="text-orange-500 underline font-semibold mb-1 cursor-pointer"
-                    onClick={() => setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id)}
-                  >
-                    {m.telephone || "—"}
-                  </p>
-        
-                  {openPhoneMenuId === m.id && (
-                    <div
-                      ref={phoneMenuRef}
-                      className="phone-menu absolute mt-2 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-52 text-center"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <a
-                        href={m.telephone ? `tel:${m.telephone}` : "#"}
-                        className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
-                      >
-                        📞 Appeler
-                      </a>
-                      <a
-                        href={m.telephone ? `sms:${m.telephone}` : "#"}
-                        className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
-                      >
-                        ✉️ SMS
-                      </a>
-                      <a
-                        href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}?call` : "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
-                      >
-                        📱 Appel WhatsApp
-                      </a>
-                      <a
-                        href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}` : "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
-                      >
-                        💬 Message WhatsApp
-                      </a>
-                    </div>
-                  )}
+                  {/* 📞 Téléphone */}
+                    {m.telephone && (
+                      <div className="relative inline-block mt-1">
+                        <p
+                          className="text-orange-500 underline font-semibold cursor-pointer text-center"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
+                          }}
+                        >
+                          {m.telephone}
+                        </p>
+                    
+                        {openPhoneMenuId === m.id && (
+                          <div
+                            ref={phoneMenuRef}
+                            className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-52 text-center"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <a href={`tel:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">
+                              📞 Appeler
+                            </a>
+                            <a href={`sms:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">
+                              ✉️ SMS
+                            </a>
+                            <a
+                              href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block px-4 py-2 hover:bg-gray-100 text-black"
+                            >
+                              📱 Appel WhatsApp
+                            </a>
+                            <a
+                              href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block px-4 py-2 hover:bg-gray-100 text-black"
+                            >
+                              💬 Message WhatsApp
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    )}
         
                   <p className="text-sm text-black-700 mb-1">
                     🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}

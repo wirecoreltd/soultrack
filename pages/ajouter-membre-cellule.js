@@ -6,8 +6,17 @@ import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import { useMembers } from "../context/MembersContext";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function AjouterMembreCellule() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableCellule"]}>
+      <AjouterMembreCelluleContent />
+    </ProtectedRoute>
+  );
+}
+
+  function AjouterMembreCelluleContent() {
   const router = useRouter();
   const { setAllMembers } = useMembers();
 

@@ -56,6 +56,7 @@ export default function ListMembers() {
   const phoneMenuRef = useRef(null);  
   const router = useRouter();
   const [egliseId, setEgliseId] = useState(null);
+  const [loading, setLoading] = useState(true);
     
 
   const [view, setView] = useState(() => {
@@ -198,8 +199,30 @@ export default function ListMembers() {
     showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
   };
 
+    const [members, setMembers] = useState([]);
+
+useEffect(() => {
+  if (!egliseId) return; // n’exécute que si on a l’eglise_id
+
+  const fetchMembers = async () => {
+    const { data, error } = await supabase
+      .from("membres_complets")
+      .select("*")
+      .eq("eglise_id", egliseId)  // 🔹 filtre correct
+      .order("created_at", { ascending: false });
+
+    if (!error) setMembers(data);
+    else console.error("Erreur récupération membres :", error.message);
+  };
+
+  fetchMembers();
+}, [egliseId]);
+
     //---------Récupérer l’eglise_id---------//
-    useEffect(() => {
+    const [egliseId, setEgliseId] = useState(null);
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
   const fetchEgliseId = async () => {
     const { data: session } = await supabase.auth.getSession();
     if (!session?.session?.user) return;
@@ -212,10 +235,13 @@ export default function ListMembers() {
 
     if (!error && profile) setEgliseId(profile.eglise_id);
     else console.error("Erreur récupération eglise_id :", error?.message);
+
+    setLoading(false);
   };
 
   fetchEgliseId();
 }, []);
+
     
     useEffect(() => {
     const handleClickOutside = (e) => {

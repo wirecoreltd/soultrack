@@ -11,11 +11,21 @@ import AccessGuard from "../components/AccessGuard";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
+import ProtectedRoute from "../components/ProtectedRoute"; 
 
 export default function CellulesHub() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableCellule", "SuperviseurCellule"]}>
+      <CellulesHubContent />
+    </ProtectedRoute>
+  );
+}
+
+function CellulesHubContent() {
   const router = useRouter();
   const [prenom, setPrenom] = useState("cher membre");
 
+  
   useEffect(() => {
     const fetchPrenom = async () => {
       try {

@@ -111,13 +111,8 @@ export default function DetailsMemberPopup({
                 <div className="absolute top-full mt-2 bg-white border rounded-lg shadow w-56 z-50">
                   <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100">📞 Appeler</a>
                   <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100">✉️ SMS</a>
-                  <a
-                    href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`}
-                    target="_blank"
-                    className="block px-4 py-2 hover:bg-gray-100"
-                  >
-                    💬 WhatsApp
-                  </a>
+                  <a href={`https://wa.me/${membre.telephone?.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100"> 📱 Appel WhatsApp </a>
+                  <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100"> 💬 WhatsApp </a>                    
                 </div>
               )}
             </div>

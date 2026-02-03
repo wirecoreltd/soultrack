@@ -13,17 +13,8 @@ import { useSearchParams } from "next/navigation";
 import { useMembers } from "../context/MembersContext";
 import Header from "../components/Header";
 import { useRouter } from "next/navigation";
-import ProtectedRoute from "../components/ProtectedRoute";
-import ListMembersContent from "../components/ListMembersContent";
 
-export default function ListMembersPage() {
-  return (
-    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableCellule"]}>
-      <ListMembersContent />
-    </ProtectedRoute>
-  );
-}
-
+export default function ListMembers() {
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});

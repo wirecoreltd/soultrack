@@ -21,6 +21,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     besoin: [],
     infos_supplementaires: "",
     is_whatsapp: false,
+    eglise_id: null,
   });
 
   const [showOtherField, setShowOtherField] = useState(false);
@@ -37,6 +38,25 @@ export default function AddEvangelise({ onNewEvangelise }) {
     "La Famille",
     "Paix",
   ];
+
+  useEffect(() => {
+  const fetchUserEglise = async () => {
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session?.user) return;
+
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("eglise_id")
+      .eq("id", session.session.user.id)
+      .single();
+
+    if (!error && profile) {
+      setFormData(prev => ({ ...prev, eglise_id: profile.eglise_id }));
+    }
+  };
+
+  fetchUserEglise();
+}, []);
 
   // Vérification du token
   useEffect(() => {
@@ -91,6 +111,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
       besoin: finalBesoins,
       infos_supplementaires: formData.infos_supplementaires || null,
       is_whatsapp: formData.is_whatsapp,
+      eglise_id: formData.eglise_id,
     };
 
     try {

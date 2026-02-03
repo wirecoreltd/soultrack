@@ -6,20 +6,6 @@ import Header from "../components/Header";
 import supabase from "../lib/supabaseClient";
 import ProtectedRoute from "../components/ProtectedRoute";
 
-useEffect(() => {
-  const checkSession = async () => {
-    const { data } = await supabase.auth.getSession();
-
-    if (data.session) {
-      // L'utilisateur est déjà connecté
-      router.replace("/dashboard"); 
-    }
-  };
-
-  checkSession();
-}, [router]);
-
-
 const roleCards = {
   Administrateur: [
     { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#0E7490" },
@@ -44,6 +30,19 @@ const roleCards = {
 };
 
 export default function IndexPage() {
+   const router = useRouter();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+
+      if (data?.session) {
+        router.replace("/dashboard");
+      }
+    };
+
+    checkSession();
+  }, [router]);
     return (
     <ProtectedRoute allowedRoles={[
       "Administrateur",

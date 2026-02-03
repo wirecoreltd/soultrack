@@ -7,8 +7,16 @@ import LogoutLink from "../components/LogoutLink";
 import EditEvangeliseSuiviPopup from "../components/EditEvangeliseSuiviPopup";
 import DetailEvangeliseSuivisPopup from "../components/DetailEvangeliseSuivisPopup";
 import HeaderPages from "../components/HeaderPages";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function SuivisEvangelisation() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableEvangelisation", "Conseiller"]}>
+      <SuivisEvangelisationContent />
+    </ProtectedRoute>
+  );
+}
+  function SuivisEvangelisationContent() {
   const [allSuivis, setAllSuivis] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [cellules, setCellules] = useState([]);

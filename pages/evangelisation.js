@@ -20,20 +20,21 @@ export default function Evangelisation() {
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
   
+  // 🔹 Popup doublon
   const [showDoublonPopup, setShowDoublonPopup] = useState(false);
   const [doublonsDetected, setDoublonsDetected] = useState([]);
   const [pendingContacts, setPendingContacts] = useState([]);
 
   const [view, setView] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("members_view") || "card";
-    }
-    return "card";
-  });
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("members_view") || "card";
+  }
+  return "card";
+});
 
   useEffect(() => {
-    localStorage.setItem("members_view", view);
-  }, [view]);
+  localStorage.setItem("members_view", view);
+}, [view]);
 
   /* ================= FETCH ================= */
   useEffect(() => {
@@ -102,12 +103,15 @@ export default function Evangelisation() {
   const hasSelectedContacts = selectedContacts.length > 0;
 
   const formatDateFr = (dateString) => {
-    if (!dateString) return "—";
-    const d = new Date(dateString);
-    const day = d.getDate().toString().padStart(2, "0");
-    const months = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
-    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
-  };
+  if (!dateString) return "—";
+  const d = new Date(dateString);
+
+  const day = d.getDate().toString().padStart(2, "0");
+  const months = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+
+  return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+};
+
 
   const getBorderColor = (member) => {
     if (member.is_whatsapp) return "#25D366";
@@ -170,6 +174,7 @@ export default function Evangelisation() {
 
       if (!cible || !cible.telephone) throw new Error("Numéro cible invalide");
 
+      // Insert dans suivis_des_evangelises
       const inserts = contactsToSend.map((m) => ({
         prenom: m.prenom,
         nom: m.nom,
@@ -204,6 +209,7 @@ export default function Evangelisation() {
       setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
       setCheckedContacts({});
 
+      // Construire message WhatsApp
       let message = `👋 Bonjour ${selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom},\n\n`;
       message += contactsToSend.length > 1
         ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
@@ -264,7 +270,7 @@ export default function Evangelisation() {
                 {selectedTargetType === "cellule"
                   ? c.ville
                     ? `${c.cellule_full} - ${c.ville}`
-                    : c.cellule_full
+                    : c.cellule_fulls
                   : `${c.prenom} ${c.nom}`}
               </option>
             ))}
@@ -296,35 +302,29 @@ export default function Evangelisation() {
       <div className="w-full max-w-6xl flex flex-col items-center">
         {/* VUE CARTE */}
         {contacts && view === "card" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
             {contacts.map((member) => (
-              <div key={member.id} className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-4 border-l-4" style={{ borderLeftColor: getBorderColor(member) }}>
-                <h2 className="font-bold text-black text-base text-center mb-1">{member.prenom} {member.nom}</h2>
-          
-                {/* Telephone */}
-                <div className="relative inline-block mt-1">
-                  <p className="text-orange-500 underline font-semibold cursor-pointer text-center mb-1" 
-                    onClick={() => setOpenPhoneMenuId(member.id)}>{member.telephone || "—"}</p>
-                  {openPhoneMenuId === member.id && (
-                    <div ref={phoneMenuRef} className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2" onClick={(e) => e.stopPropagation()}>
-                      <a href={member.telephone ? `tel:${member.telephone}` : "#"} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
-                      <a href={member.telephone ? `sms:${member.telephone}` : "#"} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
-                      <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}?call` : "#"} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Appel WhatsApp</a>
-                      <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}` : "#"} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 Message WhatsApp</a>
-                    </div>
-                  )}
-                </div>
-
+              <div key={member.id} className="bg-white rounded-2xl shadow-xl p-4 border-l-4 relative" style={{ borderLeftColor: getBorderColor(member) }}>
+                <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
+                <p className="text-center text-sm text-orange-500 font-semibold underline cursor-pointer" onClick={() => setOpenPhoneMenuId(member.id)}>{member.telephone || "—"}</p>
+                {openPhoneMenuId === member.id && (
+                  <div ref={phoneMenuRef} className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2" onClick={(e) => e.stopPropagation()}>
+                    <a href={member.telephone ? `tel:${member.telephone}` : "#"} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
+                    <a href={member.telephone ? `sms:${member.telephone}` : "#"} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
+                    <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}?call` : "#"} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Appel WhatsApp</a>
+                    <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g,"")}` : "#"} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 Message WhatsApp</a>
+                  </div>
+                )}
                 <p className="text-center mt-3 text-sm">🏙️ Ville : {member.ville || "—"}</p>
                 <label className="flex justify-center gap-2 mt-4">
                   <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} /> Sélectionner
                 </label>
-                <p className="self-end text-[11px] text-gray-400 mt-3">Créé le {formatDateFr(member.created_at)} </p>
+                  <p className="text-[11px] text-gray-400 text-right mt-3">Créé le {formatDateFr(member.created_at)} </p>
                 <button onClick={() => setDetailsOpen(prev => ({ ...prev, [member.id]: !prev[member.id] }))} className="text-orange-500 underline text-sm block mx-auto mt-2">
                   {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                 </button>
 
-                {detailsOpen[member.id] && (
+               {detailsOpen[member.id] && (                  
                   <div className="text-sm mt-2 space-y-1">
                     <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🎗️ Sexe : {member.sexe || "—"}</p>
@@ -332,7 +332,7 @@ export default function Evangelisation() {
                     <p>☀️ Type : {member.type_conversion || "—"}</p>
                     <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
                     <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
-              
+                
                     {/* CARTE UNIQUE – ACTIONS */}
                     <div className="mt-3 bg-gray-50 rounded-xl shadow-md p-4">
                       <div className="flex flex-col gap-2">
@@ -346,6 +346,7 @@ export default function Evangelisation() {
                         >
                           ✏️ Modifier le contact
                         </button>
+                
                         {/* Supprimer */}
                         <button
                           onClick={() => {
@@ -357,7 +358,7 @@ export default function Evangelisation() {
                               handleSupprimerMembre(member.id);
                             }
                           }}
-                          className="w-full py-2 rounded-lg text-red-600"
+                          className="w-full py-2 rounded-lg text-red-600 text-xs"
                         >
                           🗑️ Supprimer le contact
                         </button>
@@ -365,6 +366,8 @@ export default function Evangelisation() {
                     </div>
                   </div>
                 )}
+
+
               </div>
             ))}
           </div>

@@ -53,9 +53,10 @@ export default function ListMembers() {
   const [selectedMember, setSelectedMember] = useState(null);
   const { members, setAllMembers } = useMembers();
   const [openPhoneId, setOpenPhoneId] = useState(null);
-  const phoneMenuRef = useRef(null);
-  
+  const phoneMenuRef = useRef(null);  
   const router = useRouter();
+  const [egliseId, setEgliseId] = useState(null);
+    
 
   const [view, setView] = useState(() => {
   if (typeof window !== "undefined") {
@@ -197,6 +198,25 @@ export default function ListMembers() {
     showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
   };
 
+    //---------Récupérer l’eglise_id---------//
+    useEffect(() => {
+  const fetchEgliseId = async () => {
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session?.user) return;
+
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("eglise_id")
+      .eq("id", session.session.user.id)
+      .single();
+
+    if (!error && profile) setEgliseId(profile.eglise_id);
+    else console.error("Erreur récupération eglise_id :", error?.message);
+  };
+
+  fetchEgliseId();
+}, []);
+    
     useEffect(() => {
     const handleClickOutside = (e) => {
       // si on clique EN DEHORS d’un menu téléphone

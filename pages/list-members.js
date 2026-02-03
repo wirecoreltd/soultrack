@@ -13,8 +13,15 @@ import { useSearchParams } from "next/navigation";
 import { useMembers } from "../context/MembersContext";
 import Header from "../components/Header";
 import { useRouter } from "next/navigation";
+import ProtectedRoute from "../components/ProtectedRoute";
 
-export default function ListMembers() {
+export default function CellulesHub() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableCellule", "SuperviseurCellule"]}>
+      <CellulesHubContent />
+    </ProtectedRoute>
+  );
+}
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
@@ -45,6 +52,10 @@ export default function ListMembers() {
   const { members, setAllMembers } = useMembers();
   const [openPhoneId, setOpenPhoneId] = useState(null);
   const phoneMenuRef = useRef(null);
+
+  function CellulesHubContent() {
+  const router = useRouter();
+  const [prenom, setPrenom] = useState("cher membre");
   
   const router = useRouter();
 

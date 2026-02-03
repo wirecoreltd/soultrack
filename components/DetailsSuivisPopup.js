@@ -95,7 +95,7 @@ export default function DetailsSuivisPopup({
               </button>
 
               {openPhoneMenu && (
-                <div className="absolute top-full mt-2 bg-white text-center border rounded-lg shadow w-56 z-50">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white text-center border rounded-lg shadow w-56 z-50">
                   <a href={`tel:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler</a>
                   <a href={`sms:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">✉️ SMS</a>
                   <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 WhatsApp</a>

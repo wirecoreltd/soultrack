@@ -302,11 +302,15 @@ export default function Evangelisation() {
       <div className="w-full max-w-6xl flex flex-col items-center">
         {/* VUE CARTE */}
         {contacts && view === "card" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
             {contacts.map((member) => (
-              <div key={member.id} className="bg-white rounded-2xl shadow-xl p-4 border-l-4 relative" style={{ borderLeftColor: getBorderColor(member) }}>
-                <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
-                <p className="text-center text-sm text-orange-500 font-semibold underline cursor-pointer" onClick={() => setOpenPhoneMenuId(member.id)}>{member.telephone || "—"}</p>
+              <div key={member.id} className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-4 border-l-4" style={{ borderLeftColor: getBorderColor(member) }}>
+                <h2 className="font-bold text-black text-base text-center mb-1">{member.prenom} {member.nom}</h2>
+          
+                {/* Telephone */}
+                <div className="relative inline-block mt-1">
+                <p className="text-orange-500 underline font-semibold cursor-pointer text-center mb-1" 
+                  onClick={() => setOpenPhoneMenuId(member.id)}>{member.telephone || "—"}</p>
                 {openPhoneMenuId === member.id && (
                   <div ref={phoneMenuRef} className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2" onClick={(e) => e.stopPropagation()}>
                     <a href={member.telephone ? `tel:${member.telephone}` : "#"} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
@@ -319,7 +323,7 @@ export default function Evangelisation() {
                 <label className="flex justify-center gap-2 mt-4">
                   <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} /> Sélectionner
                 </label>
-                  <p className="text-[11px] text-gray-400 text-right mt-3">Créé le {formatDateFr(member.created_at)} </p>
+                  <p className="self-end text-[11px] text-gray-400 mt-3">Créé le {formatDateFr(member.created_at)} </p>
                 <button onClick={() => setDetailsOpen(prev => ({ ...prev, [member.id]: !prev[member.id] }))} className="text-orange-500 underline text-sm block mx-auto mt-2">
                   {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                 </button>
@@ -334,7 +338,7 @@ export default function Evangelisation() {
                     <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
                 
                     {/* CARTE UNIQUE – ACTIONS */}
-                    <div className="mt-3 bg-gray-50 rounded-xl shadow-md p-4">
+                    <div className="mt-3">
                       <div className="flex flex-col gap-2">
                         {/* Modifier */}
                         <button
@@ -342,7 +346,7 @@ export default function Evangelisation() {
                             setEditMember(member);
                             setPopupMember(null);
                           }}
-                          className="w-full py-2 rounded-lg text-orange-500"
+                          className="text-orange-500 underline text-sm"
                         >
                           ✏️ Modifier le contact
                         </button>

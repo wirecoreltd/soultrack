@@ -155,28 +155,28 @@ export default function ListMembers() {
   // -------------------- Fetch data --------------------
   const fetchMembers = async (profile = null) => {
   setLoading(true);
+
   try {
     let query = supabase
-  .from("membres_complets")
-  .select("*")
-  .neq("etat_contact", "supprime")
+      .from("membres_complets")
+      .select("*")
+      .neq("etat_contact", "supprime")
+      // 🔒 ne jamais afficher sans église
+      .not("eglise_id", "is", null)
+      // 🔒 uniquement l’église du profil
+      .eq("eglise_id", profile.eglise_id);
 
-  // 🔒 1️⃣ N'affiche JAMAIS les membres sans église
-  .not("eglise_id", "is", null)
-
-  // 🔒 2️⃣ Limite STRICTEMENT à l’église du profil connecté
-  .eq("eglise_id", profile.eglise_id);
-
-// 🎯 Filtres conseiller (inchangés)
-if (conseillerIdFromUrl) {
-  query = query.eq("conseiller_id", conseillerIdFromUrl);
-} else if (profile?.role === "Conseiller") {
-  query = query.eq("conseiller_id", profile.id);
-}
-query = query.order("created_at", { ascending: false });    
+    // 🎯 Filtres conseiller
+    if (conseillerIdFromUrl) {
+      query = query.eq("conseiller_id", conseillerIdFromUrl);
+    } else if (profile?.role === "Conseiller") {
+      query = query.eq("conseiller_id", profile.id);
     }
 
-    const { data, error } = await query.order("created_at", { ascending: false });
+    // 📅 ordre final
+    const { data, error } = await query.order("created_at", {
+      ascending: false,
+    });
 
     if (error) throw error;
 
@@ -188,6 +188,7 @@ query = query.order("created_at", { ascending: false });
     setLoading(false);
   }
 };
+
 
   const fetchCellules = async () => {
     const { data, error } = await supabase.from("cellules").select("id, cellule_full");

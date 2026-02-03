@@ -161,12 +161,12 @@ export default function ListMembers() {
       .select("*")
       .neq("etat_contact", "supprime");
 
-    // Filtre par église uniquement pour les utilisateurs "Conseiller" ou "ResponsableCellule"
-    if (profile && ["Conseiller", "ResponsableCellule"].includes(profile.role) && profile.eglise_id) {
-  query = query.eq("eglise_id", profile.eglise_id);
-}
+    // ⚡ Filtre église : seulement pour Conseiller ou ResponsableCellule
+    if (profile?.eglise_id && ["Conseiller", "ResponsableCellule"].includes(profile.role)) {
+      query = query.eq("eglise_id", profile.eglise_id);
+    }
 
-    // Filtre par conseiller si besoin
+    // Filtre par conseiller si l'URL contient conseiller_id
     if (conseillerIdFromUrl) {
       query = query.eq("conseiller_id", conseillerIdFromUrl);
     } else if (profile?.role === "Conseiller") {
@@ -176,6 +176,7 @@ export default function ListMembers() {
     const { data, error } = await query.order("created_at", { ascending: false });
 
     if (error) throw error;
+
     setAllMembers(data || []);
   } catch (err) {
     console.error("Erreur fetchMembers:", err);
@@ -184,8 +185,6 @@ export default function ListMembers() {
     setLoading(false);
   }
 };
-
-
 
   const fetchCellules = async () => {
     const { data, error } = await supabase.from("cellules").select("id, cellule_full");
@@ -252,6 +251,7 @@ export default function ListMembers() {
     setSession(session);
 
     if (session?.user) {
+      // Récupérer le profil complet avec eglise_id
       const { data: profileData, error } = await supabase
         .from("profiles")
         .select("id, prenom, role, eglise_id")
@@ -259,8 +259,8 @@ export default function ListMembers() {
         .single();
 
       if (error) {
-        console.error(error);
-        await fetchMembers(); // fallback
+        console.error("Erreur profile:", error);
+        await fetchMembers(); // fallback : tous les membres
         return;
       }
 
@@ -269,13 +269,11 @@ export default function ListMembers() {
         return;
       }
 
-      // stocker profile avec eglise_id
       setPrenom(profileData.prenom || "");
-      
-      // ⚡ Appliquer filtre église seulement si eglise_id existe
-      await fetchMembers(profileData); 
+      // ⚡ ici on passe le profil complet à fetchMembers
+      await fetchMembers(profileData);
     } else {
-      await fetchMembers(); // aucun filtre si pas de session
+      await fetchMembers(); // fallback si pas de session
     }
 
     fetchCellules();

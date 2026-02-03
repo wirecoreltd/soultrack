@@ -357,33 +357,60 @@ export default function ListMembers() {
             </h2>
     
             {/* Téléphone */}
-                <div className="relative text-center">
-                  <p
-                    className="text-orange-500 underline cursor-pointer font-semibold"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpenPhoneId(openPhoneId === m.id ? null : m.id);
-                    }}
-                  >
-                    {m.telephone || "—"}
-                  </p>
-                  {openPhoneId === m.id && (
-                    <div
-                      ref={phoneMenuRef}
-                      className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56"
-                      onClick={(e) => e.stopPropagation()}
+              <div className="relative text-center mt-2">
+                {m.telephone ? (
+                  <>
+                    <p
+                      className="text-orange-500 underline cursor-pointer font-semibold"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenPhoneId(openPhoneId === m.id ? null : m.id);
+                      }}
                     >
-                      <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
-                      <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
-                      <a href={`https://wa.me/${m.telephone?.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Appel WhatsApp</a>
-                      <a href={`https://wa.me/${m.telephone?.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 Message WhatsApp</a>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <span className="text-gray-400">—</span>
-              )}
-            </div>
+                      {m.telephone}
+                    </p>
+              
+                    {openPhoneId === m.id && (
+                      <div
+                        className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <a
+                          href={`tel:${m.telephone}`}
+                          className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                        >
+                          📞 Appeler
+                        </a>
+                        <a
+                          href={`sms:${m.telephone}`}
+                          className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                        >
+                          ✉️ SMS
+                        </a>
+                        <a
+                          href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                        >
+                          📱 Appel WhatsApp
+                        </a>
+                        <a
+                          href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                        >
+                          💬 Message WhatsApp
+                        </a>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
+              </div>
+
     
             {/* Infos principales */}
             <div className="w-full mt-2 text-sm text-black space-y-1">

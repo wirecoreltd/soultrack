@@ -43,6 +43,8 @@ export default function ListMembers() {
   const [etatContactFilter, setEtatContactFilter] = useState("");  
   const [selectedMember, setSelectedMember] = useState(null);
   const { members, setAllMembers } = useMembers();
+  const [openPhoneId, setOpenPhoneId] = useState(null);
+  const phoneMenuRef = useRef(null);
   
   const router = useRouter();
 
@@ -65,7 +67,6 @@ export default function ListMembers() {
       prev.map(mem => (mem.id === updatedMember.id ? updatedMember : mem))
     );
   };
-
 
   const statutSuiviLabels = {
     1: "En Suivis",
@@ -104,7 +105,6 @@ export default function ListMembers() {
 
   return ministereList.join(", ");
 };
-
 
   // -------------------- Supprimer un membre --------------------
   const handleSupprimerMembre = async (id) => {
@@ -187,7 +187,14 @@ export default function ListMembers() {
     const cibleName = type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`;
     showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
   };
-  
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+        setOpenPhoneId(null);
+      }
+    };
+
   useEffect(() => {
     const fetchUserRole = async () => {
       const {
@@ -350,53 +357,26 @@ export default function ListMembers() {
             </h2>
     
             {/* Téléphone */}
-            <div className="relative flex justify-center mt-2">
-              {m.telephone ? (
-                <>
-                  <button
-                    type="button"
+                <div className="relative text-center">
+                  <p
+                    className="text-orange-500 underline cursor-pointer font-semibold"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id);
+                      setOpenPhoneId(openPhoneId === m.id ? null : m.id);
                     }}
-                    className="text-orange-500 underline font-semibold text-base"
                   >
-                    {m.telephone}
-                  </button>
-    
-                  {openPhoneMenuId === m.id && (
+                    {m.telephone || "—"}
+                  </p>
+                  {openPhoneId === m.id && (
                     <div
-                      className="absolute top-full mt-2 bg-white rounded-lg shadow-lg border z-50 w-52"
+                      ref={phoneMenuRef}
+                      className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56"
                       onClick={(e) => e.stopPropagation()}
                     >
-                     <a
-                        href={m.telephone ? `tel:${m.telephone}` : "#"}
-                        className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
-                      >
-                        📞 Appeler
-                      </a>
-                      <a
-                        href={m.telephone ? `sms:${m.telephone}` : "#"}
-                        className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
-                      >
-                        ✉️ SMS
-                      </a>
-                      <a
-                        href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}?call` : "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
-                      >
-                        📱 Appel WhatsApp
-                      </a>
-                      <a
-                        href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}` : "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}
-                      >
-                        💬 Message WhatsApp
-                      </a>
+                      <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
+                      <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
+                      <a href={`https://wa.me/${m.telephone?.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Appel WhatsApp</a>
+                      <a href={`https://wa.me/${m.telephone?.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 Message WhatsApp</a>
                     </div>
                   )}
                 </>

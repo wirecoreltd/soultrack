@@ -370,6 +370,8 @@ export default function Evangelisation() {
                   </div>
                 </div>
               )}
+            </div>  // <-- cette div ferme chaque membre
+            ))}  
 
         {/* VUE TABLE */}
         {contacts && view === "table" && (

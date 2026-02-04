@@ -14,6 +14,7 @@ import { useMembers } from "../context/MembersContext";
 import Header from "../components/Header";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/ProtectedRoute";
+import useChurchScope from "../hooks/useChurchScope";
 
 export default function ListMembers() {
   return (
@@ -37,7 +38,7 @@ export default function ListMembers() {
   const searchParams = useSearchParams();
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
   const toBoolean = (val) => val === true || val === "true";
-  const [userRole, setUserRole] = useState(null);
+  const [userRole, setUserRole] = useState(null);  
   
   // -------------------- Nouveaux états --------------------
   const [commentChanges, setCommentChanges] = useState({});
@@ -153,28 +154,24 @@ export default function ListMembers() {
   };
 
   // -------------------- Fetch data --------------------
-  const fetchMembers = async (profile = null) => {
-    setLoading(true);
-    try {
-      let query = supabase
-        .from("membres_complets")
-        .select("*")
-        .neq("etat_contact", "supprime")
+  useEffect(() => {
+    if (!scopedQuery) return;
+
+    const fetchMembers = async () => {
+      const query = scopedQuery("membres_complets");
+      if (!query) return;
+
+      const { data, error } = await query
         .order("created_at", { ascending: false });
 
-      if (conseillerIdFromUrl) query = query.eq("conseiller_id", conseillerIdFromUrl);
-      else if (profile?.role === "Conseiller") query = query.eq("conseiller_id", profile.id);
+      if (!error) setMembers(data || []);
+    };
 
-      const { data, error } = await query;
-      if (error) throw error;
-      setAllMembers(data || []);
-    } catch (err) {
-      console.error("Erreur fetchMembers:", err);
-      setAllMembers([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchMembers();
+  }, [scopedQuery]);
+
+  if (loading) return <p>Chargement…</p>;
+  if (error) return <p className="text-red-600">{error}</p>;
 
   const fetchCellules = async () => {
     const { data, error } = await supabase.from("cellules").select("id, cellule_full");

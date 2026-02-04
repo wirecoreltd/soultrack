@@ -9,6 +9,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
   const statutIds = { envoye: 1, en_attente: 2, integrer: 3, refus: 4 };
 
+  // Vérification de doublon
   const checkDoublon = async () => {
     if (!membre.telephone) return false;
     const { data, error } = await supabase
@@ -30,6 +31,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       alert("❌ Vous devez être connecté.");
       return;
     }
+
     const isDoublon = await checkDoublon();
     if (isDoublon) {
       setDoublonDetected(true);
@@ -66,25 +68,10 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         responsableTelephone = cible.telephone;
       }
 
-      // 🔹 Mettre à jour le membre
-      const { data: updatedMember } = await supabase
-        .from("membres_complets")
-        .update({
-          statut: "actif",
-          statut_suivis: statutIds.envoye,
-          cellule_id: type === "cellule" ? cible.id : null,
-          conseiller_id: type === "conseiller" ? cible.id : null,
-          suivi_cellule_nom: type === "cellule" ? cible.cellule_full : null,
-          suivi_responsable: type === "conseiller" ? `${cible.prenom} ${cible.nom}` : responsablePrenom,
-          suivi_responsable_id: type === "conseiller" ? cible.id : null,
-          etat_contact: "Existant"
-        })
-        .eq("id", membre.id)
-        .select()
-        .single();
-
-      if (onEnvoyer) onEnvoyer(updatedMember);
-      if (showToast) showToast(`✅ ${membre.prenom} ${membre.nom} envoyé à ${type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`}`);
+      if (type === "numero") {
+        responsablePrenom = "Responsable";
+        responsableTelephone = cible; // numéro saisi
+      }
 
       // 🔹 Message WhatsApp complet
       let message = `👋 Bonjour ${responsablePrenom}!\n\n`;
@@ -112,9 +99,38 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;
       message += "Merci pour ton accompagnement ❤️";
 
-      const phone = responsableTelephone.replace(/\D/g, "");
+      const phone = responsableTelephone?.replace(/\D/g, "");
+      if (!phone) {
+        alert("❌ Le numéro WhatsApp est invalide.");
+        setLoading(false);
+        return;
+      }
+
+      // Ouvrir WhatsApp avant l'update pour éviter le blocage
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
 
+      // 🔹 Mettre à jour le membre dans Supabase
+      const { data: updatedMember } = await supabase
+        .from("membres_complets")
+        .update({
+          statut: "actif",
+          statut_suivis: statutIds.envoye,
+          cellule_id: type === "cellule" ? cible.id : null,
+          conseiller_id: type === "conseiller" ? cible.id : null,
+          suivi_cellule_nom: type === "cellule" ? cible.cellule_full : null,
+          suivi_responsable: type === "conseiller" ? `${cible.prenom} ${cible.nom}` : responsablePrenom,
+          suivi_responsable_id: type === "conseiller" ? cible.id : null,
+          etat_contact: "Existant"
+        })
+        .eq("id", membre.id)
+        .select()
+        .single();
+
+      if (onEnvoyer) onEnvoyer(updatedMember);
+      if (showToast) showToast(`✅ ${membre.prenom} ${membre.nom} envoyé à ${
+        type === "cellule" ? cible.cellule_full : type === "conseiller" ? `${cible.prenom} ${cible.nom}` : cible
+      }`);
+      
     } catch (err) {
       console.error(err);
       alert(`❌ ${err.message}`);
@@ -137,7 +153,6 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
         {loading ? "Envoi..." : "📤 Envoyer par WhatsApp"}
       </button>
 
-      {/* 🔹 Popup Doublon - Moderne */}
       {showDoublonPopup && doublonDetected && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity">
           <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl p-6 w-96 max-w-[90%] text-center animate-fadeIn">

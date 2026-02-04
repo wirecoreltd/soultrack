@@ -63,7 +63,7 @@ function ListMembersContent() {
     return "card";
   });
 
-  const { scopedQuery } = useChurchScope();
+  const { scopedQuery } = useChurchScope(); // 🔑 Utilisation correcte du hook scopedQuery
 
   // -------------------- Toast --------------------
   const showToast = (msg) => {
@@ -149,140 +149,21 @@ function ListMembersContent() {
     }
   };
 
-  // -------------------- Fetch membres via scopedQuery sécurisé --------------------
-useEffect(() => {
-  if (!session) {
-    console.warn("❌ Vous devez être connecté pour afficher les membres.");
-    setAllMembers([]);
-    setLoading(false);
-    return;
-  }
+  // -------------------- Fetch membres via scopedQuery --------------------
+  useEffect(() => {
+    if (!scopedQuery) return;
 
-  if (!scopedQuery) {
-    console.warn("scopedQuery non disponible, tentative de fetch annulée");
-    setAllMembers([]);
-    setLoading(false);
-    return;
-  }
-
-  // -------------------- Fetch membres --------------------
-      const fetchMembers = async () => {
-      setLoading(true);
-      try {
-        let data = [];
-  
-        // 🔹 Si scopedQuery existe, on l'utilise
-        if (scopedQuery && typeof scopedQuery === "function") {
-          const query = scopedQuery("membres_complets");
-          if (query && typeof query.order === "function") {
-            const { data: scopedData, error } = await query.order("created_at", {
-              ascending: false,
-            });
-            if (error) {
-              console.error("Erreur fetchMembers scopedQuery:", error);
-            } else {
-              data = scopedData || [];
-            }
-          } else {
-            console.warn("scopedQuery ou query.order n'est pas disponible");
-          }
-        }
-  
-        // 🔹 Sinon fallback sur supabase direct
-        if (data.length === 0) {
-          const { data: supaData, error } = await supabase
-            .from("membres_complets")
-            .select("*")
-            .order("created_at", { ascending: false });
-          if (error) {
-            console.error("Erreur fetchMembers supabase direct:", error);
-          } else {
-            data = supaData || [];
-          }
-        }
-  
-        // 🔹 Mettre à jour le state
-        setAllMembers(data);
-      } catch (err) {
-        console.error("Erreur fetchMembers:", err);
-        setAllMembers([]);
-      } finally {
-        setLoading(false);
-      }
+    const fetchMembers = async () => {
+      const { data, error } = await scopedQuery("membres_complets").order("created_at", {
+        ascending: false,
+      });
+      if (error) console.error("Erreur fetchMembers:", error);
+      else setAllMembers(data || []);
+      setLoading(false);
     };
-  
+
     fetchMembers();
   }, [scopedQuery, setAllMembers]);
-
-
-
-// -------------------- Realtime sécurisé --------------------
-useEffect(() => {
-  if (!session || !scopedQuery) return;
-
-  // Déconnecte l’ancien channel si existant
-  if (realtimeChannelRef.current) {
-    try {
-      realtimeChannelRef.current.unsubscribe();
-    } catch (e) {}
-    realtimeChannelRef.current = null;
-  }
-
-  const channel = supabase.channel("realtime:membres_complets");
-
-  const fetchLatestMembers = async () => {
-    try {
-      const query = scopedQuery("membres_complets");
-      if (!query) return;
-      const { data } = await query.order("created_at", { ascending: false });
-      if (data) setAllMembers(data);
-    } catch (err) {
-      console.error("Erreur fetchLatestMembers realtime:", err);
-    }
-  };
-
-  channel.on(
-    "postgres_changes",
-    { event: "*", schema: "public", table: "membres_complets" },
-    fetchLatestMembers
-  );
-
-  channel.on(
-    "postgres_changes",
-    { event: "*", schema: "public", table: "cellules" },
-    () => {
-      fetchCellules();
-      fetchLatestMembers();
-    }
-  );
-
-  channel.on(
-    "postgres_changes",
-    { event: "*", schema: "public", table: "profiles" },
-    () => {
-      fetchConseillers();
-      fetchLatestMembers();
-    }
-  );
-
-  try {
-    channel.subscribe();
-  } catch (err) {
-    console.warn("Erreur subscription realtime:", err);
-  }
-
-  realtimeChannelRef.current = channel;
-
-  return () => {
-    try {
-      if (realtimeChannelRef.current) {
-        realtimeChannelRef.current.unsubscribe();
-        realtimeChannelRef.current = null;
-      }
-    } catch (e) {}
-  };
-}, [scopedQuery, session, setAllMembers]);
-
 
   // -------------------- Fetch cellules et conseillers --------------------
   useEffect(() => {

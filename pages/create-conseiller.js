@@ -15,64 +15,71 @@ export default function CreateConseiller() {
     email: "",
     password: "",
     eglise_id: "",
-    branche_id: "",
+    branch_id: "",
   });
   const [responsableId, setResponsableId] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ➤ Récupérer l'utilisateur connecté
+  // ➤ Récupérer l'utilisateur connecté, son eglise_id et branch_id, et les membres correspondants
   useEffect(() => {
-    async function fetchUser() {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) return console.error(error);
+    async function fetchUserAndMembers() {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) return console.error(sessionError);
       if (!session?.user) return setMessage("❌ Vous devez être connecté");
-      setResponsableId(session.user.id);
-    }
-    fetchUser();
-  }, []);
 
-  // ➤ Récupérer les membres "star"
-  useEffect(() => {
-    async function fetchStarMembers() {
-      const { data, error } = await supabase
+      const userId = session.user.id;
+      setResponsableId(userId);
+
+      // Récupérer eglise_id et branch_id du responsable
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("eglise_id, branch_id")
+        .eq("id", userId)
+        .single();
+
+      if (profileError) return console.error(profileError);
+
+      setFormData(prev => ({
+        ...prev,
+        eglise_id: profile.eglise_id,
+        branch_id: profile.branch_id,
+      }));
+
+      // Récupérer les membres "star" dans la même église et branche
+      const { data: membersData, error: membersError } = await supabase
         .from("membres_complets")
-        .select("id, prenom, nom, telephone, eglise_id, branche_id")
-        .eq("star", true);
-      if (error) console.error(error);
-      else setMembers(data);
+        .select("id, prenom, nom, telephone")
+        .eq("star", true)
+        .eq("eglise_id", profile.eglise_id)
+        .eq("branch_id", profile.branch_id);
+
+      if (membersError) return console.error(membersError);
+
+      setMembers(membersData || []);
     }
-    fetchStarMembers();
+
+    fetchUserAndMembers();
   }, []);
 
-  // ➤ Remplissage automatique des infos + église/branche
+  // ➤ Préremplissage automatique des infos
   useEffect(() => {
     if (!selectedMemberId) {
-      setFormData({
-        prenom: "",
-        nom: "",
-        telephone: "",
-        email: "",
-        password: "",
-        eglise_id: "",
-        branche_id: "",
-      });
+      setFormData(prev => ({ ...prev, prenom: "", nom: "", telephone: "" }));
       return;
     }
-    const member = members.find((m) => m.id === selectedMemberId);
+    const member = members.find(m => m.id === selectedMemberId);
     if (member) {
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         prenom: member.prenom,
         nom: member.nom,
         telephone: member.telephone,
-        eglise_id: member.eglis_id || member.eglise_id || "", // selon nom réel dans la table
-        branche_id: member.branche_id || "",
-      });
+      }));
     }
-  }, [selectedMemberId]);
+  }, [selectedMemberId, members]);
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -80,6 +87,7 @@ export default function CreateConseiller() {
       setMessage("❌ Remplissez tous les champs !");
       return;
     }
+
     setLoading(true);
     setMessage("⏳ Création en cours...");
 
@@ -87,10 +95,7 @@ export default function CreateConseiller() {
       const res = await fetch("/api/create-conseiller", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          responsable_id: responsableId,
-        }),
+        body: JSON.stringify({ ...formData, responsable_id: responsableId }),
       });
 
       const data = await res.json().catch(() => null);
@@ -104,8 +109,8 @@ export default function CreateConseiller() {
           telephone: "",
           email: "",
           password: "",
-          eglise_id: "",
-          branche_id: "",
+          eglise_id: formData.eglise_id,
+          branch_id: formData.branch_id,
         });
       } else {
         setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
@@ -121,15 +126,18 @@ export default function CreateConseiller() {
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
         <button onClick={() => router.back()} className="absolute top-4 left-4 text-gray-700 hover:text-gray-900">← Retour</button>
-        <div className="flex justify-center mb-6">
-          <Image src="/logo.png" alt="Logo" width={80} height={80} />
-        </div>
+        <div className="flex justify-center mb-6"><Image src="/logo.png" alt="Logo" width={80} height={80} /></div>
         <h1 className="text-3xl font-bold text-center mb-6">Créer un Conseiller</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
-          <select value={selectedMemberId} onChange={(e) => setSelectedMemberId(e.target.value)} className="input" required>
+          <select
+            value={selectedMemberId}
+            onChange={(e) => setSelectedMemberId(e.target.value)}
+            className="input"
+            required
+          >
             <option value="">-- Choisir un Serviteur --</option>
-            {members.map((m) => (
+            {members.map(m => (
               <option key={m.id} value={m.id}>{m.prenom} {m.nom}</option>
             ))}
           </select>

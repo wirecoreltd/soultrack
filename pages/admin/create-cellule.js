@@ -18,15 +18,45 @@ export default function CreateCellule() {
   const [responsables, setResponsables] = useState([]);
 
   useEffect(() => {
-    const fetchResponsables = async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, telephone")
-        .in("role", ["ResponsableCellule"]);
-      if (!error) setResponsables(data);
-    };
-    fetchResponsables();
-  }, []);
+  const fetchResponsables = async () => {
+
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("eglise_id, branche_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile) return;
+
+    const { data: cellules } = await supabase
+      .from("cellules")
+      .select("responsable_id")
+      .eq("eglise_id", profile.eglise_id)
+      .eq("branche_id", profile.branche_id);
+
+    const responsablesDejaPris = cellules
+      ?.map(c => c.responsable_id)
+      .filter(Boolean) || [];
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom, telephone")
+      .eq("eglise_id", profile.eglise_id)
+      .eq("branche_id", profile.branche_id)
+      .eq("role", "ResponsableCellule")
+      .not("id", "in", `(${responsablesDejaPris.join(",")})`);
+
+    if (!error) setResponsables(data);
+  };
+
+  fetchResponsables();
+}, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -41,6 +71,11 @@ export default function CreateCellule() {
       telephone: selected ? selected.telephone || "" : "",
     });
   };
+
+  const {
+  data: { user }
+} = await supabase.auth.getUser();
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -22,6 +22,8 @@ export default function AddMember() {
     infos_supplementaires: "",
     priere_salut: "",
     type_conversion: "",
+    eglise_id: "",
+    branche_id: "", // ajout branche_id
   });
 
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
@@ -31,25 +33,29 @@ export default function AddMember() {
 
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
 
+  // ➤ Récupérer eglise_id et branche_id de l'utilisateur connecté
   useEffect(() => {
-  const fetchUserEglise = async () => {
-    // Récupérer la session de l'utilisateur qui a généré le lien
-    const { data: session } = await supabase.auth.getSession();
-    if (!session?.session?.user) return;
+    const fetchUserEglise = async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) return;
 
-    const { data: profile, error } = await supabase
-      .from("profiles")
-      .select("eglise_id")
-      .eq("id", session.session.user.id)
-      .single();
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id") // récupère les deux
+        .eq("id", session.session.user.id)
+        .single();
 
-    if (!error && profile) {
-      setFormData(prev => ({ ...prev, eglise_id: profile.eglise_id }));
-    }
-  };
+      if (!error && profile) {
+        setFormData(prev => ({
+          ...prev,
+          eglise_id: profile.eglise_id,
+          branche_id: profile.branche_id,
+        }));
+      }
+    };
 
-  fetchUserEglise();
-}, []);
+    fetchUserEglise();
+  }, []);
 
   // Vérification du token
   useEffect(() => {
@@ -88,71 +94,66 @@ export default function AddMember() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const finalBesoin = showBesoinLibre && formData.besoinLibre
-    ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
-    : formData.besoin;
+    const finalBesoin = showBesoinLibre && formData.besoinLibre
+      ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
+      : formData.besoin;
 
-  // Crée l'objet contact à envoyer
-  const dataToSend = {
-    ...formData,
-    besoin: finalBesoin,
-    etat_contact: "Nouveau", // statut par défaut
-     eglise_id: formData.eglise_id,
-  };
-
-  delete dataToSend.besoinLibre;
-
-  try {
-    // Vérifier si le téléphone existe déjà
-    const { data: existing } = await supabase
-      .from("membres_complets")
-      .select("id")
-      .eq("telephone", formData.telephone)
-      .single();
-
-    // Créer un objet temporaire pour le front
-    const newContact = {
-      ...dataToSend,
-      id: existing?.id || Date.now(), // id temporaire si pas encore en base
-      deja_existant: !!existing,      // true si trouvé
-      isNouveau: true,                // pour afficher badge "Nouveau"
+    const dataToSend = {
+      ...formData,
+      besoin: finalBesoin,
+      etat_contact: "Nouveau",
+      eglise_id: formData.eglise_id,
+      branche_id: formData.branche_id, // envoi branche_id aussi
     };
 
-    // Ici, tu peux ajouter newContact dans ton state pour l'afficher dans la vue carte
-    // Exemple : setContacts(prev => [newContact, ...prev]);
-    // ❗️ pas besoin de stocker deja_existant dans la DB
+    delete dataToSend.besoinLibre;
 
-    // Insertion dans la table Supabase
-    const { error } = await supabase.from("membres_complets").insert([dataToSend]);
-    if (error) throw error;
+    try {
+      // Vérifier si le téléphone existe déjà
+      const { data: existing } = await supabase
+        .from("membres_complets")
+        .select("id")
+        .eq("telephone", formData.telephone)
+        .single();
 
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
+      const newContact = {
+        ...dataToSend,
+        id: existing?.id || Date.now(),
+        deja_existant: !!existing,
+        isNouveau: true,
+      };
 
-    setFormData({
-      sexe: "",
-      nom: "",
-      prenom: "",
-      telephone: "",
-      ville: "",
-      statut: "",
-      venu: "",
-      besoin: [],
-      besoinLibre: "",
-      is_whatsapp: false,
-      infos_supplementaires: "",
-      priere_salut: "",
-      type_conversion: "",
-    });
-    setShowBesoinLibre(false);
+      const { error } = await supabase.from("membres_complets").insert([dataToSend]);
+      if (error) throw error;
 
-  } catch (err) {
-    alert(err.message);
-  }
-};
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
 
+      setFormData({
+        sexe: "",
+        nom: "",
+        prenom: "",
+        telephone: "",
+        ville: "",
+        statut: "",
+        venu: "",
+        besoin: [],
+        besoinLibre: "",
+        is_whatsapp: false,
+        infos_supplementaires: "",
+        priere_salut: "",
+        type_conversion: "",
+        eglise_id: formData.eglise_id,
+        branche_id: formData.branche_id,
+      });
+      setShowBesoinLibre(false);
+
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   const handleCancel = () => {
     setFormData({
@@ -169,6 +170,8 @@ export default function AddMember() {
       infos_supplementaires: "",
       priere_salut: "",
       type_conversion: "",
+      eglise_id: formData.eglise_id,
+      branche_id: formData.branche_id,
     });
     setShowBesoinLibre(false);
   };
@@ -368,7 +371,7 @@ export default function AddMember() {
             className="input"
           />
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">
+           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">
             <button type="button" onClick={handleCancel} className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               Annuler
             </button>

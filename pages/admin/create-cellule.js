@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -6,6 +7,7 @@ import supabase from "../../lib/supabaseClient";
 
 export default function CreateCellule() {
   const router = useRouter();
+
   const [formData, setFormData] = useState({
     nom: "",
     zone: "",
@@ -13,57 +15,71 @@ export default function CreateCellule() {
     responsable_nom: "",
     telephone: "",
   });
+
+  const [responsables, setResponsables] = useState([]);
+  const [egliseId, setEgliseId] = useState(null);
+  const [brancheId, setBrancheId] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [responsables, setResponsables] = useState([]);
 
+  /* =========================
+     CONTEXTE UTILISATEUR
+     (eglise_id / branche_id)
+  ========================= */
   useEffect(() => {
-  const fetchResponsables = async () => {
+    const initContext = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
+      if (!user) return;
 
-    if (!user) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("eglise_id, branche_id")
-      .eq("id", user.id)
-      .single();
+      if (!profile) return;
 
-    if (!profile) return;
+      setEgliseId(profile.eglise_id);
+      setBrancheId(profile.branche_id);
+    };
 
-    const { data: cellules } = await supabase
-      .from("cellules")
-      .select("responsable_id")
-      .eq("eglise_id", profile.eglise_id)
-      .eq("branche_id", profile.branche_id);
+    initContext();
+  }, []);
 
-    const responsablesDejaPris = cellules
-      ?.map(c => c.responsable_id)
-      .filter(Boolean) || [];
+  /* =========================
+     RESPONSABLES (FILTRÉS)
+  ========================= */
+  useEffect(() => {
+    if (!egliseId || !brancheId) return;
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom, telephone")
-      .eq("eglise_id", profile.eglise_id)
-      .eq("branche_id", profile.branche_id)
-      .eq("role", "ResponsableCellule")
-      .not("id", "in", `(${responsablesDejaPris.join(",")})`);
+    const fetchResponsables = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, telephone")
+        .eq("role", "ResponsableCellule")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
 
-    if (!error) setResponsables(data);
-  };
+      if (!error) setResponsables(data || []);
+    };
 
-  fetchResponsables();
-}, []);
+    fetchResponsables();
+  }, [egliseId, brancheId]);
 
+  /* =========================
+     HANDLERS
+  ========================= */
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleResponsableChange = (e) => {
-    const selected = responsables.find(r => r.id === e.target.value);
+    const selected = responsables.find((r) => r.id === e.target.value);
+
     setFormData({
       ...formData,
       responsable_id: e.target.value,
@@ -72,13 +88,14 @@ export default function CreateCellule() {
     });
   };
 
-  const {
-  data: { user }
-} = await supabase.auth.getUser();
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!egliseId || !brancheId) {
+      setMessage("❌ Contexte église/branche introuvable");
+      return;
+    }
+
     setLoading(true);
     setMessage("⏳ Création en cours...");
 
@@ -86,48 +103,59 @@ export default function CreateCellule() {
       const res = await fetch("/api/create-cellule", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          eglise_id: egliseId,
+          branche_id: brancheId,
+        }),
       });
 
-      const data = await res.json().catch(() => null);
+      const data = await res.json();
 
-      if (res.ok) {
-        setMessage("✅ Cellule créée avec succès !");
-        setFormData({ nom: "", zone: "", responsable_id: "", responsable_nom: "", telephone: "" });
+      if (!res.ok) {
+        setMessage(`❌ ${data.error}`);
       } else {
-        setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
+        setMessage("✅ Cellule créée avec succès !");
+        setFormData({
+          nom: "",
+          zone: "",
+          responsable_id: "",
+          responsable_nom: "",
+          telephone: "",
+        });
       }
     } catch (err) {
-      setMessage("❌ Erreur serveur: " + err.message);
+      setMessage("❌ Erreur serveur");
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    setFormData({ nom: "", zone: "", responsable_id: "", responsable_nom: "", telephone: "" });
-    setMessage("");
+    router.back();
   };
 
+  /* =========================
+     UI
+  ========================= */
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-lg relative">
 
-        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
-          className="absolute top-4 left-4 flex items-center text-gray-700 hover:text-gray-900 transition-colors"
+          className="absolute top-4 left-4 text-gray-700"
         >
           ← Retour
         </button>
 
-        {/* Logo centré */}
         <div className="flex justify-center mb-6">
-          <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
+          <Image src="/logo.png" alt="SoulTrack" width={80} height={80} />
         </div>
 
-        {/* Titre */}
-        <h1 className="text-3xl font-bold text-center mb-6">Créer une cellule</h1>
+        <h1 className="text-3xl font-bold text-center mb-6">
+          Créer une cellule
+        </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
@@ -135,23 +163,23 @@ export default function CreateCellule() {
             placeholder="Nom de la cellule"
             value={formData.nom}
             onChange={handleChange}
-            className="w-full rounded-xl border border-gray-300 p-3 text-black"
+            className="w-full rounded-xl border p-3 text-black"
             required
           />
+
           <input
             name="zone"
             placeholder="Zone / Localisation"
             value={formData.zone}
             onChange={handleChange}
-            className="w-full rounded-xl border border-gray-300 p-3 text-black"
+            className="w-full rounded-xl border p-3 text-black"
             required
           />
 
           <select
-            name="responsable_id"
             value={formData.responsable_id}
             onChange={handleResponsableChange}
-            className="w-full rounded-xl border border-gray-300 p-3 text-black"
+            className="w-full rounded-xl border p-3 text-black"
             required
           >
             <option value="">-- Sélectionnez un responsable --</option>
@@ -164,30 +192,25 @@ export default function CreateCellule() {
 
           {formData.responsable_id && (
             <input
-              name="telephone"
-              placeholder="Téléphone du responsable"
               value={formData.telephone}
               readOnly
-              className="w-full rounded-xl border border-gray-300 p-3 text-black bg-gray-100 cursor-not-allowed"
+              className="w-full rounded-xl border p-3 bg-gray-100 text-black"
             />
           )}
 
-          {/* Boutons côte à côte */}
-          <div className="flex gap-4 mt-2">
-            {/* Annuler à gauche */}
+          <div className="flex gap-4">
             <button
               type="button"
               onClick={handleCancel}
-              className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 text-white py-2 rounded-2xl hover:from-gray-500 hover:to-gray-600 transition-all"
+              className="flex-1 bg-gray-400 text-white py-2 rounded-2xl"
             >
               Annuler
             </button>
 
-            {/* Créer à droite */}
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white py-2 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition-all"
+              className="flex-1 bg-indigo-500 text-white py-2 rounded-2xl"
             >
               {loading ? "Création..." : "Créer"}
             </button>
@@ -195,11 +218,7 @@ export default function CreateCellule() {
         </form>
 
         {message && (
-          <p
-            className={`mt-4 text-center text-sm ${message.startsWith("✅") ? "text-green-600" : "text-red-600"}`}
-          >
-            {message}
-          </p>
+          <p className="mt-4 text-center text-sm">{message}</p>
         )}
       </div>
     </div>

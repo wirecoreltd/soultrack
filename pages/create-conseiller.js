@@ -19,7 +19,7 @@ export default function CreateConseiller() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ➤ Récupérer l'utilisateur connecté et son profil (eglise_id et branch_id)
+  // ➤ Récupérer l'utilisateur connecté et son profil (eglise_id et branche_id)
   useEffect(() => {
     async function fetchUserAndMembers() {
       try {
@@ -32,7 +32,7 @@ export default function CreateConseiller() {
         // Récupérer profil
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, eglise_id, branch_id")
+          .select("id, eglise_id, branche_id")
           .eq("id", session.user.id)
           .single();
         if (profileError) return console.error("Erreur profil :", profileError);
@@ -43,7 +43,7 @@ export default function CreateConseiller() {
           .select("id, prenom, nom, telephone")
           .eq("star", true)
           .eq("eglise_id", profileData.eglise_id)
-          .eq("branch_id", profileData.branch_id);
+          .eq("branche_id", profileData.branche_id);
 
         if (membersError) return console.error("Erreur membres :", membersError);
         setMembers(membersData || []);

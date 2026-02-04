@@ -19,17 +19,17 @@ export default function CreateConseiller() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ➤ Récupérer l'utilisateur connecté et les membres disponibles
+  // ➤ Récupérer l'utilisateur connecté et ses membres disponibles
   useEffect(() => {
     async function fetchUserAndMembers() {
       try {
+        // 🔹 Session utilisateur
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) return console.error("Erreur session :", sessionError);
         if (!session?.user) return setMessage("❌ Vous devez être connecté");
-
         setResponsableId(session.user.id);
 
-        // 🔹 Profil du responsable (eglise + branche)
+        // 🔹 Profil du responsable
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("id, eglise_id, branche_id")
@@ -37,26 +37,33 @@ export default function CreateConseiller() {
           .single();
         if (profileError) return console.error("Erreur profil :", profileError);
 
-        // 🔹 Récupérer emails des conseillers existants
-        const { data: conseillersExistants } = await supabase
-          .from("profiles")
-          .select("email")
-          .eq("role", "Conseiller");
-
-        const emailsConseillers = new Set(conseillersExistants.map(c => c.email));
-
-        // 🔹 Récupérer membres star de la même église et branche
+        // 🔹 Membres star de la même église/branche
         const { data: membersData, error: membersError } = await supabase
           .from("membres_complets")
-          .select("id, prenom, nom, telephone, email")
+          .select("id, prenom, nom, telephone")
           .eq("star", true)
           .eq("eglise_id", profileData.eglise_id)
           .eq("branche_id", profileData.branche_id);
-
         if (membersError) return console.error("Erreur membres :", membersError);
 
-        // 🔹 Exclure ceux qui sont déjà conseillers
-        const membresDisponibles = membersData.filter(m => !emailsConseillers.has(m.email));
+        // 🔹 Conseillers existants
+        const { data: conseillersExistants, error: conseillersError } = await supabase
+          .from("profiles")
+          .select("prenom, nom, telephone")
+          .eq("role", "Conseiller");
+        if (conseillersError) return console.error("Erreur conseillers :", conseillersError);
+
+        // 🔹 Créer un Set des conseillers existants (clé unique prenom-nom-telephone)
+        const conseillersSet = new Set(
+          conseillersExistants.map(c => `${c.prenom.toLowerCase()}-${c.nom.toLowerCase()}-${c.telephone}`)
+        );
+
+        // 🔹 Filtrer les membres déjà conseillers
+        const membresDisponibles = membersData.filter(m => {
+          const key = `${m.prenom.toLowerCase()}-${m.nom.toLowerCase()}-${m.telephone}`;
+          return !conseillersSet.has(key);
+        });
+
         setMembers(membresDisponibles || []);
       } catch (err) {
         console.error("Erreur fetchUserAndMembers :", err);
@@ -66,7 +73,7 @@ export default function CreateConseiller() {
     fetchUserAndMembers();
   }, []);
 
-  // ➤ Remplissage automatique des infos du membre sélectionné
+  // ➤ Remplissage automatique des infos
   useEffect(() => {
     if (!selectedMemberId) {
       setFormData({ ...formData, prenom: "", nom: "", telephone: "" });

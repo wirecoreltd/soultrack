@@ -224,7 +224,7 @@ export default function Evangelisation() {
         conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
         cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
         Date_Evangelise: m.created_at, 
-        date_suivi: new Date().toISOString()
+        date_suivi: new Date().toISOString(),
         eglise_id: profile?.eglise_id || null,
         branche_id: profile?.branche_id || null
       }));

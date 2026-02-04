@@ -8,6 +8,7 @@ import EditEvangeliseSuiviPopup from "../components/EditEvangeliseSuiviPopup";
 import DetailEvangeliseSuivisPopup from "../components/DetailEvangeliseSuivisPopup";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
+import useChurchScope from "../hooks/useChurchScope";
 
 export default function SuivisEvangelisation() {
   return (
@@ -17,6 +18,7 @@ export default function SuivisEvangelisation() {
   );
 }
   function SuivisEvangelisationContent() {
+  const { profile, loading: loadingProfile, error: profileError, scopedQuery } = useChurchScope();  
   const [allSuivis, setAllSuivis] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [cellules, setCellules] = useState([]);
@@ -83,58 +85,61 @@ export default function SuivisEvangelisation() {
     return data;
   };
 
-  // ================= CONSEILLERS =================
-  const fetchConseillers = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom")
-      .eq("role", "Conseiller");
-
-    setConseillers(data || []);
+  // ================= FETCH=================
+   const fetchConseillers = async () => {
+    try {
+      const query = scopedQuery("profiles");
+      if (!query) return;
+      const { data, error } = await query.select("id, prenom, nom").eq("role", "Conseiller");
+      if (error) throw error;
+      setConseillers(data || []);
+    } catch (err) {
+      console.error("Erreur fetchConseillers:", err.message);
+      setConseillers([]);
+    }
   };
 
-  // ================= CELLULES =================
   const fetchCellules = async () => {
-    const { data } = await supabase
-      .from("cellules")
-      .select("id, cellule_full, responsable_id");
-
-    setCellules(data || []);
-    return data || [];
+    try {
+      const query = scopedQuery("cellules");
+      if (!query) return;
+      const { data, error } = await query.select("id, cellule_full, responsable_id");
+      if (error) throw error;
+      setCellules(data || []);
+      return data || [];
+    } catch (err) {
+      console.error("Erreur fetchCellules:", err.message);
+      setCellules([]);
+      return [];
+    }
   };
 
-  // ================= SUIVIS =================
-  const fetchSuivis = async (userData, cellulesData) => {
-  try {
-    const { data, error } = await supabase
-      .from("suivis_des_evangelises")
-      .select("*")
-      .order("id", { ascending: false });
+  const fetchSuivis = async () => {
+    try {
+      const query = scopedQuery("suivis_des_evangelises");
+      if (!query) return;
 
-    if (error) {
-      console.error("Erreur fetchSuivis:", error);
+      const { data, error } = await query.order("id", { ascending: false });
+      if (error) throw error;
+
+      let filtered = data || [];
+
+      // 🔹 Filtrage selon rôle
+      if (profile.role === "Conseiller") {
+        filtered = filtered.filter((m) => m.conseiller_id === profile.id);
+      } else if (profile.role === "ResponsableCellule") {
+        const mesCellulesIds = cellules
+          .filter((c) => c.responsable_id === profile.id)
+          .map((c) => c.id);
+        filtered = filtered.filter((m) => mesCellulesIds.includes(m.cellule_id));
+      }
+
+      setAllSuivis(filtered);
+    } catch (err) {
+      console.error("Erreur fetchSuivis:", err.message);
       setAllSuivis([]);
-      return;
     }
-
-    let filtered = data || [];
-
-    // 🔹 Filtrage selon rôle
-    if (userData.role === "Conseiller") {
-      filtered = filtered.filter((m) => m.conseiller_id === userData.id);
-    } else if (userData.role === "ResponsableCellule") {
-      const mesCellulesIds = cellulesData
-        .filter((c) => c.responsable_id === userData.id)
-        .map((c) => c.id);
-      filtered = filtered.filter((m) => mesCellulesIds.includes(m.cellule_id));
-    }
-
-    setAllSuivis(filtered);
-  } catch (err) {
-    console.error("Erreur fetchSuivis:", err.message);
-    setAllSuivis([]);
-  }
-};
+  };
 
   // ================= HELPERS =================
   const getBorderColor = (m) => {

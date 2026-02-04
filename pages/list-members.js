@@ -154,17 +154,21 @@ export default function ListMembers() {
   };
 
   // -------------------- Fetch data --------------------
- useEffect(() => {
-  if (!scopedQuery) return;
+const { profile, loading: loadingScope, error: errorScope, scopedQuery } = useChurchScope();
+const [members, setMembers] = useState([]);
+
+useEffect(() => {
+  if (!scopedQuery) return; // ⚠️ n’exécute que si prêt
 
   const fetchMembers = async () => {
     const { data, error } = await scopedQuery("membres_complets").order("created_at", { ascending: false });
-    if (error) console.error(error);
+    if (error) console.error("Erreur fetchMembers:", error);
     else setMembers(data || []);
   };
 
   fetchMembers();
 }, [scopedQuery]);
+
 
 
   if (loading) return <p>Chargement…</p>;
@@ -348,6 +352,9 @@ export default function ListMembers() {
             catch { return m.besoin; }
           })();
 
+      if (loadingScope) return <p>Chargement…</p>;
+      if (errorScope) return <p className="text-red-600">{errorScope}</p>;
+    
     return (
         <div key={m.id} className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative">
           

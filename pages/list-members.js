@@ -1,3 +1,28 @@
+"use client";
+
+import { useEffect, useState, useRef, useMemo } from "react";
+import supabase from "../lib/supabaseClient";
+import BoutonEnvoyer from "../components/BoutonEnvoyer";
+import LogoutLink from "../components/LogoutLink";
+import DetailsMemberPopup from "../components/DetailsMemberPopup";
+import EditMemberPopup from "../components/EditMemberPopup";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { useSearchParams } from "next/navigation";
+import { useMembers } from "../context/MembersContext";
+import Header from "../components/Header";
+import { useRouter } from "next/navigation";
+import ProtectedRoute from "../components/ProtectedRoute";
+import useChurchScope from "../hooks/useChurchScope";
+
+export default function ListMembers() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableCellule"]}>
+      <ListMembersContent />
+    </ProtectedRoute>
+  );
+}
+
 function ListMembersContent() {
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");

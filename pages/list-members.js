@@ -63,7 +63,7 @@ function ListMembersContent() {
     return "card";
   });
 
-  const { scopedQuery } = useChurchScope(); // 🔑 Utilisation correcte du hook scopedQuery
+  const { scopedQuery } = useChurchScope();
 
   // -------------------- Toast --------------------
   const showToast = (msg) => {
@@ -149,21 +149,118 @@ function ListMembersContent() {
     }
   };
 
-  // -------------------- Fetch membres via scopedQuery --------------------
+  // -------------------- Fetch membres via scopedQuery + Realtime --------------------
   useEffect(() => {
     if (!scopedQuery) return;
+    if (!session) return;
 
     const fetchMembers = async () => {
-      const { data, error } = await scopedQuery("membres_complets").order("created_at", {
-        ascending: false,
-      });
-      if (error) console.error("Erreur fetchMembers:", error);
-      else setAllMembers(data || []);
-      setLoading(false);
+      try {
+        const result = await scopedQuery("membres_complets");
+        const data = result?.order
+          ? await result.order("created_at", { ascending: false })
+          : { data: [] };
+        setAllMembers(data.data || []);
+      } catch (error) {
+        console.error("Erreur fetchMembers:", error);
+        setAllMembers([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchMembers();
-  }, [scopedQuery, setAllMembers]);
+
+    if (realtimeChannelRef.current) {
+      try {
+        realtimeChannelRef.current.unsubscribe();
+      } catch (e) {}
+      realtimeChannelRef.current = null;
+    }
+
+    const channel = supabase.channel("realtime:membres_complets");
+
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "membres_complets" },
+      async () => {
+        if (scopedQuery && session) {
+          try {
+            const result = await scopedQuery("membres_complets");
+            const data = result?.order
+              ? await result.order("created_at", { ascending: false })
+              : { data: [] };
+            if (data.data) setAllMembers(data.data);
+          } catch (err) {
+            console.error("Erreur realtime fetch:", err);
+          }
+        }
+      }
+    );
+
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "cellules" },
+      async () => {
+        try {
+          const { data: cellData, error } = await supabase.from("cellules").select("id, cellule_full");
+          if (!error && cellData) setCellules(cellData);
+
+          if (scopedQuery && session) {
+            const result = await scopedQuery("membres_complets");
+            const data = result?.order
+              ? await result.order("created_at", { ascending: false })
+              : { data: [] };
+            if (data.data) setAllMembers(data.data);
+          }
+        } catch (err) {
+          console.error("Erreur realtime cellules:", err);
+        }
+      }
+    );
+
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "profiles" },
+      async () => {
+        try {
+          const { data: consData } = await supabase
+            .from("profiles")
+            .select("id, prenom, nom, telephone")
+            .eq("role", "Conseiller");
+          if (consData) setConseillers(consData);
+
+          if (scopedQuery && session) {
+            const result = await scopedQuery("membres_complets");
+            const data = result?.order
+              ? await result.order("created_at", { ascending: false })
+              : { data: [] };
+            if (data.data) setAllMembers(data.data);
+          }
+        } catch (err) {
+          console.error("Erreur realtime profiles:", err);
+        }
+      }
+    );
+
+    try {
+      channel.subscribe();
+    } catch (err) {
+      console.warn("Erreur subscription realtime:", err);
+    }
+
+    realtimeChannelRef.current = channel;
+
+    return () => {
+      try {
+        if (realtimeChannelRef.current) {
+          realtimeChannelRef.current.unsubscribe();
+          realtimeChannelRef.current = null;
+        }
+      } catch (e) {}
+    };
+  }, [scopedQuery, session, setAllMembers]);
+
 
   // -------------------- Fetch cellules et conseillers --------------------
   useEffect(() => {

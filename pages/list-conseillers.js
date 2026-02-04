@@ -15,35 +15,37 @@ export default function ListConseillers() {
   const fetchConseillers = async () => {
     setLoading(true);
     try {
+      // 🔹 Récupérer utilisateur connecté
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Utilisateur non connecté");
 
-      // 🔹 Récupérer eglise_id et branch_id de l'utilisateur connecté
-      const { data: userProfile, error: profileError } = await supabase
+      // 🔹 Récupérer info de l'utilisateur pour eglise_id et branch_id
+      const { data: userProfile } = await supabase
         .from("profiles")
-        .select("eglise_id, branch_id")
+        .select("eglise_id, branche_id")
         .eq("id", user.id)
         .single();
 
-      if (profileError || !userProfile) throw new Error("Impossible de récupérer votre profil");
+      if (!userProfile) throw new Error("Impossible de récupérer votre profil");
 
-      const { eglise_id, branch_id } = userProfile;
+      const eglise_id = String(userProfile.eglise_id);
+      const branch_id = String(userProfile.branche_id);
 
-      // 🔹 Récupérer les conseillers de la même église et branche
+      // 🔹 Récupérer les conseillers assignés à la même église et branche
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, prenom, nom, email, telephone, role, responsable_id")
         .eq("role", "Conseiller")
         .eq("eglise_id", eglise_id)
-        .eq("branch_id", branch_id);
+        .eq("branche_id", branch_id);
 
-      if (!profiles) {
+      if (!profiles || profiles.length === 0) {
         setConseillers([]);
         setLoading(false);
         return;
       }
 
-      // 🔹 Compter contacts pour chaque conseiller
+      // 🔹 Compter contacts assignés à chaque conseiller
       const conseillersIds = profiles.map((p) => p.id);
       const { data: membres } = await supabase
         .from("membres_complets")
@@ -57,7 +59,7 @@ export default function ListConseillers() {
         contactSetMap[m.conseiller_id].add(m.id);
       });
 
-      // 🔹 Responsable map
+      // 🔹 Récupérer les responsables
       const responsablesIds = profiles.map((p) => p.responsable_id).filter(Boolean);
       let responsableMap = {};
       if (responsablesIds.length > 0) {

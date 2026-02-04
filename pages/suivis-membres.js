@@ -11,6 +11,8 @@ import { useMembers } from "../context/MembersContext";
 import { useRouter } from "next/navigation";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
+import useChurchScope from "../hooks/useChurchScope";
+
 
 export default function SuivisMembres() {
   return (
@@ -22,8 +24,8 @@ export default function SuivisMembres() {
 
   function SuivisMembresContent() {
   const router = useRouter();
+  const { profile, loading: scopeLoading, error: scopeError, scopedQuery } = useChurchScope();
   const { members, setAllMembers, updateMember } = useMembers();
-
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
@@ -82,7 +84,7 @@ export default function SuivisMembres() {
         setPrenom(profileData.prenom || "cher membre");
         setRole(profileData.role);
 
-        let query = supabase.from("membres_complets").select("*").order("created_at", { ascending: false });
+        let query = scopedQuery("membres_complets").order("created_at", { ascending: false });
 
         if (profileData.role === "Conseiller") {
           query = query.eq("conseiller_id", profileData.id);
@@ -240,6 +242,10 @@ export default function SuivisMembres() {
         return "—";
       }
     };     
+
+    if (scopeLoading) return <p className="text-white">Chargement...</p>;
+    if (scopeError) return <p className="text-red-400">Erreur : {scopeError}</p>;
+    if (!profile) return null;
 
 return (
       <div className="text-black text-sm space-y-2 w-full">

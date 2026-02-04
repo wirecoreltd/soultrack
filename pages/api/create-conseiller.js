@@ -1,47 +1,73 @@
 import { createClient } from "@supabase/supabase-js";
 
-// ✅ Service Role Key pour pouvoir créer des utilisateurs côté serveur
-const supabase = createClient(
+const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-export default async function handler(req, res) {
-  if (req.method !== "POST")
-    return res.status(405).json({ error: "Méthode non autorisée" });
-
+export async function POST(req) {
   try {
-    const { prenom, nom, telephone, email, password, responsable_id } = req.body;
+    const body = await req.json();
+    const { email, password, prenom, nom, telephone, responsable_id } = body;
 
-    if (!responsable_id) {
-      return res.status(400).json({ error: "Responsable non fourni" });
+    if (!email || !password || !responsable_id) {
+      return Response.json({ error: "Champs manquants" }, { status: 400 });
     }
 
-    // ✅ Crée l'utilisateur dans Auth
-    const { data: userData, error: createError } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-    });
-    if (createError) throw createError;
+    // 🔹 1. Récupérer le profil du responsable
+    const { data: responsable, error: respErr } = await supabaseAdmin
+      .from("profiles")
+      .select("eglise_id, branche_id")
+      .eq("id", responsable_id)
+      .single();
 
-    const user = userData.user;
+    if (respErr || !responsable) {
+      return Response.json(
+        { error: "Profil responsable introuvable" },
+        { status: 400 }
+      );
+    }
 
-    // ✅ Insert dans profiles avec responsable_id
-    const { error: profileError } = await supabase.from("profiles").insert({
-      id: user.id,
-      prenom,
-      nom,
-      telephone,
-      role: "Conseiller",
-      email,
-      responsable_id,
-    });
-    if (profileError) throw profileError;
+    // 🔹 2. Créer l'utilisateur Auth
+    const { data: authUser, error: authError } =
+      await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      });
 
-    return res.status(200).json({ message: "Conseiller créé avec succès", userId: user.id });
+    if (authError) {
+      return Response.json({ error: authError.message }, { status: 400 });
+    }
+
+    // 🔹 3. Créer le profil CONSEILLER avec eglise & branche
+    const { error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .insert({
+        id: authUser.user.id,
+        email,
+        prenom,
+        nom,
+        telephone,
+        role: "Conseiller",
+        responsable_id,
+        must_change_password: true,
+        eglise_id: responsable.eglise_id,
+        branche_id: responsable.branche_id,
+      });
+
+    if (profileError) {
+      return Response.json(
+        { error: profileError.message },
+        { status: 400 }
+      );
+    }
+
+    return Response.json({ success: true });
   } catch (err) {
-    console.error("Erreur création conseiller:", err);
-    return res.status(500).json({ error: err.message });
+    return Response.json(
+      { error: err.message },
+      { status: 500 }
+    );
   }
 }

@@ -17,8 +17,7 @@ export default function SuivisEvangelisation() {
 }
 
 function SuivisEvangelisationContent() {
-  const { profile, loading: loadingProfile, error: profileError, scopedQuery } = useChurchScope();
-
+  const { profile, loading: loadingProfile, error: profileError, scopedQuery } = useChurchScope();  
   const [allSuivis, setAllSuivis] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [cellules, setCellules] = useState([]);
@@ -27,6 +26,7 @@ function SuivisEvangelisationContent() {
   const [showRefus, setShowRefus] = useState(false);
   const [phoneMenuId, setPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
+  const [editingContact, setEditingContact] = useState(null);
 
   // View localStorage
   const [view, setView] = useState(() => {

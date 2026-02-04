@@ -162,8 +162,11 @@ export default function ListMembers() {
       .select("*")
       .neq("etat_contact", "supprime")
       .not("eglise_id", "is", null)
-      .eq("eglise_id", profile.eglise_id);
+      .not("branche_id", "is", null)
+      .eq("eglise_id", profile.eglise_id)
+      .eq("branche_id", profile.branche_id);
 
+    // 🎯 Filtre conseiller
     if (conseillerIdFromUrl) {
       query = query.eq("conseiller_id", conseillerIdFromUrl);
     } else if (profile?.role === "Conseiller") {
@@ -184,9 +187,7 @@ export default function ListMembers() {
     setLoading(false);
   }
 };
-
-
-
+    
   const fetchCellules = async () => {
     const { data, error } = await supabase.from("cellules").select("id, cellule_full");
     if (error) console.error("Erreur fetchCellules:", error);

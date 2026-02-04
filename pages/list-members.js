@@ -153,7 +153,12 @@ export default function ListMembers() {
   };
 
   // -------------------- Fetch data --------------------
-  const fetchMembers = async (profile = null) => {
+  const fetchMembers = async (profile) => {
+  if (!profile?.eglise_id || !profile?.branche_id) {
+    console.warn("Profile incomplet, fetchMembers annulé", profile);
+    return;
+  }
+
   setLoading(true);
 
   try {
@@ -166,10 +171,9 @@ export default function ListMembers() {
       .eq("eglise_id", profile.eglise_id)
       .eq("branche_id", profile.branche_id);
 
-    // 🎯 Filtre conseiller
     if (conseillerIdFromUrl) {
       query = query.eq("conseiller_id", conseillerIdFromUrl);
-    } else if (profile?.role === "Conseiller") {
+    } else if (profile.role === "Conseiller") {
       query = query.eq("conseiller_id", profile.id);
     }
 
@@ -285,6 +289,11 @@ export default function ListMembers() {
   fetchSessionAndProfile();
 }, []);
 
+useEffect(() => {
+  if (profile?.eglise_id && profile?.branche_id) {
+    fetchMembers(profile);
+  }
+}, [profile]);
 
   // -------------------- Realtime --------------------
   useEffect(() => {

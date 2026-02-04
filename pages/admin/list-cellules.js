@@ -99,46 +99,49 @@ export default function ListCellules() {
     fetchCellules();
   }, []);
 
-  const fetchCellules = async () => {
-    setLoading(true);
+ const fetchCellules = async () => {
+  setLoading(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, role")
-      .eq("id", user.id)
-      .single();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, role, eglise_id, branche_id")
+    .eq("id", user.id)
+    .single();
 
-    setUserRole(profile.role);
+  setUserRole(profile.role);
 
-    let query = supabase
-      .from("cellules")
-      .select("id, cellule_full, ville, responsable, telephone, responsable_id")
-      .order("cellule_full");
+  let query = supabase
+    .from("cellules")
+    .select("id, cellule_full, ville, responsable, telephone, responsable_id")
+    .eq("eglise_id", profile.eglise_id)
+    .eq("branche_id", profile.branche_id) // 🔹 filtrer par branche
+    .order("cellule_full");
 
-    if (profile.role === "ResponsableCellule") {
-      query = query.eq("responsable_id", profile.id);
-    }
+  if (profile.role === "ResponsableCellule") {
+    query = query.eq("responsable_id", profile.id);
+  }
 
-    const { data } = await query;
+  const { data } = await query;
 
-    const withCount = await Promise.all(
-      data.map(async (c) => {
-        const { count } = await supabase
-          .from("membres_complets")
-          .select("id", { count: "exact", head: true })
-          .eq("cellule_id", c.id)
-          .eq("statut_suivis", 3);
+  const withCount = await Promise.all(
+    data.map(async (c) => {
+      const { count } = await supabase
+        .from("membres_complets")
+        .select("id", { count: "exact", head: true })
+        .eq("cellule_id", c.id)
+        .eq("statut_suivis", 3);
 
-        return { ...c, membre_count: count || 0 };
-      })
-    );
+      return { ...c, membre_count: count || 0 };
+    })
+  );
 
-    setCellules(withCount);
-    setLoading(false);
-  };
+  setCellules(withCount);
+  setLoading(false);
+};
+
 
   /* =========================
      Recherche + Filtre

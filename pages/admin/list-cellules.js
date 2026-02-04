@@ -84,7 +84,7 @@ export default function ListCellules() {
   );
 }
   
-  function ListCellulesContent() {
+function ListCellulesContent() {
   const router = useRouter();
   const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -99,63 +99,60 @@ export default function ListCellules() {
     fetchCellules();
   }, []);
 
- const fetchCellules = async () => {
-  setLoading(true);
+  const fetchCellules = async () => {
+    setLoading(true);
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+    // Récupérer l'utilisateur connecté
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, role, eglise_id, branche_id")
-    .eq("id", user.id)
-    .single();
+    // Récupérer le profil complet pour eglise_id et branche_id
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, role, eglise_id, branche_id")
+      .eq("id", user.id)
+      .single();
 
-  setUserRole(profile.role);
+    if (!profile) return;
 
-  let query = supabase
-    .from("cellules")
-    .select("id, cellule_full, ville, responsable, telephone, responsable_id")
-    .eq("eglise_id", profile.eglise_id)
-    .eq("branche_id", profile.branche_id) // 🔹 filtrer par branche
-    .order("cellule_full");
+    setUserRole(profile.role);
 
-  if (profile.role === "ResponsableCellule") {
-    query = query.eq("responsable_id", profile.id);
-  }
+    // 🔹 Récupérer les cellules filtrées par eglise et branche
+    let query = supabase
+      .from("cellules")
+      .select("id, cellule_full, ville, responsable, telephone, responsable_id, eglise_id, branche_id")
+      .eq("eglise_id", profile.eglise_id)
+      .eq("branche_id", profile.branche_id)
+      .order("cellule_full");
 
-  const { data } = await query;
+    // Si ResponsableCellule, ne voir que ses cellules
+    if (profile.role === "ResponsableCellule") {
+      query = query.eq("responsable_id", profile.id);
+    }
 
-  const withCount = await Promise.all(
-    data.map(async (c) => {
-      const { count } = await supabase
-        .from("membres_complets")
-        .select("id", { count: "exact", head: true })
-        .eq("cellule_id", c.id)
-        .eq("statut_suivis", 3);
+    const { data: cellsData } = await query;
 
-      return { ...c, membre_count: count || 0 };
-    })
-  );
+    // 🔹 Ajouter le compte des membres par cellule
+    const withCount = await Promise.all(
+      (cellsData || []).map(async (c) => {
+        const { count } = await supabase
+          .from("membres_complets")
+          .select("id", { count: "exact", head: true })
+          .eq("cellule_id", c.id)
+          .eq("statut_suivis", 3);
 
-  setCellules(withCount);
-  setLoading(false);
-};
+        return { ...c, membre_count: count || 0 };
+      })
+    );
 
+    setCellules(withCount);
+    setLoading(false);
+  };
 
-  /* =========================
-     Recherche + Filtre
-     (cellule_full uniquement)
-  ========================= */
+  // 🔹 Filtrage recherche + menu
   const cellulesFiltrees = cellules.filter((c) => {
-    const matchSearch = c.cellule_full
-      ?.toLowerCase()
-      .includes(search.toLowerCase());
-
-    const matchFilter = filterCellule
-      ? c.cellule_full === filterCellule
-      : true;
-
+    const matchSearch = c.cellule_full?.toLowerCase().includes(search.toLowerCase());
+    const matchFilter = filterCellule ? c.cellule_full === filterCellule : true;
     return matchSearch && matchFilter;
   });
 

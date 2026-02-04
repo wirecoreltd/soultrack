@@ -15,29 +15,27 @@ export default function ListConseillers() {
   const fetchConseillers = async () => {
     setLoading(true);
     try {
-      // 🔹 Récupérer utilisateur connecté
+      // 🔹 Récupérer l'utilisateur connecté
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Utilisateur non connecté");
 
-      // 🔹 Récupérer info de l'utilisateur pour eglise_id et branch_id
-      const { data: userProfile } = await supabase
+      // 🔹 Récupérer les informations de l'utilisateur pour savoir son église et branche
+      const { data: currentProfile } = await supabase
         .from("profiles")
         .select("eglise_id, branche_id")
         .eq("id", user.id)
         .single();
+      if (!currentProfile) throw new Error("Profil introuvable");
 
-      if (!userProfile) throw new Error("Impossible de récupérer votre profil");
+      const { eglise_id, branche_id } = currentProfile;
 
-      const eglise_id = String(userProfile.eglise_id);
-      const branch_id = String(userProfile.branche_id);
-
-      // 🔹 Récupérer les conseillers assignés à la même église et branche
+      // 🔹 Récupérer les conseillers de la même église et branche
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, prenom, nom, email, telephone, role, responsable_id")
+        .select("id, prenom, nom, email, telephone, role, responsable_id, eglise_id, branche_id")
         .eq("role", "Conseiller")
         .eq("eglise_id", eglise_id)
-        .eq("branche_id", branch_id);
+        .eq("branche_id", branche_id);
 
       if (!profiles || profiles.length === 0) {
         setConseillers([]);
@@ -45,21 +43,20 @@ export default function ListConseillers() {
         return;
       }
 
-      // 🔹 Compter contacts assignés à chaque conseiller
-      const conseillersIds = profiles.map((p) => p.id);
-      const { data: membres } = await supabase
-        .from("membres_complets")
-        .select("id, conseiller_id")
-        .in("conseiller_id", conseillersIds);
-
+      // 🔹 Compter les contacts assignés pour chaque conseiller (même église/branche)
       const contactSetMap = {};
-      membres?.forEach((m) => {
-        if (!m.conseiller_id) return;
-        if (!contactSetMap[m.conseiller_id]) contactSetMap[m.conseiller_id] = new Set();
-        contactSetMap[m.conseiller_id].add(m.id);
-      });
+      for (const c of profiles) {
+        const { data: membresConseiller } = await supabase
+          .from("membres_complets")
+          .select("id")
+          .eq("conseiller_id", c.id)
+          .eq("eglise_id", eglise_id)
+          .eq("branche_id", branche_id);
 
-      // 🔹 Récupérer les responsables
+        contactSetMap[c.id] = membresConseiller ? new Set(membresConseiller.map(m => m.id)) : new Set();
+      }
+
+      // 🔹 Récupérer les responsables pour les conseillers
       const responsablesIds = profiles.map((p) => p.responsable_id).filter(Boolean);
       let responsableMap = {};
       if (responsablesIds.length > 0) {
@@ -72,6 +69,7 @@ export default function ListConseillers() {
         });
       }
 
+      // 🔹 Mapper les conseillers avec contacts et responsable
       const list = profiles.map((p) => ({
         ...p,
         responsable_nom: p.responsable_id ? (responsableMap[p.responsable_id] || "Aucun") : "Aucun",

@@ -1,39 +1,90 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 
-export default function AddContact() {
+export default function AddMember() {
   const router = useRouter();
+  const { token } = router.query;
 
-  const [etatContact, setEtatContact] = useState("Nouveau");
   const [formData, setFormData] = useState({
-    prenom: "",
-    nom: "",
-    telephone: "",
-    is_whatsapp: false,
-    ville: "",
     sexe: "",
+    nom: "",
+    prenom: "",
+    telephone: "",
+    ville: "",
     statut: "",
     venu: "",
-    priere_salut: "",
-    type_conversion: "",
     besoin: [],
     besoinLibre: "",
+    is_whatsapp: false,
     infos_supplementaires: "",
+    priere_salut: "",
+    type_conversion: "",
+    eglise_id: "",
+    branche_id: "", // ajout branche_id
   });
+
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
 
+  // ➤ Récupérer eglise_id et branche_id de l'utilisateur connecté
+  useEffect(() => {
+    const fetchUserEglise = async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) return;
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id") // récupère les deux
+        .eq("id", session.session.user.id)
+        .single();
+
+      if (!error && profile) {
+        setFormData(prev => ({
+          ...prev,
+          eglise_id: profile.eglise_id,
+          branche_id: profile.branche_id,
+        }));
+      }
+    };
+
+    fetchUserEglise();
+  }, []);
+
+  // Vérification du token
+  useEffect(() => {
+    if (!token) return;
+
+    const verifyToken = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("access_tokens")
+        .select("*")
+        .eq("token", token)
+        .gte("expires_at", new Date().toISOString())
+        .single();
+
+      if (error || !data) setErrorMsg("Lien invalide ou expiré.");
+      setLoading(false);
+    };
+
+    verifyToken();
+  }, [token]);
+
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
+
     if (value === "Autre") {
       setShowBesoinLibre(checked);
       if (!checked) setFormData((prev) => ({ ...prev, besoinLibre: "" }));
     }
+
     setFormData((prev) => {
       const updatedBesoin = checked
         ? [...prev.besoin, value]
@@ -42,22 +93,38 @@ export default function AddContact() {
     });
   };
 
-  const handleCancel = () => router.back();
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const finalBesoin = showBesoinLibre && formData.besoinLibre
       ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
       : formData.besoin;
 
     const dataToSend = {
       ...formData,
-      etat_contact: etatContact,
       besoin: finalBesoin,
+      etat_contact: "Nouveau",
+      eglise_id: formData.eglise_id,
+      branche_id: formData.branche_id, // envoi branche_id aussi
     };
+
     delete dataToSend.besoinLibre;
 
     try {
+      // Vérifier si le téléphone existe déjà
+      const { data: existing } = await supabase
+        .from("membres_complets")
+        .select("id")
+        .eq("telephone", formData.telephone)
+        .single();
+
+      const newContact = {
+        ...dataToSend,
+        id: existing?.id || Date.now(),
+        deja_existant: !!existing,
+        isNouveau: true,
+      };
+
       const { error } = await supabase.from("membres_complets").insert([dataToSend]);
       if (error) throw error;
 
@@ -65,25 +132,52 @@ export default function AddContact() {
       setTimeout(() => setSuccess(false), 3000);
 
       setFormData({
-        prenom: "",
-        nom: "",
-        telephone: "",
-        is_whatsapp: false,
-        ville: "",
         sexe: "",
+        nom: "",
+        prenom: "",
+        telephone: "",
+        ville: "",
         statut: "",
         venu: "",
-        priere_salut: "",
-        type_conversion: "",
         besoin: [],
         besoinLibre: "",
+        is_whatsapp: false,
         infos_supplementaires: "",
+        priere_salut: "",
+        type_conversion: "",
+        eglise_id: formData.eglise_id,
+        branche_id: formData.branche_id,
       });
       setShowBesoinLibre(false);
+
     } catch (err) {
       alert(err.message);
     }
   };
+
+  const handleCancel = () => {
+    setFormData({
+      sexe: "",
+      nom: "",
+      prenom: "",
+      telephone: "",
+      ville: "",
+      statut: "",
+      venu: "",
+      besoin: [],
+      besoinLibre: "",
+      is_whatsapp: false,
+      infos_supplementaires: "",
+      priere_salut: "",
+      type_conversion: "",
+      eglise_id: formData.eglise_id,
+      branche_id: formData.branche_id,
+    });
+    setShowBesoinLibre(false);
+  };
+
+  if (loading) return <p className="text-center mt-10">Vérification du lien...</p>;
+  if (errorMsg) return <p className="text-center mt-10 text-red-600">{errorMsg}</p>;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-4 sm:p-6">
@@ -341,9 +435,9 @@ export default function AddContact() {
               Ajouter
             </button>
           </div>
-
-          {success && <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">✅ Contact ajouté avec succès !</p>}
         </form>
+
+        {success && <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">✅ Membre ajouté avec succès !</p>}
 
         <style jsx>{`
           .input {

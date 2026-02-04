@@ -7,7 +7,7 @@ import supabase from "../lib/supabaseClient";
 
 export default function AddEvangelise({ onNewEvangelise }) {
   const router = useRouter();
-  const { token } = router.query; // pour vérification du lien si nécessaire
+  const { token } = router.query;
 
   const [formData, setFormData] = useState({
     nom: "",
@@ -22,6 +22,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     infos_supplementaires: "",
     is_whatsapp: false,
     eglise_id: null,
+    branche_id: null, // ✅ ajout branche_id
   });
 
   const [showOtherField, setShowOtherField] = useState(false);
@@ -30,16 +31,9 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const besoinsList = [
-    "Finances",
-    "Santé",
-    "Travail",
-    "Les Enfants",
-    "La Famille",
-    "Paix",
-  ];
+  const besoinsList = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille", "Paix"];
 
-  // Récupérer eglise_id de l'utilisateur connecté
+  // ➤ Récupérer eglise_id et branche_id de l'utilisateur connecté
   useEffect(() => {
     const fetchUserEglise = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -47,28 +41,30 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("eglise_id")
+        .select("eglise_id, branche_id")
         .eq("id", session.session.user.id)
         .single();
 
       if (!error && profile) {
-        setFormData((prev) => ({ ...prev, eglise_id: profile.eglise_id }));
-        console.log("Eglise ID récupéré :", profile.eglise_id);
+        setFormData((prev) => ({
+          ...prev,
+          eglise_id: profile.eglise_id,
+          branche_id: profile.branche_id,
+        }));
+        console.log("Eglise ID :", profile.eglise_id, "Branche ID :", profile.branche_id);
       } else {
-        console.error("Erreur récupération eglise_id :", error?.message);
+        console.error("Erreur récupération eglise/branche :", error?.message);
       }
     };
-
     fetchUserEglise();
   }, []);
 
-  // Vérification du token (si tu souhaites maintenir le lien)
+  // Vérification du token si nécessaire
   useEffect(() => {
     if (!token) return;
 
     const verifyToken = async () => {
       setLoading(true);
-
       const { data, error } = await supabase
         .from("access_tokens")
         .select("*")
@@ -76,9 +72,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
         .gte("expires_at", new Date().toISOString())
         .single();
 
-      if (error || !data) {
-        setErrorMsg("Lien invalide ou expiré.");
-      }
+      if (error || !data) setErrorMsg("Lien invalide ou expiré.");
       setLoading(false);
     };
 
@@ -87,11 +81,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
   const handleBesoinChange = (value) => {
     let updated = [...formData.besoin];
-    if (updated.includes(value)) {
-      updated = updated.filter((b) => b !== value);
-    } else {
-      updated.push(value);
-    }
+    if (updated.includes(value)) updated = updated.filter((b) => b !== value);
+    else updated.push(value);
     setFormData({ ...formData, besoin: updated });
   };
 
@@ -99,9 +90,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     e.preventDefault();
 
     const finalBesoins = [...formData.besoin];
-    if (showOtherField && otherBesoin.trim()) {
-      finalBesoins.push(otherBesoin.trim());
-    }
+    if (showOtherField && otherBesoin.trim()) finalBesoins.push(otherBesoin.trim());
 
     const finalData = {
       nom: formData.nom.trim(),
@@ -111,12 +100,12 @@ export default function AddEvangelise({ onNewEvangelise }) {
       statut: "evangelisé",
       sexe: formData.sexe || null,
       priere_salut: formData.priere_salut === "Oui",
-      type_conversion:
-        formData.priere_salut === "Oui" ? formData.type_conversion || null : null,
+      type_conversion: formData.priere_salut === "Oui" ? formData.type_conversion || null : null,
       besoin: finalBesoins,
       infos_supplementaires: formData.infos_supplementaires || null,
       is_whatsapp: formData.is_whatsapp,
-      eglise_id: formData.eglise_id, // ✅ envoyé correctement
+      eglise_id: formData.eglise_id,   // ✅ envoyé
+      branche_id: formData.branche_id, // ✅ envoyé
     };
 
     try {
@@ -128,13 +117,12 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
       if (insertError) throw insertError;
 
-      // ⚡ Ajouter le nouvel évangélisé dans la table affichée
       if (onNewEvangelise) onNewEvangelise(newEvangelise);
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
-      // Reset form
+      // Reset form mais conserver eglise_id et branche_id
       setFormData((prev) => ({
         nom: "",
         prenom: "",
@@ -147,7 +135,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
         besoin: [],
         infos_supplementaires: "",
         is_whatsapp: false,
-        eglise_id: prev.eglise_id, // conserver l'id de l'église
+        eglise_id: prev.eglise_id,
+        branche_id: prev.branche_id,
       }));
       setShowOtherField(false);
       setOtherBesoin("");
@@ -170,7 +159,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
       besoin: [],
       infos_supplementaires: "",
       is_whatsapp: false,
-      eglise_id: prev.eglise_id, // conserver l'id
+      eglise_id: prev.eglise_id,
+      branche_id: prev.branche_id,
     }));
     setShowOtherField(false);
     setOtherBesoin("");
@@ -186,11 +176,10 @@ export default function AddEvangelise({ onNewEvangelise }) {
           <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
         </div>
 
-        <h1 className="text-3xl font-bold text-center mb-2">
-          Ajouter une personne évangélisée
-        </h1>
+        <h1 className="text-3xl font-bold text-center mb-2">Ajouter une personne évangélisée</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
+    
           <input
             className="input"
             type="text"
@@ -319,17 +308,10 @@ export default function AddEvangelise({ onNewEvangelise }) {
           />
 
           <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
-            >
+            <button type="button" onClick={handleCancel} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               Annuler
             </button>
-            <button
-              type="submit"
-              className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:scale-105 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
-            >
+            <button type="submit" className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:scale-105 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               Ajouter
             </button>
           </div>

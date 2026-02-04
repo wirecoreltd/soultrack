@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef, useMemo } from "react";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
 import BoutonEnvoyer from "../components/BoutonEnvoyer";
 import LogoutLink from "../components/LogoutLink";
 import DetailsMemberPopup from "../components/DetailsMemberPopup";
@@ -24,23 +23,21 @@ export default function ListMembers() {
   );
 }
 
-  function ListMembersContent() {
-  const [filter, setFilter] = useState("");
-  const [search, setSearch] = useState("");
-  const [detailsOpen, setDetailsOpen] = useState({});
+function ListMembersContent() {
+  const { profile, loading: loadingScope, error: errorScope, scopedQuery } = useChurchScope();
+  const [members, setMembers] = useState([]);
   const [cellules, setCellules] = useState([]);
-  const [conseillers, setConseillers] = useState([]);  
+  const [conseillers, setConseillers] = useState([]);
   const [popupMember, setPopupMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
   const [session, setSession] = useState(null);
   const [prenom, setPrenom] = useState("");
-  const [loading, setLoading] = useState(true);
-  const searchParams = useSearchParams();
-  const conseillerIdFromUrl = searchParams.get("conseiller_id");
-  const toBoolean = (val) => val === true || val === "true";
-  const [userRole, setUserRole] = useState(null);    
-  
-  // -------------------- Nouveaux états --------------------
+  const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [detailsOpen, setDetailsOpen] = useState({});
+  const [userRole, setUserRole] = useState(null);
+  const [openPhoneId, setOpenPhoneId] = useState(null);
+
   const [commentChanges, setCommentChanges] = useState({});
   const [statusChanges, setStatusChanges] = useState({});
   const [updating, setUpdating] = useState({});
@@ -48,22 +45,21 @@ export default function ListMembers() {
   const [selectedTargetType, setSelectedTargetType] = useState({});
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
-  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
-  const realtimeChannelRef = useRef(null);
-  const [etatContactFilter, setEtatContactFilter] = useState("");  
-  const [selectedMember, setSelectedMember] = useState(null);
-  const { members, setAllMembers } = useMembers();
-  const [openPhoneId, setOpenPhoneId] = useState(null);
-  const phoneMenuRef = useRef(null);
-  
+
+  const searchParams = useSearchParams();
+  const conseillerIdFromUrl = searchParams.get("conseiller_id");
   const router = useRouter();
+  const realtimeChannelRef = useRef(null);
+
+  const toBoolean = (val) => val === true || val === "true";
+  const { setAllMembers } = useMembers(); // context global
 
   const [view, setView] = useState(() => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("members_view") || "card";
-  }
-  return "card";
-});  
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("members_view") || "card";
+    }
+    return "card";
+  });
 
   // -------------------- Toast --------------------
   const showToast = (msg) => {
@@ -72,7 +68,7 @@ export default function ListMembers() {
     setTimeout(() => setShowingToast(false), 3500);
   };
 
-    const handleUpdateMember = (updatedMember) => {
+  const handleUpdateMember = (updatedMember) => {
     setAllMembers(prev =>
       prev.map(mem => (mem.id === updatedMember.id ? updatedMember : mem))
     );
@@ -94,27 +90,22 @@ export default function ListMembers() {
   };
 
   const formatMinistere = (ministereJson, autreMinistere) => {
-  let ministereList = [];
+    let ministereList = [];
 
-  // Parser le champ Ministere
-  if (ministereJson) {
-    try {
-      const parsed = typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
-      ministereList = Array.isArray(parsed) ? parsed : [parsed];
-      // On retire explicitement "Autre" si présent
-      ministereList = ministereList.filter(m => m.toLowerCase() !== "autre");
-    } catch {
-      if (ministereJson.toLowerCase() !== "autre") ministereList = [ministereJson];
+    if (ministereJson) {
+      try {
+        const parsed = typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
+        ministereList = Array.isArray(parsed) ? parsed : [parsed];
+        ministereList = ministereList.filter(m => m.toLowerCase() !== "autre");
+      } catch {
+        if (ministereJson.toLowerCase() !== "autre") ministereList = [ministereJson];
+      }
     }
-  }
 
-  // Ajouter la valeur réelle du champ Autre_Ministere si rempli
-  if (autreMinistere?.trim()) {
-    ministereList.push(autreMinistere.trim());
-  }
+    if (autreMinistere?.trim()) ministereList.push(autreMinistere.trim());
 
-  return ministereList.join(", ");
-};
+    return ministereList.join(", ");
+  };
 
   // -------------------- Supprimer un membre --------------------
   const handleSupprimerMembre = async (id) => {
@@ -153,70 +144,64 @@ export default function ListMembers() {
     }
   };
 
-  // -------------------- Fetch data --------------------
-const { profile, loading: loadingScope, error: errorScope, scopedQuery } = useChurchScope();
-const [members, setMembers] = useState([]);
+  // -------------------- Fetch membres via scopedQuery --------------------
+  useEffect(() => {
+    if (!scopedQuery) return;
 
-useEffect(() => {
-  if (!scopedQuery) return; // ⚠️ n’exécute que si prêt
-
-  const fetchMembers = async () => {
-    const { data, error } = await scopedQuery("membres_complets").order("created_at", { ascending: false });
-    if (error) console.error("Erreur fetchMembers:", error);
-    else setMembers(data || []);
-  };
-
-  fetchMembers();
-}, [scopedQuery]);
-
-
-
-  if (loading) return <p>Chargement…</p>;
-  if (error) return <p className="text-red-600">{error}</p>;
-
-  const fetchCellules = async () => {
-    const { data, error } = await supabase.from("cellules").select("id, cellule_full");
-    if (error) console.error("Erreur fetchCellules:", error);
-    if (data) setCellules(data);
-  };
-
-  const fetchConseillers = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom, telephone")
-      .eq("role", "Conseiller");
-    if (data) setConseillers(data);
-  };
-
-  const handleAfterSend = (updatedMember, type, cible) => {
-    const updatedWithActif = { ...updatedMember, statut: "actif" };
-    updateMember(updatedWithActif);
-    const cibleName = type === "cellule" ? cible.cellule_full : `${cible.prenom} ${cible.nom}`;
-    showToast(`✅ ${updatedMember.prenom} ${updatedMember.nom} envoyé à ${cibleName}`);
-  };
-
-    useEffect(() => {
-    const handleClickOutside = (e) => {
-      // si on clique EN DEHORS d’un menu téléphone
-      if (!e.target.closest(".phone-menu-container")) {
-        setOpenPhoneId(null);
-      }
+    const fetchMembers = async () => {
+      const { data, error } = await scopedQuery("membres_complets").order("created_at", { ascending: false });
+      if (error) console.error("Erreur fetchMembers:", error);
+      else setAllMembers(data || []);
     };
-  
-    document.addEventListener("mousedown", handleClickOutside);
-  
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+
+    fetchMembers();
+  }, [scopedQuery, setAllMembers]);
+
+  // -------------------- Fetch Cellules et Conseillers --------------------
+  useEffect(() => {
+    const fetchCellules = async () => {
+      const { data, error } = await supabase.from("cellules").select("id, cellule_full");
+      if (!error && data) setCellules(data);
     };
+
+    const fetchConseillers = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, telephone")
+        .eq("role", "Conseiller");
+      if (data) setConseillers(data);
+    };
+
+    fetchCellules();
+    fetchConseillers();
   }, []);
+
+  // -------------------- Realtime --------------------
+  useEffect(() => {
+    if (realtimeChannelRef.current) {
+      try { realtimeChannelRef.current.unsubscribe(); } catch (e) {}
+      realtimeChannelRef.current = null;
+    }
+
+    const channel = supabase.channel("realtime:membres_complets");
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "membres_complets" }, () => {
+      if (scopedQuery) scopedQuery("membres_complets").then(r => setAllMembers(r?.data || []));
+    });
+    try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
+
+    realtimeChannelRef.current = channel;
+    return () => {
+      try { if (realtimeChannelRef.current) { realtimeChannelRef.current.unsubscribe(); realtimeChannelRef.current = null; } } catch (e) {}
+    };
+  }, [scopedQuery, setAllMembers]);
+
+  // -------------------- Gestion view et toast --------------------
+  useEffect(() => { localStorage.setItem("members_view", view); }, [view]);
 
   useEffect(() => {
     const fetchUserRole = async () => {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-      if (userError || !user) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
       const { data: profile } = await supabase
         .from("profiles")
@@ -230,132 +215,10 @@ useEffect(() => {
     fetchUserRole();
   }, []);
 
-  useEffect(() => {localStorage.setItem("members_view", view);}, [view]);
+  if (loadingScope) return <p>Chargement…</p>;
+  if (errorScope) return <p className="text-red-600">{errorScope}</p>;
 
-  // -------------------- useEffect initial --------------------
-  useEffect(() => {
-    const fetchSessionAndProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-
-      if (session?.user) {
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("id, prenom, role")
-          .eq("id", session.user.id)
-          .single();
-        if (!profileError) {
-          setPrenom(profileData.prenom || "");
-          await fetchMembers(profileData);
-        } else console.error(profileError);
-      } else {
-        await fetchMembers();
-      }
-
-      fetchCellules();
-      fetchConseillers();
-    };
-
-    fetchSessionAndProfile();
-  }, []);
-
-  // -------------------- Realtime --------------------
-  useEffect(() => {
-    if (realtimeChannelRef.current) {
-      try { realtimeChannelRef.current.unsubscribe(); } catch (e) {}
-      realtimeChannelRef.current = null;
-    }
-
-    const channel = supabase.channel("realtime:membres_complets");
-    channel.on("postgres_changes", { event: "*", schema: "public", table: "membres_complets" }, () => fetchMembers());
-    channel.on("postgres_changes", { event: "*", schema: "public", table: "cellules" }, () => { fetchCellules(); fetchMembers(); });
-    channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { fetchConseillers(); fetchMembers(); });
-    try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
-
-    realtimeChannelRef.current = channel;
-    return () => {
-      try { if (realtimeChannelRef.current) { realtimeChannelRef.current.unsubscribe(); realtimeChannelRef.current = null; } } catch (e) {}
-    };
-  }, []);
-
-  // -------------------- Filtrage --------------------
-  const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
-  const actifs = members.filter((m) => m.etat_contact !== "supprime");
-  const baseFiltered = filter
-    ? actifs.filter((m) => m.etat_contact?.trim().toLowerCase() === filter.toLowerCase())
-    : actifs;
-
-  const searchFiltered = baseFiltered.filter((m) =>
-    `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const nouveaux = searchFiltered.filter(
-    (m) => m.etat_contact?.trim().toLowerCase() === "nouveau"
-  );
-
-  const existants = searchFiltered.filter(
-    (m) => ["existant", "ancien"].includes(m.etat_contact?.trim().toLowerCase())
-  );
-
-  return { filteredMembers: searchFiltered, filteredNouveaux: nouveaux, filteredAnciens: existants };
-}, [members, filter, search]);
-
-
-  const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
-
-    const handleMarquerCommeMembre = async (id) => {
-  try {
-    const { error } = await supabase
-      .from("membres_complets")
-      .update({ etat_contact: "existant" })
-      .eq("id", id);
-
-    if (error) throw error;
-
-    // Mettre à jour localement
-    setAllMembers(prev => prev.map(m => m.id === id ? { ...m, etat_contact: "existant" } : m));
-    showToast("✅ Ce contact est maintenant membre existant");
-  } catch (err) {
-    console.error("Erreur mise à jour statut :", err);
-  }
-};
-
-
-  const getBorderColor = (m) => {
-    if (!m.etat_contact) return "#ccc";
-    const etat = m.etat_contact.trim().toLowerCase();
-    if (etat === "Existant") return "#34A853";
-    if (etat === "Nouveau") return "#34A85e";
-    if (etat === "Inactif") return "#999999";
-    return "#ccc";
-  };
-
-  const formatDate = (dateStr) => {
-    try { return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr }); } catch { return ""; }
-  };
-
-  const today = new Date();
-  const dateDuJour = today.toLocaleDateString("fr-FR", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric",
-  });
-
-  // -------------------- renderMemberCard --------------------
-  const renderMemberCard = (m) => {
-    const isOpen = detailsOpen[m.id];
-
-    const besoins = !m.besoin
-      ? "—"
-      : Array.isArray(m.besoin)
-        ? m.besoin.join(", ")
-        : (() => {
-            try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; }
-            catch { return m.besoin; }
-          })();
-
-      if (loadingScope) return <p>Chargement…</p>;
-      if (errorScope) return <p className="text-red-600">{errorScope}</p>;
-    
-    return (
+  return (
         <div key={m.id} className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative">
           
           {/* Badge Nouveau */}

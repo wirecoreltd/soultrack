@@ -166,40 +166,55 @@ useEffect(() => {
   }
 
   // -------------------- Fetch membres --------------------
-//useEffect(() => {
-  const fetchMembers = async () => {
-    setLoading(true);
-    try {
-      let data = [];
-      // 🔹 Si scopedQuery existe, on l'utilise
-      if (scopedQuery) {
-        const query = scopedQuery("membres_complets");
-        if (query) {
-          const res = await query.order("created_at", { ascending: false });
-          if (res.data) data = res.data;
+  useEffect(() => {
+    const fetchMembers = async () => {
+      setLoading(true);
+      try {
+        let data = [];
+  
+        // 🔹 Si scopedQuery existe, on l'utilise
+        if (scopedQuery && typeof scopedQuery === "function") {
+          const query = scopedQuery("membres_complets");
+          if (query && typeof query.order === "function") {
+            const { data: scopedData, error } = await query.order("created_at", {
+              ascending: false,
+            });
+            if (error) {
+              console.error("Erreur fetchMembers scopedQuery:", error);
+            } else {
+              data = scopedData || [];
+            }
+          } else {
+            console.warn("scopedQuery ou query.order n'est pas disponible");
+          }
         }
-      } 
-      // 🔹 Sinon on utilise supabase directement
-      else {
-        const { data: supaData, error } = await supabase
-          .from("membres_complets")
-          .select("*")
-          .order("created_at", { ascending: false });
-        if (error) console.error("Erreur fetchSupabase:", error);
-        else data = supaData || [];
+  
+        // 🔹 Sinon fallback sur supabase direct
+        if (data.length === 0) {
+          const { data: supaData, error } = await supabase
+            .from("membres_complets")
+            .select("*")
+            .order("created_at", { ascending: false });
+          if (error) {
+            console.error("Erreur fetchMembers supabase direct:", error);
+          } else {
+            data = supaData || [];
+          }
+        }
+  
+        // 🔹 Mettre à jour le state
+        setAllMembers(data);
+      } catch (err) {
+        console.error("Erreur fetchMembers:", err);
+        setAllMembers([]);
+      } finally {
+        setLoading(false);
       }
+    };
+  
+    fetchMembers();
+  }, [scopedQuery, setAllMembers]);
 
-      setAllMembers(data);
-    } catch (err) {
-      console.error("Erreur fetchMembers:", err);
-      setAllMembers([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchMembers();
-}, [scopedQuery, setAllMembers]);
 
 
 // -------------------- Realtime sécurisé --------------------

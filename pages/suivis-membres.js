@@ -104,18 +104,7 @@ export default function SuivisMembres() {
       } finally {
         setLoading(false);
       }
-    };
-
-    const fetchCellulesConseillers = async () => {
-      try {
-        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
-        const { data: conseillersData } = await supabase.from("profiles").select("id, prenom, nom").eq("role", "Conseiller");
-        setCellules(cellulesData || []);
-        setConseillers(conseillersData || []);
-      } catch (err) {
-        console.error("Erreur chargement cellules/conseillers :", err);
-      }
-    };
+    };    
 
     fetchMembresComplets();
     fetchCellulesConseillers();
@@ -208,7 +197,7 @@ export default function SuivisMembres() {
     return status === 1 || status === 2;
   });
   
-  const uniqueMembers = Array.from(new Map(filteredMembers.map(i => [i.id, i])).values());
+  const uniqueMembers = members;
 
   const DetailsPopup = ({ m }) => {
     const commentRef = useRef(null);
@@ -219,6 +208,8 @@ export default function SuivisMembres() {
         commentRef.current.selectionStart = commentRef.current.value.length;
       }
     }, [commentChanges[m.id]]);
+
+    const uniqueMembersFiltered = uniqueMembers.filter(m => showRefus ? m.statut_suivis === 4 : true);
 
     //  HELPERS  //
     const formatMinistere = (ministere) => {

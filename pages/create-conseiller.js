@@ -19,7 +19,7 @@ export default function CreateConseiller() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Récupérer l'utilisateur connecté et les membres disponibles
+  // ➤ Récupérer l'utilisateur connecté et les membres disponibles
   useEffect(() => {
     async function fetchUserAndMembers() {
       try {
@@ -29,7 +29,7 @@ export default function CreateConseiller() {
 
         setResponsableId(session.user.id);
 
-        // 🔹 Récupérer profil du responsable
+        // 🔹 Profil du responsable (eglise + branche)
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("id, eglise_id, branche_id")
@@ -37,28 +37,27 @@ export default function CreateConseiller() {
           .single();
         if (profileError) return console.error("Erreur profil :", profileError);
 
+        // 🔹 Récupérer emails des conseillers existants
+        const { data: conseillersExistants } = await supabase
+          .from("profiles")
+          .select("email")
+          .eq("role", "Conseiller");
+
+        const emailsConseillers = new Set(conseillersExistants.map(c => c.email));
+
         // 🔹 Récupérer membres star de la même église et branche
         const { data: membersData, error: membersError } = await supabase
           .from("membres_complets")
-          .select("id, prenom, nom, telephone")
+          .select("id, prenom, nom, telephone, email")
           .eq("star", true)
           .eq("eglise_id", profileData.eglise_id)
           .eq("branche_id", profileData.branche_id);
+
         if (membersError) return console.error("Erreur membres :", membersError);
 
-        // 🔹 Récupérer tous les profils déjà conseillers
-        const { data: conseillersExistants, error: consError } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("role", "Conseiller");
-        if (consError) return console.error("Erreur conseillers existants :", consError);
-
-        const conseillersIds = new Set(conseillersExistants.map(c => c.id));
-
-        // 🔹 Filtrer les membres qui ne sont pas déjà conseillers
-        const availableMembers = (membersData || []).filter(m => !conseillersIds.has(m.id));
-
-        setMembers(availableMembers);
+        // 🔹 Exclure ceux qui sont déjà conseillers
+        const membresDisponibles = membersData.filter(m => !emailsConseillers.has(m.email));
+        setMembers(membresDisponibles || []);
       } catch (err) {
         console.error("Erreur fetchUserAndMembers :", err);
       }
@@ -67,7 +66,7 @@ export default function CreateConseiller() {
     fetchUserAndMembers();
   }, []);
 
-  // 🔹 Remplissage automatique des infos
+  // ➤ Remplissage automatique des infos du membre sélectionné
   useEffect(() => {
     if (!selectedMemberId) {
       setFormData({ ...formData, prenom: "", nom: "", telephone: "" });

@@ -64,9 +64,10 @@ export default function SuivisEvangelisation() {
 
   const init = async () => {
     const userData = await fetchUser();
-    await fetchConseillers();
     const cellulesData = await fetchCellules();
-    if (userData) await fetchSuivis(userData, cellulesData);
+    await fetchConseillers();
+    if (userData && cellulesData) await fetchSuivis(userData, cellulesData);
+
     setLoading(false);
   };
 
@@ -114,32 +115,32 @@ export default function SuivisEvangelisation() {
     }
   };
 
-  const fetchSuivis = async () => {
-    try {
-      const query = scopedQuery("suivis_des_evangelises");
-      if (!query) return;
+  const fetchSuivis = async (userData, cellulesData) => {
+  try {
+    const query = scopedQuery("suivis_des_evangelises");
+    if (!query) return;
 
-      const { data, error } = await query.order("id", { ascending: false });
-      if (error) throw error;
+    const { data, error } = await query.order("id", { ascending: false });
+    if (error) throw error;
 
-      let filtered = data || [];
+    let filtered = data || [];
 
-      // 🔹 Filtrage selon rôle
-      if (profile.role === "Conseiller") {
-        filtered = filtered.filter((m) => m.conseiller_id === profile.id);
-      } else if (profile.role === "ResponsableCellule") {
-        const mesCellulesIds = cellules
-          .filter((c) => c.responsable_id === profile.id)
-          .map((c) => c.id);
-        filtered = filtered.filter((m) => mesCellulesIds.includes(m.cellule_id));
-      }
-
-      setAllSuivis(filtered);
-    } catch (err) {
-      console.error("Erreur fetchSuivis:", err.message);
-      setAllSuivis([]);
+    // Filtrage selon rôle
+    if (userData.role === "Conseiller") {
+      filtered = filtered.filter((m) => m.conseiller_id === userData.id);
+    } else if (userData.role === "ResponsableCellule") {
+      const mesCellulesIds = (cellulesData || [])
+        .filter((c) => c.responsable_id === userData.id)
+        .map((c) => c.id);
+      filtered = filtered.filter((m) => mesCellulesIds.includes(m.cellule_id));
     }
-  };
+
+    setAllSuivis(filtered);
+  } catch (err) {
+    console.error("Erreur fetchSuivis:", err.message);
+    setAllSuivis([]);
+  }
+};
 
   // ================= HELPERS =================
   const getBorderColor = (m) => {

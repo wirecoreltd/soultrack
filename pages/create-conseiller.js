@@ -14,72 +14,60 @@ export default function CreateConseiller() {
     telephone: "",
     email: "",
     password: "",
-    eglise_id: "",
-    branch_id: "",
   });
   const [responsableId, setResponsableId] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ➤ Récupérer l'utilisateur connecté, son eglise_id et branch_id, et les membres correspondants
+  // ➤ Récupérer l'utilisateur connecté et son profil (eglise_id et branch_id)
   useEffect(() => {
     async function fetchUserAndMembers() {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) return console.error(sessionError);
-      if (!session?.user) return setMessage("❌ Vous devez être connecté");
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) return console.error("Erreur session :", sessionError);
+        if (!session?.user) return setMessage("❌ Vous devez être connecté");
 
-      const userId = session.user.id;
-      setResponsableId(userId);
+        setResponsableId(session.user.id);
 
-      // Récupérer eglise_id et branch_id du responsable
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("eglise_id, branch_id")
-        .eq("id", userId)
-        .single();
+        // Récupérer profil
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, eglise_id, branch_id")
+          .eq("id", session.user.id)
+          .single();
+        if (profileError) return console.error("Erreur profil :", profileError);
 
-      if (profileError) return console.error(profileError);
+        // Récupérer membres star de la même église et branche
+        const { data: membersData, error: membersError } = await supabase
+          .from("membres_complets")
+          .select("id, prenom, nom, telephone")
+          .eq("star", true)
+          .eq("eglise_id", profileData.eglise_id)
+          .eq("branch_id", profileData.branch_id);
 
-      setFormData(prev => ({
-        ...prev,
-        eglise_id: profile.eglise_id,
-        branch_id: profile.branch_id,
-      }));
-
-      // Récupérer les membres "star" dans la même église et branche
-      const { data: membersData, error: membersError } = await supabase
-        .from("membres_complets")
-        .select("id, prenom, nom, telephone")
-        .eq("star", true)
-        .eq("eglise_id", profile.eglise_id)
-        .eq("branch_id", profile.branch_id);
-
-      if (membersError) return console.error(membersError);
-
-      setMembers(membersData || []);
+        if (membersError) return console.error("Erreur membres :", membersError);
+        setMembers(membersData || []);
+      } catch (err) {
+        console.error("Erreur fetchUserAndMembers :", err);
+      }
     }
 
     fetchUserAndMembers();
   }, []);
 
-  // ➤ Préremplissage automatique des infos
+  // ➤ Remplissage automatique des infos
   useEffect(() => {
     if (!selectedMemberId) {
-      setFormData(prev => ({ ...prev, prenom: "", nom: "", telephone: "" }));
+      setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
       return;
     }
-    const member = members.find(m => m.id === selectedMemberId);
+    const member = members.find((m) => m.id === selectedMemberId);
     if (member) {
-      setFormData(prev => ({
-        ...prev,
-        prenom: member.prenom,
-        nom: member.nom,
-        telephone: member.telephone,
-      }));
+      setFormData({ ...formData, prenom: member.prenom, nom: member.nom, telephone: member.telephone });
     }
-  }, [selectedMemberId, members]);
+  }, [selectedMemberId]);
 
-  const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -87,7 +75,6 @@ export default function CreateConseiller() {
       setMessage("❌ Remplissez tous les champs !");
       return;
     }
-
     setLoading(true);
     setMessage("⏳ Création en cours...");
 
@@ -103,15 +90,7 @@ export default function CreateConseiller() {
       if (res.ok) {
         setMessage("✅ Conseiller créé avec succès !");
         setSelectedMemberId("");
-        setFormData({
-          prenom: "",
-          nom: "",
-          telephone: "",
-          email: "",
-          password: "",
-          eglise_id: formData.eglise_id,
-          branch_id: formData.branch_id,
-        });
+        setFormData({ prenom: "", nom: "", telephone: "", email: "", password: "" });
       } else {
         setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
       }
@@ -130,16 +109,15 @@ export default function CreateConseiller() {
         <h1 className="text-3xl font-bold text-center mb-6">Créer un Conseiller</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
-          <select
-            value={selectedMemberId}
-            onChange={(e) => setSelectedMemberId(e.target.value)}
-            className="input"
-            required
-          >
+          <select value={selectedMemberId} onChange={(e) => setSelectedMemberId(e.target.value)} className="input" required>
             <option value="">-- Choisir un Serviteur --</option>
-            {members.map(m => (
-              <option key={m.id} value={m.id}>{m.prenom} {m.nom}</option>
-            ))}
+            {members.length > 0 ? (
+              members.map((m) => (
+                <option key={m.id} value={m.id}>{m.prenom} {m.nom}</option>
+              ))
+            ) : (
+              <option disabled>Aucun serviteur disponible</option>
+            )}
           </select>
 
           <input name="prenom" placeholder="Prénom" value={formData.prenom} readOnly className="input" />

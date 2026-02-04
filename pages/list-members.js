@@ -165,6 +165,24 @@ function ListMembersContent() {
     fetchMembers();
   }, [scopedQuery, setAllMembers]);
 
+  // -------------------- Récupérer la session Supabase --------------------
+    useEffect(() => {
+      const getSession = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+      };
+      getSession();
+    
+      // Optionnel : écouter les changements de session
+      const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+        setSession(session);
+      });
+    
+      return () => {
+        listener.subscription.unsubscribe();
+      };
+    }, []);
+
   // -------------------- Fetch cellules et conseillers --------------------
   useEffect(() => {
     const fetchCellules = async () => {

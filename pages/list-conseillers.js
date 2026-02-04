@@ -9,7 +9,6 @@ import HeaderPages from "../components/HeaderPages";
 export default function ListConseillers() {
   const [conseillers, setConseillers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [prenom, setPrenom] = useState("");
   const [search, setSearch] = useState("");
   const router = useRouter();
 
@@ -19,10 +18,24 @@ export default function ListConseillers() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Utilisateur non connecté");
 
+      // 🔹 Récupérer eglise_id et branch_id de l'utilisateur connecté
+      const { data: userProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("eglise_id, branch_id")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError || !userProfile) throw new Error("Impossible de récupérer votre profil");
+
+      const { eglise_id, branch_id } = userProfile;
+
+      // 🔹 Récupérer les conseillers de la même église et branche
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, prenom, nom, email, telephone, role, responsable_id")
-        .eq("role", "Conseiller");
+        .eq("role", "Conseiller")
+        .eq("eglise_id", eglise_id)
+        .eq("branch_id", branch_id);
 
       if (!profiles) {
         setConseillers([]);
@@ -30,7 +43,7 @@ export default function ListConseillers() {
         return;
       }
 
-      // Compter contacts
+      // 🔹 Compter contacts pour chaque conseiller
       const conseillersIds = profiles.map((p) => p.id);
       const { data: membres } = await supabase
         .from("membres_complets")
@@ -44,6 +57,7 @@ export default function ListConseillers() {
         contactSetMap[m.conseiller_id].add(m.id);
       });
 
+      // 🔹 Responsable map
       const responsablesIds = profiles.map((p) => p.responsable_id).filter(Boolean);
       let responsableMap = {};
       if (responsablesIds.length > 0) {

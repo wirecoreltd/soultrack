@@ -149,6 +149,23 @@ function ListMembersContent() {
     }
   };
 
+  // -------------------- Après showToast --------------------
+const handleAfterSend = (memberId, type, cible) => {
+  console.log("Contact envoyé :", memberId, type, cible);
+  showToast("✅ Contact envoyé !");
+  
+  // Optionnel : mettre à jour le membre localement ou rafraîchir la liste
+  // Par exemple si tu veux marquer le suivi comme "envoyé"
+  setAllMembers(prev =>
+    prev.map(m =>
+      m.id === memberId
+        ? { ...m, suivi_envoye: true } // tu peux créer un champ temporaire pour suivi
+        : m
+    )
+  );
+};
+
+
   // -------------------- Fetch membres via scopedQuery --------------------
   useEffect(() => {
     if (!scopedQuery) return;

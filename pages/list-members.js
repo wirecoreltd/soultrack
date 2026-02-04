@@ -149,14 +149,31 @@ function ListMembersContent() {
     }
   };
 
-  // -------------------- Fetch membres via scopedQuery + Realtime --------------------
-  // -------------------- Fetch membres via scopedQuery + Realtime --------------------
+  // -------------------- Fetch membres via scopedQuery sécurisé --------------------
 useEffect(() => {
-  if (!scopedQuery) return;
+  if (!session) {
+    console.warn("❌ Vous devez être connecté pour afficher les membres.");
+    setAllMembers([]);
+    setLoading(false);
+    return;
+  }
+
+  if (!scopedQuery) {
+    console.warn("scopedQuery non disponible, tentative de fetch annulée");
+    setAllMembers([]);
+    setLoading(false);
+    return;
+  }
 
   const fetchMembers = async () => {
     try {
       const query = scopedQuery("membres_complets");
+      if (!query) {
+        console.warn("scopedQuery('membres_complets') a retourné null");
+        setAllMembers([]);
+        return;
+      }
+
       const { data, error } = await query.order("created_at", { ascending: false });
       if (error) {
         console.error("Erreur fetchMembers:", error);
@@ -173,8 +190,13 @@ useEffect(() => {
   };
 
   fetchMembers();
+}, [scopedQuery, session, setAllMembers]);
 
-  // -------------------- Realtime --------------------
+// -------------------- Realtime sécurisé --------------------
+useEffect(() => {
+  if (!session || !scopedQuery) return;
+
+  // Déconnecte l’ancien channel si existant
   if (realtimeChannelRef.current) {
     try {
       realtimeChannelRef.current.unsubscribe();
@@ -184,41 +206,38 @@ useEffect(() => {
 
   const channel = supabase.channel("realtime:membres_complets");
 
-  const refreshMembers = async () => {
+  const fetchLatestMembers = async () => {
     try {
-      if (!scopedQuery) return;
       const query = scopedQuery("membres_complets");
+      if (!query) return;
       const { data } = await query.order("created_at", { ascending: false });
       if (data) setAllMembers(data);
     } catch (err) {
-      console.error("Erreur realtime fetchMembers:", err);
+      console.error("Erreur fetchLatestMembers realtime:", err);
     }
   };
 
   channel.on(
     "postgres_changes",
     { event: "*", schema: "public", table: "membres_complets" },
-    refreshMembers
+    fetchLatestMembers
   );
+
   channel.on(
     "postgres_changes",
     { event: "*", schema: "public", table: "cellules" },
-    async () => {
-      const { data: cellData } = await supabase.from("cellules").select("id, cellule_full");
-      if (cellData) setCellules(cellData);
-      refreshMembers();
+    () => {
+      fetchCellules();
+      fetchLatestMembers();
     }
   );
+
   channel.on(
     "postgres_changes",
     { event: "*", schema: "public", table: "profiles" },
-    async () => {
-      const { data: consData } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, telephone")
-        .eq("role", "Conseiller");
-      if (consData) setConseillers(consData);
-      refreshMembers();
+    () => {
+      fetchConseillers();
+      fetchLatestMembers();
     }
   );
 
@@ -238,7 +257,8 @@ useEffect(() => {
       }
     } catch (e) {}
   };
-}, [scopedQuery, setAllMembers]);
+}, [scopedQuery, session, setAllMembers]);
+
 
   // -------------------- Fetch cellules et conseillers --------------------
   useEffect(() => {

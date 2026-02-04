@@ -66,56 +66,60 @@ export default function SuivisMembres() {
   }, []);
 
   useEffect(() => {
-  const fetchMembresComplets = async () => {
-    setLoading(true);
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error("Utilisateur non connecté");
+    const fetchMembresComplets = async () => {
+      setLoading(true);
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) throw new Error("Utilisateur non connecté");
 
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, role")
-        .eq("id", user.id)
-        .single();
-      if (profileError || !profileData) throw profileError;
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, prenom, nom, role")
+          .eq("id", user.id)
+          .single();
+        if (profileError || !profileData) throw profileError;
 
-      setPrenom(profileData.prenom || "cher membre");
-      setRole(profileData.role);
+        setPrenom(profileData.prenom || "cher membre");
+        setRole(profileData.role);
 
-      let query = supabase.from("membres_complets").select("*");
+        let query = supabase.from("membres_complets").select("*").order("created_at", { ascending: false });
 
-      if (profileData.role === "Conseiller") {
-        query = query.eq("conseiller_id", profileData.id);
-      } else if (profileData.role === "ResponsableCellule") {
-        const { data: cellulesData } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("responsable_id", profileData.id);
-        const celluleIds = cellulesData?.map(c => c.id) || [];
-        if (celluleIds.length > 0) query = query.in("cellule_id", celluleIds);
-        else query = query.eq("id", -1); // pas de cellule → aucun membre
+        if (profileData.role === "Conseiller") {
+          query = query.eq("conseiller_id", profileData.id);
+        } else if (profileData.role === "ResponsableCellule") {
+          const { data: cellulesData } = await supabase.from("cellules").select("id").eq("responsable_id", profileData.id);
+          const celluleIds = cellulesData?.map(c => c.id) || [];
+          if (celluleIds.length > 0) query = query.in("cellule_id", celluleIds);
+          else query = query.eq("id", -1);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        setAllMembers(data || []);
+        if (!data || data.length === 0) setMessage("Aucun membre à afficher.");
+      } catch (err) {
+        console.error("❌ Erreur fetchMembresComplets:", err);
+        setMessage("Erreur lors de la récupération des membres.");
+      } finally {
+        setLoading(false);
       }
+    };
 
-      // ⚠️ Toujours mettre l'ordre après avoir construit query
-      query = query.order("created_at", { ascending: false });
+    const fetchCellulesConseillers = async () => {
+      try {
+        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
+        const { data: conseillersData } = await supabase.from("profiles").select("id, prenom, nom").eq("role", "Conseiller");
+        setCellules(cellulesData || []);
+        setConseillers(conseillersData || []);
+      } catch (err) {
+        console.error("Erreur chargement cellules/conseillers :", err);
+      }
+    };
 
-      const { data, error } = await query;
-      if (error) throw error;
-
-      setAllMembers(data || []);
-      if (!data || data.length === 0) setMessage("Aucun membre à afficher.");
-    } catch (err) {
-      console.error("❌ Erreur fetchMembresComplets:", err);
-      setMessage("Erreur lors de la récupération des membres.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchMembresComplets();
-  // fetchCellulesConseillers(); // <-- supprimer ou définir avant
-}, [setAllMembers]);
-
+    fetchMembresComplets();
+    fetchCellulesConseillers();
+  }, [setAllMembers]);
 
   const handleCommentChange = (id, value) => {
     setCommentChanges(prev => ({ ...prev, [id]: value }));
@@ -204,7 +208,7 @@ export default function SuivisMembres() {
     return status === 1 || status === 2;
   });
   
-  const uniqueMembers = members;
+  const uniqueMembers = Array.from(new Map(filteredMembers.map(i => [i.id, i])).values());
 
   const DetailsPopup = ({ m }) => {
     const commentRef = useRef(null);
@@ -215,8 +219,6 @@ export default function SuivisMembres() {
         commentRef.current.selectionStart = commentRef.current.value.length;
       }
     }, [commentChanges[m.id]]);
-
-    const uniqueMembersFiltered = uniqueMembers.filter(m => showRefus ? m.statut_suivis === 4 : true);
 
     //  HELPERS  //
     const formatMinistere = (ministere) => {

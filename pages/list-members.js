@@ -1,43 +1,20 @@
-"use client";
-
-import { useEffect, useState, useRef, useMemo } from "react";
-import supabase from "../lib/supabaseClient";
-import BoutonEnvoyer from "../components/BoutonEnvoyer";
-import LogoutLink from "../components/LogoutLink";
-import DetailsMemberPopup from "../components/DetailsMemberPopup";
-import EditMemberPopup from "../components/EditMemberPopup";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { useSearchParams } from "next/navigation";
-import { useMembers } from "../context/MembersContext";
-import Header from "../components/Header";
-import { useRouter } from "next/navigation";
-import ProtectedRoute from "../components/ProtectedRoute";
-import useChurchScope from "../hooks/useChurchScope";
-
-export default function ListMembers() {
-  return (
-    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableCellule"]}>
-      <ListMembersContent />
-    </ProtectedRoute>
-  );
-}
-
 function ListMembersContent() {
-  const { profile, loading: loadingScope, error: errorScope, scopedQuery } = useChurchScope();
-  const [members, setMembers] = useState([]);
+  const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [popupMember, setPopupMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
   const [session, setSession] = useState(null);
   const [prenom, setPrenom] = useState("");
-  const [filter, setFilter] = useState("");
-  const [search, setSearch] = useState("");
-  const [detailsOpen, setDetailsOpen] = useState({});
+  const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const conseillerIdFromUrl = searchParams.get("conseiller_id");
+  const toBoolean = (val) => val === true || val === "true";
   const [userRole, setUserRole] = useState(null);
-  const [openPhoneId, setOpenPhoneId] = useState(null);
 
+  // -------------------- Nouveaux états --------------------
   const [commentChanges, setCommentChanges] = useState({});
   const [statusChanges, setStatusChanges] = useState({});
   const [updating, setUpdating] = useState({});
@@ -45,14 +22,14 @@ function ListMembersContent() {
   const [selectedTargetType, setSelectedTargetType] = useState({});
   const [toastMessage, setToastMessage] = useState("");
   const [showingToast, setShowingToast] = useState(false);
-
-  const searchParams = useSearchParams();
-  const conseillerIdFromUrl = searchParams.get("conseiller_id");
-  const router = useRouter();
+  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const realtimeChannelRef = useRef(null);
-
-  const toBoolean = (val) => val === true || val === "true";
-  const { setAllMembers } = useMembers(); // context global
+  const [etatContactFilter, setEtatContactFilter] = useState("");
+  const [selectedMember, setSelectedMember] = useState(null);
+  const { members, setAllMembers } = useMembers();
+  const [openPhoneId, setOpenPhoneId] = useState(null);
+  const phoneMenuRef = useRef(null);
+  const router = useRouter();
 
   const [view, setView] = useState(() => {
     if (typeof window !== "undefined") {
@@ -60,6 +37,8 @@ function ListMembersContent() {
     }
     return "card";
   });
+
+  const { scopedQuery } = useChurchScope(); // 🔑 Utilisation correcte du hook scopedQuery
 
   // -------------------- Toast --------------------
   const showToast = (msg) => {
@@ -69,8 +48,8 @@ function ListMembersContent() {
   };
 
   const handleUpdateMember = (updatedMember) => {
-    setAllMembers(prev =>
-      prev.map(mem => (mem.id === updatedMember.id ? updatedMember : mem))
+    setAllMembers((prev) =>
+      prev.map((mem) => (mem.id === updatedMember.id ? updatedMember : mem))
     );
   };
 
@@ -85,25 +64,28 @@ function ListMembersContent() {
     if (!dateString) return "—";
     const d = new Date(dateString);
     const day = d.getDate().toString().padStart(2, "0");
-    const months = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+    const months = [
+      "Janv","Févr","Mars","Avr","Mai","Juin",
+      "Juil","Août","Sept","Oct","Nov","Déc",
+    ];
     return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
   const formatMinistere = (ministereJson, autreMinistere) => {
     let ministereList = [];
-
     if (ministereJson) {
       try {
-        const parsed = typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
+        const parsed =
+          typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
         ministereList = Array.isArray(parsed) ? parsed : [parsed];
-        ministereList = ministereList.filter(m => m.toLowerCase() !== "autre");
+        ministereList = ministereList.filter((m) => m.toLowerCase() !== "autre");
       } catch {
         if (ministereJson.toLowerCase() !== "autre") ministereList = [ministereJson];
       }
     }
-
-    if (autreMinistere?.trim()) ministereList.push(autreMinistere.trim());
-
+    if (autreMinistere?.trim()) {
+      ministereList.push(autreMinistere.trim());
+    }
     return ministereList.join(", ");
   };
 
@@ -113,12 +95,10 @@ function ListMembersContent() {
       .from("membres_complets")
       .update({ etat_contact: "supprime" })
       .eq("id", id);
-
     if (error) {
       console.error("Erreur suppression :", error);
       return;
     }
-
     setAllMembers((prev) =>
       prev.map((m) => (m.id === id ? { ...m, etat_contact: "supprime" } : m))
     );
@@ -149,21 +129,23 @@ function ListMembersContent() {
     if (!scopedQuery) return;
 
     const fetchMembers = async () => {
-      const { data, error } = await scopedQuery("membres_complets").order("created_at", { ascending: false });
+      const { data, error } = await scopedQuery("membres_complets").order("created_at", {
+        ascending: false,
+      });
       if (error) console.error("Erreur fetchMembers:", error);
       else setAllMembers(data || []);
+      setLoading(false);
     };
 
     fetchMembers();
   }, [scopedQuery, setAllMembers]);
 
-  // -------------------- Fetch Cellules et Conseillers --------------------
+  // -------------------- Fetch cellules et conseillers --------------------
   useEffect(() => {
     const fetchCellules = async () => {
       const { data, error } = await supabase.from("cellules").select("id, cellule_full");
       if (!error && data) setCellules(data);
     };
-
     const fetchConseillers = async () => {
       const { data } = await supabase
         .from("profiles")
@@ -171,7 +153,6 @@ function ListMembersContent() {
         .eq("role", "Conseiller");
       if (data) setConseillers(data);
     };
-
     fetchCellules();
     fetchConseillers();
   }, []);
@@ -179,46 +160,168 @@ function ListMembersContent() {
   // -------------------- Realtime --------------------
   useEffect(() => {
     if (realtimeChannelRef.current) {
-      try { realtimeChannelRef.current.unsubscribe(); } catch (e) {}
+      try {
+        realtimeChannelRef.current.unsubscribe();
+      } catch (e) {}
       realtimeChannelRef.current = null;
     }
 
     const channel = supabase.channel("realtime:membres_complets");
-    channel.on("postgres_changes", { event: "*", schema: "public", table: "membres_complets" }, () => {
-      if (scopedQuery) scopedQuery("membres_complets").then(r => setAllMembers(r?.data || []));
-    });
-    try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
+
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "membres_complets" },
+      () => {
+        if (scopedQuery) {
+          scopedQuery("membres_complets").order("created_at", { ascending: false }).then(({ data }) => {
+            if (data) setAllMembers(data);
+          });
+        }
+      }
+    );
+
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "cellules" },
+      () => {
+        fetchCellules();
+        if (scopedQuery) {
+          scopedQuery("membres_complets").order("created_at", { ascending: false }).then(({ data }) => {
+            if (data) setAllMembers(data);
+          });
+        }
+      }
+    );
+
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "profiles" },
+      () => {
+        fetchConseillers();
+        if (scopedQuery) {
+          scopedQuery("membres_complets").order("created_at", { ascending: false }).then(({ data }) => {
+            if (data) setAllMembers(data);
+          });
+        }
+      }
+    );
+
+    try {
+      channel.subscribe();
+    } catch (err) {
+      console.warn("Erreur subscription realtime:", err);
+    }
 
     realtimeChannelRef.current = channel;
+
     return () => {
-      try { if (realtimeChannelRef.current) { realtimeChannelRef.current.unsubscribe(); realtimeChannelRef.current = null; } } catch (e) {}
+      try {
+        if (realtimeChannelRef.current) {
+          realtimeChannelRef.current.unsubscribe();
+          realtimeChannelRef.current = null;
+        }
+      } catch (e) {}
     };
   }, [scopedQuery, setAllMembers]);
 
-  // -------------------- Gestion view et toast --------------------
-  useEffect(() => { localStorage.setItem("members_view", view); }, [view]);
+  // -------------------- Filtrage --------------------
+  const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
+    const actifs = members.filter((m) => m.etat_contact !== "supprime");
+    const baseFiltered = filter
+      ? actifs.filter((m) => m.etat_contact?.trim().toLowerCase() === filter.toLowerCase())
+      : actifs;
+    const searchFiltered = baseFiltered.filter(
+      (m) => `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
+    );
+    const nouveaux = searchFiltered.filter(
+      (m) => m.etat_contact?.trim().toLowerCase() === "nouveau"
+    );
+    const existants = searchFiltered.filter((m) =>
+      ["existant", "ancien"].includes(m.etat_contact?.trim().toLowerCase())
+    );
+    return { filteredMembers: searchFiltered, filteredNouveaux: nouveaux, filteredAnciens: existants };
+  }, [members, filter, search]);
 
+  // -------------------- Handlers --------------------
+  const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const handleMarquerCommeMembre = async (id) => {
+    try {
+      const { error } = await supabase
+        .from("membres_complets")
+        .update({ etat_contact: "existant" })
+        .eq("id", id);
+      if (error) throw error;
+
+      setAllMembers((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, etat_contact: "existant" } : m))
+      );
+      showToast("✅ Ce contact est maintenant membre existant");
+    } catch (err) {
+      console.error("Erreur mise à jour statut :", err);
+    }
+  };
+
+  const getBorderColor = (m) => {
+    if (!m.etat_contact) return "#ccc";
+    const etat = m.etat_contact.trim().toLowerCase();
+    if (etat === "existant") return "#34A853";
+    if (etat === "nouveau") return "#34A85e";
+    if (etat === "inactif") return "#999999";
+    return "#ccc";
+  };
+
+  const formatDate = (dateStr) => {
+    try {
+      return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr });
+    } catch {
+      return "";
+    }
+  };
+
+  const today = new Date();
+  const dateDuJour = today.toLocaleDateString("fr-FR", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  // -------------------- Gestion clic en dehors menu téléphone --------------------
   useEffect(() => {
-    const fetchUserRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-      setUserRole(profile?.role || null);
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".phone-menu-container")) {
+        setOpenPhoneId(null);
+      }
     };
-
-    fetchUserRole();
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
-  if (loadingScope) return <p>Chargement…</p>;
-  if (errorScope) return <p className="text-red-600">{errorScope}</p>;
+  // -------------------- Sauvegarde de la vue --------------------
+  useEffect(() => {
+    localStorage.setItem("members_view", view);
+  }, [view]);
 
-  return (
+  // -------------------- renderMemberCard --------------------
+  const renderMemberCard = (m) => {
+    const isOpen = detailsOpen[m.id];
+    const besoins = !m.besoin
+      ? "—"
+      : Array.isArray(m.besoin)
+      ? m.besoin.join(", ")
+      : (() => {
+          try {
+            const arr = JSON.parse(m.besoin);
+            return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+          } catch {
+            return m.besoin;
+          }
+        })();
+
+    return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
         <div key={m.id} className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative">
           

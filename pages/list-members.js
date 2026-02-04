@@ -153,45 +153,29 @@ export default function ListMembers() {
   };
 
   // -------------------- Fetch data --------------------
-  const fetchMembers = async (profile) => {
-  if (!profile?.eglise_id || !profile?.branche_id) {
-    console.warn("Profile incomplet, fetchMembers annulé", profile);
-    return;
-  }
+  const fetchMembers = async (profile = null) => {
+    setLoading(true);
+    try {
+      let query = supabase
+        .from("membres_complets")
+        .select("*")
+        .neq("etat_contact", "supprime")
+        .order("created_at", { ascending: false });
 
-  setLoading(true);
+      if (conseillerIdFromUrl) query = query.eq("conseiller_id", conseillerIdFromUrl);
+      else if (profile?.role === "Conseiller") query = query.eq("conseiller_id", profile.id);
 
-  try {
-    let query = supabase
-      .from("membres_complets")
-      .select("*")
-      .neq("etat_contact", "supprime")
-      .not("eglise_id", "is", null)
-      .not("branche_id", "is", null)
-      .eq("eglise_id", profile.eglise_id)
-      .eq("branche_id", profile.branche_id);
-
-    if (conseillerIdFromUrl) {
-      query = query.eq("conseiller_id", conseillerIdFromUrl);
-    } else if (profile.role === "Conseiller") {
-      query = query.eq("conseiller_id", profile.id);
+      const { data, error } = await query;
+      if (error) throw error;
+      setAllMembers(data || []);
+    } catch (err) {
+      console.error("Erreur fetchMembers:", err);
+      setAllMembers([]);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const { data, error } = await query.order("created_at", {
-      ascending: false,
-    });
-
-    if (error) throw error;
-
-    setAllMembers(data || []);
-  } catch (err) {
-    console.error("Erreur fetchMembers:", err);
-    setAllMembers([]);
-  } finally {
-    setLoading(false);
-  }
-};
-    
   const fetchCellules = async () => {
     const { data, error } = await supabase.from("cellules").select("id, cellule_full");
     if (error) console.error("Erreur fetchCellules:", error);
@@ -252,48 +236,30 @@ export default function ListMembers() {
 
   // -------------------- useEffect initial --------------------
   useEffect(() => {
-  const fetchSessionAndProfile = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    setSession(session);
+    const fetchSessionAndProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
 
-    if (session?.user) {
-      // Récupérer le profil complet avec eglise_id
-      const { data: profileData, error } = await supabase
-        .from("profiles")
-        .select("id, prenom, role, eglise_id")
-        .eq("id", session.user.id)
-        .single();
-
-      if (error) {
-        console.error("Erreur profile:", error);
-        await fetchMembers(); // fallback : tous les membres
-        return;
+      if (session?.user) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, prenom, role")
+          .eq("id", session.user.id)
+          .single();
+        if (!profileError) {
+          setPrenom(profileData.prenom || "");
+          await fetchMembers(profileData);
+        } else console.error(profileError);
+      } else {
+        await fetchMembers();
       }
 
-      if (!profileData) {
-        await fetchMembers(); // fallback
-        return;
-      }
+      fetchCellules();
+      fetchConseillers();
+    };
 
-      setPrenom(profileData.prenom || "");
-      // ⚡ ici on passe le profil complet à fetchMembers
-      await fetchMembers(profileData);
-    } else {
-      await fetchMembers(); // fallback si pas de session
-    }
-
-    fetchCellules();
-    fetchConseillers();
-  };
-
-  fetchSessionAndProfile();
-}, []);
-
-useEffect(() => {
-  if (profile?.eglise_id && profile?.branche_id) {
-    fetchMembers(profile);
-  }
-}, [profile]);
+    fetchSessionAndProfile();
+  }, []);
 
   // -------------------- Realtime --------------------
   useEffect(() => {

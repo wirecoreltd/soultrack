@@ -166,7 +166,7 @@ useEffect(() => {
   }
 
   // -------------------- Fetch membres --------------------
-useEffect(() => {
+//useEffect(() => {
   const fetchMembers = async () => {
     setLoading(true);
     try {

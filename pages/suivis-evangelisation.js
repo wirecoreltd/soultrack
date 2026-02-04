@@ -2,8 +2,6 @@
 
 import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
-import LogoutLink from "../components/LogoutLink";
 import EditEvangeliseSuiviPopup from "../components/EditEvangeliseSuiviPopup";
 import DetailEvangeliseSuivisPopup from "../components/DetailEvangeliseSuivisPopup";
 import HeaderPages from "../components/HeaderPages";
@@ -17,77 +15,89 @@ export default function SuivisEvangelisation() {
     </ProtectedRoute>
   );
 }
-  function SuivisEvangelisationContent() {
-  const { profile, loading: loadingProfile, error: profileError, scopedQuery } = useChurchScope();  
+
+function SuivisEvangelisationContent() {
+  const { profile, loading: loadingProfile, error: profileError, scopedQuery } = useChurchScope();
+
   const [allSuivis, setAllSuivis] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [cellules, setCellules] = useState([]);
-  const [loading, setLoading] = useState(true);  
-  const [updating, setUpdating] = useState({});
-  const [detailsCarteId, setDetailsCarteId] = useState(null);
-  const [detailsTable, setDetailsTable] = useState(null);
-  const [editingContact, setEditingContact] = useState(null);
-  const [commentChanges, setCommentChanges] = useState({});
-  const [statusChanges, setStatusChanges] = useState({});
-  const [showRefus, setShowRefus] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [showRefus, setShowRefus] = useState(false);
   const [phoneMenuId, setPhoneMenuId] = useState(null);
-  const phoneMenuRef = useRef(null); 
+  const phoneMenuRef = useRef(null);
+
+  // View localStorage
   const [view, setView] = useState(() => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("members_view") || "card";
-  }
-  return "card";
-});
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("members_view") || "card";
+    }
+    return "card";
+  });
+  useEffect(() => {
+    localStorage.setItem("members_view", view);
+  }, [view]);
 
-  useEffect(() => {localStorage.setItem("members_view", view);}, [view]);
-
-    // ================= INIT =================
-
-    useEffect(() => {
-      const handleClickOutside = (e) => {
-        if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
-          setPhoneMenuId(null);
-        }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
+  // ================= INIT =================
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+        setPhoneMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     init();
   }, []);
 
+  // Re-fetch suivis si showRefus, user ou cellules changent
   useEffect(() => {
-    if (user) fetchSuivis(user, cellules);
-  }, [showRefus]);
+    if (user && cellules.length) {
+      fetchSuivis(user, cellules);
+    }
+  }, [showRefus, user, cellules]);
 
+  // ================= FUNCTIONS =================
   const init = async () => {
-    const userData = await fetchUser();
-    const cellulesData = await fetchCellules();
-    await fetchConseillers();
-    if (userData && cellulesData) await fetchSuivis(userData, cellulesData);
-
+    setLoading(true);
+    try {
+      const userData = await fetchUser();
+      const cellulesData = await fetchCellules();
+      await fetchConseillers();
+      if (userData && cellulesData) {
+        await fetchSuivis(userData, cellulesData);
+      }
+    } catch (err) {
+      console.error("Erreur init:", err);
+    }
     setLoading(false);
   };
 
-  // ================= USER =================
   const fetchUser = async () => {
-    const { data: session } = await supabase.auth.getSession();
-    if (!session?.session?.user) return null;
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) return null;
 
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", session.session.user.id)
-      .single();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.session.user.id)
+        .single();
+      if (error) throw error;
 
-    setUser(data);
-    return data;
+      setUser(data);
+      return data;
+    } catch (err) {
+      console.error("Erreur fetchUser:", err.message);
+      return null;
+    }
   };
 
-  // ================= FETCH=================
-   const fetchConseillers = async () => {
+  const fetchConseillers = async () => {
     try {
       const query = scopedQuery("profiles");
       if (!query) return;
@@ -103,7 +113,7 @@ export default function SuivisEvangelisation() {
   const fetchCellules = async () => {
     try {
       const query = scopedQuery("cellules");
-      if (!query) return;
+      if (!query) return [];
       const { data, error } = await query.select("id, cellule_full, responsable_id");
       if (error) throw error;
       setCellules(data || []);
@@ -116,31 +126,38 @@ export default function SuivisEvangelisation() {
   };
 
   const fetchSuivis = async (userData, cellulesData) => {
-  try {
-    const query = scopedQuery("suivis_des_evangelises");
-    if (!query) return;
+    try {
+      const query = scopedQuery("suivis_des_evangelises");
+      if (!query) return;
 
-    const { data, error } = await query.order("id", { ascending: false });
-    if (error) throw error;
+      const { data, error } = await query.order("id", { ascending: false });
+      if (error) throw error;
 
-    let filtered = data || [];
+      let filtered = data || [];
 
-    // Filtrage selon rôle
-    if (userData.role === "Conseiller") {
-      filtered = filtered.filter((m) => m.conseiller_id === userData.id);
-    } else if (userData.role === "ResponsableCellule") {
-      const mesCellulesIds = (cellulesData || [])
-        .filter((c) => c.responsable_id === userData.id)
-        .map((c) => c.id);
-      filtered = filtered.filter((m) => mesCellulesIds.includes(m.cellule_id));
+      // Filtrage selon rôle
+      if (userData.role === "Conseiller") {
+        filtered = filtered.filter(
+          (m) => String(m.conseiller_id) === String(userData.id)
+        );
+      } else if (userData.role === "ResponsableCellule") {
+        const mesCellulesIds = (cellulesData || [])
+          .filter((c) => String(c.responsable_id) === String(userData.id))
+          .map((c) => String(c.id));
+        filtered = filtered.filter((m) => mesCellulesIds.includes(String(m.cellule_id)));
+      }
+
+      if (!showRefus) {
+        filtered = filtered.filter((m) => m.status_suivis_evangelises !== "Refus");
+      }
+
+      console.log("Suivis filtrés:", filtered);
+      setAllSuivis(filtered);
+    } catch (err) {
+      console.error("Erreur fetchSuivis:", err.message);
+      setAllSuivis([]);
     }
-
-    setAllSuivis(filtered);
-  } catch (err) {
-    console.error("Erreur fetchSuivis:", err.message);
-    setAllSuivis([]);
-  }
-};
+  };
 
   // ================= HELPERS =================
   const getBorderColor = (m) => {

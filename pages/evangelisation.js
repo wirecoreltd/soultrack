@@ -6,6 +6,7 @@ import HeaderPages from "../components/HeaderPages";
 import EditEvangelisePopup from "../components/EditEvangelisePopup";
 import DetailsEvangePopup from "../components/DetailsEvangePopup";
 import ProtectedRoute from "../components/ProtectedRoute";
+import useChurchScope from "../hooks/useChurchScope";
 
 export default function Evangelisation() {
   return (
@@ -16,6 +17,7 @@ export default function Evangelisation() {
 }
 
   function EvangelisationContent() {
+   const { profile, loading: loadingProfile, error: profileError, scopedQuery } = useChurchScope();  
   const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [conseillers, setConseillers] = useState([]);
@@ -62,35 +64,57 @@ export default function Evangelisation() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const fetchContacts = async () => {
-    const { data, error } = await supabase
-      .from("evangelises")
-      .select("*")
-      .eq("status_suivi", "Non envoyé")
-      .order("created_at", { ascending: false })
-      .limit(1000);
+   useEffect(() => {
+    if (!profile) return; // attendre le hook
 
-    if (error) {
-      console.error("Erreur fetchContacts:", error);
+    fetchContacts();
+    fetchCellules();
+    fetchConseillers();
+  }, [profile]);
+
+  const fetchContacts = async () => {
+    try {
+      const query = scopedQuery("evangelises");
+      if (!query) return;
+
+      const { data, error } = await query
+        .eq("status_suivi", "Non envoyé")
+        .order("created_at", { ascending: false })
+        .limit(1000);
+
+      if (error) throw error;
+
+      setContacts(data || []);
+    } catch (err) {
+      console.error("Erreur fetchContacts:", err.message);
       setContacts([]);
-      return;
     }
-    setContacts(data || []);
   };
 
   const fetchCellules = async () => {
-    const { data } = await supabase
-      .from("cellules")
-      .select("id, cellule_full, responsable, telephone, ville");
-    setCellules(data || []);
+    try {
+      const query = scopedQuery("cellules");
+      if (!query) return;
+      const { data, error } = await query.select("id, cellule_full, responsable, telephone, ville");
+      if (error) throw error;
+      setCellules(data || []);
+    } catch (err) {
+      console.error("Erreur fetchCellules:", err.message);
+      setCellules([]);
+    }
   };
 
   const fetchConseillers = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom, telephone")
-      .eq("role", "Conseiller");
-    setConseillers(data || []);
+    try {
+      const query = scopedQuery("profiles");
+      if (!query) return;
+      const { data, error } = await query.select("id, prenom, nom, telephone").eq("role", "Conseiller");
+      if (error) throw error;
+      setConseillers(data || []);
+    } catch (err) {
+      console.error("Erreur fetchConseillers:", err.message);
+      setConseillers([]);
+    }
   };
 
   /* ================= UTILS ================= */

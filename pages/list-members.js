@@ -38,8 +38,7 @@ export default function ListMembers() {
   const searchParams = useSearchParams();
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
   const toBoolean = (val) => val === true || val === "true";
-  const [userRole, setUserRole] = useState(null);  
-  const { loading, error, scopedQuery } = useChurchScope();
+  const [userRole, setUserRole] = useState(null);    
   
   // -------------------- Nouveaux états --------------------
   const [commentChanges, setCommentChanges] = useState({});

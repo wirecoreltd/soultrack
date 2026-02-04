@@ -165,22 +165,31 @@ useEffect(() => {
     return;
   }
 
+  // -------------------- Fetch membres --------------------
+useEffect(() => {
   const fetchMembers = async () => {
+    setLoading(true);
     try {
-      const query = scopedQuery("membres_complets");
-      if (!query) {
-        console.warn("scopedQuery('membres_complets') a retourné null");
-        setAllMembers([]);
-        return;
+      let data = [];
+      // 🔹 Si scopedQuery existe, on l'utilise
+      if (scopedQuery) {
+        const query = scopedQuery("membres_complets");
+        if (query) {
+          const res = await query.order("created_at", { ascending: false });
+          if (res.data) data = res.data;
+        }
+      } 
+      // 🔹 Sinon on utilise supabase directement
+      else {
+        const { data: supaData, error } = await supabase
+          .from("membres_complets")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) console.error("Erreur fetchSupabase:", error);
+        else data = supaData || [];
       }
 
-      const { data, error } = await query.order("created_at", { ascending: false });
-      if (error) {
-        console.error("Erreur fetchMembers:", error);
-        setAllMembers([]);
-      } else {
-        setAllMembers(data || []);
-      }
+      setAllMembers(data);
     } catch (err) {
       console.error("Erreur fetchMembers:", err);
       setAllMembers([]);
@@ -190,7 +199,8 @@ useEffect(() => {
   };
 
   fetchMembers();
-}, [scopedQuery, session, setAllMembers]);
+}, [scopedQuery, setAllMembers]);
+
 
 // -------------------- Realtime sécurisé --------------------
 useEffect(() => {

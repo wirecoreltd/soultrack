@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import React from "react";
 import supabase from "../lib/supabaseClient";
+import { useRouter } from "next/navigation";
 import HeaderPages from "../components/HeaderPages";
 
 export default function ListConseillers() {
@@ -18,14 +19,16 @@ export default function ListConseillers() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Utilisateur non connecté");
 
-      const { data: currentUserProfile, error: errProfile } = await supabase
+      const { data: currentUserProfile } = await supabase
         .from("profiles")
-        .select("id, prenom, nom, eglise_id, branche_id")
+        .select("id, prenom, nom, email, telephone, role, eglise_id, branche_id")
         .eq("id", user.id)
         .single();
-      if (errProfile || !currentUserProfile) throw new Error("Impossible de récupérer le profil");
 
-      const { eglise_id, branche_id } = currentUserProfile;
+      if (!currentUserProfile) throw new Error("Profil introuvable");
+
+      const eglise_id = String(currentUserProfile.eglise_id);
+      const branche_id = String(currentUserProfile.branche_id);
 
       // 🔹 Récupérer les conseillers de la même église et branche
       const { data: profiles, error: errConseillers } = await supabase
@@ -36,21 +39,19 @@ export default function ListConseillers() {
         .eq("branche_id", branche_id);
 
       if (errConseillers) throw errConseillers;
-
       if (!profiles || profiles.length === 0) {
         setConseillers([]);
         setLoading(false);
         return;
       }
 
-      // 🔹 Récupérer les membres assignés à ces conseillers
+      // 🔹 Compter les contacts assignés à chaque conseiller
       const conseillersIds = profiles.map((p) => p.id);
       const { data: membres } = await supabase
         .from("membres_complets")
         .select("id, conseiller_id")
         .in("conseiller_id", conseillersIds);
 
-      // 🔹 Compter les contacts par conseiller
       const contactSetMap = {};
       membres?.forEach((m) => {
         if (!m.conseiller_id) return;
@@ -58,7 +59,7 @@ export default function ListConseillers() {
         contactSetMap[m.conseiller_id].add(m.id);
       });
 
-      // 🔹 Récupérer les responsables
+      // 🔹 Récupérer les noms des responsables
       const responsablesIds = profiles.map((p) => p.responsable_id).filter(Boolean);
       let responsableMap = {};
       if (responsablesIds.length > 0) {
@@ -71,7 +72,6 @@ export default function ListConseillers() {
         });
       }
 
-      // 🔹 Construire la liste finale
       const list = profiles.map((p) => ({
         ...p,
         responsable_nom: p.responsable_id ? (responsableMap[p.responsable_id] || "Aucun") : "Aucun",
@@ -91,7 +91,7 @@ export default function ListConseillers() {
     fetchConseillers();
   }, []);
 
-  // 🔹 Filtrer les conseillers selon la recherche
+  // 🔹 Filtrer selon la recherche
   const filteredConseillers = conseillers.filter(
     (c) =>
       c.prenom.toLowerCase().includes(search.toLowerCase()) ||
@@ -115,7 +115,7 @@ export default function ListConseillers() {
           type="text"
           placeholder="Recherche..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={e => setSearch(e.target.value)}
           className="w-2/3 px-3 py-2 rounded-md border text-black"
         />
       </div>
@@ -135,9 +135,7 @@ export default function ListConseillers() {
         {loading ? (
           <p className="text-center text-white">Chargement...</p>
         ) : filteredConseillers.length === 0 ? (
-          <p className="text-center text-white">
-            Aucun conseiller trouvé pour votre église et votre branche.
-          </p>
+          <p className="text-center text-white">Aucun conseiller trouvé pour votre église et votre branche.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
             {filteredConseillers.map((c) => (

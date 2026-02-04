@@ -14,12 +14,14 @@ export default function CreateConseiller() {
     telephone: "",
     email: "",
     password: "",
+    eglise_id: "",
+    branche_id: "",
   });
   const [responsableId, setResponsableId] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ➤ Récupérer l'utilisateur connecté et son ID (responsable)
+  // ➤ Récupérer l'utilisateur connecté
   useEffect(() => {
     async function fetchUser() {
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -30,12 +32,12 @@ export default function CreateConseiller() {
     fetchUser();
   }, []);
 
-  // ➤ Récupérer les membres avec star = true
+  // ➤ Récupérer les membres "star"
   useEffect(() => {
     async function fetchStarMembers() {
       const { data, error } = await supabase
         .from("membres_complets")
-        .select("id, prenom, nom, telephone")
+        .select("id, prenom, nom, telephone, eglise_id, branche_id")
         .eq("star", true);
       if (error) console.error(error);
       else setMembers(data);
@@ -43,15 +45,30 @@ export default function CreateConseiller() {
     fetchStarMembers();
   }, []);
 
-  // ➤ Remplissage automatique des infos
+  // ➤ Remplissage automatique des infos + église/branche
   useEffect(() => {
     if (!selectedMemberId) {
-      setFormData({ ...formData, prenom: "", nom: "", telephone: "" });
+      setFormData({
+        prenom: "",
+        nom: "",
+        telephone: "",
+        email: "",
+        password: "",
+        eglise_id: "",
+        branche_id: "",
+      });
       return;
     }
     const member = members.find((m) => m.id === selectedMemberId);
     if (member) {
-      setFormData({ ...formData, prenom: member.prenom, nom: member.nom, telephone: member.telephone });
+      setFormData({
+        ...formData,
+        prenom: member.prenom,
+        nom: member.nom,
+        telephone: member.telephone,
+        eglise_id: member.eglis_id || member.eglise_id || "", // selon nom réel dans la table
+        branche_id: member.branche_id || "",
+      });
     }
   }, [selectedMemberId]);
 
@@ -70,7 +87,10 @@ export default function CreateConseiller() {
       const res = await fetch("/api/create-conseiller", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, responsable_id: responsableId }),
+        body: JSON.stringify({
+          ...formData,
+          responsable_id: responsableId,
+        }),
       });
 
       const data = await res.json().catch(() => null);
@@ -78,7 +98,15 @@ export default function CreateConseiller() {
       if (res.ok) {
         setMessage("✅ Conseiller créé avec succès !");
         setSelectedMemberId("");
-        setFormData({ prenom: "", nom: "", telephone: "", email: "", password: "" });
+        setFormData({
+          prenom: "",
+          nom: "",
+          telephone: "",
+          email: "",
+          password: "",
+          eglise_id: "",
+          branche_id: "",
+        });
       } else {
         setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
       }
@@ -93,13 +121,17 @@ export default function CreateConseiller() {
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
         <button onClick={() => router.back()} className="absolute top-4 left-4 text-gray-700 hover:text-gray-900">← Retour</button>
-        <div className="flex justify-center mb-6"><Image src="/logo.png" alt="Logo" width={80} height={80} /></div>
+        <div className="flex justify-center mb-6">
+          <Image src="/logo.png" alt="Logo" width={80} height={80} />
+        </div>
         <h1 className="text-3xl font-bold text-center mb-6">Créer un Conseiller</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
           <select value={selectedMemberId} onChange={(e) => setSelectedMemberId(e.target.value)} className="input" required>
             <option value="">-- Choisir un Serviteur --</option>
-            {members.map((m) => (<option key={m.id} value={m.id}>{m.prenom} {m.nom}</option>))}
+            {members.map((m) => (
+              <option key={m.id} value={m.id}>{m.prenom} {m.nom}</option>
+            ))}
           </select>
 
           <input name="prenom" placeholder="Prénom" value={formData.prenom} readOnly className="input" />

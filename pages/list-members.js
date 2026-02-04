@@ -184,70 +184,68 @@ function ListMembersContent() {
 
   // -------------------- Realtime --------------------
   useEffect(() => {
-    if (realtimeChannelRef.current) {
-      try {
-        realtimeChannelRef.current.unsubscribe();
-      } catch (e) {}
-      realtimeChannelRef.current = null;
-    }
-
-    const channel = supabase.channel("realtime:membres_complets");
-
-    channel.on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "membres_complets" },
-      () => {
-        if (scopedQuery) {
-          scopedQuery("membres_complets").order("created_at", { ascending: false }).then(({ data }) => {
-            if (data) setAllMembers(data);
-          });
-        }
-      }
-    );
-
-    channel.on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "cellules" },
-      () => {
-        fetchCellules();
-        if (scopedQuery) {
-          scopedQuery("membres_complets").order("created_at", { ascending: false }).then(({ data }) => {
-            if (data) setAllMembers(data);
-          });
-        }
-      }
-    );
-
-    channel.on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "profiles" },
-      () => {
-        fetchConseillers();
-        if (scopedQuery) {
-          scopedQuery("membres_complets").order("created_at", { ascending: false }).then(({ data }) => {
-            if (data) setAllMembers(data);
-          });
-        }
-      }
-    );
-
+  if (realtimeChannelRef.current) {
     try {
-      channel.subscribe();
+      realtimeChannelRef.current.unsubscribe();
+    } catch (e) {}
+    realtimeChannelRef.current = null;
+  }
+
+  const channel = supabase.channel("realtime:membres_complets");
+
+  const fetchScopedMembers = async () => {
+    if (!scopedQuery) return;
+    try {
+      const query = scopedQuery("membres_complets");
+      if (!query) return;
+      const { data } = await query.order("created_at", { ascending: false });
+      if (data) setAllMembers(data);
     } catch (err) {
-      console.warn("Erreur subscription realtime:", err);
+      console.error("Erreur fetchMembers realtime:", err);
     }
+  };
 
-    realtimeChannelRef.current = channel;
+  channel.on(
+    "postgres_changes",
+    { event: "*", schema: "public", table: "membres_complets" },
+    fetchScopedMembers
+  );
 
-    return () => {
-      try {
-        if (realtimeChannelRef.current) {
-          realtimeChannelRef.current.unsubscribe();
-          realtimeChannelRef.current = null;
-        }
-      } catch (e) {}
-    };
-  }, [scopedQuery, setAllMembers]);
+  channel.on(
+    "postgres_changes",
+    { event: "*", schema: "public", table: "cellules" },
+    () => {
+      fetchCellules();
+      fetchScopedMembers();
+    }
+  );
+
+  channel.on(
+    "postgres_changes",
+    { event: "*", schema: "public", table: "profiles" },
+    () => {
+      fetchConseillers();
+      fetchScopedMembers();
+    }
+  );
+
+  try {
+    channel.subscribe();
+  } catch (err) {
+    console.warn("Erreur subscription realtime:", err);
+  }
+
+  realtimeChannelRef.current = channel;
+
+  return () => {
+    try {
+      if (realtimeChannelRef.current) {
+        realtimeChannelRef.current.unsubscribe();
+        realtimeChannelRef.current = null;
+      }
+    } catch (e) {}
+  };
+}, [scopedQuery, setAllMembers]);
 
   // -------------------- Filtrage --------------------
   const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {

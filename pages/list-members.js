@@ -39,6 +39,7 @@ export default function ListMembers() {
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
   const toBoolean = (val) => val === true || val === "true";
   const [userRole, setUserRole] = useState(null);  
+  const { loading, error, scopedQuery } = useChurchScope();
   
   // -------------------- Nouveaux états --------------------
   const [commentChanges, setCommentChanges] = useState({});
@@ -154,21 +155,18 @@ export default function ListMembers() {
   };
 
   // -------------------- Fetch data --------------------
-  useEffect(() => {
-    if (!scopedQuery) return;
+ useEffect(() => {
+  if (!scopedQuery) return;
 
-    const fetchMembers = async () => {
-      const query = scopedQuery("membres_complets");
-      if (!query) return;
+  const fetchMembers = async () => {
+    const { data, error } = await scopedQuery("membres_complets").order("created_at", { ascending: false });
+    if (error) console.error(error);
+    else setMembers(data || []);
+  };
 
-      const { data, error } = await query
-        .order("created_at", { ascending: false });
+  fetchMembers();
+}, [scopedQuery]);
 
-      if (!error) setMembers(data || []);
-    };
-
-    fetchMembers();
-  }, [scopedQuery]);
 
   if (loading) return <p>Chargement…</p>;
   if (error) return <p className="text-red-600">{error}</p>;

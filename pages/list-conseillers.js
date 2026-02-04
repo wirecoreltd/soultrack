@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import React from "react";
-import supabase from "../lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 
 export default function ListConseillers() {
@@ -19,23 +18,24 @@ export default function ListConseillers() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Utilisateur non connecté");
 
-      // 🔹 Récupérer les informations de l'utilisateur pour savoir son église et branche
-      const { data: currentProfile } = await supabase
+      const { data: currentUserProfile, error: errProfile } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("id, prenom, nom, eglise_id, branche_id")
         .eq("id", user.id)
         .single();
-      if (!currentProfile) throw new Error("Profil introuvable");
+      if (errProfile || !currentUserProfile) throw new Error("Impossible de récupérer le profil");
 
-      const { eglise_id, branche_id } = currentProfile;
+      const { eglise_id, branche_id } = currentUserProfile;
 
       // 🔹 Récupérer les conseillers de la même église et branche
-      const { data: profiles } = await supabase
+      const { data: profiles, error: errConseillers } = await supabase
         .from("profiles")
-        .select("id, prenom, nom, email, telephone, role, responsable_id, eglise_id, branche_id")
+        .select("id, prenom, nom, email, telephone, role, responsable_id")
         .eq("role", "Conseiller")
         .eq("eglise_id", eglise_id)
         .eq("branche_id", branche_id);
+
+      if (errConseillers) throw errConseillers;
 
       if (!profiles || profiles.length === 0) {
         setConseillers([]);
@@ -43,20 +43,22 @@ export default function ListConseillers() {
         return;
       }
 
-      // 🔹 Compter les contacts assignés pour chaque conseiller (même église/branche)
+      // 🔹 Récupérer les membres assignés à ces conseillers
+      const conseillersIds = profiles.map((p) => p.id);
+      const { data: membres } = await supabase
+        .from("membres_complets")
+        .select("id, conseiller_id")
+        .in("conseiller_id", conseillersIds);
+
+      // 🔹 Compter les contacts par conseiller
       const contactSetMap = {};
-      for (const c of profiles) {
-        const { data: membresConseiller } = await supabase
-          .from("membres_complets")
-          .select("id")
-          .eq("conseiller_id", c.id)
-          .eq("eglise_id", eglise_id)
-          .eq("branche_id", branche_id);
+      membres?.forEach((m) => {
+        if (!m.conseiller_id) return;
+        if (!contactSetMap[m.conseiller_id]) contactSetMap[m.conseiller_id] = new Set();
+        contactSetMap[m.conseiller_id].add(m.id);
+      });
 
-        contactSetMap[c.id] = membresConseiller ? new Set(membresConseiller.map(m => m.id)) : new Set();
-      }
-
-      // 🔹 Récupérer les responsables pour les conseillers
+      // 🔹 Récupérer les responsables
       const responsablesIds = profiles.map((p) => p.responsable_id).filter(Boolean);
       let responsableMap = {};
       if (responsablesIds.length > 0) {
@@ -69,7 +71,7 @@ export default function ListConseillers() {
         });
       }
 
-      // 🔹 Mapper les conseillers avec contacts et responsable
+      // 🔹 Construire la liste finale
       const list = profiles.map((p) => ({
         ...p,
         responsable_nom: p.responsable_id ? (responsableMap[p.responsable_id] || "Aucun") : "Aucun",
@@ -113,7 +115,7 @@ export default function ListConseillers() {
           type="text"
           placeholder="Recherche..."
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
           className="w-2/3 px-3 py-2 rounded-md border text-black"
         />
       </div>
@@ -133,7 +135,9 @@ export default function ListConseillers() {
         {loading ? (
           <p className="text-center text-white">Chargement...</p>
         ) : filteredConseillers.length === 0 ? (
-          <p className="text-center text-white">Aucun conseiller trouvé.</p>
+          <p className="text-center text-white">
+            Aucun conseiller trouvé pour votre église et votre branche.
+          </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
             {filteredConseillers.map((c) => (

@@ -4,13 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@supabase/supabase-js";
+import ProtectedRoute from "../../components/ProtectedRoute";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-export default function CreateInternalUser() {
+function CreateInternalUserContent() {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -153,5 +154,16 @@ export default function CreateInternalUser() {
         }
       `}</style>
     </div>
+  );
+}
+
+/* =========================
+   PAGE PROTÉGÉE
+========================= */
+export default function CreateInternalUserPage() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur"]}>
+      <CreateInternalUserContent />
+    </ProtectedRoute>
   );
 }

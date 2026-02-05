@@ -11,6 +11,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    // 🔐 Vérification auth via token
     const token = req.headers.authorization?.replace("Bearer ", "");
     if (!token) {
       return res.status(401).json({ error: "Non authentifié" });
@@ -18,13 +19,14 @@ export default async function handler(req, res) {
 
     const {
       data: { user },
-      error,
+      error: authCheckError,
     } = await supabaseAdmin.auth.getUser(token);
 
-    if (error || !user) {
+    if (authCheckError || !user) {
       return res.status(401).json({ error: "Non authentifié" });
     }
 
+    // 📥 Données reçues
     const {
       prenom,
       nom,
@@ -40,6 +42,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Champs obligatoires manquants" });
     }
 
+    // 🔎 Récupérer eglise / branche de l’admin
     const { data: adminProfile, error: adminError } = await supabaseAdmin
       .from("profiles")
       .select("eglise_id, branche_id")
@@ -50,6 +53,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Profil admin introuvable" });
     }
 
+    // 👤 Création utilisateur Auth
     const { data: authUser, error: authError } =
       await supabaseAdmin.auth.admin.createUser({
         email,
@@ -61,29 +65,55 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: authError.message });
     }
 
+    const newUserId = authUser.user.id;
+
+    // 📄 Création profile (SANS cellule)
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
-      .insert([{
-        id: authUser.user.id,
+      .insert({
+        id: newUserId,
         prenom,
         nom,
         email,
         telephone: telephone || null,
         role_description: role,
-        cellule_nom: cellule_nom || null,
-        cellule_zone: cellule_zone || null,
         eglise_id: adminProfile.eglise_id,
         branche_id: adminProfile.branche_id,
-      }]);
+      });
 
     if (profileError) {
       return res.status(400).json({ error: profileError.message });
     }
 
-    return res.status(200).json({ message: "Utilisateur créé avec succès" });
+    // 🏠 Création cellule UNIQUEMENT si ResponsableCellule
+    if (
+      role === "ResponsableCellule" &&
+      cellule_nom &&
+      cellule_zone
+    ) {
+      const { error: celluleError } = await supabaseAdmin
+        .from("cellules")
+        .insert({
+          cellule: cellule_nom,
+          ville: cellule_zone,
+          responsable: `${prenom} ${nom}`,
+          responsable_id: newUserId,
+          telephone: telephone || "",
+          eglise_id: adminProfile.eglise_id,
+          branche_id: adminProfile.branche_id,
+        });
+
+      if (celluleError) {
+        return res.status(400).json({ error: celluleError.message });
+      }
+    }
+
+    return res.status(200).json({
+      message: "Utilisateur créé avec succès",
+    });
 
   } catch (err) {
-    console.error(err);
+    console.error("create-user API error:", err);
     return res.status(500).json({ error: err.message });
   }
 }

@@ -30,7 +30,7 @@ function UserRow({ u, setSelectedUser, setDeleteUser }) {
 ========================= */
 export default function ListUsers() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableCellule", "SuperviseurCellule"]}>
+    <ProtectedRoute allowedRoles={["Administrateur"]}>
       <ListUsersContent />
     </ProtectedRoute>
   );

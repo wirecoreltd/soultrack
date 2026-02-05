@@ -9,15 +9,7 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 function CreateCelluleContent() {
   const router = useRouter();
 
-  export default function CreateCellulePage() {
-  return (
-    <ProtectedRoute allowedRoles={["Administrateur", "SuperviseurCellule"]}>
-      <CreateCelluleContent />
-    </ProtectedRoute>
-  );
-}
-  
-  const [formData, setFormData] = useState({
+   const [formData, setFormData] = useState({
     nom: "",
     zone: "",
     responsable_id: "",
@@ -225,6 +217,15 @@ function CreateCelluleContent() {
             </button>
           </div>
         </form>
+
+ export default function CreateCellulePage() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "SuperviseurCellule"]}>
+      <CreateCelluleContent />
+    </ProtectedRoute>
+  );
+}
+  
 
         {message && (
           <p className="mt-4 text-center text-sm">{message}</p>

@@ -140,9 +140,8 @@ function ListUsersContent() {
 
       <h1 className="text-4xl text-white text-center mb-6 font-bold">Gestion des utilisateurs</h1>
      
-            Barre recherche / filtre / actions
-            ========================= */}
-            <div className="max-w-6xl w-full mx-auto mb-6 flex flex-col gap-3">
+ {/* Barre recherche / filtre / actions*/}
+                       <div className="max-w-6xl w-full mx-auto mb-6 flex flex-col gap-3">
               
               {/* Search bar centrée */}
               <div className="flex justify-center">

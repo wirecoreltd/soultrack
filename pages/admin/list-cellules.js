@@ -169,7 +169,19 @@ function ListCellulesContent() {
       </h1>
 
       {/* Filtre + Count */}
-<div className="max-w-6xl mx-auto mb-2 flex items-center justify-between gap-4">
+{/* Recherche – CENTRÉE */}
+<div className="flex justify-center mb-4">
+  <input
+    type="text"
+    placeholder="Chercher par cellule..."
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    className="w-full max-w-md px-3 py-2 rounded-md text-black"
+  />
+</div>
+
+   {/* Filtre + Count – CENTRÉS */}
+<div className="max-w-6xl mx-auto mb-4 flex justify-center items-center gap-4">
   <select
     value={filterCellule}
     onChange={(e) => setFilterCellule(e.target.value)}
@@ -188,18 +200,19 @@ function ListCellulesContent() {
   </span>
 </div>
 
-{/* Bouton Ajouter – aligné à la largeur de la table */}
+{/* Bouton Ajouter – ALIGNÉ À LA FIN DE LA TABLE */}
 <div className="max-w-6xl mx-auto flex justify-end mb-3">
   <button
     onClick={() => router.push("/admin/create-cellule")}
-    className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+    className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-orange-500 hover:bg-orange-600 transition"
   >
     ➕ Ajouter une Cellule
   </button>
-  </div>
+</div>
 
 
       {/* Tableau */}
+
       <div className="max-w-6xl mx-auto space-y-2">
         <div className="hidden sm:flex text-sm font-semibold text-white border-b pb-2">
           <div className="flex-[2]">Ville</div>

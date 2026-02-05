@@ -7,6 +7,28 @@ import EditUserModal from "../../components/EditUserModal";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 
+/* =========================
+   Ligne utilisateur
+========================= */
+function UserRow({ u, router, setSelectedUser, setDeleteUser }) {
+  return (
+    <div className="flex flex-row items-center px-4 py-3 rounded-lg gap-2 bg-white/15 border-l-4" style={{ borderLeftColor: "#F59E0B" }}>
+      <div className="flex-[2] text-white font-semibold text-sm">{u.prenom} {u.nom}</div>
+      <div className="flex-[2] text-white text-sm">{u.email}</div>
+      <div className="flex-[2] text-white font-medium text-sm">{u.role_description}</div>
+
+      {/* Action */}
+      <div className="flex-[1] flex justify-center gap-2">
+        <button onClick={() => setSelectedUser(u)} className="text-blue-400 hover:text-blue-600 text-lg">✏️</button>
+        <button onClick={() => setDeleteUser(u)} className="text-red-400 hover:text-red-600 text-lg">🗑️</button>
+      </div>
+    </div>
+  );
+}
+
+/* =========================
+   Page principale
+========================= */
 export default function ListUsers() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "ResponsableCellule", "SuperviseurCellule"]}>
@@ -23,7 +45,6 @@ function ListUsersContent() {
   const [roles, setRoles] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
-
   const [search, setSearch] = useState("");
 
   const [userScope, setUserScope] = useState({
@@ -31,6 +52,9 @@ function ListUsersContent() {
     branche_id: null,
   });
 
+  /* =========================
+     Récupération scope utilisateur
+  ========================== */
   useEffect(() => {
     const fetchUserScope = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -50,10 +74,12 @@ function ListUsersContent() {
         });
       }
     };
-
     fetchUserScope();
   }, []);
 
+  /* =========================
+     Récupération utilisateurs
+  ========================== */
   useEffect(() => {
     if (!userScope.eglise_id || !userScope.branche_id) return;
     fetchUsers();
@@ -80,6 +106,9 @@ function ListUsersContent() {
     setLoading(false);
   };
 
+  /* =========================
+     Delete utilisateur
+  ========================== */
   const handleDelete = async () => {
     if (!deleteUser?.id) return;
     const { error } = await supabase.from("profiles").delete().eq("id", deleteUser.id);
@@ -89,11 +118,17 @@ function ListUsersContent() {
     }
   };
 
+  /* =========================
+     Update utilisateur
+  ========================== */
   const handleUpdated = (updatedUser) => {
     if (!updatedUser || !updatedUser.id) return;
     setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
   };
 
+  /* =========================
+     Filtrage + recherche
+  ========================== */
   const filteredUsers = users
     .filter(u => (roleFilter ? u.role_description === roleFilter : true))
     .filter(u => u.prenom.toLowerCase().includes(search.toLowerCase()) || u.nom.toLowerCase().includes(search.toLowerCase()));
@@ -106,14 +141,16 @@ function ListUsersContent() {
 
       <h1 className="text-4xl text-white text-center mb-6 font-bold">Gestion des utilisateurs</h1>
 
-      {/* Recherche & Filtre */}
-      <div className="flex flex-col sm:flex-row justify-between items-center max-w-6xl mx-auto gap-4 mb-6">
+      {/* =========================
+         Recherche & Filtre centrés
+      ========================== */}
+      <div className="flex flex-col sm:flex-row justify-center items-center max-w-6xl mx-auto gap-4 mb-6">
         <input
           type="text"
           placeholder="Recherche par nom..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full sm:w-1/2 px-4 py-2 rounded-xl text-black"
+          className="w-full sm:w-1/2 px-4 py-2 rounded-xl text-black shadow-sm"
         />
 
         <select
@@ -133,32 +170,29 @@ function ListUsersContent() {
         </button>
       </div>
 
-      {/* Tableau */}
+      {/* =========================
+         Tableau style ListCellules
+      ========================== */}
       <div className="max-w-6xl mx-auto space-y-2">
-        <div className="hidden sm:grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-t-xl">
-          <span>Nom complet</span>
-          <span>Email</span>
-          <span>Rôle</span>
-          <span className="text-center">Actions</span>
+        <div className="hidden sm:flex text-sm font-semibold text-white border-b pb-2">
+          <div className="flex-[2]">Nom complet</div>
+          <div className="flex-[2]">Email</div>
+          <div className="flex-[2]">Rôle</div>
+          <div className="flex-[1] text-center">Actions</div>
         </div>
 
         {filteredUsers.length === 0 ? (
           <p className="text-white text-center mt-6">Aucun utilisateur</p>
         ) : (
-          filteredUsers.map(user => (
-            <div key={user.id} className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 px-4 py-3 bg-white/15 text-white border-b border-white/20 rounded-sm items-center">
-              <span className="font-semibold">{user.prenom} {user.nom}</span>
-              <span className="text-gray-200">{user.email}</span>
-              <span className="text-indigo-400 font-medium">{user.role_description}</span>
-              <div className="flex justify-center gap-3">
-                <button onClick={() => setSelectedUser(user)} className="text-blue-400 hover:text-blue-600 text-lg">✏️</button>
-                <button onClick={() => setDeleteUser(user)} className="text-red-400 hover:text-red-600 text-lg">🗑️</button>
-              </div>
-            </div>
+          filteredUsers.map(u => (
+            <UserRow key={u.id} u={u} router={router} setSelectedUser={setSelectedUser} setDeleteUser={setDeleteUser} />
           ))
         )}
       </div>
 
+      {/* =========================
+         Modals
+      ========================== */}
       {selectedUser && <EditUserModal user={selectedUser} onClose={() => setSelectedUser(null)} onUpdated={handleUpdated} />}
 
       {deleteUser && (

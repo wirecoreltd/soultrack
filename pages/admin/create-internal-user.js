@@ -46,61 +46,65 @@ export default function CreateInternalUser() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      setMessage("❌ Les mots de passe ne correspondent pas.");
-      return;
-    }
+  if (formData.password !== formData.confirmPassword) {
+    setMessage("❌ Les mots de passe ne correspondent pas.");
+    return;
+  }
 
-    setLoading(true);
-    setMessage("⏳ Création en cours...");
+  setLoading(true);
+  setMessage("⏳ Création en cours...");
 
-    try {
-      const newUserData = {
-        prenom: formData.prenom,
-        nom: formData.nom,
-        email: formData.email,
-        password: formData.password,
-        telephone: formData.telephone || null,
-        role: formData.role,
-        // uniquement si le rôle est ResponsableCellule, sinon facultatif
-        cellule_nom: formData.role === "ResponsableCellule" ? formData.cellule_nom || null : null,
-        cellule_zone: formData.role === "ResponsableCellule" ? formData.cellule_zone || null : null,
-        eglise_id: egliseId,
-        branche_id: brancheId,
-      };
+  try {
+    // Exemple : récupérer eglise_id et branche_id depuis localStorage ou contexte
+    const eglise_id = localStorage.getItem("eglise_id") || null;
+    const branche_id = localStorage.getItem("branche_id") || null;
 
-      const res = await fetch("/api/create-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newUserData),
+    const newUserData = {
+      prenom: formData.prenom,
+      nom: formData.nom,
+      email: formData.email,
+      password: formData.password,
+      telephone: formData.telephone || null,
+      role: formData.role,
+      cellule_nom: formData.role === "ResponsableCellule" ? formData.cellule_nom || null : null,
+      cellule_zone: formData.role === "ResponsableCellule" ? formData.cellule_zone || null : null,
+      eglise_id,   // ✅ ajouté
+      branche_id,  // ✅ ajouté
+    };
+
+    const res = await fetch("/api/create-user", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newUserData),
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (res.ok) {
+      setMessage("✅ Utilisateur créé avec succès !");
+      setFormData({
+        prenom: "",
+        nom: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        telephone: "",
+        role: "",
+        cellule_nom: "",
+        cellule_zone: "",
       });
-
-      const data = await res.json().catch(() => null);
-
-      if (res.ok) {
-        setMessage("✅ Utilisateur créé avec succès !");
-        setFormData({
-          prenom: "",
-          nom: "",
-          email: "",
-          password: "",
-          confirmPassword: "",
-          telephone: "",
-          role: "",
-          cellule_nom: "",
-          cellule_zone: "",
-        });
-      } else {
-        setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
-      }
-    } catch (err) {
-      setMessage("❌ " + err.message);
-    } finally {
-      setLoading(false);
+    } else {
+      setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
     }
-  };
+  } catch (err) {
+    setMessage("❌ " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleCancel = () => router.push("/admin/list-users");
 

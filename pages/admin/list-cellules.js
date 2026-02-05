@@ -179,21 +179,7 @@ function ListCellulesContent() {
         />
       </div>
 
-   {/* =========================
-   Barre recherche + filtre + count
-========================= */}
-<div className="max-w-6xl w-full mx-auto mb-4 flex flex-col items-center gap-3">
-
-  {/* Recherche + Filtre + Count centrés */}
-  <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-    {/* Recherche */}
-    <input
-      type="text"
-      placeholder="Chercher par cellule00..."
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-      className="px-3 py-2 rounded-md text-black"
-    />
+<div className="max-w-6xl w-full mx-auto mb-4 flex flex-col items-center gap-3">  
 
     {/* Filtre */}
     <select

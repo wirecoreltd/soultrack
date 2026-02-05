@@ -1,47 +1,75 @@
-import supabaseAdmin from "../../lib/supabaseAdmin";
+// pages/api/create-user.js
+import supabase from "../../lib/supabaseClient";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Méthode non autorisée" });
   }
 
+  const {
+    prenom,
+    nom,
+    email,
+    password,
+    telephone,
+    role,
+    cellule_nom,
+    cellule_zone,
+    eglise_id,
+    branche_id,
+  } = req.body;
+
+  // ================== Validation simple ==================
+  if (!prenom || !nom || !email || !password || !role || !eglise_id || !branche_id) {
+    return res.status(400).json({ error: "Champs obligatoires manquants" });
+  }
+
   try {
-    const { prenom, nom, email, password, role, telephone } = req.body;
-
-    if (!prenom || !nom || !email || !password || !role) {
-      return res.status(400).json({ error: "Champs obligatoires manquants." });
-    }
-
-    // 1️⃣ Création utilisateur auth
-    const { data, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    // ================== Créer l'utilisateur dans Supabase Auth ==================
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,
+      user_metadata: {
+        prenom,
+        nom,
+        telephone,
+        role,
+        cellule_nom: cellule_nom || null,
+        cellule_zone: cellule_zone || null,
+        eglise_id,
+        branche_id,
+      },
     });
 
     if (authError) throw authError;
 
-    const user = data.user;
+    const userId = authData.user.id;
 
-    // 2️⃣ Création profil
-    const { error: profileError } = await supabaseAdmin.from("profiles").insert({
-      id: user.id,
-      prenom,
-      nom,
-      email,
-      telephone,
-      role,
-      must_change_password: true,
-    });
+    // ================== Créer l'entrée dans la table profiles ==================
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .insert([
+        {
+          id: userId,
+          prenom,
+          nom,
+          email,
+          telephone: telephone || null,
+          role_description: role,
+          cellule_nom: cellule_nom || null,
+          cellule_zone: cellule_zone || null,
+          eglise_id,
+          branche_id,
+        },
+      ])
+      .select()
+      .single();
 
     if (profileError) throw profileError;
 
-    return res.status(200).json({
-      message: "Utilisateur créé avec succès",
-      user_id: user.id,
-    });
+    return res.status(200).json({ user: profileData });
   } catch (err) {
-    console.error("Erreur création utilisateur:", err);
+    console.error("Erreur création utilisateur :", err);
     return res.status(500).json({ error: err.message });
   }
 }

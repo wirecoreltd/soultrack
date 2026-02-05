@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
+import Header from "../components/Header";
 import { useRouter } from "next/router";
 import ProtectedRoute from "../components/ProtectedRoute";
 
@@ -127,22 +128,11 @@ function Attendance() {
   if (loading) return <p className="text-center mt-10 text-lg">Chargement...</p>;
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200">
-      {/* 🔹 Retour */}
-      <button
-        onClick={() => router.back()}
-        className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700"
-      >
-        ← Retour
-      </button>
-
-      {/* 🔹 Logo */}
-      <div className="flex justify-center mb-6">
-        <Image src="/logo.png" alt="Logo" width={80} height={80} />
-      </div>
+    <div className="min-h-screen flex flex-col items-center p-6 bg-[#16acea]">
+      <HeaderPages />
 
       {/* 🔹 Titre */}
-      <h1 className="text-3xl font-bold text-center mb-6">📊 Rapports d'assistance</h1>
+      <h1 className="text-3xl font-bold text-center mb-6">Rapports d'assistance</h1>
 
       {/* 🔹 Formulaire */}
       <div className="max-w-3xl mx-auto bg-white rounded-3xl p-6 shadow-lg mb-6">

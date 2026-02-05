@@ -139,45 +139,48 @@ function ListUsersContent() {
       <HeaderPages />
 
       <h1 className="text-4xl text-white text-center mb-6 font-bold">Gestion des utilisateurs</h1>
-
-      {/* =========================
-         Search & Filter + Actions
-      ========================== */}
-      <div className="max-w-6xl w-full mx-auto mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        {/* Search */}
-        <input
-          type="text"
-          placeholder="Chercher par membre..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full sm:w-1/2 px-3 py-2 rounded-sm text-black"
-        />
-
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2 sm:mt-0 w-full sm:w-auto">
-          {/* Filter */}
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="px-3 py-2 rounded-sm text-black"
-          >
-            <option value="">Tous les rôles</option>
-            {roles.map(r => <option key={r} value={r}>{r}</option>)}
-          </select>
-
-          {/* Compteur */}
-          <span className="text-white text-sm ml-auto sm:ml-0">
-            Total : {filteredUsers.length}
-          </span>
-
-          {/* Ajouter utilisateur */}
-          <button
-            onClick={() => router.push("/admin/create-member")}
-            className="text-white font-semibold px-4 py-2 rounded shadow text-sm whitespace-nowrap"
-          >
-            ➕ Ajouter un utilisateur
-          </button>
-        </div>
-      </div>
+     
+            Barre recherche / filtre / actions
+            ========================= */}
+            <div className="max-w-6xl w-full mx-auto mb-6 flex flex-col gap-3">
+              
+              {/* Search bar centrée */}
+              <div className="flex justify-center">
+                <input
+                  type="text"
+                  placeholder="Chercher un membre..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full sm:w-1/2 px-4 py-2 rounded-md text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                />
+              </div>
+            
+              {/* Filter + compteur centrés */}
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="px-4 py-2 rounded-md text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                >
+                  <option value="">Tous les rôles</option>
+                  {roles.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+            
+                <span className="text-white text-sm font-medium">
+                  Total : {filteredUsers.length}
+                </span>
+              </div>
+            
+              {/* Bouton Ajouter un utilisateur aligné à droite */}
+              <div className="flex justify-end">
+                <button
+                  onClick={() => router.push("/admin/create-member")}
+                  className="px-4 py-2 rounded-md bg-orange-500 text-white font-semibold shadow hover:bg-orange-600"
+                >
+                  ➕ Ajouter un utilisateur
+                </button>
+              </div>
+            </div>
 
       {/* =========================
          Liste des utilisateurs

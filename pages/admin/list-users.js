@@ -173,15 +173,15 @@ function ListUsersContent() {
               {/* Bouton Ajouter un utilisateur aligné à droite */}
               <div className="flex justify-end">
                 <button
-                  onClick={() => router.push("/admin/create-member")}
-                  className="px-4 py-2 rounded-md bg-orange-500 text-white font-semibold shadow hover:bg-orange-600"
-                >
-                  ➕ Ajouter un utilisateur
-                </button>
+          onClick={() => router.push("/admin/create-internal-user)}
+          className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+        >
+          ➕ Ajouter un utilisateur
+        </button>
               </div>
             </div>
 
-      {/* =========================
+      {/* ========================= 
          Liste des utilisateurs
       ========================== */}
       <div className="max-w-6xl mx-auto space-y-2">

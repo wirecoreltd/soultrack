@@ -95,20 +95,35 @@ export default function SuivisEvangelisation() {
 
   // ================= CELLULES =================
   const fetchCellules = async () => {
-    const { data } = await supabase
-      .from("cellules")
-      .select("id, cellule_full, responsable_id");
+  if (!user) return [];
 
-    setCellules(data || []);
-    return data || [];
-  };
+  const { data, error } = await supabase
+    .from("cellules")
+    .select("id, cellule_full, responsable_id")
+    .eq("eglise_id", user.eglise_id)
+    .eq("branche_id", user.branche_id);
+
+  if (error) {
+    console.error("Erreur fetchCellules :", error);
+    setCellules([]);
+    return [];
+  }
+
+  setCellules(data || []);
+  return data || [];
+};
+
 
   // ================= SUIVIS =================
   const fetchSuivis = async (userData, cellulesData) => {
   try {
+    if (!userData) return;
+
     const { data, error } = await supabase
       .from("suivis_des_evangelises")
       .select("*")
+      .eq("eglise_id", userData.eglise_id)
+      .eq("branche_id", userData.branche_id)
       .order("id", { ascending: false });
 
     if (error) {
@@ -119,14 +134,20 @@ export default function SuivisEvangelisation() {
 
     let filtered = data || [];
 
-    // 🔹 Filtrage selon rôle
+    // 🔹 RÔLES (ON GARDE TON LOGIQUE)
     if (userData.role === "Conseiller") {
-      filtered = filtered.filter((m) => m.conseiller_id === userData.id);
-    } else if (userData.role === "ResponsableCellule") {
+      filtered = filtered.filter(
+        (m) => m.conseiller_id === userData.id
+      );
+    } 
+    else if (userData.role === "ResponsableCellule") {
       const mesCellulesIds = cellulesData
         .filter((c) => c.responsable_id === userData.id)
         .map((c) => c.id);
-      filtered = filtered.filter((m) => mesCellulesIds.includes(m.cellule_id));
+
+      filtered = filtered.filter((m) =>
+        mesCellulesIds.includes(m.cellule_id)
+      );
     }
 
     setAllSuivis(filtered);
@@ -135,6 +156,7 @@ export default function SuivisEvangelisation() {
     setAllSuivis([]);
   }
 };
+
 
   // ================= HELPERS =================
   const getBorderColor = (m) => {

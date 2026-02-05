@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import supabase from "../../lib/supabaseClient"; // Assure-toi que le chemin est correct
+import supabase from "../../lib/supabaseClient";
 
 export default function CreateInternalUser() {
   const router = useRouter();
@@ -33,9 +33,11 @@ export default function CreateInternalUser() {
     setMessage("⏳ Création en cours...");
 
     try {
+      // ✅ Envoie les cookies pour l'authentification automatique
       const res = await fetch("/api/create-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(formData),
       });
 
@@ -65,23 +67,20 @@ export default function CreateInternalUser() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
-
-        <button onClick={() => router.back()} className="absolute top-4 left-4 text-gray-700 hover:text-gray-900">← Retour</button>
-
+        <button onClick={() => router.back()} className="absolute top-4 left-4">← Retour</button>
         <div className="flex justify-center mb-6">
           <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
         </div>
-
         <h1 className="text-3xl font-bold text-center mb-6">Créer un utilisateur</h1>
 
-        <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input" required />
           <input name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input" required />
           <input name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="input" required />
-          <input name="password" type="password" placeholder="Mot de passe" value={formData.password} onChange={handleChange} className="input" required />
-          <input name="confirmPassword" type="password" placeholder="Confirmer le mot de passe" value={formData.confirmPassword} onChange={handleChange} className="input" required />
+          <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
+          <input name="confirmPassword" placeholder="Confirmer le mot de passe" type="password" value={formData.confirmPassword} onChange={handleChange} className="input" required />
           <input name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={handleChange} className="input" />
-
+          
           <select name="role" value={formData.role} onChange={handleChange} className="input" required>
             <option value="">-- Sélectionne un rôle --</option>
             <option value="Administrateur">Administrateur</option>
@@ -93,15 +92,20 @@ export default function CreateInternalUser() {
           </select>
 
           <div className="flex gap-4 mt-4">
-            <button type="button" onClick={() => router.push("/")} className="flex-1 bg-gray-400 text-white py-3 rounded-2xl">Annuler</button>
-            <button type="submit" disabled={loading} className="flex-1 bg-blue-500 text-white py-3 rounded-2xl">{loading ? "Création..." : "Créer"}</button>
+            <button type="button" onClick={() => router.push("/")} className="flex-1 bg-gray-400 text-white py-3 rounded-xl">Annuler</button>
+            <button type="submit" disabled={loading} className="flex-1 bg-blue-500 text-white py-3 rounded-xl">{loading ? "Création..." : "Créer"}</button>
           </div>
         </form>
 
-        {message && <p className="mt-4 text-center text-sm">{message}</p>}
+        {message && <p className="mt-4 text-center">{message}</p>}
 
         <style jsx>{`
-          .input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 12px; }
+          .input {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 12px;
+          }
         `}</style>
       </div>
     </div>

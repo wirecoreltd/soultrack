@@ -5,6 +5,8 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 import EditUserModal from "../../components/EditUserModal";
+import HeaderPages from "../../components/HeaderPages";
+import ProtectedRoute from "../../components/ProtectedRoute"; 
 
 export default function ListUsers() {
   const router = useRouter();
@@ -71,7 +73,6 @@ export default function ListUsers() {
   fetchUserScope();
 }, []);
 
-
   const handleDelete = async () => {
     if (!deleteUser?.id) return;
     const { error } = await supabase.from("profiles").delete().eq("id", deleteUser.id);
@@ -91,14 +92,9 @@ export default function ListUsers() {
   if (loading) return <p className="text-center mt-10 text-lg">Chargement...</p>;
 
   return (
-            <div
-  className="min-h-screen p-6"
-  style={{
-    background: "linear-gradient(135deg, #A7C7FF 0%, #A7C7FF 60%, #FFB87A 100%)"
-  }}
->
-
-    
+      <div className="min-h-screen p-6 bg-[#333699]">
+      <HeaderPages />
+  
       <button onClick={() => router.back()} className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700">← Retour</button>
 
       <div className="flex flex-col items-center mb-6">

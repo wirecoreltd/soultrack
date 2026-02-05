@@ -1,6 +1,9 @@
-// pages/api/create-user.js
-import supabase from "../../lib/supabaseClient";
-import bcrypt from "bcryptjs";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -8,55 +11,123 @@ export default async function handler(req, res) {
   }
 
   try {
-    const {
+    const { prenom, nom, email, password, role, telephone, sendMethod } = req.body;
+
+    if (!sendMethod) {
+      return res.status(400).json({ error: "Méthode d’envoi non choisie." });
+    }
+
+    // ============================================================
+    // 1️⃣ CREATION UTILISATEUR AUTH
+    // ============================================================
+    const { data: userData, error: createError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+
+    if (createError) throw createError;
+
+    const user = userData.user;
+
+    // ============================================================
+    // 2️⃣ INSERTION DANS TABLE profiles
+    // ============================================================
+    const { error: profileError } = await supabase.from("profiles").insert({
+      id: user.id,
       prenom,
       nom,
       email,
-      password,
       telephone,
       role,
-      cellule_nom,
-      cellule_zone,
-      eglise_id,
-      branche_id,
-    } = req.body;
+      must_change_password: true,
+    });
 
-    if (!prenom || !nom || !email || !password || !role) {
-      return res.status(400).json({ error: "Champs obligatoires manquants" });
+    if (profileError) throw profileError;
+
+    // ============================================================
+    // 3️⃣ MESSAGE TEMPLATE
+    // ============================================================
+    const loginUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/login`;
+
+    const message = `
+Bonjour ${prenom},
+
+Votre compte SoulTrack a été créé avec succès 🙌
+
+Voici vos accès :
+
+📧 Email : ${email}
+🔑 Mot de passe : ${password}
+
+Connectez-vous ici :
+➡️ ${loginUrl}
+
+🙏 Nous sommes heureux de vous compter parmi nous. Que Dieu vous bénisse !
+– L'équipe SoulTrack
+    `.trim();
+
+    // ============================================================
+    // 4️⃣ ENVOI EMAIL SI sendMethod === "email"
+    // ============================================================
+    let emailStatus = "not_sent";
+    let whatsappLink = null;
+
+    if (sendMethod === "email") {
+      if (!process.env.SENDGRID_API_KEY) {
+        emailStatus = "failed_no_key";
+      } else {
+        try {
+          const emailRes = await fetch("https://api.sendgrid.com/v3/mail/send", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              personalizations: [{ to: [{ email }] }],
+              from: { email: process.env.EMAIL_FROM || "no-reply@soultrack.app" },
+              subject: "Vos accès SoulTrack",
+              content: [{ type: "text/plain", value: message }],
+            }),
+          });
+
+          emailStatus = emailRes.ok ? "sent" : "failed";
+        } catch (err) {
+          console.error("Erreur SendGrid:", err);
+          emailStatus = "failed";
+        }
+      }
     }
 
-    // ✅ Hasher le mot de passe
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // ============================================================
+    // 5️⃣ LIEN WHATSAPP SI sendMethod === "whatsapp"
+    // ============================================================
+    if (sendMethod === "whatsapp") {
+      if (!telephone) {
+        return res.status(400).json({
+          error: "Numéro de téléphone requis pour envoyer via WhatsApp.",
+        });
+      }
 
-    // Créer l'utilisateur
-    const { data, error } = await supabase
-      .from("profiles")  // ou "users" selon ta table
-      .insert([
-        {
-          prenom,
-          nom,
-          email,
-          password: hashedPassword,
-          telephone: telephone || null,
-          role,
-          cellule_nom: role === "ResponsableCellule" ? cellule_nom || null : null,
-          cellule_zone: role === "ResponsableCellule" ? cellule_zone || null : null,
-          eglise_id: eglise_id || null,
-          branche_id: branche_id || null,
-          created_at: new Date().toISOString(),
-        },
-      ])
-      .select()
-      .single();
+      const cleanPhone = telephone.replace(/\D/g, "");
+      const encoded = encodeURIComponent(message);
 
-    if (error) {
-      console.error("Supabase error:", error);
-      return res.status(500).json({ error: error.message });
+      whatsappLink = `https://wa.me/${cleanPhone}?text=${encoded}`;
     }
 
-    return res.status(200).json({ user: data });
+    // ============================================================
+    // 6️⃣ RESPONSE
+    // ============================================================
+    return res.status(200).json({
+      message: "Utilisateur créé avec succès",
+      email_status: emailStatus,
+      whatsapp_link: whatsappLink,
+      sendMethod,
+    });
+
   } catch (err) {
-    console.error("Server error:", err);
+    console.error("Erreur création:", err);
     return res.status(500).json({ error: err.message });
   }
 }

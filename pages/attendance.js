@@ -21,6 +21,22 @@ function Attendance() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
 
+    const [formData, setFormData] = useState({
+    date: "",
+    hommes: 0,
+    femmes: 0,
+    jeunes: 0,
+    enfants: 0,
+    connectes: 0,
+    nouveauxVenus: 0,
+    nouveauxConvertis: 0,
+  });
+
+  const [editId, setEditId] = useState(null);
+  const [message, setMessage] = useState("");
+
+
+
   // 🔹 Fetch reports
   const fetchReports = async () => {
     setLoading(true);

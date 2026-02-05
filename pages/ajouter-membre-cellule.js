@@ -39,35 +39,67 @@ export default function AjouterMembreCellule() {
 
   const [success, setSuccess] = useState(false);
 
+    const [userScope, setUserScope] = useState({
+  eglise_id: null,
+  branche_id: null,
+});
+
+useEffect(() => {
+  const fetchUserScope = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData?.session?.user;
+    if (!user) return;
+
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("eglise_id, branche_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!error && profile) {
+      setUserScope({
+        eglise_id: profile.eglise_id,
+        branche_id: profile.branche_id,
+      });
+    }
+  };
+
+  fetchUserScope();
+}, []);
+
+
   // ================== FETCH CELLULES ==================
   useEffect(() => {
-    const fetchCellules = async () => {
-      const userId = localStorage.getItem("userId");
+  if (!userScope.eglise_id || !userScope.branche_id) return;
 
-      const { data, error } = await supabase
-        .from("cellules")
-        .select("id, ville, cellule")
-        .eq("responsable_id", userId);
+  const fetchCellules = async () => {
+    const userId = localStorage.getItem("userId");
 
-      if (error || !data || data.length === 0) {
-        alert("⚠️ Vous n'avez pas encore de cellule assignée. Contactez l'administrateur !");
-        return;
-      }
+    const { data, error } = await supabase
+      .from("cellules")
+      .select("id, ville, cellule")
+      .eq("responsable_id", userId)
+      .eq("eglise_id", userScope.eglise_id)
+      .eq("branche_id", userScope.branche_id);
 
-      setCellules(data);
+    if (error || !data || data.length === 0) {
+      alert("⚠️ Aucune cellule trouvée pour votre église / branche.");
+      return;
+    }
 
-      // ✅ SÉLECTION AUTO UNIQUEMENT SI 1 CELLULE
-      if (data.length === 1) {
-        setFormData((prev) => ({
-          ...prev,
-          cellule_id: data[0].id,
-        }));
-      }
-      // ❌ SI PLUSIEURS → ON NE FAIT RIEN
-    };
+    setCellules(data);
 
-    fetchCellules();
-  }, []);
+    if (data.length === 1) {
+      setFormData((prev) => ({
+        ...prev,
+        cellule_id: data[0].id,
+      }));
+    }
+  };
+
+  fetchCellules();
+}, [userScope]);
+
 
   // ================== HANDLERS ==================
   const handleChange = (e) => {
@@ -90,6 +122,8 @@ export default function AjouterMembreCellule() {
           ville: formData.ville,
           venu: formData.venu,
           cellule_id: formData.cellule_id,
+          eglise_id: userScope.eglise_id,
+          branche_id: userScope.branche_id,
           statut_suivis: 3, // Intégrer
           etat_contact: "Existant", 
           is_whatsapp: formData.is_whatsapp,

@@ -38,20 +38,19 @@ export default async function handler(req, res) {
       responsable: responsable_nom,
       responsable_id,
       telephone,
-      cellule_full: `${zone} - ${nom}`,
       eglise_id,
       branche_id,
       created_at: new Date(),
     });
 
     if (error) {
-      console.error(error);
+      console.error("Insert error:", error);
       return res.status(500).json({ error: error.message });
     }
 
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error(err);
+    console.error("Server error:", err);
     return res.status(500).json({ error: "Server error" });
   }
 }

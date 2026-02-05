@@ -144,29 +144,39 @@ function ListUsersContent() {
       {/* =========================
          Recherche & Filtre centrés
       ========================== */}
-      <div className="flex flex-col sm:flex-row justify-center items-center max-w-6xl mx-auto gap-4 mb-6">
+      <div className="max-w-6xl w-full mx-auto mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        {/* Search bar */}
         <input
           type="text"
-          placeholder="Recherche par nom..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full sm:w-1/2 px-4 py-2 rounded-xl text-black shadow-sm"
+          placeholder="Chercher par membre..."
+          value={prenom}
+          onChange={(e) => setPrenom(e.target.value)}
+          className="w-full sm:w-1/2 px-3 py-2 rounded-sm text-black"
         />
 
-        <select
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="px-4 py-2 rounded-xl text-black shadow-sm w-full sm:w-1/4"
-        >
-          <option value="">Tous les rôles</option>
-          {roles.map(r => <option key={r} value={r}>{r}</option>)}
-        </select>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2 sm:mt-0">
+    <select
+      value={role}
+      onChange={(e) => setRole(e.target.value)}
+      className="px-3 py-2 rounded-sm text-black"
+    >
+      <option value="">Tous les rôles</option>
+      <option value="Conseiller">Conseiller</option>
+      <option value="ResponsableCellule">Responsable Cellule</option>
+      <option value="Administrateur">Administrateur</option>
+    </select>
 
+    {/* Compteur membres à droite */}
+    <span className="text-white text-sm ml-auto sm:ml-0">
+      Total : {uniqueMembers.length}
+    </span>
+
+        {/* Bouton Ajouter un membre */}
         <button
-          onClick={() => router.push("/admin/create-internal-user")}
-          className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600"
+          onClick={() => router.push("/admin/create-member")}
+          className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
         >
-          ➕ Créer utilisateur
+          ➕ Ajouter un utilisateur
         </button>
       </div>
 

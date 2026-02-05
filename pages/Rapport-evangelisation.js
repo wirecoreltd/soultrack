@@ -6,8 +6,19 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import EditEvanRapportLine from "../components/EditEvanRapportLine";
 import HeaderPages from "../components/HeaderPages";
+import ProtectedRoute from "../components/ProtectedRoute";
 
-export default function RapportEvangelisation() {
+// Wrapper sécurisé
+export default function RapportEvangelisationPage() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableEvangelisation"]}>
+      <RapportEvangelisation />
+    </ProtectedRoute>
+  );
+}
+
+// Composant enfant avec la logique complète
+function RapportEvangelisation() {
   const router = useRouter();
   const [rapports, setRapports] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -4,10 +4,19 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
+import ProtectedRoute from "../../components/ProtectedRoute"; 
 
-export default function CreateCellule() {
+function CreateCelluleContent() {
   const router = useRouter();
 
+  export default function CreateCellulePage() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "SuperviseurCellule"]}>
+      <CreateCelluleContent />
+    </ProtectedRoute>
+  );
+}
+  
   const [formData, setFormData] = useState({
     nom: "",
     zone: "",

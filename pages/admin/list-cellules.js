@@ -210,7 +210,6 @@ function ListCellulesContent() {
       ➕ Ajouter une Cellule
     </button>
   </div>
-</div>
 
       {/* Tableau */}
       <div className="max-w-6xl mx-auto space-y-2">

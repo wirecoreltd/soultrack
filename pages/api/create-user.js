@@ -8,11 +8,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ================== AUTHENTIFICATION ==================
-    const { user } = await supabase.auth.getUserByCookie(req);
-    if (!user) return res.status(401).json({ error: "Non authentifié" });
-
-    // ================== RÉCUPÉRATION DES DONNÉES ==================
     const {
       prenom,
       nom,
@@ -22,30 +17,30 @@ export default async function handler(req, res) {
       telephone,
       cellule_nom,
       cellule_zone,
+      creatorId, // 🔹 ID de l'utilisateur qui crée le nouveau compte
     } = req.body;
 
-    if (!prenom || !nom || !email || !password || !role) {
+    if (!prenom || !nom || !email || !password || !role || !creatorId) {
       return res.status(400).json({ error: "Champs obligatoires manquants" });
     }
 
-    // ================== HASH DU MOT DE PASSE ==================
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ================== RÉCUPÉRATION EGLISE ET BRANCHE ==================
-    const { data: currentUserData, error: currentUserError } = await supabase
+    // 🔹 On récupère automatiquement eglise_id et branche_id depuis le créateur
+    const { data: creatorData, error: creatorError } = await supabase
       .from("profiles")
       .select("eglise_id, branche_id")
-      .eq("id", user.id)
+      .eq("id", creatorId)
       .single();
 
-    if (currentUserError || !currentUserData) {
+    if (creatorError || !creatorData) {
       return res.status(400).json({ error: "Impossible de récupérer l'église/branche" });
     }
 
-    const eglise_id = currentUserData.eglise_id;
-    const branche_id = currentUserData.branche_id;
+    const eglise_id = creatorData.eglise_id;
+    const branche_id = creatorData.branche_id;
 
-    // ================== INSERTION UTILISATEUR ==================
+    // 🔹 Création du nouvel utilisateur
     const { data: newUser, error } = await supabase
       .from("profiles")
       .insert([
@@ -65,9 +60,7 @@ export default async function handler(req, res) {
       .select()
       .single();
 
-    if (error) {
-      return res.status(500).json({ error: error.message });
-    }
+    if (error) return res.status(500).json({ error: error.message });
 
     return res.status(200).json({ user: newUser });
   } catch (err) {

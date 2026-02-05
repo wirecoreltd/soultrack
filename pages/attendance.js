@@ -4,23 +4,22 @@ import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import ProtectedRoute from "../components/ProtectedRoute";
 
-export default function Attendance() {
+// Wrapper sécurisé
+export default function AttendancePage() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
+      <Attendance />
+    </ProtectedRoute>
+  );
+}
+
+// Composant enfant avec toute la logique
+function Attendance() {
   const router = useRouter();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({
-    date: "",
-    hommes: 0,
-    femmes: 0,
-    jeunes: 0,
-    enfants: 0,
-    connectes: 0,
-    nouveauxVenus: 0,
-    nouveauxConvertis: 0,
-  });
-  const [editId, setEditId] = useState(null);
-  const [message, setMessage] = useState("");
 
   // 🔹 Fetch reports
   const fetchReports = async () => {

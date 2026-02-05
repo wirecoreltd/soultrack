@@ -1,8 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import supabase from "../../lib/supabaseClient";
 
 export default function CreateInternalUser() {
   const router = useRouter();
@@ -17,45 +16,12 @@ export default function CreateInternalUser() {
   });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [userEglise, setUserEglise] = useState(null); // Pour récupérer eglise_id et branche_id
-
-  // ================== FETCH USER EGLISE & BRANCHE ==================
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data: currentUser } = await supabase.auth.getUser();
-      if (!currentUser?.user) return;
-
-      // Récupérer l’eglise_id et branche_id du user connecté
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("eglise_id, branche_id")
-        .eq("id", currentUser.user.id)
-        .single();
-
-      if (error) {
-        console.error("Impossible de récupérer l'église/branche :", error.message);
-        return;
-      }
-
-      setUserEglise({
-        eglise_id: data.eglise_id,
-        branche_id: data.branche_id,
-      });
-    };
-
-    fetchUser();
-  }, []);
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!userEglise) {
-      setMessage("❌ Impossible de récupérer l'église et la branche du user.");
-      return;
-    }
 
     if (formData.password !== formData.confirmPassword) {
       setMessage("❌ Les mots de passe ne correspondent pas.");
@@ -66,31 +32,28 @@ export default function CreateInternalUser() {
     setMessage("⏳ Création en cours...");
 
     try {
-      const { data, error } = await supabase.from("profiles").insert([
-        {
-          prenom: formData.prenom,
-          nom: formData.nom,
-          email: formData.email,
-          password: formData.password, // ⚠️ hashing côté API si besoin
-          telephone: formData.telephone || null,
-          role_description: formData.role,
-          eglise_id: userEglise.eglise_id,
-          branche_id: userEglise.branche_id,
-        },
-      ]).select().single();
-
-      if (error) throw error;
-
-      setMessage("✅ Utilisateur créé avec succès !");
-      setFormData({
-        prenom: "",
-        nom: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        telephone: "",
-        role: "",
+      const res = await fetch("/api/create-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
+
+      const data = await res.json().catch(() => null);
+
+      if (res.ok) {
+        setMessage("✅ Utilisateur créé avec succès !");
+        setFormData({
+          prenom: "",
+          nom: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          telephone: "",
+          role: "",
+        });
+      } else {
+        setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
+      }
     } catch (err) {
       setMessage("❌ " + err.message);
     } finally {
@@ -103,8 +66,6 @@ export default function CreateInternalUser() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
-
-        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
           className="absolute top-4 left-4 flex items-center text-gray-700 hover:text-gray-900 transition-colors"
@@ -112,12 +73,10 @@ export default function CreateInternalUser() {
           ← Retour
         </button>
 
-        {/* Logo centré */}
         <div className="flex justify-center mb-6">
           <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
         </div>
 
-        {/* Titre */}
         <h1 className="text-3xl font-bold text-center mb-6">Créer un utilisateur</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">

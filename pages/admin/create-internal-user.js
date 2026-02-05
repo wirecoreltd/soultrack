@@ -1,3 +1,5 @@
+tres bien le eglise et branche id doit rentrer dans la base
+
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -151,6 +153,7 @@ export default function CreateInternalUser() {
             <option value="ResponsableIntegration">Responsable Intégration</option>
             <option value="ResponsableCellule">Responsable de Cellule</option>
             <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
+              <option value="SuperviseurCellule">Superviseur des Cellules</option>
             <option value="Conseiller">Conseiller</option>
           </select>
 

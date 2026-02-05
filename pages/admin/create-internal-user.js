@@ -19,6 +19,34 @@ export default function CreateInternalUser() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [userScope, setUserScope] = useState({ eglise_id: null, branche_id: null });
+
+  const [userScope, setUserScope] = useState({ eglise_id: null, branche_id: null });
+
+useEffect(() => {
+  const fetchUserScope = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData?.session?.user;
+    if (!user) return;
+
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("eglise_id, branche_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!error && profile) {
+      setUserScope({
+        eglise_id: profile.eglise_id,
+        branche_id: profile.branche_id,
+      });
+    }
+  };
+
+  fetchUserScope();
+}, []);
+
+
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -36,10 +64,11 @@ export default function CreateInternalUser() {
 
     try {
       const res = await fetch("/api/create-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(newUserData),
+});
+
 
       const data = await res.json().catch(() => null);
 
@@ -53,6 +82,8 @@ export default function CreateInternalUser() {
           confirmPassword: "",
           telephone: "",
           role: "",
+          eglise_id: userScope.eglise_id,
+          branche_id: userScope.branche_id,
           cellule_nom: "",
           cellule_zone: "",
         });

@@ -1,11 +1,13 @@
 "use client";
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 
-export default function CreateInternalUser({ egliseId, brancheId }) {
+export default function CreateInternalUser() {
   const router = useRouter();
+
   const [formData, setFormData] = useState({
     prenom: "",
     nom: "",
@@ -14,11 +16,38 @@ export default function CreateInternalUser({ egliseId, brancheId }) {
     confirmPassword: "",
     telephone: "",
     role: "",
-    cellule_nom: "",   // optionnel
-    cellule_zone: "",  // optionnel
+    cellule_nom: "",
+    cellule_zone: "",
   });
+
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // ✅ Stocke l'eglise et branche automatiquement
+  const [egliseId, setEgliseId] = useState("");
+  const [brancheId, setBrancheId] = useState("");
+
+  useEffect(() => {
+    const fetchUserEgliseBranche = async () => {
+      const userId = localStorage.getItem("userId"); // ID de l'utilisateur connecté
+      if (!userId) return;
+
+      const { data: userProfile, error } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", userId)
+        .single();
+
+      if (!error && userProfile) {
+        setEgliseId(userProfile.eglise_id);
+        setBrancheId(userProfile.branche_id);
+      } else {
+        console.error("Impossible de récupérer l'église/branche :", error);
+      }
+    };
+
+    fetchUserEgliseBranche();
+  }, []);
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -26,6 +55,7 @@ export default function CreateInternalUser({ egliseId, brancheId }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // ✅ Vérification mot de passe
     if (formData.password !== formData.confirmPassword) {
       setMessage("❌ Les mots de passe ne correspondent pas.");
       return;
@@ -35,40 +65,34 @@ export default function CreateInternalUser({ egliseId, brancheId }) {
     setMessage("⏳ Création en cours...");
 
     try {
-      // Préparer l'objet à insérer
-      const newUser = {
-        prenom: formData.prenom,
-        nom: formData.nom,
-        email: formData.email,
-        telephone: formData.telephone,
-        role: formData.role,
-        eglise_id: egliseId,     // 🔹 obligatoire
-        branche_id: brancheId,   // 🔹 obligatoire
-        // Ne pas envoyer cellule_nom / cellule_zone si vide
-        ...(formData.cellule_nom ? { cellule_nom: formData.cellule_nom } : {}),
-        ...(formData.cellule_zone ? { cellule_zone: formData.cellule_zone } : {}),
-      };
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .insert([newUser])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setMessage("✅ Utilisateur créé avec succès !");
-      setFormData({
-        prenom: "",
-        nom: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        telephone: "",
-        role: "",
-        cellule_nom: "",
-        cellule_zone: "",
+      const res = await fetch("/api/create-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          eglise_id: egliseId,
+          branche_id: brancheId,
+        }),
       });
+
+      const data = await res.json().catch(() => null);
+
+      if (res.ok) {
+        setMessage("✅ Utilisateur créé avec succès !");
+        setFormData({
+          prenom: "",
+          nom: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          telephone: "",
+          role: "",
+          cellule_nom: "",
+          cellule_zone: "",
+        });
+      } else {
+        setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
+      }
     } catch (err) {
       setMessage("❌ " + err.message);
     } finally {
@@ -76,11 +100,13 @@ export default function CreateInternalUser({ egliseId, brancheId }) {
     }
   };
 
-  const handleCancel = () => router.push("/");
+  const handleCancel = () => router.push("/"); // Retour à l'accueil ou page admin
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
+
+        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
           className="absolute top-4 left-4 flex items-center text-gray-700 hover:text-gray-900 transition-colors"
@@ -88,10 +114,12 @@ export default function CreateInternalUser({ egliseId, brancheId }) {
           ← Retour
         </button>
 
+        {/* Logo centré */}
         <div className="flex justify-center mb-6">
           <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
         </div>
 
+        {/* Titre */}
         <h1 className="text-3xl font-bold text-center mb-6">Créer un utilisateur</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
@@ -121,8 +149,8 @@ export default function CreateInternalUser({ egliseId, brancheId }) {
           />
           <input
             name="password"
-            type="password"
             placeholder="Mot de passe"
+            type="password"
             value={formData.password}
             onChange={handleChange}
             className="input"
@@ -130,8 +158,8 @@ export default function CreateInternalUser({ egliseId, brancheId }) {
           />
           <input
             name="confirmPassword"
-            type="password"
             placeholder="Confirmer le mot de passe"
+            type="password"
             value={formData.confirmPassword}
             onChange={handleChange}
             className="input"
@@ -161,19 +189,19 @@ export default function CreateInternalUser({ egliseId, brancheId }) {
             <option value="Conseiller">Conseiller</option>
           </select>
 
-          {/* Optionnel seulement si ResponsableCellule */}
+          {/* Bloc spécifique pour Responsable de cellule */}
           {formData.role === "ResponsableCellule" && (
             <div className="space-y-3 border-t pt-3">
               <input
                 name="cellule_nom"
-                placeholder="Nom de la cellule (optionnel)"
+                placeholder="Nom de la cellule (facultatif)"
                 value={formData.cellule_nom}
                 onChange={handleChange}
                 className="input"
               />
               <input
                 name="cellule_zone"
-                placeholder="Zone / Localisation (optionnel)"
+                placeholder="Zone / Localisation (facultatif)"
                 value={formData.cellule_zone}
                 onChange={handleChange}
                 className="input"
@@ -181,10 +209,14 @@ export default function CreateInternalUser({ egliseId, brancheId }) {
             </div>
           )}
 
+          {/* Bloc spécifique pour Conseiller */}
           {formData.role === "Conseiller" && (
-            <p className="text-sm text-gray-600 border-t pt-3">Aucune information supplémentaire requise pour le rôle Conseiller.</p>
+            <div className="space-y-3 border-t pt-3">
+              <p className="text-sm text-gray-600">Aucune information supplémentaire requise pour le rôle Conseiller.</p>
+            </div>
           )}
 
+          {/* Boutons côte à côte */}
           <div className="flex gap-4 mt-4">
             <button
               type="button"

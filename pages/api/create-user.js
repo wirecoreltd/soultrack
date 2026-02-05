@@ -1,10 +1,18 @@
-import supabase from "../../lib/supabaseClient";
+// pages/api/create-user.js
 import bcrypt from "bcryptjs";
+import supabase from "../../lib/supabaseClient";
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Méthode non autorisée" });
+  }
 
   try {
+    // ================== AUTHENTIFICATION ==================
+    const { user } = await supabase.auth.getUserByCookie(req);
+    if (!user) return res.status(401).json({ error: "Non authentifié" });
+
+    // ================== RÉCUPÉRATION DES DONNÉES ==================
     const {
       prenom,
       nom,
@@ -17,53 +25,53 @@ export default async function handler(req, res) {
     } = req.body;
 
     if (!prenom || !nom || !email || !password || !role) {
-      return res.status(400).json({ error: "Champs requis manquants" });
+      return res.status(400).json({ error: "Champs obligatoires manquants" });
     }
 
-    // 🔹 Récupérer l'utilisateur connecté via Supabase Auth
-    const { data: { user }, error: authError } = await supabase.auth.getUserByCookie(req);
+    // ================== HASH DU MOT DE PASSE ==================
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    if (authError || !user) return res.status(401).json({ error: "Non authentifié" });
-
-    // 🔹 Récupérer eglise_id et branche_id depuis l'utilisateur connecté
-    const { data: currentUser, error: userError } = await supabase
+    // ================== RÉCUPÉRATION EGLISE ET BRANCHE ==================
+    const { data: currentUserData, error: currentUserError } = await supabase
       .from("profiles")
       .select("eglise_id, branche_id")
       .eq("id", user.id)
       .single();
 
-    if (userError || !currentUser) return res.status(401).json({ error: "Utilisateur introuvable" });
+    if (currentUserError || !currentUserData) {
+      return res.status(400).json({ error: "Impossible de récupérer l'église/branche" });
+    }
 
-    // 🔹 Hasher le mot de passe
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const eglise_id = currentUserData.eglise_id;
+    const branche_id = currentUserData.branche_id;
 
-    // 🔹 Préparer l'utilisateur à insérer
-    const newUser = {
-      prenom,
-      nom,
-      email,
-      password: hashedPassword,
-      role_description: role,
-      telephone: telephone || null,
-      cellule_nom: cellule_nom || null,
-      cellule_zone: cellule_zone || null,
-      eglise_id: currentUser.eglise_id,
-      branche_id: currentUser.branche_id,
-      created_at: new Date().toISOString(),
-    };
-
-    const { data, error } = await supabase
+    // ================== INSERTION UTILISATEUR ==================
+    const { data: newUser, error } = await supabase
       .from("profiles")
-      .insert([newUser])
+      .insert([
+        {
+          prenom,
+          nom,
+          email,
+          password: hashedPassword,
+          role_description: role,
+          telephone: telephone || null,
+          cellule_nom: cellule_nom || null,
+          cellule_zone: cellule_zone || null,
+          eglise_id,
+          branche_id,
+        },
+      ])
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
 
-    return res.status(200).json({ message: "Utilisateur créé avec succès", user: data });
-
+    return res.status(200).json({ user: newUser });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: err.message || "Erreur serveur" });
+    return res.status(500).json({ error: err.message });
   }
 }

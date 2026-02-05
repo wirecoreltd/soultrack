@@ -10,14 +10,13 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 /* =========================
    Ligne utilisateur
 ========================= */
-function UserRow({ u, router, setSelectedUser, setDeleteUser }) {
+function UserRow({ u, setSelectedUser, setDeleteUser }) {
   return (
-    <div className="flex flex-row items-center px-4 py-3 rounded-lg gap-2 bg-white/15 border-l-4" style={{ borderLeftColor: "#F59E0B" }}>
-      <div className="flex-[2] text-white font-semibold text-sm">{u.prenom} {u.nom}</div>
-      <div className="flex-[2] text-white text-sm">{u.email}</div>
-      <div className="flex-[2] text-white font-medium text-sm">{u.role_description}</div>
-
-      {/* Action */}
+    <div className="flex flex-row items-center px-4 py-2 rounded-lg gap-2 bg-white/15 border-l-4 text-sm" style={{ borderLeftColor: "#F59E0B" }}>
+      <div className="flex-[2] text-white font-semibold">{u.prenom} {u.nom}</div>
+      <div className="flex-[2] text-white">{u.email}</div>
+      <div className="flex-[2] text-white font-medium">{u.role_description}</div>
+      {/* Actions */}
       <div className="flex-[1] flex justify-center gap-2">
         <button onClick={() => setSelectedUser(u)} className="text-blue-400 hover:text-blue-600 text-lg">✏️</button>
         <button onClick={() => setDeleteUser(u)} className="text-red-400 hover:text-red-600 text-lg">🗑️</button>
@@ -41,7 +40,7 @@ function ListUsersContent() {
   const router = useRouter();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [roleFilter, setRoleFilter] = useState("");
+  const [role, setRole] = useState("");
   const [roles, setRoles] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
@@ -130,7 +129,7 @@ function ListUsersContent() {
      Filtrage + recherche
   ========================== */
   const filteredUsers = users
-    .filter(u => (roleFilter ? u.role_description === roleFilter : true))
+    .filter(u => (role ? u.role_description === role : true))
     .filter(u => u.prenom.toLowerCase().includes(search.toLowerCase()) || u.nom.toLowerCase().includes(search.toLowerCase()));
 
   if (loading) return <p className="text-center mt-10 text-white text-lg">Chargement...</p>;
@@ -142,48 +141,46 @@ function ListUsersContent() {
       <h1 className="text-4xl text-white text-center mb-6 font-bold">Gestion des utilisateurs</h1>
 
       {/* =========================
-         Recherche & Filtre centrés
+         Search & Filter + Actions
       ========================== */}
-      <div className="max-w-6xl w-full mx-auto mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        {/* Search bar */}
+      <div className="max-w-6xl w-full mx-auto mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        {/* Search */}
         <input
           type="text"
           placeholder="Chercher par membre..."
-          value={prenom}
-          onChange={(e) => setPrenom(e.target.value)}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           className="w-full sm:w-1/2 px-3 py-2 rounded-sm text-black"
         />
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2 sm:mt-0">
-    <select
-      value={role}
-      onChange={(e) => setRole(e.target.value)}
-      className="px-3 py-2 rounded-sm text-black"
-    >
-      <option value="">Tous les rôles</option>
-      <option value="Conseiller">Conseiller</option>
-      <option value="ResponsableCellule">Responsable Cellule</option>
-      <option value="Administrateur">Administrateur</option>
-    </select>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2 sm:mt-0 w-full sm:w-auto">
+          {/* Filter */}
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="px-3 py-2 rounded-sm text-black"
+          >
+            <option value="">Tous les rôles</option>
+            {roles.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
 
-    {/* Compteur membres à droite */}
-    <span className="text-white text-sm ml-auto sm:ml-0">
-      Total : {uniqueMembers.length}
-    </span>
+          {/* Compteur */}
+          <span className="text-white text-sm ml-auto sm:ml-0">
+            Total : {filteredUsers.length}
+          </span>
 
-        {/* Bouton Ajouter un membre */}
-        <button
-          onClick={() => router.push("/admin/create-member")}
-          className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-        >
-          ➕ Ajouter un utilisateur
-        </button>
+          {/* Ajouter utilisateur */}
+          <button
+            onClick={() => router.push("/admin/create-member")}
+            className="text-white font-semibold px-4 py-2 rounded shadow text-sm whitespace-nowrap"
+          >
+            ➕ Ajouter un utilisateur
+          </button>
+        </div>
       </div>
-   </div>
-   
 
       {/* =========================
-         Tableau style ListCellules
+         Liste des utilisateurs
       ========================== */}
       <div className="max-w-6xl mx-auto space-y-2">
         <div className="hidden sm:flex text-sm font-semibold text-white border-b pb-2">
@@ -197,7 +194,7 @@ function ListUsersContent() {
           <p className="text-white text-center mt-6">Aucun utilisateur</p>
         ) : (
           filteredUsers.map(u => (
-            <UserRow key={u.id} u={u} router={router} setSelectedUser={setSelectedUser} setDeleteUser={setDeleteUser} />
+            <UserRow key={u.id} u={u} setSelectedUser={setSelectedUser} setDeleteUser={setDeleteUser} />
           ))
         )}
       </div>

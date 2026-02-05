@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import supabase from "../../lib/supabaseClient"; // Assure-toi du chemin correct
 
 export default function CreateInternalUser() {
   const router = useRouter();
@@ -18,44 +19,50 @@ export default function CreateInternalUser() {
   });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
   const [userScope, setUserScope] = useState({ eglise_id: null, branche_id: null });
 
-  const [userScope, setUserScope] = useState({ eglise_id: null, branche_id: null });
+  // ================== Récupérer l'église et branche de l'utilisateur connecté ==================
+  useEffect(() => {
+    const fetchUserScope = async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const user = sessionData?.session?.user;
+        if (!user) return;
 
-useEffect(() => {
-  const fetchUserScope = async () => {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const user = sessionData?.session?.user;
-    if (!user) return;
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("eglise_id, branche_id")
+          .eq("id", user.id)
+          .single();
 
-    const { data: profile, error } = await supabase
-      .from("profiles")
-      .select("eglise_id, branche_id")
-      .eq("id", user.id)
-      .single();
+        if (!error && profile) {
+          setUserScope({
+            eglise_id: profile.eglise_id,
+            branche_id: profile.branche_id,
+          });
+        }
+      } catch (err) {
+        console.error("Erreur fetchUserScope:", err);
+      }
+    };
 
-    if (!error && profile) {
-      setUserScope({
-        eglise_id: profile.eglise_id,
-        branche_id: profile.branche_id,
-      });
-    }
-  };
+    fetchUserScope();
+  }, []);
 
-  fetchUserScope();
-}, []);
-
-
+  // ================== Handlers ==================
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ✅ Vérification mot de passe
     if (formData.password !== formData.confirmPassword) {
       setMessage("❌ Les mots de passe ne correspondent pas.");
+      return;
+    }
+
+    if (!userScope.eglise_id || !userScope.branche_id) {
+      setMessage("❌ Impossible de récupérer l'église ou la branche de l'utilisateur.");
       return;
     }
 
@@ -63,12 +70,26 @@ useEffect(() => {
     setMessage("⏳ Création en cours...");
 
     try {
-      const res = await fetch("/api/create-user", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(newUserData),
-});
+      // ================== Préparer les données ==================
+      const newUserData = {
+        prenom: formData.prenom,
+        nom: formData.nom,
+        email: formData.email,
+        password: formData.password,
+        telephone: formData.telephone,
+        role: formData.role,
+        cellule_nom: formData.cellule_nom || null,
+        cellule_zone: formData.cellule_zone || null,
+        eglise_id: userScope.eglise_id,
+        branche_id: userScope.branche_id,
+      };
 
+      // ================== Appel API ==================
+      const res = await fetch("/api/create-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newUserData),
+      });
 
       const data = await res.json().catch(() => null);
 
@@ -82,8 +103,6 @@ useEffect(() => {
           confirmPassword: "",
           telephone: "",
           role: "",
-          eglise_id: userScope.eglise_id,
-          branche_id: userScope.branche_id,
           cellule_nom: "",
           cellule_zone: "",
         });
@@ -99,6 +118,7 @@ useEffect(() => {
 
   const handleCancel = () => router.push("/"); // Retour à l'accueil ou page admin
 
+  // ================== Render ==================
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
@@ -182,7 +202,7 @@ useEffect(() => {
             <option value="ResponsableIntegration">Responsable Intégration</option>
             <option value="ResponsableCellule">Responsable de Cellule</option>
             <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
-              <option value="SuperviseurCellule">Superviseur des Cellules</option>
+            <option value="SuperviseurCellule">Superviseur des Cellules</option>
             <option value="Conseiller">Conseiller</option>
           </select>
 
@@ -209,7 +229,6 @@ useEffect(() => {
           {/* Bloc spécifique pour Conseiller */}
           {formData.role === "Conseiller" && (
             <div className="space-y-3 border-t pt-3">
-              {/* Ici tu peux ajouter des champs spécifiques pour Conseiller si besoin */}
               <p className="text-sm text-gray-600">Aucune information supplémentaire requise pour le rôle Conseiller.</p>
             </div>
           )}

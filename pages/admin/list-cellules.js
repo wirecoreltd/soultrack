@@ -168,48 +168,38 @@ function ListCellulesContent() {
         Liste des cellules
       </h1>
 
-      {/* Recherche */}
-      <div className="flex justify-center mb-3">
-        <input
-          type="text"
-          placeholder="Chercher par cellule..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-md px-3 py-2 rounded-md text-black"
-        />
-      </div>
+      {/* Filtre + Count */}
+<div className="max-w-6xl mx-auto mb-2 flex items-center justify-between gap-4">
+  <select
+    value={filterCellule}
+    onChange={(e) => setFilterCellule(e.target.value)}
+    className="px-3 py-2 rounded-md text-black"
+  >
+    <option value="">Toutes les cellules</option>
+    {cellules.map((c) => (
+      <option key={c.id} value={c.cellule_full}>
+        {c.cellule_full}
+      </option>
+    ))}
+  </select>
 
-<div className="max-w-6xl w-full mx-auto mb-4 flex flex-col items-center gap-3">  
+  <span className="text-white text-sm font-semibold">
+    Total : {cellulesFiltrees.length}
+  </span>
+</div>
 
-    {/* Filtre */}
-    <select
-      value={filterCellule}
-      onChange={(e) => setFilterCellule(e.target.value)}
-      className="px-3 py-2 rounded-md text-black"
-    >
-      <option value="">Toutes les cellules</option>
-      {cellules.map((c) => (
-        <option key={c.id} value={c.cellule_full}>
-          {c.cellule_full}
-        </option>
-      ))}
-    </select>
+{/* Bouton Ajouter – aligné à la largeur de la table */}
+<div className="max-w-6xl mx-auto flex justify-end mb-3">
+  <button
+    onClick={() => router.push("/admin/create-cellule")}
+    className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+  >
+    ➕ Ajouter une Cellule
+  </button>
+</div>
 
-    {/* Count */}
-    <span className="text-white text-sm font-semibold">
-      Total : {cellulesFiltrees.length}
-    </span>
   </div>
 
-  {/* Bouton Ajouter une cellule aligné à droite */}
-  <div className="w-full flex justify-end mt-2">
-    <button
-      onClick={() => router.push("/admin/create-cellule")}
-      className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-    >
-      ➕ Ajouter une Cellule
-    </button>
-  </div>
 
       {/* Tableau */}
       <div className="max-w-6xl mx-auto space-y-2">

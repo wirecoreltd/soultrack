@@ -179,8 +179,21 @@ function ListCellulesContent() {
         />
       </div>
 
-   {/* Filtre + Count + Bouton Ajouter */}
-<div className="max-w-6xl w-full mx-auto mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">  
+   {/* =========================
+   Barre recherche + filtre + count
+========================= */}
+<div className="max-w-6xl w-full mx-auto mb-4 flex flex-col items-center gap-3">
+
+  {/* Recherche + Filtre + Count centrés */}
+  <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+    {/* Recherche */}
+    <input
+      type="text"
+      placeholder="Chercher par cellule..."
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      className="px-3 py-2 rounded-md text-black"
+    />
 
     {/* Filtre */}
     <select
@@ -202,19 +215,16 @@ function ListCellulesContent() {
     </span>
   </div>
 
-  {/* Bouton Ajouter aligné à droite */}
-  <div className="flex justify-end mt-2 sm:mt-0">
+  {/* Bouton Ajouter une cellule aligné à droite */}
+  <div className="w-full flex justify-end mt-2">
     <button
       onClick={() => router.push("/admin/create-cellule")}
-      className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+      className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-orange-500 hover:bg-orange-600"
     >
       ➕ Ajouter une Cellule
     </button>
   </div>
-
 </div>
-
-
 
       {/* Tableau */}
       <div className="max-w-6xl mx-auto space-y-2">

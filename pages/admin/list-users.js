@@ -179,6 +179,8 @@ function ListUsersContent() {
           ➕ Ajouter un utilisateur
         </button>
       </div>
+   </div>
+   
 
       {/* =========================
          Tableau style ListCellules

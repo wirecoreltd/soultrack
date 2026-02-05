@@ -1,21 +1,23 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
+import ProtectedRoute from "../components/ProtectedRoute";
 
-function CreateConseiller() {
-  const router = useRouter();
-  const [members, setMembers] = useState([]);
-  const [selectedMemberId, setSelectedMemberId] = useState("");
-
-  export default function CreateConseillerPage() {
+export default function CreateConseillerPage() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
       <CreateConseiller />
     </ProtectedRoute>
   );
 }
+
+function CreateConseiller() {
+  const router = useRouter();
+  const [members, setMembers] = useState([]);
+  const [selectedMemberId, setSelectedMemberId] = useState("");
   const [formData, setFormData] = useState({
     prenom: "",
     nom: "",
@@ -26,6 +28,7 @@ function CreateConseiller() {
   const [responsableId, setResponsableId] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
 
   // ➤ Récupérer l'utilisateur connecté et ses membres disponibles
   useEffect(() => {

@@ -15,12 +15,20 @@ export default function ListUsers() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
 
+  const [userScope, setUserScope] = useState({
+  eglise_id: null,
+  branche_id: null,
+});
+
   const fetchUsers = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom, email, telephone, role_description, created_at")
-      .order("created_at", { ascending: true });
+  .from("profiles")
+  .select("id, prenom, nom, email, telephone, role_description, created_at")
+  .eq("eglise_id", userScope.eglise_id)
+  .eq("branche_id", userScope.branche_id)
+  .order("created_at", { ascending: true });
+
 
     if (error) {
       console.error(error);
@@ -35,8 +43,34 @@ export default function ListUsers() {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+  if (!userScope.eglise_id || !userScope.branche_id) return;
+  fetchUsers();
+}, [userScope]);
+
+
+  useEffect(() => {
+  const fetchUserScope = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData?.session?.user;
+    if (!user) return;
+
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("eglise_id, branche_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!error && profile) {
+      setUserScope({
+        eglise_id: profile.eglise_id,
+        branche_id: profile.branche_id,
+      });
+    }
+  };
+
+  fetchUserScope();
+}, []);
+
 
   const handleDelete = async () => {
     if (!deleteUser?.id) return;

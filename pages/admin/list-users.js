@@ -93,14 +93,9 @@ export default function ListUsers() {
 
   return (
       <div className="min-h-screen p-6 bg-[#333699]">
-      <HeaderPages />
-  
-      <button onClick={() => router.back()} className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700">← Retour</button>
-
-      <div className="flex flex-col items-center mb-6">
-        <Image src="/logo.png" alt="Logo" width={80} height={80} />
-        <h1 className="text-3xl font-bold text-center mt-2">Gestion des utilisateurs</h1>
-      </div>
+      <HeaderPages />  
+      
+        <h1 className="text-3xl font-bold text-center mt-2">Gestion des utilisateurs</h1>      
 
       <div className="flex justify-start items-center mb-6 max-w-5xl mx-auto gap-4">
         <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="border p-2 rounded-xl shadow-sm text-left w-auto">

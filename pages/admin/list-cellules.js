@@ -196,8 +196,6 @@ function ListCellulesContent() {
   >
     ➕ Ajouter une Cellule
   </button>
-</div>
-
   </div>
 
 

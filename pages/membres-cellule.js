@@ -62,15 +62,25 @@ export default function MembresCellule() {
         const user = sessionData?.session?.user;
         if (!user) throw new Error("Non connecté");
 
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id, role")
-          .eq("id", user.id)
-          .single();
+        const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, role, eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
+      
+      if (profileError || !profile) {
+        throw new Error("Profil introuvable");
+      }
+      
+      const { eglise_id, branche_id } = profile;
+
 
         let celluleQuery = supabase
           .from("cellules")
-          .select("id, cellule_full, responsable_id");
+          .select("id, cellule_full, responsable_id")
+          .eq("eglise_id", eglise_id)
+          .eq("branche_id", branche_id);
+
 
         if (profile.role === "ResponsableCellule") {
           celluleQuery = celluleQuery.eq("responsable_id", profile.id);
@@ -87,12 +97,15 @@ export default function MembresCellule() {
           return;
         }
         
-        let membresQuery = supabase
-          .from("membres_complets")
-          .select("*")
-          .in("cellule_id", celluleIds)
-          .eq("statut_suivis", 3)
-          .order("created_at", { ascending: false });
+       let membresQuery = supabase
+        .from("membres_complets")
+        .select("*")
+        .in("cellule_id", celluleIds)
+        .eq("eglise_id", eglise_id)
+        .eq("branche_id", branche_id)
+        .eq("statut_suivis", 3)
+        .order("created_at", { ascending: false });
+
         
         if (profile.role === "Conseiller") {
           membresQuery = membresQuery.eq("conseiller_id", profile.id);

@@ -1,50 +1,75 @@
 import supabase from "../../lib/supabaseClient";
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Méthode non autorisée" });
-
-  // ✅ Récupère l'utilisateur connecté
-  const { user } = await supabase.auth.getUserByCookie(req, res);
-  if (!user) return res.status(401).json({ error: "Non authentifié" });
-
-  const { prenom, nom, email, password, telephone, role } = req.body;
+  // ✅ Vérifie la méthode POST
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Méthode non autorisée" });
+  }
 
   try {
-    // 1️⃣ Crée l'utilisateur dans Supabase Auth
-    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+    // ✅ Vérifie l'utilisateur admin connecté
+    const { data: { user } } = await supabase.auth.getUserByCookie(req, res);
+    if (!user) return res.status(401).json({ error: "Non authentifié" });
+
+    const {
+      prenom,
+      nom,
       email,
       password,
-      user_metadata: { prenom, nom, telephone, role }
-    });
-    if (authError) throw authError;
+      telephone,
+      role,
+      cellule_nom,
+      cellule_zone,
+    } = req.body;
 
-    // 2️⃣ Récupère l'eglise_id et branche_id automatiquement depuis l'utilisateur connecté
-    const { data: currentProfile, error: profileError } = await supabase
+    if (!prenom || !nom || !email || !password || !role) {
+      return res.status(400).json({ error: "Champs obligatoires manquants" });
+    }
+
+    // ✅ Récupération de l'eglise et branche de l'utilisateur admin connecté
+    const { data: adminProfile, error: profileError } = await supabase
       .from("profiles")
       .select("eglise_id, branche_id")
-      .eq("auth_id", user.id)
+      .eq("id", user.id)
       .single();
-    if (profileError) throw profileError;
 
-    // 3️⃣ Crée le profil dans `profiles`
-    const { data, error } = await supabase
+    if (profileError || !adminProfile) {
+      return res.status(400).json({ error: "Impossible de récupérer l'église / branche" });
+    }
+
+    // ✅ Création de l'utilisateur dans auth.users
+    const { data: newAuthUser, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+
+    if (authError) return res.status(400).json({ error: authError.message });
+
+    // ✅ Création du profil dans la table "profiles"
+    const { data: newProfile, error: profileInsertError } = await supabase
       .from("profiles")
       .insert([{
-        auth_id: authUser.id,
+        id: newAuthUser.id,       // même id que dans auth.users
         prenom,
         nom,
         email,
         telephone,
-        role,
-        eglise_id: currentProfile.eglise_id,
-        branche_id: currentProfile.branche_id
+        role_description: role,
+        cellule_nom: cellule_nom || null,
+        cellule_zone: cellule_zone || null,
+        eglise_id: adminProfile.eglise_id,
+        branche_id: adminProfile.branche_id,
       }])
       .select()
       .single();
-    if (error) throw error;
 
-    res.status(200).json({ message: "Utilisateur créé avec succès", user: data });
+    if (profileInsertError) return res.status(400).json({ error: profileInsertError.message });
+
+    return res.status(200).json({ message: "Utilisateur créé avec succès", profile: newProfile });
+
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error(err);
+    return res.status(500).json({ error: err.message || "Erreur serveur" });
   }
 }

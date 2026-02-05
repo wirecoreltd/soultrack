@@ -4,10 +4,18 @@ import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 
-export default function CreateConseiller() {
+function CreateConseiller() {
   const router = useRouter();
   const [members, setMembers] = useState([]);
   const [selectedMemberId, setSelectedMemberId] = useState("");
+
+  export default function CreateConseillerPage() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
+      <CreateConseiller />
+    </ProtectedRoute>
+  );
+}
   const [formData, setFormData] = useState({
     prenom: "",
     nom: "",

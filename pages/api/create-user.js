@@ -1,61 +1,50 @@
-import { createClient } from "@supabase/supabase-js";
-import bcrypt from "bcryptjs";
-
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+import supabase from "../../lib/supabaseClient";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Méthode non autorisée" });
 
+  // ✅ Récupère l'utilisateur connecté
+  const { user } = await supabase.auth.getUserByCookie(req, res);
+  if (!user) return res.status(401).json({ error: "Non authentifié" });
+
   const { prenom, nom, email, password, telephone, role } = req.body;
 
-  if (!prenom || !nom || !email || !password || !role) {
-    return res.status(400).json({ error: "Champs obligatoires manquants" });
-  }
-
   try {
-    // 🔹 Récupère l'utilisateur actuel pour connaître église et branche
-    const authUserId = req.headers["x-user-id"]; // ou récupère depuis cookie/session
-    if (!authUserId) return res.status(401).json({ error: "Non authentifié" });
-
-    const { data: currentUser, error: errUser } = await supabase
-      .from("profiles")
-      .select("eglise_id, branche_id")
-      .eq("id", authUserId)
-      .single();
-
-    if (errUser || !currentUser) return res.status(500).json({ error: "Impossible de récupérer l'utilisateur créateur" });
-
-    // 🔹 Crée l'utilisateur dans auth.users
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const { data: newUser, error: errAuth } = await supabase.auth.admin.createUser({
+    // 1️⃣ Crée l'utilisateur dans Supabase Auth
+    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,
+      user_metadata: { prenom, nom, telephone, role }
     });
+    if (authError) throw authError;
 
-    if (errAuth) return res.status(500).json({ error: errAuth.message });
+    // 2️⃣ Récupère l'eglise_id et branche_id automatiquement depuis l'utilisateur connecté
+    const { data: currentProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("eglise_id, branche_id")
+      .eq("auth_id", user.id)
+      .single();
+    if (profileError) throw profileError;
 
-    // 🔹 Crée le profil
-    const { data: profile, error: errProfile } = await supabase
+    // 3️⃣ Crée le profil dans `profiles`
+    const { data, error } = await supabase
       .from("profiles")
       .insert([{
-        id: newUser.user.id,
+        auth_id: authUser.id,
         prenom,
         nom,
+        email,
         telephone,
-        role_description: role,
-        eglise_id: currentUser.eglise_id,
-        branche_id: currentUser.branche_id
+        role,
+        eglise_id: currentProfile.eglise_id,
+        branche_id: currentProfile.branche_id
       }])
       .select()
       .single();
+    if (error) throw error;
 
-    if (errProfile) return res.status(500).json({ error: errProfile.message });
-
-    res.status(200).json({ message: "Utilisateur créé", profile });
-
+    res.status(200).json({ message: "Utilisateur créé avec succès", user: data });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 }

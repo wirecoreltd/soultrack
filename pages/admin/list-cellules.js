@@ -193,6 +193,15 @@ function ListCellulesContent() {
             </option>
           ))}
         </select>
+           {/* Bouton Ajouter un utilisateur aligné à droite */}
+              <div className="flex justify-end">
+                <button
+                   onClick={() => router.push("/admin/create-cellule")}
+                   className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+                 >
+                   ➕ Ajouter une Cellule
+                 </button>
+              </div>
       </div>
 
       {/* Tableau */}

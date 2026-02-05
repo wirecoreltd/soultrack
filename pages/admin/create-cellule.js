@@ -4,12 +4,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
-import ProtectedRoute from "../../components/ProtectedRoute"; 
+import ProtectedRoute from "../../components/ProtectedRoute";
 
 function CreateCelluleContent() {
   const router = useRouter();
 
-   const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
     nom: "",
     zone: "",
     responsable_id: "",
@@ -20,7 +20,6 @@ function CreateCelluleContent() {
   const [responsables, setResponsables] = useState([]);
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
-
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -216,21 +215,19 @@ function CreateCelluleContent() {
               {loading ? "Création..." : "Créer"}
             </button>
           </div>
-        </form>
-
- export default function CreateCellulePage() {
-  return (
-    <ProtectedRoute allowedRoles={["Administrateur", "SuperviseurCellule"]}>
-      <CreateCelluleContent />
-    </ProtectedRoute>
-  );
-}
-  
+        </form> 
 
         {message && (
           <p className="mt-4 text-center text-sm">{message}</p>
         )}
       </div>
     </div>
+  );
+}
+ export default function CreateCellulePage() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "SuperviseurCellule"]}>
+      <CreateCelluleContent />
+    </ProtectedRoute>
   );
 }

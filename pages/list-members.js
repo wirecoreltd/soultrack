@@ -55,6 +55,8 @@ function ListMembersContent() {
   const [openPhoneId, setOpenPhoneId] = useState(null);
   const phoneMenuRef = useRef(null);
   const router = useRouter();
+  const [userProfile, setUserProfile] = useState(null);
+
 
   const [view, setView] = useState(() => {
     if (typeof window !== "undefined") {
@@ -202,20 +204,50 @@ const handleAfterSend = (memberId, type, cible) => {
 
   // -------------------- Fetch cellules et conseillers --------------------
   useEffect(() => {
-    const fetchCellules = async () => {
-      const { data, error } = await supabase.from("cellules").select("id, cellule_full");
-      if (!error && data) setCellules(data);
-    };
-    const fetchConseillers = async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, telephone")
-        .eq("role", "Conseiller");
-      if (data) setConseillers(data);
-    };
-    fetchCellules();
-    fetchConseillers();
-  }, []);
+  const fetchData = async () => {
+    // 1. utilisateur connecté
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    // 2. récupérer eglise_id & branche_id
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, eglise_id, branche_id")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || !profile) return;
+
+    setUserProfile(profile);
+
+    // 3. cellules filtrées
+    const { data: cellulesData } = await supabase
+      .from("cellules")
+      .select("id, cellule_full")
+      .eq("eglise_id", profile.eglise_id)
+      .eq("branche_id", profile.branche_id)
+      .order("cellule_full");
+
+    if (cellulesData) setCellules(cellulesData);
+
+    // 4. conseillers filtrés
+    const { data: conseillersData } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom, telephone")
+      .eq("role", "Conseiller")
+      .eq("eglise_id", profile.eglise_id)
+      .eq("branche_id", profile.branche_id)
+      .order("prenom");
+
+    if (conseillersData) setConseillers(conseillersData);
+  };
+
+  fetchData();
+}, []);
+
 
   // -------------------- Realtime --------------------
   useEffect(() => {

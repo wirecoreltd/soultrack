@@ -96,43 +96,71 @@ function LinkEgliseContent() {
               </div>
 
               {/* Rows */}
-              {eglises.map((eglise) => (
-                <div
-                  key={eglise.id}
-                  className="flex flex-col sm:flex-row items-start sm:items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
-                  style={{ borderLeftColor: "#0EA5E9" }}
-                >
-                  <div className="flex-[3] text-white font-semibold">{eglise.nom}</div>
-                  <div className="flex-[1] text-white">{eglise.status_invitation || "Non reliée"}</div>
-                  <div className="flex-[2] flex gap-2">
-                    <button
-                      onClick={() => sendInvitation(eglise.id)}
-                      disabled={sendingId === eglise.id}
-                      className={`px-3 py-1 rounded font-semibold ${
-                        eglise.status_invitation === "en_attente"
-                          ? "bg-yellow-500 text-white"
-                          : eglise.status_invitation === "refus"
-                          ? "bg-red-500 text-white"
-                          : "bg-blue-600 text-white"
-                      }`}
-                    >
-                      {sendingId === eglise.id
-                        ? "Envoi..."
-                        : eglise.status_invitation === "en_attente"
-                        ? "⏳ En attente - Renvoyer"
-                        : eglise.status_invitation === "refus"
-                        ? "❌ Refus - Relancer"
-                        : "📤 Relier"}
-                    </button>
-                  </div>
+              {/* Rows */}
+{eglises.map((eglise) => {
+  const statut = eglise.status_invitation || "non_reliee";
 
-                  {/* Liste des églises déjà sous supervision */}
-                  {eglise.sousSupervision && eglise.sousSupervision.length > 0 && (
-                    <ul className="mt-2 ml-4 list-disc list-inside text-white text-sm">
-                      {eglise.sousSupervision.map((sub) => (
-                        <li key={sub.id}>
-                          {sub.nom} {sub.status_invitation === "relier" ? "✅ Lecture seule" : ""}
-                        </li>
+  return (
+    <div
+      key={eglise.id}
+      className="flex flex-col sm:flex-row items-start sm:items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
+      style={{ borderLeftColor: "#0EA5E9" }}
+    >
+      <div className="flex-[3] text-white font-semibold">{eglise.nom}</div>
+      <div className="flex-[1] text-white">
+        {statut === "non_reliee"
+          ? "Non reliée"
+          : statut === "en_attente"
+          ? "En attente"
+          : statut === "refus"
+          ? "Refus"
+          : "✅ Relié"}
+      </div>
+
+      {/* Bouton toujours visible */}
+      <div className="flex-[2] flex gap-2">
+        {statut === "non_reliee" && (
+          <button
+            onClick={() => sendInvitation(eglise.id)}
+            disabled={sendingId === eglise.id}
+            className="bg-blue-600 text-white px-3 py-1 rounded font-semibold"
+          >
+            {sendingId === eglise.id ? "Envoi..." : "📤 Envoyer invitation"}
+          </button>
+        )}
+
+        {statut === "en_attente" && (
+          <button
+            onClick={() => sendInvitation(eglise.id)}
+            disabled={sendingId === eglise.id}
+            className="bg-yellow-500 text-white px-3 py-1 rounded font-semibold"
+          >
+            ⏳ Renvoyer invitation
+          </button>
+        )}
+
+        {statut === "refus" && (
+          <button
+            onClick={() => sendInvitation(eglise.id)}
+            disabled={sendingId === eglise.id}
+            className="bg-red-500 text-white px-3 py-1 rounded font-semibold"
+          >
+            ❌ Relancer invitation
+          </button>
+        )}
+
+        {statut === "relier" && (
+          <span className="text-green-400 font-semibold">✅ Relié</span>
+        )}
+      </div>
+
+      {/* Liste des églises déjà sous supervision */}
+      {eglise.sousSupervision && eglise.sousSupervision.length > 0 && (
+        <ul className="mt-2 ml-4 list-disc list-inside text-white text-sm">
+          {eglise.sousSupervision.map((sub) => (
+            <li key={sub.id}>
+              {sub.nom} {sub.status_invitation === "relier" ? "✅ Lecture seule" : ""}
+            </li>
                       ))}
                     </ul>
                   )}

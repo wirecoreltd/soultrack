@@ -5,29 +5,49 @@ import supabase from "../../lib/supabaseClient";
 import SendEgliseLinkPopup from "../../components/SendEgliseLinkPopup";
 import HeaderPages from "../../components/HeaderPages";
 
-export default function LinkEglise() {
-  const [superviseur, setSuperviseur] = useState({ prenom: "", nom: "" });
+export default function LinkEglise({ userId }) { // userId = superviseur connecté
+  const [superviseur, setSuperviseur] = useState({ prenom: "", nom: "", email: "", telephone: "" });
   const [eglise, setEglise] = useState({ nom: "", branche: "" });
-  const [canal, setCanal] = useState("whatsapp"); // "whatsapp" | "email"
+  const [canal, setCanal] = useState("whatsapp");
   const [invitations, setInvitations] = useState([]);
+  const [superviseurEgliseId, setSuperviseurEgliseId] = useState(null);
 
-  // Remplace avec l'ID réel de l'église du superviseur connecté
-  const SUPERVISEUR_EGLISE_ID = "00000000-0000-0000-0000-000000000000";
+  // 🔹 Charger l'église du superviseur connecté
+  const loadSuperviseurEglise = async () => {
+    const { data: egliseData, error } = await supabase
+      .from("eglises")
+      .select("*")
+      .eq("responsable_id", userId) // <-- champ qui relie l'utilisateur à son église
+      .single();
 
-  // Charger les invitations existantes
+    if (error) {
+      console.error("Erreur récupération église superviseur:", error);
+      return;
+    }
+
+    setSuperviseurEgliseId(egliseData.id);
+  };
+
+  // 🔹 Charger les invitations existantes
   const loadInvitations = async () => {
+    if (!superviseurEgliseId) return;
+
     const { data } = await supabase
       .from("eglise_supervisions")
       .select("*")
-      .eq("superviseur_eglise_id", SUPERVISEUR_EGLISE_ID)
+      .eq("superviseur_eglise_id", superviseurEgliseId)
       .order("created_at", { ascending: false });
 
     setInvitations(data || []);
   };
 
   useEffect(() => {
-    loadInvitations();
+    loadSuperviseurEglise();
   }, []);
+
+  useEffect(() => {
+    loadInvitations();
+  }, [superviseurEgliseId]);
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
@@ -43,49 +63,63 @@ export default function LinkEglise() {
       <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4">
         {/* Responsable */}
         <div>
-          <label className="block font-semibold mb-1">Responsable :</label>
+          <label className="block font-semibold mb-1">Responsable Prénom</label>
           <input
-            type="text"
-            placeholder="Prénom"
+            className="w-full border border-gray-300 rounded-xl px-4 py-2"
             value={superviseur.prenom}
             onChange={(e) => setSuperviseur({ ...superviseur, prenom: e.target.value })}
-            className="w-full border border-gray-300 rounded-xl px-4 py-2"
           />
+        </div>
+
+        <div>
+          <label className="block font-semibold mb-1">Responsable Nom</label>
           <input
-            type="text"
-            placeholder="Nom"
+            className="w-full border border-gray-300 rounded-xl px-4 py-2"
             value={superviseur.nom}
             onChange={(e) => setSuperviseur({ ...superviseur, nom: e.target.value })}
-            className="w-full border border-gray-300 rounded-xl px-4 py-2 mt-2"
+          />
+        </div>
+
+        <div>
+          <label className="block font-semibold mb-1">Responsable Email</label>
+          <input
+            className="w-full border border-gray-300 rounded-xl px-4 py-2"
+            value={superviseur.email || ""}
+            onChange={(e) => setSuperviseur({ ...superviseur, email: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="block font-semibold mb-1">Responsable Téléphone</label>
+          <input
+            className="w-full border border-gray-300 rounded-xl px-4 py-2"
+            value={superviseur.telephone || ""}
+            onChange={(e) => setSuperviseur({ ...superviseur, telephone: e.target.value })}
           />
         </div>
 
         {/* Église */}
         <div>
-          <label className="block font-semibold mb-1">Église :</label>
+          <label className="block font-semibold mb-1">Église</label>
           <input
-            type="text"
-            placeholder="Nom de l'Église"
+            className="w-full border border-gray-300 rounded-xl px-4 py-2"
             value={eglise.nom}
             onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
-            className="w-full border border-gray-300 rounded-xl px-4 py-2"
           />
         </div>
 
         <div>
-          <label className="block font-semibold mb-1">Branche / Région :</label>
+          <label className="block font-semibold mb-1">Branche / Région</label>
           <input
-            type="text"
-            placeholder="Branche / Région"
+            className="w-full border border-gray-300 rounded-xl px-4 py-2"
             value={eglise.branche}
             onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
-            className="w-full border border-gray-300 rounded-xl px-4 py-2"
           />
         </div>
 
-        {/* Canal */}
+        {/* Canal d'envoi */}
         <div>
-          <label className="block font-semibold mb-1">Envoyer par :</label>
+          <label className="block font-semibold mb-1">Envoyer par</label>
           <select
             value={canal}
             onChange={(e) => setCanal(e.target.value)}
@@ -96,15 +130,17 @@ export default function LinkEglise() {
           </select>
         </div>
 
-        {/* Bouton principal */}
-        <SendEgliseLinkPopup
-          label="Envoyer l'invitation"
-          type={canal}
-          superviseur={superviseur}
-          eglise={eglise}
-          superviseurEgliseId={SUPERVISEUR_EGLISE_ID}
-          onSuccess={loadInvitations} // recharge la table après insertion
-        />
+        {/* Bouton d'envoi */}
+        {superviseurEgliseId && (
+          <SendEgliseLinkPopup
+            label="Envoyer l'invitation"
+            type={canal}
+            superviseur={superviseur}
+            eglise={eglise}
+            superviseurEgliseId={superviseurEgliseId}
+            onSuccess={loadInvitations}
+          />
+        )}
       </div>
 
       {/* Table des invitations */}

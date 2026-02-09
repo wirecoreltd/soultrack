@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import supabase from "../../../pages/lib/supabaseClient";
-import SendEgliseLinkPopup from "../../../pages/components/SendEgliseLinkPopup";
-import HeaderPages from "../../../pages/components/HeaderPages";
+import supabase from "../../../lib/supabaseClient";
+import SendEgliseLinkPopup from "../../../components/SendEgliseLinkPopup";
+import HeaderPages from "../../../components/HeaderPages";
+
 
 
 export default function LinkEglise() {

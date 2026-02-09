@@ -7,6 +7,7 @@ import LogoutLink from "../components/LogoutLink";
 import SendLinkPopup from "../components/SendLinkPopup";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import HeaderPages from "../components/HeaderPages";
 
 export default function Administrateur() {
   const router = useRouter();
@@ -20,34 +21,9 @@ export default function Administrateur() {
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
-      {/* 🔹 Top bar */}
-      <div className="w-full max-w-5xl mb-4">
-        {/* Ligne principale : Retour à gauche, Déconnexion à droite */}
-        <div className="flex justify-between items-center">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-white hover:text-gray-200 transition-colors"
-          >
-            ← Retour
-          </button>
-
-          <LogoutLink />
-        </div>
-
-        {/* Ligne du dessous : Bienvenue aligné à droite */}
-        <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">
-            👋 Bienvenue {userName}
-          </p>
-        </div>
-      </div>
-
-      {/* 🔹 Logo centré */}
-      <div className="mb-6">
-        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
-      </div>
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+  
+     <HeaderPages />
 
       {/* 🔹 Titre */}
       <h1 className="text-3xl font-bold text-white mb-6">
@@ -67,6 +43,18 @@ export default function Administrateur() {
             Liste des Utilisateurs
           </div>
         </Link>
+          
+          {/* Relier une Eglise */}
+          <Link
+            href="/admin/link-eglise"
+            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+            style={{ borderTopColor: "#8B5CF6" }}
+          >
+            <div className="text-4xl mb-1">🔗</div>
+            <div className="text-lg font-bold text-gray-800 text-center">
+              Relier une Église
+            </div>
+          </Link>
 
         {/* Liste des Cellules */}
         <Link

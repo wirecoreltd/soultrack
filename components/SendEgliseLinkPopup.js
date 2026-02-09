@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 export default function SendEgliseLinkPopup({ label, type, buttonColor, eglise, superviseur }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [emailAddress, setEmailAddress] = useState("");
+  const [email, setEmail] = useState("");
   const [token, setToken] = useState("");
 
   // ✅ Récupérer ou créer token
@@ -15,7 +15,6 @@ export default function SendEgliseLinkPopup({ label, type, buttonColor, eglise, 
     const fetchOrCreateToken = async () => {
       const now = new Date().toISOString();
 
-      // Vérifier s’il existe un token actif
       let { data, error } = await supabase
         .from("access_tokens")
         .select("*")
@@ -28,7 +27,6 @@ export default function SendEgliseLinkPopup({ label, type, buttonColor, eglise, 
       if (!error && data) {
         setToken(data.token);
       } else {
-        // Créer un nouveau token avec expiration 7 jours
         const newToken = uuidv4();
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -36,10 +34,7 @@ export default function SendEgliseLinkPopup({ label, type, buttonColor, eglise, 
           .from("access_tokens")
           .insert([{ token: newToken, access_type: type, expires_at: expiresAt }]);
 
-        if (insertError) {
-          console.error("Erreur création token :", insertError.message);
-          return;
-        }
+        if (insertError) console.error("Erreur création token :", insertError.message);
 
         setToken(newToken);
       }
@@ -69,7 +64,6 @@ export default function SendEgliseLinkPopup({ label, type, buttonColor, eglise, 
 
   const handleSendEmail = () => {
     const link = getLink();
-    const subject = "Invitation à être relié(e) à votre superviseur spirituel";
     const body = `
 Bonjour,
 
@@ -79,26 +73,21 @@ Vous êtes invité(e) à être relié(e) à votre superviseur spirituel.
 ⛪ Église : ${eglise.nom}
 🌍 Branche / Région : ${eglise.branche || "—"}
 
-Nous vous encourageons à accepter cette invitation afin de rester connecté(e) et guidé(e) dans votre parcours spirituel.
-Pour accepter ou refuser l’invitation, cliquez sur le lien ci-dessous :
-
-${link}
-
-Que Dieu bénisse votre engagement et votre chemin dans la foi.
+Lien pour accepter/refuser : ${link}
 
 Cordialement,
 L’équipe de SoulTrack
     `;
-    window.location.href = `mailto:${emailAddress}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(`mailto:${email}?subject=Invitation à relier votre église&body=${encodeURIComponent(body)}`);
     setShowPopup(false);
-    setEmailAddress("");
+    setEmail("");
   };
 
   return (
     <>
       <button
         onClick={() => setShowPopup(true)}
-        className={`w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r ${buttonColor} hover:opacity-90 transition`}
+        className={`px-4 py-2 rounded-xl font-semibold text-white bg-gradient-to-r ${buttonColor} hover:opacity-90 transition`}
       >
         {label}
       </button>
@@ -108,46 +97,45 @@ L’équipe de SoulTrack
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl relative">
             <h2 className="text-xl font-bold mb-3">{label}</h2>
             <p className="text-gray-700 mb-4">
-              Choisissez comment envoyer l'invitation : WhatsApp ou Email.
+              Envoyez l’invitation par WhatsApp ou Email. Vous pouvez saisir le numéro ou l’email manuellement.
             </p>
 
-            {/* 📱 WhatsApp */}
             <input
               type="text"
-              placeholder="Numéro WhatsApp (facultatif)"
+              placeholder="Numéro WhatsApp (ex: +2305xxxxxx)"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
-            <button
-              onClick={handleSendWhatsApp}
-              className="w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold mb-4 transition"
-            >
-              Envoyer via WhatsApp
-            </button>
 
-            {/* 📧 Email */}
             <input
               type="email"
-              placeholder="Adresse Email"
-              value={emailAddress}
-              onChange={(e) => setEmailAddress(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              placeholder="Email (ex: example@mail.com)"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
-            <button
-              onClick={handleSendEmail}
-              disabled={!emailAddress}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold mb-3 transition disabled:opacity-50"
-            >
-              Envoyer via Email
-            </button>
 
-            <button
-              onClick={() => { setShowPopup(false); setPhoneNumber(""); setEmailAddress(""); }}
-              className="w-full py-3 bg-gray-300 hover:bg-gray-400 rounded-xl font-semibold transition"
-            >
-              Annuler
-            </button>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => { setShowPopup(false); setPhoneNumber(""); setEmail(""); }}
+                className="flex-1 py-3 bg-gray-300 hover:bg-gray-400 rounded-2xl font-semibold transition"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleSendWhatsApp}
+                className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-semibold transition"
+              >
+                WhatsApp
+              </button>
+              <button
+                onClick={handleSendEmail}
+                className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl font-semibold transition"
+              >
+                Email
+              </button>
+            </div>
           </div>
         </div>
       )}

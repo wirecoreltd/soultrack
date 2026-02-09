@@ -123,19 +123,71 @@ function LinkEgliseContent() {
       <div className="w-full max-w-4xl bg-white text-black rounded-2xl shadow-lg p-6">
         <h2 className="text-2xl font-semibold mb-4">Églises sous votre supervision</h2>
 
-        {eglises.length === 0 ? (
-          <p>Aucune église à superviser pour le moment.</p>
-        ) : (
-          <ul className="space-y-3">
-            {eglises.map((e) => (
-              <li key={e.id} className="flex justify-between items-center bg-gray-100 rounded p-3">
-                <span className="font-medium">{e.nom}</span>
-                {statusActions(e)}
-              </li>
-            ))}
-          </ul>
-        )}
+       {/* ================== TABLE DES ÉGLISES POTENTIELLES ================== */}
+{eglisesPotentielles && eglisesPotentielles.length > 0 && (
+  <div className="w-full max-w-6xl overflow-x-auto py-2">
+    <div className="min-w-[700px] space-y-2">
+      {/* Header */}
+      <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+        <div className="flex-[3]">Église</div>
+        <div className="flex-[1]">Statut</div>
+        <div className="flex-[2] flex justify-center items-center">Action</div>
       </div>
+
+      {/* Rows */}
+      {eglisesPotentielles.map((eglise) => (
+        <div
+          key={eglise.id}
+          className="flex flex-col sm:flex-row items-start sm:items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
+          style={{ borderLeftColor: "#0EA5E9" }}
+        >
+          <div className="flex-[3] text-white font-semibold">{eglise.nom}</div>
+          <div className="flex-[1] text-white">{eglise.statut}</div>
+          <div className="flex-[2] flex gap-2">
+            {eglise.statut === "Non reliée" && (
+              <button
+                onClick={() => handleEnvoyerInvitation(eglise.id)}
+                className="bg-green-500 text-white px-3 py-1 rounded font-semibold"
+              >
+                📤 Envoyer invitation
+              </button>
+            )}
+            {eglise.statut === "En attente" && (
+              <button
+                onClick={() => handleRenvoyerInvitation(eglise.id)}
+                className="bg-yellow-500 text-white px-3 py-1 rounded font-semibold"
+              >
+                ⏳ Renvoyer invitation
+              </button>
+            )}
+            {eglise.statut === "Refus" && (
+              <button
+                onClick={() => handleRelancerInvitation(eglise.id)}
+                className="bg-red-500 text-white px-3 py-1 rounded font-semibold"
+              >
+                ❌ Relancer invitation
+              </button>
+            )}
+            {eglise.statut === "Reliée" && (
+              <span className="text-green-400 font-semibold">✅ Relié</span>
+            )}
+          </div>
+
+          {/* Liste des églises déjà sous supervision */}
+          {eglise.sousSupervision && eglise.sousSupervision.length > 0 && (
+            <ul className="mt-2 ml-4 list-disc list-inside text-white text-sm">
+              {eglise.sousSupervision.map((sub) => (
+                <li key={sub.id}>
+                  {sub.nom} {sub.statut === "Reliée" ? "✅ Lecture seule" : ""}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
     </div>
+  </div>
+)}
+
   );
 }

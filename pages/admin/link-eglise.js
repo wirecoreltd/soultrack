@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import supabase from "../lib/supabaseClient";
-import SendEgliseLinkPopup from "../components/SendEgliseLinkPopup";
-import HeaderPages from "../components/HeaderPages";
+import supabase from "../../lib/supabaseClient";
+import SendEgliseLinkPopup from "../../components/SendEgliseLinkPopup";
+import HeaderPages from "../../components/HeaderPages";
 
 // ⚠️ Remplace cet ID par l'ID réel de ton église superviseur
 const SUPERVISEUR_EGLISE_ID = "5e0baaf8-8f86-4ba6-92fc-c4f361d77eae";

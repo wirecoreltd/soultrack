@@ -1,59 +1,44 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import supabase from "../../lib/supabaseClient";
-import SendEgliseLinkPopup from "../../components/SendEgliseLinkPopup";
-import HeaderPages from "../../components/HeaderPages";
+import supabase from "../lib/supabaseClient";
+import SendEgliseLinkPopup from "../components/SendEgliseLinkPopup";
+import HeaderPages from "../components/HeaderPages";
 
-export default function LinkEglise({ userId }) { // userId = superviseur connecté
+export default function LinkEglise() {
   const [superviseur, setSuperviseur] = useState({ prenom: "", nom: "", email: "", telephone: "" });
   const [eglise, setEglise] = useState({ nom: "", branche: "" });
-  const [canal, setCanal] = useState("whatsapp");
+  const [canal, setCanal] = useState("whatsapp"); // "whatsapp" | "email"
   const [invitations, setInvitations] = useState([]);
-  const [superviseurEgliseId, setSuperviseurEgliseId] = useState(null);
 
-  // 🔹 Charger l'église du superviseur connecté
-  const loadSuperviseurEglise = async () => {
-    const { data: egliseData, error } = await supabase
-      .from("eglises")
-      .select("*")
-      .eq("responsable_id", userId) // <-- champ qui relie l'utilisateur à son église
-      .single();
+  // 🔹 Remplacer par l'ID réel du superviseur connecté
+  const SUPERVISEUR_EGLISE_ID = "00000000-0000-0000-0000-000000000000";
 
-    if (error) {
-      console.error("Erreur récupération église superviseur:", error);
-      return;
-    }
-
-    setSuperviseurEgliseId(egliseData.id);
-  };
-
-  // 🔹 Charger les invitations existantes
+  // Charger les invitations existantes
   const loadInvitations = async () => {
-    if (!superviseurEgliseId) return;
-
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("eglise_supervisions")
       .select("*")
-      .eq("superviseur_eglise_id", superviseurEgliseId)
+      .eq("superviseur_eglise_id", SUPERVISEUR_EGLISE_ID)
       .order("created_at", { ascending: false });
 
-    setInvitations(data || []);
+    if (error) {
+      console.error(error);
+    } else {
+      setInvitations(data || []);
+    }
   };
-
-  useEffect(() => {
-    loadSuperviseurEglise();
-  }, []);
 
   useEffect(() => {
     loadInvitations();
-  }, [superviseurEgliseId]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
 
       <h1 className="text-4xl font-bold mb-4 text-center">Relier une Église</h1>
+
       <p className="text-center max-w-2xl mb-6">
         Ici vous pouvez envoyer des invitations pour relier les églises que vous supervisez.
         Les églises enfants ne voient aucune autre église sur la plateforme.
@@ -61,65 +46,55 @@ export default function LinkEglise({ userId }) { // userId = superviseur connect
       </p>
 
       <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4">
-        {/* Responsable */}
+        {/* 🔹 Responsable */}
         <div>
-          <label className="block font-semibold mb-1">Responsable Prénom</label>
+          <label className="block font-semibold mb-1">Prénom Responsable</label>
           <input
-            className="w-full border border-gray-300 rounded-xl px-4 py-2"
+            type="text"
+            placeholder="Prénom"
             value={superviseur.prenom}
             onChange={(e) => setSuperviseur({ ...superviseur, prenom: e.target.value })}
+            className="w-full border border-gray-300 rounded-xl px-4 py-2"
           />
         </div>
 
         <div>
-          <label className="block font-semibold mb-1">Responsable Nom</label>
+          <label className="block font-semibold mb-1">Nom Responsable</label>
           <input
-            className="w-full border border-gray-300 rounded-xl px-4 py-2"
+            type="text"
+            placeholder="Nom"
             value={superviseur.nom}
             onChange={(e) => setSuperviseur({ ...superviseur, nom: e.target.value })}
+            className="w-full border border-gray-300 rounded-xl px-4 py-2"
           />
         </div>
 
+        {/* 🔹 Église */}
         <div>
-          <label className="block font-semibold mb-1">Responsable Email</label>
+          <label className="block font-semibold mb-1">Nom de l'Église</label>
           <input
-            className="w-full border border-gray-300 rounded-xl px-4 py-2"
-            value={superviseur.email || ""}
-            onChange={(e) => setSuperviseur({ ...superviseur, email: e.target.value })}
-          />
-        </div>
-
-        <div>
-          <label className="block font-semibold mb-1">Responsable Téléphone</label>
-          <input
-            className="w-full border border-gray-300 rounded-xl px-4 py-2"
-            value={superviseur.telephone || ""}
-            onChange={(e) => setSuperviseur({ ...superviseur, telephone: e.target.value })}
-          />
-        </div>
-
-        {/* Église */}
-        <div>
-          <label className="block font-semibold mb-1">Église</label>
-          <input
-            className="w-full border border-gray-300 rounded-xl px-4 py-2"
+            type="text"
+            placeholder="Nom de l'Église"
             value={eglise.nom}
             onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
+            className="w-full border border-gray-300 rounded-xl px-4 py-2"
           />
         </div>
 
         <div>
           <label className="block font-semibold mb-1">Branche / Région</label>
           <input
-            className="w-full border border-gray-300 rounded-xl px-4 py-2"
+            type="text"
+            placeholder="Branche / Région"
             value={eglise.branche}
             onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
+            className="w-full border border-gray-300 rounded-xl px-4 py-2"
           />
         </div>
 
-        {/* Canal d'envoi */}
+        {/* 🔹 Canal d'envoi */}
         <div>
-          <label className="block font-semibold mb-1">Envoyer par</label>
+          <label className="block font-semibold mb-1">Envoyer par :</label>
           <select
             value={canal}
             onChange={(e) => setCanal(e.target.value)}
@@ -130,20 +105,18 @@ export default function LinkEglise({ userId }) { // userId = superviseur connect
           </select>
         </div>
 
-        {/* Bouton d'envoi */}
-        {superviseurEgliseId && (
-          <SendEgliseLinkPopup
-            label="Envoyer l'invitation"
-            type={canal}
-            superviseur={superviseur}
-            eglise={eglise}
-            superviseurEgliseId={superviseurEgliseId}
-            onSuccess={loadInvitations}
-          />
-        )}
+        {/* 🔹 Bouton principal */}
+        <SendEgliseLinkPopup
+          label="Envoyer l'invitation"
+          type={canal}
+          superviseur={superviseur}
+          eglise={eglise}
+          superviseurEgliseId={SUPERVISEUR_EGLISE_ID}
+          onSuccess={loadInvitations} // recharge la table
+        />
       </div>
 
-      {/* Table des invitations */}
+      {/* 🔹 Table des invitations */}
       <div className="w-full max-w-5xl mt-10">
         <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400">
           <div className="flex-[2]">Église</div>

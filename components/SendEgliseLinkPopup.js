@@ -4,26 +4,14 @@ import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import { v4 as uuidv4 } from "uuid";
 
-export default function SendEgliseLinkPopup({
-  label,
-  type,
-  superviseur,
-  eglise,
-  superviseurEgliseId,
-  onSuccess
-}) {
+export default function SendEgliseLinkPopup({ label, type, superviseur, eglise, superviseurEgliseId, onSuccess }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSend = async () => {
-    if (!superviseurEgliseId) {
-      alert("⚠️ ID du superviseur invalide. Impossible d'envoyer l'invitation.");
-      return;
-    }
-
-    if (!eglise.nom) {
-      alert("⚠️ Veuillez saisir le nom de l'église.");
+    if (!superviseur.prenom || !superviseur.nom || !eglise.nom) {
+      alert("⚠️ Veuillez remplir le prénom, nom du responsable et le nom de l'église.");
       return;
     }
 
@@ -31,27 +19,31 @@ export default function SendEgliseLinkPopup({
     const token = uuidv4();
 
     try {
-      // 🔹 INSERT ou UPDATE (upsert) pour éviter les conflits
-      const { error } = await supabase
-        .from("eglise_supervisions")
-        .upsert([{
-          superviseur_eglise_id: superviseurEgliseId,
-          supervisee_eglise_id: null,
-          responsable_prenom: superviseur.prenom || "",
-          responsable_nom: superviseur.nom || "",
-          responsable_email: superviseur.email || "",
-          responsable_telephone: superviseur.telephone || "",
-          eglise_nom: eglise.nom,
-          eglise_branche: eglise.branche || "",
-          invitation_token: token,
-          statut: "pending",
-          created_at: new Date().toISOString()
-        }], { onConflict: ["superviseur_eglise_id", "eglise_nom"] });
+      const { data, error } = await supabase.from("eglise_supervisions").insert([{
+        superviseur_eglise_id: superviseurEgliseId, // obligatoire
+        supervisee_eglise_id: null,
+        responsable_prenom: superviseur.prenom,
+        responsable_nom: superviseur.nom,
+        responsable_email: superviseur.email || "",
+        responsable_telephone: superviseur.telephone || "",
+        eglise_nom: eglise.nom,
+        eglise_branche: eglise.branche,
+        invitation_token: token,
+        statut: "pending",
+        created_at: new Date().toISOString()
+      }]);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur en envoyant l'invitation :", error);
+        alert("⚠️ Une erreur est survenue lors de l'envoi de l'invitation : " + error.message);
+        setLoading(false);
+        return;
+      }
 
+      // Générer le lien
       const link = `${window.location.origin}/accept-invitation?token=${token}`;
 
+      // Envoi via WhatsApp ou Email
       if (type === "whatsapp") {
         const whatsappLink = phoneNumber
           ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(
@@ -69,11 +61,12 @@ export default function SendEgliseLinkPopup({
 
       setShowPopup(false);
       setPhoneNumber("");
+      setLoading(false);
+
       if (onSuccess) onSuccess(); // recharge la table
     } catch (err) {
-      console.error("Erreur en envoyant l'invitation :", err);
-      alert("⚠️ Une erreur est survenue lors de l'envoi de l'invitation.");
-    } finally {
+      console.error(err);
+      alert("⚠️ Une erreur inattendue est survenue.");
       setLoading(false);
     }
   };
@@ -83,8 +76,9 @@ export default function SendEgliseLinkPopup({
       <button
         onClick={() => setShowPopup(true)}
         className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#09203F] to-[#537895] hover:opacity-90 transition"
+        disabled={loading}
       >
-        {label}
+        {loading ? "Envoi..." : label}
       </button>
 
       {showPopup && (
@@ -109,15 +103,16 @@ export default function SendEgliseLinkPopup({
               <button
                 onClick={() => setShowPopup(false)}
                 className="flex-1 py-3 bg-gray-300 hover:bg-gray-400 rounded-2xl font-semibold transition"
+                disabled={loading}
               >
                 Annuler
               </button>
               <button
                 onClick={handleSend}
+                className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-semibold transition"
                 disabled={loading}
-                className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-semibold transition disabled:opacity-50"
               >
-                {loading ? "Envoi..." : "Envoyer"}
+                Envoyer
               </button>
             </div>
           </div>

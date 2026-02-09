@@ -8,47 +8,26 @@ import HeaderPages from "../../components/HeaderPages";
 export default function LinkEglise() {
   const [superviseur, setSuperviseur] = useState({ prenom: "", nom: "" });
   const [eglise, setEglise] = useState({ nom: "", branche: "" });
-  const [canal, setCanal] = useState("whatsapp");
+  const [canal, setCanal] = useState("whatsapp"); // "whatsapp" | "email"
   const [invitations, setInvitations] = useState([]);
-  const [superviseurEgliseId, setSuperviseurEgliseId] = useState(null);
 
-  // Charger l'église du superviseur connecté
-  useEffect(() => {
-    const fetchSuperviseurEglise = async () => {
-      const user = supabase.auth.user();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from("eglises")
-        .select("id")
-        .eq("responsable_id", user.id) // adapter selon ton schéma utilisateur → église
-        .single();
-
-      if (error) {
-        console.error("Erreur récupération église superviseur :", error);
-        return;
-      }
-
-      setSuperviseurEgliseId(data.id);
-      loadInvitations(data.id);
-    };
-
-    fetchSuperviseurEglise();
-  }, []);
+  // Remplace avec l'ID réel de l'église du superviseur connecté
+  const SUPERVISEUR_EGLISE_ID = "00000000-0000-0000-0000-000000000000";
 
   // Charger les invitations existantes
-  const loadInvitations = async (egliseId = superviseurEgliseId) => {
-    if (!egliseId) return;
-
-    const { data, error } = await supabase
+  const loadInvitations = async () => {
+    const { data } = await supabase
       .from("eglise_supervisions")
       .select("*")
-      .eq("superviseur_eglise_id", egliseId)
+      .eq("superviseur_eglise_id", SUPERVISEUR_EGLISE_ID)
       .order("created_at", { ascending: false });
 
-    if (error) console.error("Erreur load invitations :", error);
-    else setInvitations(data || []);
+    setInvitations(data || []);
   };
+
+  useEffect(() => {
+    loadInvitations();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
@@ -56,16 +35,15 @@ export default function LinkEglise() {
 
       <h1 className="text-4xl font-bold mb-4 text-center">Relier une Église</h1>
       <p className="text-center max-w-2xl mb-6">
-        Ici vous pouvez envoyer des invitations pour relier les églises que vous supervisez. 
-        Les églises enfants ne voient aucune autre église sur la plateforme. 
+        Ici vous pouvez envoyer des invitations pour relier les églises que vous supervisez.
+        Les églises enfants ne voient aucune autre église sur la plateforme.
         Seul le superviseur peut envoyer l’invitation.
       </p>
 
       <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4">
-
         {/* Responsable */}
         <div>
-          <label className="block font-semibold mb-1">Prénom</label>
+          <label className="block font-semibold mb-1">Responsable :</label>
           <input
             type="text"
             placeholder="Prénom"
@@ -73,22 +51,18 @@ export default function LinkEglise() {
             onChange={(e) => setSuperviseur({ ...superviseur, prenom: e.target.value })}
             className="w-full border border-gray-300 rounded-xl px-4 py-2"
           />
-        </div>
-
-        <div>
-          <label className="block font-semibold mb-1">Nom</label>
           <input
             type="text"
             placeholder="Nom"
             value={superviseur.nom}
             onChange={(e) => setSuperviseur({ ...superviseur, nom: e.target.value })}
-            className="w-full border border-gray-300 rounded-xl px-4 py-2"
+            className="w-full border border-gray-300 rounded-xl px-4 py-2 mt-2"
           />
         </div>
 
         {/* Église */}
         <div>
-          <label className="block font-semibold mb-1">Église</label>
+          <label className="block font-semibold mb-1">Église :</label>
           <input
             type="text"
             placeholder="Nom de l'Église"
@@ -99,7 +73,7 @@ export default function LinkEglise() {
         </div>
 
         <div>
-          <label className="block font-semibold mb-1">Branche / Région</label>
+          <label className="block font-semibold mb-1">Branche / Région :</label>
           <input
             type="text"
             placeholder="Branche / Région"
@@ -109,7 +83,7 @@ export default function LinkEglise() {
           />
         </div>
 
-        {/* Canal d'envoi */}
+        {/* Canal */}
         <div>
           <label className="block font-semibold mb-1">Envoyer par :</label>
           <select
@@ -122,18 +96,15 @@ export default function LinkEglise() {
           </select>
         </div>
 
-        {/* Bouton */}
-        {superviseurEgliseId && (
-          <SendEgliseLinkPopup
-            label="Envoyer l'invitation"
-            type={canal}
-            superviseur={superviseur}
-            eglise={eglise}
-            superviseurEgliseId={superviseurEgliseId}
-            onSuccess={() => loadInvitations(superviseurEgliseId)}
-          />
-        )}
-
+        {/* Bouton principal */}
+        <SendEgliseLinkPopup
+          label="Envoyer l'invitation"
+          type={canal}
+          superviseur={superviseur}
+          eglise={eglise}
+          superviseurEgliseId={SUPERVISEUR_EGLISE_ID}
+          onSuccess={loadInvitations} // recharge la table après insertion
+        />
       </div>
 
       {/* Table des invitations */}

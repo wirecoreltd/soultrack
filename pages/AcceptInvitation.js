@@ -1,18 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
+import HeaderPages from "../components/HeaderPages";
 
 export default function AcceptInvitation() {
   const router = useRouter();
-  const { token } = router.query; // récupère le token depuis l'URL
+  const { token } = router.query;
+
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("Vérification de l'invitation...");
 
   useEffect(() => {
     if (!token) return;
 
-    const verifyInvitation = async () => {
+    const checkInvitation = async () => {
       const { data, error } = await supabase
         .from("eglise_supervisions")
         .select("*")
@@ -21,33 +24,48 @@ export default function AcceptInvitation() {
 
       if (error || !data) {
         setMessage("Invitation invalide ou expirée.");
+        setLoading(false);
         return;
       }
 
       if (data.statut === "accepted") {
         setMessage("Cette invitation a déjà été acceptée.");
+        setLoading(false);
         return;
       }
 
-      // 🔹 Met à jour le statut
-      await supabase
+      const { error: updateError } = await supabase
         .from("eglise_supervisions")
-        .update({ statut: "accepted", approved_at: new Date().toISOString() })
+        .update({
+          statut: "accepted",
+          approved_at: new Date().toISOString(),
+        })
         .eq("id", data.id);
 
-      setMessage(
-        `Vous êtes maintenant relié(e) à ${data.eglise_nom}. Bienvenue !`
-      );
+      if (updateError) {
+        setMessage("Erreur lors de l'acceptation.");
+      } else {
+        setMessage(`Invitation acceptée. Église reliée avec succès.`);
+      }
+
+      setLoading(false);
     };
 
-    verifyInvitation();
+    checkInvitation();
   }, [token]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#333699] text-white p-6">
-      <div className="bg-white text-black p-6 rounded-2xl shadow-lg max-w-md w-full text-center">
-        <h1 className="text-2xl font-bold mb-4">Invitation</h1>
-        <p>{message}</p>
+    <div className="min-h-screen bg-[#333699] text-white flex flex-col items-center justify-center p-6">
+      <HeaderPages />
+
+      <div className="bg-white text-black rounded-2xl shadow-xl p-6 max-w-md w-full text-center">
+        <h1 className="text-2xl font-bold mb-4">Invitation Église</h1>
+
+        {loading ? (
+          <p>Chargement...</p>
+        ) : (
+          <p className="font-semibold">{message}</p>
+        )}
       </div>
     </div>
   );

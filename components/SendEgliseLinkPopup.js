@@ -4,19 +4,26 @@ import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import { v4 as uuidv4 } from "uuid";
 
-export default function SendEgliseLinkPopup({ label, type, superviseur, eglise, superviseurEgliseId, onSuccess }) {
+export default function SendEgliseLinkPopup({
+  label,
+  type,
+  superviseur,
+  eglise,
+  superviseurEgliseId,
+  onSuccess
+}) {
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSend = async () => {
     if (!superviseurEgliseId) {
-      alert("⚠️ Impossible d'envoyer l'invitation : ID de l'église superviseur manquant.");
+      alert("⚠️ ID du superviseur invalide. Impossible d'envoyer l'invitation.");
       return;
     }
 
-    if (!superviseur.prenom || !superviseur.nom || !eglise.nom) {
-      alert("⚠️ Veuillez remplir le prénom, le nom du responsable et le nom de l'église.");
+    if (!eglise.nom) {
+      alert("⚠️ Veuillez saisir le nom de l'église.");
       return;
     }
 
@@ -24,26 +31,27 @@ export default function SendEgliseLinkPopup({ label, type, superviseur, eglise, 
     const token = uuidv4();
 
     try {
-      // 🔹 INSERT dans eglise_supervisions
-      const { error } = await supabase.from("eglise_supervisions").insert([{
-        superviseur_eglise_id: superviseurEgliseId,
-        supervisee_eglise_id: null,
-        responsable_prenom: superviseur.prenom,
-        responsable_nom: superviseur.nom,
-        responsable_email: superviseur.email || null,
-        responsable_telephone: superviseur.telephone || null,
-        eglise_nom: eglise.nom,
-        eglise_branche: eglise.branche || null,
-        invitation_token: token,
-        statut: "pending",
-        created_at: new Date().toISOString()
-      }]);
+      // 🔹 INSERT ou UPDATE (upsert) pour éviter les conflits
+      const { error } = await supabase
+        .from("eglise_supervisions")
+        .upsert([{
+          superviseur_eglise_id: superviseurEgliseId,
+          supervisee_eglise_id: null,
+          responsable_prenom: superviseur.prenom || "",
+          responsable_nom: superviseur.nom || "",
+          responsable_email: superviseur.email || "",
+          responsable_telephone: superviseur.telephone || "",
+          eglise_nom: eglise.nom,
+          eglise_branche: eglise.branche || "",
+          invitation_token: token,
+          statut: "pending",
+          created_at: new Date().toISOString()
+        }], { onConflict: ["superviseur_eglise_id", "eglise_nom"] });
 
       if (error) throw error;
 
       const link = `${window.location.origin}/accept-invitation?token=${token}`;
 
-      // 🔹 Envoi WhatsApp ou Email
       if (type === "whatsapp") {
         const whatsappLink = phoneNumber
           ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(
@@ -59,7 +67,6 @@ export default function SendEgliseLinkPopup({ label, type, superviseur, eglise, 
         window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       }
 
-      // 🔹 Reset popup
       setShowPopup(false);
       setPhoneNumber("");
       if (onSuccess) onSuccess(); // recharge la table
@@ -84,7 +91,6 @@ export default function SendEgliseLinkPopup({ label, type, superviseur, eglise, 
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl relative">
             <h2 className="text-xl font-bold mb-3">{label}</h2>
-
             {type === "whatsapp" && (
               <>
                 <p className="text-gray-700 mb-4">
@@ -99,7 +105,6 @@ export default function SendEgliseLinkPopup({ label, type, superviseur, eglise, 
                 />
               </>
             )}
-
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setShowPopup(false)}
@@ -109,8 +114,8 @@ export default function SendEgliseLinkPopup({ label, type, superviseur, eglise, 
               </button>
               <button
                 onClick={handleSend}
-                className={`flex-1 py-3 ${loading ? "bg-gray-400" : "bg-green-500 hover:bg-green-600"} text-white rounded-2xl font-semibold transition`}
                 disabled={loading}
+                className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-semibold transition disabled:opacity-50"
               >
                 {loading ? "Envoi..." : "Envoyer"}
               </button>

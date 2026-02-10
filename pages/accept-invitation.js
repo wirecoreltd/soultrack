@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
+import HeaderPages from "../components/HeaderPages";
 
 export default function AcceptInvitation() {
   const router = useRouter();
@@ -11,7 +12,7 @@ export default function AcceptInvitation() {
   const [invitation, setInvitation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [finalMessage, setFinalMessage] = useState("");
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -23,11 +24,7 @@ export default function AcceptInvitation() {
         .eq("invitation_token", token)
         .single();
 
-      if (error) {
-        setMessage("Invitation introuvable");
-      } else {
-        setInvitation(data);
-      }
+      if (!error) setInvitation(data);
       setLoading(false);
     };
 
@@ -45,26 +42,51 @@ export default function AcceptInvitation() {
       })
       .eq("invitation_token", token);
 
-    if (error) {
-      setMessage("Erreur mise à jour");
-    } else {
+    if (!error) {
       setInvitation((prev) => ({ ...prev, statut }));
-      setMessage("Statut mis à jour");
+
+      if (statut === "acceptee") {
+        setFinalMessage(
+          `Vous êtes maintenant sous la supervision de ${invitation.eglise_nom}`
+        );
+      }
+
+      if (statut === "refusee") {
+        setFinalMessage(
+          `Vous avez refusé l’invitation de ${invitation.eglise_nom}`
+        );
+      }
+
+      if (statut === "pending") {
+        setFinalMessage(
+          "L’invitation est toujours en attente. Vous pouvez décider plus tard."
+        );
+      }
     }
 
     setActionLoading(false);
   };
 
   if (loading) return <div className="p-10">Chargement...</div>;
-  if (!invitation) return <div className="p-10">{message}</div>;
+  if (!invitation) return <div className="p-10">Invitation introuvable</div>;
 
   return (
-    <div className="min-h-screen flex justify-center items-center bg-gray-100">
-      <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md space-y-3">
+    <div className="min-h-screen bg-[#333699] flex flex-col items-center p-6">
 
-        <h1 className="text-xl font-bold text-center">
-          📩 Invitation de supervision
-        </h1>
+      <HeaderPages />
+
+      <h1 className="text-3xl text-white font-bold mt-4 mb-4">
+        Invitation de supervision d’église
+      </h1>
+
+      <button
+        onClick={() => router.push("/")}
+        className="mb-6 bg-white text-[#333699] px-4 py-2 rounded-xl font-semibold"
+      >
+        ⬅ Retour Dashboard
+      </button>
+
+      <div className="bg-white rounded-3xl shadow-xl p-6 max-w-md w-full space-y-3">
 
         <p><b>Église :</b> {invitation.eglise_nom}</p>
         <p><b>Branche :</b> {invitation.eglise_branche}</p>
@@ -72,40 +94,46 @@ export default function AcceptInvitation() {
         <p><b>Email :</b> {invitation.responsable_email}</p>
         <p><b>Téléphone :</b> {invitation.responsable_telephone}</p>
 
-        <p className="mt-3">
+        <p className="mt-2">
           <b>Statut actuel :</b> {invitation.statut}
         </p>
 
-        {/* TOUJOURS VISIBLE */}
-        <div className="flex gap-2 justify-center mt-4">
+        {!finalMessage && (
+          <div className="flex gap-2 justify-center mt-4">
 
-          <button
-            disabled={actionLoading}
-            onClick={() => updateStatus("acceptee")}
-            className="bg-green-500 text-white px-3 py-2 rounded"
-          >
-            Accepter
-          </button>
+            <button
+              disabled={actionLoading}
+              onClick={() => updateStatus("acceptee")}
+              className="bg-green-500 text-white px-4 py-2 rounded-xl font-semibold"
+            >
+              Accepter
+            </button>
 
-          <button
-            disabled={actionLoading}
-            onClick={() => updateStatus("refusee")}
-            className="bg-red-500 text-white px-3 py-2 rounded"
-          >
-            Refuser
-          </button>
+            <button
+              disabled={actionLoading}
+              onClick={() => updateStatus("refusee")}
+              className="bg-red-500 text-white px-4 py-2 rounded-xl font-semibold"
+            >
+              Refuser
+            </button>
 
-          <button
-            disabled={actionLoading}
-            onClick={() => updateStatus("pending")}
-            className="bg-gray-500 text-white px-3 py-2 rounded"
-          >
-            En attente
-          </button>
+            <button
+              disabled={actionLoading}
+              onClick={() => updateStatus("pending")}
+              className="bg-gray-400 text-white px-4 py-2 rounded-xl font-semibold"
+            >
+              En attente
+            </button>
 
-        </div>
+          </div>
+        )}
 
-        {message && <p className="text-center mt-3">{message}</p>}
+        {finalMessage && (
+          <div className="mt-6 text-center font-semibold text-lg">
+            {finalMessage}
+          </div>
+        )}
+
       </div>
     </div>
   );

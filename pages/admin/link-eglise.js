@@ -18,83 +18,84 @@ export default function LinkEglise() {
     branche: "",
   });
 
+  const [superviseurEgliseId, setSuperviseurEgliseId] = useState(null);
+  const [superviseurBrancheId, setSuperviseurBrancheId] = useState(null);
+
   const [canal, setCanal] = useState("whatsapp");
   const [invitations, setInvitations] = useState([]);
   const [filteredInvitations, setFilteredInvitations] = useState([]);
 
-  const [superviseurEgliseId, setSuperviseurEgliseId] = useState(null);
-  const [superviseurBrancheId, setSuperviseurBrancheId] = useState(null);
+  // 🔹 Récupérer le profil du superviseur connecté
+  const loadProfile = async () => {
+    const user = supabase.auth.getUser();
+    if (!user) return;
 
-  // 🔹 Charger le profil du superviseur connecté
-  const loadSuperviseur = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("prenom, nom, email, telephone, eglise_id, branche_id")
+      .eq("id", user.data.user.id)
+      .single();
 
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("prenom, nom, email, telephone, eglise_id, branche_id")
-        .eq("id", user.id)
-        .single();
-
-      if (error) throw error;
-
-      setSuperviseur({
-        prenom: profile.prenom,
-        nom: profile.nom,
-        email: profile.email,
-        telephone: profile.telephone,
-      });
-
-      setSuperviseurEgliseId(profile.eglise_id);
-      setSuperviseurBrancheId(profile.branche_id);
-
-    } catch (err) {
-      console.error("Erreur récupération superviseur :", err.message);
+    if (error) {
+      console.error("Erreur récupération profil :", error.message);
+      return;
     }
+
+    setSuperviseur({
+      prenom: profile.prenom || "",
+      nom: profile.nom || "",
+      email: profile.email || "",
+      telephone: profile.telephone || "",
+    });
+
+    setSuperviseurEgliseId(profile.eglise_id);
+    setSuperviseurBrancheId(profile.branche_id);
   };
 
-  // 🔹 Charger les invitations du superviseur
+  // 🔹 Charger les invitations de cet superviseur uniquement
   const loadInvitations = async () => {
     if (!superviseurEgliseId) return;
-    try {
-      const { data, error } = await supabase
-        .from("eglise_supervisions")
-        .select("*")
-        .eq("superviseur_eglise_id", superviseurEgliseId)
-        .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setInvitations(data || []);
-    } catch (err) {
-      console.error("Erreur chargement invitations:", err.message);
+    const { data, error } = await supabase
+      .from("eglise_supervisions")
+      .select("*")
+      .eq("superviseur_eglise_id", superviseurEgliseId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Erreur chargement invitations :", error.message);
+      return;
     }
+
+    setInvitations(data || []);
   };
 
-  // 🔹 Filtrage automatique
   useEffect(() => {
-    let filtered = invitations;
-    if (eglise.nom.trim() !== "") {
-      filtered = filtered.filter((inv) =>
-        inv.eglise_nom?.toLowerCase().includes(eglise.nom.toLowerCase())
-      );
-    }
-    if (eglise.branche.trim() !== "") {
-      filtered = filtered.filter((inv) =>
-        inv.eglise_branche?.toLowerCase().includes(eglise.branche.toLowerCase())
-      );
-    }
-    setFilteredInvitations(filtered);
-  }, [eglise.nom, eglise.branche, invitations]);
-
-  // 🔹 Initial load
-  useEffect(() => {
-    loadSuperviseur();
+    loadProfile();
   }, []);
 
   useEffect(() => {
     loadInvitations();
   }, [superviseurEgliseId]);
+
+  // 🔥 Filtrage dynamique par nom / branche
+  useEffect(() => {
+    let filtered = invitations;
+
+    if (eglise.nom.trim() !== "") {
+      filtered = filtered.filter((inv) =>
+        inv.eglise_nom?.toLowerCase().includes(eglise.nom.toLowerCase())
+      );
+    }
+
+    if (eglise.branche.trim() !== "") {
+      filtered = filtered.filter((inv) =>
+        inv.eglise_branche?.toLowerCase().includes(eglise.branche.toLowerCase())
+      );
+    }
+
+    setFilteredInvitations(filtered);
+  }, [eglise.nom, eglise.branche, invitations]);
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">

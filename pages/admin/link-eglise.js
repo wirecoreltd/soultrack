@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import supabase from "../lib/supabaseClient";
+import supabase from "../../lib/supabaseClient";
 import SendEgliseLinkPopup from "../../components/SendEgliseLinkPopup";
 import HeaderPages from "../../components/HeaderPages";
 
-const [superviseurEgliseId, setSuperviseurEgliseId] = useState(null);
-const [superviseurBrancheId, setSuperviseurBrancheId] = useState(null);
-
+// ⚡ Définir tes IDs ici
+const SUPERVISEUR_EGLISE_ID = "5e0baaf8-8f86-4ba6-92fc-c4f361d77eae";
+const SUPERVISEUR_BRANCHE_ID = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"; // <-- mettre la valeur réelle
 
 export default function LinkEglise() {
   const [superviseur, setSuperviseur] = useState({
@@ -28,41 +28,19 @@ export default function LinkEglise() {
 
   // 🔹 Charger invitations du superviseur
   const loadInvitations = async () => {
-    const { data, error } = await supabase
-      .from("eglise_supervisions")
-      .select("*")
-      .eq("superviseur_eglise_id", SUPERVISEUR_EGLISE_ID)
-      .order("created_at", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("eglise_supervisions")
+        .select("*")
+        .eq("superviseur_eglise_id", SUPERVISEUR_EGLISE_ID)
+        .order("created_at", { ascending: false });
 
-    if (!error) {
+      if (error) throw error;
       setInvitations(data || []);
+    } catch (err) {
+      console.error("Erreur chargement invitations:", err.message);
     }
   };
-
-  useEffect(() => {
-  const loadSuperviseurContext = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from("eglise_supervisions")
-      .select("superviseur_eglise_id, superviseur_branche_id")
-      .eq("superviseur_user_id", user.id)
-      .eq("statut", "acceptee")
-      .single();
-
-    if (!error && data) {
-      setSuperviseurEgliseId(data.superviseur_eglise_id);
-      setSuperviseurBrancheId(data.superviseur_branche_id);
-    }
-  };
-
-  loadSuperviseurContext();
-}, []);
-
 
   useEffect(() => {
     loadInvitations();
@@ -172,18 +150,15 @@ export default function LinkEglise() {
           <option value="email">Email</option>
         </select>
 
-       {superviseurEgliseId && superviseurBrancheId && (
-  <SendEgliseLinkPopup
-    label="Envoyer l'invitation"
-    type={canal}
-    superviseur={superviseur}
-    eglise={eglise}
-    superviseurEgliseId={superviseurEgliseId}
-    superviseurBrancheId={superviseurBrancheId}
-    onSuccess={loadInvitations}
-  />
-)}
-
+        <SendEgliseLinkPopup
+          label="Envoyer l'invitation"
+          type={canal}
+          superviseur={superviseur}
+          eglise={eglise}
+          superviseurEgliseId={SUPERVISEUR_EGLISE_ID}
+          superviseurBrancheId={SUPERVISEUR_BRANCHE_ID}
+          onSuccess={loadInvitations}
+        />
       </div>
 
       {/* TABLE FILTRÉE */}

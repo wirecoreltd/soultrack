@@ -68,10 +68,10 @@ export default function HeaderInvitation() {
       {/* Top bar */}
       <div className="flex justify-between items-center mb-1">
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push("/")}
           className="text-amber-300 hover:text-gray-200 transition"
         >
-          ← Retour
+          ← Dashboard
         </button>
 
         <button

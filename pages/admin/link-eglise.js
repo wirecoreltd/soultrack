@@ -5,10 +5,6 @@ import supabase from "../../lib/supabaseClient";
 import SendEgliseLinkPopup from "../../components/SendEgliseLinkPopup";
 import HeaderPages from "../../components/HeaderPages";
 
-// ⚡ Définir tes IDs ici
-const SUPERVISEUR_EGLISE_ID = "5e0baaf8-8f86-4ba6-92fc-c4f361d77eae";
-const SUPERVISEUR_BRANCHE_ID = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"; // <-- mettre la valeur réelle
-
 export default function LinkEglise() {
   const [superviseur, setSuperviseur] = useState({
     prenom: "",
@@ -26,13 +22,46 @@ export default function LinkEglise() {
   const [invitations, setInvitations] = useState([]);
   const [filteredInvitations, setFilteredInvitations] = useState([]);
 
-  // 🔹 Charger invitations du superviseur
+  const [superviseurEgliseId, setSuperviseurEgliseId] = useState(null);
+  const [superviseurBrancheId, setSuperviseurBrancheId] = useState(null);
+
+  // 🔹 Charger le profil du superviseur connecté
+  const loadSuperviseur = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("prenom, nom, email, telephone, eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+
+      setSuperviseur({
+        prenom: profile.prenom,
+        nom: profile.nom,
+        email: profile.email,
+        telephone: profile.telephone,
+      });
+
+      setSuperviseurEgliseId(profile.eglise_id);
+      setSuperviseurBrancheId(profile.branche_id);
+
+    } catch (err) {
+      console.error("Erreur récupération superviseur :", err.message);
+    }
+  };
+
+  // 🔹 Charger les invitations du superviseur
   const loadInvitations = async () => {
+    if (!superviseurEgliseId) return;
     try {
       const { data, error } = await supabase
         .from("eglise_supervisions")
         .select("*")
-        .eq("superviseur_eglise_id", SUPERVISEUR_EGLISE_ID)
+        .eq("superviseur_eglise_id", superviseurEgliseId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -42,28 +71,30 @@ export default function LinkEglise() {
     }
   };
 
-  useEffect(() => {
-    loadInvitations();
-  }, []);
-
-  // 🔥 FILTRE AUTOMATIQUE ÉGLISE + BRANCHE
+  // 🔹 Filtrage automatique
   useEffect(() => {
     let filtered = invitations;
-
     if (eglise.nom.trim() !== "") {
       filtered = filtered.filter((inv) =>
         inv.eglise_nom?.toLowerCase().includes(eglise.nom.toLowerCase())
       );
     }
-
     if (eglise.branche.trim() !== "") {
       filtered = filtered.filter((inv) =>
         inv.eglise_branche?.toLowerCase().includes(eglise.branche.toLowerCase())
       );
     }
-
     setFilteredInvitations(filtered);
   }, [eglise.nom, eglise.branche, invitations]);
+
+  // 🔹 Initial load
+  useEffect(() => {
+    loadSuperviseur();
+  }, []);
+
+  useEffect(() => {
+    loadInvitations();
+  }, [superviseurEgliseId]);
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
@@ -155,8 +186,8 @@ export default function LinkEglise() {
           type={canal}
           superviseur={superviseur}
           eglise={eglise}
-          superviseurEgliseId={SUPERVISEUR_EGLISE_ID}
-          superviseurBrancheId={SUPERVISEUR_BRANCHE_ID}
+          superviseurEgliseId={superviseurEgliseId}
+          superviseurBrancheId={superviseurBrancheId}
           onSuccess={loadInvitations}
         />
       </div>

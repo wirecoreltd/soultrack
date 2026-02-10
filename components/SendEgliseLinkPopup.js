@@ -13,12 +13,10 @@ export default function SendEgliseLinkPopup({
   superviseurBrancheId,
   onSuccess
 }) {
-
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Vérifie si c'est un UUID valide
   const isValidUUID = (uuid) =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid);
 
@@ -36,36 +34,64 @@ export default function SendEgliseLinkPopup({
     }
 
     setLoading(true);
-    const token = uuidv4();
 
     try {
-      const { error } = await supabase
+      // 1️⃣ Vérifier si une invitation existe déjà pour cette église
+      const { data: existing, error: fetchError } = await supabase
         .from("eglise_supervisions")
-        .insert([{
-          superviseur_eglise_id: superviseurEgliseId,
-          superviseur_branche_id: superviseurBrancheId,
-          supervisee_eglise_id: null,
-          supervisee_branche_id: null,
-          responsable_prenom: superviseur.prenom,
-          responsable_nom: superviseur.nom,
-          responsable_email: superviseur.email || "",
-          responsable_telephone: superviseur.telephone || "",
-          eglise_nom: eglise.nom,
-          eglise_branche: eglise.branche || "",
-          invitation_token: token,
-          statut: "pending",
-          created_at: new Date().toISOString()
-        }]);
+        .select("*")
+        .eq("superviseur_eglise_id", superviseurEgliseId)
+        .eq("eglise_nom", eglise.nom)
+        .eq("superviseur_branche_id", superviseurBrancheId)
+        .single(); // récupère une seule ligne
 
-      if (error) {
-        console.error("Erreur en envoyant l'invitation :", error);
-        alert("⚠️ Une erreur est survenue : " + error.message);
-        setLoading(false);
-        return;
+      if (fetchError && fetchError.code !== "PGRST116") throw fetchError; // ignore not found
+
+      let token;
+      let statut = "pending";
+
+      if (existing) {
+        // Si pending ou accepted → possibilité de renvoi
+        if (existing.statut === "pending") {
+          token = existing.invitation_token;
+        } else if (existing.statut === "expired") {
+          token = uuidv4(); // regénérer un token pour expired
+          await supabase
+            .from("eglise_supervisions")
+            .update({ invitation_token: token, statut: "pending", created_at: new Date().toISOString() })
+            .eq("id", existing.id);
+        } else {
+          alert("Cette église a déjà un superviseur accepté.");
+          setLoading(false);
+          return;
+        }
+      } else {
+        // Pas d'invitation existante → insert
+        token = uuidv4();
+        const { error } = await supabase
+          .from("eglise_supervisions")
+          .insert([{
+            superviseur_eglise_id: superviseurEgliseId,
+            superviseur_branche_id: superviseurBrancheId,
+            supervisee_eglise_id: null,
+            supervisee_branche_id: null,
+            responsable_prenom: superviseur.prenom,
+            responsable_nom: superviseur.nom,
+            responsable_email: superviseur.email || "",
+            responsable_telephone: superviseur.telephone || "",
+            eglise_nom: eglise.nom,
+            eglise_branche: eglise.branche || "",
+            invitation_token: token,
+            statut,
+            created_at: new Date().toISOString()
+          }]);
+        if (error) throw error;
       }
 
+      // 2️⃣ Générer lien
       const link = `${window.location.origin}/accept-invitation?token=${token}`;
 
+      // 3️⃣ Envoi WhatsApp / Email
       if (type === "whatsapp") {
         const whatsappLink = phoneNumber
           ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(
@@ -89,7 +115,7 @@ export default function SendEgliseLinkPopup({
 
     } catch (err) {
       console.error(err);
-      alert("Erreur inattendue.");
+      alert("⚠️ Erreur lors de l'envoi de l'invitation : " + err.message);
       setLoading(false);
     }
   };
@@ -107,7 +133,6 @@ export default function SendEgliseLinkPopup({
       {showPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full">
-
             <h2 className="text-xl font-bold mb-3">{label}</h2>
 
             {type === "whatsapp" && (
@@ -136,7 +161,6 @@ export default function SendEgliseLinkPopup({
                 Envoyer
               </button>
             </div>
-
           </div>
         </div>
       )}

@@ -85,7 +85,7 @@ export default function HeaderInvitation() {
       {/* User info en haut à droite */}
       <div className="flex justify-end flex-col text-right space-y-1 mb-6">
         <p className="text-white text-sm">
-          👋 Bienvenue{" "}
+          Connecté : {" "}
           <span className="font-semibold">{loading ? "..." : prenom}</span>
         </p>
       </div>

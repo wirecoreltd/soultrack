@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import HeaderPages from "../components/HeaderInvitation";
+import HeaderInvitation from "../components/HeaderInvitation";
 
 export default function AcceptInvitation() {
   const router = useRouter();

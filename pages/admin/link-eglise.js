@@ -146,13 +146,14 @@ export default function LinkEglise() {
         </select>
 
         <SendEgliseLinkPopup
-          label="Envoyer l'invitation"
-          type={canal}
-          superviseur={superviseur}
-          eglise={eglise}
-          superviseurEgliseId={SUPERVISEUR_EGLISE_ID}
-          onSuccess={loadInvitations}
-        />
+  label="Envoyer l'invitation"
+  type={canal}
+  superviseur={superviseur}
+  eglise={eglise}
+  superviseurEgliseId={SUPERVISEUR_EGLISE_ID}
+  superviseurBrancheId={SUPERVISEUR_BRANCHE_ID}
+  onSuccess={loadInvitations}
+/>
       </div>
 
       {/* TABLE FILTRÉE */}

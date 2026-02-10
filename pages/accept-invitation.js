@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import HeaderPages from "../components/HeaderPages";
+import HeaderPages from "../components/HeaderInvitation";
 
 export default function AcceptInvitation() {
   const router = useRouter();
@@ -73,18 +73,11 @@ export default function AcceptInvitation() {
   return (
     <div className="min-h-screen bg-[#333699] flex flex-col items-center p-6">
 
-      <HeaderPages />
+      <HeaderInvitation />
 
       <h1 className="text-3xl text-white font-bold mt-4 mb-4">
         Invitation de supervision d’église
-      </h1>
-
-      <button
-        onClick={() => router.push("/index")}
-        className="mb-6 bg-white text-[#333699] px-4 py-2 rounded-xl font-semibold"
-      >
-        ⬅ Retour Dashboard
-      </button>
+      </h1>      
 
       <div className="bg-white rounded-3xl shadow-xl p-6 max-w-md w-full space-y-3">
 

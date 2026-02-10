@@ -5,7 +5,9 @@ import supabase from "../../lib/supabaseClient";
 import SendEgliseLinkPopup from "../../components/SendEgliseLinkPopup";
 import HeaderPages from "../../components/HeaderPages";
 
-const SUPERVISEUR_EGLISE_ID = "5e0baaf8-8f86-4ba6-92fc-c4f361d77eae";
+const [superviseurEgliseId, setSuperviseurEgliseId] = useState(null);
+const [superviseurBrancheId, setSuperviseurBrancheId] = useState(null);
+
 
 export default function LinkEglise() {
   const [superviseur, setSuperviseur] = useState({
@@ -36,6 +38,31 @@ export default function LinkEglise() {
       setInvitations(data || []);
     }
   };
+
+  useEffect(() => {
+  const loadSuperviseurContext = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("eglise_supervisions")
+      .select("superviseur_eglise_id, superviseur_branche_id")
+      .eq("superviseur_user_id", user.id)
+      .eq("statut", "acceptee")
+      .single();
+
+    if (!error && data) {
+      setSuperviseurEgliseId(data.superviseur_eglise_id);
+      setSuperviseurBrancheId(data.superviseur_branche_id);
+    }
+  };
+
+  loadSuperviseurContext();
+}, []);
+
 
   useEffect(() => {
     loadInvitations();
@@ -145,15 +172,18 @@ export default function LinkEglise() {
           <option value="email">Email</option>
         </select>
 
-        <SendEgliseLinkPopup
-  label="Envoyer l'invitation"
-  type={canal}
-  superviseur={superviseur}
-  eglise={eglise}
-  superviseurEgliseId={SUPERVISEUR_EGLISE_ID}
-  superviseurBrancheId={SUPERVISEUR_BRANCHE_ID}
-  onSuccess={loadInvitations}
-/>
+       {superviseurEgliseId && superviseurBrancheId && (
+  <SendEgliseLinkPopup
+    label="Envoyer l'invitation"
+    type={canal}
+    superviseur={superviseur}
+    eglise={eglise}
+    superviseurEgliseId={superviseurEgliseId}
+    superviseurBrancheId={superviseurBrancheId}
+    onSuccess={loadInvitations}
+  />
+)}
+
       </div>
 
       {/* TABLE FILTRÉE */}

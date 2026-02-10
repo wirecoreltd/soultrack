@@ -17,17 +17,13 @@ export default function SendEgliseLinkPopup({
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Vérifie si c'est un UUID valide
-  const isValidUUID = (uuid) =>
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid);
-
+  // ✅ Vérifie si on peut envoyer l’invitation
   const canSend =
-    superviseur.prenom?.trim() &&
-    superviseur.nom?.trim() &&
-    eglise.nom?.trim() &&
-    isValidUUID(superviseurEgliseId) &&
-    isValidUUID(superviseurBrancheId) &&
-    !loading;
+    superviseur.prenom &&
+    superviseur.nom &&
+    eglise.nom &&
+    superviseurEgliseId &&
+    superviseurBrancheId;
 
   const handleSend = async () => {
     if (!canSend) {
@@ -113,7 +109,7 @@ export default function SendEgliseLinkPopup({
             {type === "whatsapp" && (
               <input
                 type="text"
-                placeholder="Numéro WhatsApp (optionnel)"
+                placeholder="Numéro WhatsApp"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 className="w-full border rounded-xl px-4 py-3 mb-4"
@@ -130,8 +126,10 @@ export default function SendEgliseLinkPopup({
 
               <button
                 onClick={handleSend}
-                className={`flex-1 py-3 rounded-2xl text-white ${canSend ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'}`}
-                disabled={!canSend}
+                className={`flex-1 py-3 rounded-2xl text-white ${
+                  canSend ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'
+                }`}
+                disabled={!canSend || loading}
               >
                 Envoyer
               </button>

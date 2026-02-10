@@ -18,10 +18,20 @@ export default function SendEgliseLinkPopup({
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSend = async () => {
+  // Vérifie si c'est un UUID valide
+  const isValidUUID = (uuid) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid);
 
-    if (!superviseur.prenom || !superviseur.nom || !eglise.nom) {
-      alert("⚠️ Veuillez remplir le prénom, nom du responsable et le nom de l'église.");
+  const canSend =
+    superviseur.prenom &&
+    superviseur.nom &&
+    eglise.nom &&
+    isValidUUID(superviseurEgliseId) &&
+    isValidUUID(superviseurBrancheId);
+
+  const handleSend = async () => {
+    if (!canSend) {
+      alert("⚠️ Veuillez remplir toutes les informations correctement.");
       return;
     }
 
@@ -29,28 +39,19 @@ export default function SendEgliseLinkPopup({
     const token = uuidv4();
 
     try {
-
       const { error } = await supabase
         .from("eglise_supervisions")
         .insert([{
-          // SUPERVISEUR
           superviseur_eglise_id: superviseurEgliseId,
           superviseur_branche_id: superviseurBrancheId,
-
-          // SUPERVISÉ (pas encore connu)
           supervisee_eglise_id: null,
           supervisee_branche_id: null,
-
-          // INFOS CONTACT
           responsable_prenom: superviseur.prenom,
           responsable_nom: superviseur.nom,
           responsable_email: superviseur.email || "",
           responsable_telephone: superviseur.telephone || "",
-
-          // INFOS ÉGLISE INVITÉE
           eglise_nom: eglise.nom,
-          eglise_branche: eglise.branche,
-
+          eglise_branche: eglise.branche || "",
           invitation_token: token,
           statut: "pending",
           created_at: new Date().toISOString()
@@ -63,12 +64,9 @@ export default function SendEgliseLinkPopup({
         return;
       }
 
-      // Générer lien
       const link = `${window.location.origin}/accept-invitation?token=${token}`;
 
-      // Envoi WhatsApp / Email
       if (type === "whatsapp") {
-
         const whatsappLink = phoneNumber
           ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(
               `🙏 Bonjour, invitation de supervision.\n\nSuperviseur : ${superviseur.prenom} ${superviseur.nom}\nÉglise : ${eglise.nom}\nBranche : ${eglise.branche || "—"}\n\nLien : ${link}`
@@ -76,14 +74,10 @@ export default function SendEgliseLinkPopup({
           : `https://api.whatsapp.com/send?text=${encodeURIComponent(
               `🙏 Bonjour, invitation de supervision.\n\nSuperviseur : ${superviseur.prenom} ${superviseur.nom}\nÉglise : ${eglise.nom}\nBranche : ${eglise.branche || "—"}\n\nLien : ${link}`
             )}`;
-
         window.open(whatsappLink, "_blank");
-
       } else {
-
         const subject = "Invitation de supervision";
         const body = `Bonjour,\n\nVous êtes invité à être supervisé.\n\nSuperviseur : ${superviseur.prenom} ${superviseur.nom}\nÉglise : ${eglise.nom}\nBranche : ${eglise.branche || "—"}\n\nLien : ${link}`;
-
         window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       }
 
@@ -136,7 +130,8 @@ export default function SendEgliseLinkPopup({
 
               <button
                 onClick={handleSend}
-                className="flex-1 py-3 bg-green-500 text-white rounded-2xl"
+                className={`flex-1 py-3 rounded-2xl text-white ${canSend ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'}`}
+                disabled={!canSend || loading}
               >
                 Envoyer
               </button>

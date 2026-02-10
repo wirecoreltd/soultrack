@@ -4,12 +4,22 @@ import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import { v4 as uuidv4 } from "uuid";
 
-export default function SendEgliseLinkPopup({ label, type, superviseur, eglise, superviseurEgliseId, onSuccess }) {
+export default function SendEgliseLinkPopup({
+  label,
+  type,
+  superviseur,
+  eglise,
+  superviseurEgliseId,
+  superviseurBrancheId,
+  onSuccess
+}) {
+
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSend = async () => {
+
     if (!superviseur.prenom || !superviseur.nom || !eglise.nom) {
       alert("⚠️ Veuillez remplir le prénom, nom du responsable et le nom de l'église.");
       return;
@@ -19,43 +29,61 @@ export default function SendEgliseLinkPopup({ label, type, superviseur, eglise, 
     const token = uuidv4();
 
     try {
-      const { data, error } = await supabase.from("eglise_supervisions").insert([{
-        superviseur_eglise_id: superviseurEgliseId, // obligatoire
-        supervisee_eglise_id: null,
-        responsable_prenom: superviseur.prenom,
-        responsable_nom: superviseur.nom,
-        responsable_email: superviseur.email || "",
-        responsable_telephone: superviseur.telephone || "",
-        eglise_nom: eglise.nom,
-        eglise_branche: eglise.branche,
-        invitation_token: token,
-        statut: "pending",
-        created_at: new Date().toISOString()
-      }]);
+
+      const { error } = await supabase
+        .from("eglise_supervisions")
+        .insert([{
+          // SUPERVISEUR
+          superviseur_eglise_id: superviseurEgliseId,
+          superviseur_branche_id: superviseurBrancheId,
+
+          // SUPERVISÉ (pas encore connu)
+          supervisee_eglise_id: null,
+          supervisee_branche_id: null,
+
+          // INFOS CONTACT
+          responsable_prenom: superviseur.prenom,
+          responsable_nom: superviseur.nom,
+          responsable_email: superviseur.email || "",
+          responsable_telephone: superviseur.telephone || "",
+
+          // INFOS ÉGLISE INVITÉE
+          eglise_nom: eglise.nom,
+          eglise_branche: eglise.branche,
+
+          invitation_token: token,
+          statut: "pending",
+          created_at: new Date().toISOString()
+        }]);
 
       if (error) {
         console.error("Erreur en envoyant l'invitation :", error);
-        alert("⚠️ Une erreur est survenue lors de l'envoi de l'invitation : " + error.message);
+        alert("⚠️ Une erreur est survenue : " + error.message);
         setLoading(false);
         return;
       }
 
-      // Générer le lien
+      // Générer lien
       const link = `${window.location.origin}/accept-invitation?token=${token}`;
 
-      // Envoi via WhatsApp ou Email
+      // Envoi WhatsApp / Email
       if (type === "whatsapp") {
+
         const whatsappLink = phoneNumber
           ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(
-              `🙏 Bonjour, vous êtes invité(e) à être relié(e) à votre superviseur.\n\n📖 Responsable : ${superviseur.prenom} ${superviseur.nom}\n⛪ Église : ${eglise.nom}\n🌍 Branche / Région : ${eglise.branche || "—"}\n\nLien : ${link}`
+              `🙏 Bonjour, invitation de supervision.\n\nSuperviseur : ${superviseur.prenom} ${superviseur.nom}\nÉglise : ${eglise.nom}\nBranche : ${eglise.branche || "—"}\n\nLien : ${link}`
             )}`
           : `https://api.whatsapp.com/send?text=${encodeURIComponent(
-              `🙏 Bonjour, vous êtes invité(e) à être relié(e) à votre superviseur.\n\n📖 Responsable : ${superviseur.prenom} ${superviseur.nom}\n⛪ Église : ${eglise.nom}\n🌍 Branche / Région : ${eglise.branche || "—"}\n\nLien : ${link}`
+              `🙏 Bonjour, invitation de supervision.\n\nSuperviseur : ${superviseur.prenom} ${superviseur.nom}\nÉglise : ${eglise.nom}\nBranche : ${eglise.branche || "—"}\n\nLien : ${link}`
             )}`;
+
         window.open(whatsappLink, "_blank");
-      } else if (type === "email") {
-        const subject = "Invitation à se relier à votre superviseur spirituel";
-        const body = `🙏 Bonjour,\n\nVous êtes invité(e) à être relié(e) à votre superviseur.\n\n📖 Responsable : ${superviseur.prenom} ${superviseur.nom}\n⛪ Église : ${eglise.nom}\n🌍 Branche / Région : ${eglise.branche || "—"}\n\nLien : ${link}\n\nQue Dieu vous bénisse.`;
+
+      } else {
+
+        const subject = "Invitation de supervision";
+        const body = `Bonjour,\n\nVous êtes invité à être supervisé.\n\nSuperviseur : ${superviseur.prenom} ${superviseur.nom}\nÉglise : ${eglise.nom}\nBranche : ${eglise.branche || "—"}\n\nLien : ${link}`;
+
         window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       }
 
@@ -63,10 +91,11 @@ export default function SendEgliseLinkPopup({ label, type, superviseur, eglise, 
       setPhoneNumber("");
       setLoading(false);
 
-      if (onSuccess) onSuccess(); // recharge la table
+      if (onSuccess) onSuccess();
+
     } catch (err) {
       console.error(err);
-      alert("⚠️ Une erreur inattendue est survenue.");
+      alert("Erreur inattendue.");
       setLoading(false);
     }
   };
@@ -75,7 +104,7 @@ export default function SendEgliseLinkPopup({ label, type, superviseur, eglise, 
     <>
       <button
         onClick={() => setShowPopup(true)}
-        className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#09203F] to-[#537895] hover:opacity-90 transition"
+        className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#09203F] to-[#537895]"
         disabled={loading}
       >
         {loading ? "Envoi..." : label}
@@ -83,38 +112,36 @@ export default function SendEgliseLinkPopup({ label, type, superviseur, eglise, 
 
       {showPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl relative">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full">
+
             <h2 className="text-xl font-bold mb-3">{label}</h2>
+
             {type === "whatsapp" && (
-              <>
-                <p className="text-gray-700 mb-4">
-                  Cliquez sur <span className="font-semibold">Envoyer</span> pour ouvrir WhatsApp, ou saisissez un numéro manuellement.
-                </p>
-                <input
-                  type="text"
-                  placeholder="Numéro WhatsApp (+2305xxxxxx)"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                />
-              </>
+              <input
+                type="text"
+                placeholder="Numéro WhatsApp"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                className="w-full border rounded-xl px-4 py-3 mb-4"
+              />
             )}
-            <div className="flex gap-3 justify-end">
+
+            <div className="flex gap-3">
               <button
                 onClick={() => setShowPopup(false)}
-                className="flex-1 py-3 bg-gray-300 hover:bg-gray-400 rounded-2xl font-semibold transition"
-                disabled={loading}
+                className="flex-1 py-3 bg-gray-300 rounded-2xl"
               >
                 Annuler
               </button>
+
               <button
                 onClick={handleSend}
-                className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-semibold transition"
-                disabled={loading}
+                className="flex-1 py-3 bg-green-500 text-white rounded-2xl"
               >
                 Envoyer
               </button>
             </div>
+
           </div>
         </div>
       )}

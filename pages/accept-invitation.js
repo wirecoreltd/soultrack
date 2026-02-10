@@ -80,7 +80,7 @@ export default function AcceptInvitation() {
       </h1>
 
       <button
-        onClick={() => router.push("/")}
+        onClick={() => router.push("/index")}
         className="mb-6 bg-white text-[#333699] px-4 py-2 rounded-xl font-semibold"
       >
         ⬅ Retour Dashboard

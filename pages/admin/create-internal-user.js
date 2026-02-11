@@ -51,6 +51,7 @@ function CreateInternalUserContent() {
 
       if (!session) {
         setMessage("❌ Session expirée");
+        setLoading(false);
         return;
       }
 
@@ -154,7 +155,6 @@ function CreateInternalUserContent() {
           padding: 12px;
         }
       `}</style>
-          
     </div>
   );
 }
@@ -162,12 +162,13 @@ function CreateInternalUserContent() {
 /* =========================
    PAGE PROTÉGÉE
 ========================= */
-return (
-  <div>
-    <ProtectedRoute allowedRoles={["Administrateur"]}>
-      <CreateCelluleContent />
-    </ProtectedRoute>
-    <Footer />
-  </div>
-);
+export default function CreateInternalUserPage() {
+  return (
+    <>
+      <ProtectedRoute allowedRoles={["Administrateur"]}>
+        <CreateInternalUserContent />
+      </ProtectedRoute>
+      <Footer />
+    </>
+  );
 }

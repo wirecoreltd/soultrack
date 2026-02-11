@@ -11,6 +11,7 @@ import { fr } from "date-fns/locale";
 import { useSearchParams } from "next/navigation";
 import { useMembers } from "../context/MembersContext";
 import Header from "../components/Header";
+import Header from "../components/Footer";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/ProtectedRoute";
 import useChurchScope from "../hooks/useChurchScope";
@@ -921,6 +922,7 @@ const handleAfterSend = (memberId, type, cible) => {
       {showingToast && (
         <div className="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50">{toastMessage}</div>
       )}
+<Footer />
     </div>
   );
 }

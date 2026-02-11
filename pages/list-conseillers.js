@@ -6,6 +6,7 @@ import supabase from "../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
+import Footer from "../components/Footer";
 
 export default function ListConseillersPage() {
   return (
@@ -168,6 +169,7 @@ function ListConseillers() {
           </div>
         )}
       </div>
+           <Footer />
     </div>
   );
 }

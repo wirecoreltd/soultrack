@@ -68,7 +68,7 @@ export default function LinkEglise() {
     loadSuperviseur();
   }, []);
 
-  // 🔹 Charger invitations du superviseur uniquement pour ses églises
+  // 🔹 Charger invitations du superviseur
   const loadInvitations = async () => {
     if (!superviseur.eglise_id) return;
 
@@ -85,30 +85,17 @@ export default function LinkEglise() {
     loadInvitations();
   }, [superviseur.eglise_id]);
 
-  // 🔹 Renvoyer invitation ou rappel avec confirmation
-  const handleResend = async (invitation) => {
-    const actionText =
-      invitation.statut === "refusé" ? "renvoyer cette invitation" : "envoyer un rappel";
-
-    const confirmed = window.confirm(
-      `Voulez-vous vraiment ${actionText} pour ${invitation.responsable_prenom} ${invitation.responsable_nom} ?`
-    );
-
-    if (!confirmed) return;
-
-    try {
-      const { error } = await supabase
-        .from("eglise_supervisions")
-        .update({ statut: "pending" })
-        .eq("id", invitation.id);
-
-      if (error) throw error;
-
-      alert("Action effectuée avec succès !");
-      loadInvitations();
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de l'action.");
+  // 🔹 Fonction pour obtenir le style de la bordure et le bouton selon statut
+  const getStatusStyle = (statut) => {
+    switch (statut.toLowerCase()) {
+      case "accepted":
+        return { border: "border-l-4 border-green-500", bg: "bg-green-100", button: null };
+      case "refused":
+        return { border: "border-l-4 border-red-500", bg: "bg-red-100", button: "Renvoyer invitation" };
+      case "pending":
+        return { border: "border-l-4 border-gray-500", bg: "bg-orange-100", button: "Envoyer rappel" };
+      default:
+        return { border: "border-l-4 border-gray-300", bg: "bg-gray-100", button: null };
     }
   };
 
@@ -190,9 +177,9 @@ export default function LinkEglise() {
         />
       </div>
 
-      {/* TABLE DES INVITATIONS */}
+      {/* TABLE */}
       <div className="w-full max-w-5xl mt-10">
-        <div className="hidden sm:flex text-sm font-semibold uppercase border-b border-white/40 pb-2">
+        <div className="flex text-sm font-semibold uppercase border-b border-white/40 pb-2">
           <div className="flex-[2]">Église</div>
           <div className="flex-[2]">Branche</div>
           <div className="flex-[2]">Responsable</div>
@@ -200,46 +187,26 @@ export default function LinkEglise() {
         </div>
 
         {invitations.map((inv) => {
-          let borderColor = "border-gray-400";
-          let actionButton = null;
-
-          if (inv.statut === "accepté") borderColor = "border-green-500";
-          if (inv.statut === "refusé") {
-            borderColor = "border-red-500";
-            actionButton = (
-              <button
-                onClick={() => handleResend(inv)}
-                className="ml-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
-              >
-                Renvoyer invitation
-              </button>
-            );
-          }
-          if (inv.statut === "pending") {
-            borderColor = "border-gray-400";
-            actionButton = (
-              <button
-                onClick={() => handleResend(inv)}
-                className="ml-2 px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-black rounded"
-              >
-                Envoyer rappel
-              </button>
-            );
-          }
+          const statusStyle = getStatusStyle(inv.statut);
 
           return (
             <div
               key={inv.id}
-              className={`flex px-4 py-3 bg-white/10 rounded-lg mt-2 border-l-4 ${borderColor}`}
+              className={`flex px-4 py-3 rounded-lg mt-2 bg-white/10 ${statusStyle.bg} ${statusStyle.border}`}
             >
               <div className="flex-[2]">{inv.eglise_nom}</div>
               <div className="flex-[2]">{inv.eglise_branche}</div>
               <div className="flex-[2]">{inv.responsable_prenom} {inv.responsable_nom}</div>
-              <div className="flex-[2] flex items-center">
-                <span className="text-xs bg-black/40 px-2 py-1 rounded">
-                  {inv.statut}
-                </span>
-                {actionButton}
+              <div className="flex-[2] flex items-center justify-between">
+                <span>{inv.statut}</span>
+                {statusStyle.button && (
+                  <button
+                    className="ml-2 px-3 py-1 rounded bg-white text-black text-sm font-semibold hover:opacity-80"
+                    onClick={() => alert(`${statusStyle.button} pour ${inv.responsable_prenom}`)}
+                  >
+                    {statusStyle.button}
+                  </button>
+                )}
               </div>
             </div>
           );

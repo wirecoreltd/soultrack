@@ -18,11 +18,12 @@ export default function SendEgliseLinkPopup({
   const [loading, setLoading] = useState(false);
 
   // ✅ Le bouton peut envoyer si tous les champs nécessaires sont remplis
-  const canSend =
-  superviseur?.prenom?.trim() &&
-  superviseur?.nom?.trim() &&
-  eglise?.nom?.trim() &&
-  superviseurEgliseId;
+ const canSend =
+  Boolean(superviseur?.prenom?.trim()) &&
+  Boolean(superviseur?.nom?.trim()) &&
+  Boolean(eglise?.nom?.trim()) &&
+  Boolean(superviseurEgliseId);
+
 
 
   const handleSend = async () => {

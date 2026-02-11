@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
-import Header from "../components/Header";
+import HeaderPages from "../components/HeaderPages";
 import { useRouter } from "next/router";
 import ProtectedRoute from "../components/ProtectedRoute";
 

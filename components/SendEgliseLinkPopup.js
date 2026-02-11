@@ -12,7 +12,6 @@ export default function SendEgliseLinkPopup({
 }) {
 
   const handleSend = async () => {
-
     if (!type) {
       alert("Veuillez sélectionner un mode d’envoi.");
       return;
@@ -23,56 +22,65 @@ export default function SendEgliseLinkPopup({
       return;
     }
 
-    // 🔹 Création invitation en base
-    const { data, error } = await supabase
-      .from("eglise_supervisions")
-      .insert([
-        {
-          superviseur_eglise_id: superviseur.eglise_id,
-          superviseur_branche_id: superviseur.branche_id,
-          responsable_prenom: responsable.prenom,
-          responsable_nom: responsable.nom,
-          eglise_nom: eglise.nom,
-          eglise_branche: eglise.branche,
-          statut: "pending"
-        }
-      ])
-      .select()
-      .single();
+    try {
+      // 🔹 Création de l'invitation en base
+      const { data, error } = await supabase
+        .from("eglise_supervisions")
+        .insert([
+          {
+            superviseur_eglise_id: superviseur.eglise_id,
+            superviseur_branche_id: superviseur.branche_id,
+            responsable_prenom: responsable.prenom,
+            responsable_nom: responsable.nom,
+            eglise_nom: eglise.nom,
+            eglise_branche: eglise.branche,
+            statut: "pending"
+          }
+        ])
+        .select()
+        .single();
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+      if (error) {
+        alert(error.message);
+        return;
+      }
 
-    const invitationToken = data.invitation_token;
+      const invitationToken = data.invitation_token;
 
-    const message = `
+      // 🔹 Message formaté
+      const message = `
 🙏 Bonjour ${responsable.prenom} ${responsable.nom},
 
-${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom}
-vous a envoyé une invitation afin que votre église soit placée sous sa supervision.
+${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom} 
+vous a envoyé une invitation pour que votre église soit placée sous sa supervision.
 
-Veuillez cliquer sur le lien ci-dessous pour accepter, refuser ou laisser l’invitation en attente :
+Cliquez sur le lien ci-dessous pour accepter, refuser ou laisser l’invitation en attente :
 
 https://soultrack-three.vercel.app/accept-invitation?token=${invitationToken}
 
 Que Dieu vous bénisse 🙏
 `;
 
-    if (type === "whatsapp") {
-      window.open(
-        `https://wa.me/?text=${encodeURIComponent(message)}`,
-        "_blank"
-      );
-    }
+      // 🔹 Envoi WhatsApp
+      if (type === "whatsapp") {
+        window.open(
+          `https://wa.me/?text=${encodeURIComponent(message)}`,
+          "_blank"
+        );
+      }
 
-    if (type === "email") {
-      window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
-    }
+      // 🔹 Envoi Email
+      if (type === "email") {
+        window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
+      }
 
-    alert("Invitation envoyée avec succès !");
-    onSuccess();
+      alert("Invitation envoyée avec succès !");
+      onSuccess();
+
+    } catch (err) {
+      console.error(err);
+      alert("Une erreur est survenue lors de l'envoi de l'invitation.");
+    }
   };
 
   return (

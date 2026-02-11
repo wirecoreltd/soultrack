@@ -3,10 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
+import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
-import Header from "../components/Header";
 
-// Définition des cartes par rôle
 const roleCards = {
   Administrateur: [
     { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#0E7490" },
@@ -37,16 +36,12 @@ export default function IndexPage() {
 
   useEffect(() => {
     const init = async () => {
-      // Vérifier session
       const { data } = await supabase.auth.getSession();
-
       if (!data?.session) {
-        // Pas connecté → signup
         router.replace("/SignupEglise");
         return;
       }
 
-      // Récupérer rôle stocké localement ou depuis Supabase
       const storedRoles = localStorage.getItem("userRole");
       if (storedRoles) {
         try {
@@ -59,7 +54,6 @@ export default function IndexPage() {
 
       setLoading(false);
     };
-
     init();
   }, [router]);
 
@@ -67,16 +61,13 @@ export default function IndexPage() {
     router.push(path.startsWith("/") ? path : "/" + path);
   };
 
-  if (loading) return null; // peut mettre un loader ici
+  if (loading) return null;
 
-  // Construire cartes à afficher
   let cardsToShow = [];
   if (roles.includes("Administrateur")) {
     Object.values(roleCards).forEach((cards) => {
       cards.forEach((card) => {
-        if (!cardsToShow.find((c) => c.path === card.path)) {
-          cardsToShow.push(card);
-        }
+        if (!cardsToShow.find((c) => c.path === card.path)) cardsToShow.push(card);
       });
     });
   } else {
@@ -84,20 +75,15 @@ export default function IndexPage() {
       const roleKey = role.trim();
       if (roleCards[roleKey]) {
         roleCards[roleKey].forEach((card) => {
-          if (!cardsToShow.find((c) => c.path === card.path)) {
-            cardsToShow.push(card);
-          }
+          if (!cardsToShow.find((c) => c.path === card.path)) cardsToShow.push(card);
         });
       }
     });
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
-      <Header />
+    <div className="min-h-screen flex flex-col items-center p-6 text-center space-y-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+      <HeaderPages />
 
       <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl">
         {cardsToShow.map((card) => (
@@ -117,7 +103,8 @@ export default function IndexPage() {
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         1 Corinthiens 12:14 ❤️
       </div>
-     <Footer />      
+
+      <Footer />
     </div>
   );
 }

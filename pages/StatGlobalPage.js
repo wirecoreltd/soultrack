@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
-import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
+import Footer from "../components/Footer";
 
 export default function StatGlobalPage() {
   return (
@@ -15,13 +15,26 @@ export default function StatGlobalPage() {
 }
 
 function StatGlobal() {
-  const [loading, setLoading] = useState(false);
-  const [dateDebut, setDateDebut] = useState("");
-  const [dateFin, setDateFin] = useState("");
-  const [stats, setStats] = useState(null);
-  const [superviseur, setSuperviseur] = useState({ eglise_id: null, branche_id: null });
+  const [superviseur, setSuperviseur] = useState({
+    eglise_id: null,
+    branche_id: null,
+  });
 
-  // 🔹 Charger l’église/branche du superviseur connecté
+  const [dateRange, setDateRange] = useState({
+    start: "",
+    end: "",
+  });
+
+  const [stats, setStats] = useState({
+    sumAttendance: {},
+    sumEvang: {},
+    serviteurs: 0,
+    servParMinistere: [],
+  });
+
+  const [loading, setLoading] = useState(true);
+
+  // 🔹 Charger superviseur connecté
   useEffect(() => {
     const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -33,157 +46,164 @@ function StatGlobal() {
         .eq("id", user.id)
         .single();
 
-      if (!error) setSuperviseur({ eglise_id: data.eglise_id, branche_id: data.branche_id });
+      if (!error && data) setSuperviseur({ eglise_id: data.eglise_id, branche_id: data.branche_id });
     };
     loadSuperviseur();
   }, []);
 
-  // 🔹 Charger les stats quand dateDebut/dateFin changent
-  useEffect(() => {
-    if (!dateDebut || !dateFin) return;
+  // 🔹 Charger statistiques
+  const fetchStats = async () => {
     if (!superviseur.eglise_id) return;
+    setLoading(true);
 
-    const fetchStats = async () => {
-      setLoading(true);
+    const { start, end } = dateRange;
 
-      // 🔹 Attendance
-      const { data: attData } = await supabase
+    try {
+      // --- Attendance ---
+      const { data: attData = [] } = await supabase
         .from("attendance")
-        .select("hommes, femmes, jeunes, enfants, connectes, nouveauxConvertis")
-        .gte("date", dateDebut)
-        .lte("date", dateFin)
+        .select("*")
         .eq("eglise_id", superviseur.eglise_id)
-        .eq("branche_id", superviseur.branche_id);
+        .eq("branche_id", superviseur.branche_id)
+        .gte("date", start || "1970-01-01")
+        .lte("date", end || "2100-12-31");
 
-      // 🔹 Évangélisation
-      const { data: evangData } = await supabase
+      const sumAttendance = attData.reduce(
+        (acc, r) => ({
+          hommes: acc.hommes + Number(r.hommes || 0),
+          femmes: acc.femmes + Number(r.femmes || 0),
+          jeunes: acc.jeunes + Number(r.jeunes || 0),
+          enfants: acc.enfants + Number(r.enfants || 0),
+          connectes: acc.connectes + Number(r.connectes || 0),
+          nouveauxConvertis: acc.nouveauxConvertis + Number(r.nouveauxConvertis || 0),
+        }),
+        { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveauxConvertis: 0 }
+      );
+
+      // --- Evangélisation ---
+      const { data: evangData = [] } = await supabase
         .from("rapport_evangelisation")
-        .select("hommes, femmes, priere, nouveau_converti, reconciliation, moissonneurs")
-        .gte("date", dateDebut)
-        .lte("date", dateFin)
+        .select("*")
         .eq("eglise_id", superviseur.eglise_id)
-        .eq("branche_id", superviseur.branche_id);
+        .eq("branche_id", superviseur.branche_id)
+        .gte("date", start || "1970-01-01")
+        .lte("date", end || "2100-12-31");
 
-      // 🔹 Serviteurs
-      const { data: serviteurs } = await supabase
+      const sumEvang = evangData.reduce(
+        (acc, r) => ({
+          hommes: acc.hommes + Number(r.hommes || 0),
+          femmes: acc.femmes + Number(r.femmes || 0),
+          priere: acc.priere + Number(r.priere || 0),
+          nouveau_converti: acc.nouveau_converti + Number(r.nouveau_converti || 0),
+          reconciliation: acc.reconciliation + Number(r.reconciliation || 0),
+          moissonneurs: acc.moissonneurs + Number(r.moissonneurs || 0),
+        }),
+        { hommes: 0, femmes: 0, priere: 0, nouveau_converti: 0, reconciliation: 0, moissonneurs: 0 }
+      );
+
+      // --- Serviteurs ---
+      const { data: servData = [] } = await supabase
         .from("membres_complets")
         .select("id, ministere")
         .eq("star", true)
         .eq("eglise_id", superviseur.eglise_id)
         .eq("branche_id", superviseur.branche_id);
 
-      // 🔹 Totaux
-      const sumAttendance = attData?.reduce((acc, r) => {
-        acc.hommes += r.hommes || 0;
-        acc.femmes += r.femmes || 0;
-        acc.jeunes += r.jeunes || 0;
-        acc.enfants += r.enfants || 0;
-        acc.connectes += r.connectes || 0;
-        acc.nouveauxConvertis += r.nouveauxConvertis || 0;
-        return acc;
-      }, { hommes:0, femmes:0, jeunes:0, enfants:0, connectes:0, nouveauxConvertis:0 });
-
-      const sumEvang = evangData?.reduce((acc, r) => {
-        acc.hommes += r.hommes || 0;
-        acc.femmes += r.femmes || 0;
-        acc.priere += r.priere || 0;
-        acc.nouveau_converti += r.nouveau_converti || 0;
-        acc.reconciliation += r.reconciliation || 0;
-        acc.moissonneurs += r.moissonneurs || 0;
-        return acc;
-      }, { hommes:0, femmes:0, priere:0, nouveau_converti:0, reconciliation:0, moissonneurs:0 });
-
-      // 🔹 Serviteurs par ministère
       const servParMinistere = {};
-      serviteurs?.forEach(s => {
+      servData.forEach((s) => {
         if (!s.ministere) return;
-        servParMinistere[s.ministere] = (servParMinistere[s.ministere] || 0) + 1;
+        if (!servParMinistere[s.ministere]) servParMinistere[s.ministere] = 0;
+        servParMinistere[s.ministere]++;
       });
 
-      setStats({ sumAttendance, sumEvang, totalServiteurs: serviteurs?.length || 0, servParMinistere });
+      setStats({
+        sumAttendance,
+        sumEvang,
+        serviteurs: servData.length,
+        servParMinistere: Object.entries(servParMinistere),
+      });
+    } catch (err) {
+      console.error(err);
+    }
 
-      setLoading(false);
-    };
+    setLoading(false);
+  };
 
+  useEffect(() => {
     fetchStats();
-  }, [dateDebut, dateFin, superviseur]);
+  }, [superviseur, dateRange]);
+
+  if (loading) return <p className="text-center mt-10 text-lg">Chargement des statistiques...</p>;
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699] text-white">
       <HeaderPages />
 
-      <h1 className="text-3xl font-bold mb-4">Statistiques Globales</h1>
+      <h1 className="text-3xl font-bold text-center mb-2 text-white">Statistiques Globales</h1>
 
-      <div className="mb-6 flex gap-4">
+      <div className="flex gap-4 my-4">
         <div>
-          <label className="font-semibold mr-2">Date de début :</label>
-          <input type="date" value={dateDebut} onChange={e=>setDateDebut(e.target.value)} className="rounded-xl px-3 py-2 text-black"/>
+          <label>Date de début</label>
+          <input
+            type="date"
+            className="px-3 py-2 rounded-xl text-black"
+            value={dateRange.start}
+            onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+          />
         </div>
         <div>
-          <label className="font-semibold mr-2">Date de fin :</label>
-          <input type="date" value={dateFin} onChange={e=>setDateFin(e.target.value)} className="rounded-xl px-3 py-2 text-black"/>
+          <label>Date de fin</label>
+          <input
+            type="date"
+            className="px-3 py-2 rounded-xl text-black"
+            value={dateRange.end}
+            onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+          />
         </div>
       </div>
 
-      {loading && <p>Chargement...</p>}
-
-      {stats && !loading && (
-        <div className="max-w-7xl w-full overflow-x-auto">
-          <table className="min-w-full bg-white text-black rounded-2xl shadow-lg overflow-hidden">
-            <thead className="bg-purple-600 text-white text-center">
-              <tr>
-                <th className="py-3 px-4 text-left">Statistique</th>
-                <th colSpan={6}>Attendance</th>
-                <th colSpan={6}>Évangélisation</th>
-              </tr>
-              <tr className="bg-purple-500 text-white text-center">
-                <th></th>
-                <th>Hommes</th>
-                <th>Femmes</th>
-                <th>Jeunes</th>
-                <th>Enfants</th>
-                <th>Connectés</th>
-                <th>Nouveaux convertis</th>
-                <th>Hommes</th>
-                <th>Femmes</th>
-                <th>Prières</th>
-                <th>Nouveaux convertis</th>
-                <th>Réconciliations</th>
-                <th>Moissonneurs</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="text-center border-b hover:bg-gray-100 transition-all bg-white/90">
-                <td className="py-2 px-4 font-medium">Totaux</td>
-                <td>{stats.sumAttendance.hommes}</td>
-                <td>{stats.sumAttendance.femmes}</td>
-                <td>{stats.sumAttendance.jeunes}</td>
-                <td>{stats.sumAttendance.enfants}</td>
-                <td>{stats.sumAttendance.connectes}</td>
-                <td>{stats.sumAttendance.nouveauxConvertis}</td>
-                <td>{stats.sumEvang.hommes}</td>
-                <td>{stats.sumEvang.femmes}</td>
-                <td>{stats.sumEvang.priere}</td>
-                <td>{stats.sumEvang.nouveau_converti}</td>
-                <td>{stats.sumEvang.reconciliation}</td>
-                <td>{stats.sumEvang.moissonneurs}</td>
-              </tr>
-              <tr className="text-center border-b hover:bg-gray-100 transition-all bg-white/90">
-                <td className="py-2 px-4 font-medium">Serviteurs</td>
-                <td colSpan={12}>{stats.totalServiteurs}</td>
-              </tr>
-              {Object.entries(stats.servParMinistere).map(([ministere, count]) => (
-                <tr key={ministere} className="text-center border-b hover:bg-gray-100 transition-all bg-white/90">
-                  <td className="py-2 px-4 font-medium">{ministere}</td>
-                  <td colSpan={12}>{count}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {!stats && !loading && <p className="mt-6 text-white/80 text-center">Sélectionnez une plage de dates pour afficher les statistiques.</p>}
+      {/* Tableau global */}
+      <div className="overflow-x-auto w-full max-w-6xl mt-4 bg-white text-black rounded-3xl p-6 shadow-lg">
+        <table className="min-w-full text-sm">
+          <thead className="bg-blue-600 text-white">
+            <tr>
+              <th className="py-2 px-4">Type</th>
+              <th className="py-2 px-4">Hommes</th>
+              <th className="py-2 px-4">Femmes</th>
+              <th className="py-2 px-4">Jeunes / Enfants</th>
+              <th className="py-2 px-4">Connectés / Prière</th>
+              <th className="py-2 px-4">Nouveaux convertis / Réconciliation</th>
+              <th className="py-2 px-4">Moissonneurs</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="text-center bg-gray-100 text-black">
+              <td className="py-2 px-4 font-medium">Attendance</td>
+              <td className="py-2 px-4">{stats.sumAttendance?.hommes || 0}</td>
+              <td className="py-2 px-4">{stats.sumAttendance?.femmes || 0}</td>
+              <td className="py-2 px-4">{(stats.sumAttendance?.jeunes || 0) + (stats.sumAttendance?.enfants || 0)}</td>
+              <td className="py-2 px-4">{stats.sumAttendance?.connectes || 0}</td>
+              <td className="py-2 px-4">{stats.sumAttendance?.nouveauxConvertis || 0}</td>
+              <td className="py-2 px-4">—</td>
+            </tr>
+            <tr className="text-center bg-gray-50 text-black">
+              <td className="py-2 px-4 font-medium">Évangélisation</td>
+              <td className="py-2 px-4">{stats.sumEvang?.hommes || 0}</td>
+              <td className="py-2 px-4">{stats.sumEvang?.femmes || 0}</td>
+              <td className="py-2 px-4">—</td>
+              <td className="py-2 px-4">{stats.sumEvang?.priere || 0}</td>
+              <td className="py-2 px-4">{stats.sumEvang?.nouveau_converti || 0} / {stats.sumEvang?.reconciliation || 0}</td>
+              <td className="py-2 px-4">{stats.sumEvang?.moissonneurs || 0}</td>
+            </tr>
+            <tr className="text-center bg-gray-100 text-black">
+              <td className="py-2 px-4 font-medium">Serviteurs</td>
+              <td colSpan={6}>
+                Total : {stats.serviteurs} | Par ministère : {stats.servParMinistere.map(([min, nb]) => `${min}: ${nb}`).join(" / ")}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <Footer />
     </div>

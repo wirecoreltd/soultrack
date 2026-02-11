@@ -116,9 +116,9 @@ export default function LinkEglise() {
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
 
-      <h3 className="text-2xl font-semibold text-white text-center mt-8 mb-3">
+      <h4 className="text-2xl font-semibold text-white text-center mt-6 mb-2">
         Envoyer ne inviation pour relier une eglise    
-      </h3> 
+      </h4> 
   
       {/* FORMULAIRE */}
       <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4">
@@ -190,9 +190,9 @@ export default function LinkEglise() {
         />
       </div>
 
-        <h3 className="text-2xl font-semibold text-white mt-14 mb-2 text-center">
+        <h4 className="text-2xl font-semibold text-white mt-14 mb-2 text-center">
           Liste des Églises Supervisées
-        </h3>
+        </h4>
 
       {/* TABLE DES INVITATIONS */}
       <div className="w-full max-w-5xl mt-10">

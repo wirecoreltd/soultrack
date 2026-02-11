@@ -195,7 +195,8 @@ export default function LinkEglise() {
         <div className="hidden sm:flex text-sm font-semibold uppercase border-b border-white/40 pb-2">
           <div className="flex-[2]">Église</div>
           <div className="flex-[2]">Branche</div>
-          <div className="flex-[2]">Responsable / Statut</div>
+          <div className="flex-[2]">Responsable</div>
+          <div className="flex-[2]">Statut</div>
         </div>
 
         {invitations.map((inv) => {
@@ -233,9 +234,9 @@ export default function LinkEglise() {
             >
               <div className="flex-[2]">{inv.eglise_nom}</div>
               <div className="flex-[2]">{inv.eglise_branche}</div>
+              <div className="flex-[2]">{inv.responsable_prenom} {inv.responsable_nom}</div>
               <div className="flex-[2] flex items-center">
-                {inv.responsable_prenom} {inv.responsable_nom}
-                <span className="ml-2 text-xs bg-black/40 px-2 py-1 rounded">
+                <span className="ml-0 text-xs bg-black/40 px-2 py-1 rounded">
                   {inv.statut}
                 </span>
                 {actionButton}

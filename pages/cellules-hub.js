@@ -127,6 +127,7 @@ function CellulesHubContent() {
           La famille est le plus grand trésor. Prenez soin les uns des autres avec amour et patience. <br />
           1 Corinthiens 12:14 ❤️
         </div>
+          <Footer />
       </div>
     </AccessGuard>
   );

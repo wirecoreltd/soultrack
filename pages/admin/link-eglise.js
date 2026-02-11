@@ -176,7 +176,7 @@ export default function LinkEglise() {
       <div className="h-10" />
 
       {/* TITRE TABLE */}
-      <h4 className="text-2xl font-bold mb-2 mt-4 text-center w-full max-w-5xl">
+      <h4 className="text-2xl font-bold mt-4 text-center w-full max-w-5xl">
         Liste des églises supervisées
       </h4>
 

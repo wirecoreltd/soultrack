@@ -1,4 +1,3 @@
-// pages/link-eglise.js
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,10 +9,15 @@ export default function LinkEglise() {
   const [superviseur, setSuperviseur] = useState({
     prenom: "",
     nom: "",
-    email: "",
-    telephone: "",
     eglise_id: null,
-    branche_id: null
+    branche_id: null,
+    eglise_nom: "",
+    branche_nom: ""
+  });
+
+  const [responsable, setResponsable] = useState({
+    prenom: "",
+    nom: ""
   });
 
   const [eglise, setEglise] = useState({
@@ -21,163 +25,109 @@ export default function LinkEglise() {
     branche: ""
   });
 
-  const [canal, setCanal] = useState("whatsapp");
+  const [canal, setCanal] = useState("");
   const [invitations, setInvitations] = useState([]);
-  const [filteredInvitations, setFilteredInvitations] = useState([]);
 
-  // 🔹 Récupérer automatiquement l'église et la branche du superviseur
+  // 🔹 Charger superviseur connecté automatiquement
   useEffect(() => {
-  const loadSuperviseur = async () => {
-    try {
-      // 🔹 1. Récupérer l'utilisateur connecté
-      const { data: userData, error: userError } = await supabase.auth.getUser();
+    const loadSuperviseur = async () => {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
 
-      if (userError) throw userError;
-      if (!userData?.user) {
-        console.error("Aucun utilisateur connecté");
-        return;
-      }
+      if (!user) return;
 
-      const userId = userData.user.id;
-
-      // 🔹 2. Charger son profil
       const { data, error } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id, prenom, nom, email, telephone")
-        .eq("id", userId)
+        .select(`
+          prenom,
+          nom,
+          eglise_id,
+          branche_id,
+          eglises ( nom ),
+          branches ( nom )
+        `)
+        .eq("id", user.id)
         .single();
 
-      if (error) throw error;
-      if (!data) {
-        console.error("Profil non trouvé");
+      if (error) {
+        console.error("Erreur superviseur:", error.message);
         return;
       }
 
       setSuperviseur({
-        prenom: data.prenom || "",
-        nom: data.nom || "",
-        email: data.email || "",
-        telephone: data.telephone || "",
+        prenom: data.prenom,
+        nom: data.nom,
         eglise_id: data.eglise_id,
-        branche_id: data.branche_id
+        branche_id: data.branche_id,
+        eglise_nom: data.eglises?.nom || "",
+        branche_nom: data.branches?.nom || ""
       });
+    };
 
-      console.log("Superviseur chargé :", data);
-
-    } catch (err) {
-      console.error("Erreur récupération superviseur:", err.message);
-    }
-  };
-
-  loadSuperviseur();
-}, []);
-
+    loadSuperviseur();
+  }, []);
 
   // 🔹 Charger invitations du superviseur
   const loadInvitations = async () => {
     if (!superviseur.eglise_id) return;
-    try {
-      const { data, error } = await supabase
-        .from("eglise_supervisions")
-        .select("*")
-        .eq("superviseur_eglise_id", superviseur.eglise_id)
-        .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setInvitations(data || []);
-    } catch (err) {
-      console.error("Erreur chargement invitations:", err.message);
-    }
+    const { data, error } = await supabase
+      .from("eglise_supervisions")
+      .select("*")
+      .eq("superviseur_eglise_id", superviseur.eglise_id)
+      .order("created_at", { ascending: false });
+
+    if (!error) setInvitations(data || []);
   };
 
   useEffect(() => {
     loadInvitations();
   }, [superviseur.eglise_id]);
 
-  // 🔥 Filtrage automatique
-  useEffect(() => {
-    let filtered = invitations;
-
-    if (eglise.nom.trim() !== "") {
-      filtered = filtered.filter((inv) =>
-        inv.eglise_nom?.toLowerCase().includes(eglise.nom.toLowerCase())
-      );
-    }
-
-    if (eglise.branche.trim() !== "") {
-      filtered = filtered.filter((inv) =>
-        inv.eglise_branche?.toLowerCase().includes(eglise.branche.toLowerCase())
-      );
-    }
-
-    setFilteredInvitations(filtered);
-  }, [eglise.nom, eglise.branche, invitations]);
-
   return (
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
 
-      <h1 className="text-4xl font-bold mb-4 text-center">Relier une Église</h1>
-      <p className="text-center max-w-2xl mb-6">
-        Ici vous pouvez envoyer des invitations pour relier les églises que vous supervisez.
-        Les églises enfants ne voient aucune autre église sur la plateforme.
-        Seul le superviseur peut envoyer l’invitation.
-      </p>
+      <h1 className="text-4xl font-bold mb-6 text-center">
+        Relier une Église
+      </h1>
 
       {/* FORMULAIRE */}
       <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4">
-        {/* Responsable */}
+
+        {/* Responsable qui reçoit */}
         <div>
-          <label className="font-semibold">Responsable Prénom</label>
+          <label className="font-semibold">Prénom du responsable</label>
           <input
             className="w-full border rounded-xl px-3 py-2"
-            value={superviseur.prenom}
+            value={responsable.prenom}
             onChange={(e) =>
-              setSuperviseur({ ...superviseur, prenom: e.target.value })
+              setResponsable({ ...responsable, prenom: e.target.value })
             }
           />
         </div>
 
         <div>
-          <label className="font-semibold">Responsable Nom</label>
+          <label className="font-semibold">Nom du responsable</label>
           <input
             className="w-full border rounded-xl px-3 py-2"
-            value={superviseur.nom}
+            value={responsable.nom}
             onChange={(e) =>
-              setSuperviseur({ ...superviseur, nom: e.target.value })
+              setResponsable({ ...responsable, nom: e.target.value })
             }
           />
         </div>
 
+        {/* Église à superviser */}
         <div>
-          <label className="font-semibold">Email</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2"
-            value={superviseur.email}
-            onChange={(e) =>
-              setSuperviseur({ ...superviseur, email: e.target.value })
-            }
-          />
-        </div>
-
-        <div>
-          <label className="font-semibold">Téléphone</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2"
-            value={superviseur.telephone}
-            onChange={(e) =>
-              setSuperviseur({ ...superviseur, telephone: e.target.value })
-            }
-          />
-        </div>
-
-        {/* Église */}
-        <div>
-          <label className="font-semibold">Église</label>
+          <label className="font-semibold">Nom de l'Église</label>
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={eglise.nom}
-            onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
+            onChange={(e) =>
+              setEglise({ ...eglise, nom: e.target.value })
+            }
           />
         </div>
 
@@ -186,15 +136,19 @@ export default function LinkEglise() {
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={eglise.branche}
-            onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
+            onChange={(e) =>
+              setEglise({ ...eglise, branche: e.target.value })
+            }
           />
         </div>
 
+        {/* Mode d’envoi */}
         <select
           className="w-full border rounded-xl px-3 py-2"
           value={canal}
           onChange={(e) => setCanal(e.target.value)}
         >
+          <option value="">-- Sélectionnez le mode d’envoi --</option>
           <option value="whatsapp">WhatsApp</option>
           <option value="email">Email</option>
         </select>
@@ -203,31 +157,24 @@ export default function LinkEglise() {
           label="Envoyer l'invitation"
           type={canal}
           superviseur={superviseur}
+          responsable={responsable}
           eglise={eglise}
-          superviseurEgliseId={superviseur.eglise_id}
-          superviseurBrancheId={superviseur.branche_id}
           onSuccess={loadInvitations}
         />
       </div>
 
-      {/* TABLE FILTRÉE */}
+      {/* TABLE */}
       <div className="w-full max-w-5xl mt-10">
-        <div className="hidden sm:flex text-sm font-semibold uppercase border-b border-white/40 pb-2">
-          <div className="flex-[2]">Église</div>
-          <div className="flex-[2]">Branche / Région</div>
-          <div className="flex-[2]">Responsable / Statut</div>
-        </div>
-
-        {filteredInvitations.map((inv) => (
+        {invitations.map((inv) => (
           <div
             key={inv.id}
-            className="flex px-2 py-2 bg-white/10 rounded-lg mt-2"
+            className="flex px-4 py-3 bg-white/10 rounded-lg mt-2"
           >
-            <div className="flex-[2]">{inv.eglise_nom || "—"}</div>
-            <div className="flex-[2]">{inv.eglise_branche || "—"}</div>
+            <div className="flex-[2]">{inv.eglise_nom}</div>
+            <div className="flex-[2]">{inv.eglise_branche}</div>
             <div className="flex-[2]">
               {inv.responsable_prenom} {inv.responsable_nom}
-              <span className="ml-2 text-xs bg-black/30 px-2 py-1 rounded">
+              <span className="ml-2 text-xs bg-black/40 px-2 py-1 rounded">
                 {inv.statut}
               </span>
             </div>

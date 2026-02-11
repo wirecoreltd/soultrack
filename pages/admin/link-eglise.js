@@ -68,7 +68,7 @@ export default function LinkEglise() {
     loadSuperviseur();
   }, []);
 
-  // 🔹 Charger invitations du superviseur
+  // 🔹 Charger invitations du superviseur uniquement pour ses églises
   const loadInvitations = async () => {
     if (!superviseur.eglise_id) return;
 
@@ -163,7 +163,7 @@ export default function LinkEglise() {
         />
       </div>
 
-      {/* TABLE */}
+      {/* TABLE DES INVITATIONS */}
       <div className="w-full max-w-5xl mt-10">
         {invitations.map((inv) => (
           <div

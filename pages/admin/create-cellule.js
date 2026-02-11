@@ -227,9 +227,11 @@ function CreateCelluleContent() {
 }
  export default function CreateCellulePage() {
   return (
+    <div>
     <ProtectedRoute allowedRoles={["Administrateur", "ResponsableCellule", "SuperviseurCellule"]}>
       <CreateCelluleContent />
     </ProtectedRoute>
    <Footer />
+    </div>
   );
 }

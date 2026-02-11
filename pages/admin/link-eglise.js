@@ -103,57 +103,61 @@ export default function LinkEglise() {
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
 
-      <h4 className="text-2xl font-bold mb-6 text-center">
+      <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
         Envoyer une invitation pour relier une église
       </h4>
 
       {/* FORMULAIRE */}
-      <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4">
+      <div className="w-full max-w-5xl bg-white text-black rounded-2xl shadow-lg p-6 space-y-4 mb-10">
 
         {/* Responsable qui reçoit */}
-        <div>
-          <label className="font-semibold">Prénom du responsable</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2"
-            value={responsable.prenom}
-            onChange={(e) =>
-              setResponsable({ ...responsable, prenom: e.target.value })
-            }
-          />
-        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="font-semibold">Prénom du responsable</label>
+            <input
+              className="w-full border rounded-xl px-3 py-2"
+              value={responsable.prenom}
+              onChange={(e) =>
+                setResponsable({ ...responsable, prenom: e.target.value })
+              }
+            />
+          </div>
 
-        <div>
-          <label className="font-semibold">Nom du responsable</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2"
-            value={responsable.nom}
-            onChange={(e) =>
-              setResponsable({ ...responsable, nom: e.target.value })
-            }
-          />
+          <div>
+            <label className="font-semibold">Nom du responsable</label>
+            <input
+              className="w-full border rounded-xl px-3 py-2"
+              value={responsable.nom}
+              onChange={(e) =>
+                setResponsable({ ...responsable, nom: e.target.value })
+              }
+            />
+          </div>
         </div>
 
         {/* Église à superviser */}
-        <div>
-          <label className="font-semibold">Nom de l'Église</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2"
-            value={eglise.nom}
-            onChange={(e) =>
-              setEglise({ ...eglise, nom: e.target.value })
-            }
-          />
-        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="font-semibold">Nom de l'Église</label>
+            <input
+              className="w-full border rounded-xl px-3 py-2"
+              value={eglise.nom}
+              onChange={(e) =>
+                setEglise({ ...eglise, nom: e.target.value })
+              }
+            />
+          </div>
 
-        <div>
-          <label className="font-semibold">Branche / Région</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2"
-            value={eglise.branche}
-            onChange={(e) =>
-              setEglise({ ...eglise, branche: e.target.value })
-            }
-          />
+          <div>
+            <label className="font-semibold">Branche / Région</label>
+            <input
+              className="w-full border rounded-xl px-3 py-2"
+              value={eglise.branche}
+              onChange={(e) =>
+                setEglise({ ...eglise, branche: e.target.value })
+              }
+            />
+          </div>
         </div>
 
         {/* Mode d’envoi */}
@@ -178,17 +182,17 @@ export default function LinkEglise() {
       </div>
 
       {/* TITRE TABLE */}
-      <h4 className="text-xl font-semibold mt-10 mb-4 w-full max-w-5xl">
+      <h4 className="text-2xl font-bold mb-4 text-center w-full max-w-5xl">
         Liste des églises supervisées
       </h4>
 
       {/* TABLE */}
       <div className="w-full max-w-5xl">
-        <div className="flex text-sm font-semibold uppercase border-b border-white/40 pb-2">
-          <div className="flex-[2]">Église</div>
-          <div className="flex-[2]">Branche</div>
-          <div className="flex-[2]">Responsable</div>
-          <div className="flex-[2]">Statut</div>
+        <div className="grid grid-cols-4 text-sm font-semibold uppercase border-b border-white/40 pb-2 text-left gap-2">
+          <div>Église</div>
+          <div>Branche</div>
+          <div>Responsable</div>
+          <div>Statut</div>
         </div>
 
         {invitations.map((inv) => {
@@ -197,16 +201,16 @@ export default function LinkEglise() {
           return (
             <div
               key={inv.id}
-              className={`flex px-4 py-3 rounded-lg mt-2 bg-white/10 ${statusStyle.border}`}
+              className={`grid grid-cols-4 gap-2 px-4 py-3 rounded-lg mt-2 bg-white/10 ${statusStyle.border} items-center`}
             >
-              <div className="flex-[2]">{inv.eglise_nom}</div>
-              <div className="flex-[2]">{inv.eglise_branche}</div>
-              <div className="flex-[2]">{inv.responsable_prenom} {inv.responsable_nom}</div>
-              <div className="flex-[2] flex items-center justify-between">
-                <span>{inv.statut}</span>
+              <div>{inv.eglise_nom}</div>
+              <div>{inv.eglise_branche}</div>
+              <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
+              <div className="flex items-center justify-start">
+                <span className="mr-2">{inv.statut}</span>
                 {statusStyle.button && (
                   <button
-                    className={`ml-2 px-3 py-1 text-orange-500 font-semibold text-sm hover:opacity-80`}
+                    className={`text-orange-500 font-semibold text-sm hover:opacity-80`}
                     onClick={() => alert(`${statusStyle.button} pour ${inv.responsable_prenom}`)}
                   >
                     {statusStyle.button}

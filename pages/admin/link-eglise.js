@@ -85,6 +85,33 @@ export default function LinkEglise() {
     loadInvitations();
   }, [superviseur.eglise_id]);
 
+  // 🔹 Renvoyer invitation ou rappel avec confirmation
+  const handleResend = async (invitation) => {
+    const actionText =
+      invitation.statut === "refusé" ? "renvoyer cette invitation" : "envoyer un rappel";
+
+    const confirmed = window.confirm(
+      `Voulez-vous vraiment ${actionText} pour ${invitation.responsable_prenom} ${invitation.responsable_nom} ?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const { error } = await supabase
+        .from("eglise_supervisions")
+        .update({ statut: "pending" })
+        .eq("id", invitation.id);
+
+      if (error) throw error;
+
+      alert("Action effectuée avec succès !");
+      loadInvitations();
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de l'action.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
@@ -165,21 +192,57 @@ export default function LinkEglise() {
 
       {/* TABLE DES INVITATIONS */}
       <div className="w-full max-w-5xl mt-10">
-        {invitations.map((inv) => (
-          <div
-            key={inv.id}
-            className="flex px-4 py-3 bg-white/10 rounded-lg mt-2"
-          >
-            <div className="flex-[2]">{inv.eglise_nom}</div>
-            <div className="flex-[2]">{inv.eglise_branche}</div>
-            <div className="flex-[2]">
-              {inv.responsable_prenom} {inv.responsable_nom}
-              <span className="ml-2 text-xs bg-black/40 px-2 py-1 rounded">
-                {inv.statut}
-              </span>
+        <div className="hidden sm:flex text-sm font-semibold uppercase border-b border-white/40 pb-2">
+          <div className="flex-[2]">Église</div>
+          <div className="flex-[2]">Branche</div>
+          <div className="flex-[2]">Responsable / Statut</div>
+        </div>
+
+        {invitations.map((inv) => {
+          let borderColor = "border-gray-400";
+          let actionButton = null;
+
+          if (inv.statut === "accepté") borderColor = "border-green-500";
+          if (inv.statut === "refusé") {
+            borderColor = "border-red-500";
+            actionButton = (
+              <button
+                onClick={() => handleResend(inv)}
+                className="ml-4 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
+              >
+                Renvoyer invitation
+              </button>
+            );
+          }
+          if (inv.statut === "pending") {
+            borderColor = "border-gray-400";
+            actionButton = (
+              <button
+                onClick={() => handleResend(inv)}
+                className="ml-4 px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-black rounded"
+              >
+                Envoyer rappel
+              </button>
+            );
+          }
+
+          return (
+            <div
+              key={inv.id}
+              className={`flex px-4 py-3 bg-white/10 rounded-lg mt-2 border-l-4 ${borderColor}`}
+            >
+              <div className="flex-[2]">{inv.eglise_nom}</div>
+              <div className="flex-[2]">{inv.eglise_branche}</div>
+              <div className="flex-[2] flex items-center">
+                {inv.responsable_prenom} {inv.responsable_nom}
+                <span className="ml-2 text-xs bg-black/40 px-2 py-1 rounded">
+                  {inv.statut}
+                </span>
+                {actionButton}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

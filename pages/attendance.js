@@ -2,9 +2,7 @@
 
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
 import HeaderPages from "../components/HeaderPages";
-import { useRouter } from "next/router";
 import ProtectedRoute from "../components/ProtectedRoute";
 
 // Wrapper sécurisé
@@ -16,13 +14,14 @@ export default function AttendancePage() {
   );
 }
 
-// Composant enfant avec toute la logique
+// Composant enfant
 function Attendance() {
-  const router = useRouter();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
 
-    const [formData, setFormData] = useState({
+  const [superviseur, setSuperviseur] = useState({ eglise_id: null, branche_id: null });
+
+  const [formData, setFormData] = useState({
     date: "",
     hommes: 0,
     femmes: 0,
@@ -36,15 +35,37 @@ function Attendance() {
   const [editId, setEditId] = useState(null);
   const [message, setMessage] = useState("");
 
+  // 🔹 Charger eglise/branche du superviseur connecté
+  useEffect(() => {
+    const loadSuperviseur = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
 
-  // 🔹 Fetch reports
+      if (error) console.error("Erreur fetch superviseur :", error);
+      else setSuperviseur({ eglise_id: data.eglise_id, branche_id: data.branche_id });
+    };
+
+    loadSuperviseur();
+  }, []);
+
+  // 🔹 Fetch reports filtré par eglise/branche
   const fetchReports = async () => {
+    if (!superviseur.eglise_id || !superviseur.branche_id) return;
+
     setLoading(true);
     const { data, error } = await supabase
       .from("attendance")
       .select("*")
+      .eq("eglise_id", superviseur.eglise_id)
+      .eq("branche_id", superviseur.branche_id)
       .order("date", { ascending: false });
+
     if (error) console.error("❌ Erreur fetch:", error);
     else setReports(data || []);
     setLoading(false);
@@ -52,7 +73,7 @@ function Attendance() {
 
   useEffect(() => {
     fetchReports();
-  }, []);
+  }, [superviseur]);
 
   // 🔹 Handle form change
   const handleChange = (e) => {
@@ -66,10 +87,16 @@ function Attendance() {
     setMessage("⏳ Enregistrement en cours...");
 
     try {
+      const rapportAvecEglise = {
+        ...formData,
+        eglise_id: superviseur.eglise_id,
+        branche_id: superviseur.branche_id,
+      };
+
       if (editId) {
         const { data, error } = await supabase
           .from("attendance")
-          .update(formData)
+          .update(rapportAvecEglise)
           .eq("id", editId)
           .select();
         if (error) throw error;
@@ -77,7 +104,7 @@ function Attendance() {
       } else {
         const { data, error } = await supabase
           .from("attendance")
-          .insert([formData])
+          .insert([rapportAvecEglise])
           .select();
         if (error) throw error;
         setMessage("✅ Rapport ajouté !");
@@ -120,7 +147,10 @@ function Attendance() {
   // 🔹 Delete report
   const handleDelete = async (id) => {
     if (!confirm("Voulez-vous vraiment supprimer ce rapport ?")) return;
-    const { error } = await supabase.from("attendance").delete().eq("id", id);
+    const { error } = await supabase
+      .from("attendance")
+      .delete()
+      .eq("id", id);
     if (error) console.error("❌ Erreur delete:", error);
     else fetchReports();
   };

@@ -10,6 +10,7 @@ export default function HeaderPages() {
   const [prenom, setPrenom] = useState("Utilisateur");
   const [eglise, setEglise] = useState("Église Principale");
   const [branche, setBranche] = useState("Maurice");
+  const [superviseur, setSuperviseur] = useState(""); // 🔹 superviseur affiché
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,6 +49,27 @@ export default function HeaderPages() {
           if (!brancheError && brancheData) setBranche(brancheData.nom);
         }
 
+        // 🔹 Récupérer le superviseur de cette église
+        if (profile?.eglise_id) {
+          const { data: supervisionData, error: supervisionError } = await supabase
+            .from("eglise_supervisions")
+            .select(`
+              superviseur_eglise_id,
+              superviseur_branche_id,
+              eglises(nom),
+              branches(nom)
+            `)
+            .eq("supervisee_eglise_id", profile.eglise_id)
+            .eq("statut", "accepté")
+            .single();
+
+          if (!supervisionError && supervisionData) {
+            const supEglise = supervisionData.eglises?.nom || "";
+            const supBranche = supervisionData.branches?.nom || "";
+            setSuperviseur(`Sous la supervision de ${supEglise} - ${supBranche}`);
+          }
+        }
+
       } catch (err) {
         console.error("Erreur récupération profil :", err);
       } finally {
@@ -83,11 +105,13 @@ export default function HeaderPages() {
       </div>
 
       {/* User info en haut à droite */}
-      <div className="flex justify-end flex-col text-right space-y-1 mb-6">
+      <div className="flex justify-end flex-col text-right space-y-1 mb-2">
         <p className="text-white text-sm">
-          Connecté : {" "}
-          <span className="font-semibold">{loading ? "..." : prenom}</span>
+          Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
         </p>
+        {superviseur && (
+          <p className="text-white text-xs italic">{superviseur}</p>
+        )}
       </div>
 
       {/* Logo centré */}

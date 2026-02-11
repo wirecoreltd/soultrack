@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
+import Footer from "../components/Footer";
 import Header from "../components/Header";
 
 // Définition des cartes par rôle
@@ -116,6 +117,7 @@ export default function IndexPage() {
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         1 Corinthiens 12:14 ❤️
       </div>
+     <Footer />      
     </div>
   );
 }

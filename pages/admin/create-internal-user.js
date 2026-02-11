@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@supabase/supabase-js";
 import ProtectedRoute from "../../components/ProtectedRoute";
-import Footer from "../components/Footer";
+import Footer from "../../components/Footer";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -154,6 +154,7 @@ function CreateInternalUserContent() {
           padding: 12px;
         }
       `}</style>
+          <Footer />
     </div>
   );
 }
@@ -165,7 +166,6 @@ export default function CreateInternalUserPage() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur"]}>
       <CreateInternalUserContent />
-    </ProtectedRoute>
-  <Footer />
+    </ProtectedRoute>  
   );
 }

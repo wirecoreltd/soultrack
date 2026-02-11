@@ -184,7 +184,7 @@ export default function LinkEglise() {
       <div className="w-full max-w-5xl">
 
         {/* HEADER */}
-        <div className="grid grid-cols-4 text-sm font-semibold uppercase border-b border-white/40 pb-2">
+        <div className="grid grid-cols-4 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
           <div>Église</div>
           <div>Branche</div>
           <div>Responsable</div>

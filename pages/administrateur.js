@@ -8,6 +8,7 @@ import SendLinkPopup from "../components/SendLinkPopup";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import HeaderPages from "../components/HeaderPages";
+import Footer from "../components/Footer";
 
 export default function Administrateur() {
   const router = useRouter();
@@ -107,6 +108,7 @@ export default function Administrateur() {
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         1 Corinthiens 12:14 ❤️
       </div>
+        <Footer />
     </div>
   );
 }

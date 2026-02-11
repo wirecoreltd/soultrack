@@ -162,11 +162,12 @@ function CreateInternalUserContent() {
 /* =========================
    PAGE PROTÉGÉE
 ========================= */
-export default function CreateInternalUserPage() {
-  return (
+return (
+  <div>
     <ProtectedRoute allowedRoles={["Administrateur"]}>
-      <CreateInternalUserContent />
+      <CreateCelluleContent />
+    </ProtectedRoute>
     <Footer />
-    </ProtectedRoute>  
-  );
+  </div>
+);
 }

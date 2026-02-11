@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
+import Footer from "../components/Footer";
 
 export default function AcceptInvitationPage() {
   const [token, setToken] = useState("");
@@ -111,6 +112,7 @@ export default function AcceptInvitationPage() {
           {error && <p className="text-red-500 mt-4">{error}</p>}
         </>
       )}
+<Footer />
     </div>
   );
 }

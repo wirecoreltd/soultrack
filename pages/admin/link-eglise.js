@@ -211,7 +211,7 @@ export default function LinkEglise() {
             actionButton = (
               <button
                 onClick={() => handleResend(inv)}
-                className="ml-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
+                className="hidden sm:flex text-sm uppercase border-b border-white/40 pb-2"
               >
                 Renvoyer invitation
               </button>
@@ -222,7 +222,7 @@ export default function LinkEglise() {
             actionButton = (
               <button
                 onClick={() => handleResend(inv)}
-                className="ml-2 px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-black rounded"
+                className="hidden sm:flex text-sm uppercase border-b border-white/40 pb-2"
               >
                 Envoyer rappel
               </button>

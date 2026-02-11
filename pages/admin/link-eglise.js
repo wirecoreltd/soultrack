@@ -28,7 +28,7 @@ export default function LinkEglise() {
   const [canal, setCanal] = useState("");
   const [invitations, setInvitations] = useState([]);
 
-  // 🔹 Charger superviseur connecté automatiquement
+  // 🔹 Charger superviseur connecté
   useEffect(() => {
     const loadSuperviseur = async () => {
       const {
@@ -50,25 +50,22 @@ export default function LinkEglise() {
         .eq("id", user.id)
         .single();
 
-      if (error) {
-        console.error("Erreur superviseur:", error.message);
-        return;
+      if (!error) {
+        setSuperviseur({
+          prenom: data.prenom,
+          nom: data.nom,
+          eglise_id: data.eglise_id,
+          branche_id: data.branche_id,
+          eglise_nom: data.eglises?.nom || "",
+          branche_nom: data.branches?.nom || ""
+        });
       }
-
-      setSuperviseur({
-        prenom: data.prenom,
-        nom: data.nom,
-        eglise_id: data.eglise_id,
-        branche_id: data.branche_id,
-        eglise_nom: data.eglises?.nom || "",
-        branche_nom: data.branches?.nom || ""
-      });
     };
 
     loadSuperviseur();
   }, []);
 
-  // 🔹 Charger invitations du superviseur
+  // 🔹 Charger invitations
   const loadInvitations = async () => {
     if (!superviseur.eglise_id) return;
 
@@ -85,17 +82,17 @@ export default function LinkEglise() {
     loadInvitations();
   }, [superviseur.eglise_id]);
 
-  // 🔹 Style bordure et bouton selon statut
+  // 🔹 Style selon statut
   const getStatusStyle = (statut) => {
-    switch (statut.toLowerCase()) {
+    switch (statut?.toLowerCase()) {
       case "accepted":
-        return { border: "border-l-4 border-green-500", button: null, bg: "bg-green-100/20" };
+        return { border: "border-l-4 border-green-600", button: null };
       case "refused":
-        return { border: "border-l-4 border-red-500", button: "Renvoyer invitation", bg: "bg-red-100/20" };
+        return { border: "border-l-4 border-red-600", button: "Renvoyer invitation" };
       case "pending":
-        return { border: "border-l-4 border-gray-400", button: "Envoyer rappel", bg: "bg-gray-100/20" };
+        return { border: "border-l-4 border-gray-400", button: "Envoyer rappel" };
       default:
-        return { border: "border-l-4 border-gray-300", button: null, bg: "bg-gray-50/10" };
+        return { border: "border-l-4 border-gray-300", button: null };
     }
   };
 
@@ -103,58 +100,56 @@ export default function LinkEglise() {
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
 
+      {/* TITRE FORMULAIRE */}
       <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
         Envoyer une invitation pour relier une église
       </h4>
 
-      {/* FORMULAIRE */}
-      <div className="w-full max-w-5xl bg-white text-black rounded-2xl shadow-lg p-6 space-y-4 mb-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="font-semibold">Prénom du responsable</label>
-            <input
-              className="w-full border rounded-xl px-3 py-2"
-              value={responsable.prenom}
-              onChange={(e) =>
-                setResponsable({ ...responsable, prenom: e.target.value })
-              }
-            />
-          </div>
+      {/* FORMULAIRE (vertical comme demandé) */}
+      <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4 mb-10">
 
-          <div>
-            <label className="font-semibold">Nom du responsable</label>
-            <input
-              className="w-full border rounded-xl px-3 py-2"
-              value={responsable.nom}
-              onChange={(e) =>
-                setResponsable({ ...responsable, nom: e.target.value })
-              }
-            />
-          </div>
+        <div>
+          <label className="font-semibold">Prénom du responsable</label>
+          <input
+            className="w-full border rounded-xl px-3 py-2"
+            value={responsable.prenom}
+            onChange={(e) =>
+              setResponsable({ ...responsable, prenom: e.target.value })
+            }
+          />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="font-semibold">Nom de l'Église</label>
-            <input
-              className="w-full border rounded-xl px-3 py-2"
-              value={eglise.nom}
-              onChange={(e) =>
-                setEglise({ ...eglise, nom: e.target.value })
-              }
-            />
-          </div>
+        <div>
+          <label className="font-semibold">Nom du responsable</label>
+          <input
+            className="w-full border rounded-xl px-3 py-2"
+            value={responsable.nom}
+            onChange={(e) =>
+              setResponsable({ ...responsable, nom: e.target.value })
+            }
+          />
+        </div>
 
-          <div>
-            <label className="font-semibold">Branche / Région</label>
-            <input
-              className="w-full border rounded-xl px-3 py-2"
-              value={eglise.branche}
-              onChange={(e) =>
-                setEglise({ ...eglise, branche: e.target.value })
-              }
-            />
-          </div>
+        <div>
+          <label className="font-semibold">Nom de l'Église</label>
+          <input
+            className="w-full border rounded-xl px-3 py-2"
+            value={eglise.nom}
+            onChange={(e) =>
+              setEglise({ ...eglise, nom: e.target.value })
+            }
+          />
+        </div>
+
+        <div>
+          <label className="font-semibold">Branche / Région</label>
+          <input
+            className="w-full border rounded-xl px-3 py-2"
+            value={eglise.branche}
+            onChange={(e) =>
+              setEglise({ ...eglise, branche: e.target.value })
+            }
+          />
         </div>
 
         <select
@@ -177,40 +172,43 @@ export default function LinkEglise() {
         />
       </div>
 
-      {/* ESPACE AU-DESSUS DU TITRE TABLE */}
-      <div className="h-8" />
+      {/* ESPACE AU-DESSUS */}
+      <div className="h-10" />
 
       {/* TITRE TABLE */}
       <h4 className="text-2xl font-bold mb-4 text-center w-full max-w-5xl">
         Liste des églises supervisées
       </h4>
 
-      {/* TABLE */}
+      {/* TABLE ALIGNÉE PARFAITEMENT */}
       <div className="w-full max-w-5xl">
-        <div className="grid grid-cols-[2fr_1.5fr_1.5fr_1fr] text-sm font-semibold uppercase border-b border-white/40 pb-2 gap-2 text-left">
+
+        {/* HEADER */}
+        <div className="grid grid-cols-4 text-sm font-semibold uppercase border-b border-white/40 pb-2">
           <div>Église</div>
           <div>Branche</div>
           <div>Responsable</div>
           <div>Statut</div>
         </div>
 
+        {/* LIGNES */}
         {invitations.map((inv) => {
           const statusStyle = getStatusStyle(inv.statut);
 
           return (
             <div
               key={inv.id}
-              className={`grid grid-cols-[2fr_1.5fr_1.5fr_1fr] gap-2 px-4 py-2 mt-2 rounded-lg ${statusStyle.border} ${statusStyle.bg} items-center`}
+              className={`grid grid-cols-4 px-2 py-2 mt-2 rounded-lg ${statusStyle.border} items-center`}
             >
-              <div className="truncate">{inv.eglise_nom}</div>
-              <div className="truncate">{inv.eglise_branche}</div>
-              <div className="truncate">{inv.responsable_prenom} {inv.responsable_nom}</div>
-              <div className="flex items-center justify-start gap-2">
-                <span className="truncate">{inv.statut}</span>
+              <div>{inv.eglise_nom}</div>
+              <div>{inv.eglise_branche}</div>
+              <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
+              <div className="flex items-center gap-3">
+                <span>{inv.statut}</span>
                 {statusStyle.button && (
                   <button
-                    className="text-orange-500 font-semibold text-sm hover:opacity-80 truncate"
-                    onClick={() => alert(`${statusStyle.button} pour ${inv.responsable_prenom}`)}
+                    className="text-orange-500 font-semibold text-sm hover:opacity-80"
+                    onClick={() => alert(`${statusStyle.button}`)}
                   >
                     {statusStyle.button}
                   </button>

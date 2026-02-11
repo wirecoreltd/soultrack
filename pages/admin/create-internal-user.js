@@ -154,7 +154,7 @@ function CreateInternalUserContent() {
           padding: 12px;
         }
       `}</style>
-          <Footer />
+          
     </div>
   );
 }
@@ -166,6 +166,7 @@ export default function CreateInternalUserPage() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur"]}>
       <CreateInternalUserContent />
+    <Footer />
     </ProtectedRoute>  
   );
 }

@@ -85,17 +85,17 @@ export default function LinkEglise() {
     loadInvitations();
   }, [superviseur.eglise_id]);
 
-  // 🔹 Fonction pour obtenir le style de la bordure et le bouton selon statut
+  // 🔹 Style bordure et bouton selon statut
   const getStatusStyle = (statut) => {
     switch (statut.toLowerCase()) {
       case "accepted":
-        return { border: "border-l-4 border-green-500", bg: "bg-green-100", button: null };
+        return { border: "border-l-4 border-green-500", button: null };
       case "refused":
-        return { border: "border-l-4 border-red-500", bg: "bg-red-100", button: "Renvoyer invitation" };
+        return { border: "border-l-4 border-red-500", button: "Renvoyer invitation" };
       case "pending":
-        return { border: "border-l-4 border-gray-500", bg: "bg-orange-100", button: "Envoyer rappel" };
+        return { border: "border-l-4 border-gray-400", button: "Envoyer rappel" };
       default:
-        return { border: "border-l-4 border-gray-300", bg: "bg-gray-100", button: null };
+        return { border: "border-l-4 border-gray-300", button: null };
     }
   };
 
@@ -103,9 +103,9 @@ export default function LinkEglise() {
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
 
-      <h1 className="text-4xl font-bold mb-6 text-center">
-        Relier une Église
-      </h1>
+      <h4 className="text-2xl font-bold mb-6 text-center">
+        Envoyer une invitation pour relier une église
+      </h4>
 
       {/* FORMULAIRE */}
       <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4">
@@ -177,8 +177,13 @@ export default function LinkEglise() {
         />
       </div>
 
+      {/* TITRE TABLE */}
+      <h4 className="text-xl font-semibold mt-10 mb-4 w-full max-w-5xl">
+        Liste des églises supervisées
+      </h4>
+
       {/* TABLE */}
-      <div className="w-full max-w-5xl mt-10">
+      <div className="w-full max-w-5xl">
         <div className="flex text-sm font-semibold uppercase border-b border-white/40 pb-2">
           <div className="flex-[2]">Église</div>
           <div className="flex-[2]">Branche</div>
@@ -192,7 +197,7 @@ export default function LinkEglise() {
           return (
             <div
               key={inv.id}
-              className={`flex px-4 py-3 rounded-lg mt-2 bg-white/10 ${statusStyle.bg} ${statusStyle.border}`}
+              className={`flex px-4 py-3 rounded-lg mt-2 bg-white/10 ${statusStyle.border}`}
             >
               <div className="flex-[2]">{inv.eglise_nom}</div>
               <div className="flex-[2]">{inv.eglise_branche}</div>
@@ -201,7 +206,7 @@ export default function LinkEglise() {
                 <span>{inv.statut}</span>
                 {statusStyle.button && (
                   <button
-                    className="ml-2 px-3 py-1 rounded bg-white text-black text-sm font-semibold hover:opacity-80"
+                    className={`ml-2 px-3 py-1 text-orange-500 font-semibold text-sm hover:opacity-80`}
                     onClick={() => alert(`${statusStyle.button} pour ${inv.responsable_prenom}`)}
                   >
                     {statusStyle.button}

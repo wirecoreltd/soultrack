@@ -14,7 +14,7 @@ export default function StatGlobalePage() {
   const [brancheId, setBrancheId] = useState(null);
   const [typeFilter, setTypeFilter] = useState("all");
 
-  // 🔹 Récupérer eglise_id et branche_id de l'utilisateur connecté
+  // Récupérer eglise et branche de l'utilisateur
   useEffect(() => {
     const fetchUserEglise = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -29,24 +29,20 @@ export default function StatGlobalePage() {
       if (!error && profile) {
         setEgliseId(profile.eglise_id);
         setBrancheId(profile.branche_id);
-      } else {
-        console.error("Erreur récupération eglise/branche :", error?.message);
-      }
+      } else console.error(error);
     };
     fetchUserEglise();
   }, []);
 
-  // 🔹 Récupérer les stats combinées
   const fetchStats = async () => {
     if (!egliseId || !brancheId) return;
     setLoading(true);
 
-    // Dates filtrage
-    let start = dateStart || "1900-01-01";
-    let end = dateEnd || "2100-12-31";
+    const start = dateStart || "1900-01-01";
+    const end = dateEnd || "2100-12-31";
 
     // Attendance
-    const { data: attendanceData, error: attError } = await supabase
+    const { data: attendanceData } = await supabase
       .from("attendance")
       .select("*")
       .gte("date", start)
@@ -54,10 +50,8 @@ export default function StatGlobalePage() {
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
 
-    if (attError) console.error(attError);
-
     // Evangelises
-    const { data: evangelisesData, error: evError } = await supabase
+    const { data: evangelisesData } = await supabase
       .from("evangelises")
       .select("*")
       .gte("created_at", start)
@@ -65,9 +59,7 @@ export default function StatGlobalePage() {
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
 
-    if (evError) console.error(evError);
-
-    // Construire stats combinées par date et type
+    // Construire stats combinées
     const combined = [];
 
     // Attendance
@@ -121,11 +113,10 @@ export default function StatGlobalePage() {
 
     Object.values(groupedEv).forEach((r) => combined.push(r));
 
-    // Filtre type
+    // Filtrer par type
     const filtered =
       typeFilter === "all" ? combined : combined.filter((r) => r.type === typeFilter);
 
-    // Trier par date
     filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     setStats(filtered);
@@ -138,13 +129,43 @@ export default function StatGlobalePage() {
 
   if (loading) return <p className="text-center mt-10">Chargement des statistiques...</p>;
 
+  // Calcul total
+  const total = stats.reduce(
+    (acc, r) => {
+      acc.hommes += r.hommes || 0;
+      acc.femmes += r.femmes || 0;
+      acc.jeunes += r.jeunes || 0;
+      acc.enfants += r.enfants || 0;
+      acc.connectes += r.connectes || 0;
+      acc.priere_salut += r.priere_salut === "-" ? 0 : r.priere_salut;
+      acc.nouveauxVenus += r.nouveauxVenus || 0;
+      acc.nouveauxConvertis += r.nouveauxConvertis || 0;
+      acc.reconciliation += r.reconciliation === "-" ? 0 : r.reconciliation;
+      acc.moissonneur += r.moissonneur === "-" ? 0 : r.moissonneur;
+      return acc;
+    },
+    {
+      hommes: 0,
+      femmes: 0,
+      jeunes: 0,
+      enfants: 0,
+      connectes: 0,
+      priere_salut: 0,
+      nouveauxVenus: 0,
+      nouveauxConvertis: 0,
+      reconciliation: 0,
+      moissonneur: 0,
+    }
+  );
+
+  const getTypeColor = (type) => (type === "Culte" ? "border-purple-600" : "border-orange-500");
+
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#16acea]">
       <HeaderPages />
-
       <h1 className="text-3xl font-bold mb-2">Statistiques Globales</h1>
 
-      {/* 🔹 Filtres */}
+      {/* Filtres */}
       <div className="flex flex-wrap gap-4 mb-4">
         <div>
           <label className="font-medium">Date début :</label>
@@ -178,7 +199,7 @@ export default function StatGlobalePage() {
         </div>
       </div>
 
-      {/* 🔹 Tableau */}
+      {/* Tableau */}
       <div className="overflow-x-auto w-full max-w-6xl">
         <table className="min-w-full bg-white rounded-2xl shadow-lg overflow-hidden">
           <thead className="bg-purple-600 text-white">
@@ -199,8 +220,13 @@ export default function StatGlobalePage() {
           </thead>
           <tbody>
             {stats.map((r, idx) => (
-              <tr key={idx} className={`${idx % 2 === 0 ? "bg-white" : "bg-purple-50"} hover:bg-purple-100`}>
-                <td className="py-2 px-4 text-left font-medium">{new Date(r.date).toLocaleDateString()}</td>
+              <tr
+                key={idx}
+                className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100 border-l-4 ${getTypeColor(
+                  r.type
+                )}`}
+              >
+                <td className="py-2 px-4 font-medium">{new Date(r.date).toLocaleDateString()}</td>
                 <td className="py-2 px-4">{r.type}</td>
                 <td className="py-2 px-4">{r.hommes}</td>
                 <td className="py-2 px-4">{r.femmes}</td>
@@ -214,6 +240,22 @@ export default function StatGlobalePage() {
                 <td className="py-2 px-4">{r.moissonneur}</td>
               </tr>
             ))}
+
+            {/* Total général */}
+            <tr className="bg-gray-200 font-bold border-t-2 border-gray-400">
+              <td className="py-2 px-4 text-left">Total</td>
+              <td className="py-2 px-4"></td>
+              <td className="py-2 px-4">{total.hommes}</td>
+              <td className="py-2 px-4">{total.femmes}</td>
+              <td className="py-2 px-4">{total.jeunes}</td>
+              <td className="py-2 px-4">{total.enfants}</td>
+              <td className="py-2 px-4">{total.connectes}</td>
+              <td className="py-2 px-4">{total.priere_salut}</td>
+              <td className="py-2 px-4">{total.nouveauxVenus}</td>
+              <td className="py-2 px-4">{total.nouveauxConvertis}</td>
+              <td className="py-2 px-4">{total.reconciliation}</td>
+              <td className="py-2 px-4">{total.moissonneur}</td>
+            </tr>
           </tbody>
         </table>
       </div>

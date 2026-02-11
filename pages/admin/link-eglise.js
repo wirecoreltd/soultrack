@@ -103,7 +103,7 @@ export default function LinkEglise() {
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
 
-      <h4 className="text-2xl font-bold mb-6 text-center">
+      <h4 className="text-xl font-semibold mt-10 mb-4 w-full max-w-5xl text-center">
         Envoyer une invitation pour relier une église
       </h4>
 
@@ -178,7 +178,7 @@ export default function LinkEglise() {
       </div>
 
       {/* TITRE TABLE */}
-      <h4 className="text-xl font-semibold mt-10 mb-4 w-full max-w-5xl">
+      <h4 className="text-xl font-semibold mt-10 mb-4 w-full max-w-5xl text-center">
         Liste des églises supervisées
       </h4>
 
@@ -206,7 +206,7 @@ export default function LinkEglise() {
                 <span>{inv.statut}</span>
                 {statusStyle.button && (
                   <button
-                    className={`ml-2 px-3 py-1 text-orange-500 font-semibold text-sm hover:opacity-80`}
+                    className={`text-orange-500 font-semibold text-sm hover:opacity-80`}
                     onClick={() => alert(`${statusStyle.button} pour ${inv.responsable_prenom}`)}
                   >
                     {statusStyle.button}

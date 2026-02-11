@@ -17,11 +17,11 @@ export default function SendEgliseLinkPopup({
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ Vérifie si on peut envoyer l’invitation
+  // ✅ Le bouton peut envoyer si tous les champs nécessaires sont remplis
   const canSend =
-    superviseur.prenom &&
-    superviseur.nom &&
-    eglise.nom &&
+    superviseur.prenom.trim() !== "" &&
+    superviseur.nom.trim() !== "" &&
+    eglise.nom.trim() !== "" &&
     superviseurEgliseId &&
     superviseurBrancheId;
 
@@ -60,6 +60,7 @@ export default function SendEgliseLinkPopup({
         return;
       }
 
+      // Générer lien
       const link = `${window.location.origin}/accept-invitation?token=${token}`;
 
       if (type === "whatsapp") {
@@ -109,7 +110,7 @@ export default function SendEgliseLinkPopup({
             {type === "whatsapp" && (
               <input
                 type="text"
-                placeholder="Numéro WhatsApp"
+                placeholder="Numéro WhatsApp (optionnel)"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 className="w-full border rounded-xl px-4 py-3 mb-4"
@@ -126,9 +127,7 @@ export default function SendEgliseLinkPopup({
 
               <button
                 onClick={handleSend}
-                className={`flex-1 py-3 rounded-2xl text-white ${
-                  canSend ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'
-                }`}
+                className={`flex-1 py-3 rounded-2xl text-white ${canSend ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'}`}
                 disabled={!canSend || loading}
               >
                 Envoyer

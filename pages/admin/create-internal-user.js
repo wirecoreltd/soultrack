@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@supabase/supabase-js";
 import ProtectedRoute from "../../components/ProtectedRoute";
-import ProtectedRoute from "../../components/Footer";
+import Footer from "../../components/Footer";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,

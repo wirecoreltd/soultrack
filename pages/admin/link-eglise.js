@@ -204,37 +204,39 @@ export default function LinkEglise() {
         </div>
 
         {invitations.map((inv) => {
-          let borderColor = "border-gray-400";
           let actionButton = null;
-
-          if (inv.statut === "accepté") borderColor = "border-green-500";
+        
           if (inv.statut === "refusé") {
-            borderColor = "border-red-500";
             actionButton = (
               <button
                 onClick={() => handleResend(inv)}
-                className="ml-4 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
+                className="ml-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
               >
                 Renvoyer invitation
               </button>
             );
           }
+        
           if (inv.statut === "pending") {
-            borderColor = "border-gray-400";
             actionButton = (
               <button
                 onClick={() => handleResend(inv)}
-                className="ml-4 px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-black rounded"
+                className="ml-2 px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-black rounded"
               >
                 Envoyer rappel
               </button>
             );
           }
-
+        
           return (
             <div
               key={inv.id}
-              className={`flex px-4 py-3 bg-white/10 rounded-lg mt-2 border-l-4 ${borderColor}`}
+              className={`flex px-4 py-3 bg-white/10 rounded-lg mt-2
+                border-l-4
+                ${inv.statut === "accepté" ? "border-green-500" : ""}
+                ${inv.statut === "refusé" ? "border-red-500" : ""}
+                ${inv.statut === "pending" ? "border-gray-400" : ""}
+              `}
             >
               <div className="flex-[2]">{inv.eglise_nom}</div>
               <div className="flex-[2]">{inv.eglise_branche}</div>

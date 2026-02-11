@@ -176,7 +176,7 @@ export default function LinkEglise() {
       <div className="h-10" />
 
       {/* TITRE TABLE */}
-      <h4 className="text-2xl font-bold mb-4 text-center w-full max-w-5xl">
+      <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
         Liste des églises supervisées
       </h4>
 
@@ -198,7 +198,7 @@ export default function LinkEglise() {
           return (
             <div
               key={inv.id}
-              className={`grid grid-cols-4 px-2 py-2 mt-2 rounded-lg ${statusStyle.border} items-center`}
+              className={`grid grid-cols-4 px-3 py-2 mt-2 rounded-lg ${statusStyle.border} items-center`}
             >
               <div>{inv.eglise_nom}</div>
               <div>{inv.eglise_branche}</div>

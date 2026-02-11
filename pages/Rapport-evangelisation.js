@@ -7,6 +7,7 @@ import { useRouter } from "next/router";
 import EditEvanRapportLine from "../components/EditEvanRapportLine";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
+import Footer from "../components/Footer";
 
 // Wrapper sécurisé
 export default function RapportEvangelisationPage() {
@@ -101,6 +102,7 @@ function RapportEvangelisation() {
         onSave={handleSaveRapport}
       />
     )}
+          <Footer />
   </div>
 );
     }

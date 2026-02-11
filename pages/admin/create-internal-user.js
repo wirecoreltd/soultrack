@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@supabase/supabase-js";
 import ProtectedRoute from "../../components/ProtectedRoute";
-import Footer from "../../components/Footer";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -167,8 +166,7 @@ export default function CreateInternalUserPage() {
     <>
       <ProtectedRoute allowedRoles={["Administrateur"]}>
         <CreateInternalUserContent />
-      </ProtectedRoute>
-      <Footer />
+      </ProtectedRoute>     
     </>
   );
 }

@@ -6,6 +6,7 @@ import supabase from "../../lib/supabaseClient";
 import EditUserModal from "../../components/EditUserModal";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
+import Footer from "../../components/Footer";
 
 /* =========================
    Ligne utilisateur
@@ -218,6 +219,7 @@ function ListUsersContent() {
           </div>
         </div>
       )}
+         <Footer />
     </div>
   );
 }

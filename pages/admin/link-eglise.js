@@ -190,6 +190,10 @@ export default function LinkEglise() {
         />
       </div>
 
+        <h1 className="text-4xl font-bold mb-6 text-center">
+                Liste des Egise Supervisées
+              </h1>
+
       {/* TABLE DES INVITATIONS */}
       <div className="w-full max-w-5xl mt-10">
         <div className="hidden sm:flex text-sm font-semibold uppercase border-b border-white/40 pb-2">

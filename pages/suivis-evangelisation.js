@@ -8,6 +8,7 @@ import EditEvangeliseSuiviPopup from "../components/EditEvangeliseSuiviPopup";
 import DetailEvangeliseSuivisPopup from "../components/DetailEvangeliseSuivisPopup";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
+import Footer from "../components/Footer";
 
 export default function SuivisEvangelisation() {
   return (
@@ -674,6 +675,7 @@ export default function SuivisEvangelisation() {
         }}
       />
     )}
+<Footer />
   </div>
 );
 }

@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
 import useChurchScope from "../hooks/useChurchScope";
+import Footer from "../components/Footer";
 
 
 export default function SuivisMembres() {
@@ -512,6 +513,7 @@ return (
           onUpdateMember={updateMember}
         />
       )}
+            <Footer />
     </div>
   );
 }

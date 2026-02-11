@@ -6,6 +6,7 @@ import supabase from "../../lib/supabaseClient";
 import EditCelluleModal from "../../components/EditCelluleModal";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute"; 
+import Footer from "../components/Footer";
 
 /* =========================
    Ligne Cellule
@@ -243,6 +244,7 @@ function ListCellulesContent() {
           }
         />
       )}
+         <Footer />
     </div>
   );
 }

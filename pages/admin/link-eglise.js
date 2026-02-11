@@ -190,7 +190,7 @@ export default function LinkEglise() {
         />
       </div>
 
-        <h2 className="text-2xl font-semibold text-white mt-8 mb-1 text-center">
+        <h2 className="text-2xl font-semibold text-white mt-12 mb-1 text-center">
           Liste des Églises Supervisées
         </h2>
 

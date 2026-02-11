@@ -19,11 +19,11 @@ export default function SendEgliseLinkPopup({
 
   // ✅ Le bouton peut envoyer si tous les champs nécessaires sont remplis
   const canSend =
-    superviseur.prenom.trim() !== "" &&
-    superviseur.nom.trim() !== "" &&
-    eglise.nom.trim() !== "" &&
-    superviseurEgliseId &&
-    superviseurBrancheId;
+  superviseur?.prenom?.trim() &&
+  superviseur?.nom?.trim() &&
+  eglise?.nom?.trim() &&
+  superviseurEgliseId;
+
 
   const handleSend = async () => {
     if (!canSend) {
@@ -90,6 +90,15 @@ export default function SendEgliseLinkPopup({
       setLoading(false);
     }
   };
+
+  console.log({
+  prenom: superviseur?.prenom,
+  nom: superviseur?.nom,
+  eglise: eglise?.nom,
+  superviseurEgliseId,
+  superviseurBrancheId
+});
+
 
   return (
     <>

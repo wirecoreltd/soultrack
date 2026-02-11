@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import supabase from "../../lib/supabaseClient";
 import SendEgliseLinkPopup from "../../components/SendEgliseLinkPopup";
 import HeaderPages from "../../components/HeaderPages";
+import Footer from "../../components/Footer";
 
 export default function LinkEglise() {
   const [superviseur, setSuperviseur] = useState({
@@ -251,6 +252,7 @@ export default function LinkEglise() {
           );
         })}
       </div>
+          <Footer />
     </div>
   );
 }

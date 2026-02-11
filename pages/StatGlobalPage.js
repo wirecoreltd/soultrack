@@ -17,7 +17,6 @@ export default function StatGlobalePage() {
 function StatGlobale() {
   const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
 
@@ -40,7 +39,7 @@ function StatGlobale() {
       return;
     }
 
-    // 2️⃣ Requête attendance
+    // 2️⃣ Requête attendance (Rapport Culte)
     let attendanceQuery = supabase
       .from("attendance")
       .select("*")
@@ -53,7 +52,7 @@ function StatGlobale() {
     const { data: attendanceData, error: attendanceError } = await attendanceQuery.order("date", { ascending: true });
     if (attendanceError) console.error(attendanceError);
 
-    // 3️⃣ Requête evangelises
+    // 3️⃣ Requête evangelises (Rapport Évangélisation)
     let evangeliseQuery = supabase
       .from("evangelises")
       .select("*")
@@ -66,24 +65,46 @@ function StatGlobale() {
     const { data: evangeliseData, error: evangeliseError } = await evangeliseQuery.order("created_at", { ascending: true });
     if (evangeliseError) console.error(evangeliseError);
 
-    // 4️⃣ Combiner les stats par date
+    // 4️⃣ Organiser les stats par date
     const statsMap = {};
 
     // Attendance
     attendanceData?.forEach((a) => {
       const date = a.date;
-      if (!statsMap[date]) statsMap[date] = { date, hommes: 0, femmes: 0, jeunes: 0, enfants: 0, evangelises: 0 };
-      statsMap[date].hommes += a.hommes || 0;
-      statsMap[date].femmes += a.femmes || 0;
-      statsMap[date].jeunes += a.jeunes || 0;
-      statsMap[date].enfants += a.enfants || 0;
+      if (!statsMap[date]) statsMap[date] = { date, culte: {}, evangelisation: {} };
+      statsMap[date].culte = {
+        hommes: a.hommes || 0,
+        femmes: a.femmes || 0,
+        jeunes: a.jeunes || 0,
+        enfants: a.enfants || 0,
+        connectes: a.connectes || 0,
+        priere: a.priere || 0,
+        nouveauxVenus: a.nouveauxVenus || 0,
+        nouveauxConvertis: a.nouveauxConvertis || 0,
+        reconciliation: a.reconciliation || 0,
+        moissonneur: a.moissonneurs || 0,
+      };
     });
 
     // Evangelises
     evangeliseData?.forEach((e) => {
       const date = e.created_at.split("T")[0];
-      if (!statsMap[date]) statsMap[date] = { date, hommes: 0, femmes: 0, jeunes: 0, enfants: 0, evangelises: 0 };
-      statsMap[date].evangelises += 1;
+      if (!statsMap[date]) statsMap[date] = { date, culte: {}, evangelisation: {} };
+
+      // Pour chaque évangélisé on ajoute les compteurs
+      const ev = statsMap[date].evangelisation;
+      statsMap[date].evangelisation = {
+        hommes: (ev?.hommes || 0) + (e.sexe === "Homme" ? 1 : 0),
+        femmes: (ev?.femmes || 0) + (e.sexe === "Femme" ? 1 : 0),
+        jeunes: (ev?.jeunes || 0),
+        enfants: (ev?.enfants || 0),
+        connectes: (ev?.connectes || 0),
+        priere: (ev?.priere || 0) + (e.priere_salut ? 1 : 0),
+        nouveauxVenus: (ev?.nouveauxVenus || 0) + (e.status_suivi === "Nouveau venu" ? 1 : 0),
+        nouveauxConvertis: (ev?.nouveauxConvertis || 0) + (e.type_conversion === "Nouveau converti" ? 1 : 0),
+        reconciliation: (ev?.reconciliation || 0) + (e.type_conversion === "Réconciliation" ? 1 : 0),
+        moissonneur: (ev?.moissonneur || 0) + 1,
+      };
     });
 
     setStats(Object.values(statsMap));
@@ -99,7 +120,6 @@ function StatGlobale() {
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-
       <h1 className="text-3xl font-bold text-gray-800 mt-2">Statistiques Globales</h1>
       <p className="text-gray-600 italic mt-1">Résumé combiné Attendance + Évangélisation</p>
 
@@ -131,25 +151,50 @@ function StatGlobale() {
           <thead className="bg-orange-500 text-white">
             <tr>
               <th className="py-3 px-4 text-left">Date</th>
+              <th className="py-3 px-4">Type</th>
               <th className="py-3 px-4">Hommes</th>
               <th className="py-3 px-4">Femmes</th>
               <th className="py-3 px-4">Jeunes</th>
               <th className="py-3 px-4">Enfants</th>
-              <th className="py-3 px-4">Évangélisés</th>
+              <th className="py-3 px-4">Connectés</th>
+              <th className="py-3 px-4">Prière du salut</th>
+              <th className="py-3 px-4">Nouveaux venus</th>
+              <th className="py-3 px-4">Nouveaux convertis</th>
+              <th className="py-3 px-4">Réconciliation</th>
+              <th className="py-3 px-4">Moissonneur</th>
             </tr>
           </thead>
           <tbody>
-            {stats.map((s, index) => (
-              <tr
-                key={s.date}
-                className={`text-center ${index % 2 === 0 ? "bg-white" : "bg-orange-50"} hover:bg-orange-100 transition-colors`}
-              >
+            {stats.map((s) => (
+              <tr key={s.date + "_culte"} className="bg-white text-center hover:bg-orange-100 transition-colors">
                 <td className="py-2 px-4 text-left font-medium">{s.date}</td>
-                <td className="py-2 px-4">{s.hommes}</td>
-                <td className="py-2 px-4">{s.femmes}</td>
-                <td className="py-2 px-4">{s.jeunes}</td>
-                <td className="py-2 px-4">{s.enfants}</td>
-                <td className="py-2 px-4">{s.evangelises}</td>
+                <td className="py-2 px-4 font-semibold">Rapport Culte</td>
+                <td className="py-2 px-4">{s.culte?.hommes || 0}</td>
+                <td className="py-2 px-4">{s.culte?.femmes || 0}</td>
+                <td className="py-2 px-4">{s.culte?.jeunes || 0}</td>
+                <td className="py-2 px-4">{s.culte?.enfants || 0}</td>
+                <td className="py-2 px-4">{s.culte?.connectes || 0}</td>
+                <td className="py-2 px-4">{s.culte?.priere || 0}</td>
+                <td className="py-2 px-4">{s.culte?.nouveauxVenus || 0}</td>
+                <td className="py-2 px-4">{s.culte?.nouveauxConvertis || 0}</td>
+                <td className="py-2 px-4">{s.culte?.reconciliation || 0}</td>
+                <td className="py-2 px-4">{s.culte?.moissonneur || 0}</td>
+              </tr>
+            ))}
+            {stats.map((s) => (
+              <tr key={s.date + "_evangelisation"} className="bg-orange-50 text-center hover:bg-orange-100 transition-colors">
+                <td className="py-2 px-4 text-left font-medium">{s.date}</td>
+                <td className="py-2 px-4 font-semibold">Rapport Évangélisation</td>
+                <td className="py-2 px-4">{s.evangelisation?.hommes || 0}</td>
+                <td className="py-2 px-4">{s.evangelisation?.femmes || 0}</td>
+                <td className="py-2 px-4">{s.evangelisation?.jeunes || 0}</td>
+                <td className="py-2 px-4">{s.evangelisation?.enfants || 0}</td>
+                <td className="py-2 px-4">{s.evangelisation?.connectes || 0}</td>
+                <td className="py-2 px-4">{s.evangelisation?.priere || 0}</td>
+                <td className="py-2 px-4">{s.evangelisation?.nouveauxVenus || 0}</td>
+                <td className="py-2 px-4">{s.evangelisation?.nouveauxConvertis || 0}</td>
+                <td className="py-2 px-4">{s.evangelisation?.reconciliation || 0}</td>
+                <td className="py-2 px-4">{s.evangelisation?.moissonneur || 0}</td>
               </tr>
             ))}
           </tbody>

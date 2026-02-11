@@ -31,7 +31,10 @@ export default function LinkEglise() {
   // 🔹 Charger superviseur connecté automatiquement
   useEffect(() => {
     const loadSuperviseur = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+
       if (!user) return;
 
       const { data, error } = await supabase
@@ -65,7 +68,7 @@ export default function LinkEglise() {
     loadSuperviseur();
   }, []);
 
-  // 🔹 Charger invitations du superviseur
+  // 🔹 Charger invitations du superviseur uniquement pour ses églises
   const loadInvitations = async () => {
     if (!superviseur.eglise_id) return;
 
@@ -82,29 +85,30 @@ export default function LinkEglise() {
     loadInvitations();
   }, [superviseur.eglise_id]);
 
-  // 🔹 Gestion bordure selon statut
-  const getBorderClass = (statut) => {
-    switch (statut.toLowerCase()) {
-      case "accepté":
-        return "border-l-4 border-green-500";
-      case "refusé":
-        return "border-l-4 border-red-500";
-      case "pending":
-      case "en attente":
-        return "border-l-4 border-gray-400";
-      default:
-        return "border-l-4 border-gray-400";
-    }
-  };
+  // 🔹 Renvoyer invitation ou rappel avec confirmation
+  const handleResend = async (invitation) => {
+    const actionText =
+      invitation.statut === "refusé" ? "renvoyer cette invitation" : "envoyer un rappel";
 
-  // 🔹 Actions boutons statut
-  const handleAction = async (inv) => {
-    if (inv.statut.toLowerCase() === "pending") {
-      alert("Rappel envoyé à " + inv.responsable_prenom);
-      // Ici tu peux ajouter ton code pour renvoyer le rappel
-    } else if (inv.statut.toLowerCase() === "refusé") {
-      alert("Invitation renvoyée à " + inv.responsable_prenom);
-      // Ici tu peux ajouter ton code pour renvoyer l'invitation
+    const confirmed = window.confirm(
+      `Voulez-vous vraiment ${actionText} pour ${invitation.responsable_prenom} ${invitation.responsable_nom} ?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const { error } = await supabase
+        .from("eglise_supervisions")
+        .update({ statut: "pending" })
+        .eq("id", invitation.id);
+
+      if (error) throw error;
+
+      alert("Action effectuée avec succès !");
+      loadInvitations();
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de l'action.");
     }
   };
 
@@ -112,7 +116,9 @@ export default function LinkEglise() {
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
 
-      <h1 className="text-4xl font-bold mb-6 text-center">Relier une Église</h1>
+      <h1 className="text-4xl font-bold mb-6 text-center">
+        Relier une Église
+      </h1>
 
       {/* FORMULAIRE */}
       <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4">
@@ -123,7 +129,9 @@ export default function LinkEglise() {
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={responsable.prenom}
-            onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
+            onChange={(e) =>
+              setResponsable({ ...responsable, prenom: e.target.value })
+            }
           />
         </div>
 
@@ -132,7 +140,9 @@ export default function LinkEglise() {
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={responsable.nom}
-            onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
+            onChange={(e) =>
+              setResponsable({ ...responsable, nom: e.target.value })
+            }
           />
         </div>
 
@@ -142,7 +152,9 @@ export default function LinkEglise() {
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={eglise.nom}
-            onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
+            onChange={(e) =>
+              setEglise({ ...eglise, nom: e.target.value })
+            }
           />
         </div>
 
@@ -151,7 +163,9 @@ export default function LinkEglise() {
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={eglise.branche}
-            onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
+            onChange={(e) =>
+              setEglise({ ...eglise, branche: e.target.value })
+            }
           />
         </div>
 
@@ -176,9 +190,8 @@ export default function LinkEglise() {
         />
       </div>
 
-      {/* TABLE */}
+      {/* TABLE DES INVITATIONS */}
       <div className="w-full max-w-5xl mt-10">
-        {/* Header */}
         <div className="hidden sm:flex text-sm font-semibold uppercase border-b border-white/40 pb-2">
           <div className="flex-[2]">Église</div>
           <div className="flex-[2]">Branche</div>
@@ -186,36 +199,51 @@ export default function LinkEglise() {
           <div className="flex-[2]">Statut</div>
         </div>
 
-        {/* Rows */}
-        {invitations.map((inv) => (
-          <div
-            key={inv.id}
-            className={`flex px-4 py-3 bg-white/10 rounded-lg mt-2 items-center ${getBorderClass(inv.statut)}`}
-          >
-            <div className="flex-[2]">{inv.eglise_nom}</div>
-            <div className="flex-[2]">{inv.eglise_branche}</div>
-            <div className="flex-[2]">{inv.responsable_prenom} {inv.responsable_nom}</div>
-            <div className="flex-[2] flex items-center gap-2">
-              <span>{inv.statut}</span>
-              {(inv.statut.toLowerCase() === "pending" || inv.statut.toLowerCase() === "en attente") && (
-                <button
-                  onClick={() => handleAction(inv)}
-                  className="px-3 py-1 bg-gray-500 text-white rounded-xl text-xs"
-                >
-                  Envoyer un rappel
-                </button>
-              )}
-              {inv.statut.toLowerCase() === "refusé" && (
-                <button
-                  onClick={() => handleAction(inv)}
-                  className="px-3 py-1 bg-red-500 text-white rounded-xl text-xs"
-                >
-                  Renvoyer l'invitation
-                </button>
-              )}
+        {invitations.map((inv) => {
+          let borderColor = "border-gray-400";
+          let actionButton = null;
+
+          if (inv.statut === "accepté") borderColor = "border-green-500";
+          if (inv.statut === "refusé") {
+            borderColor = "border-red-500";
+            actionButton = (
+              <button
+                onClick={() => handleResend(inv)}
+                className="ml-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
+              >
+                Renvoyer invitation
+              </button>
+            );
+          }
+          if (inv.statut === "pending") {
+            borderColor = "border-gray-400";
+            actionButton = (
+              <button
+                onClick={() => handleResend(inv)}
+                className="ml-2 px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-black rounded"
+              >
+                Envoyer rappel
+              </button>
+            );
+          }
+
+          return (
+            <div
+              key={inv.id}
+              className={`flex px-4 py-3 bg-white/10 rounded-lg mt-2 border-l-4 ${borderColor}`}
+            >
+              <div className="flex-[2]">{inv.eglise_nom}</div>
+              <div className="flex-[2]">{inv.eglise_branche}</div>
+              <div className="flex-[2]">{inv.responsable_prenom} {inv.responsable_nom}</div>
+              <div className="flex-[2] flex items-center">
+                <span className="text-xs bg-black/40 px-2 py-1 rounded">
+                  {inv.statut}
+                </span>
+                {actionButton}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

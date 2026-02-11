@@ -116,7 +116,7 @@ export default function LinkEglise() {
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
 
-      <h4 className="text-2xl font-semibold text-white text-center mt-6 mb-2">
+      <h4 className="text-2xl font-semibold text-white text-center mt-6 mb-3">
         Envoyer ne inviation pour relier une eglise    
       </h4> 
   

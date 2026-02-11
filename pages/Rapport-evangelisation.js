@@ -27,16 +27,39 @@ function RapportEvangelisation() {
   const [selectedRapport, setSelectedRapport] = useState(null);
 
   const fetchRapports = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("rapport_evangelisation")
-      .select("*")
-      .order("date", { ascending: true });
-    if (error) console.error(error);
-    else setRapports(data || []);
-    setLoading(false);
-  };
+  setLoading(true);
 
+  // 🔹 récupérer église et branche de l'utilisateur connecté
+  const { data: session } = await supabase.auth.getSession();
+  if (!session?.session?.user) return;
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("eglise_id, branche_id")
+    .eq("id", session.session.user.id)
+    .single();
+
+  if (profileError || !profile) {
+    console.error("Erreur récupération église/branche :", profileError);
+    setLoading(false);
+    return;
+  }
+
+  const { eglise_id, branche_id } = profile;
+
+  // 🔹 récupérer les rapports filtrés
+  const { data, error } = await supabase
+    .from("rapport_evangelisation")
+    .select("*")
+    .eq("eglise_id", eglise_id)
+    .eq("branche_id", branche_id)
+    .order("date", { ascending: true });
+
+  if (error) console.error(error);
+  else setRapports(data || []);
+  setLoading(false);
+};
+  
   const handleSaveRapport = async (updated) => {
     const { data, error } = await supabase
       .from("rapport_evangelisation")

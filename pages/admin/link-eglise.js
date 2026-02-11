@@ -27,32 +27,51 @@ export default function LinkEglise() {
 
   // 🔹 Récupérer automatiquement l'église et la branche du superviseur
   useEffect(() => {
-    const loadSuperviseur = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("eglise_id, branche_id, prenom, nom, email, telephone")
-          .eq("id", supabase.auth.getUser().user.id) // ID connecté
-          .single();
+  const loadSuperviseur = async () => {
+    try {
+      // 🔹 1. Récupérer l'utilisateur connecté
+      const { data: userData, error: userError } = await supabase.auth.getUser();
 
-        if (error) throw error;
-
-        setSuperviseur({
-          prenom: data.prenom || "",
-          nom: data.nom || "",
-          email: data.email || "",
-          telephone: data.telephone || "",
-          eglise_id: data.eglise_id,
-          branche_id: data.branche_id
-        });
-
-      } catch (err) {
-        console.error("Erreur récupération superviseur:", err.message);
+      if (userError) throw userError;
+      if (!userData?.user) {
+        console.error("Aucun utilisateur connecté");
+        return;
       }
-    };
 
-    loadSuperviseur();
-  }, []);
+      const userId = userData.user.id;
+
+      // 🔹 2. Charger son profil
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id, prenom, nom, email, telephone")
+        .eq("id", userId)
+        .single();
+
+      if (error) throw error;
+      if (!data) {
+        console.error("Profil non trouvé");
+        return;
+      }
+
+      setSuperviseur({
+        prenom: data.prenom || "",
+        nom: data.nom || "",
+        email: data.email || "",
+        telephone: data.telephone || "",
+        eglise_id: data.eglise_id,
+        branche_id: data.branche_id
+      });
+
+      console.log("Superviseur chargé :", data);
+
+    } catch (err) {
+      console.error("Erreur récupération superviseur:", err.message);
+    }
+  };
+
+  loadSuperviseur();
+}, []);
+
 
   // 🔹 Charger invitations du superviseur
   const loadInvitations = async () => {

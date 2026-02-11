@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 import ProtectedRoute from "../../components/ProtectedRoute";
+import Footer from "../../components/Footer";
 
 function CreateCelluleContent() {
   const router = useRouter();
@@ -229,5 +230,6 @@ function CreateCelluleContent() {
     <ProtectedRoute allowedRoles={["Administrateur", "ResponsableCellule", "SuperviseurCellule"]}>
       <CreateCelluleContent />
     </ProtectedRoute>
+   <Footer />
   );
 }

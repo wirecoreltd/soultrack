@@ -8,6 +8,7 @@ import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
 import DetailsCelluleMemberPopup from "../components/DetailsCelluleMemberPopup";
 import ProtectedRoute from "../components/ProtectedRoute"
 import HeaderPages from "../components/HeaderPages";
+import Footer from "../components/Footer";
 
 export default function MembresCellule() {
   return (
@@ -341,7 +342,7 @@ export default function MembresCellule() {
           }}
         />
       )}
-
+<Footer />
     </div>
   );
 }

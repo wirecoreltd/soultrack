@@ -7,7 +7,7 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import { useMembers } from "../context/MembersContext";
 import ProtectedRoute from "../components/ProtectedRoute";
-import Footer from "../../components/Footer";
+import Footer from "../components/Footer";
 
 export default function AjouterMembreCellule() {
   return (

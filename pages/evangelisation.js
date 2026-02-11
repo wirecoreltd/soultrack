@@ -7,6 +7,7 @@ import EditEvangelisePopup from "../components/EditEvangelisePopup";
 import DetailsEvangePopup from "../components/DetailsEvangePopup";
 import ProtectedRoute from "../components/ProtectedRoute";
 import useChurchScope from "../hooks/useChurchScope";
+import Footer from "../components/Footer";
 
 export default function Evangelisation() {
   return (
@@ -504,6 +505,7 @@ export default function Evangelisation() {
           </div>
         </div>
       )}
+        <Footer />
     </div>
   );
 }

@@ -29,36 +29,42 @@ function RapportEvangelisation() {
   const fetchRapports = async () => {
   setLoading(true);
 
-  // 🔹 récupérer église et branche de l'utilisateur connecté
   const { data: session } = await supabase.auth.getSession();
   if (!session?.session?.user) return;
 
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile } = await supabase
     .from("profiles")
     .select("eglise_id, branche_id")
     .eq("id", session.session.user.id)
     .single();
 
-  if (profileError || !profile) {
-    console.error("Erreur récupération église/branche :", profileError);
-    setLoading(false);
-    return;
-  }
-
-  const { eglise_id, branche_id } = profile;
-
-  // 🔹 récupérer les rapports filtrés
-  const { data, error } = await supabase
-    .from("rapport_evangelisation")
+  const { data: evangelises, error } = await supabase
+    .from("evangelises")
     .select("*")
-    .eq("eglise_id", eglise_id)
-    .eq("branche_id", branche_id)
-    .order("date", { ascending: true });
+    .eq("eglise_id", profile.eglise_id)
+    .eq("branche_id", profile.branche_id)
+    .order("created_at", { ascending: true });
 
   if (error) console.error(error);
-  else setRapports(data || []);
+
+  // Transformer les données pour le tableau
+  const rapportsParDate = {};
+  evangelises.forEach((e) => {
+    const date = e.created_at.split("T")[0]; // ou new Date(e.created_at).toLocaleDateString()
+    if (!rapportsParDate[date]) {
+      rapportsParDate[date] = { date, hommes: 0, femmes: 0, priere: 0, nouveau_converti: 0, reconciliation: 0 };
+    }
+    if (e.sexe === "Homme") rapportsParDate[date].hommes += 1;
+    if (e.sexe === "Femme") rapportsParDate[date].femmes += 1;
+    if (e.priere_salut) rapportsParDate[date].priere += 1;
+    if (e.type_conversion === "Nouveau converti") rapportsParDate[date].nouveau_converti += 1;
+    if (e.type_conversion === "Réconciliation") rapportsParDate[date].reconciliation += 1;
+  });
+
+  setRapports(Object.values(rapportsParDate));
   setLoading(false);
 };
+
   
   const handleSaveRapport = async (updated) => {
     const { data, error } = await supabase

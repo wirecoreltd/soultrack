@@ -10,6 +10,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
+import Footer from "../components/Footer";
 
 export default function EvangelisationHub() {
   return (
@@ -102,6 +103,7 @@ function EvangelisationHubContent() {
         <br />
         Romains 10:14 ❤️
       </div>
+        <Footer />
     </div>
   );
 }

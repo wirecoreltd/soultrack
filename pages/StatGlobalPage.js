@@ -17,7 +17,6 @@ export default function StatGlobalPageWrapper() {
 function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-  const [rapportFilter, setRapportFilter] = useState("Tous");
 
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
@@ -30,13 +29,9 @@ function StatGlobalPage() {
 
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Récupérer eglise_id et branche_id automatiquement
   useEffect(() => {
     const fetchProfile = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data } = await supabase
@@ -50,17 +45,15 @@ function StatGlobalPage() {
         setBrancheId(data.branche_id);
       }
     };
-
     fetchProfile();
   }, []);
 
   const fetchStats = async () => {
     if (!egliseId || !brancheId) return;
-
     setLoading(true);
 
     // ==========================
-    // 🔹 ATTENDANCE
+    // ATTENDANCE
     // ==========================
     let attendanceQuery = supabase
       .from("attendance")
@@ -81,7 +74,6 @@ function StatGlobalPage() {
       connectes: 0,
       nouveauxVenus: 0,
       nouveauxConvertis: 0,
-      moissonneurs: 0,
     };
 
     attendanceData?.forEach((r) => {
@@ -92,13 +84,11 @@ function StatGlobalPage() {
       attendanceTotals.connectes += Number(r.connectes) || 0;
       attendanceTotals.nouveauxVenus += Number(r.nouveauxVenus) || 0;
       attendanceTotals.nouveauxConvertis += Number(r.nouveauxConvertis) || 0;
-      attendanceTotals.moissonneurs += Number(r.moissonneurs) || 0;
     });
-
     setAttendanceStats(attendanceTotals);
 
     // ==========================
-    // 🔹 EVANGELISATION
+    // EVANGELISATION
     // ==========================
     let evanQuery = supabase
       .from("evangelises")
@@ -115,26 +105,22 @@ function StatGlobalPage() {
       hommes: 0,
       femmes: 0,
       prieres: 0,
-      reconciliations: 0,
       nouveauxConvertis: 0,
-      nouveauxVenus: 0,
-      moissonneurs: 0,
+      reconciliations: 0,
     };
 
     evanData?.forEach((r) => {
       if (r.sexe === "Homme") evanTotals.hommes++;
       if (r.sexe === "Femme") evanTotals.femmes++;
       if (r.priere_salut) evanTotals.prieres++;
-      if (r.type_conversion === "Réconciliation") evanTotals.reconciliations++;
       if (r.type_conversion === "Nouveau converti") evanTotals.nouveauxConvertis++;
-      if (r.type_conversion === "Nouveau venu") evanTotals.nouveauxVenus++;
-      if (r.moissonneur) evanTotals.moissonneurs++;
+      if (r.type_conversion === "Réconciliation") evanTotals.reconciliations++;
     });
 
     setEvanStats(evanTotals);
 
     // ==========================
-    // 🔹 BAPTEME
+    // BAPTEME
     // ==========================
     let baptemeQuery = supabase
       .from("baptemes")
@@ -147,13 +133,13 @@ function StatGlobalPage() {
 
     const { data: baptemeData } = await baptemeQuery;
 
-    setBaptemeStats({
-      hommes: baptemeData?.reduce((sum, r) => sum + Number(r.hommes), 0) || 0,
-      femmes: baptemeData?.reduce((sum, r) => sum + Number(r.femmes), 0) || 0,
-    });
+    const totalBaptemeHommes = baptemeData?.reduce((sum, r) => sum + Number(r.hommes), 0) || 0;
+    const totalBaptemeFemmes = baptemeData?.reduce((sum, r) => sum + Number(r.femmes), 0) || 0;
+
+    setBaptemeStats({ hommes: totalBaptemeHommes, femmes: totalBaptemeFemmes });
 
     // ==========================
-    // 🔹 FORMATION
+    // FORMATION
     // ==========================
     let formationQuery = supabase
       .from("formations")
@@ -166,13 +152,13 @@ function StatGlobalPage() {
 
     const { data: formationData } = await formationQuery;
 
-    setFormationStats({
-      hommes: formationData?.reduce((sum, r) => sum + Number(r.hommes), 0) || 0,
-      femmes: formationData?.reduce((sum, r) => sum + Number(r.femmes), 0) || 0,
-    });
+    const totalFormationHommes = formationData?.reduce((sum, r) => sum + Number(r.hommes), 0) || 0;
+    const totalFormationFemmes = formationData?.reduce((sum, r) => sum + Number(r.femmes), 0) || 0;
+
+    setFormationStats({ hommes: totalFormationHommes, femmes: totalFormationFemmes });
 
     // ==========================
-    // 🔹 CELLULES
+    // CELLULES
     // ==========================
     const { count: cellulesCountData } = await supabase
       .from("cellules")
@@ -213,22 +199,6 @@ function StatGlobalPage() {
           />
         </div>
 
-        <div>
-          <label>Filtrer par Rapport</label>
-          <select
-            className="border border-gray-400 rounded-lg px-3 py-2 ml-2 bg-transparent text-white"
-            value={rapportFilter}
-            onChange={(e) => setRapportFilter(e.target.value)}
-          >
-            <option value="Tous">Tous</option>
-            <option value="Culte">Culte</option>
-            <option value="Evangelisation">Evangelisation</option>
-            <option value="Baptême">Baptême</option>
-            <option value="Formation">Formation</option>
-            <option value="Cellules">Cellules</option>
-          </select>
-        </div>
-
         <button
           onClick={fetchStats}
           className="bg-[#333699] text-white px-6 py-2 rounded-xl hover:bg-[#2a2f85] transition duration-150"
@@ -241,54 +211,70 @@ function StatGlobalPage() {
       {loading && <p className="text-white mt-6">Chargement...</p>}
 
       {!loading && attendanceStats && (
-        <div className="w-full max-w-6xl mt-6">
-          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-300 rounded-xl">
-            <div className="min-w-[1200px] space-y-2">
-              {/* HEADER */}
-              <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-4 py-2 border-b border-gray-400 bg-transparent rounded-t-xl">
-                <div className="flex-[2] sticky left-0 bg-transparent z-10 whitespace-nowrap">Rapport</div>
-                <div className="flex-[1] whitespace-nowrap">Hommes</div>
-                <div className="flex-[1] whitespace-nowrap">Femmes</div>
-                <div className="flex-[1] whitespace-nowrap">Jeunes</div>
-                <div className="flex-[1] whitespace-nowrap">Enfants</div>
-                <div className="flex-[1] whitespace-nowrap">Connectés</div>
-                <div className="flex-[2] whitespace-nowrap">Nouveaux Venus</div>
-                <div className="flex-[2] whitespace-nowrap">Prière / Réconciliation</div>
-                <div className="flex-[2] whitespace-nowrap">Nouveau Converti</div>
-                <div className="flex-[1] whitespace-nowrap">Moissonneurs</div>
-                <div className="flex-[1] whitespace-nowrap">Total</div>
-              </div>
-
-              {/* LIGNES */}
-              {[
-                { label: "Culte", data: attendanceStats, borderColor: "border-l-orange-500" },
-                { label: "Evangelisation", data: evanStats, borderColor: "border-l-green-500" },
-                { label: "Baptême", data: baptemeStats, borderColor: "border-l-purple-500" },
-                { label: "Formation", data: formationStats, borderColor: "border-l-blue-500" },
-                { label: "Cellules", data: { total: cellulesCount }, borderColor: "border-l-yellow-500" },
-              ]
-                .filter((r) => rapportFilter === "Tous" || r.label === rapportFilter)
-                .map((r, idx) => (
-                  <div
-                    key={idx}
-                    className={`flex flex-row items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 border-l-4 ${r.borderColor}`}
-                  >
-                    <div className="flex-[2] sticky left-0 bg-white/10 text-white font-semibold z-10">{r.label}</div>
-                    <div className="flex-[1] text-white">{r.data?.hommes ?? "-"}</div>
-                    <div className="flex-[1] text-white">{r.data?.femmes ?? "-"}</div>
-                    <div className="flex-[1] text-white">{r.data?.jeunes ?? "-"}</div>
-                    <div className="flex-[1] text-white">{r.data?.enfants ?? "-"}</div>
-                    <div className="flex-[1] text-white">{r.data?.connectes ?? "-"}</div>
-                    <div className="flex-[2] text-white">{r.data?.nouveauxVenus ?? r.data?.prieres ?? "-"}</div>
-                    <div className="flex-[2] text-white">{r.data?.prieres ?? r.data?.reconciliations ?? "-"}</div>
-                    <div className="flex-[2] text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
-                    <div className="flex-[1] text-white">{r.data?.moissonneurs ?? "-"}</div>
-                    <div className="flex-[1] text-white">
-                      {r.data?.hommes && r.data?.femmes ? r.data.hommes + r.data.femmes : r.data?.total ?? "-"}
-                    </div>
-                  </div>
-                ))}
+        <div className="w-full max-w-6xl overflow-x-auto py-2 mt-6">
+          <div className="min-w-[900px]">
+            {/* HEADER */}
+            <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-4 py-2 border-b border-gray-400 bg-white/10">
+              <div className="flex-[2]">Type</div>
+              <div className="flex-[1]">Hommes</div>
+              <div className="flex-[1]">Femmes</div>
+              <div className="flex-[1]">Jeunes</div>
+              <div className="flex-[1]">Enfants</div>
+              <div className="flex-[1]">Connectés</div>
+              <div className="flex-[1]">Nouveaux Venus</div>
+              <div className="flex-[1]">Prière / Réconciliation</div>
+              <div className="flex-[1]">Nouveau Converti</div>
+              <div className="flex-[1]">Moissonneurs</div>
+              <div className="flex-[1]">Total</div>
             </div>
+
+            {/* LIGNES */}
+            {[
+              {
+                label: "Culte",
+                data: attendanceStats,
+                borderColor: "border-l-orange-500",
+              },
+              {
+                label: "Evangelisation",
+                data: evanStats,
+                borderColor: "border-l-green-500",
+              },
+              {
+                label: "Baptême",
+                data: baptemeStats,
+                borderColor: "border-l-purple-500",
+              },
+              {
+                label: "Formation",
+                data: formationStats,
+                borderColor: "border-l-blue-500",
+              },
+              {
+                label: "Cellules",
+                data: { total: cellulesCount },
+                borderColor: "border-l-yellow-500",
+              },
+            ].map((r, idx) => (
+              <div
+                key={idx}
+                className={`flex flex-row items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 border-l-4 ${r.borderColor}`}
+              >
+                <div className="flex-[2] sticky left-0 bg-white/20 text-white font-semibold z-20 shadow-md">{r.label}</div>
+                <div className="flex-[1] text-white">{r.data?.hommes ?? "-"}</div>
+                <div className="flex-[1] text-white">{r.data?.femmes ?? "-"}</div>
+                <div className="flex-[1] text-white">{r.data?.jeunes ?? "-"}</div>
+                <div className="flex-[1] text-white">{r.data?.enfants ?? "-"}</div>
+                <div className="flex-[1] text-white">{r.data?.connectes ?? "-"}</div>
+                <div className="flex-[1] text-white">{r.data?.nouveauxVenus ?? "-"}</div>
+                <div className="flex-[1] text-white">{r.data?.prieres ?? r.data?.reconciliations ?? "-"}</div>
+                <div className="flex-[1] text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
+                <div className="flex-[1] text-white">-</div> {/* Moissonneurs placeholder */}
+                <div className="flex-[1] text-white">
+                  {r.data?.hommes && r.data?.femmes ? r.data.hommes + r.data.femmes : r.data?.total ?? "-"}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

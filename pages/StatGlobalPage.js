@@ -238,6 +238,7 @@ function StatGlobalPage() {
               <div className="min-w-[140px] text-center">Connectés</div>
               <div className="min-w-[150px] text-center">Nouveaux Venus</div>
               <div className="min-w-[180px] text-center">Nouveau Converti</div>
+              <div className="min-w-[140px] text-center">Réconciliation</div>
               <div className="min-w-[160px] text-center">Moissonneurs</div>
               <div className="min-w-[130px] text-center">Total</div>
             </div>
@@ -259,6 +260,7 @@ function StatGlobalPage() {
                   <div className="min-w-[140px] text-center text-white">{r.data?.connectes ?? "-"}</div>
                   <div className="min-w-[150px] text-center text-white">{r.data?.nouveauxVenus ?? "-"}</div>
                   <div className="min-w-[180px] text-center text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
+                  <div className="min-w-[140px] text-center text-white">{r.data?.reconciliations ?? "-"}</div>         
                   <div className="min-w-[160px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>
                   <div className="min-w-[130px] text-center text-white font-bold">{total ?? r.data?.total ?? "-"}</div>
                 </div>

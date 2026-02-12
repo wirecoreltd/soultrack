@@ -8,7 +8,6 @@ import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Footer from "../components/Footer";
 
-// Wrapper sécurisé
 export default function RapportEvangelisationPage() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "ResponsableEvangelisation"]}>
@@ -24,11 +23,12 @@ function RapportEvangelisation() {
   const [editOpen, setEditOpen] = useState(false);
   const [selectedRapport, setSelectedRapport] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [evangelises, setEvangelises] = useState([]);
 
-  // ✅ Fetch depuis rapport_evangelisation uniquement
   const fetchRapports = async () => {
     setLoading(true);
 
+    // 1️⃣ Session
     const { data: sessionData } = await supabase.auth.getSession();
     const user = sessionData?.session?.user;
     if (!user) {
@@ -36,6 +36,7 @@ function RapportEvangelisation() {
       return;
     }
 
+    // 2️⃣ Profil
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
       .select("eglise_id, branche_id")
@@ -50,16 +51,66 @@ function RapportEvangelisation() {
 
     setProfile(profileData);
 
-    const { data, error } = await supabase
-      .from("rapport_evangelisation")
+    // 3️⃣ Récupérer évangélisés
+    const { data: evangelisesData, error: evangelisesError } = await supabase
+      .from("evangelises")
       .select("*")
       .eq("eglise_id", profileData.eglise_id)
       .eq("branche_id", profileData.branche_id)
-      .order("date", { ascending: true });
+      .order("created_at", { ascending: true });
 
-    if (error) console.error(error);
+    if (evangelisesError) console.error(evangelisesError);
+    setEvangelises(evangelisesData || []);
 
-    setRapports(data || []);
+    // 4️⃣ Récupérer rapports sauvegardés
+    const { data: rapportsSaved, error: rapportsError } = await supabase
+      .from("rapport_evangelisation")
+      .select("*")
+      .eq("eglise_id", profileData.eglise_id)
+      .eq("branche_id", profileData.branche_id);
+
+    if (rapportsError) console.error(rapportsError);
+
+    // 5️⃣ Construction hybride
+    const mergedRapports = {};
+
+    evangelisesData?.forEach((e) => {
+      const date = e.created_at.split("T")[0];
+
+      if (!mergedRapports[date]) {
+        mergedRapports[date] = {
+          date,
+          hommes: 0,
+          femmes: 0,
+          priere: 0,
+          nouveau_converti: 0,
+          reconciliation: 0,
+          moissonneurs: "",
+        };
+      }
+
+      if (e.sexe === "Homme") mergedRapports[date].hommes += 1;
+      if (e.sexe === "Femme") mergedRapports[date].femmes += 1;
+      if (e.priere_salut) mergedRapports[date].priere += 1;
+      if (e.type_conversion === "Nouveau converti")
+        mergedRapports[date].nouveau_converti += 1;
+      if (e.type_conversion === "Réconciliation")
+        mergedRapports[date].reconciliation += 1;
+    });
+
+    // Fusionner avec les moissonneurs et champs existants
+    rapportsSaved?.forEach((saved) => {
+      if (mergedRapports[saved.date]) {
+        mergedRapports[saved.date] = {
+          ...mergedRapports[saved.date],
+          ...saved,
+        };
+      } else {
+        mergedRapports[saved.date] = { ...saved };
+      }
+    });
+
+    setRapports(Object.values(mergedRapports));
     setLoading(false);
   };
 
@@ -79,11 +130,8 @@ function RapportEvangelisation() {
         }
       );
 
-    if (error) {
-      console.error("Erreur mise à jour rapport :", error);
-    } else {
-      fetchRapports();
-    }
+    if (error) console.error("Erreur mise à jour rapport :", error);
+    else fetchRapports();
   };
 
   useEffect(() => {
@@ -91,9 +139,7 @@ function RapportEvangelisation() {
   }, []);
 
   if (loading)
-    return (
-      <p className="text-center mt-10 text-white">Chargement des rapports...</p>
-    );
+    return <p className="text-center mt-10 text-white">Chargement des rapports...</p>;
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -136,7 +182,7 @@ function RapportEvangelisation() {
                 <td className="py-2 px-4">{r.priere}</td>
                 <td className="py-2 px-4">{r.nouveau_converti}</td>
                 <td className="py-2 px-4">{r.reconciliation}</td>
-                <td className="py-2 px-4">{r.moissonneurs ?? "-"}</td>
+                <td className="py-2 px-4">{r.moissonneurs || "-"}</td>
                 <td className="py-2 px-4">
                   <button
                     onClick={() => {

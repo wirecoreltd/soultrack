@@ -136,8 +136,43 @@ function RapportEvangelisation() {
   };
 
   useEffect(() => {
-    fetchRapports();
-  }, []);
+    const fetchRapports = async () => {
+      setLoading(true);
+    
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+    
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
+    
+      if (profileError || !profileData) {
+        console.error(profileError);
+        setLoading(false);
+        return;
+      }
+    
+      setProfile(profileData);
+    
+      const { data, error } = await supabase
+        .from("rapport_evangelisation")
+        .select("*")
+        .eq("eglise_id", profileData.eglise_id)
+        .eq("branche_id", profileData.branche_id)
+        .order("date", { ascending: true });
+    
+      if (error) console.error(error);
+    
+      setRapports(data || []);
+      setLoading(false);
+    };
+
 
   if (loading)
     return (

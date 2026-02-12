@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { UserPlus } from "lucide-react";
 
 export default function AddMemberTimeline() {
   const router = useRouter();
@@ -22,8 +21,8 @@ export default function AddMemberTimeline() {
           <div className="absolute top-10 w-full h-1 bg-blue-200"></div>
 
           {/* Cercle étape */}
-          <div className="relative z-10 bg-blue-600 text-white w-20 h-20 rounded-full flex items-center justify-center shadow-xl">
-            <UserPlus size={32} />
+          <div className="relative z-10 bg-blue-600 text-white w-20 h-20 rounded-full flex items-center justify-center shadow-xl text-3xl">
+            👤➕
           </div>
 
           {/* Contenu en dessous */}

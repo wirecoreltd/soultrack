@@ -17,6 +17,7 @@ export default function StatGlobalPageWrapper() {
 function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
+  const [rapportFilter, setRapportFilter] = useState("Tous");
 
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
@@ -32,10 +33,7 @@ function StatGlobalPage() {
   // 🔹 Récupérer eglise_id et branche_id automatiquement
   useEffect(() => {
     const fetchProfile = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data } = await supabase
@@ -55,7 +53,6 @@ function StatGlobalPage() {
 
   const fetchStats = async () => {
     if (!egliseId || !brancheId) return;
-
     setLoading(true);
 
     // ==========================
@@ -140,12 +137,10 @@ function StatGlobalPage() {
 
     const { data: baptemeData } = await baptemeQuery;
 
-    const totalBaptemeHommes =
-      baptemeData?.reduce((sum, r) => sum + Number(r.hommes), 0) || 0;
-    const totalBaptemeFemmes =
-      baptemeData?.reduce((sum, r) => sum + Number(r.femmes), 0) || 0;
-
-    setBaptemeStats({ hommes: totalBaptemeHommes, femmes: totalBaptemeFemmes });
+    setBaptemeStats({
+      hommes: baptemeData?.reduce((sum, r) => sum + Number(r.hommes), 0) || 0,
+      femmes: baptemeData?.reduce((sum, r) => sum + Number(r.femmes), 0) || 0,
+    });
 
     // ==========================
     // 🔹 FORMATION
@@ -161,12 +156,10 @@ function StatGlobalPage() {
 
     const { data: formationData } = await formationQuery;
 
-    const totalFormationHommes =
-      formationData?.reduce((sum, r) => sum + Number(r.hommes), 0) || 0;
-    const totalFormationFemmes =
-      formationData?.reduce((sum, r) => sum + Number(r.femmes), 0) || 0;
-
-    setFormationStats({ hommes: totalFormationHommes, femmes: totalFormationFemmes });
+    setFormationStats({
+      hommes: formationData?.reduce((sum, r) => sum + Number(r.hommes), 0) || 0,
+      femmes: formationData?.reduce((sum, r) => sum + Number(r.femmes), 0) || 0,
+    });
 
     // ==========================
     // 🔹 CELLULES
@@ -185,11 +178,10 @@ function StatGlobalPage() {
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-
       <h1 className="text-3xl font-bold text-white mt-4">Statistiques Globales</h1>
 
       {/* FILTRES */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white items-end">
         <div>
           <label>Date début</label>
           <input
@@ -199,7 +191,6 @@ function StatGlobalPage() {
             onChange={(e) => setDateDebut(e.target.value)}
           />
         </div>
-
         <div>
           <label>Date fin</label>
           <input
@@ -209,7 +200,21 @@ function StatGlobalPage() {
             onChange={(e) => setDateFin(e.target.value)}
           />
         </div>
-
+        <div>
+          <label>Rapport</label>
+          <select
+            className="border border-gray-400 rounded-lg px-3 py-2 ml-2 bg-transparent text-white"
+            value={rapportFilter}
+            onChange={(e) => setRapportFilter(e.target.value)}
+          >
+            <option value="Tous">Tous</option>
+            <option value="Culte">Culte</option>
+            <option value="Evangelisation">Evangelisation</option>
+            <option value="Bapteme">Baptême</option>
+            <option value="Formation">Formation</option>
+            <option value="Cellules">Cellules</option>
+          </select>
+        </div>
         <button
           onClick={fetchStats}
           className="bg-[#333699] text-white px-6 py-2 rounded-xl hover:bg-[#2a2f85] transition duration-150"
@@ -239,70 +244,33 @@ function StatGlobalPage() {
 
             {/* LIGNES */}
             {[
-              {
-                label: "Rapport Culte",
-                data: attendanceStats,
-                borderColor: "border-l-orange-500",
-                bgColor: "bg-white/10",
-              },
-              {
-                label: "Rapport Evangelisation",
-                data: evanStats,
-                borderColor: "border-l-green-500",
-                bgColor: "bg-white/10",
-              },
-              {
-                label: "Rapport Baptême",
-                data: baptemeStats,
-                borderColor: "border-l-purple-500",
-                bgColor: "bg-white/10",
-              },
-              {
-                label: "Rapport Formation",
-                data: formationStats,
-                borderColor: "border-l-blue-500",
-                bgColor: "bg-white/10",
-              },
-              {
-                label: "Nombre de Cellules",
-                data: { total: cellulesCount },
-                borderColor: "border-l-yellow-500",
-                bgColor: "bg-white/10",
-              },
-            ].map((r, idx) => (
-              <div
-                key={idx}
-                className={`flex flex-row items-center px-4 py-3 rounded-lg ${r.bgColor} hover:bg-white/20 transition duration-150 border-l-4 ${r.borderColor}`}
-              >
-                <div className="flex-[2] text-white font-semibold">{r.label}</div>
-                <div className="flex-[1] text-white">
-                  {r.data?.hommes ?? "-"}
+              { label: "Rapport Culte", data: attendanceStats, borderColor: "border-l-orange-500" },
+              { label: "Rapport Evangelisation", data: evanStats, borderColor: "border-l-green-500" },
+              { label: "Rapport Baptême", data: baptemeStats, borderColor: "border-l-purple-500" },
+              { label: "Rapport Formation", data: formationStats, borderColor: "border-l-blue-500" },
+              { label: "Nombre de Cellules", data: { total: cellulesCount }, borderColor: "border-l-yellow-500" },
+            ]
+              .filter((r) => rapportFilter === "Tous" || r.label.includes(rapportFilter))
+              .map((r, idx) => (
+                <div
+                  key={idx}
+                  className={`flex flex-row items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 border-l-4 ${r.borderColor}`}
+                >
+                  <div className="flex-[2] text-white font-semibold">{r.label}</div>
+                  <div className="flex-[1] text-white">{r.data?.hommes ?? "-"}</div>
+                  <div className="flex-[1] text-white">{r.data?.femmes ?? "-"}</div>
+                  <div className="flex-[1] text-white">{r.data?.jeunes ?? "-"}</div>
+                  <div className="flex-[1] text-white">{r.data?.enfants ?? "-"}</div>
+                  <div className="flex-[1] text-white">{r.data?.connectes ?? "-"}</div>
+                  <div className="flex-[1] text-white">{r.data?.prieres ?? "-"}</div>
+                  <div className="flex-[1] text-white">
+                    {r.data?.nouveauxConvertis ?? r.data?.nouveauxVenus ?? r.data?.total ?? "-"}
+                  </div>
+                  <div className="flex-[1] text-white">
+                    {r.data?.hommes && r.data?.femmes ? r.data.hommes + r.data.femmes : r.data?.total ?? "-"}
+                  </div>
                 </div>
-                <div className="flex-[1] text-white">
-                  {r.data?.femmes ?? "-"}
-                </div>
-                <div className="flex-[1] text-white">
-                  {r.data?.jeunes ?? "-"}
-                </div>
-                <div className="flex-[1] text-white">
-                  {r.data?.enfants ?? "-"}
-                </div>
-                <div className="flex-[1] text-white">
-                  {r.data?.connectes ?? "-"}
-                </div>
-                <div className="flex-[1] text-white">
-                  {r.data?.prieres ?? "-"}
-                </div>
-                <div className="flex-[1] text-white">
-                  {r.data?.nouveauxConvertis ?? r.data?.nouveauxVenus ?? r.data?.total ?? "-"}
-                </div>
-                <div className="flex-[1] text-white">
-                  {r.data?.hommes && r.data?.femmes
-                    ? r.data.hommes + r.data.femmes
-                    : r.data?.total ?? "-"}
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       )}

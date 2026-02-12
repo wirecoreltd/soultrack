@@ -1,49 +1,131 @@
 "use client";
 
-import PublicHeader from "../components/PublicHeader";
-import Footer from "../components/Footer";
+import { useRouter } from "next/navigation";
 
-const plans = [
-  { range: "0 - 100", price: "Gratuit", features: ["Membres jusqu'à 100", "Accès aux statistiques de base"] },
-  { range: "101 - 1000", price: "$50/mois", features: ["Membres jusqu'à 1000", "Stats avancées", "Support email"] },
-  { range: "1001 - 5000", price: "$70/mois", features: ["Membres jusqu'à 5000", "Toutes les fonctionnalités", "Support prioritaire"] },
-  { range: "5001 - 15000", price: "$200/mois", features: ["Membres jusqu'à 15000", "Fonctionnalités premium", "Support dédié"] },
-  { range: "> 15000", price: "Contactez-nous", features: ["Plan sur mesure pour grandes églises"] },
-];
+export default function Pricing() {
+  const router = useRouter();
 
-export default function PricingPage() {
+  const plans = [
+    {
+      name: "Église Mini",
+      range: "0–100 membres",
+      price: "Gratuit",
+      popular: false,
+      features: [
+        "Suivi de base des membres",
+        "Liste des membres",
+        "Accès aux cellules",
+      ],
+    },
+    {
+      name: "Église Standard",
+      range: "101–1000 membres",
+      price: "$50/mois",
+      popular: true,
+      features: [
+        "Tout dans Mini",
+        "Rapports d’activité avancés",
+        "Statistiques de cultes & évangélisation",
+      ],
+    },
+    {
+      name: "Église Pro",
+      range: "1001–5000 membres",
+      price: "$70/mois",
+      popular: false,
+      features: [
+        "Tout dans Standard",
+        "Alertes & notifications avancées",
+        "Exports PDF / Excel",
+      ],
+    },
+    {
+      name: "Église Plus",
+      range: "5001–15000 membres",
+      price: "$200/mois",
+      popular: false,
+      features: [
+        "Tout dans Pro",
+        "Support prioritaire",
+        "Multi‑branche / Multi‑cellules",
+      ],
+    },
+    {
+      name: "Église Enterprise",
+      range: "Plus de 15000",
+      price: "Contactez‑nous",
+      popular: false,
+      features: [
+        "Plan personnalisé",
+        "Intégration & support dédié",
+        "Options sur mesure",
+      ],
+    },
+  ];
+
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <PublicHeader />
+    <div className="min-h-screen bg-white text-gray-900">
+      {/* Hero */}
+      <section className="text-center py-16 px-6">
+        <h1 className="text-4xl font-bold text-blue-700 mb-4">
+          Tarifs SoulTrack
+        </h1>
+        <p className="text-lg text-gray-700 mb-8">
+          Choisissez le plan adapté à la taille de votre église et à vos besoins de suivi
+          spirituel, des membres et des cellules.
+        </p>
+      </section>
 
-      <main className="flex-grow max-w-6xl mx-auto px-6 py-16">
-        <h1 className="text-4xl font-bold mb-10 text-center">Nos Tarifs</h1>
+      {/* Pricing Grid */}
+      <section className="max-w-6xl mx-auto px-6 grid md:grid-cols-5 gap-6">
+        {plans.map((plan, idx) => (
+          <div
+            key={idx}
+            className={`flex flex-col border rounded-2xl shadow-lg p-6 transition hover:shadow-xl ${
+              plan.popular ? "border-blue-500" : "border-gray-200"
+            }`}
+          >
+            {plan.popular && (
+              <span className="text-white bg-blue-500 px-3 py-1 rounded-full text-xs uppercase font-semibold self-start mb-2">
+                Recommandé
+              </span>
+            )}
+            <h2 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h2>
+            <p className="text-sm text-gray-600 mb-4">{plan.range}</p>
+            <p className="text-3xl font-bold text-gray-900 mb-6">{plan.price}</p>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {plans.map((plan) => (
-            <div key={plan.range} className="border rounded-2xl p-6 shadow hover:shadow-lg transition">
-              <h2 className="text-xl font-bold mb-2">{plan.range}</h2>
-              <p className="text-2xl font-bold mb-4">{plan.price}</p>
-              <ul className="text-gray-700 space-y-1">
-                {plan.features.map((f, idx) => (
-                  <li key={idx}>• {f}</li>
-                ))}
-              </ul>
-              {plan.price === "Contactez-nous" ? (
-                <button className="mt-4 w-full px-4 py-2 border border-blue-500 text-blue-500 rounded-2xl hover:bg-blue-500 hover:text-white transition font-semibold">
-                  Nous contacter
-                </button>
-              ) : (
-                <button className="mt-4 w-full px-4 py-2 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition font-semibold">
-                  S’inscrire
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </main>
+            <ul className="flex-1 space-y-2 mb-6 text-sm text-gray-700">
+              {plan.features.map((f, i) => (
+                <li key={i}>✔ {f}</li>
+              ))}
+            </ul>
 
-      <Footer />
+            <button
+              onClick={() =>
+                plan.price === "Contactez‑nous"
+                  ? router.push("/contact")
+                  : router.push("/signup-eglise")
+              }
+              className={`mt-auto text-center py-2 rounded-lg font-bold ${
+                plan.popular
+                  ? "bg-blue-500 text-white hover:bg-blue-600"
+                  : "bg-gray-200 text-gray-900 hover:bg-gray-300"
+              } transition`}
+            >
+              {plan.price === "Contactez‑nous"
+                ? "Contactez‑nous"
+                : "Commencer"}
+            </button>
+          </div>
+        ))}
+      </section>
+
+      {/* Optional: FAQ */}
+      <section className="max-w-4xl mx-auto px-6 py-16 text-center text-sm text-gray-700">
+        <h3 className="text-2xl font-semibold mb-4">Questions fréquentes</h3>
+        <p>Les prix sont mensuels et facturés automatiquement.</p>
+        <p>Vous pouvez changer de plan à tout moment sans frais cachés.</p>
+      </section>
     </div>
   );
 }

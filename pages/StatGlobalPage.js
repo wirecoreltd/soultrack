@@ -4,160 +4,133 @@ import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
-import { useSession } from "@supabase/auth-helpers-react";
 
-export default function StatsGlobalPage() {
-  const { data: session } = useSession();
-  const [rapportType, setRapportType] = useState("All");
+export default function StatGlobalPage() {
+  const [stats, setStats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [stats, setStats] = useState([]);
-  const [nbCellules, setNbCellules] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [reportType, setReportType] = useState("all"); // all, evangelisation, attendance
 
-  const userEgliseId = session?.user?.eglise_id;
-  const userBrancheId = session?.user?.branche_id;
+  const fetchSession = async () => {
+    const { data } = await supabase.auth.getSession();
+    if (data?.session) setSession(data.session);
+  };
 
-  // 🔹 Récupération des stats
   const fetchStats = async () => {
-    if (!userEgliseId || !userBrancheId) return;
+    if (!session) return;
     setLoading(true);
 
-    try {
-      let attendanceQuery = supabase
-        .from("attendance")
-        .select("*")
-        .eq("eglise_id", userEgliseId)
-        .eq("branche_id", userBrancheId);
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("eglise_id, branche_id")
+      .eq("id", session.user.id)
+      .single();
 
-      let evangelisationQuery = supabase
-        .from("evangelises")
-        .select("*")
-        .eq("eglise_id", userEgliseId)
-        .eq("branche_id", userBrancheId);
-
-      // Filtre par date si défini
-      if (startDate) {
-        attendanceQuery = attendanceQuery.gte("date", startDate);
-        evangelisationQuery = evangelisationQuery.gte("date", startDate);
-      }
-      if (endDate) {
-        attendanceQuery = attendanceQuery.lte("date", endDate);
-        evangelisationQuery = evangelisationQuery.lte("date", endDate);
-      }
-
-      const [{ data: attendData }, { data: evangData }] = await Promise.all([
-        attendanceQuery,
-        evangelisationQuery,
-      ]);
-
-      // Fusion des stats par type
-      let combinedStats = [];
-
-      if (rapportType === "Attendance" || rapportType === "All") {
-        combinedStats.push(
-          ...attendData.map((r) => ({
-            type: "Rapport Culte",
-            date: r.date,
-            hommes: r.hommes,
-            femmes: r.femmes,
-            jeunes: r.jeunes,
-            enfants: r.enfants,
-            connectes: r.connectes,
-            priere: r.priere,
-            nouveauxVenus: r.nouveauxVenus,
-            nouveauxConvertis: r.nouveauxConvertis,
-            reconciliation: r.reconciliation,
-            moissonneur: r.moissonneur,
-          }))
-        );
-      }
-
-      if (rapportType === "Evangelisation" || rapportType === "All") {
-        combinedStats.push(
-          ...evangData.map((r) => ({
-            type: "Rapport Évangélisation",
-            date: r.date,
-            hommes: r.hommes,
-            femmes: r.femmes,
-            jeunes: r.jeunes,
-            enfants: r.enfants,
-            connectes: r.connectes,
-            priere: r.priere,
-            nouveauxVenus: r.nouveauxVenus,
-            nouveauxConvertis: r.nouveauxConvertis,
-            reconciliation: r.reconciliation,
-            moissonneur: r.moissonneur,
-          }))
-        );
-      }
-
-      setStats(combinedStats);
-    } catch (err) {
-      console.error("Erreur fetch stats :", err);
+    if (profileError) {
+      console.error("Erreur récupération eglise/branche :", profileError);
+      setLoading(false);
+      return;
     }
 
+    const eglise_id = profile.eglise_id;
+    const branche_id = profile.branche_id;
+
+    // Construire le filtre de date
+    let dateFilter = {};
+    if (startDate) dateFilter.gte = startDate;
+    if (endDate) dateFilter.lte = endDate;
+
+    // Fonction pour récupérer un type de rapport
+    const fetchReport = async (tableName) => {
+      const query = supabase
+        .from(tableName)
+        .select("*")
+        .eq("eglise_id", eglise_id)
+        .eq("branche_id", branche_id);
+
+      if (startDate) query.gte("date", startDate);
+      if (endDate) query.lte("date", endDate);
+
+      const { data, error } = await query;
+      if (error) console.error(`Erreur récupération ${tableName}:`, error);
+      return data || [];
+    };
+
+    const attendanceData = reportType === "all" || reportType === "attendance"
+      ? await fetchReport("attendance")
+      : [];
+
+    const evangelisationData = reportType === "all" || reportType === "evangelisation"
+      ? await fetchReport("evangelisation")
+      : [];
+
+    // Combiner les deux datasets
+    const combinedStats = [
+      ...attendanceData.map(r => ({ ...r, type: "Rapport Culte" })),
+      ...evangelisationData.map(r => ({ ...r, type: "Rapport Evangelisation" })),
+    ];
+
+    setStats(combinedStats);
     setLoading(false);
   };
 
-  // 🔹 Nombre de cellules
-  const fetchNbCellules = async () => {
-    if (!userEgliseId || !userBrancheId) return;
-
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("id", { count: "exact" })
-      .eq("eglise_id", userEgliseId)
-      .eq("branche_id", userBrancheId);
-
-    if (error) console.error("Erreur récupération cellules :", error);
-    else setNbCellules(data?.length || 0);
-  };
+  useEffect(() => {
+    fetchSession();
+  }, []);
 
   useEffect(() => {
     fetchStats();
-    fetchNbCellules();
-  }, [startDate, endDate, rapportType, userEgliseId, userBrancheId]);
+  }, [session, startDate, endDate, reportType]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+    <div className="min-h-screen bg-[#333699] p-6 flex flex-col items-center">
       <HeaderPages />
 
       <h1 className="text-3xl font-bold text-gray-800 mt-2">Statistiques Globales</h1>
 
-      <div className="mt-4 flex flex-wrap gap-4 items-center">
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="input"
-        />
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          className="input"
-        />
-        <select
-          value={rapportType}
-          onChange={(e) => setRapportType(e.target.value)}
-          className="input"
-        >
-          <option value="All">Tous les rapports</option>
-          <option value="Attendance">Rapport Culte</option>
-          <option value="Evangelisation">Rapport Évangélisation</option>
-          {/* On pourra rajouter Baptême, Formation, etc. */}
-        </select>
+      <div className="flex gap-4 mt-4">
+        <div>
+          <label className="text-white font-semibold">Date début :</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="ml-2 p-2 rounded"
+          />
+        </div>
+        <div>
+          <label className="text-white font-semibold">Date fin :</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="ml-2 p-2 rounded"
+          />
+        </div>
+        <div>
+          <label className="text-white font-semibold">Type de rapport :</label>
+          <select
+            value={reportType}
+            onChange={(e) => setReportType(e.target.value)}
+            className="ml-2 p-2 rounded"
+          >
+            <option value="all">Tous</option>
+            <option value="attendance">Culte</option>
+            <option value="evangelisation">Evangelisation</option>
+          </select>
+        </div>
       </div>
 
       {loading ? (
         <p className="text-center mt-10 text-white">Chargement des statistiques...</p>
       ) : (
-        <div className="overflow-x-auto mt-4 w-full max-w-6xl">
+        <div className="overflow-x-auto mt-6 w-full max-w-6xl">
           <table className="min-w-full border-separate border-spacing-0 shadow-lg rounded-2xl overflow-hidden">
             <thead className="bg-orange-500 text-white">
               <tr>
-                <th className="py-3 px-4 text-left">Type</th>
+                <th className="py-3 px-4">Type</th>
                 <th className="py-3 px-4">Date</th>
                 <th className="py-3 px-4">Hommes</th>
                 <th className="py-3 px-4">Femmes</th>
@@ -172,37 +145,25 @@ export default function StatsGlobalPage() {
               </tr>
             </thead>
             <tbody>
-              <tr className="bg-gray-200 font-semibold">
-                <td className="py-2 px-4 text-left">Cellules</td>
-                <td className="py-2 px-4">-</td>
-                <td className="py-2 px-4">{nbCellules}</td>
-                <td className="py-2 px-4">-</td>
-                <td className="py-2 px-4">-</td>
-                <td className="py-2 px-4">-</td>
-                <td className="py-2 px-4">-</td>
-                <td className="py-2 px-4">-</td>
-                <td className="py-2 px-4">-</td>
-                <td className="py-2 px-4">-</td>
-                <td className="py-2 px-4">-</td>
-                <td className="py-2 px-4">-</td>
-              </tr>
-              {stats.map((r, i) => (
+              {stats.map((r, index) => (
                 <tr
-                  key={i}
-                  className={`text-center ${i % 2 === 0 ? "bg-white" : "bg-orange-50"} hover:bg-orange-100 transition-colors`}
+                  key={r.id || index}
+                  className={`text-center ${
+                    index % 2 === 0 ? "bg-white" : "bg-orange-50"
+                  } hover:bg-orange-100 transition-colors`}
                 >
-                  <td className="py-2 px-4 text-left font-medium">{r.type}</td>
-                  <td className="py-2 px-4">{new Date(r.date).toLocaleDateString()}</td>
+                  <td className="py-2 px-4">{r.type}</td>
+                  <td className="py-2 px-4">{r.date ? new Date(r.date).toLocaleDateString() : "-"}</td>
                   <td className="py-2 px-4">{r.hommes || 0}</td>
                   <td className="py-2 px-4">{r.femmes || 0}</td>
                   <td className="py-2 px-4">{r.jeunes || 0}</td>
                   <td className="py-2 px-4">{r.enfants || 0}</td>
                   <td className="py-2 px-4">{r.connectes || 0}</td>
-                  <td className="py-2 px-4">{r.priere || 0}</td>
+                  <td className="py-2 px-4">{r.priere_salut ? "Oui" : "Non"}</td>
                   <td className="py-2 px-4">{r.nouveauxVenus || 0}</td>
                   <td className="py-2 px-4">{r.nouveauxConvertis || 0}</td>
                   <td className="py-2 px-4">{r.reconciliation || 0}</td>
-                  <td className="py-2 px-4">{r.moissonneur || 0}</td>
+                  <td className="py-2 px-4">{r.moissonneurs || "-"}</td>
                 </tr>
               ))}
             </tbody>
@@ -211,14 +172,6 @@ export default function StatsGlobalPage() {
       )}
 
       <Footer />
-
-      <style jsx>{`
-        .input {
-          padding: 10px;
-          border-radius: 10px;
-          border: 1px solid #ccc;
-        }
-      `}</style>
     </div>
   );
 }

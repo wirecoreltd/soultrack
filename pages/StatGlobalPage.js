@@ -3,256 +3,306 @@
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
+import ProtectedRoute from "../components/ProtectedRoute";
 import Footer from "../components/Footer";
 
-export default function StatGlobalPage() {
-  const [rapportType, setRapportType] = useState("Tous");
-  const [rapportsCulte, setRapportsCulte] = useState([]);
-  const [rapportsEvang, setRapportsEvang] = useState([]);
-  const [rapportsBapteme, setRapportsBapteme] = useState([]);
-  const [rapportsFormation, setRapportsFormation] = useState([]);
-  const [nbCellules, setNbCellules] = useState(0);
-  const [loading, setLoading] = useState(true);
+export default function StatGlobalPageWrapper() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
+      <StatGlobalPage />
+    </ProtectedRoute>
+  );
+}
+
+function StatGlobalPage() {
+  const [dateDebut, setDateDebut] = useState("");
+  const [dateFin, setDateFin] = useState("");
 
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
 
-  // Dates de filtre
-  const [dateDebut, setDateDebut] = useState("");
-  const [dateFin, setDateFin] = useState("");
+  const [attendanceStats, setAttendanceStats] = useState(null);
+  const [evanStats, setEvanStats] = useState(null);
+  const [baptemeStats, setBaptemeStats] = useState({ hommes: 0, femmes: 0 });
+  const [formationStats, setFormationStats] = useState({ hommes: 0, femmes: 0 });
 
+  const [loading, setLoading] = useState(false);
+
+  // 🔹 Récupérer eglise_id et branche_id automatiquement
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) return;
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      const { data: profile, error } = await supabase
+      if (!user) return;
+
+      const { data } = await supabase
         .from("profiles")
         .select("eglise_id, branche_id")
-        .eq("id", session.session.user.id)
+        .eq("id", user.id)
         .single();
 
-      if (!error && profile) {
-        setEgliseId(profile.eglise_id);
-        setBrancheId(profile.branche_id);
-      } else console.error(error);
+      if (data) {
+        setEgliseId(data.eglise_id);
+        setBrancheId(data.branche_id);
+      }
     };
+
     fetchProfile();
   }, []);
 
-  const fetchRapports = async () => {
+  const fetchStats = async () => {
     if (!egliseId || !brancheId) return;
+
     setLoading(true);
 
-    const dateFilter = (col) => {
-      const filters = {};
-      if (dateDebut) filters[`${col}`] = { gte: dateDebut };
-      if (dateFin) filters[`${col}`] = { lte: dateFin };
-      return filters;
+    // ==========================
+    // 🔹 ATTENDANCE
+    // ==========================
+    let attendanceQuery = supabase
+      .from("attendance")
+      .select("*")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId);
+
+    if (dateDebut) attendanceQuery = attendanceQuery.gte("date", dateDebut);
+    if (dateFin) attendanceQuery = attendanceQuery.lte("date", dateFin);
+
+    const { data: attendanceData } = await attendanceQuery;
+
+    const attendanceTotals = {
+      hommes: 0,
+      femmes: 0,
+      jeunes: 0,
+      enfants: 0,
+      connectes: 0,
+      nouveauxVenus: 0,
+      nouveauxConvertis: 0,
     };
 
-    try {
-      // Culte
-      const { data: culte } = await supabase
-        .from("rapport_culte")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .gte("date", dateDebut || "1900-01-01")
-        .lte("date", dateFin || "3000-01-01")
-        .order("date", { ascending: true });
-      setRapportsCulte(culte || []);
+    attendanceData?.forEach((r) => {
+      attendanceTotals.hommes += Number(r.hommes) || 0;
+      attendanceTotals.femmes += Number(r.femmes) || 0;
+      attendanceTotals.jeunes += Number(r.jeunes) || 0;
+      attendanceTotals.enfants += Number(r.enfants) || 0;
+      attendanceTotals.connectes += Number(r.connectes) || 0;
+      attendanceTotals.nouveauxVenus += Number(r.nouveauxVenus) || 0;
+      attendanceTotals.nouveauxConvertis += Number(r.nouveauxConvertis) || 0;
+    });
 
-      // Évangélisation
-      const { data: evang } = await supabase
-        .from("rapport_evangelisation")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .gte("date", dateDebut || "1900-01-01")
-        .lte("date", dateFin || "3000-01-01")
-        .order("date", { ascending: true });
-      setRapportsEvang(evang || []);
+    setAttendanceStats(attendanceTotals);
 
-      // Baptême
-      const { data: bapteme } = await supabase
-        .from("rapport_bapteme")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .gte("date", dateDebut || "1900-01-01")
-        .lte("date", dateFin || "3000-01-01")
-        .order("date", { ascending: true });
-      setRapportsBapteme(bapteme || []);
+    // ==========================
+    // 🔹 EVANGELISATION
+    // ==========================
+    let evanQuery = supabase
+      .from("evangelises")
+      .select("*")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId);
 
-      // Formation
-      const { data: formation } = await supabase
-        .from("rapport_formation")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .gte("date", dateDebut || "1900-01-01")
-        .lte("date", dateFin || "3000-01-01")
-        .order("date", { ascending: true });
-      setRapportsFormation(formation || []);
+    if (dateDebut) evanQuery = evanQuery.gte("created_at", dateDebut);
+    if (dateFin) evanQuery = evanQuery.lte("created_at", dateFin);
 
-      // Nombre de cellules
-      const { count: cellulesCount } = await supabase
-        .from("cellules")
-        .select("*", { count: "exact", head: true })
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
-      setNbCellules(cellulesCount || 0);
-    } catch (err) {
-      console.error("Erreur fetch stats globales :", err);
-    } finally {
-      setLoading(false);
-    }
+    const { data: evanData } = await evanQuery;
+
+    const evanTotals = {
+      hommes: 0,
+      femmes: 0,
+      prieres: 0,
+      nouveauxConvertis: 0,
+      reconciliations: 0,
+    };
+
+    evanData?.forEach((r) => {
+      if (r.sexe === "Homme") evanTotals.hommes++;
+      if (r.sexe === "Femme") evanTotals.femmes++;
+
+      if (r.priere_salut) evanTotals.prieres++;
+
+      if (r.type_conversion === "Nouveau converti")
+        evanTotals.nouveauxConvertis++;
+
+      if (r.type_conversion === "Réconciliation")
+        evanTotals.reconciliations++;
+    });
+
+    setEvanStats(evanTotals);
+
+    // ==========================
+    // 🔹 BAPTEME
+    // ==========================
+    let baptemeQuery = supabase
+      .from("baptemes")
+      .select("hommes, femmes")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId);
+
+    if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
+    if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
+
+    const { data: baptemeData } = await baptemeQuery;
+
+    const totalBaptemeHommes =
+      baptemeData?.reduce((sum, r) => sum + Number(r.hommes), 0) || 0;
+
+    const totalBaptemeFemmes =
+      baptemeData?.reduce((sum, r) => sum + Number(r.femmes), 0) || 0;
+
+    setBaptemeStats({
+      hommes: totalBaptemeHommes,
+      femmes: totalBaptemeFemmes,
+    });
+
+    // ==========================
+    // 🔹 FORMATION
+    // ==========================
+    let formationQuery = supabase
+      .from("formations")
+      .select("hommes, femmes")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId);
+
+    if (dateDebut) formationQuery = formationQuery.gte("date_debut", dateDebut);
+    if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin);
+
+    const { data: formationData } = await formationQuery;
+
+    const totalFormationHommes =
+      formationData?.reduce((sum, r) => sum + Number(r.hommes), 0) || 0;
+
+    const totalFormationFemmes =
+      formationData?.reduce((sum, r) => sum + Number(r.femmes), 0) || 0;
+
+    setFormationStats({
+      hommes: totalFormationHommes,
+      femmes: totalFormationFemmes,
+    });
+
+    setLoading(false);
   };
-
-  useEffect(() => {
-    fetchRapports();
-  }, [egliseId, brancheId, dateDebut, dateFin]);
-
-  if (loading) return <p className="text-center mt-10">Chargement des statistiques...</p>;
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-3xl font-bold text-gray-800 mt-2">Statistiques Globales</h1>
-      <p className="text-gray-600 italic mt-1 mb-4">
-        Données combinées par église et branche
-      </p>
+      <h1 className="text-3xl font-bold text-white mt-4">
+        Statistiques Globales
+      </h1>
 
-      {/* Filtres */}
-      <div className="flex gap-4 mb-4 flex-wrap">
-        <select
-          className="input"
-          value={rapportType}
-          onChange={(e) => setRapportType(e.target.value)}
+      {/* FILTRES */}
+      <div className="bg-white p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-black">
+        <div>
+          <label>Date début</label>
+          <input
+            type="date"
+            className="border rounded-lg px-3 py-2 ml-2"
+            value={dateDebut}
+            onChange={(e) => setDateDebut(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label>Date fin</label>
+          <input
+            type="date"
+            className="border rounded-lg px-3 py-2 ml-2"
+            value={dateFin}
+            onChange={(e) => setDateFin(e.target.value)}
+          />
+        </div>
+
+        <button
+          onClick={fetchStats}
+          className="bg-[#333699] text-white px-6 py-2 rounded-xl hover:bg-[#2a2f85]"
         >
-          <option value="Tous">Tous les rapports</option>
-          <option value="Culte">Rapport Culte</option>
-          <option value="Evangelisation">Rapport Évangélisation</option>
-          <option value="Bapteme">Rapport Baptême</option>
-          <option value="Formation">Rapport Formation</option>
-        </select>
-
-        <input
-          type="date"
-          className="input"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-        />
-        <input
-          type="date"
-          className="input"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-        />
+          Générer
+        </button>
       </div>
 
-      {/* Tableau */}
-      <div className="overflow-x-auto w-full max-w-6xl">
-        <table className="min-w-full border-separate border-spacing-0 shadow-lg rounded-2xl overflow-hidden">
-          <thead className="bg-orange-500 text-white">
-            <tr>
-              <th className="py-3 px-4 text-left">Type</th>
-              <th className="py-3 px-4 text-left">Date</th>
-              <th className="py-3 px-4">Hommes</th>
-              <th className="py-3 px-4">Femmes</th>
-              <th className="py-3 px-4">Jeunes</th>
-              <th className="py-3 px-4">Enfants</th>
-              <th className="py-3 px-4">Connectés</th>
-              <th className="py-3 px-4">Prière du salut</th>
-              <th className="py-3 px-4">Nouveaux venus</th>
-              <th className="py-3 px-4">Nouveaux convertis</th>
-              <th className="py-3 px-4">Réconciliation</th>
-              <th className="py-3 px-4">Moissonneurs</th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* Culte */}
-            {["Tous", "Culte"].includes(rapportType) &&
-              rapportsCulte.map((r, idx) => (
-                <tr key={`culte-${idx}`} className={`text-center ${idx % 2 === 0 ? "bg-white" : "bg-orange-50"} hover:bg-orange-100`}>
-                  <td className="py-2 px-4 text-left">Culte</td>
-                  <td className="py-2 px-4 text-left">{new Date(r.date).toLocaleDateString()}</td>
-                  <td className="py-2 px-4">{r.hommes}</td>
-                  <td className="py-2 px-4">{r.femmes}</td>
-                  <td className="py-2 px-4">{r.jeunes || "-"}</td>
-                  <td className="py-2 px-4">{r.enfants || "-"}</td>
-                  <td className="py-2 px-4">{r.connectes || "-"}</td>
-                  <td className="py-2 px-4">{r.priere_salut || "-"}</td>
-                  <td className="py-2 px-4">{r.nouveauxVenus || "-"}</td>
-                  <td className="py-2 px-4">{r.nouveauxConvertis || "-"}</td>
-                  <td className="py-2 px-4">{r.reconciliation || "-"}</td>
-                  <td className="py-2 px-4">{r.moissonneurs || "-"}</td>
-                </tr>
-              ))}
+      {/* TABLEAU */}
+      {loading && <p className="text-white mt-6">Chargement...</p>}
 
-            {/* Évangélisation */}
-            {["Tous", "Evangelisation"].includes(rapportType) &&
-              rapportsEvang.map((r, idx) => (
-                <tr key={`evang-${idx}`} className={`text-center ${idx % 2 === 0 ? "bg-white" : "bg-orange-50"} hover:bg-orange-100`}>
-                  <td className="py-2 px-4 text-left">Évangélisation</td>
-                  <td className="py-2 px-4 text-left">{new Date(r.date).toLocaleDateString()}</td>
-                  <td className="py-2 px-4">{r.hommes}</td>
-                  <td className="py-2 px-4">{r.femmes}</td>
-                  <td className="py-2 px-4">{r.jeunes || "-"}</td>
-                  <td className="py-2 px-4">{r.enfants || "-"}</td>
-                  <td className="py-2 px-4">{r.connectes || "-"}</td>
-                  <td className="py-2 px-4">{r.priere || "-"}</td>
-                  <td className="py-2 px-4">{r.nouveauxVenus || "-"}</td>
-                  <td className="py-2 px-4">{r.nouveau_converti || "-"}</td>
-                  <td className="py-2 px-4">{r.reconciliation || "-"}</td>
-                  <td className="py-2 px-4">{r.moissonneurs || "-"}</td>
-                </tr>
-              ))}
+      {!loading && attendanceStats && (
+        <div className="overflow-x-auto mt-8 w-full max-w-6xl">
+          <table className="min-w-full bg-white rounded-2xl overflow-hidden shadow-lg text-center">
+            <thead className="bg-orange-500 text-white">
+              <tr>
+                <th className="py-3 px-4 text-left">Rapport</th>
+                <th>Hommes</th>
+                <th>Femmes</th>
+                <th>Jeunes</th>
+                <th>Enfants</th>
+                <th>Connectés</th>
+                <th>Prière</th>
+                <th>Nouveaux</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* CULTE */}
+              <tr className="bg-orange-50 font-semibold">
+                <td className="text-left px-4">Rapport Culte</td>
+                <td>{attendanceStats.hommes}</td>
+                <td>{attendanceStats.femmes}</td>
+                <td>{attendanceStats.jeunes}</td>
+                <td>{attendanceStats.enfants}</td>
+                <td>{attendanceStats.connectes}</td>
+                <td>-</td>
+                <td>{attendanceStats.nouveauxVenus}</td>
+                <td>
+                  {attendanceStats.hommes +
+                    attendanceStats.femmes +
+                    attendanceStats.jeunes +
+                    attendanceStats.enfants}
+                </td>
+              </tr>
 
-            {/* Baptême */}
-            {["Tous", "Bapteme"].includes(rapportType) &&
-              rapportsBapteme.map((r, idx) => (
-                <tr key={`bap-${idx}`} className={`text-center ${idx % 2 === 0 ? "bg-white" : "bg-orange-50"} hover:bg-orange-100`}>
-                  <td className="py-2 px-4 text-left">Baptême</td>
-                  <td className="py-2 px-4 text-left">{new Date(r.date).toLocaleDateString()}</td>
-                  <td className="py-2 px-4">{r.hommes}</td>
-                  <td className="py-2 px-4">{r.femmes}</td>
-                  <td className="py-2 px-4 col-span-6">-</td>
-                </tr>
-              ))}
+              {/* EVANGELISATION */}
+              <tr className="bg-green-100 font-semibold">
+                <td className="text-left px-4">Rapport Evangelisation</td>
+                <td>{evanStats?.hommes}</td>
+                <td>{evanStats?.femmes}</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>{evanStats?.prieres}</td>
+                <td>{evanStats?.nouveauxConvertis}</td>
+                <td>{evanStats?.hommes + evanStats?.femmes}</td>
+              </tr>
 
-            {/* Formation */}
-            {["Tous", "Formation"].includes(rapportType) &&
-              rapportsFormation.map((r, idx) => (
-                <tr key={`form-${idx}`} className={`text-center ${idx % 2 === 0 ? "bg-white" : "bg-orange-50"} hover:bg-orange-100`}>
-                  <td className="py-2 px-4 text-left">Formation</td>
-                  <td className="py-2 px-4 text-left">{new Date(r.date).toLocaleDateString()}</td>
-                  <td className="py-2 px-4">{r.hommes}</td>
-                  <td className="py-2 px-4">{r.femmes}</td>
-                  <td className="py-2 px-4 col-span-6">{r.nom_formation || "-"}</td>
-                </tr>
-              ))}
+              {/* BAPTEME */}
+              <tr className="bg-purple-100 font-semibold">
+                <td className="text-left px-4">Rapport Baptême</td>
+                <td>{baptemeStats.hommes}</td>
+                <td>{baptemeStats.femmes}</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>{baptemeStats.hommes + baptemeStats.femmes}</td>
+              </tr>
 
-            {/* Nombre de cellules */}
-            <tr className="bg-gray-300 font-bold text-center">
-              <td colSpan={12} className="py-2 px-4">Nombre de cellules : {nbCellules}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              {/* FORMATION */}
+              <tr className="bg-blue-100 font-semibold">
+                <td className="text-left px-4">Rapport Formation</td>
+                <td>{formationStats.hommes}</td>
+                <td>{formationStats.femmes}</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>{formationStats.hommes + formationStats.femmes}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <Footer />
-
-      <style jsx>{`
-        .input {
-          padding: 10px;
-          border-radius: 12px;
-          border: 1px solid #ccc;
-          min-width: 200px;
-        }
-      `}</style>
     </div>
   );
 }

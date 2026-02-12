@@ -185,7 +185,6 @@ function StatGlobalPage() {
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-
       <h1 className="text-3xl font-bold text-white mt-4">
         Statistiques Globales
       </h1>
@@ -198,14 +197,12 @@ function StatGlobalPage() {
           onChange={(e) => setDateDebut(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
-
         <input
           type="date"
           value={dateFin}
           onChange={(e) => setDateFin(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
-
         <select
           value={typeRapport}
           onChange={(e) => setTypeRapport(e.target.value)}
@@ -218,7 +215,6 @@ function StatGlobalPage() {
           <option value="Formation">Formation</option>
           <option value="Cellules">Cellules</option>
         </select>
-
         <button
           onClick={fetchStats}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
@@ -229,41 +225,41 @@ function StatGlobalPage() {
 
       {/* TABLE */}
       {!loading && attendanceStats && (
-        <div className="w-full max-w-7xl overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
-          <div className="min-w-[1300px] space-y-2">
+        <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+          <div className="min-w-[1600px] space-y-2"> {/* plus large pour total */}
             {/* HEADER */}
             <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[180px]">Type</div>
-              <div className="min-w-[110px] text-center">Hommes</div>
-              <div className="min-w-[110px] text-center">Femmes</div>
-              <div className="min-w-[110px] text-center">Jeunes</div>
-              <div className="min-w-[110px] text-center">Enfants</div>
-              <div className="min-w-[130px] text-center">Connectés</div>
-              <div className="min-w-[140px] text-center">Nouveaux Venus</div>
-              <div className="min-w-[170px] text-center">Nouveau Converti</div>
-              <div className="min-w-[150px] text-center">Moissonneurs</div>
-              <div className="min-w-[110px] text-center">Total</div>
+              <div className="min-w-[120px] text-center">Hommes</div>
+              <div className="min-w-[120px] text-center">Femmes</div>
+              <div className="min-w-[120px] text-center">Jeunes</div>
+              <div className="min-w-[120px] text-center">Enfants</div>
+              <div className="min-w-[140px] text-center">Connectés</div>
+              <div className="min-w-[150px] text-center">Nouveaux Venus</div>
+              <div className="min-w-[180px] text-center">Nouveau Converti</div>
+              <div className="min-w-[160px] text-center">Moissonneurs</div>
+              <div className="min-w-[130px] text-center">Total</div>
             </div>
 
             {/* LIGNES */}
             {rapports.map((r, idx) => {
-              const total = (Number(r.data?.hommes) || 0) + (Number(r.data?.femmes) || 0);
-
+              const total =
+                (Number(r.data?.hommes) || 0) + (Number(r.data?.femmes) || 0);
               return (
                 <div
                   key={idx}
                   className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${r.border}`}
                 >
                   <div className="min-w-[180px] text-white font-semibold">{r.label}</div>
-                  <div className="min-w-[110px] text-center text-white">{r.data?.hommes ?? "-"}</div>
-                  <div className="min-w-[110px] text-center text-white">{r.data?.femmes ?? "-"}</div>
-                  <div className="min-w-[110px] text-center text-white">{r.data?.jeunes ?? "-"}</div>
-                  <div className="min-w-[110px] text-center text-white">{r.data?.enfants ?? "-"}</div>
-                  <div className="min-w-[130px] text-center text-white">{r.data?.connectes ?? "-"}</div>
-                  <div className="min-w-[140px] text-center text-white">{r.data?.nouveauxVenus ?? "-"}</div>
-                  <div className="min-w-[170px] text-center text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
-                  <div className="min-w-[150px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>
-                  <div className="min-w-[110px] text-center text-white font-bold">{(total || r.data?.total) ?? "-"}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.data?.hommes ?? "-"}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.data?.femmes ?? "-"}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.data?.jeunes ?? "-"}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.data?.enfants ?? "-"}</div>
+                  <div className="min-w-[140px] text-center text-white">{r.data?.connectes ?? "-"}</div>
+                  <div className="min-w-[150px] text-center text-white">{r.data?.nouveauxVenus ?? "-"}</div>
+                  <div className="min-w-[180px] text-center text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
+                  <div className="min-w-[160px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>
+                  <div className="min-w-[130px] text-center text-white font-bold">{total ?? r.data?.total ?? "-"}</div>
                 </div>
               );
             })}

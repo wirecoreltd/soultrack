@@ -208,13 +208,14 @@ function StatGlobalPage() {
           onChange={(e) => setTypeRapport(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         >
-          <option value="Tous">Tous</option>
-          <option value="Culte">Culte</option>
-          <option value="Evangelisation">Evangelisation</option>
-          <option value="Baptême">Baptême</option>
-          <option value="Formation">Formation</option>
-          <option value="Cellules">Cellules</option>
+          <option className="text-black" value="Tous">Tous</option>
+          <option className="text-black" value="Culte">Culte</option>
+          <option className="text-black" value="Evangelisation">Evangelisation</option>
+          <option className="text-black" value="Baptême">Baptême</option>
+          <option className="text-black" value="Formation">Formation</option>
+          <option className="text-black" value="Cellules">Cellules</option>
         </select>
+
         <button
           onClick={fetchStats}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
@@ -226,7 +227,7 @@ function StatGlobalPage() {
       {/* TABLE */}
       {!loading && attendanceStats && (
         <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
-          <div className="min-w-[1600px] space-y-2"> {/* plus large pour total */}
+          <div className="w-max space-y-2"> {/* plus large pour total */}
             {/* HEADER */}
             <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[180px]">Type</div>

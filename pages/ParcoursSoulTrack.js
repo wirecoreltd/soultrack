@@ -1,153 +1,104 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function ParcoursSoulTrack() {
-  const router = useRouter();
-
-  const features = [
-    {
-      title: "Ajouter et suivre les membres",
-      description: "Ajoutez un membre et assignez-le à un responsable ou conseiller pour un suivi spirituel complet.",
-      icon: "/icons/member.png",
-      button: { label: "Voir la liste des membres", link: "/members" },
-    },
-    {
-      title: "Ajouter les évangélisés",
-      description: "Ajoutez un nouvel évangélisé et suivez sa progression spirituelle avec vos responsables.",
-      icon: "/icons/evangelise.png",
-      button: { label: "Voir la liste des membres", link: "/members" },
-    },
-    {
-      title: "Liste des membres",
-      description: "Consultez tous les membres avec leurs cartes individuelles, photos et détails.",
-      icon: "/icons/card.png",
-      button: null,
-    },
-    {
-      title: "Suivi des membres",
-      description: "Gérez la présence au culte, l’évangélisation, la formation et le baptême. Suivi individuel et global.",
-      icon: "/icons/follow-up.png",
-      button: { label: "Voir le hub de suivi", link: "/follow-up" },
-    },
-    {
-      title: "Gestion des responsables et cellules",
-      description: "Créez des responsables et des cellules, attribuez des membres et suivez chaque âme.",
-      icon: "/icons/hierarchy.png",
-      button: null,
-    },
-    {
-      title: "Relier les églises",
-      description: "Reliez votre église aux autres pour plus de visibilité et un reporting clair.",
-      icon: "/icons/churches.png",
-      button: null,
-    },
-    {
-      title: "Administration et sécurité",
-      description: "Créez des utilisateurs, gérez les rôles et les accès selon la hiérarchie.",
-      icon: "/icons/admin.png",
-      button: null,
-    },
-  ];
-
-  const testimonials = [
-    {
-      name: "Past. Jean",
-      church: "Église Bethel",
-      role: "Responsable Cellule",
-      members: 150,
-      message: "SoulTrack a révolutionné la gestion de nos cellules et membres.",
-      avatar: "/avatar1.png",
-    },
-    {
-      name: "Sœur Marie",
-      church: "Église Lumière",
-      role: "Superviseur Cellule",
-      members: 300,
-      message: "Grâce à SoulTrack, je peux suivre et accompagner chaque membre facilement.",
-      avatar: "/avatar2.png",
-    },
-    {
-      name: "Frère Paul",
-      church: "Église Espoir",
-      role: "Administrateur",
-      members: 500,
-      message: "Une plateforme intuitive et fiable pour toute l’église.",
-      avatar: "/avatar3.png",
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-white text-gray-900">
       {/* Hero */}
-      <section className="relative flex flex-col md:flex-row items-center justify-between max-w-6xl mx-auto px-6 py-16 gap-8">
-        <div className="flex-1 space-y-6">
-          <h1 className="text-5xl font-bold text-blue-700">
+      <section className="py-20 bg-gradient-to-r from-blue-50 to-amber-50">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold text-blue-700 mb-6">
             Découvrez le parcours SoulTrack
           </h1>
-          <p className="text-lg text-gray-700">
-            Un chemin simple et visuel pour gérer vos cellules, membres et activités spirituelles. 
-            <span className="italic"> « Veillez les uns sur les autres » (Galates 6:2)</span>
+          <p className="text-gray-700 text-lg md:text-xl">
+            Suivez chaque membre, évangélisé et cellule de votre église avec simplicité et efficacité.
+            <br />
+            <span className="italic">« Prenez soin les uns des autres » (1 Pierre 5:2)</span>
           </p>
-          <button
-            onClick={() => router.push("/signup-eglise")}
-            className="mt-4 bg-gradient-to-r from-blue-500 to-amber-400 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:scale-105 transition"
-          >
-            Commencer
-          </button>
-        </div>
-        <div className="flex-1 flex justify-center">
-          <div className="bg-blue-50 rounded-3xl p-6 shadow-lg">
-            <Image
-              src="/hero-illustration.png"
-              alt="Illustration parcours SoulTrack"
-              width={400}
-              height={300}
-              className="rounded-2xl"
-            />
+          <div className="mt-8">
+            <button
+              onClick={() => window.location.href = "/signup-eglise"}
+              className="bg-gradient-to-r from-blue-500 to-amber-400 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:scale-105 transition"
+            >
+              Commencer maintenant
+            </button>
           </div>
         </div>
       </section>
 
-      {/* Features / Process */}
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <h2 className="text-3xl font-bold text-center text-blue-700 mb-12">Comment ça marche</h2>
-        <div className="grid md:grid-cols-2 gap-10">
-          {features.map((f, i) => (
-            <div key={i} className="flex flex-col items-center bg-white shadow-lg rounded-2xl p-6 text-center hover:scale-105 transition">
-              <Image src={f.icon} alt={f.title} width={80} height={80} className="mb-4" />
-              <h3 className="font-semibold text-xl mb-2">{f.title}</h3>
-              <p className="text-gray-600 mb-4">{f.description}</p>
-              {f.button && (
-                <button
-                  onClick={() => router.push(f.button.link)}
-                  className="bg-gradient-to-r from-blue-500 to-amber-400 text-white font-bold py-2 px-4 rounded-xl shadow-md hover:scale-105 transition"
-                >
-                  {f.button.label}
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* Flowchart étapes */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-blue-700 mb-12">
+            Comment ça fonctionne
+          </h2>
 
-      {/* Testimonials */}
-      <section className="bg-blue-50 py-16">
-        <h2 className="text-3xl font-bold text-center text-blue-700 mb-12">Ils utilisent SoulTrack</h2>
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 px-6">
-          {testimonials.map((t, i) => (
-            <div key={i} className="bg-white p-6 rounded-2xl shadow-lg flex flex-col items-center hover:scale-105 transition">
-              <Image src={t.avatar} alt={t.name} width={80} height={80} className="rounded-full mb-4" />
-              <p className="text-gray-700 mb-2 italic text-center">"{t.message}"</p>
-              <p className="font-semibold">{t.name}</p>
-              <p className="text-sm text-gray-500">{t.role} - {t.members} membres</p>
-              <p className="text-sm text-gray-400">{t.church}</p>
-              <button className="mt-4 text-blue-600 underline text-sm hover:text-blue-800">
-                Voir profil
-              </button>
+          <div className="relative flex flex-col md:flex-row justify-between items-center gap-10">
+            {/* Étape 1 */}
+            <div className="flex flex-col items-center md:w-1/3">
+              <div className="bg-gradient-to-r from-blue-400 to-blue-600 text-white p-6 rounded-full shadow-xl">
+                <span className="text-4xl">👤</span>
+              </div>
+              <h3 className="mt-4 font-semibold text-xl text-gray-900">1. Ajout & Suivi</h3>
+              <p className="mt-2 text-gray-600 text-sm md:text-base">
+                Ajoutez un Membre ou un Évangélisé et assignez-le à un Conseiller ou Responsable de Cellule pour le suivi.
+              </p>
             </div>
-          ))}
+
+            {/* Flèche 1 → 2 */}
+            <div className="hidden md:block absolute left-1/3 top-1/2 w-1/3 border-t-4 border-blue-300"></div>
+
+            {/* Étape 2 */}
+            <div className="flex flex-col items-center md:w-1/3">
+              <div className="bg-gradient-to-r from-green-400 to-green-600 text-white p-6 rounded-full shadow-xl">
+                <span className="text-4xl">📋</span>
+              </div>
+              <h3 className="mt-4 font-semibold text-xl text-gray-900">2. Liste & Détails</h3>
+              <p className="mt-2 text-gray-600 text-sm md:text-base">
+                Consultez tous les membres, leur carte individuelle, photo, et les informations clés pour un suivi précis.
+              </p>
+            </div>
+
+            {/* Flèche 2 → 3 */}
+            <div className="hidden md:block absolute left-2/3 top-1/2 w-1/3 border-t-4 border-green-300"></div>
+
+            {/* Étape 3 */}
+            <div className="flex flex-col items-center md:w-1/3">
+              <div className="bg-gradient-to-r from-purple-400 to-purple-600 text-white p-6 rounded-full shadow-xl">
+                <span className="text-4xl">📊</span>
+              </div>
+              <h3 className="mt-4 font-semibold text-xl text-gray-900">3. Suivi & Administration</h3>
+              <p className="mt-2 text-gray-600 text-sm md:text-base">
+                Suivi global des présences, formations, baptêmes et rapports. Les administrateurs gèrent les utilisateurs et rôles.
+              </p>
+            </div>
+          </div>
+
+          {/* Flèches mobile */}
+          <div className="mt-10 md:hidden flex flex-col items-center gap-10">
+            <div className="w-1/2 border-t-4 border-blue-300"></div>
+            <div className="w-1/2 border-t-4 border-green-300"></div>
+          </div>
+
+          {/* Cascade des rapports */}
+          <div className="mt-20">
+            <h3 className="text-2xl font-semibold text-gray-800 mb-4">Cascade des rapports entre Églises</h3>
+            <div className="flex flex-col md:flex-row items-center justify-around gap-6">
+              <div className="text-center">
+                <div className="bg-amber-400 text-white p-4 rounded-lg text-xl font-bold">Église Mère</div>
+                <p className="text-gray-600 text-sm mt-2">Supervision globale</p>
+              </div>
+              <div className="text-center">
+                <div className="bg-blue-500 text-white p-4 rounded-lg text-xl font-bold">Église Superviseur</div>
+                <p className="text-gray-600 text-sm mt-2">Coordonne les rapports</p>
+              </div>
+              <div className="text-center">
+                <div className="bg-green-500 text-white p-4 rounded-lg text-xl font-bold">Église Supervisée</div>
+                <p className="text-gray-600 text-sm mt-2">Fournit les données & suivis</p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -155,7 +106,7 @@ export default function ParcoursSoulTrack() {
       <section className="max-w-6xl mx-auto px-6 py-16 text-center">
         <h2 className="text-3xl font-bold text-blue-700 mb-6">Prêt à simplifier la gestion de votre église ?</h2>
         <button
-          onClick={() => router.push("/signup-eglise")}
+          onClick={() => window.location.href = "/signup-eglise"}
           className="bg-gradient-to-r from-blue-500 to-amber-400 text-white font-bold py-3 px-8 rounded-2xl shadow-lg hover:scale-105 transition"
         >
           Commencer maintenant

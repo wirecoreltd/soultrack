@@ -25,6 +25,7 @@ function StatGlobalPage() {
   const [evanStats, setEvanStats] = useState(null);
   const [baptemeStats, setBaptemeStats] = useState({ hommes: 0, femmes: 0 });
   const [formationStats, setFormationStats] = useState({ hommes: 0, femmes: 0 });
+  const [cellulesCount, setCellulesCount] = useState(0);
 
   const [loading, setLoading] = useState(false);
 
@@ -118,14 +119,9 @@ function StatGlobalPage() {
     evanData?.forEach((r) => {
       if (r.sexe === "Homme") evanTotals.hommes++;
       if (r.sexe === "Femme") evanTotals.femmes++;
-
       if (r.priere_salut) evanTotals.prieres++;
-
-      if (r.type_conversion === "Nouveau converti")
-        evanTotals.nouveauxConvertis++;
-
-      if (r.type_conversion === "Réconciliation")
-        evanTotals.reconciliations++;
+      if (r.type_conversion === "Nouveau converti") evanTotals.nouveauxConvertis++;
+      if (r.type_conversion === "Réconciliation") evanTotals.reconciliations++;
     });
 
     setEvanStats(evanTotals);
@@ -146,14 +142,10 @@ function StatGlobalPage() {
 
     const totalBaptemeHommes =
       baptemeData?.reduce((sum, r) => sum + Number(r.hommes), 0) || 0;
-
     const totalBaptemeFemmes =
       baptemeData?.reduce((sum, r) => sum + Number(r.femmes), 0) || 0;
 
-    setBaptemeStats({
-      hommes: totalBaptemeHommes,
-      femmes: totalBaptemeFemmes,
-    });
+    setBaptemeStats({ hommes: totalBaptemeHommes, femmes: totalBaptemeFemmes });
 
     // ==========================
     // 🔹 FORMATION
@@ -171,14 +163,21 @@ function StatGlobalPage() {
 
     const totalFormationHommes =
       formationData?.reduce((sum, r) => sum + Number(r.hommes), 0) || 0;
-
     const totalFormationFemmes =
       formationData?.reduce((sum, r) => sum + Number(r.femmes), 0) || 0;
 
-    setFormationStats({
-      hommes: totalFormationHommes,
-      femmes: totalFormationFemmes,
-    });
+    setFormationStats({ hommes: totalFormationHommes, femmes: totalFormationFemmes });
+
+    // ==========================
+    // 🔹 CELLULES
+    // ==========================
+    const { count: cellulesCountData } = await supabase
+      .from("cellules")
+      .select("id", { count: "exact", head: true })
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId);
+
+    setCellulesCount(cellulesCountData || 0);
 
     setLoading(false);
   };
@@ -187,17 +186,15 @@ function StatGlobalPage() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-3xl font-bold text-white mt-4">
-        Statistiques Globales
-      </h1>
+      <h1 className="text-3xl font-bold text-white mt-4">Statistiques Globales</h1>
 
       {/* FILTRES */}
-      <div className="bg-white p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-black">
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
         <div>
           <label>Date début</label>
           <input
             type="date"
-            className="border rounded-lg px-3 py-2 ml-2"
+            className="border border-gray-400 rounded-lg px-3 py-2 ml-2 bg-transparent text-white"
             value={dateDebut}
             onChange={(e) => setDateDebut(e.target.value)}
           />
@@ -207,7 +204,7 @@ function StatGlobalPage() {
           <label>Date fin</label>
           <input
             type="date"
-            className="border rounded-lg px-3 py-2 ml-2"
+            className="border border-gray-400 rounded-lg px-3 py-2 ml-2 bg-transparent text-white"
             value={dateFin}
             onChange={(e) => setDateFin(e.target.value)}
           />
@@ -215,7 +212,7 @@ function StatGlobalPage() {
 
         <button
           onClick={fetchStats}
-          className="bg-[#333699] text-white px-6 py-2 rounded-xl hover:bg-[#2a2f85]"
+          className="bg-[#333699] text-white px-6 py-2 rounded-xl hover:bg-[#2a2f85] transition duration-150"
         >
           Générer
         </button>
@@ -225,80 +222,88 @@ function StatGlobalPage() {
       {loading && <p className="text-white mt-6">Chargement...</p>}
 
       {!loading && attendanceStats && (
-        <div className="overflow-x-auto mt-8 w-full max-w-6xl">
-          <table className="min-w-full bg-white rounded-2xl overflow-hidden shadow-lg text-center">
-            <thead className="bg-orange-500 text-white">
-              <tr>
-                <th className="py-3 px-4 text-left">Rapport</th>
-                <th>Hommes</th>
-                <th>Femmes</th>
-                <th>Jeunes</th>
-                <th>Enfants</th>
-                <th>Connectés</th>
-                <th>Prière</th>
-                <th>Nouveaux</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* CULTE */}
-              <tr className="bg-orange-50 font-semibold">
-                <td className="text-left px-4">Rapport Culte</td>
-                <td>{attendanceStats.hommes}</td>
-                <td>{attendanceStats.femmes}</td>
-                <td>{attendanceStats.jeunes}</td>
-                <td>{attendanceStats.enfants}</td>
-                <td>{attendanceStats.connectes}</td>
-                <td>-</td>
-                <td>{attendanceStats.nouveauxVenus}</td>
-                <td>
-                  {attendanceStats.hommes +
-                    attendanceStats.femmes +
-                    attendanceStats.jeunes +
-                    attendanceStats.enfants}
-                </td>
-              </tr>
+        <div className="w-full max-w-6xl overflow-x-auto py-2 mt-6">
+          <div className="min-w-[700px] space-y-2">
+            {/* HEADER */}
+            <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-4 py-2 border-b border-gray-400 bg-transparent rounded-t-xl">
+              <div className="flex-[2]">Rapport</div>
+              <div className="flex-[1]">Hommes</div>
+              <div className="flex-[1]">Femmes</div>
+              <div className="flex-[1]">Jeunes</div>
+              <div className="flex-[1]">Enfants</div>
+              <div className="flex-[1]">Connectés</div>
+              <div className="flex-[1]">Prière</div>
+              <div className="flex-[1]">Nouveaux</div>
+              <div className="flex-[1]">Total</div>
+            </div>
 
-              {/* EVANGELISATION */}
-              <tr className="bg-green-100 font-semibold">
-                <td className="text-left px-4">Rapport Evangelisation</td>
-                <td>{evanStats?.hommes}</td>
-                <td>{evanStats?.femmes}</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td>{evanStats?.prieres}</td>
-                <td>{evanStats?.nouveauxConvertis}</td>
-                <td>{evanStats?.hommes + evanStats?.femmes}</td>
-              </tr>
-
-              {/* BAPTEME */}
-              <tr className="bg-purple-100 font-semibold">
-                <td className="text-left px-4">Rapport Baptême</td>
-                <td>{baptemeStats.hommes}</td>
-                <td>{baptemeStats.femmes}</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td>{baptemeStats.hommes + baptemeStats.femmes}</td>
-              </tr>
-
-              {/* FORMATION */}
-              <tr className="bg-blue-100 font-semibold">
-                <td className="text-left px-4">Rapport Formation</td>
-                <td>{formationStats.hommes}</td>
-                <td>{formationStats.femmes}</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td>{formationStats.hommes + formationStats.femmes}</td>
-              </tr>
-            </tbody>
-          </table>
+            {/* LIGNES */}
+            {[
+              {
+                label: "Rapport Culte",
+                data: attendanceStats,
+                borderColor: "border-l-orange-500",
+                bgColor: "bg-white/10",
+              },
+              {
+                label: "Rapport Evangelisation",
+                data: evanStats,
+                borderColor: "border-l-green-500",
+                bgColor: "bg-white/10",
+              },
+              {
+                label: "Rapport Baptême",
+                data: baptemeStats,
+                borderColor: "border-l-purple-500",
+                bgColor: "bg-white/10",
+              },
+              {
+                label: "Rapport Formation",
+                data: formationStats,
+                borderColor: "border-l-blue-500",
+                bgColor: "bg-white/10",
+              },
+              {
+                label: "Nombre de Cellules",
+                data: { total: cellulesCount },
+                borderColor: "border-l-yellow-500",
+                bgColor: "bg-white/10",
+              },
+            ].map((r, idx) => (
+              <div
+                key={idx}
+                className={`flex flex-row items-center px-4 py-3 rounded-lg ${r.bgColor} hover:bg-white/20 transition duration-150 border-l-4 ${r.borderColor}`}
+              >
+                <div className="flex-[2] text-white font-semibold">{r.label}</div>
+                <div className="flex-[1] text-white">
+                  {r.data?.hommes ?? "-"}
+                </div>
+                <div className="flex-[1] text-white">
+                  {r.data?.femmes ?? "-"}
+                </div>
+                <div className="flex-[1] text-white">
+                  {r.data?.jeunes ?? "-"}
+                </div>
+                <div className="flex-[1] text-white">
+                  {r.data?.enfants ?? "-"}
+                </div>
+                <div className="flex-[1] text-white">
+                  {r.data?.connectes ?? "-"}
+                </div>
+                <div className="flex-[1] text-white">
+                  {r.data?.prieres ?? "-"}
+                </div>
+                <div className="flex-[1] text-white">
+                  {r.data?.nouveauxConvertis ?? r.data?.nouveauxVenus ?? r.data?.total ?? "-"}
+                </div>
+                <div className="flex-[1] text-white">
+                  {r.data?.hommes && r.data?.femmes
+                    ? r.data.hommes + r.data.femmes
+                    : r.data?.total ?? "-"}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

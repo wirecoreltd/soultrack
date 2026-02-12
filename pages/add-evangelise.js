@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
-import Footer from "../components/Footer";
 
 export default function AddEvangelise({ onNewEvangelise }) {
   const router = useRouter();
@@ -332,8 +331,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
             border: 1px solid #ccc;
           }
         `}</style>
-      </div>
-          <Footer />
+      </div>         
     </div>
   );
 }

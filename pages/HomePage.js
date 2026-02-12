@@ -1,128 +1,162 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import PublicHeader from "../components/PublicHeader";
 import Footer from "../components/Footer";
 
 export default function HomePage() {
+  const router = useRouter();
+
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="bg-white">
       <PublicHeader />
 
-      {/* ========== Hero Section ========== */}
-      <main className="flex-grow">
-        <section className="pt-20 pb-16 text-center px-6">
-          <h1 className="text-5xl font-bold mb-4">SoulTrack</h1>
-          <p className="text-lg text-gray-700 max-w-3xl mx-auto mb-6">
-            La solution ultime pour gérer votre église et vos cellules.
-            Simplifiez le suivi des membres, les présences, l’évangélisation
-            et les communications — tout en mettant Dieu au centre.
-          </p>
+      {/* Hero */}
+      <section className="relative pt-20 pb-32 bg-white">
+        <div className="max-w-7xl mx-auto px-6 lg:flex lg:items-center lg:justify-between">
+          {/* Texte Hero */}
+          <div className="lg:w-1/2">
+            <h1 className="text-5xl font-bold text-gray-900 mb-6">
+              Centralisez la gestion de votre église
+            </h1>
+            <p className="text-lg text-gray-700 mb-8">
+              Suivez les membres, les présences, les cellules, l’évangélisation et
+              les rapports, le tout dans une seule plateforme intelligente.
+            </p>
+            <p className="text-gray-500 mb-6 italic">
+              « Que tout ce que vous faites se fasse avec amour » – 1 Corinthiens 16:14
+            </p>
 
-          {/* Verset biblique inspirant */}
-          <blockquote className="italic text-gray-600 max-w-2xl mx-auto mb-8">
-            "Car là où deux ou trois sont assemblés en mon nom, je suis au milieu d’eux."
-            <span className="block font-semibold mt-2 text-gray-800">— Matthieu 18:20</span>
-          </blockquote>
-
-          {/* Call to Actions */}
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <button
-              onClick={() => (window.location.href = "/signup-eglise")}
-              className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-2xl hover:bg-blue-600 transition"
-            >
-              Commencer gratuitement
-            </button>
-            <button
-              onClick={() => (window.location.href = "/login")}
-              className="px-6 py-3 border border-blue-500 text-blue-500 font-semibold rounded-2xl hover:bg-blue-500 hover:text-white transition"
-            >
-              Déjà inscrit ? Connexion
-            </button>
-          </div>
-        </section>
-
-        {/* ========== Features Section ========== */}
-        <section className="bg-gray-50 py-16 px-6">
-          <h2 className="text-3xl font-bold text-center mb-10">
-            Ce que SoulTrack vous apporte
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {/* Feature card 1 */}
-            <div className="p-6 bg-white border rounded-2xl shadow-sm hover:shadow-lg transition">
-              <h3 className="text-xl font-semibold mb-2">Gestion des membres</h3>
-              <p className="text-gray-700">
-                Suivez l’évolution de chaque membre, sa cellule, son statut et
-                ses interactions au sein de l’église.
-              </p>
-            </div>
-
-            {/* Feature card 2 */}
-            <div className="p-6 bg-white border rounded-2xl shadow-sm hover:shadow-lg transition">
-              <h3 className="text-xl font-semibold mb-2">Suivi des cellules</h3>
-              <p className="text-gray-700">
-                Gère facilement les cellules, leurs responsables, présences et
-                évènements.
-              </p>
-            </div>
-
-            {/* Feature card 3 */}
-            <div className="p-6 bg-white border rounded-2xl shadow-sm hover:shadow-lg transition">
-              <h3 className="text-xl font-semibold mb-2">Statistiques intelligentes</h3>
-              <p className="text-gray-700">
-                Obtenez des vues claires et des rapports sur les présences,
-                l’évangélisation et la croissance spirituelle.
-              </p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => router.push("/signup-eglise")}
+                className="bg-blue-600 text-white font-semibold px-6 py-3 rounded-2xl hover:bg-blue-700 transition"
+              >
+                Commencer gratuitement
+              </button>
+              <button
+                onClick={() => router.push("/login")}
+                className="border border-blue-600 text-blue-600 font-semibold px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition"
+              >
+                Connexion
+              </button>
             </div>
           </div>
-        </section>
 
-        {/* ========== Why Choose Us Section ========== */}
-        <section className="py-16 px-6">
-          <h2 className="text-3xl font-bold text-center mb-10">
-            Pourquoi choisir SoulTrack ?
-          </h2>
+          {/* Illustration */}
+          <div className="lg:w-1/2 mt-10 lg:mt-0">
+            <Image
+              src="/hero-illustration.png"
+              alt="Illustration SoulTrack"
+              width={600}
+              height={400}
+              className="w-full h-auto"
+            />
+          </div>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 max-w-6xl mx-auto">
-            <div>
-              <p className="text-gray-700 mb-6">
-                SoulTrack est pensé spécialement pour les églises qui désirent
-                porter une attention particulière à chaque âme et à chaque
-                cellule. Avec des outils puissants mais simples à utiliser,
-                vous gagnez du temps pour ce qui compte réellement : votre
-                ministère.
-              </p>
-              <p className="text-gray-700">
-                Notre plateforme offre des fonctions complètes de gestion, de
-                communication et de statistiques, tout en étant accessible à
-                toutes les tailles d’église.
+      {/* Features */}
+      <section className="bg-gray-50 py-20 px-6">
+        <div className="max-w-7xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-10">Fonctionnalités puissantes</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white p-6 border rounded-2xl shadow-sm hover:shadow-lg transition">
+              <h3 className="text-xl font-semibold mb-2">Suivi des Membres</h3>
+              <p className="text-gray-700 text-sm">
+                Suivi détaillé de chaque membre, statut, conversion et cellule.
               </p>
             </div>
-
-            <div className="flex flex-col gap-4">
-              <div className="p-4 border rounded-xl shadow-sm">
-                <h4 className="font-semibold text-lg">Accessible partout</h4>
-                <p className="text-gray-700 text-sm">
-                  Utilisez SoulTrack sur web et appareils mobiles sans installation.
-                </p>
-              </div>
-              <div className="p-4 border rounded-xl shadow-sm">
-                <h4 className="font-semibold text-lg">Support inclus</h4>
-                <p className="text-gray-700 text-sm">
-                  Assistance et documentation pour vous aider à avancer.
-                </p>
-              </div>
-              <div className="p-4 border rounded-xl shadow-sm">
-                <h4 className="font-semibold text-lg">Évolutivité</h4>
-                <p className="text-gray-700 text-sm">
-                  Convient aux petites et grandes églises, avec croissance sans
-                  limite.
-                </p>
-              </div>
+            <div className="bg-white p-6 border rounded-2xl shadow-sm hover:shadow-lg transition">
+              <h3 className="text-xl font-semibold mb-2">Cellules</h3>
+              <p className="text-gray-700 text-sm">
+                Organisation complète des cellules, responsables, présences et rapports.
+              </p>
+            </div>
+            <div className="bg-white p-6 border rounded-2xl shadow-sm hover:shadow-lg transition">
+              <h3 className="text-xl font-semibold mb-2">Statistiques</h3>
+              <p className="text-gray-700 text-sm">
+                Données visuelles pour guider vos décisions spirituelles.
+              </p>
             </div>
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
+
+      {/* Pourquoi SoulTrack */}
+      <section className="py-20 px-6">
+        <div className="max-w-7xl mx-auto lg:flex lg:gap-12">
+          <div className="lg:w-1/2">
+            <h2 className="text-3xl font-bold mb-6">
+              Pourquoi choisir SoulTrack ?
+            </h2>
+            <p className="text-gray-700 mb-6">
+              Une plateforme pensée pour les églises, par des personnes qui
+              comprennent les enjeux du ministère et du suivi spirituel.
+            </p>
+            <ul className="text-gray-700 list-disc list-inside space-y-2">
+              <li>Suivi intuitif et complet</li>
+              <li>Communication simplifiée</li>
+              <li>Rapports fiables et exportables</li>
+              <li>Adapté aux petites comme grandes églises</li>
+            </ul>
+          </div>
+          <div className="lg:w-1/2 mt-8 lg:mt-0">
+            <Image
+              src="/features-illustration.png"
+              alt="Pourquoi SoulTrack"
+              width={500}
+              height={400}
+              className="w-full h-auto"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="bg-gray-50 py-20 px-6">
+        <div className="max-w-7xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-10">Ce que disent nos utilisateurs</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white p-6 border rounded-xl shadow-sm">
+              <p className="text-gray-700 mb-4 italic">
+                "SoulTrack a transformé la manière dont nous gérons nos cellules."
+              </p>
+              <h4 className="font-semibold">Past. Jean</h4>
+              <p className="text-sm text-gray-500">Église Bethel</p>
+            </div>
+            <div className="bg-white p-6 border rounded-xl shadow-sm">
+              <p className="text-gray-700 mb-4 italic">
+                "Un outil indispensable pour suivre les présences et rapports."
+              </p>
+              <h4 className="font-semibold">Past. Marie</h4>
+              <p className="text-sm text-gray-500">Église Grâce</p>
+            </div>
+            <div className="bg-white p-6 border rounded-xl shadow-sm">
+              <p className="text-gray-700 mb-4 italic">
+                "Les statistiques sont claires et nous aident à mieux planifier."
+              </p>
+              <h4 className="font-semibold">Past. Samuel</h4>
+              <p className="text-sm text-gray-500">Église Lumière</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Logos utilisateurs */}
+      <section className="py-20 px-6">
+        <div className="max-w-7xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-10">Ils utilisent SoulTrack</h2>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 items-center justify-items-center">
+            <img src="/logo-eglise1.png" alt="Église 1" className="h-12 object-contain" />
+            <img src="/logo-eglise2.png" alt="Église 2" className="h-12 object-contain" />
+            <img src="/logo-eglise3.png" alt="Église 3" className="h-12 object-contain" />
+            <img src="/logo-eglise4.png" alt="Église 4" className="h-12 object-contain" />
+            <img src="/logo-eglise5.png" alt="Église 5" className="h-12 object-contain" />
+          </div>
+        </div>
+      </section>
 
       <Footer />
     </div>

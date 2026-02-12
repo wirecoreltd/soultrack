@@ -30,6 +30,7 @@ function StatGlobalPage() {
 
   const [loading, setLoading] = useState(false);
 
+  // ================= PROFILE =================
   useEffect(() => {
     const fetchProfile = async () => {
       const {
@@ -53,12 +54,13 @@ function StatGlobalPage() {
     fetchProfile();
   }, []);
 
+  // ================= FETCH STATS =================
   const fetchStats = async () => {
     if (!egliseId || !brancheId) return;
 
     setLoading(true);
 
-    // ================= ATTENDANCE =================
+    // -------- ATTENDANCE --------
     let attendanceQuery = supabase
       .from("attendance")
       .select("*")
@@ -95,7 +97,7 @@ function StatGlobalPage() {
 
     setAttendanceStats(attendanceTotals);
 
-    // ================= EVANGELISATION =================
+    // -------- EVANGELISATION --------
     let evanQuery = supabase
       .from("evangelises")
       .select("*")
@@ -123,49 +125,37 @@ function StatGlobalPage() {
       if (r.sexe === "Homme") evanTotals.hommes++;
       if (r.sexe === "Femme") evanTotals.femmes++;
       if (r.priere_salut) evanTotals.prieres++;
-      if (r.type_conversion === "Nouveau converti") evanTotals.nouveauxConvertis++;
+      if (r.type_conversion === "Nouveau converti")
+        evanTotals.nouveauxConvertis++;
     });
 
     setEvanStats(evanTotals);
 
-    // ================= BAPTEME =================
-    let baptemeQuery = supabase
+    // -------- BAPTEME --------
+    const { data: baptemeData } = await supabase
       .from("baptemes")
       .select("hommes, femmes")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
 
-    if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
-    if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
-
-    const { data: baptemeData } = await baptemeQuery;
-
-    const baptemeTotals = {
+    setBaptemeStats({
       hommes: baptemeData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
       femmes: baptemeData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
-    };
+    });
 
-    setBaptemeStats(baptemeTotals);
-
-    // ================= FORMATION =================
-    let formationQuery = supabase
+    // -------- FORMATION --------
+    const { data: formationData } = await supabase
       .from("formations")
       .select("hommes, femmes")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
 
-    if (dateDebut) formationQuery = formationQuery.gte("date_debut", dateDebut);
-    if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin);
-
-    const { data: formationData } = await formationQuery;
-
-    const formationTotals = {
+    setFormationStats({
       hommes: formationData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
       femmes: formationData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
-    };
+    });
 
-    setFormationStats(formationTotals);
-
+    // -------- CELLULES --------
     const { count } = await supabase
       .from("cellules")
       .select("id", { count: "exact", head: true })
@@ -193,7 +183,6 @@ function StatGlobalPage() {
         Statistiques Globales
       </h1>
 
-      {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
         <input
           type="date"
@@ -201,14 +190,12 @@ function StatGlobalPage() {
           onChange={(e) => setDateDebut(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
-
         <input
           type="date"
           value={dateFin}
           onChange={(e) => setDateFin(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
-
         <select
           value={typeRapport}
           onChange={(e) => setTypeRapport(e.target.value)}
@@ -230,11 +217,9 @@ function StatGlobalPage() {
         </button>
       </div>
 
-      {/* TABLE */}
       {!loading && attendanceStats && (
-        <div className="w-full max-w-7xl overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+        <div className="w-full max-w-7xl overflow-x-auto mt-6">
           <div className="min-w-[1300px] space-y-2">
-            {/* HEADER */}
             <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[180px]">Rapport</div>
               <div className="min-w-[110px] text-center">Hommes</div>
@@ -243,7 +228,7 @@ function StatGlobalPage() {
               <div className="min-w-[110px] text-center">Enfants</div>
               <div className="min-w-[130px] text-center">Connectés</div>
               <div className="min-w-[140px] text-center">Nouveaux Venus</div>
-              <div className="min-w-[180px] text-center">Prière / Réconciliation</div>
+              <div className="min-w-[180px] text-center">Prière</div>
               <div className="min-w-[170px] text-center">Nouveau Converti</div>
               <div className="min-w-[150px] text-center">Moissonneurs</div>
               <div className="min-w-[110px] text-center">Total</div>
@@ -272,7 +257,10 @@ function StatGlobalPage() {
                   <div className="min-w-[180px] text-center text-white">{r.data?.prieres ?? "-"}</div>
                   <div className="min-w-[170px] text-center text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
                   <div className="min-w-[150px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>
-                  <div className="min-w-[110px] text-center text-white font-bold">{total || r.data?.total ?? "-"}</div>
+
+                  <div className="min-w-[110px] text-center text-white font-bold">
+                    {r.data?.total !== undefined ? r.data.total : total}
+                  </div>
                 </div>
               );
             })}

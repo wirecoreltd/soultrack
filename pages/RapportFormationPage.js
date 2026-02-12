@@ -189,8 +189,7 @@ function RapportFormation() {
               <th>Date Fin</th>
               <th>Formation</th>
               <th>Hommes</th>
-              <th>Femmes</th>
-              <th>Total</th>
+              <th>Femmes</th>              
             </tr>
           </thead>
           <tbody>
@@ -200,8 +199,7 @@ function RapportFormation() {
                 <td>{r.date_fin}</td>
                 <td>{r.nom_formation}</td>
                 <td>{r.hommes}</td>
-                <td>{r.femmes}</td>
-                <td>{Number(r.hommes) + Number(r.femmes)}</td>
+                <td>{r.femmes}</td>                
               </tr>
             ))}
           </tbody>

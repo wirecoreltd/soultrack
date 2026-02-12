@@ -231,20 +231,20 @@ function StatGlobalPage() {
 
       {!loading && attendanceStats && (
         <div className="w-full max-w-6xl overflow-x-auto py-2 mt-6">
-          <div className="min-w-[900px] space-y-2">
+          <div className="min-w-[1000px] space-y-2">
             {/* HEADER */}
             <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-4 py-2 border-b border-gray-400 bg-transparent rounded-t-xl">
-              <div className="flex-[2]">Rapport</div>
-              <div className="flex-[1]">Hommes</div>
-              <div className="flex-[1]">Femmes</div>
-              <div className="flex-[1]">Jeunes</div>
-              <div className="flex-[1]">Enfants</div>
-              <div className="flex-[1]">Connectés</div>
-              <div className="flex-[1]">Nouveaux Venus</div>
-              <div className="flex-[1]">Prière / Réconciliation</div>
-              <div className="flex-[1]">Nouveau Converti</div>
-              <div className="flex-[1]">Moissonneurs</div>
-              <div className="flex-[1]">Total</div>
+              <div className="flex-[2] whitespace-nowrap">Rapport</div>
+              <div className="flex-[1] whitespace-nowrap">Hommes</div>
+              <div className="flex-[1] whitespace-nowrap">Femmes</div>
+              <div className="flex-[1] whitespace-nowrap">Jeunes</div>
+              <div className="flex-[1] whitespace-nowrap">Enfants</div>
+              <div className="flex-[1] whitespace-nowrap">Connectés</div>
+              <div className="flex-[2] whitespace-nowrap">Nouveaux Venus</div>
+              <div className="flex-[2] whitespace-nowrap">Prière / Réconciliation</div>
+              <div className="flex-[2] whitespace-nowrap">Nouveau Converti</div>
+              <div className="flex-[1] whitespace-nowrap">Moissonneurs</div>
+              <div className="flex-[1] whitespace-nowrap">Total</div>
             </div>
 
             {/* LIGNES */}
@@ -267,11 +267,14 @@ function StatGlobalPage() {
                   <div className="flex-[1] text-white">{r.data?.jeunes ?? "-"}</div>
                   <div className="flex-[1] text-white">{r.data?.enfants ?? "-"}</div>
                   <div className="flex-[1] text-white">{r.data?.connectes ?? "-"}</div>
-                  <div className="flex-[1] text-white">
+                  <div className="flex-[2] text-white">
+                    {r.data?.nouveauxVenus ?? r.data?.prieres ?? "-"}
+                  </div>
+                  <div className="flex-[2] text-white">
                     {r.data?.prieres ?? r.data?.reconciliations ?? "-"}
                   </div>
-                  <div className="flex-[1] text-white">
-                    {r.data?.nouveauxVenus ?? r.data?.nouveauxConvertis ?? "-"}
+                  <div className="flex-[2] text-white">
+                    {r.data?.nouveauxConvertis ?? "-"}
                   </div>
                   <div className="flex-[1] text-white">{r.data?.moissonneurs ?? "-"}</div>
                   <div className="flex-[1] text-white">

@@ -67,10 +67,6 @@ export default function AddEvangelise({ onNewEvangelise, profile }) {
     finalBesoins.push(otherBesoin.trim());
   }
 
-  // 🔹 Assurer que les UUID soient null ou un vrai UUID
-  const egliseId = profile?.eglise_id && profile.eglise_id !== "null" ? profile.eglise_id : null;
-  const brancheId = profile?.branche_id && profile.branche_id !== "null" ? profile.branche_id : null;
-
   const finalData = {
     nom: formData.nom.trim(),
     prenom: formData.prenom.trim(),
@@ -83,12 +79,12 @@ export default function AddEvangelise({ onNewEvangelise, profile }) {
     besoin: finalBesoins,
     infos_supplementaires: formData.infos_supplementaires || null,
     is_whatsapp: formData.is_whatsapp,
-    eglise_id: egliseId,
-    branche_id: brancheId,
+    eglise_id: profile?.eglise_id || null,  // ✅ UUID réel ou null
+    branche_id: profile?.branche_id || null // ✅ UUID réel ou null
   };
 
   try {
-    // Insert évangélisé et récupérer l'objet créé
+    // Insert évangélisé
     const { data: newEvangelise, error: insertError } = await supabase
       .from("evangelises")
       .insert([finalData])
@@ -111,8 +107,8 @@ export default function AddEvangelise({ onNewEvangelise, profile }) {
       .from("rapport_evangelisation")
       .select("*")
       .eq("date", today)
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId)
+      .eq("eglise_id", profile?.eglise_id)   // Filtrer par église
+      .eq("branche_id", profile?.branche_id) // Filtrer par branche
       .single();
 
     if (fetchError && fetchError.code !== "PGRST116") throw fetchError;
@@ -128,8 +124,8 @@ export default function AddEvangelise({ onNewEvangelise, profile }) {
           reconciliation: existingReport.reconciliation + reconciliation,
         })
         .eq("date", today)
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+        .eq("eglise_id", profile?.eglise_id)
+        .eq("branche_id", profile?.branche_id);
     } else {
       await supabase.from("rapport_evangelisation").insert([
         {
@@ -139,8 +135,8 @@ export default function AddEvangelise({ onNewEvangelise, profile }) {
           priere,
           nouveau_converti,
           reconciliation,
-          eglise_id: egliseId,
-          branche_id: brancheId,
+          eglise_id: profile?.eglise_id,
+          branche_id: profile?.branche_id,
         },
       ]);
     }
@@ -151,7 +147,6 @@ export default function AddEvangelise({ onNewEvangelise, profile }) {
     // Reset form
     setSuccess(true);
     setTimeout(() => setSuccess(false), 3000);
-
     setFormData({
       nom: "",
       prenom: "",
@@ -171,7 +166,6 @@ export default function AddEvangelise({ onNewEvangelise, profile }) {
     alert(err.message);
   }
 };
-
 
   const handleCancel = () => {
     setFormData({

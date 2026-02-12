@@ -56,7 +56,7 @@ function StatGlobalPage() {
     setLoading(true);
 
     // ==========================
-    // 🔹 ATTENDANCE
+    // ATTENDANCE
     // ==========================
     let attendanceQuery = supabase
       .from("attendance")
@@ -92,7 +92,7 @@ function StatGlobalPage() {
     setAttendanceStats(attendanceTotals);
 
     // ==========================
-    // 🔹 EVANGELISATION
+    // EVANGELISATION
     // ==========================
     let evanQuery = supabase
       .from("evangelises")
@@ -124,7 +124,7 @@ function StatGlobalPage() {
     setEvanStats(evanTotals);
 
     // ==========================
-    // 🔹 BAPTEME
+    // BAPTEME
     // ==========================
     let baptemeQuery = supabase
       .from("baptemes")
@@ -143,7 +143,7 @@ function StatGlobalPage() {
     });
 
     // ==========================
-    // 🔹 FORMATION
+    // FORMATION
     // ==========================
     let formationQuery = supabase
       .from("formations")
@@ -162,7 +162,7 @@ function StatGlobalPage() {
     });
 
     // ==========================
-    // 🔹 CELLULES
+    // CELLULES
     // ==========================
     const { count: cellulesCountData } = await supabase
       .from("cellules")
@@ -181,7 +181,7 @@ function StatGlobalPage() {
       <h1 className="text-3xl font-bold text-white mt-4">Statistiques Globales</h1>
 
       {/* FILTRES */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white items-end">
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
         <div>
           <label>Date début</label>
           <input
@@ -191,6 +191,7 @@ function StatGlobalPage() {
             onChange={(e) => setDateDebut(e.target.value)}
           />
         </div>
+
         <div>
           <label>Date fin</label>
           <input
@@ -200,21 +201,23 @@ function StatGlobalPage() {
             onChange={(e) => setDateFin(e.target.value)}
           />
         </div>
+
         <div>
-          <label>Rapport</label>
+          <label>Filtrer par Rapport</label>
           <select
             className="border border-gray-400 rounded-lg px-3 py-2 ml-2 bg-transparent text-white"
             value={rapportFilter}
             onChange={(e) => setRapportFilter(e.target.value)}
           >
-            <option value="Tous">Tous</option>
-            <option value="Culte">Culte</option>
-            <option value="Evangelisation">Evangelisation</option>
-            <option value="Bapteme">Baptême</option>
-            <option value="Formation">Formation</option>
-            <option value="Cellules">Cellules</option>
+            <option>Tous</option>
+            <option>Culte</option>
+            <option>Evangelisation</option>
+            <option>Baptême</option>
+            <option>Formation</option>
+            <option>Cellules</option>
           </select>
         </div>
+
         <button
           onClick={fetchStats}
           className="bg-[#333699] text-white px-6 py-2 rounded-xl hover:bg-[#2a2f85] transition duration-150"
@@ -228,7 +231,7 @@ function StatGlobalPage() {
 
       {!loading && attendanceStats && (
         <div className="w-full max-w-6xl overflow-x-auto py-2 mt-6">
-          <div className="min-w-[700px] space-y-2">
+          <div className="min-w-[900px] space-y-2">
             {/* HEADER */}
             <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-4 py-2 border-b border-gray-400 bg-transparent rounded-t-xl">
               <div className="flex-[2]">Rapport</div>
@@ -237,20 +240,22 @@ function StatGlobalPage() {
               <div className="flex-[1]">Jeunes</div>
               <div className="flex-[1]">Enfants</div>
               <div className="flex-[1]">Connectés</div>
-              <div className="flex-[1]">Prière</div>
-              <div className="flex-[1]">Nouveaux</div>
+              <div className="flex-[1]">Nouveaux Venus</div>
+              <div className="flex-[1]">Prière / Réconciliation</div>
+              <div className="flex-[1]">Nouveau Converti</div>
+              <div className="flex-[1]">Moissonneurs</div>
               <div className="flex-[1]">Total</div>
             </div>
 
             {/* LIGNES */}
             {[
-              { label: "Rapport Culte", data: attendanceStats, borderColor: "border-l-orange-500" },
-              { label: "Rapport Evangelisation", data: evanStats, borderColor: "border-l-green-500" },
-              { label: "Rapport Baptême", data: baptemeStats, borderColor: "border-l-purple-500" },
-              { label: "Rapport Formation", data: formationStats, borderColor: "border-l-blue-500" },
-              { label: "Nombre de Cellules", data: { total: cellulesCount }, borderColor: "border-l-yellow-500" },
+              { label: "Culte", data: attendanceStats, borderColor: "border-l-orange-500" },
+              { label: "Evangelisation", data: evanStats, borderColor: "border-l-green-500" },
+              { label: "Baptême", data: baptemeStats, borderColor: "border-l-purple-500" },
+              { label: "Formation", data: formationStats, borderColor: "border-l-blue-500" },
+              { label: "Cellules", data: { total: cellulesCount }, borderColor: "border-l-yellow-500" },
             ]
-              .filter((r) => rapportFilter === "Tous" || r.label.includes(rapportFilter))
+              .filter((r) => rapportFilter === "Tous" || r.label === rapportFilter)
               .map((r, idx) => (
                 <div
                   key={idx}
@@ -262,12 +267,17 @@ function StatGlobalPage() {
                   <div className="flex-[1] text-white">{r.data?.jeunes ?? "-"}</div>
                   <div className="flex-[1] text-white">{r.data?.enfants ?? "-"}</div>
                   <div className="flex-[1] text-white">{r.data?.connectes ?? "-"}</div>
-                  <div className="flex-[1] text-white">{r.data?.prieres ?? "-"}</div>
                   <div className="flex-[1] text-white">
-                    {r.data?.nouveauxConvertis ?? r.data?.nouveauxVenus ?? r.data?.total ?? "-"}
+                    {r.data?.prieres ?? r.data?.reconciliations ?? "-"}
                   </div>
                   <div className="flex-[1] text-white">
-                    {r.data?.hommes && r.data?.femmes ? r.data.hommes + r.data.femmes : r.data?.total ?? "-"}
+                    {r.data?.nouveauxVenus ?? r.data?.nouveauxConvertis ?? "-"}
+                  </div>
+                  <div className="flex-[1] text-white">{r.data?.moissonneurs ?? "-"}</div>
+                  <div className="flex-[1] text-white">
+                    {r.data?.hommes && r.data?.femmes
+                      ? r.data.hommes + r.data.femmes
+                      : r.data?.total ?? "-"}
                   </div>
                 </div>
               ))}

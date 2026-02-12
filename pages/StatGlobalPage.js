@@ -30,7 +30,9 @@ function StatGlobalPage() {
 
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Récupérer eglise_id et branche_id automatiquement
+  // ==========================
+  // 🔹 GET USER PROFILE
+  // ==========================
   useEffect(() => {
     const fetchProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -51,13 +53,14 @@ function StatGlobalPage() {
     fetchProfile();
   }, []);
 
+  // ==========================
+  // 🔹 FETCH STATS
+  // ==========================
   const fetchStats = async () => {
     if (!egliseId || !brancheId) return;
     setLoading(true);
 
-    // ==========================
-    // ATTENDANCE
-    // ==========================
+    // -------- ATTENDANCE --------
     let attendanceQuery = supabase
       .from("attendance")
       .select("*")
@@ -77,6 +80,7 @@ function StatGlobalPage() {
       connectes: 0,
       nouveauxVenus: 0,
       nouveauxConvertis: 0,
+      moissonneurs: 0,
     };
 
     attendanceData?.forEach((r) => {
@@ -87,13 +91,12 @@ function StatGlobalPage() {
       attendanceTotals.connectes += Number(r.connectes) || 0;
       attendanceTotals.nouveauxVenus += Number(r.nouveauxVenus) || 0;
       attendanceTotals.nouveauxConvertis += Number(r.nouveauxConvertis) || 0;
+      attendanceTotals.moissonneurs += Number(r.moissonneurs) || 0;
     });
 
     setAttendanceStats(attendanceTotals);
 
-    // ==========================
-    // EVANGELISATION
-    // ==========================
+    // -------- EVANGELISATION --------
     let evanQuery = supabase
       .from("evangelises")
       .select("*")
@@ -123,57 +126,52 @@ function StatGlobalPage() {
 
     setEvanStats(evanTotals);
 
-    // ==========================
-    // BAPTEME
-    // ==========================
-    let baptemeQuery = supabase
+    // -------- BAPTEME --------
+    const { data: baptemeData } = await supabase
       .from("baptemes")
       .select("hommes, femmes")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
 
-    if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
-    if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
-
-    const { data: baptemeData } = await baptemeQuery;
-
     setBaptemeStats({
-      hommes: baptemeData?.reduce((sum, r) => sum + Number(r.hommes), 0) || 0,
-      femmes: baptemeData?.reduce((sum, r) => sum + Number(r.femmes), 0) || 0,
+      hommes: baptemeData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
+      femmes: baptemeData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
     });
 
-    // ==========================
-    // FORMATION
-    // ==========================
-    let formationQuery = supabase
+    // -------- FORMATION --------
+    const { data: formationData } = await supabase
       .from("formations")
       .select("hommes, femmes")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
 
-    if (dateDebut) formationQuery = formationQuery.gte("date_debut", dateDebut);
-    if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin);
-
-    const { data: formationData } = await formationQuery;
-
     setFormationStats({
-      hommes: formationData?.reduce((sum, r) => sum + Number(r.hommes), 0) || 0,
-      femmes: formationData?.reduce((sum, r) => sum + Number(r.femmes), 0) || 0,
+      hommes: formationData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
+      femmes: formationData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
     });
 
-    // ==========================
-    // CELLULES
-    // ==========================
-    const { count: cellulesCountData } = await supabase
+    // -------- CELLULES --------
+    const { count } = await supabase
       .from("cellules")
       .select("id", { count: "exact", head: true })
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
 
-    setCellulesCount(cellulesCountData || 0);
+    setCellulesCount(count || 0);
 
     setLoading(false);
   };
+
+  // ==========================
+  // 🔹 TABLE ROWS
+  // ==========================
+  const rows = [
+    { label: "Culte", data: attendanceStats, border: "border-l-orange-500" },
+    { label: "Evangelisation", data: evanStats, border: "border-l-green-500" },
+    { label: "Baptême", data: baptemeStats, border: "border-l-purple-500" },
+    { label: "Formation", data: formationStats, border: "border-l-blue-500" },
+    { label: "Cellules", data: { total: cellulesCount }, border: "border-l-yellow-500" },
+  ].filter(r => rapportFilter === "Tous" || r.label === rapportFilter);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -182,108 +180,78 @@ function StatGlobalPage() {
 
       {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
-        <div>
-          <label>Date début</label>
-          <input
-            type="date"
-            className="border border-gray-400 rounded-lg px-3 py-2 ml-2 bg-transparent text-white"
-            value={dateDebut}
-            onChange={(e) => setDateDebut(e.target.value)}
-          />
-        </div>
+        <input
+          type="date"
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent"
+          value={dateDebut}
+          onChange={(e) => setDateDebut(e.target.value)}
+        />
 
-        <div>
-          <label>Date fin</label>
-          <input
-            type="date"
-            className="border border-gray-400 rounded-lg px-3 py-2 ml-2 bg-transparent text-white"
-            value={dateFin}
-            onChange={(e) => setDateFin(e.target.value)}
-          />
-        </div>
+        <input
+          type="date"
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent"
+          value={dateFin}
+          onChange={(e) => setDateFin(e.target.value)}
+        />
 
-        <div>
-          <label>Filtrer par Rapport</label>
-          <select
-            className="border border-gray-400 rounded-lg px-3 py-2 ml-2 bg-transparent text-white"
-            value={rapportFilter}
-            onChange={(e) => setRapportFilter(e.target.value)}
-          >
-            <option>Tous</option>
-            <option>Culte</option>
-            <option>Evangelisation</option>
-            <option>Baptême</option>
-            <option>Formation</option>
-            <option>Cellules</option>
-          </select>
-        </div>
+        <select
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent"
+          value={rapportFilter}
+          onChange={(e) => setRapportFilter(e.target.value)}
+        >
+          <option>Tous</option>
+          <option>Culte</option>
+          <option>Evangelisation</option>
+          <option>Baptême</option>
+          <option>Formation</option>
+          <option>Cellules</option>
+        </select>
 
         <button
           onClick={fetchStats}
-          className="bg-[#333699] text-white px-6 py-2 rounded-xl hover:bg-[#2a2f85] transition duration-150"
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
         >
           Générer
         </button>
       </div>
 
-      {/* TABLEAU */}
       {loading && <p className="text-white mt-6">Chargement...</p>}
 
       {!loading && attendanceStats && (
-        <div className="w-full max-w-6xl overflow-x-auto py-2 mt-6">
-          <div className="min-w-[1000px] space-y-2">
+        <div className="w-full max-w-6xl overflow-x-auto mt-8">
+          <div className="min-w-max space-y-2">
+
             {/* HEADER */}
-            <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-4 py-2 border-b border-gray-400 bg-transparent rounded-t-xl">
-              <div className="flex-[2] whitespace-nowrap">Rapport</div>
-              <div className="flex-[1] whitespace-nowrap">Hommes</div>
-              <div className="flex-[1] whitespace-nowrap">Femmes</div>
-              <div className="flex-[1] whitespace-nowrap">Jeunes</div>
-              <div className="flex-[1] whitespace-nowrap">Enfants</div>
-              <div className="flex-[1] whitespace-nowrap">Connectés</div>
-              <div className="flex-[2] whitespace-nowrap">Nouveaux Venus</div>
-              <div className="flex-[2] whitespace-nowrap">Prière / Réconciliation</div>
-              <div className="flex-[2] whitespace-nowrap">Nouveau Converti</div>
-              <div className="flex-[1] whitespace-nowrap">Moissonneurs</div>
-              <div className="flex-[1] whitespace-nowrap">Total</div>
+            <div className="flex text-sm font-semibold uppercase text-white px-4 py-2">
+              {["Rapport","Hommes","Femmes","Jeunes","Enfants","Connectés","Nouveaux Venus","Prière / Réconciliation","Nouveau Converti","Moissonneurs","Total"]
+              .map((h,i)=>(
+                <div key={i} className="mr-6 whitespace-nowrap">{h}</div>
+              ))}
             </div>
 
-            {/* LIGNES */}
-            {[
-              { label: "Culte", data: attendanceStats, borderColor: "border-l-orange-500" },
-              { label: "Evangelisation", data: evanStats, borderColor: "border-l-green-500" },
-              { label: "Baptême", data: baptemeStats, borderColor: "border-l-purple-500" },
-              { label: "Formation", data: formationStats, borderColor: "border-l-blue-500" },
-              { label: "Cellules", data: { total: cellulesCount }, borderColor: "border-l-yellow-500" },
-            ]
-              .filter((r) => rapportFilter === "Tous" || r.label === rapportFilter)
-              .map((r, idx) => (
-                <div
-                  key={idx}
-                  className={`flex flex-row items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 border-l-4 ${r.borderColor}`}
-                >
-                  <div className="flex-[2] text-white font-semibold">{r.label}</div>
-                  <div className="flex-[1] text-white">{r.data?.hommes ?? "-"}</div>
-                  <div className="flex-[1] text-white">{r.data?.femmes ?? "-"}</div>
-                  <div className="flex-[1] text-white">{r.data?.jeunes ?? "-"}</div>
-                  <div className="flex-[1] text-white">{r.data?.enfants ?? "-"}</div>
-                  <div className="flex-[1] text-white">{r.data?.connectes ?? "-"}</div>
-                  <div className="flex-[2] text-white">
-                    {r.data?.nouveauxVenus ?? r.data?.prieres ?? "-"}
-                  </div>
-                  <div className="flex-[2] text-white">
-                    {r.data?.prieres ?? r.data?.reconciliations ?? "-"}
-                  </div>
-                  <div className="flex-[2] text-white">
-                    {r.data?.nouveauxConvertis ?? "-"}
-                  </div>
-                  <div className="flex-[1] text-white">{r.data?.moissonneurs ?? "-"}</div>
-                  <div className="flex-[1] text-white">
-                    {r.data?.hommes && r.data?.femmes
-                      ? r.data.hommes + r.data.femmes
-                      : r.data?.total ?? "-"}
-                  </div>
+            {/* ROWS */}
+            {rows.map((r,i)=>(
+              <div
+                key={i}
+                className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${r.border} min-w-max`}
+              >
+                <div className="mr-6 font-semibold text-white">{r.label}</div>
+                <div className="mr-6 text-white">{r.data?.hommes ?? "-"}</div>
+                <div className="mr-6 text-white">{r.data?.femmes ?? "-"}</div>
+                <div className="mr-6 text-white">{r.data?.jeunes ?? "-"}</div>
+                <div className="mr-6 text-white">{r.data?.enfants ?? "-"}</div>
+                <div className="mr-6 text-white">{r.data?.connectes ?? "-"}</div>
+                <div className="mr-6 text-white">{r.data?.nouveauxVenus ?? "-"}</div>
+                <div className="mr-6 text-white">{r.data?.prieres ?? r.data?.reconciliations ?? "-"}</div>
+                <div className="mr-6 text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
+                <div className="mr-6 text-white">{r.data?.moissonneurs ?? "-"}</div>
+                <div className="text-white">
+                  {r.data?.hommes && r.data?.femmes
+                    ? r.data.hommes + r.data.femmes
+                    : r.data?.total ?? "-"}
                 </div>
-              ))}
+              </div>
+            ))}
           </div>
         </div>
       )}

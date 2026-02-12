@@ -42,7 +42,7 @@ function StatGlobalPage() {
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
 
-  // ⚡ Données brutes
+  // 🔹 States pour données brutes
   const [attendanceData, setAttendanceData] = useState([]);
   const [evanData, setEvanData] = useState([]);
   const [baptemeData, setBaptemeData] = useState([]);
@@ -51,19 +51,18 @@ function StatGlobalPage() {
 
   const [loading, setLoading] = useState(false);
 
-  // Données agrégées pour le tableau
+  // 🔹 States pour stats agrégées (tableau)
   const [attendanceStats, setAttendanceStats] = useState(null);
-  const [evanStats, setEvanStatsAgg] = useState(null);
+  const [evanStatsAgg, setEvanStatsAgg] = useState(null);
   const [baptemeStatsAgg, setBaptemeStatsAgg] = useState({ hommes: 0, femmes: 0 });
   const [formationStatsAgg, setFormationStatsAgg] = useState({ hommes: 0, femmes: 0 });
 
-  // 🔹 Récupérer eglise_id et branche_id automatiquement
+  // 🔹 Récupérer automatiquement eglise_id et branche_id
   useEffect(() => {
     const fetchProfile = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-
       if (!user) return;
 
       const { data } = await supabase
@@ -82,18 +81,16 @@ function StatGlobalPage() {
 
   const fetchStats = async () => {
     if (!egliseId || !brancheId) return;
-
     setLoading(true);
 
-    // ==========================
-    // 🔹 ATTENDANCE
-    // ==========================
+    // -----------------------------
+    // Attendance
+    // -----------------------------
     let attendanceQuery = supabase
       .from("attendance")
       .select("*")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
-
     if (dateDebut) attendanceQuery = attendanceQuery.gte("date", dateDebut);
     if (dateFin) attendanceQuery = attendanceQuery.lte("date", dateFin);
 
@@ -121,15 +118,14 @@ function StatGlobalPage() {
     });
     setAttendanceStats(attendanceTotals);
 
-    // ==========================
-    // 🔹 EVANGELISATION
-    // ==========================
+    // -----------------------------
+    // Evangelisation
+    // -----------------------------
     let evanQuery = supabase
       .from("evangelises")
       .select("*")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
-
     if (dateDebut) evanQuery = evanQuery.gte("created_at", dateDebut);
     if (dateFin) evanQuery = evanQuery.lte("created_at", dateFin);
 
@@ -142,7 +138,6 @@ function StatGlobalPage() {
       prieres: 0,
       nouveauxConvertis: 0,
     };
-
     evan?.forEach((r) => {
       if (r.sexe === "Homme") evanTotals.hommes++;
       if (r.sexe === "Femme") evanTotals.femmes++;
@@ -151,15 +146,14 @@ function StatGlobalPage() {
     });
     setEvanStatsAgg(evanTotals);
 
-    // ==========================
-    // 🔹 BAPTEME
-    // ==========================
+    // -----------------------------
+    // Baptême
+    // -----------------------------
     let baptemeQuery = supabase
       .from("baptemes")
       .select("*")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
-
     if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
     if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
 
@@ -172,15 +166,14 @@ function StatGlobalPage() {
       bapteme?.reduce((sum, r) => sum + Number(r.femmes), 0) || 0;
     setBaptemeStatsAgg({ hommes: totalBaptemeHommes, femmes: totalBaptemeFemmes });
 
-    // ==========================
-    // 🔹 FORMATION
-    // ==========================
+    // -----------------------------
+    // Formation
+    // -----------------------------
     let formationQuery = supabase
       .from("formations")
       .select("*")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
-
     if (dateDebut) formationQuery = formationQuery.gte("date_debut", dateDebut);
     if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin);
 
@@ -193,9 +186,9 @@ function StatGlobalPage() {
       formation?.reduce((sum, r) => sum + Number(r.femmes), 0) || 0;
     setFormationStatsAgg({ hommes: totalFormationHommes, femmes: totalFormationFemmes });
 
-    // ==========================
-    // 🔹 CELLULES
-    // ==========================
+    // -----------------------------
+    // Cellules
+    // -----------------------------
     const { count: cellulesCountData } = await supabase
       .from("cellules")
       .select("id", { count: "exact", head: true })
@@ -206,98 +199,9 @@ function StatGlobalPage() {
     setLoading(false);
   };
 
-  // 🔹 Préparer les données pour Chart.js
-  const allDates = Array.from(
-    new Set([
-      ...attendanceData.map((r) => r.date),
-      ...evanData.map((r) => r.created_at),
-      ...baptemeData.map((r) => r.date),
-      ...formationData.map((r) => r.date_debut),
-    ])
-  ).sort();
-
-  const mapSeries = (data, key) => {
-    const map = {};
-    data.forEach((r) => {
-      const date = r.date || r.created_at || r.date_debut;
-      map[date] = (map[date] || 0) + Number(r[key] || 0);
-    });
-    return allDates.map((d) => map[d] || 0);
-  };
-
-  const chartData = {
-    labels: allDates,
-    datasets: [
-      {
-        label: "Culte Hommes",
-        data: mapSeries(attendanceData, "hommes"),
-        borderColor: "rgba(255,165,0,1)",
-        backgroundColor: "rgba(255,165,0,0.2)",
-      },
-      {
-        label: "Culte Femmes",
-        data: mapSeries(attendanceData, "femmes"),
-        borderColor: "rgba(255,140,0,1)",
-        backgroundColor: "rgba(255,140,0,0.2)",
-      },
-      {
-        label: "Évangélisés",
-        data: mapSeries(evanData, "hommes"),
-        borderColor: "rgba(0,128,0,1)",
-        backgroundColor: "rgba(0,128,0,0.2)",
-      },
-      {
-        label: "Prières",
-        data: mapSeries(evanData, "prieres"),
-        borderColor: "rgba(34,139,34,1)",
-        backgroundColor: "rgba(34,139,34,0.2)",
-      },
-      {
-        label: "Convertis",
-        data: mapSeries(evanData, "nouveauxConvertis"),
-        borderColor: "rgba(0,100,0,1)",
-        backgroundColor: "rgba(0,100,0,0.2)",
-      },
-      {
-        label: "Baptême Hommes",
-        data: mapSeries(baptemeData, "hommes"),
-        borderColor: "rgba(128,0,128,1)",
-        backgroundColor: "rgba(128,0,128,0.2)",
-      },
-      {
-        label: "Baptême Femmes",
-        data: mapSeries(baptemeData, "femmes"),
-        borderColor: "rgba(186,85,211,1)",
-        backgroundColor: "rgba(186,85,211,0.2)",
-      },
-      {
-        label: "Formation Hommes",
-        data: mapSeries(formationData, "hommes"),
-        borderColor: "rgba(0,0,255,1)",
-        backgroundColor: "rgba(0,0,255,0.2)",
-      },
-      {
-        label: "Formation Femmes",
-        data: mapSeries(formationData, "femmes"),
-        borderColor: "rgba(30,144,255,1)",
-        backgroundColor: "rgba(30,144,255,0.2)",
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: { position: "top", labels: { color: "white" } },
-      title: { display: true, text: "Évolution des rapports", color: "white" },
-    },
-    scales: {
-      x: { ticks: { color: "white" }, grid: { color: "rgba(255,255,255,0.1)" } },
-      y: { ticks: { color: "white" }, grid: { color: "rgba(255,255,255,0.1)" } },
-    },
-  };
-
-  // 🔹 Préparer les lignes pour tableau
+  // -----------------------------
+  // Préparer les lignes du tableau
+  // -----------------------------
   const tableLines = [
     { label: "Rapport Culte", data: attendanceStats, borderColor: "border-l-orange-500" },
     { label: "Rapport Evangelisation", data: evanStatsAgg, borderColor: "border-l-green-500" },
@@ -340,8 +244,7 @@ function StatGlobalPage() {
       </div>
 
       {/* TABLEAU */}
-      {loading && <p className="text-white mt-6">Chargement...</p>}
-      {!loading && attendanceStats && (
+      {!loading && (
         <div className="overflow-x-auto mt-8 w-full max-w-6xl">
           <div className="min-w-[700px] space-y-2">
             {/* HEADER */}
@@ -387,7 +290,54 @@ function StatGlobalPage() {
       {/* DASHBOARD GRAPHIQUE SOUS LE TABLEAU */}
       {!loading && (
         <div className="w-full max-w-6xl mt-8 p-4 bg-[#222288] rounded-2xl shadow-lg">
-          <Line data={chartData} options={chartOptions} />
+          <Line
+            data={{
+              labels: attendanceData.map((r) => r.date),
+              datasets: [
+                {
+                  label: "Culte Hommes",
+                  data: attendanceData.map((r) => Number(r.hommes)),
+                  borderColor: "rgba(255,165,0,1)",
+                  backgroundColor: "rgba(255,165,0,0.2)",
+                },
+                {
+                  label: "Culte Femmes",
+                  data: attendanceData.map((r) => Number(r.femmes)),
+                  borderColor: "rgba(255,140,0,1)",
+                  backgroundColor: "rgba(255,140,0,0.2)",
+                },
+                {
+                  label: "Évangélisés",
+                  data: evanData.map((r) => 1), // simplifié pour count par item
+                  borderColor: "rgba(0,128,0,1)",
+                  backgroundColor: "rgba(0,128,0,0.2)",
+                },
+                {
+                  label: "Prières",
+                  data: evanData.map((r) => r.priere_salut ? 1 : 0),
+                  borderColor: "rgba(34,139,34,1)",
+                  backgroundColor: "rgba(34,139,34,0.2)",
+                },
+                {
+                  label: "Convertis",
+                  data: evanData.map((r) => r.type_conversion === "Nouveau converti" ? 1 : 0),
+                  borderColor: "rgba(0,100,0,1)",
+                  backgroundColor: "rgba(0,100,0,0.2)",
+                },
+              ],
+            }}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: { position: "top", labels: { color: "white" } },
+                title: { display: true, text: "Évolution des rapports", color: "white" },
+              },
+              scales: {
+                x: { ticks: { color: "white" }, grid: { color: "rgba(255,255,255,0.1)" } },
+                y: { ticks: { color: "white" }, grid: { color: "rgba(255,255,255,0.1)" } },
+              },
+            }}
+          />
         </div>
       )}
 

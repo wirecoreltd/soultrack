@@ -25,10 +25,10 @@ function RapportEvangelisation() {
   const [selectedRapport, setSelectedRapport] = useState(null);
   const [profile, setProfile] = useState(null);
 
+  // ✅ Fetch depuis rapport_evangelisation uniquement
   const fetchRapports = async () => {
     setLoading(true);
 
-    // 1️⃣ Session
     const { data: sessionData } = await supabase.auth.getSession();
     const user = sessionData?.session?.user;
     if (!user) {
@@ -36,7 +36,6 @@ function RapportEvangelisation() {
       return;
     }
 
-    // 2️⃣ Profil
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
       .select("eglise_id, branche_id")
@@ -44,71 +43,23 @@ function RapportEvangelisation() {
       .single();
 
     if (profileError || !profileData) {
-      console.error("Erreur profil :", profileError);
+      console.error(profileError);
       setLoading(false);
       return;
     }
 
     setProfile(profileData);
 
-    // 3️⃣ Évangélisés
-    const { data: evangelises, error: evangelisesError } = await supabase
-      .from("evangelises")
-      .select("*")
-      .eq("eglise_id", profileData.eglise_id)
-      .eq("branche_id", profileData.branche_id)
-      .order("created_at", { ascending: true });
-
-    if (evangelisesError) {
-      console.error("Erreur evangelises :", evangelisesError);
-    }
-
-    // 4️⃣ Rapports sauvegardés
-    const { data: rapportsSaved, error: rapportsError } = await supabase
+    const { data, error } = await supabase
       .from("rapport_evangelisation")
       .select("*")
       .eq("eglise_id", profileData.eglise_id)
-      .eq("branche_id", profileData.branche_id);
+      .eq("branche_id", profileData.branche_id)
+      .order("date", { ascending: true });
 
-    if (rapportsError) {
-      console.error("Erreur rapport_evangelisation :", rapportsError);
-    }
+    if (error) console.error(error);
 
-    // 5️⃣ Construction dynamique
-    const rapportsParDate = {};
-
-    evangelises?.forEach((e) => {
-      const date = e.created_at.split("T")[0];
-
-      if (!rapportsParDate[date]) {
-        rapportsParDate[date] = {
-          date,
-          hommes: 0,
-          femmes: 0,
-          priere: 0,
-          nouveau_converti: 0,
-          reconciliation: 0,
-          moissonneurs: null,
-        };
-      }
-
-      if (e.sexe === "Homme") rapportsParDate[date].hommes += 1;
-      if (e.sexe === "Femme") rapportsParDate[date].femmes += 1;
-      if (e.priere_salut) rapportsParDate[date].priere += 1;
-      if (e.type_conversion === "Nouveau converti")
-        rapportsParDate[date].nouveau_converti += 1;
-      if (e.type_conversion === "Réconciliation")
-        rapportsParDate[date].reconciliation += 1;
-    });
-
-    // 6️⃣ Fusion moissonneurs
-    rapportsSaved?.forEach((saved) => {
-      if (rapportsParDate[saved.date]) {
-        rapportsParDate[saved.date].moissonneurs = saved.moissonneurs;
-      }
-    });
-
-    setRapports(Object.values(rapportsParDate));
+    setRapports(data || []);
     setLoading(false);
   };
 
@@ -136,47 +87,12 @@ function RapportEvangelisation() {
   };
 
   useEffect(() => {
-    const fetchRapports = async () => {
-      setLoading(true);
-    
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData?.session?.user;
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-    
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("eglise_id, branche_id")
-        .eq("id", user.id)
-        .single();
-    
-      if (profileError || !profileData) {
-        console.error(profileError);
-        setLoading(false);
-        return;
-      }
-    
-      setProfile(profileData);
-    
-      const { data, error } = await supabase
-        .from("rapport_evangelisation")
-        .select("*")
-        .eq("eglise_id", profileData.eglise_id)
-        .eq("branche_id", profileData.branche_id)
-        .order("date", { ascending: true });
-    
-      if (error) console.error(error);
-    
-      setRapports(data || []);
-      setLoading(false);
-    };
-
+    fetchRapports();
+  }, []);
 
   if (loading)
     return (
-      <p className="text-center mt-10">Chargement des rapports...</p>
+      <p className="text-center mt-10 text-white">Chargement des rapports...</p>
     );
 
   return (

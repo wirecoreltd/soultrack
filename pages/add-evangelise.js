@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 
-export default function AddEvangelise({ onNewEvangelise, profile }) {
+export default function AddEvangelise({ onNewEvangelise }) {
   const router = useRouter();
   const { token } = router.query;
 
@@ -21,6 +21,8 @@ export default function AddEvangelise({ onNewEvangelise, profile }) {
     besoin: [],
     infos_supplementaires: "",
     is_whatsapp: false,
+    eglise_id: null,
+    branche_id: null, // ✅ ajout branche_id
   });
 
   const [showOtherField, setShowOtherField] = useState(false);
@@ -31,13 +33,38 @@ export default function AddEvangelise({ onNewEvangelise, profile }) {
 
   const besoinsList = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille", "Paix"];
 
-  // Vérification du token
+  // ➤ Récupérer eglise_id et branche_id de l'utilisateur connecté
+  useEffect(() => {
+    const fetchUserEglise = async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) return;
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", session.session.user.id)
+        .single();
+
+      if (!error && profile) {
+        setFormData((prev) => ({
+          ...prev,
+          eglise_id: profile.eglise_id,
+          branche_id: profile.branche_id,
+        }));
+        console.log("Eglise ID :", profile.eglise_id, "Branche ID :", profile.branche_id);
+      } else {
+        console.error("Erreur récupération eglise/branche :", error?.message);
+      }
+    };
+    fetchUserEglise();
+  }, []);
+
+  // Vérification du token si nécessaire
   useEffect(() => {
     if (!token) return;
 
     const verifyToken = async () => {
       setLoading(true);
-
       const { data, error } = await supabase
         .from("access_tokens")
         .select("*")
@@ -60,115 +87,67 @@ export default function AddEvangelise({ onNewEvangelise, profile }) {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const finalBesoins = [...formData.besoin];
-  if (showOtherField && otherBesoin.trim()) {
-    finalBesoins.push(otherBesoin.trim());
-  }
+    const finalBesoins = [...formData.besoin];
+    if (showOtherField && otherBesoin.trim()) finalBesoins.push(otherBesoin.trim());
 
-  const finalData = {
-    nom: formData.nom.trim(),
-    prenom: formData.prenom.trim(),
-    telephone: formData.telephone.trim() || null,
-    ville: formData.ville.trim() || null,
-    statut: "evangelisé",
-    sexe: formData.sexe || null,
-    priere_salut: formData.priere_salut === "Oui",
-    type_conversion: formData.priere_salut === "Oui" ? formData.type_conversion || null : null,
-    besoin: finalBesoins,
-    infos_supplementaires: formData.infos_supplementaires || null,
-    is_whatsapp: formData.is_whatsapp,
-    eglise_id: profile?.eglise_id || null,  // ✅ UUID réel ou null
-    branche_id: profile?.branche_id || null // ✅ UUID réel ou null
+    const finalData = {
+      nom: formData.nom.trim(),
+      prenom: formData.prenom.trim(),
+      telephone: formData.telephone.trim() || null,
+      ville: formData.ville.trim() || null,
+      statut: "evangelisé",
+      sexe: formData.sexe || null,
+      priere_salut: formData.priere_salut === "Oui",
+      type_conversion: formData.priere_salut === "Oui" ? formData.type_conversion || null : null,
+      besoin: finalBesoins,
+      infos_supplementaires: formData.infos_supplementaires || null,
+      is_whatsapp: formData.is_whatsapp,
+      eglise_id: formData.eglise_id,   // ✅ envoyé
+      branche_id: formData.branche_id, // ✅ envoyé
+    };
+
+    try {
+      const { data: newEvangelise, error: insertError } = await supabase
+        .from("evangelises")
+        .insert([finalData])
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      if (onNewEvangelise) onNewEvangelise(newEvangelise);
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+
+      // Reset form mais conserver eglise_id et branche_id
+      setFormData((prev) => ({
+        nom: "",
+        prenom: "",
+        telephone: "",
+        ville: "",
+        statut: "evangelisé",
+        sexe: "",
+        priere_salut: "",
+        type_conversion: "",
+        besoin: [],
+        infos_supplementaires: "",
+        is_whatsapp: false,
+        eglise_id: prev.eglise_id,
+        branche_id: prev.branche_id,
+      }));
+      setShowOtherField(false);
+      setOtherBesoin("");
+    } catch (err) {
+      alert("Erreur lors de l'ajout : " + err.message);
+      console.error(err);
+    }
   };
 
-  try {
-    // Insert évangélisé
-    const { data: newEvangelise, error: insertError } = await supabase
-      .from("evangelises")
-      .insert([finalData])
-      .select()
-      .single();
-
-    if (insertError) throw insertError;
-
-    // Mise à jour rapport du jour
-    const today = new Date().toISOString().slice(0, 10);
-    const hommes = formData.sexe === "Homme" ? 1 : 0;
-    const femmes = formData.sexe === "Femme" ? 1 : 0;
-    const priere = formData.priere_salut === "Oui" ? 1 : 0;
-    const nouveau_converti =
-      formData.type_conversion === "Nouveau converti" ? 1 : 0;
-    const reconciliation =
-      formData.type_conversion === "Réconciliation" ? 1 : 0;
-
-    const { data: existingReport, error: fetchError } = await supabase
-      .from("rapport_evangelisation")
-      .select("*")
-      .eq("date", today)
-      .eq("eglise_id", profile?.eglise_id)   // Filtrer par église
-      .eq("branche_id", profile?.branche_id) // Filtrer par branche
-      .single();
-
-    if (fetchError && fetchError.code !== "PGRST116") throw fetchError;
-
-    if (existingReport) {
-      await supabase
-        .from("rapport_evangelisation")
-        .update({
-          hommes: existingReport.hommes + hommes,
-          femmes: existingReport.femmes + femmes,
-          priere: existingReport.priere + priere,
-          nouveau_converti: existingReport.nouveau_converti + nouveau_converti,
-          reconciliation: existingReport.reconciliation + reconciliation,
-        })
-        .eq("date", today)
-        .eq("eglise_id", profile?.eglise_id)
-        .eq("branche_id", profile?.branche_id);
-    } else {
-      await supabase.from("rapport_evangelisation").insert([
-        {
-          date: today,
-          hommes,
-          femmes,
-          priere,
-          nouveau_converti,
-          reconciliation,
-          eglise_id: profile?.eglise_id,
-          branche_id: profile?.branche_id,
-        },
-      ]);
-    }
-
-    // ⚡️ Ajouter le nouvel évangélisé dans la table affichée
-    if (onNewEvangelise) onNewEvangelise(newEvangelise);
-
-    // Reset form
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
-    setFormData({
-      nom: "",
-      prenom: "",
-      telephone: "",
-      ville: "",
-      statut: "evangelisé",
-      sexe: "",
-      priere_salut: "",
-      type_conversion: "",
-      besoin: [],
-      infos_supplementaires: "",
-      is_whatsapp: false,
-    });
-    setShowOtherField(false);
-    setOtherBesoin("");
-  } catch (err) {
-    alert(err.message);
-  }
-};
-
   const handleCancel = () => {
-    setFormData({
+    setFormData((prev) => ({
       nom: "",
       prenom: "",
       telephone: "",
@@ -180,7 +159,9 @@ export default function AddEvangelise({ onNewEvangelise, profile }) {
       besoin: [],
       infos_supplementaires: "",
       is_whatsapp: false,
-    });
+      eglise_id: prev.eglise_id,
+      branche_id: prev.branche_id,
+    }));
     setShowOtherField(false);
     setOtherBesoin("");
   };
@@ -194,10 +175,8 @@ export default function AddEvangelise({ onNewEvangelise, profile }) {
         <div className="flex justify-center mb-6">
           <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
         </div>
-    
-        <h1 className="text-3xl font-bold text-center mb-2">
-          Ajouter une personne évangélisée
-        </h1>
+
+        <h1 className="text-3xl font-bold text-center mb-2">Ajouter une personne évangélisée</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
     

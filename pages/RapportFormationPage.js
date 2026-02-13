@@ -28,7 +28,9 @@ function RapportFormation() {
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
   const [rapports, setRapports] = useState([]);
+  const [editRapport, setEditRapport] = useState(null);
 
+  // 🔹 Charger eglise et branche automatiquement
   useEffect(() => {
     const fetchUser = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -66,7 +68,7 @@ function RapportFormation() {
     fetchRapports();
   };
 
-  // 🔹 Fetch formations
+  // 🔹 Fetch formations avec filtres
   const fetchRapports = async () => {
     let query = supabase
       .from("formations")
@@ -88,6 +90,43 @@ function RapportFormation() {
     }
   }, [formData.eglise_id, formData.branche_id, filterDebut, filterFin]);
 
+  // 🔹 Modifier un rapport
+  const handleEdit = (r) => {
+    setEditRapport(r);
+    setFormData({
+      ...formData,
+      date_debut: r.date_debut,
+      date_fin: r.date_fin,
+      nom_formation: r.nom_formation,
+      hommes: r.hommes,
+      femmes: r.femmes,
+    });
+  };
+
+  const handleUpdate = async () => {
+    if (!editRapport) return;
+    await supabase
+      .from("formations")
+      .update({
+        date_debut: formData.date_debut,
+        date_fin: formData.date_fin,
+        nom_formation: formData.nom_formation,
+        hommes: formData.hommes,
+        femmes: formData.femmes,
+      })
+      .eq("id", editRapport.id);
+    setEditRapport(null);
+    setFormData((prev) => ({
+      ...prev,
+      date_debut: "",
+      date_fin: "",
+      nom_formation: "",
+      hommes: 0,
+      femmes: 0,
+    }));
+    fetchRapports();
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
@@ -98,9 +137,12 @@ function RapportFormation() {
 
       {/* Formulaire */}
       <div className="bg-white/10 p-6 rounded-3xl shadow-lg mb-6 w-full max-w-4xl">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form
+          onSubmit={editRapport ? handleUpdate : handleSubmit}
+          className="grid grid-cols-2 gap-4"
+        >
           <div className="flex flex-col">
-            <label className="text-white mb-1 font-semibold">Date Début</label>
+            <label className="text-white mb-1">Date Début</label>
             <input
               type="date"
               required
@@ -113,7 +155,7 @@ function RapportFormation() {
           </div>
 
           <div className="flex flex-col">
-            <label className="text-white mb-1 font-semibold">Date Fin</label>
+            <label className="text-white mb-1">Date Fin</label>
             <input
               type="date"
               required
@@ -125,8 +167,8 @@ function RapportFormation() {
             />
           </div>
 
-          <div className="flex flex-col md:col-span-2">
-            <label className="text-white mb-1 font-semibold">Nom de la Formation</label>
+          <div className="flex flex-col col-span-2">
+            <label className="text-white mb-1">Nom de la Formation</label>
             <input
               type="text"
               required
@@ -140,10 +182,9 @@ function RapportFormation() {
           </div>
 
           <div className="flex flex-col">
-            <label className="text-white mb-1 font-semibold">Hommes</label>
+            <label className="text-white mb-1">Hommes</label>
             <input
               type="number"
-              placeholder="Hommes"
               value={formData.hommes}
               onChange={(e) =>
                 setFormData({ ...formData, hommes: e.target.value })
@@ -153,10 +194,9 @@ function RapportFormation() {
           </div>
 
           <div className="flex flex-col">
-            <label className="text-white mb-1 font-semibold">Femmes</label>
+            <label className="text-white mb-1">Femmes</label>
             <input
               type="number"
-              placeholder="Femmes"
               value={formData.femmes}
               onChange={(e) =>
                 setFormData({ ...formData, femmes: e.target.value })
@@ -167,43 +207,37 @@ function RapportFormation() {
 
           <button
             type="submit"
-            className="col-span-1 md:col-span-2 bg-gradient-to-r from-blue-500 to-amber-400 text-white font-semibold px-6 py-3 rounded-xl shadow-md hover:scale-105 transition"
+            className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
           >
-            Ajouter
+            {editRapport ? "Modifier" : "Ajouter"}
           </button>
         </form>
       </div>
 
       {/* Filtres */}
-      <div className="bg-white/10 p-4 rounded-2xl shadow mb-4 flex flex-wrap gap-4 items-end justify-center">
-        <div className="flex flex-col">
-          <label className="text-white mb-1 font-semibold">Date Début</label>
-          <input
-            type="date"
-            value={filterDebut}
-            onChange={(e) => setFilterDebut(e.target.value)}
-            className="input"
-          />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-white mb-1 font-semibold">Date Fin</label>
-          <input
-            type="date"
-            value={filterFin}
-            onChange={(e) => setFilterFin(e.target.value)}
-            className="input"
-          />
-        </div>
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">
+        <input
+          type="date"
+          value={filterDebut}
+          onChange={(e) => setFilterDebut(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <input
+          type="date"
+          value={filterFin}
+          onChange={(e) => setFilterFin(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
         <button
           onClick={fetchRapports}
-          className="bg-gradient-to-r from-blue-500 to-amber-400 text-white font-semibold px-6 py-2 rounded-xl shadow-md hover:scale-105 transition"
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
         >
           Générer
         </button>
       </div>
 
       {/* Tableau */}
-      <div className="w-full flex justify-center mt-6 overflow-x-auto scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+      <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
         <div className="w-max space-y-2">
           {/* HEADER */}
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
@@ -212,7 +246,7 @@ function RapportFormation() {
             <div className="min-w-[200px]">Nom Formation</div>
             <div className="min-w-[120px] text-center">Hommes</div>
             <div className="min-w-[120px] text-center">Femmes</div>
-            <div className="min-w-[130px] text-center">Total</div>
+            <div className="min-w-[150px] text-center">Actions</div>
           </div>
 
           {/* LIGNES */}
@@ -226,8 +260,13 @@ function RapportFormation() {
               <div className="min-w-[200px] text-white">{r.nom_formation}</div>
               <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
               <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-              <div className="min-w-[130px] text-center text-white font-bold">
-                {Number(r.hommes) + Number(r.femmes)}
+              <div className="min-w-[150px] text-center">
+                <button
+                  onClick={() => handleEdit(r)}
+                  className="bg-gradient-to-r from-blue-500 to-amber-400 text-white font-semibold px-4 py-1 rounded-xl shadow-md hover:scale-105 transition"
+                >
+                  Modifier
+                </button>
               </div>
             </div>
           ))}

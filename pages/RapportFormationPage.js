@@ -202,11 +202,11 @@ function RapportFormation() {
           </div>
 
           {/* Bouton Ajouter / Modifier centré et plus large */}
-          <div className="col-span-2 flex justify-center mt-2">
+          <div className="col-span-2 flex justify-center mt-4">
             <button
               type="submit"
-              className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
-            >
+              className=" w-full max-w-md bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold text-lgpy-4 px-8 rounded-2xl shadow-lg hover:from-blue-500 hover:to-indigo-600
+                hover:scale-105 transition-all duration-300">
               {editRapport ? "Modifier" : "Ajouter"}
             </button>
           </div>

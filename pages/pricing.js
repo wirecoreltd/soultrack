@@ -1,8 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import PublicHeader from "../components/PublicHeader";
+import Footer from "../components/Footer";
 
-export default function Pricing() {
+export default function PricingPage() {
   const router = useRouter();
 
   const plans = [
@@ -53,7 +55,7 @@ export default function Pricing() {
     {
       name: "Église Enterprise",
       range: "Plus de 15000",
-      price: "Contactez‑nous",
+      price: "Contactez-nous",
       popular: false,
       features: [
         "Plan personnalisé",
@@ -64,20 +66,24 @@ export default function Pricing() {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div className="bg-white text-gray-900 min-h-screen">
+      <PublicHeader />
+
       {/* Hero */}
-      <section className="text-center py-16 px-6">
-        <h1 className="text-4xl font-bold text-blue-700 mb-4">
+      <section className="text-center py-20 px-6 bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100">
+        <h1 className="text-5xl font-bold mb-4 text-gray-900">
           Tarifs SoulTrack
         </h1>
-        <p className="text-lg text-gray-700 mb-8">
-          Choisissez le plan adapté à la taille de votre église et à vos besoins de suivi
-          spirituel, des membres et des cellules.
+        <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto">
+          Choisissez le plan adapté à la taille de votre église et à vos besoins de suivi spirituel.
+        </p>
+        <p className="text-gray-600 italic mb-8">
+          « Que tout ce que vous faites se fasse avec amour » – 1 Corinthiens 16:14
         </p>
       </section>
 
-      {/* Pricing Grid */}
-      <section className="max-w-6xl mx-auto px-6 grid md:grid-cols-5 gap-6">
+      {/* Pricing Cards */}
+      <section className="max-w-7xl mx-auto px-6 py-20 grid grid-cols-1 md:grid-cols-5 gap-6">
         {plans.map((plan, idx) => (
           <div
             key={idx}
@@ -86,11 +92,11 @@ export default function Pricing() {
             }`}
           >
             {plan.popular && (
-              <span className="text-white bg-blue-500 px-3 py-1 rounded-full text-xs uppercase font-semibold self-start mb-2">
+              <span className="self-start px-3 py-1 bg-blue-500 text-white rounded-full text-xs font-semibold mb-2 uppercase">
                 Recommandé
               </span>
             )}
-            <h2 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-1">{plan.name}</h2>
             <p className="text-sm text-gray-600 mb-4">{plan.range}</p>
             <p className="text-3xl font-bold text-gray-900 mb-6">{plan.price}</p>
 
@@ -102,30 +108,30 @@ export default function Pricing() {
 
             <button
               onClick={() =>
-                plan.price === "Contactez‑nous"
+                plan.price === "Contactez-nous"
                   ? router.push("/contact")
                   : router.push("/signup-eglise")
               }
-              className={`mt-auto text-center py-2 rounded-lg font-bold ${
+              className={`mt-auto py-2 rounded-lg font-bold transition ${
                 plan.popular
                   ? "bg-blue-500 text-white hover:bg-blue-600"
                   : "bg-gray-200 text-gray-900 hover:bg-gray-300"
-              } transition`}
+              }`}
             >
-              {plan.price === "Contactez‑nous"
-                ? "Contactez‑nous"
-                : "Commencer"}
+              {plan.price === "Contactez-nous" ? "Contactez-nous" : "Commencer"}
             </button>
           </div>
         ))}
       </section>
 
-      {/* Optional: FAQ */}
-      <section className="max-w-4xl mx-auto px-6 py-16 text-center text-sm text-gray-700">
+      {/* FAQ / Info supplémentaire */}
+      <section className="max-w-4xl mx-auto px-6 py-16 text-center text-gray-700 text-sm">
         <h3 className="text-2xl font-semibold mb-4">Questions fréquentes</h3>
-        <p>Les prix sont mensuels et facturés automatiquement.</p>
+        <p>Les prix sont mensuels et peuvent évoluer selon la taille de votre église.</p>
         <p>Vous pouvez changer de plan à tout moment sans frais cachés.</p>
       </section>
+
+      <Footer />
     </div>
   );
 }

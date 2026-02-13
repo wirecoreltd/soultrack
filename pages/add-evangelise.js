@@ -104,7 +104,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const finalData = {
     nom: formData.nom.trim(),
     prenom: formData.prenom.trim(),
-    telephone: formData.telephone.trim() || null, // si vide → null
+    telephone: formData.telephone.trim() || "", // si vide → null
     ville: formData.ville.trim() || null,
     statut: "evangelisé",
     sexe: formData.sexe || null,
@@ -156,11 +156,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
           femmes: existingReport.femmes + (formData.sexe === "Femme" ? 1 : 0),
           priere: existingReport.priere + (formData.priere_salut === "Oui" ? 1 : 0),
           nouveau_converti: existingReport.nouveau_converti + (formData.type_conversion === "Nouveau converti" ? 1 : 0),
-          reconciliation: existingReport.reconciliation + (formData.type_conversion === "Réconciliation" ? 1 : 0),
-          moissonneurs: existingReport.moissonneurs
-            ? existingReport.moissonneurs + `,${newEvangelise.id}`
-            : `${newEvangelise.id}`,
-        })
+          reconciliation: existingReport.reconciliation + (formData.type_conversion === "Réconciliation" ? 1 : 0),          
         .eq("date", today)
         .eq("eglise_id", formData.eglise_id)
         .eq("branche_id", formData.branche_id);
@@ -173,8 +169,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
           femmes: formData.sexe === "Femme" ? 1 : 0,
           priere: formData.priere_salut === "Oui" ? 1 : 0,
           nouveau_converti: formData.type_conversion === "Nouveau converti" ? 1 : 0,
-          reconciliation: formData.type_conversion === "Réconciliation" ? 1 : 0,
-          moissonneurs: `${newEvangelise.id}`,
+          reconciliation: formData.type_conversion === "Réconciliation" ? 1 : 0,          
           eglise_id: formData.eglise_id,
           branche_id: formData.branche_id,
         }]);

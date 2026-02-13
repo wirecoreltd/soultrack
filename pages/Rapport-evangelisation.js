@@ -134,7 +134,7 @@ export default function RapportEvangelisation() {
                 <div className="min-w-[180px] text-center">Nouveau Converti</div>
                 <div className="min-w-[160px] text-center">Réconciliation</div>
                 <div className="min-w-[160px] text-center">Moissonneurs</div>
-                <div className="min-w-[140px] text-center">Actions</div>
+                <div className="min-w-[140px] text-center text-orange-400 font-semibold">Actions</div>
               </div>
 
               {/* LIGNES */}

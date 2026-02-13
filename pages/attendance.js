@@ -208,7 +208,7 @@ function Attendance() {
       </div>
 
       {/* 🔹 FILTRE DATE */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white max-w-5xl w-full justify-center">
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">
         <input
           type="date"
           value={dateDebut}

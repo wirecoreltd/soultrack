@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
+import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 
 // Wrapper sécurisé
@@ -75,13 +76,11 @@ function Attendance() {
     fetchReports();
   }, [superviseur]);
 
-  // 🔹 Handle form change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🔹 Add or update report
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("⏳ Enregistrement en cours...");
@@ -94,18 +93,16 @@ function Attendance() {
       };
 
       if (editId) {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("attendance")
           .update(rapportAvecEglise)
-          .eq("id", editId)
-          .select();
+          .eq("id", editId);
         if (error) throw error;
         setMessage("✅ Rapport mis à jour !");
       } else {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("attendance")
-          .insert([rapportAvecEglise])
-          .select();
+          .insert([rapportAvecEglise]);
         if (error) throw error;
         setMessage("✅ Rapport ajouté !");
       }
@@ -128,7 +125,6 @@ function Attendance() {
     }
   };
 
-  // 🔹 Edit report
   const handleEdit = (report) => {
     setEditId(report.id);
     setFormData({
@@ -144,7 +140,6 @@ function Attendance() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // 🔹 Delete report
   const handleDelete = async (id) => {
     if (!confirm("Voulez-vous vraiment supprimer ce rapport ?")) return;
     const { error } = await supabase
@@ -155,17 +150,18 @@ function Attendance() {
     else fetchReports();
   };
 
-  if (loading) return <p className="text-center mt-10 text-lg">Chargement...</p>;
+  if (loading) return <p className="text-center mt-10 text-lg text-white">Chargement...</p>;
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-[#16acea]">
+    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      {/* 🔹 Titre */}
-      <h1 className="text-3xl font-bold text-center mb-6">Rapports d'assistance</h1>
+      <h1 className="text-3xl font-bold text-white mt-4 mb-6 text-center">
+        Rapports d'assistance
+      </h1>
 
       {/* 🔹 Formulaire */}
-      <div className="max-w-3xl mx-auto bg-white rounded-3xl p-6 shadow-lg mb-6">
+      <div className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[
             { label: "Date", name: "date", type: "date" },
@@ -178,14 +174,16 @@ function Attendance() {
             { label: "Nouveaux convertis", name: "nouveauxConvertis", type: "number" },
           ].map((field) => (
             <div key={field.name} className="flex flex-col">
-              <label htmlFor={field.name} className="font-medium mb-1">{field.label}</label>
+              <label htmlFor={field.name} className="font-medium mb-1 text-white">
+                {field.label}
+              </label>
               <input
                 type={field.type}
                 name={field.name}
                 id={field.name}
                 value={formData[field.name]}
                 onChange={handleChange}
-                className="input"
+                className="input bg-white/20 text-white placeholder-white"
                 required={field.type === "date"}
               />
             </div>
@@ -198,55 +196,46 @@ function Attendance() {
             {editId ? "Mettre à jour" : "Ajouter le rapport"}
           </button>
         </form>
-        {message && <p className="mt-4 text-center font-medium">{message}</p>}
+        {message && <p className="mt-4 text-center font-medium text-white">{message}</p>}
       </div>
 
-      {/* 🔹 Liste des rapports */}
-      <div className="max-w-5xl mx-auto bg-white rounded-3xl p-6 shadow-lg overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead className="bg-purple-600 text-white">
-            <tr>
-              <th className="py-3 px-4 text-left">Date</th>
-              <th className="py-3 px-4 text-left">Hommes</th>
-              <th className="py-3 px-4 text-left">Femmes</th>
-              <th className="py-3 px-4 text-left">Jeunes</th>
-              <th className="py-3 px-4 text-left">Enfants</th>
-              <th className="py-3 px-4 text-left">Connectés</th>
-              <th className="py-3 px-4 text-left">Nouveaux venus</th>
-              <th className="py-3 px-4 text-left">Nouveaux convertis</th>
-              <th className="py-3 px-4 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reports.map((r) => (
-              <tr key={r.id} className="border-b hover:bg-purple-50 transition-all">
-                <td className="py-3 px-4 font-semibold text-gray-700">{r.date}</td>
-                <td className="py-3 px-4">{r.hommes}</td>
-                <td className="py-3 px-4">{r.femmes}</td>
-                <td className="py-3 px-4">{r.jeunes}</td>
-                <td className="py-3 px-4">{r.enfants}</td>
-                <td className="py-3 px-4">{r.connectes}</td>
-                <td className="py-3 px-4">{r.nouveauxVenus}</td>
-                <td className="py-3 px-4">{r.nouveauxConvertis}</td>
-                <td className="py-3 px-4 flex justify-center gap-2">
-                  <button
-                    onClick={() => handleEdit(r)}
-                    className="text-blue-600 hover:text-blue-800"
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    onClick={() => handleDelete(r.id)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    🗑️
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* 🔹 Tableau des rapports */}
+      <div className="max-w-5xl w-full overflow-x-auto mb-6">
+        <div className="w-max space-y-2">
+          {/* HEADER */}
+          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+            <div className="min-w-[150px]">Date</div>
+            <div className="min-w-[120px] text-center">Hommes</div>
+            <div className="min-w-[120px] text-center">Femmes</div>
+            <div className="min-w-[120px] text-center">Jeunes</div>
+            <div className="min-w-[120px] text-center">Enfants</div>
+            <div className="min-w-[140px] text-center">Connectés</div>
+            <div className="min-w-[150px] text-center">Nouveaux Venus</div>
+            <div className="min-w-[180px] text-center">Nouveaux Convertis</div>
+            <div className="min-w-[140px] text-center">Actions</div>
+          </div>
+
+          {/* LIGNES */}
+          {reports.map((r) => (
+            <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-purple-500">
+              <div className="min-w-[150px] text-white font-semibold">{r.date}</div>
+              <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+              <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+              <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
+              <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
+              <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
+              <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
+              <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
+              <div className="min-w-[140px] text-center flex justify-center gap-2">
+                <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
+                <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+
+      <Footer />
 
       <style jsx>{`
         .input {

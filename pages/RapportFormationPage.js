@@ -207,7 +207,7 @@ function RapportFormation() {
 
           <button
             type="submit"
-            className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
+            className="justify-center bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
           >
             {editRapport ? "Modifier" : "Ajouter"}
           </button>
@@ -243,7 +243,7 @@ function RapportFormation() {
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
             <div className="min-w-[180px]">Date Début</div>
             <div className="min-w-[180px]">Date Fin</div>
-            <div className="min-w-[200px]">Nom Formation</div>
+            <div className="min-w-[200px] text-center">Nom Formation</div>
             <div className="min-w-[120px] text-center">Hommes</div>
             <div className="min-w-[120px] text-center">Femmes</div>
             <div className="min-w-[150px] text-center">Actions</div>

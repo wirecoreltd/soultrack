@@ -5,6 +5,9 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import EditEvanRapportLine from "../components/EditEvanRapportLine";
+import HeaderPages from "../components/HeaderPages";
+import Footer from "../components/Footer";
+
 
 export default function RapportEvangelisation() {
   const router = useRouter();
@@ -83,103 +86,91 @@ export default function RapportEvangelisation() {
     return <p className="text-center mt-10">Chargement des rapports...</p>;
 
   return (
-    <div
-      className="min-h-screen p-6"
-      style={{
-        background:
-          "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)",
-      }}
-    >
-      {/* 🔹 Bouton retour */}
-      <button
-        onClick={() => router.back()}
-        className="mb-4 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded shadow text-gray-800"
-      >
-        ← Retour
-      </button>
+  <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
 
-      {/* Logo + titre */}
-      <div className="flex flex-col items-center mb-6">
-        <Image
-          src="/logo.png"
-          alt="SoulTrack Logo"
-          width={80}
-          height={80}
-        />
-        <h1 className="text-3xl font-bold text-gray-800 mt-2">
-          Rapport Évangélisation
-        </h1>
-        <p className="text-gray-600 italic mt-1">
-          Résumé des évangélisations par date
-        </p>
+    <HeaderPages />
+
+    <h1 className="text-3xl font-bold text-white mt-4">
+      Rapport Évangélisation
+    </h1>
+
+    <p className="text-white/80 mt-2">
+      Résumé des évangélisations par date
+    </p>
+
+    {!loading && (
+      <div className="w-full max-w-full overflow-x-auto mt-8 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+        <div className="w-max space-y-2">
+
+          {/* HEADER */}
+          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+            <div className="min-w-[150px]">Date</div>
+            <div className="min-w-[120px] text-center">Hommes</div>
+            <div className="min-w-[120px] text-center">Femmes</div>
+            <div className="min-w-[140px] text-center">Prière</div>
+            <div className="min-w-[180px] text-center">Nouveau Converti</div>
+            <div className="min-w-[160px] text-center">Réconciliation</div>
+            <div className="min-w-[160px] text-center">Moissonneurs</div>
+            <div className="min-w-[140px] text-center">Actions</div>
+          </div>
+
+          {/* LIGNES */}
+          {rapports.map((r, index) => (
+            <div
+              key={r.id}
+              className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500"
+            >
+              <div className="min-w-[150px] text-white font-semibold">
+                {new Date(r.date).toLocaleDateString()}
+              </div>
+
+              <div className="min-w-[120px] text-center text-white">
+                {r.hommes ?? "-"}
+              </div>
+
+              <div className="min-w-[120px] text-center text-white">
+                {r.femmes ?? "-"}
+              </div>
+
+              <div className="min-w-[140px] text-center text-white">
+                {r.priere ?? "-"}
+              </div>
+
+              <div className="min-w-[180px] text-center text-white">
+                {r.nouveau_converti ?? "-"}
+              </div>
+
+              <div className="min-w-[160px] text-center text-white">
+                {r.reconciliation ?? "-"}
+              </div>
+
+              <div className="min-w-[160px] text-center text-white">
+                {r.moissonneurs ?? "-"}
+              </div>
+
+              <div className="min-w-[140px] text-center">
+                <button
+                  onClick={() => {
+                    setSelectedRapport(r);
+                    setEditOpen(true);
+                  }}
+                  className="bg-[#2a2f85] px-4 py-1 rounded-xl hover:bg-[#1f2366] text-white"
+                >
+                  Modifier
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {rapports.length === 0 && (
+            <div className="text-white/70 px-4 py-6">
+              Aucun rapport trouvé
+            </div>
+          )}
+
+        </div>
       </div>
-
-      {/* Tableau */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-separate border-spacing-0 shadow-lg rounded-2xl overflow-hidden">
-          <thead className="bg-orange-500 text-white">
-            <tr>
-              <th className="py-3 px-4 text-left">Date</th>
-              <th className="py-3 px-4">Hommes</th>
-              <th className="py-3 px-4">Femmes</th>
-              <th className="py-3 px-4">Prière</th>
-              <th className="py-3 px-4">Nouveau converti</th>
-              <th className="py-3 px-4">Réconciliation</th>
-              <th className="py-3 px-4">Moissonneurs</th>
-              <th className="py-3 px-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rapports.map((r, index) => (
-              <tr
-                key={r.id}
-                className={`text-center ${
-                  index % 2 === 0
-                    ? "bg-white"
-                    : "bg-orange-50"
-                } hover:bg-orange-100 transition-colors`}
-              >
-                <td className="py-2 px-4 text-left font-medium">
-                  {new Date(r.date).toLocaleDateString()}
-                </td>
-                <td className="py-2 px-4">{r.hommes}</td>
-                <td className="py-2 px-4">{r.femmes}</td>
-                <td className="py-2 px-4">{r.priere}</td>
-                <td className="py-2 px-4">
-                  {r.nouveau_converti}
-                </td>
-                <td className="py-2 px-4">
-                  {r.reconciliation}
-                </td>
-                <td className="py-2 px-4">
-                  {r.moissonneurs || "-"}
-                </td>
-                <td className="py-2 px-4">
-                  <button
-                    onClick={() => {
-                      setSelectedRapport(r);
-                      setEditOpen(true);
-                    }}
-                    className="px-3 py-1 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all"
-                  >
-                    Modifier
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Popup modification */}
-      {selectedRapport && (
-        <EditEvanRapportLine
-          isOpen={editOpen}
-          onClose={() => setEditOpen(false)}
-          rapport={selectedRapport}
-          onSave={handleSaveRapport}
-        />
-      )}
-    </div>
-  );
-}
+    )}
+    <Footer />
+  </div>
+);

@@ -8,7 +8,6 @@ import EditEvanRapportLine from "../components/EditEvanRapportLine";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 
-
 export default function RapportEvangelisation() {
   const router = useRouter();
   const [rapports, setRapports] = useState([]);
@@ -19,12 +18,11 @@ export default function RapportEvangelisation() {
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
 
-  // 🔹 1️⃣ Récupérer eglise_id et branche_id du user connecté
+  // 🔹 Récupérer eglise_id et branche_id du user connecté
   useEffect(() => {
     const fetchProfile = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData?.session?.user;
-
       if (!user) return;
 
       const { data: profile, error } = await supabase
@@ -33,18 +31,16 @@ export default function RapportEvangelisation() {
         .eq("id", user.id)
         .single();
 
-      if (error) {
-        console.error("Erreur récupération profil :", error);
-      } else {
+      if (error) console.error("Erreur récupération profil :", error);
+      else {
         setEgliseId(profile.eglise_id);
         setBrancheId(profile.branche_id);
       }
     };
-
     fetchProfile();
   }, []);
 
-  // 🔹 2️⃣ Fetch rapports AVEC filtre eglise + branche
+  // 🔹 Fetch rapports avec filtre eglise + branche
   const fetchRapports = async () => {
     if (!egliseId || !brancheId) return;
 
@@ -63,11 +59,8 @@ export default function RapportEvangelisation() {
     setLoading(false);
   };
 
-  // 🔹 3️⃣ Refetch quand eglise/branche sont prêts
   useEffect(() => {
-    if (egliseId && brancheId) {
-      fetchRapports();
-    }
+    if (egliseId && brancheId) fetchRapports();
   }, [egliseId, brancheId]);
 
   const handleSaveRapport = async (updated) => {
@@ -75,95 +68,88 @@ export default function RapportEvangelisation() {
       .from("rapport_evangelisation")
       .upsert(updated);
 
-    if (error) {
-      console.error("Erreur mise à jour rapport :", error);
-    } else {
-      fetchRapports();
-    }
+    if (error) console.error("Erreur mise à jour rapport :", error);
+    else fetchRapports();
   };
 
   if (loading)
-    return <p className="text-center mt-10">Chargement des rapports...</p>;
+    return <p className="text-center mt-10 text-white">Chargement des rapports...</p>;
 
   return (
-  <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+      <HeaderPages />
 
-    <HeaderPages />
+      <h1 className="text-3xl font-bold text-white mt-4">
+        Rapport Évangélisation
+      </h1>
+      <p className="text-white/80 mt-2">Résumé des évangélisations par date</p>
 
-    <h1 className="text-3xl font-bold text-white mt-4">
-      Rapport Évangélisation
-    </h1>
+      {!loading && (
+        <div className="w-full flex justify-center mt-8">
+          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+            <div className="w-max space-y-2">
+              {/* HEADER */}
+              <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+                <div className="min-w-[150px]">Date</div>
+                <div className="min-w-[120px] text-center">Hommes</div>
+                <div className="min-w-[120px] text-center">Femmes</div>
+                <div className="min-w-[140px] text-center">Prière</div>
+                <div className="min-w-[180px] text-center">Nouveau Converti</div>
+                <div className="min-w-[160px] text-center">Réconciliation</div>
+                <div className="min-w-[160px] text-center">Moissonneurs</div>
+                <div className="min-w-[140px] text-center">Actions</div>
+              </div>
 
-    <p className="text-white/80 mt-2">
-      Résumé des évangélisations par date
-    </p>
-
-    {!loading && (
-      <div className="w-full flex justify-center mt-8">
-        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
-          <div className="w-max space-y-2">
-
-
-          {/* HEADER */}
-          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[150px]">Date</div>
-            <div className="min-w-[120px] text-center">Hommes</div>
-            <div className="min-w-[120px] text-center">Femmes</div>
-            <div className="min-w-[140px] text-center">Prière</div>
-            <div className="min-w-[180px] text-center">Nouveau Converti</div>
-            <div className="min-w-[160px] text-center">Réconciliation</div>
-            <div className="min-w-[160px] text-center">Moissonneurs</div>
-            <div className="min-w-[140px] text-center">Actions</div>
-          </div>
-
-          {/* LIGNES */}
-          {rapports.map((r, index) => (
-            <div
-              key={r.id}
-              className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500"
-            >
-              <div className="min-w-[150px] text-white font-semibold">
-                {new Date(r.date).toLocaleDateString()}
-              </div>
-              <div className="min-w-[120px] text-center text-white">
-                {r.hommes ?? "-"}
-              </div>
-              <div className="min-w-[120px] text-center text-white">
-                {r.femmes ?? "-"}
-              </div>
-              <div className="min-w-[140px] text-center text-white">
-                {r.priere ?? "-"}
-              </div>
-              <div className="min-w-[180px] text-center text-white">
-                {r.nouveau_converti ?? "-"}
-              </div>
-              <div className="min-w-[160px] text-center text-white">
-                {r.reconciliation ?? "-"}
-              </div>
-              <div className="min-w-[160px] text-center text-white">
-                {r.moissonneurs ?? "-"}
-              </div>
-              <div className="min-w-[140px] text-center">
-                <button
-                  onClick={() => {
-                    setSelectedRapport(r);
-                    setEditOpen(true);
-                  }}
-                  className="bg-[#2a2f85] px-4 py-1 rounded-xl hover:bg-[#1f2366] text-white"
+              {/* LIGNES */}
+              {rapports.map((r) => (
+                <div
+                  key={r.id}
+                  className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500"
                 >
-                  Modifier
-                </button>
-              </div>
-            </div>
-          ))}
+                  <div className="min-w-[150px] text-white font-semibold">
+                    {new Date(r.date).toLocaleDateString()}
+                  </div>
+                  <div className="min-w-[120px] text-center text-white">
+                    {r.hommes ?? "-"}
+                  </div>
+                  <div className="min-w-[120px] text-center text-white">
+                    {r.femmes ?? "-"}
+                  </div>
+                  <div className="min-w-[140px] text-center text-white">
+                    {r.priere ?? "-"}
+                  </div>
+                  <div className="min-w-[180px] text-center text-white">
+                    {r.nouveau_converti ?? "-"}
+                  </div>
+                  <div className="min-w-[160px] text-center text-white">
+                    {r.reconciliation ?? "-"}
+                  </div>
+                  <div className="min-w-[160px] text-center text-white">
+                    {r.moissonneurs ?? "-"}
+                  </div>
+                  <div className="min-w-[140px] text-center">
+                    <button
+                      onClick={() => {
+                        setSelectedRapport(r);
+                        setEditOpen(true);
+                      }}
+                      className="bg-[#2a2f85] px-4 py-1 rounded-xl hover:bg-[#1f2366] text-white"
+                    >
+                      Modifier
+                    </button>
+                  </div>
+                </div>
+              ))}
 
-          {rapports.length === 0 && (
-            <div className="text-white/70 px-4 py-6 text-center">
-              Aucun rapport trouvé
+              {rapports.length === 0 && (
+                <div className="text-white/70 px-4 py-6 text-center">
+                  Aucun rapport trouvé
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       {selectedRapport && (
         <EditEvanRapportLine
@@ -178,7 +164,3 @@ export default function RapportEvangelisation() {
     </div>
   );
 }
-
-
-                    
-

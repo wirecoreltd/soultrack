@@ -131,11 +131,12 @@ function RapportBapteme() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h5 className="text-3xl font-bold text-white mt-4 mb-6 text-center">Rapport Baptême</h5>
+      <h5 className="text-2xl font-bold text-white mt-4 mb-6 text-center">Rapport Baptême</h5>
 
       {/* 🔹 Formulaire */}
       <div className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6 justify-center">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <label className="text-white mb-1 font-medium">Date</label>
           <input
             type="date"
             required
@@ -143,6 +144,7 @@ function RapportBapteme() {
             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
             className="input bg-white/20 text-white placeholder-white col-span-1 md:col-span-2"
           />
+          <label className="text-white mb-1 font-medium">Hommes</label>    
           <input
             type="number"
             placeholder="Hommes"
@@ -150,6 +152,7 @@ function RapportBapteme() {
             onChange={(e) => setFormData({ ...formData, hommes: e.target.value })}
             className="input bg-white/20 text-white placeholder-white"
           />
+          <label className="text-white mb-1 font-medium">Femmes</label>    
           <input
             type="number"
             placeholder="Femmes"
@@ -157,6 +160,7 @@ function RapportBapteme() {
             onChange={(e) => setFormData({ ...formData, femmes: e.target.value })}
             className="input bg-white/20 text-white placeholder-white"
           />
+          <label className="text-white mb-1 font-medium">Baptisé par</label>    
           <input
             type="text"
             placeholder="Baptisé par"

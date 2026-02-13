@@ -205,11 +205,11 @@ function RapportFormation() {
             />
           </div>
 
-          {/* Bouton Ajouter / Modifier centré */}
-          <div className="col-span-2 flex justify-center">
+          {/* Bouton Ajouter / Modifier centré et plus large */}
+          <div className="col-span-2 flex justify-center mt-2">
             <button
               type="submit"
-              className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold px-8 py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
+              className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold px-10 py-4 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
             >
               {editRapport ? "Modifier" : "Ajouter"}
             </button>
@@ -256,32 +256,20 @@ function RapportFormation() {
           {rapports.map((r) => (
             <div
               key={r.id}
-              className="flex flex-col bg-white/10 rounded-lg hover:bg-white/20 transition border-l-4 border-l-blue-500"
+              className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
             >
-              <div className="flex items-center px-4 py-2">
-                <div className="min-w-[180px] text-white">{r.date_debut}</div>
-                <div className="min-w-[180px] text-white">{r.date_fin}</div>
-                <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
-                <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                <div className="min-w-[150px] text-center">
-                  <button
-                    onClick={() => handleEdit(r)}
-                    className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-4 py-1 rounded-xl"
-                  >
-                    Modifier
-                  </button>
-                </div>
-              </div>
-
-              {/* Ligne Total avant modifier */}
-              <div className="flex px-4 py-1 text-white font-bold border-t border-white/20 bg-white/5">
-                <div className="min-w-[180px]">TOTAL</div>
-                <div className="min-w-[180px]"></div>
-                <div className="min-w-[200px] text-center"></div>
-                <div className="min-w-[120px] text-center">{r.hommes}</div>
-                <div className="min-w-[120px] text-center">{r.femmes}</div>
-                <div className="min-w-[150px] text-center"></div>
+              <div className="min-w-[180px] text-white">{r.date_debut}</div>
+              <div className="min-w-[180px] text-white">{r.date_fin}</div>
+              <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
+              <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+              <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+              <div className="min-w-[150px] text-center">
+                <button
+                  onClick={() => handleEdit(r)}
+                  className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-4 py-1 rounded-xl"
+                >
+                  Modifier
+                </button>
               </div>
             </div>
           ))}

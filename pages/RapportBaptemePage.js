@@ -117,19 +117,20 @@ function RapportBapteme() {
       <h1 className="text-2xl font-bold text-white mt-4 mb-6 text-center">Rapport Baptême</h1>
 
       {/* Formulaire */}
-      <div className="max-w-2xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
-          {/* Date */}
-          <div className="flex flex-col">
-            <label className="text-white font-medium mb-1">Date</label>
-            <input
-              type="date"
-              required
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="input bg-white/20 text-white placeholder-white max-w-[200px] py-1"
-            />
-          </div>
+      <div className="w-full flex justify-center">
+        <div className="max-w-2xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
+            {/* Date */}
+            <div className="flex flex-col">
+              <label className="text-white font-medium mb-1">Date</label>
+              <input
+                type="date"
+                required
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                className="input bg-white/20 text-white placeholder-white max-w-[200px] py-1"
+              />
+            </div>
 
           {/* Hommes et Femmes */}
           <div className="flex gap-4 w-full">

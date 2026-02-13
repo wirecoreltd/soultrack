@@ -206,7 +206,7 @@ function RapportFormation() {
             <button
               type="submit"
               className="
-                w-full max-w-2xl
+                w-full max-w-xl
                 bg-gradient-to-r from-blue-400 to-indigo-500 
                 text-white font-bold text-lg
                 py-4 px-8

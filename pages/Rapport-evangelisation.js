@@ -158,23 +158,24 @@ export default function RapportEvangelisation() {
           ))}
 
                     {rapports.length === 0 && (
-            <div className="text-white/70 px-4 py-6">
-              Aucun rapport trouvé
-            </div>
-          )}
-        </div>
-      </div>
+                      <div className="text-white/70 px-4 py-6 text-center">
+                        Aucun rapport trouvé
+                      </div>
+                    )}
+                  </div>
+                </div>
+          
+                {selectedRapport && (
+                  <EditEvanRapportLine
+                    isOpen={editOpen}
+                    onClose={() => setEditOpen(false)}
+                    rapport={selectedRapport}
+                    onSave={handleSaveRapport}
+                  />
+                )}
+          
+                <Footer />
+              </div>
+            );
+          }
 
-      {selectedRapport && (
-        <EditEvanRapportLine
-          isOpen={editOpen}
-          onClose={() => setEditOpen(false)}
-          rapport={selectedRapport}
-          onSave={handleSaveRapport}
-        />
-      )}
-
-      <Footer />
-    </div>
-  );
-}

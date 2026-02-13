@@ -139,7 +139,7 @@ export default function RapportEvangelisation() {
             return (
               <div
                 key={r.id}
-                className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
+                className="flex items-center text-sm px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
               >
                 <div className="min-w-[150px] text-white">
                   {new Date(r.date).toLocaleDateString()}

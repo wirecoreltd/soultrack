@@ -209,7 +209,7 @@ function RapportFormation() {
                 w-full max-w-xl
                 bg-gradient-to-r from-blue-400 to-indigo-500 
                 text-white font-bold text-lg
-                py-4 px-8
+                py-6 px-8
                 rounded-2xl
                 shadow-lg
                 hover:from-blue-500 hover:to-indigo-600

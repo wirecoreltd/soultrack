@@ -145,7 +145,7 @@ export default function RapportEvangelisation() {
                   {new Date(r.date).toLocaleDateString()}
                 </div>
 
-                <div className="min-w-[120px] text-center text-white ml-1">
+                <div className="min-w-[120px] text-center text-white ml-0">
                   {r.hommes ?? "-"}
                 </div>
 

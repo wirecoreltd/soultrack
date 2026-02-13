@@ -6,7 +6,6 @@ import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 
-// Wrapper sécurisé
 export default function AttendancePage() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
@@ -15,7 +14,6 @@ export default function AttendancePage() {
   );
 }
 
-// Composant enfant
 function Attendance() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,6 +34,10 @@ function Attendance() {
   const [editId, setEditId] = useState(null);
   const [message, setMessage] = useState("");
 
+  // 🔹 Filtres date
+  const [dateDebut, setDateDebut] = useState("");
+  const [dateFin, setDateFin] = useState("");
+
   // 🔹 Charger eglise/branche du superviseur connecté
   useEffect(() => {
     const loadSuperviseur = async () => {
@@ -55,25 +57,29 @@ function Attendance() {
     loadSuperviseur();
   }, []);
 
-  // 🔹 Fetch reports filtré par eglise/branche
-  const fetchReports = async () => {
+  // 🔹 Fetch reports filtré par eglise/branche + date
+  const fetchRapports = async () => {
     if (!superviseur.eglise_id || !superviseur.branche_id) return;
 
     setLoading(true);
-    const { data, error } = await supabase
+    let query = supabase
       .from("attendance")
       .select("*")
       .eq("eglise_id", superviseur.eglise_id)
       .eq("branche_id", superviseur.branche_id)
       .order("date", { ascending: false });
 
+    if (dateDebut) query = query.gte("date", dateDebut);
+    if (dateFin) query = query.lte("date", dateFin);
+
+    const { data, error } = await query;
     if (error) console.error("❌ Erreur fetch:", error);
     else setReports(data || []);
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchReports();
+    fetchRapports();
   }, [superviseur]);
 
   const handleChange = (e) => {
@@ -107,6 +113,8 @@ function Attendance() {
         setMessage("✅ Rapport ajouté !");
       }
 
+      setTimeout(() => setMessage(""), 3000); // disparaît après 3s
+
       setFormData({
         date: "",
         hommes: 0,
@@ -118,7 +126,7 @@ function Attendance() {
         nouveauxConvertis: 0,
       });
       setEditId(null);
-      fetchReports();
+      fetchRapports();
     } catch (err) {
       console.error(err);
       setMessage("❌ " + err.message);
@@ -147,7 +155,7 @@ function Attendance() {
       .delete()
       .eq("id", id);
     if (error) console.error("❌ Erreur delete:", error);
-    else fetchReports();
+    else fetchRapports();
   };
 
   if (loading) return <p className="text-center mt-10 text-lg text-white">Chargement...</p>;
@@ -199,8 +207,30 @@ function Attendance() {
         {message && <p className="mt-4 text-center font-medium text-white">{message}</p>}
       </div>
 
+      {/* 🔹 FILTRE DATE */}
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white max-w-5xl w-full">
+        <input
+          type="date"
+          value={dateDebut}
+          onChange={(e) => setDateDebut(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <input
+          type="date"
+          value={dateFin}
+          onChange={(e) => setDateFin(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <button
+          onClick={fetchRapports}
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+        >
+          Générer
+        </button>
+      </div>
+
       {/* 🔹 Tableau des rapports */}
-      <div className="max-w-5xl w-full overflow-x-auto mb-6">
+      <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6">
         <div className="w-max space-y-2">
           {/* HEADER */}
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
@@ -208,6 +238,7 @@ function Attendance() {
             <div className="min-w-[120px] text-center">Hommes</div>
             <div className="min-w-[120px] text-center">Femmes</div>
             <div className="min-w-[120px] text-center">Jeunes</div>
+            <div className="min-w-[130px] text-center">Total</div>
             <div className="min-w-[120px] text-center">Enfants</div>
             <div className="min-w-[140px] text-center">Connectés</div>
             <div className="min-w-[150px] text-center">Nouveaux Venus</div>
@@ -216,22 +247,26 @@ function Attendance() {
           </div>
 
           {/* LIGNES */}
-          {reports.map((r) => (
-            <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-purple-500">
-              <div className="min-w-[150px] text-white font-semibold">{r.date}</div>
-              <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-              <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-              <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
-              <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
-              <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
-              <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
-              <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
-              <div className="min-w-[140px] text-center flex justify-center gap-2">
-                <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
-                <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
+          {reports.map((r) => {
+            const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
+            return (
+              <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-purple-500">
+                <div className="min-w-[150px] text-white font-semibold">{r.date}</div>
+                <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+                <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
+                <div className="min-w-[130px] text-center text-white font-bold">{total}</div>
+                <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
+                <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
+                <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
+                <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
+                <div className="min-w-[140px] text-center flex justify-center gap-2">
+                  <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
+                  <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

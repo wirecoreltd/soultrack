@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
 import { useRouter } from "next/router";
 import EditEvanRapportLine from "../components/EditEvanRapportLine";
 import HeaderPages from "../components/HeaderPages";
@@ -17,6 +16,9 @@ export default function RapportEvangelisation() {
 
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
+
+  const [dateDebut, setDateDebut] = useState("");
+  const [dateFin, setDateFin] = useState("");
 
   // 🔹 Récupérer eglise_id et branche_id du user connecté
   useEffect(() => {
@@ -40,18 +42,23 @@ export default function RapportEvangelisation() {
     fetchProfile();
   }, []);
 
-  // 🔹 Fetch rapports avec filtre eglise + branche
+  // 🔹 Fetch rapports avec filtre eglise + branche + date
   const fetchRapports = async () => {
     if (!egliseId || !brancheId) return;
 
     setLoading(true);
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("rapport_evangelisation")
       .select("*")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId)
       .order("date", { ascending: true });
+
+    if (dateDebut) query = query.gte("date", dateDebut);
+    if (dateFin) query = query.lte("date", dateFin);
+
+    const { data, error } = await query;
 
     if (error) console.error(error);
     else setRapports(data || []);
@@ -83,6 +90,28 @@ export default function RapportEvangelisation() {
         Rapport Évangélisation
       </h1>
       <p className="text-white/80 mt-2">Résumé des évangélisations par date</p>
+
+      {/* FILTRE DATE */}
+      <div className="flex gap-4 mt-6">
+        <input
+          type="date"
+          value={dateDebut}
+          onChange={(e) => setDateDebut(e.target.value)}
+          className="px-3 py-2 rounded-lg"
+        />
+        <input
+          type="date"
+          value={dateFin}
+          onChange={(e) => setDateFin(e.target.value)}
+          className="px-3 py-2 rounded-lg"
+        />
+        <button
+          onClick={fetchRapports}
+          className="bg-[#2a2f85] text-white px-4 py-2 rounded-xl hover:bg-[#1f2366]"
+        >
+          Filtrer
+        </button>
+      </div>
 
       {!loading && (
         <div className="w-full flex justify-center mt-8">

@@ -196,7 +196,7 @@ export default function RapportEvangelisation() {
               </div>
             
               {/* Les chiffres légèrement décalés */}
-              <div className="min-w-[120px] text-center text-white font-bold ml-1">
+              <div className="min-w-[120px] text-center text-white font-bold -ml-1">
                 {rapports.reduce((s, r) => s + Number(r.hommes || 0), 0)}
               </div>
             

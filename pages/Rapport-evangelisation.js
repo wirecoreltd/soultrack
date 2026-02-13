@@ -233,6 +233,7 @@ export default function RapportEvangelisation() {
             )}
           </div>
         </div>
+        )}
 
       {selectedRapport && (
         <EditEvanRapportLine

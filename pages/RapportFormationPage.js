@@ -290,15 +290,17 @@ function RapportFormation() {
               <div className="min-w-[180px] text-orange-500 font-semibold">TOTAL</div>
               <div className="min-w-[180px]"></div>
               <div className="min-w-[200px]"></div>
-              <div className="min-w-[120px] text-center text-orange-500 font-semibold ml-0">
+            
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold -ml-1">
                 {rapports.reduce((sum, r) => sum + Number(r.hommes), 0)}
               </div>
-              <div className="min-w-[120px] text-center text-orange-500 font-semibold ml-1">
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold -ml-1">
                 {rapports.reduce((sum, r) => sum + Number(r.femmes), 0)}
               </div>
-              <div className="min-w-[120px] text-center text-orange-500 font-semibold ml-0.5">
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold -ml-1">
                 {rapports.reduce((sum, r) => sum + Number(r.hommes) + Number(r.femmes), 0)}
               </div>
+            
               <div className="min-w-[150px]"></div>
             </div>
           </div>

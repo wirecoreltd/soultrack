@@ -249,7 +249,7 @@ function RapportFormation() {
         <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
           <div className="w-max space-y-2">
             {/* HEADER */}
-            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[180px]">Date Début</div>
               <div className="min-w-[180px]">Date Fin</div>
               <div className="min-w-[200px] text-center">Nom Formation</div>

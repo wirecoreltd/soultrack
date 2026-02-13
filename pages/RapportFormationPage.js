@@ -217,7 +217,7 @@ function RapportFormation() {
                 transition-all duration-300
               "
             >
-              {editRapport ? "Modifier" : "Ajouter"}
+              {editRapport ? "Modifier" : "Ajouter le rapport"}
             </button>
           </div>
         </form>

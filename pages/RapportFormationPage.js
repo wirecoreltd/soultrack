@@ -205,8 +205,18 @@ function RapportFormation() {
           <div className="col-span-2 flex justify-center mt-4">
             <button
               type="submit"
-              className=" w-full max-w-md bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold text-lgpy-4 px-8 rounded-2xl shadow-lg hover:from-blue-500 hover:to-indigo-600
-                hover:scale-105 transition-all duration-300">
+              className="
+                w-full max-w-2xl
+                bg-gradient-to-r from-blue-400 to-indigo-500 
+                text-white font-bold text-lg
+                py-4 px-8
+                rounded-2xl
+                shadow-lg
+                hover:from-blue-500 hover:to-indigo-600
+                hover:scale-105
+                transition-all duration-300
+              "
+            >
               {editRapport ? "Modifier" : "Ajouter"}
             </button>
           </div>

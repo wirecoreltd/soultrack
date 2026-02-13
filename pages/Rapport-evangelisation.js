@@ -88,8 +88,7 @@ export default function RapportEvangelisation() {
 
       <h1 className="text-3xl font-bold text-white mt-4">
         Rapport Évangélisation
-      </h1>
-      <p className="text-white/80 mt-2">Résumé des évangélisations par date</p>
+      </h1>      
 
       {/* FILTRE DATE */}
       <div className="flex gap-4 mt-6">
@@ -107,9 +106,9 @@ export default function RapportEvangelisation() {
         />
         <button
           onClick={fetchRapports}
-          className="bg-[#2a2f85] text-white px-4 py-2 rounded-xl hover:bg-[#1f2366]"
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
         >
-          Filtrer
+          Générer
         </button>
       </div>
 

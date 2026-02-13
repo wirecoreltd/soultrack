@@ -91,18 +91,18 @@ export default function RapportEvangelisation() {
       </h1>      
 
       {/* FILTRE DATE */}
-      <div className="flex gap-4 mt-6">
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
         <input
           type="date"
           value={dateDebut}
           onChange={(e) => setDateDebut(e.target.value)}
-          className="px-3 py-2 rounded-lg"
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <input
           type="date"
           value={dateFin}
           onChange={(e) => setDateFin(e.target.value)}
-          className="px-3 py-2 rounded-lg"
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <button
           onClick={fetchRapports}

@@ -200,30 +200,30 @@ export default function RapportEvangelisation() {
                 {rapports.reduce((s, r) => s + Number(r.hommes || 0), 0)}
               </div>
             
-              <div className="min-w-[120px] text-center text-white font-bold ml-1">
+              <div className="min-w-[120px] text-center text-white font-bold -ml-1">
                 {rapports.reduce((s, r) => s + Number(r.femmes || 0), 0)}
               </div>
             
-              <div className="min-w-[120px] text-center text-white font-bold ml-1">
+              <div className="min-w-[120px] text-center text-white font-bold -ml-1">
                 {rapports.reduce(
                   (s, r) => s + Number(r.hommes || 0) + Number(r.femmes || 0),
                   0
                 )}
               </div>
             
-              <div className="min-w-[150px] text-center text-white font-bold ml-1">
+              <div className="min-w-[150px] text-center text-white font-bold -ml-2">
                 {rapports.reduce((s, r) => s + Number(r.priere || 0), 0)}
               </div>
             
-              <div className="min-w-[180px] text-center text-white font-bold ml-1">
+              <div className="min-w-[180px] text-center text-white font-bold -ml-3">
                 {rapports.reduce((s, r) => s + Number(r.nouveau_converti || 0), 0)}
               </div>
             
-              <div className="min-w-[160px] text-center text-white font-bold ml-1">
+              <div className="min-w-[160px] text-center text-white font-bold -ml-3">
                 {rapports.reduce((s, r) => s + Number(r.reconciliation || 0), 0)}
               </div>
             
-              <div className="min-w-[160px] text-center text-white font-bold ml-1">
+              <div className="min-w-[160px] text-center text-white font-bold -ml-3">
                 {rapports.reduce((s, r) => s + Number(r.moissonneurs || 0), 0)}
               </div>
             

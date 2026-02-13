@@ -114,7 +114,7 @@ function RapportBapteme() {
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-      <h1 className="text-1xl font-bold text-white mt-4 mb-6 text-center">Rapport Baptême</h1>
+      <h1 className="text-2xl font-bold text-white mt-4 mb-6 text-center">Rapport Baptême</h1>
 
       {/* Formulaire */}
       <div className="max-w-2xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">

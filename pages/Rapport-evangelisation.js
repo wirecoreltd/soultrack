@@ -13,33 +13,83 @@ export default function RapportEvangelisation() {
   const [editOpen, setEditOpen] = useState(false);
   const [selectedRapport, setSelectedRapport] = useState(null);
 
+  const [egliseId, setEgliseId] = useState(null);
+  const [brancheId, setBrancheId] = useState(null);
+
+  // 🔹 1️⃣ Récupérer eglise_id et branche_id du user connecté
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
+
+      if (!user) return;
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Erreur récupération profil :", error);
+      } else {
+        setEgliseId(profile.eglise_id);
+        setBrancheId(profile.branche_id);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  // 🔹 2️⃣ Fetch rapports AVEC filtre eglise + branche
   const fetchRapports = async () => {
+    if (!egliseId || !brancheId) return;
+
     setLoading(true);
+
     const { data, error } = await supabase
       .from("rapport_evangelisation")
       .select("*")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId)
       .order("date", { ascending: true });
+
     if (error) console.error(error);
     else setRapports(data || []);
+
     setLoading(false);
   };
 
+  // 🔹 3️⃣ Refetch quand eglise/branche sont prêts
+  useEffect(() => {
+    if (egliseId && brancheId) {
+      fetchRapports();
+    }
+  }, [egliseId, brancheId]);
+
   const handleSaveRapport = async (updated) => {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("rapport_evangelisation")
-      .upsert(updated, { onConflict: ["date"] });
-    if (error) console.error("Erreur mise à jour rapport :", error);
-    else fetchRapports();
+      .upsert(updated);
+
+    if (error) {
+      console.error("Erreur mise à jour rapport :", error);
+    } else {
+      fetchRapports();
+    }
   };
 
-  useEffect(() => {
-    fetchRapports();
-  }, []);
-
-  if (loading) return <p className="text-center mt-10">Chargement des rapports...</p>;
+  if (loading)
+    return <p className="text-center mt-10">Chargement des rapports...</p>;
 
   return (
-    <div className="min-h-screen p-6" style={{ background: "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)" }}>
+    <div
+      className="min-h-screen p-6"
+      style={{
+        background:
+          "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)",
+      }}
+    >
       {/* 🔹 Bouton retour */}
       <button
         onClick={() => router.back()}
@@ -50,12 +100,21 @@ export default function RapportEvangelisation() {
 
       {/* Logo + titre */}
       <div className="flex flex-col items-center mb-6">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
-        <h1 className="text-3xl font-bold text-gray-800 mt-2">Rapport Évangélisation</h1>
-        <p className="text-gray-600 italic mt-1">Résumé des évangélisations par date</p>
+        <Image
+          src="/logo.png"
+          alt="SoulTrack Logo"
+          width={80}
+          height={80}
+        />
+        <h1 className="text-3xl font-bold text-gray-800 mt-2">
+          Rapport Évangélisation
+        </h1>
+        <p className="text-gray-600 italic mt-1">
+          Résumé des évangélisations par date
+        </p>
       </div>
 
-      {/* Tableau moderne */}
+      {/* Tableau */}
       <div className="overflow-x-auto">
         <table className="min-w-full border-separate border-spacing-0 shadow-lg rounded-2xl overflow-hidden">
           <thead className="bg-orange-500 text-white">
@@ -73,21 +132,34 @@ export default function RapportEvangelisation() {
           <tbody>
             {rapports.map((r, index) => (
               <tr
-                key={r.date}
+                key={r.id}
                 className={`text-center ${
-                  index % 2 === 0 ? "bg-white" : "bg-orange-50"
+                  index % 2 === 0
+                    ? "bg-white"
+                    : "bg-orange-50"
                 } hover:bg-orange-100 transition-colors`}
               >
-                <td className="py-2 px-4 text-left font-medium">{new Date(r.date).toLocaleDateString()}</td>
+                <td className="py-2 px-4 text-left font-medium">
+                  {new Date(r.date).toLocaleDateString()}
+                </td>
                 <td className="py-2 px-4">{r.hommes}</td>
                 <td className="py-2 px-4">{r.femmes}</td>
                 <td className="py-2 px-4">{r.priere}</td>
-                <td className="py-2 px-4">{r.nouveau_converti}</td>
-                <td className="py-2 px-4">{r.reconciliation}</td>
-                <td className="py-2 px-4">{r.moissonneurs || "-"}</td>
+                <td className="py-2 px-4">
+                  {r.nouveau_converti}
+                </td>
+                <td className="py-2 px-4">
+                  {r.reconciliation}
+                </td>
+                <td className="py-2 px-4">
+                  {r.moissonneurs || "-"}
+                </td>
                 <td className="py-2 px-4">
                   <button
-                    onClick={() => { setSelectedRapport(r); setEditOpen(true); }}
+                    onClick={() => {
+                      setSelectedRapport(r);
+                      setEditOpen(true);
+                    }}
                     className="px-3 py-1 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all"
                   >
                     Modifier
@@ -99,7 +171,7 @@ export default function RapportEvangelisation() {
         </table>
       </div>
 
-      {/* Popup pour modification */}
+      {/* Popup modification */}
       {selectedRapport && (
         <EditEvanRapportLine
           isOpen={editOpen}

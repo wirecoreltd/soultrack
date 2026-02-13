@@ -243,7 +243,7 @@ function Attendance() {
             <div className="min-w-[140px] text-center">Connectés</div>
             <div className="min-w-[150px] text-center">Nouveaux Venus</div>
             <div className="min-w-[180px] text-center">Nouveaux Convertis</div>
-            <div className="min-w-[140px] text-center">Actions</div>
+            <div className="min-w-[140px] text-center text-orange-400 font-semibold">Actions</div>
           </div>
 
           {/* LIGNES */}

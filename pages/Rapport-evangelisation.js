@@ -190,7 +190,7 @@ export default function RapportEvangelisation() {
 
           {/* TOTAL GENERAL */}
             <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
-              <div className="min-w-[150px] text-white font-bold pl-4">TOTAL</div>  {/* ← pl-4 ajoute un décalage */}
+              <div className="min-w-[150px] text-white font-bold pl-6">TOTAL</div>  {/* ← pl-4 ajoute un décalage */}
               
               <div className="min-w-[120px] text-center text-white font-bold">
                 {rapports.reduce((s, r) => s + Number(r.hommes || 0), 0)}

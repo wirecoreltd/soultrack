@@ -162,10 +162,9 @@ export default function RapportEvangelisation() {
               Aucun rapport trouvé
             </div>
           )}
-
         </div>
       </div>
-    )}
+   
     {selectedRapport && (
       <EditEvanRapportLine
         isOpen={editOpen}

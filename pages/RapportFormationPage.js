@@ -257,13 +257,13 @@ function RapportFormation() {
             >
               <div className="min-w-[180px] text-white">{r.date_debut}</div>
               <div className="min-w-[180px] text-white">{r.date_fin}</div>
-              <div className="min-w-[200px] text-white">{r.nom_formation}</div>
+              <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
               <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
               <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
               <div className="min-w-[150px] text-center">
                 <button
                   onClick={() => handleEdit(r)}
-                  className="bg-gradient-to-r from-blue-500 to-amber-400 text-white font-semibold px-4 py-1 rounded-xl shadow-md hover:scale-105 transition"
+                  className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-4 py-1 rounded-xl"
                 >
                   Modifier
                 </button>

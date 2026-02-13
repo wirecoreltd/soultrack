@@ -131,43 +131,54 @@ function RapportBapteme() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h5 className="text-2xl font-bold text-white mt-4 mb-6 text-center">Rapport Baptême</h5>
+      <h1 className="text-2xl font-bold text-white mt-4 mb-6 text-center">Rapport Baptême</h1>
 
-      {/* 🔹 Formulaire */}
-      <div className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6 justify-center">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <label className="text-white mb-1 font-medium">Date</label>
-          <input
-            type="date"
-            required
-            value={formData.date}
-            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-            className="input bg-white/20 text-white placeholder-white col-span-1 md:col-span-2"
-          />
-          <label className="text-white mb-1 font-medium">Hommes</label>    
-          <input
-            type="number"
-            placeholder="Hommes"
-            value={formData.hommes}
-            onChange={(e) => setFormData({ ...formData, hommes: e.target.value })}
-            className="input bg-white/20 text-white placeholder-white"
-          />
-          <label className="text-white mb-1 font-medium">Femmes</label>    
-          <input
-            type="number"
-            placeholder="Femmes"
-            value={formData.femmes}
-            onChange={(e) => setFormData({ ...formData, femmes: e.target.value })}
-            className="input bg-white/20 text-white placeholder-white"
-          />
-          <label className="text-white mb-1 font-medium">Baptisé par</label>    
-          <input
-            type="text"
-            placeholder="Baptisé par"
-            value={formData.baptise_par}
-            onChange={(e) => setFormData({ ...formData, baptise_par: e.target.value })}
-            className="input bg-white/20 text-white placeholder-white col-span-1 md:col-span-2"
-          />
+        {/* 🔹 Formulaire */}
+        <div className="max-w-2xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6 justify-center">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Date */}
+            <div className="flex flex-col items-end col-span-1 md:col-span-2">
+              <label className="text-white mb-1 font-medium">Date</label>
+              <input
+                type="date"
+                required
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                className="input bg-white/20 text-white placeholder-white w-full"
+              />
+            </div>
+        
+            {/* Hommes */}
+            <div className="flex flex-col items-end">
+              <label className="text-white mb-1 font-medium">Hommes</label>
+              <input
+                type="number"
+                value={formData.hommes}
+                onChange={(e) => setFormData({ ...formData, hommes: e.target.value })}
+                className="input bg-white/20 text-white placeholder-white w-full"
+              />
+            </div>
+        
+            {/* Femmes */}
+            <div className="flex flex-col items-end">
+              <label className="text-white mb-1 font-medium">Femmes</label>
+              <input
+                type="number"
+                value={formData.femmes}
+                onChange={(e) => setFormData({ ...formData, femmes: e.target.value })}
+                className="input bg-white/20 text-white placeholder-white w-full"
+              />
+            </div>
+        
+            {/* Baptisé par */}
+            <div className="flex flex-col items-end col-span-1 md:col-span-2">
+              <label className="text-white mb-1 font-medium">Baptisé par</label>
+              <input
+                type="text"
+                value={formData.baptise_par}
+                onChange={(e) => setFormData({ ...formData, baptise_par: e.target.value })}
+                className="input bg-white/20 text-white placeholder-white w-full"
+              />
 
           <button
             type="submit"

@@ -164,7 +164,7 @@ function Attendance() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-3xl font-bold text-white mt-4 mb-6 text-center">
+      <h1 className="text-2xl font-bold text-white mt-4 mb-6 text-center">
         Rapports d'assistance
       </h1>
 

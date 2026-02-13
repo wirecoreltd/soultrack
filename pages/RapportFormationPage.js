@@ -268,7 +268,7 @@ function RapportFormation() {
                   className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
                 >
                   <div className="min-w-[180px] text-white ml-0">{r.date_debut}</div>
-                  <div className="min-w-[180px] text-white">{r.date_fin}</div>
+                  <div className="min-w-[180px] text-white ml-0">{r.date_fin}</div>
                   <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
                   <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
                   <div className="min-w-[120px] text-center text-white">{r.femmes}</div>

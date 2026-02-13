@@ -199,7 +199,7 @@ function RapportBapteme() {
       </div>
 
       {/* 🔹 Tableau */}
-      <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6">
+      <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6 justify-center">
         <div className="w-max space-y-2">
           {/* HEADER */}
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">

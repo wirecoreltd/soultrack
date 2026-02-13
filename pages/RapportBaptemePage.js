@@ -28,7 +28,7 @@ function RapportBapteme() {
   const [dateFin, setDateFin] = useState("");
   const [rapports, setRapports] = useState([]);
 
-  // 🔹 Récupérer eglise / branche automatiquement
+  // Récup eglise / branche
   useEffect(() => {
     const fetchUser = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -48,28 +48,16 @@ function RapportBapteme() {
         }));
       }
     };
-
     fetchUser();
   }, []);
 
-  // 🔹 Ajouter baptême
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     await supabase.from("baptemes").insert([formData]);
-
-    setFormData((prev) => ({
-      ...prev,
-      date: "",
-      hommes: 0,
-      femmes: 0,
-      baptise_par: "",
-    }));
-
+    setFormData((prev) => ({ ...prev, date: "", hommes: 0, femmes: 0, baptise_par: "" }));
     fetchRapports();
   };
 
-  // 🔹 Fetch avec filtre date + eglise + branche
   const fetchRapports = async () => {
     let query = supabase
       .from("baptemes")
@@ -86,130 +74,119 @@ function RapportBapteme() {
   };
 
   useEffect(() => {
-    if (formData.eglise_id && formData.branche_id) {
-      fetchRapports();
-    }
+    if (formData.eglise_id && formData.branche_id) fetchRapports();
   }, [formData.eglise_id, formData.branche_id, dateDebut, dateFin]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-[#16acea]">
+    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
       <h1 className="text-3xl font-bold text-white mt-4">Rapport Baptême</h1>
 
       {/* Formulaire */}
-      <div className="bg-white p-6 rounded-3xl shadow-lg mb-6 w-full max-w-3xl">
+      <div className="bg-white/10 p-6 rounded-3xl shadow-lg mb-6 w-full max-w-3xl">
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
           <input
             type="date"
             required
             value={formData.date}
-            onChange={(e) =>
-              setFormData({ ...formData, date: e.target.value })
-            }
-            className="input col-span-2"
+            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+            className="border border-gray-400 rounded-xl px-4 py-2 col-span-2 bg-white/20 text-white"
           />
+
           <input
             type="number"
             placeholder="Hommes"
             value={formData.hommes}
-            onChange={(e) =>
-              setFormData({ ...formData, hommes: e.target.value })
-            }
-            className="input"
+            onChange={(e) => setFormData({ ...formData, hommes: e.target.value })}
+            className="border border-gray-400 rounded-xl px-4 py-2 bg-white/20 text-white"
           />
+
           <input
             type="number"
             placeholder="Femmes"
             value={formData.femmes}
-            onChange={(e) =>
-              setFormData({ ...formData, femmes: e.target.value })
-            }
-            className="input"
+            onChange={(e) => setFormData({ ...formData, femmes: e.target.value })}
+            className="border border-gray-400 rounded-xl px-4 py-2 bg-white/20 text-white"
           />
+
           <input
             type="text"
             placeholder="Baptisé par"
             value={formData.baptise_par}
-            onChange={(e) =>
-              setFormData({ ...formData, baptise_par: e.target.value })
-            }
-            className="input col-span-2"
+            onChange={(e) => setFormData({ ...formData, baptise_par: e.target.value })}
+            className="border border-gray-400 rounded-xl px-4 py-2 col-span-2 bg-white/20 text-white"
           />
 
-          <button className="col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-semibold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all">
+          <button className="col-span-2 bg-[#2a2f85] hover:bg-[#1f2366] text-white py-3 rounded-2xl transition-all">
             Ajouter
           </button>
         </form>
       </div>
 
-      {/* Filtre date */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mb-6 flex justify-center gap-4 w-full max-w-3xl text-white">
+      {/* Filtres */}
+      <div className="bg-white/10 p-4 rounded-2xl shadow mb-4 flex gap-4">
         <input
           type="date"
           value={dateDebut}
           onChange={(e) => setDateDebut(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+          className="border border-gray-400 rounded-xl px-3 py-2 bg-white/20 text-white"
         />
         <input
           type="date"
           value={dateFin}
           onChange={(e) => setDateFin(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+          className="border border-gray-400 rounded-xl px-3 py-2 bg-white/20 text-white"
         />
-        <button
-          onClick={fetchRapports}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-        >
-          Générer
-        </button>
       </div>
 
-      {/* Tableau */}
-      <div className="bg-white p-6 rounded-3xl shadow-lg w-full max-w-5xl overflow-x-auto">
-        <table className="min-w-full text-center">
-          <thead className="bg-blue-600 text-white">
-            <tr>
-              <th className="py-3 px-4">Date</th>
-              <th className="py-3 px-4">Hommes</th>
-              <th className="py-3 px-4">Femmes</th>
-              <th className="py-3 px-4 text-orange-400 font-semibold">
-                Total
-              </th>
-              <th className="py-3 px-4">Baptisé par</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rapports.map((r) => {
-              const total = (Number(r.hommes) || 0) + (Number(r.femmes) || 0);
-              return (
-                <tr
-                  key={r.id}
-                  className="border-b hover:bg-blue-50 transition-all"
-                >
-                  <td className="py-3 px-4">{r.date}</td>
-                  <td className="py-3 px-4">{r.hommes}</td>
-                  <td className="py-3 px-4">{r.femmes}</td>
-                  <td className="py-3 px-4 text-orange-400 font-semibold">
-                    {total}
-                  </td>
-                  <td className="py-3 px-4">{r.baptise_par}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      {/* Tableau style Stats Global */}
+      <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+        <div className="w-max space-y-2">
+
+          {/* HEADER */}
+          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+            <div className="min-w-[150px]">Date</div>
+            <div className="min-w-[120px] text-center">Hommes</div>
+            <div className="min-w-[120px] text-center">Femmes</div>
+            <div className="min-w-[130px] text-center">Total</div>
+            <div className="min-w-[180px] text-center">Baptisé par</div>
+          </div>
+
+          {/* LIGNES */}
+          {rapports.map((r) => (
+            <div
+              key={r.id}
+              className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500"
+            >
+              <div className="min-w-[150px] text-white font-semibold">
+                {r.date}
+              </div>
+              <div className="min-w-[120px] text-center text-white">
+                {r.hommes ?? "-"}
+              </div>
+              <div className="min-w-[120px] text-center text-white">
+                {r.femmes ?? "-"}
+              </div>
+              <div className="min-w-[130px] text-center text-white font-bold">
+                {Number(r.hommes) + Number(r.femmes)}
+              </div>
+              <div className="min-w-[180px] text-center text-white">
+                {r.baptise_par ?? "-"}
+              </div>
+            </div>
+          ))}
+
+          {rapports.length === 0 && (
+            <div className="text-white/70 px-4 py-6">
+              Aucun rapport trouvé
+            </div>
+          )}
+
+        </div>
       </div>
 
       <Footer />
-
-      <style jsx>{`
-        .input {
-          border: 1px solid #ccc;
-          padding: 10px;
-          border-radius: 12px;
-        }
-      `}</style>
     </div>
   );
 }

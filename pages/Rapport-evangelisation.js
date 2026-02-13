@@ -90,7 +90,7 @@ export default function RapportEvangelisation() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-3xl font-bold text-white mt-4">Rapport Évangélisation</h1>
+      <h1 className="text-2xl font-bold text-white mt-4">Rapport Évangélisation</h1>
 
       {/* FILTRE DATE */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">

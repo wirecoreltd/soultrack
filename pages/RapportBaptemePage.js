@@ -150,26 +150,29 @@ function RapportBapteme() {
               />
             </div>
         
-            {/* Hommes */}
-            <div className="flex flex-col">
-              <label className="text-white font-medium mb-1">Hommes</label>
-              <input
-                type="number"
-                value={formData.hommes}
-                onChange={(e) => setFormData({ ...formData, hommes: e.target.value })}
-                className="input bg-white/20 text-white placeholder-white w-full py-1"
-              />
-            </div>
+            {/* Hommes et Femmes sur la même ligne */}
+            <div className="flex gap-4 w-full">
+              {/* Hommes */}
+              <div className="flex flex-col flex-1">
+                <label className="text-white font-medium mb-1">Hommes</label>
+                <input
+                  type="number"
+                  value={formData.hommes}
+                  onChange={(e) => setFormData({ ...formData, hommes: e.target.value })}
+                  className="input bg-white/20 text-white placeholder-white w-full py-1"
+                />
+              </div>
         
-            {/* Femmes */}
-            <div className="flex flex-col">
-              <label className="text-white font-medium mb-1">Femmes</label>
-              <input
-                type="number"
-                value={formData.femmes}
-                onChange={(e) => setFormData({ ...formData, femmes: e.target.value })}
-                className="input bg-white/20 text-white placeholder-white w-full py-1"
-              />
+              {/* Femmes */}
+              <div className="flex flex-col flex-1">
+                <label className="text-white font-medium mb-1">Femmes</label>
+                <input
+                  type="number"
+                  value={formData.femmes}
+                  onChange={(e) => setFormData({ ...formData, femmes: e.target.value })}
+                  className="input bg-white/20 text-white placeholder-white w-full py-1"
+                />
+              </div>
             </div>
         
             {/* Baptisé par */}
@@ -187,7 +190,7 @@ function RapportBapteme() {
               type="submit"
               className="col-span-1 md:col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
             >
-              {editId ? "Mettre à jour" : "Ajouter le rapport"}
+              {editId ? "Mettre à jour" : "Ajouter / Modifier le rapport"}
             </button>
           </form>
 

@@ -255,7 +255,7 @@ function Attendance() {
                 <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
                 <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
                 <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
-                <div className="min-w-[130px] text-center text-orange-400 font semi-bold">{total}</div>
+                <div className="min-w-[130px] text-center text-orange-400 font-semibold">{total}</div>
                 <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
                 <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
                 <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>

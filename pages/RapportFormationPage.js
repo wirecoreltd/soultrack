@@ -29,7 +29,6 @@ function RapportFormation() {
   const [filterFin, setFilterFin] = useState("");
   const [rapports, setRapports] = useState([]);
 
-  // 🔹 Charger eglise et branche automatiquement
   useEffect(() => {
     const fetchUser = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -67,7 +66,7 @@ function RapportFormation() {
     fetchRapports();
   };
 
-  // 🔹 Fetch formations avec filtres
+  // 🔹 Fetch formations
   const fetchRapports = async () => {
     let query = supabase
       .from("formations")
@@ -89,9 +88,6 @@ function RapportFormation() {
     }
   }, [formData.eglise_id, formData.branche_id, filterDebut, filterFin]);
 
-  const totalHommes = rapports.reduce((sum, r) => sum + Number(r.hommes), 0);
-  const totalFemmes = rapports.reduce((sum, r) => sum + Number(r.femmes), 0);
-
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
@@ -102,77 +98,112 @@ function RapportFormation() {
 
       {/* Formulaire */}
       <div className="bg-white/10 p-6 rounded-3xl shadow-lg mb-6 w-full max-w-4xl">
-        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
-          <input
-            type="date"
-            required
-            value={formData.date_debut}
-            onChange={(e) =>
-              setFormData({ ...formData, date_debut: e.target.value })
-            }
-            className="input"
-          />
-          <input
-            type="date"
-            required
-            value={formData.date_fin}
-            onChange={(e) =>
-              setFormData({ ...formData, date_fin: e.target.value })
-            }
-            className="input"
-          />
-          <input
-            type="text"
-            required
-            placeholder="Nom de la formation"
-            value={formData.nom_formation}
-            onChange={(e) =>
-              setFormData({ ...formData, nom_formation: e.target.value })
-            }
-            className="input col-span-2"
-          />
-          <input
-            type="number"
-            placeholder="Hommes"
-            value={formData.hommes}
-            onChange={(e) =>
-              setFormData({ ...formData, hommes: e.target.value })
-            }
-            className="input"
-          />
-          <input
-            type="number"
-            placeholder="Femmes"
-            value={formData.femmes}
-            onChange={(e) =>
-              setFormData({ ...formData, femmes: e.target.value })
-            }
-            className="input"
-          />
-          <button className="col-span-2 bg-[#2a2f85] text-white py-3 rounded-2xl hover:bg-[#1f2366] transition">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex flex-col">
+            <label className="text-white mb-1 font-semibold">Date Début</label>
+            <input
+              type="date"
+              required
+              value={formData.date_debut}
+              onChange={(e) =>
+                setFormData({ ...formData, date_debut: e.target.value })
+              }
+              className="input"
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label className="text-white mb-1 font-semibold">Date Fin</label>
+            <input
+              type="date"
+              required
+              value={formData.date_fin}
+              onChange={(e) =>
+                setFormData({ ...formData, date_fin: e.target.value })
+              }
+              className="input"
+            />
+          </div>
+
+          <div className="flex flex-col md:col-span-2">
+            <label className="text-white mb-1 font-semibold">Nom de la Formation</label>
+            <input
+              type="text"
+              required
+              placeholder="Nom de la formation"
+              value={formData.nom_formation}
+              onChange={(e) =>
+                setFormData({ ...formData, nom_formation: e.target.value })
+              }
+              className="input"
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label className="text-white mb-1 font-semibold">Hommes</label>
+            <input
+              type="number"
+              placeholder="Hommes"
+              value={formData.hommes}
+              onChange={(e) =>
+                setFormData({ ...formData, hommes: e.target.value })
+              }
+              className="input"
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label className="text-white mb-1 font-semibold">Femmes</label>
+            <input
+              type="number"
+              placeholder="Femmes"
+              value={formData.femmes}
+              onChange={(e) =>
+                setFormData({ ...formData, femmes: e.target.value })
+              }
+              className="input"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="col-span-1 md:col-span-2 bg-gradient-to-r from-blue-500 to-amber-400 text-white font-semibold px-6 py-3 rounded-xl shadow-md hover:scale-105 transition"
+          >
             Ajouter
           </button>
         </form>
       </div>
 
       {/* Filtres */}
-      <div className="bg-white/10 p-4 rounded-2xl shadow mb-4 flex gap-4">
-        <input
-          type="date"
-          value={filterDebut}
-          onChange={(e) => setFilterDebut(e.target.value)}
-          className="input"
-        />
-        <input
-          type="date"
-          value={filterFin}
-          onChange={(e) => setFilterFin(e.target.value)}
-          className="input"
-        />
+      <div className="bg-white/10 p-4 rounded-2xl shadow mb-4 flex flex-wrap gap-4 items-end justify-center">
+        <div className="flex flex-col">
+          <label className="text-white mb-1 font-semibold">Date Début</label>
+          <input
+            type="date"
+            value={filterDebut}
+            onChange={(e) => setFilterDebut(e.target.value)}
+            className="input"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label className="text-white mb-1 font-semibold">Date Fin</label>
+          <input
+            type="date"
+            value={filterFin}
+            onChange={(e) => setFilterFin(e.target.value)}
+            className="input"
+          />
+        </div>
+        <button
+          onClick={fetchRapports}
+          className="bg-gradient-to-r from-blue-500 to-amber-400 text-white font-semibold px-6 py-2 rounded-xl shadow-md hover:scale-105 transition"
+        >
+          Générer
+        </button>
       </div>
 
       {/* Tableau */}
-      <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+      <div className="w-full flex justify-center mt-6 overflow-x-auto scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
         <div className="w-max space-y-2">
           {/* HEADER */}
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
@@ -200,16 +231,6 @@ function RapportFormation() {
               </div>
             </div>
           ))}
-
-          {/* Ligne Totaux */}
-          <div className="flex px-4 py-3 rounded-lg bg-white/10 font-bold border-t border-white/30">
-            <div className="min-w-[560px] text-white">TOTAL</div>
-            <div className="min-w-[120px] text-center text-white">{totalHommes}</div>
-            <div className="min-w-[120px] text-center text-white">{totalFemmes}</div>
-            <div className="min-w-[130px] text-center text-white">
-              {totalHommes + totalFemmes}
-            </div>
-          </div>
         </div>
       </div>
 

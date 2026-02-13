@@ -132,6 +132,15 @@ export default function AddEvangelise({ onNewEvangelise }) {
       // ➤ Gérer le rapport
       const today = new Date().toISOString().slice(0, 10);
 
+      console.log("Insertion rapport :", {
+  date: today,
+  eglise_id: formData.eglise_id,
+  branche_id: formData.branche_id,
+  sexe: formData.sexe,
+  priere_salut: formData.priere_salut,
+  type_conversion: formData.type_conversion
+});
+
       const { data: existingReport, error: reportError } = await supabase
         .from("rapport_evangelisation")
         .select("*")

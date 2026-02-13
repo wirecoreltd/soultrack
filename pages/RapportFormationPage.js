@@ -132,7 +132,7 @@ function RapportFormation() {
       <p className="text-white/80 mb-6">Résumé des formations par date</p>
 
       {/* Formulaire */}
-      <div className="bg-white/10 p-6 rounded-3xl shadow-lg mb-6 w-full max-w-4xl">
+      <div className="max-w-2xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
         <form
           onSubmit={editRapport ? handleUpdate : handleSubmit}
           className="grid grid-cols-2 gap-4"

@@ -70,7 +70,7 @@ export default function PricingPage() {
       <PublicHeader />
 
       {/* Hero */}
-      <section className="text-center py-20 px-6 bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100">
+      <section className="text-center py-20 px-6 bg-gradient-to-r from-blue-100 via-blue-200 to-blue-300">
         <h1 className="text-5xl font-bold mb-4 text-gray-900">
           Tarifs SoulTrack
         </h1>
@@ -82,20 +82,19 @@ export default function PricingPage() {
         </p>
       </section>
 
-      {/* Pricing Cards */}
-      <section className="max-w-7xl mx-auto px-6 py-20 grid grid-cols-1 md:grid-cols-5 gap-6">
+      {/* Pricing Cards flottantes / effet Dribbble */}
+      <section className="max-w-7xl mx-auto px-6 py-20 grid grid-cols-1 md:grid-cols-5 gap-8">
         {plans.map((plan, idx) => (
           <div
             key={idx}
-            className={`flex flex-col border rounded-2xl shadow-lg p-6 transition hover:shadow-xl ${
-              plan.popular ? "border-blue-500" : "border-gray-200"
-            }`}
+            className={`relative flex flex-col rounded-3xl p-6 bg-white/20 backdrop-blur-lg border border-white/30 shadow-xl transform transition duration-500 hover:-translate-y-3 hover:scale-105`}
           >
             {plan.popular && (
-              <span className="self-start px-3 py-1 bg-blue-500 text-white rounded-full text-xs font-semibold mb-2 uppercase">
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-blue-500 text-white rounded-full text-xs font-semibold uppercase rotate-3 shadow-lg">
                 Recommandé
               </span>
             )}
+
             <h2 className="text-xl font-bold text-gray-900 mb-1">{plan.name}</h2>
             <p className="text-sm text-gray-600 mb-4">{plan.range}</p>
             <p className="text-3xl font-bold text-gray-900 mb-6">{plan.price}</p>
@@ -115,7 +114,7 @@ export default function PricingPage() {
               className={`mt-auto py-2 rounded-lg font-bold transition ${
                 plan.popular
                   ? "bg-blue-500 text-white hover:bg-blue-600"
-                  : "bg-gray-200 text-gray-900 hover:bg-gray-300"
+                  : "bg-white/50 text-blue-900 hover:bg-white/70"
               }`}
             >
               {plan.price === "Contactez-nous" ? "Contactez-nous" : "Commencer"}

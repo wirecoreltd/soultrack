@@ -208,7 +208,7 @@ function Attendance() {
       </div>
 
       {/* 🔹 FILTRE DATE */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white max-w-5xl w-full">
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white max-w-5xl w-full justify-center">
         <input
           type="date"
           value={dateDebut}
@@ -255,7 +255,7 @@ function Attendance() {
                 <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
                 <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
                 <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
-                <div className="min-w-[130px] text-center text-white font-bold">{total}</div>
+                <div className="min-w-[130px] text-center text-orange-400 font semi-bold">{total}</div>
                 <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
                 <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
                 <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>

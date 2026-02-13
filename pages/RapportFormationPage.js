@@ -286,17 +286,17 @@ function RapportFormation() {
             })}
         
             {/* TOTAL GENERAL */}
-            <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
+            <div className="flex items-center px-6 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
               <div className="min-w-[180px] text-white font-bold">TOTAL</div>
               <div className="min-w-[180px]"></div>
               <div className="min-w-[200px]"></div>
-              <div className="min-w-[120px] text-center text-white font-bold">
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold ml-0.5">
                 {rapports.reduce((sum, r) => sum + Number(r.hommes), 0)}
               </div>
-              <div className="min-w-[120px] text-center text-white font-bold">
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold ml-0.5">
                 {rapports.reduce((sum, r) => sum + Number(r.femmes), 0)}
               </div>
-              <div className="min-w-[120px] text-center text-white font-bold">
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold ml-0.5">
                 {rapports.reduce((sum, r) => sum + Number(r.hommes) + Number(r.femmes), 0)}
               </div>
               <div className="min-w-[150px]"></div>

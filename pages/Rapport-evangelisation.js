@@ -19,6 +19,7 @@ export default function RapportEvangelisation() {
 
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
+  const [message, setMessage] = useState("");
 
   // 🔹 Récupérer eglise_id et branche_id du user connecté
   useEffect(() => {
@@ -71,12 +72,15 @@ export default function RapportEvangelisation() {
   }, [egliseId, brancheId]);
 
   const handleSaveRapport = async (updated) => {
-    const { error } = await supabase
-      .from("rapport_evangelisation")
-      .upsert(updated);
+    const { error } = await supabase.from("rapport_evangelisation").upsert(updated);
 
     if (error) console.error("Erreur mise à jour rapport :", error);
-    else fetchRapports();
+    else {
+      fetchRapports();
+      setMessage("✅ Rapport mis à jour !");
+      // Message disparaît après 3 secondes
+      setTimeout(() => setMessage(""), 3000);
+    }
   };
 
   if (loading)
@@ -86,12 +90,10 @@ export default function RapportEvangelisation() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-3xl font-bold text-white mt-4">
-        Rapport Évangélisation
-      </h1>      
+      <h1 className="text-3xl font-bold text-white mt-4">Rapport Évangélisation</h1>
 
       {/* FILTRE DATE */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">
         <input
           type="date"
           value={dateDebut}
@@ -112,6 +114,10 @@ export default function RapportEvangelisation() {
         </button>
       </div>
 
+      {message && (
+        <div className="text-center text-white mt-4 font-medium">{message}</div>
+      )}
+
       {!loading && (
         <div className="w-full flex justify-center mt-8">
           <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
@@ -121,7 +127,9 @@ export default function RapportEvangelisation() {
                 <div className="min-w-[150px]">Date</div>
                 <div className="min-w-[120px] text-center">Hommes</div>
                 <div className="min-w-[120px] text-center">Femmes</div>
-                <div className="min-w-[120px] text-center">Total</div>        
+                <div className="min-w-[120px] text-center text-orange-400 font-semibold">
+                  Total
+                </div>
                 <div className="min-w-[140px] text-center">Prière du Salut</div>
                 <div className="min-w-[180px] text-center">Nouveau Converti</div>
                 <div className="min-w-[160px] text-center">Réconciliation</div>
@@ -130,35 +138,39 @@ export default function RapportEvangelisation() {
               </div>
 
               {/* LIGNES */}
-              {rapports.map((r) => (
-                <div
-                  key={r.id}
-                  className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500"
-                >
-                  <div className="min-w-[150px] text-white font-semibold">
-                    {new Date(r.date).toLocaleDateString()}
+              {rapports.map((r) => {
+                const total = (Number(r.hommes) || 0) + (Number(r.femmes) || 0) + (Number(r.jeunes) || 0);
+                return (
+                  <div
+                    key={r.id}
+                    className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500"
+                  >
+                    <div className="min-w-[150px] text-white font-semibold">
+                      {new Date(r.date).toLocaleDateString()}
+                    </div>
+                    <div className="min-w-[120px] text-center text-white">{r.hommes ?? "-"}</div>
+                    <div className="min-w-[120px] text-center text-white">{r.femmes ?? "-"}</div>
+                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">
+                      {total}
+                    </div>
+                    <div className="min-w-[140px] text-center text-white">{r.priere ?? "-"}</div>
+                    <div className="min-w-[180px] text-center text-white">{r.nouveau_converti ?? "-"}</div>
+                    <div className="min-w-[160px] text-center text-white">{r.reconciliation ?? "-"}</div>
+                    <div className="min-w-[160px] text-center text-white">{r.moissonneurs ?? "-"}</div>
+                    <div className="min-w-[140px] text-center">
+                      <button
+                        onClick={() => {
+                          setSelectedRapport(r);
+                          setEditOpen(true);
+                        }}
+                        className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-4 py-1 rounded-xl"
+                      >
+                        Modifier
+                      </button>
+                    </div>
                   </div>
-                  <div className="min-w-[120px] text-center text-white">{r.hommes ?? "-"}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.femmes ?? "-"}</div>
-                  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{total}</div> 
-                  <div className="min-w-[140px] text-center text-white">{r.priere ?? "-"}</div>
-                  <div className="min-w-[180px] text-center text-white">{r.nouveau_converti ?? "-"}</div>
-                  <div className="min-w-[160px] text-center text-white">{r.reconciliation ?? "-"}</div>
-                  <div className="min-w-[160px] text-center text-white">{r.moissonneurs ?? "-"}</div>
-  
-                  <div className="min-w-[140px] text-center">
-                    <button
-                      onClick={() => {
-                        setSelectedRapport(r);
-                        setEditOpen(true);
-                      }}
-                      className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-4 py-1 rounded-xl"
-                    >
-                      Modifier
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
 
               {rapports.length === 0 && (
                 <div className="text-white/70 px-4 py-6 text-center">

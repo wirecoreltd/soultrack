@@ -131,7 +131,7 @@ function RapportBapteme() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h3 className="text-3xl font-bold text-white mt-4 mb-6 text-center">Rapport Baptême</h3>
+      <h5 className="text-3xl font-bold text-white mt-4 mb-6 text-center">Rapport Baptême</h5>
 
       {/* 🔹 Formulaire */}
       <div className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6 justify-center">

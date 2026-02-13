@@ -211,7 +211,7 @@ export default function RapportEvangelisation() {
                 )}
               </div>
             
-              <div className="min-w-[150px] text-center text-white font-bold ml-1">
+              <div className="min-w-[150px] text-center text-white font-bold ml-0">
                 {rapports.reduce((s, r) => s + Number(r.priere || 0), 0)}
               </div>
             

@@ -95,70 +95,108 @@ function RapportBapteme() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#16acea]">
       <HeaderPages />
 
-      <h1 className="text-3xl font-bold mb-4">Rapport Baptême</h1>
+      <h1 className="text-3xl font-bold text-white mt-4">Rapport Baptême</h1>
 
       {/* Formulaire */}
       <div className="bg-white p-6 rounded-3xl shadow-lg mb-6 w-full max-w-3xl">
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
-
-          <input type="date" required
+          <input
+            type="date"
+            required
             value={formData.date}
-            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, date: e.target.value })
+            }
             className="input col-span-2"
           />
-
-          <input type="number" placeholder="Hommes"
+          <input
+            type="number"
+            placeholder="Hommes"
             value={formData.hommes}
-            onChange={(e) => setFormData({ ...formData, hommes: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, hommes: e.target.value })
+            }
             className="input"
           />
-
-          <input type="number" placeholder="Femmes"
+          <input
+            type="number"
+            placeholder="Femmes"
             value={formData.femmes}
-            onChange={(e) => setFormData({ ...formData, femmes: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, femmes: e.target.value })
+            }
             className="input"
           />
-
-          <input type="text" placeholder="Baptisé par"
+          <input
+            type="text"
+            placeholder="Baptisé par"
             value={formData.baptise_par}
-            onChange={(e) => setFormData({ ...formData, baptise_par: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, baptise_par: e.target.value })
+            }
             className="input col-span-2"
           />
 
-          <button className="col-span-2 bg-blue-600 text-white py-3 rounded-2xl">
+          <button className="col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-semibold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all">
             Ajouter
           </button>
         </form>
       </div>
 
-      {/* Filtres */}
-      <div className="bg-white p-4 rounded-2xl shadow mb-4 flex gap-4">
-        <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} className="input"/>
-        <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)} className="input"/>
+      {/* Filtre date */}
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mb-6 flex justify-center gap-4 w-full max-w-3xl text-white">
+        <input
+          type="date"
+          value={dateDebut}
+          onChange={(e) => setDateDebut(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <input
+          type="date"
+          value={dateFin}
+          onChange={(e) => setDateFin(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <button
+          onClick={fetchRapports}
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+        >
+          Générer
+        </button>
       </div>
 
       {/* Tableau */}
-      <div className="bg-white p-6 rounded-3xl shadow-lg w-full max-w-5xl">
+      <div className="bg-white p-6 rounded-3xl shadow-lg w-full max-w-5xl overflow-x-auto">
         <table className="min-w-full text-center">
           <thead className="bg-blue-600 text-white">
             <tr>
-              <th>Date</th>
-              <th>Hommes</th>
-              <th>Femmes</th>
-              <th>Total</th>
-              <th>Baptisé par</th>
+              <th className="py-3 px-4">Date</th>
+              <th className="py-3 px-4">Hommes</th>
+              <th className="py-3 px-4">Femmes</th>
+              <th className="py-3 px-4 text-orange-400 font-semibold">
+                Total
+              </th>
+              <th className="py-3 px-4">Baptisé par</th>
             </tr>
           </thead>
           <tbody>
-            {rapports.map((r) => (
-              <tr key={r.id} className="border-b">
-                <td>{r.date}</td>
-                <td>{r.hommes}</td>
-                <td>{r.femmes}</td>
-                <td>{Number(r.hommes) + Number(r.femmes)}</td>
-                <td>{r.baptise_par}</td>
-              </tr>
-            ))}
+            {rapports.map((r) => {
+              const total = (Number(r.hommes) || 0) + (Number(r.femmes) || 0);
+              return (
+                <tr
+                  key={r.id}
+                  className="border-b hover:bg-blue-50 transition-all"
+                >
+                  <td className="py-3 px-4">{r.date}</td>
+                  <td className="py-3 px-4">{r.hommes}</td>
+                  <td className="py-3 px-4">{r.femmes}</td>
+                  <td className="py-3 px-4 text-orange-400 font-semibold">
+                    {total}
+                  </td>
+                  <td className="py-3 px-4">{r.baptise_par}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

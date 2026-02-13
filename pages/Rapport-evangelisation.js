@@ -153,7 +153,7 @@ export default function RapportEvangelisation() {
                   {r.femmes ?? "-"}
                 </div>
 
-                <div className="min-w-[120px] text-center text-white font-bold">
+                <div className="min-w-[120px] text-center text-orange-500 font-semibold">
                   {total}
                 </div>
 
@@ -191,39 +191,39 @@ export default function RapportEvangelisation() {
           {/* TOTAL GENERAL */}
             <div className="flex items-center px-6 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
               {/* "TOTAL" reste aligné */}
-              <div className="min-w-[150px] text-white font-bold">
+              <div className="min-w-[150px] text-white font-bold text-orange-500">
                 TOTAL
               </div>
             
               {/* Les chiffres légèrement décalés */}
-              <div className="min-w-[120px] text-center text-white font-bold -ml-1">
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold -ml-1">
                 {rapports.reduce((s, r) => s + Number(r.hommes || 0), 0)}
               </div>
             
-              <div className="min-w-[120px] text-center text-white font-bold ml-0">
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold ml-0">
                 {rapports.reduce((s, r) => s + Number(r.femmes || 0), 0)}
               </div>
             
-              <div className="min-w-[120px] text-center text-white font-bold ml-0.3">
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold ml-0.3">
                 {rapports.reduce(
                   (s, r) => s + Number(r.hommes || 0) + Number(r.femmes || 0),
                   0
                 )}
               </div>
             
-              <div className="min-w-[150px] text-center text-white font-bold -ml-0.4">
+              <div className="min-w-[150px] text-center text-orange-500 font-semibold -ml-0.4">
                 {rapports.reduce((s, r) => s + Number(r.priere || 0), 0)}
               </div>
             
-              <div className="min-w-[180px] text-center text-white font-bold ml-0">
+              <div className="min-w-[180px] text-center text-orange-500 font-semibold ml-0">
                 {rapports.reduce((s, r) => s + Number(r.nouveau_converti || 0), 0)}
               </div>
             
-              <div className="min-w-[160px] text-center text-white font-bold ml-0">
+              <div className="min-w-[160px] text-center text-orange-500 font-semibold ml-0">
                 {rapports.reduce((s, r) => s + Number(r.reconciliation || 0), 0)}
               </div>
             
-              <div className="min-w-[160px] text-center text-white font-bold -ml-3">
+              <div className="min-w-[160px] text-center text-orange-500 font-semibold ml-0">
                 {rapports.reduce((s, r) => s + Number(r.moissonneurs || 0), 0)}
               </div>
             

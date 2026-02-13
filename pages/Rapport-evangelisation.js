@@ -189,9 +189,11 @@ export default function RapportEvangelisation() {
           })}
 
           {/* TOTAL GENERAL */}
-            <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
-              <div className="min-w-[150px] text-white font-bold pl-8">TOTAL</div>  {/* ← pl-4 ajoute un décalage */}
-              
+            <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl ml-4">
+              <div className="min-w-[150px] text-white font-bold">
+                TOTAL
+              </div>
+            
               <div className="min-w-[120px] text-center text-white font-bold">
                 {rapports.reduce((s, r) => s + Number(r.hommes || 0), 0)}
               </div>
@@ -205,27 +207,21 @@ export default function RapportEvangelisation() {
                   (s, r) => s + Number(r.hommes || 0) + Number(r.femmes || 0),
                   0
                 )}
-              </div>
-            
+              </div>            
               <div className="min-w-[150px] text-center text-white font-bold">
                 {rapports.reduce((s, r) => s + Number(r.priere || 0), 0)}
-              </div>
-            
+              </div>            
               <div className="min-w-[180px] text-center text-white font-bold">
                 {rapports.reduce((s, r) => s + Number(r.nouveau_converti || 0), 0)}
-              </div>
-            
+              </div>            
               <div className="min-w-[160px] text-center text-white font-bold">
                 {rapports.reduce((s, r) => s + Number(r.reconciliation || 0), 0)}
-              </div>
-            
+              </div>            
               <div className="min-w-[160px] text-center text-white font-bold">
                 {rapports.reduce((s, r) => s + Number(r.moissonneurs || 0), 0)}
-              </div>
-            
+              </div>            
               <div className="min-w-[140px]"></div>
             </div>
-
 
           {rapports.length === 0 && (
             <div className="text-white/70 px-4 py-6 text-center">

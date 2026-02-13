@@ -121,7 +121,7 @@ export default function RapportEvangelisation() {
                 <div className="min-w-[150px]">Date</div>
                 <div className="min-w-[120px] text-center">Hommes</div>
                 <div className="min-w-[120px] text-center">Femmes</div>
-                <div className="min-w-[140px] text-center">Prière</div>
+                <div className="min-w-[140px] text-center">Prière du Salut</div>
                 <div className="min-w-[180px] text-center">Nouveau Converti</div>
                 <div className="min-w-[160px] text-center">Réconciliation</div>
                 <div className="min-w-[160px] text-center">Moissonneurs</div>

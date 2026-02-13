@@ -87,66 +87,128 @@ export default function AddEvangelise({ onNewEvangelise }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const finalBesoins = [...formData.besoin];
-    if (showOtherField && otherBesoin.trim()) finalBesoins.push(otherBesoin.trim());
+  // Vérification que l'utilisateur a bien des IDs
+  if (!formData.eglise_id || !formData.branche_id) {
+    alert("Erreur : votre compte n'est pas rattaché à une église ou branche.");
+    return;
+  }
 
-    const finalData = {
-      nom: formData.nom.trim(),
-      prenom: formData.prenom.trim(),
-      telephone: formData.telephone.trim() || null,
-      ville: formData.ville.trim() || null,
-      statut: "evangelisé",
-      sexe: formData.sexe || null,
-      priere_salut: formData.priere_salut === "Oui",
-      type_conversion: formData.priere_salut === "Oui" ? formData.type_conversion || null : null,
-      besoin: finalBesoins,
-      infos_supplementaires: formData.infos_supplementaires || null,
-      is_whatsapp: formData.is_whatsapp,
-      eglise_id: formData.eglise_id,   // ✅ envoyé
-      branche_id: formData.branche_id, // ✅ envoyé
-    };
+  // Préparer les besoins
+  const finalBesoins = [...formData.besoin];
+  if (showOtherField && otherBesoin.trim()) finalBesoins.push(otherBesoin.trim());
 
-    console.log("DATA ENVOYÉE :", finalData);
-
-    try {
-      const { data: newEvangelise, error: insertError } = await supabase
-        .from("evangelises")
-        .insert([finalData])
-        .select()
-        .single();
-
-      if (insertError) throw insertError;
-
-      if (onNewEvangelise) onNewEvangelise(newEvangelise);
-
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-
-      // Reset form mais conserver eglise_id et branche_id
-      setFormData((prev) => ({
-        nom: "",
-        prenom: "",
-        telephone: "",
-        ville: "",
-        statut: "evangelisé",
-        sexe: "",
-        priere_salut: "",
-        type_conversion: "",
-        besoin: [],
-        infos_supplementaires: "",
-        is_whatsapp: false,
-        eglise_id: prev.eglise_id,
-        branche_id: prev.branche_id,
-      }));
-      setShowOtherField(false);
-      setOtherBesoin("");
-    } catch (err) {
-      alert("Erreur lors de l'ajout : " + err.message);
-      console.error(err);
-    }
+  // Préparer les données pour l'insertion dans evangelises
+  const finalData = {
+    nom: formData.nom.trim(),
+    prenom: formData.prenom.trim(),
+    telephone: formData.telephone.trim() || null,
+    ville: formData.ville.trim() || null,
+    statut: "evangelisé",
+    sexe: formData.sexe || null,
+    priere_salut: formData.priere_salut === "Oui",
+    type_conversion: formData.priere_salut === "Oui" ? formData.type_conversion || null : null,
+    besoin: finalBesoins,
+    infos_supplementaires: formData.infos_supplementaires || null,
+    is_whatsapp: formData.is_whatsapp,
+    eglise_id: formData.eglise_id,
+    branche_id: formData.branche_id
   };
+
+  console.log("DATA ENVOYÉE :", finalData); // Vérification
+
+  try {
+    // ➤ Insert dans evangelises
+    const { data: newEvangelise, error: insertError } = await supabase
+      .from("evangelises")
+      .insert([finalData])
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("ERREUR INSERT EVANGELISE :", insertError);
+      alert(insertError.message);
+      return;
+    }
+
+    // ➤ Gérer le rapport
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+    // Vérifier si un rapport existe déjà pour cette église et branche
+    const { data: existingReport, error: reportError } = await supabase
+      .from("rapport_evangelisation")
+      .select("*")
+      .eq("date", today)
+      .eq("eglise_id", formData.eglise_id)
+      .eq("branche_id", formData.branche_id)
+      .single();
+
+    if (reportError && reportError.code !== "PGRST116") { // Ignore "no rows"
+      console.error("ERREUR RAPPORT :", reportError);
+    }
+
+    if (existingReport) {
+      // ➤ Mettre à jour le rapport
+      await supabase
+        .from("rapport_evangelisation")
+        .update({
+          hommes: existingReport.hommes + (formData.sexe === "Homme" ? 1 : 0),
+          femmes: existingReport.femmes + (formData.sexe === "Femme" ? 1 : 0),
+          priere: existingReport.priere + (formData.priere_salut === "Oui" ? 1 : 0),
+          nouveau_converti: existingReport.nouveau_converti + (formData.type_conversion === "Nouveau converti" ? 1 : 0),
+          reconciliation: existingReport.reconciliation + (formData.type_conversion === "Réconciliation" ? 1 : 0),
+          moissonneurs: existingReport.moissonneurs
+            ? existingReport.moissonneurs + `,${newEvangelise.id}`
+            : `${newEvangelise.id}`
+        })
+        .eq("date", today)
+        .eq("eglise_id", formData.eglise_id)
+        .eq("branche_id", formData.branche_id);
+    } else {
+      // ➤ Créer un nouveau rapport pour aujourd'hui
+      await supabase
+        .from("rapport_evangelisation")
+        .insert([{
+          date: today,
+          hommes: formData.sexe === "Homme" ? 1 : 0,
+          femmes: formData.sexe === "Femme" ? 1 : 0,
+          priere: formData.priere_salut === "Oui" ? 1 : 0,
+          nouveau_converti: formData.type_conversion === "Nouveau converti" ? 1 : 0,
+          reconciliation: formData.type_conversion === "Réconciliation" ? 1 : 0,
+          moissonneurs: `${newEvangelise.id}`,
+          eglise_id: formData.eglise_id,
+          branche_id: formData.branche_id
+        }]);
+    }
+
+    // ✅ Message succès
+    alert("✅ Évangélisé ajouté et rapport mis à jour !");
+
+    // Optionnel : reset formulaire
+    setFormData((prev) => ({
+      nom: "",
+      prenom: "",
+      telephone: "",
+      ville: "",
+      statut: "evangelisé",
+      sexe: "",
+      priere_salut: "",
+      type_conversion: "",
+      besoin: [],
+      infos_supplementaires: "",
+      is_whatsapp: false,
+      eglise_id: prev.eglise_id,
+      branche_id: prev.branche_id
+    }));
+    setShowOtherField(false);
+    setOtherBesoin("");
+  } catch (err) {
+    console.error("ERREUR GLOBALE :", err);
+    alert(err.message);
+  }
+};
+
 
   const handleCancel = () => {
     setFormData((prev) => ({

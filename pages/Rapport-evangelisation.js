@@ -161,7 +161,7 @@ export default function RapportEvangelisation() {
                         setSelectedRapport(r);
                         setEditOpen(true);
                       }}
-                      className="bg-[#2a2f85] px-4 py-1 rounded-xl hover:bg-[#1f2366] text-white"
+                      className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-4 py-1 rounded-xl"
                     >
                       Modifier
                     </button>

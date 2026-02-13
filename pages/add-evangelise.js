@@ -183,7 +183,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     }
 
     // ✅ Message succès
-    alert("✅ Évangélisé ajouté et rapport mis à jour !");
+    //alert("✅ Évangélisé ajouté et rapport mis à jour !");
 
     // Optionnel : reset formulaire
     setFormData((prev) => ({

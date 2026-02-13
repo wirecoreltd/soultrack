@@ -266,3 +266,31 @@ function RapportFormation() {
                 <div className="min-w-[150px] text-center">
                   <button
                     onClick={() => handleEdit(r)}
+                    className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-4 py-1 rounded-xl"
+                  >
+                    Modifier
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <Footer />
+
+      <style jsx>{`
+        .input {
+          border: 1px solid #ccc;
+          padding: 10px;
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.05);
+          color: white;
+        }
+        .input::placeholder {
+          color: #e0e0e0;
+        }
+      `}</style>
+    </div>
+  );
+}

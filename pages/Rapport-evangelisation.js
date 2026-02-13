@@ -118,7 +118,7 @@ export default function RapportEvangelisation() {
         <div className="w-max space-y-2">
 
           {/* HEADER */}
-          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+          <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
             <div className="min-w-[150px] px-1.5">Date</div>
             <div className="min-w-[120px] text-center">Hommes</div>
             <div className="min-w-[120px] text-center">Femmes</div>
@@ -139,7 +139,7 @@ export default function RapportEvangelisation() {
             return (
               <div
                 key={r.id}
-                className="flex items-center text-sm px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
+                className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
               >
                 <div className="min-w-[150px] text-white">
                   {new Date(r.date).toLocaleDateString()}
@@ -191,7 +191,7 @@ export default function RapportEvangelisation() {
           {/* TOTAL GENERAL */}
             <div className="flex items-center px-5 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
               {/* "TOTAL" reste aligné */}
-              <div className="min-w-[150px] text-sm font-bold text-orange-500">
+              <div className="min-w-[150px] font-bold text-orange-500">
                 TOTAL
               </div>
             

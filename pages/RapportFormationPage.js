@@ -30,7 +30,6 @@ function RapportFormation() {
   const [rapports, setRapports] = useState([]);
   const [editRapport, setEditRapport] = useState(null);
 
-  // Charger eglise et branche automatiquement
   useEffect(() => {
     const fetchUser = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -53,7 +52,6 @@ function RapportFormation() {
     fetchUser();
   }, []);
 
-  // Ajouter formation
   const handleSubmit = async (e) => {
     e.preventDefault();
     await supabase.from("formations").insert([formData]);
@@ -68,7 +66,6 @@ function RapportFormation() {
     fetchRapports();
   };
 
-  // Fetch formations avec filtres
   const fetchRapports = async () => {
     let query = supabase
       .from("formations")
@@ -90,7 +87,6 @@ function RapportFormation() {
     }
   }, [formData.eglise_id, formData.branche_id, filterDebut, filterFin]);
 
-  // Modifier un rapport
   const handleEdit = (r) => {
     setEditRapport(r);
     setFormData({
@@ -209,7 +205,7 @@ function RapportFormation() {
           <div className="col-span-2 flex justify-center mt-2">
             <button
               type="submit"
-              className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold px-10 py-4 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
+              className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
             >
               {editRapport ? "Modifier" : "Ajouter"}
             </button>
@@ -249,47 +245,24 @@ function RapportFormation() {
             <div className="min-w-[200px] text-center">Nom Formation</div>
             <div className="min-w-[120px] text-center">Hommes</div>
             <div className="min-w-[120px] text-center">Femmes</div>
+            <div className="min-w-[120px] text-center">Total</div>
             <div className="min-w-[150px] text-center">Actions</div>
           </div>
 
           {/* LIGNES */}
-          {rapports.map((r) => (
-            <div
-              key={r.id}
-              className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
-            >
-              <div className="min-w-[180px] text-white">{r.date_debut}</div>
-              <div className="min-w-[180px] text-white">{r.date_fin}</div>
-              <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
-              <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-              <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-              <div className="min-w-[150px] text-center">
-                <button
-                  onClick={() => handleEdit(r)}
-                  className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-4 py-1 rounded-xl"
-                >
-                  Modifier
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <Footer />
-
-      <style jsx>{`
-        .input {
-          border: 1px solid #ccc;
-          padding: 10px;
-          border-radius: 12px;
-          background: rgba(255, 255, 255, 0.05);
-          color: white;
-        }
-        .input::placeholder {
-          color: #e0e0e0;
-        }
-      `}</style>
-    </div>
-  );
-}
+          {rapports.map((r) => {
+            const total = Number(r.hommes) + Number(r.femmes);
+            return (
+              <div
+                key={r.id}
+                className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
+              >
+                <div className="min-w-[180px] text-white">{r.date_debut}</div>
+                <div className="min-w-[180px] text-white">{r.date_fin}</div>
+                <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
+                <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+                <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
+                <div className="min-w-[150px] text-center">
+                  <button
+                    onClick={() => handleEdit(r)}

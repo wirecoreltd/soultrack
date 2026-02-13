@@ -108,6 +108,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
       branche_id: formData.branche_id, // ✅ envoyé
     };
 
+    console.log("DATA ENVOYÉE :", finalData);
+
     try {
       const { data: newEvangelise, error: insertError } = await supabase
         .from("evangelises")

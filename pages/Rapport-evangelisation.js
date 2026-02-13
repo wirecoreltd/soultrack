@@ -99,8 +99,10 @@ export default function RapportEvangelisation() {
     </p>
 
     {!loading && (
-      <div className="w-full max-w-full overflow-x-auto mt-8 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
-        <div className="w-max space-y-2">
+      <div className="w-full flex justify-center mt-8">
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+          <div className="w-max space-y-2">
+
 
           {/* HEADER */}
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
@@ -123,31 +125,24 @@ export default function RapportEvangelisation() {
               <div className="min-w-[150px] text-white font-semibold">
                 {new Date(r.date).toLocaleDateString()}
               </div>
-
               <div className="min-w-[120px] text-center text-white">
                 {r.hommes ?? "-"}
               </div>
-
               <div className="min-w-[120px] text-center text-white">
                 {r.femmes ?? "-"}
               </div>
-
               <div className="min-w-[140px] text-center text-white">
                 {r.priere ?? "-"}
               </div>
-
               <div className="min-w-[180px] text-center text-white">
                 {r.nouveau_converti ?? "-"}
               </div>
-
               <div className="min-w-[160px] text-center text-white">
                 {r.reconciliation ?? "-"}
               </div>
-
               <div className="min-w-[160px] text-center text-white">
                 {r.moissonneurs ?? "-"}
               </div>
-
               <div className="min-w-[140px] text-center">
                 <button
                   onClick={() => {
@@ -170,6 +165,14 @@ export default function RapportEvangelisation() {
 
         </div>
       </div>
+    )}
+    {selectedRapport && (
+      <EditEvanRapportLine
+        isOpen={editOpen}
+        onClose={() => setEditOpen(false)}
+        rapport={selectedRapport}
+        onSave={handleSaveRapport}
+      />
     )}
     <Footer />
   </div>

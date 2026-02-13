@@ -119,7 +119,7 @@ export default function RapportEvangelisation() {
 
           {/* HEADER */}
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[150px]">Date</div>
+            <div className="min-w-[150px] px-4">Date</div>
             <div className="min-w-[120px] text-center">Hommes</div>
             <div className="min-w-[120px] text-center">Femmes</div>
             <div className="min-w-[120px] text-center">Total</div>
@@ -189,7 +189,7 @@ export default function RapportEvangelisation() {
           })}
 
           {/* TOTAL GENERAL */}
-            <div className="flex items-center px-6 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
+            <div className="flex items-center px-5 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
               {/* "TOTAL" reste aligné */}
               <div className="min-w-[150px] text-white font-bold text-orange-500">
                 TOTAL

@@ -9,7 +9,7 @@ export default function PublicHeader() {
   const [openMenu, setOpenMenu] = useState(false);
 
   const navItems = [
-    { label: "Accueil", path: "/" },
+    { label: "Accueil", path: "/HomePage" },
     { label: "Process", path: "/ParcoursSoulTrack" },
     { label: "À propos", path: "/about" },
     { label: "Pricing", path: "/pricing" },

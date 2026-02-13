@@ -236,46 +236,64 @@ function RapportFormation() {
       </div>
 
       {/* Tableau */}
-      <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
-        <div className="w-max space-y-2">
-          {/* HEADER */}
-          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[180px]">Date Début</div>
-            <div className="min-w-[180px]">Date Fin</div>
-            <div className="min-w-[200px] text-center">Nom Formation</div>
-            <div className="min-w-[120px] text-center">Hommes</div>
-            <div className="min-w-[120px] text-center">Femmes</div>
-            <div className="min-w-[120px] text-center">Total</div>
-            <div className="min-w-[150px] text-center">Actions</div>
-          </div>
-
-          {/* LIGNES */}
-          {rapports.map((r) => {
-            const total = Number(r.hommes) + Number(r.femmes);
-            return (
-              <div
-                key={r.id}
-                className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
-              >
-                <div className="min-w-[180px] text-white">{r.date_debut}</div>
-                <div className="min-w-[180px] text-white">{r.date_fin}</div>
-                <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
-                <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
-                <div className="min-w-[150px] text-center">
-                  <button
-                    onClick={() => handleEdit(r)}
-                    className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-4 py-1 rounded-xl"
-                  >
-                    Modifier
-                  </button>
+        <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
+          <div className="w-max space-y-2">
+            {/* HEADER */}
+            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[180px]">Date Début</div>
+              <div className="min-w-[180px]">Date Fin</div>
+              <div className="min-w-[200px] text-center">Nom Formation</div>
+              <div className="min-w-[120px] text-center">Hommes</div>
+              <div className="min-w-[120px] text-center">Femmes</div>
+              <div className="min-w-[120px] text-center">Total</div>
+              <div className="min-w-[150px] text-center">Actions</div>
+            </div>
+        
+            {/* LIGNES */}
+            {rapports.map((r) => {
+              const total = Number(r.hommes) + Number(r.femmes);
+              return (
+                <div
+                  key={r.id}
+                  className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
+                >
+                  <div className="min-w-[180px] text-white">{r.date_debut}</div>
+                  <div className="min-w-[180px] text-white">{r.date_fin}</div>
+                  <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+                  <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
+                  <div className="min-w-[150px] text-center">
+                    <button
+                      onClick={() => handleEdit(r)}
+                      className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-4 py-1 rounded-xl"
+                    >
+                      Modifier
+                    </button>
+                  </div>
                 </div>
+              );
+            })}
+        
+            {/* TOTAL GENERAL */}
+            <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
+              <div className="min-w-[180px] text-white font-bold">TOTAL</div>
+              <div className="min-w-[180px]"></div>
+              <div className="min-w-[200px]"></div>
+              <div className="min-w-[120px] text-center text-white font-bold">
+                {rapports.reduce((sum, r) => sum + Number(r.hommes), 0)}
               </div>
-            );
-          })}
+              <div className="min-w-[120px] text-center text-white font-bold">
+                {rapports.reduce((sum, r) => sum + Number(r.femmes), 0)}
+              </div>
+              <div className="min-w-[120px] text-center text-white font-bold">
+                {rapports.reduce((sum, r) => sum + Number(r.hommes) + Number(r.femmes), 0)}
+              </div>
+              <div className="min-w-[150px]"></div>
+            </div>
+          </div>
         </div>
-      </div>
+
 
       <Footer />
 

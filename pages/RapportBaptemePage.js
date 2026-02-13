@@ -135,61 +135,61 @@ function RapportBapteme() {
       <h1 className="text-2xl font-bold text-white mt-4 mb-6 text-center">Rapport Baptême</h1>
 
       {/* 🔹 Formulaire */}
-<div className="max-w-2xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6 justify-center">
-  <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-    {/* Date */}
-    <div className="flex flex-row-reverse items-center col-span-1 md:col-span-2 gap-2">
-      <label className="text-white font-medium">Date</label>
-      <input
-        type="date"
-        required
-        value={formData.date}
-        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-        className="input bg-white/20 text-white placeholder-white max-w-[200px] py-1"
-      />
-    </div>
-
-    {/* Hommes */}
-    <div className="flex flex-row-reverse items-center gap-2">
-      <label className="text-white font-medium">Hommes</label>
-      <input
-        type="number"
-        value={formData.hommes}
-        onChange={(e) => setFormData({ ...formData, hommes: e.target.value })}
-        className="input bg-white/20 text-white placeholder-white w-full py-1"
-      />
-    </div>
-
-    {/* Femmes */}
-    <div className="flex flex-row-reverse items-center gap-2">
-      <label className="text-white font-medium">Femmes</label>
-      <input
-        type="number"
-        value={formData.femmes}
-        onChange={(e) => setFormData({ ...formData, femmes: e.target.value })}
-        className="input bg-white/20 text-white placeholder-white w-full py-1"
-      />
-    </div>
-
-    {/* Baptisé par */}
-    <div className="flex flex-row-reverse items-center col-span-1 md:col-span-2 gap-2">
-      <label className="text-white font-medium">Baptisé par</label>
-      <input
-        type="text"
-        value={formData.baptise_par}
-        onChange={(e) => setFormData({ ...formData, baptise_par: e.target.value })}
-        className="input bg-white/20 text-white placeholder-white w-full py-1"
-      />
-    </div>
-
-    <button
-      type="submit"
-      className="col-span-1 md:col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
-    >
-      {editId ? "Mettre à jour" : "Ajouter le rapport"}
-    </button>
-  </form>
+        <div className="max-w-2xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6 justify-center">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+            {/* Date */}
+            <div className="flex flex-col">
+              <label className="text-white font-medium mb-1">Date</label>
+              <input
+                type="date"
+                required
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                className="input bg-white/20 text-white placeholder-white max-w-[200px] py-1"
+              />
+            </div>
+        
+            {/* Hommes */}
+            <div className="flex flex-col">
+              <label className="text-white font-medium mb-1">Hommes</label>
+              <input
+                type="number"
+                value={formData.hommes}
+                onChange={(e) => setFormData({ ...formData, hommes: e.target.value })}
+                className="input bg-white/20 text-white placeholder-white w-full py-1"
+              />
+            </div>
+        
+            {/* Femmes */}
+            <div className="flex flex-col">
+              <label className="text-white font-medium mb-1">Femmes</label>
+              <input
+                type="number"
+                value={formData.femmes}
+                onChange={(e) => setFormData({ ...formData, femmes: e.target.value })}
+                className="input bg-white/20 text-white placeholder-white w-full py-1"
+              />
+            </div>
+        
+            {/* Baptisé par */}
+            <div className="flex flex-col md:col-span-2">
+              <label className="text-white font-medium mb-1">Baptisé par</label>
+              <input
+                type="text"
+                value={formData.baptise_par}
+                onChange={(e) => setFormData({ ...formData, baptise_par: e.target.value })}
+                className="input bg-white/20 text-white placeholder-white w-full py-1"
+              />
+            </div>
+        
+            <button
+              type="submit"
+              className="col-span-1 md:col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
+            >
+              {editId ? "Mettre à jour" : "Ajouter le rapport"}
+            </button>
+          </form>
 
         {message && <p className="mt-4 text-center font-medium text-white">{message}</p>}
       </div>

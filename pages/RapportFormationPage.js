@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
-import ProtectedRoute from "../components/ProtectedRoute";
 import Footer from "../components/Footer";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function RapportFormationPage() {
   return (
@@ -49,16 +49,13 @@ function RapportFormation() {
         }));
       }
     };
-
     fetchUser();
   }, []);
 
   // 🔹 Ajouter formation
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     await supabase.from("formations").insert([formData]);
-
     setFormData((prev) => ({
       ...prev,
       date_debut: "",
@@ -67,7 +64,6 @@ function RapportFormation() {
       hommes: 0,
       femmes: 0,
     }));
-
     fetchRapports();
   };
 
@@ -93,20 +89,20 @@ function RapportFormation() {
     }
   }, [formData.eglise_id, formData.branche_id, filterDebut, filterFin]);
 
-  // 🔹 Totaux automatiques
   const totalHommes = rapports.reduce((sum, r) => sum + Number(r.hommes), 0);
   const totalFemmes = rapports.reduce((sum, r) => sum + Number(r.femmes), 0);
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-[#16acea]">
+    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-
-      <h1 className="text-3xl font-bold mb-4">Rapport Formation</h1>
+      <h1 className="text-3xl font-bold text-white mt-4 mb-2">
+        Rapport Formation
+      </h1>
+      <p className="text-white/80 mb-6">Résumé des formations par date</p>
 
       {/* Formulaire */}
-      <div className="bg-white p-6 rounded-3xl shadow-lg mb-6 w-full max-w-4xl">
+      <div className="bg-white/10 p-6 rounded-3xl shadow-lg mb-6 w-full max-w-4xl">
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
-
           <input
             type="date"
             required
@@ -116,7 +112,6 @@ function RapportFormation() {
             }
             className="input"
           />
-
           <input
             type="date"
             required
@@ -126,7 +121,6 @@ function RapportFormation() {
             }
             className="input"
           />
-
           <input
             type="text"
             required
@@ -137,7 +131,6 @@ function RapportFormation() {
             }
             className="input col-span-2"
           />
-
           <input
             type="number"
             placeholder="Hommes"
@@ -147,7 +140,6 @@ function RapportFormation() {
             }
             className="input"
           />
-
           <input
             type="number"
             placeholder="Femmes"
@@ -157,15 +149,14 @@ function RapportFormation() {
             }
             className="input"
           />
-
-          <button className="col-span-2 bg-blue-600 text-white py-3 rounded-2xl">
+          <button className="col-span-2 bg-[#2a2f85] text-white py-3 rounded-2xl hover:bg-[#1f2366] transition">
             Ajouter
           </button>
         </form>
       </div>
 
       {/* Filtres */}
-      <div className="bg-white p-4 rounded-2xl shadow mb-4 flex gap-4">
+      <div className="bg-white/10 p-4 rounded-2xl shadow mb-4 flex gap-4">
         <input
           type="date"
           value={filterDebut}
@@ -181,39 +172,45 @@ function RapportFormation() {
       </div>
 
       {/* Tableau */}
-      <div className="bg-white p-6 rounded-3xl shadow-lg w-full max-w-6xl">
-        <table className="min-w-full text-center">
-          <thead className="bg-blue-600 text-white">
-            <tr>
-              <th>Date Début</th>
-              <th>Date Fin</th>
-              <th>Formation</th>
-              <th>Hommes</th>
-              <th>Femmes</th>              
-            </tr>
-          </thead>
-          <tbody>
-            {rapports.map((r) => (
-              <tr key={r.id} className="border-b">
-                <td>{r.date_debut}</td>
-                <td>{r.date_fin}</td>
-                <td>{r.nom_formation}</td>
-                <td>{r.hommes}</td>
-                <td>{r.femmes}</td>                
-              </tr>
-            ))}
-          </tbody>
+      <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+        <div className="w-max space-y-2">
+          {/* HEADER */}
+          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+            <div className="min-w-[180px]">Date Début</div>
+            <div className="min-w-[180px]">Date Fin</div>
+            <div className="min-w-[200px]">Nom Formation</div>
+            <div className="min-w-[120px] text-center">Hommes</div>
+            <div className="min-w-[120px] text-center">Femmes</div>
+            <div className="min-w-[130px] text-center">Total</div>
+          </div>
+
+          {/* LIGNES */}
+          {rapports.map((r) => (
+            <div
+              key={r.id}
+              className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
+            >
+              <div className="min-w-[180px] text-white">{r.date_debut}</div>
+              <div className="min-w-[180px] text-white">{r.date_fin}</div>
+              <div className="min-w-[200px] text-white">{r.nom_formation}</div>
+              <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+              <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+              <div className="min-w-[130px] text-center text-white font-bold">
+                {Number(r.hommes) + Number(r.femmes)}
+              </div>
+            </div>
+          ))}
 
           {/* Ligne Totaux */}
-          <tfoot className="bg-gray-100 font-bold">
-            <tr>
-              <td colSpan="3">TOTAL</td>
-              <td>{totalHommes}</td>
-              <td>{totalFemmes}</td>
-              <td>{totalHommes + totalFemmes}</td>
-            </tr>
-          </tfoot>
-        </table>
+          <div className="flex px-4 py-3 rounded-lg bg-white/10 font-bold border-t border-white/30">
+            <div className="min-w-[560px] text-white">TOTAL</div>
+            <div className="min-w-[120px] text-center text-white">{totalHommes}</div>
+            <div className="min-w-[120px] text-center text-white">{totalFemmes}</div>
+            <div className="min-w-[130px] text-center text-white">
+              {totalHommes + totalFemmes}
+            </div>
+          </div>
+        </div>
       </div>
 
       <Footer />
@@ -223,6 +220,11 @@ function RapportFormation() {
           border: 1px solid #ccc;
           padding: 10px;
           border-radius: 12px;
+          background: rgba(255, 255, 255, 0.05);
+          color: white;
+        }
+        .input::placeholder {
+          color: #e0e0e0;
         }
       `}</style>
     </div>

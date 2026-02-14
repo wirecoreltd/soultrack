@@ -263,7 +263,7 @@ const totalPrincipal =
       <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6">
         <div className="w-max space-y-2">
           {/* HEADER */}
-          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+          <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
             <div className="min-w-[150px]">Date</div>
             <div className="min-w-[120px] text-center">Hommes</div>
             <div className="min-w-[120px] text-center">Femmes</div>
@@ -301,15 +301,15 @@ const totalPrincipal =
 
             {/* 🔹 TOTAL BAS */}
             <div className="flex items-center px-4 py-4 mt-2 rounded-xl bg-white/20 border-t border-white/40 font-bold">
-              <div className="min-w-[150px] text-white uppercase">TOTAL</div>
-              <div className="min-w-[120px] text-center text-white">{totalGlobal.hommes}</div>
-              <div className="min-w-[120px] text-center text-white">{totalGlobal.femmes}</div>
-              <div className="min-w-[120px] text-center text-white">{totalGlobal.jeunes}</div>
+              <div className="min-w-[150px] text-orange-400 font-semibold uppercase">TOTAL</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.jeunes}</div>
               <div className="min-w-[130px] text-center text-orange-400">{totalPrincipal}</div>
-              <div className="min-w-[120px] text-center text-white">{totalGlobal.enfants}</div>
-              <div className="min-w-[140px] text-center text-white">{totalGlobal.connectes}</div>
-              <div className="min-w-[150px] text-center text-white">{totalGlobal.nouveauxVenus}</div>
-              <div className="min-w-[180px] text-center text-white">{totalGlobal.nouveauxConvertis}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.enfants}</div>
+              <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGlobal.connectes}</div>
+              <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalGlobal.nouveauxVenus}</div>
+              <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGlobal.nouveauxConvertis}</div>
               <div className="min-w-[140px]"></div>
             </div>
         </div>

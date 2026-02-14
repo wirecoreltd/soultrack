@@ -31,10 +31,12 @@ function Attendance() {
   });
 
   const [editId, setEditId] = useState(null);
-  const [message, setMessage] = useState("");
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
 
+  /* =============================
+     LOAD SUPERVISEUR
+  ==============================*/
   useEffect(() => {
     const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -57,6 +59,9 @@ function Attendance() {
     loadSuperviseur();
   }, []);
 
+  /* =============================
+     FETCH
+  ==============================*/
   const fetchRapports = async () => {
     if (!superviseur.eglise_id || !superviseur.branche_id) return;
 
@@ -81,9 +86,22 @@ function Attendance() {
     fetchRapports();
   }, [superviseur]);
 
+  /* =============================
+     FORM
+  ==============================*/
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // 🔒 Empêche valeur négative
+    const safeValue =
+      e.target.type === "number"
+        ? Math.max(0, Number(value))
+        : value;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: safeValue,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -97,13 +115,9 @@ function Attendance() {
 
     if (editId) {
       await supabase.from("attendance").update(payload).eq("id", editId);
-      setMessage("✅ Rapport mis à jour !");
     } else {
       await supabase.from("attendance").insert([payload]);
-      setMessage("✅ Rapport ajouté !");
     }
-
-    setTimeout(() => setMessage(""), 3000);
 
     setFormData({
       date: "",
@@ -132,9 +146,20 @@ function Attendance() {
     fetchRapports();
   };
 
-  if (loading) {
+  if (loading)
     return <p className="text-center mt-10 text-white">Chargement...</p>;
-  }
+
+  /* =============================
+     TOTAL GENERAL
+  ==============================*/
+  const totalHommes = reports.reduce((s, r) => s + Number(r.hommes || 0), 0);
+  const totalFemmes = reports.reduce((s, r) => s + Number(r.femmes || 0), 0);
+  const totalJeunes = reports.reduce((s, r) => s + Number(r.jeunes || 0), 0);
+  const totalEnfants = reports.reduce((s, r) => s + Number(r.enfants || 0), 0);
+  const totalConnectes = reports.reduce((s, r) => s + Number(r.connectes || 0), 0);
+  const totalNV = reports.reduce((s, r) => s + Number(r.nouveauxVenus || 0), 0);
+  const totalNC = reports.reduce((s, r) => s + Number(r.nouveauxConvertis || 0), 0);
+  const totalGeneral = totalHommes + totalFemmes + totalJeunes;
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -144,83 +169,23 @@ function Attendance() {
         Rapports d'assistance
       </h1>
 
-      {/* FORMULAIRE */}
-      <div className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[
-            { label: "Date", name: "date", type: "date" },
-            { label: "Hommes", name: "hommes", type: "number" },
-            { label: "Femmes", name: "femmes", type: "number" },
-            { label: "Jeunes", name: "jeunes", type: "number" },
-            { label: "Enfants", name: "enfants", type: "number" },
-            { label: "Connectés", name: "connectes", type: "number" },
-            { label: "Nouveaux venus", name: "nouveauxVenus", type: "number" },
-            { label: "Nouveaux convertis", name: "nouveauxConvertis", type: "number" },
-          ].map((f) => (
-            <div key={f.name} className="flex flex-col">
-              <label className="text-white mb-1 font-medium">{f.label}</label>
-              <input
-                type={f.type}
-                name={f.name}
-                value={formData[f.name]}
-                onChange={handleChange}
-                className="bg-white/20 text-white rounded-xl px-4 py-2 border border-white/30"
-              />
-            </div>
-          ))}
-
-          <div className="col-span-1 md:col-span-2 flex justify-center mt-4">
-            <button
-              type="submit"
-              className="w-full md:w-2/3 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-4 text-lg rounded-2xl shadow-lg hover:from-blue-500 hover:to-indigo-600 transition-all"
-            >
-              {editId ? "Modifier le rapport" : "Ajouter le rapport"}
-            </button>
-          </div>
-        </form>
-
-        {message && <p className="mt-4 text-center text-white">{message}</p>}
-      </div>
-
-      {/* FILTRE DATE */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg flex gap-4 flex-wrap text-white justify-center">
-        <input
-          type="date"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-          className="bg-transparent border border-white/40 rounded-lg px-3 py-2"
-        />
-        <input
-          type="date"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-          className="bg-transparent border border-white/40 rounded-lg px-3 py-2"
-        />
-        <button
-          onClick={fetchRapports}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-        >
-          Générer
-        </button>
-      </div>
-
-      {/* TABLEAU */}
+      {/* TABLE */}
       <div className="max-w-6xl w-full mt-6 mb-6">
-        <div className="w-full overflow-x-auto">
-          <div className="min-w-max space-y-2">
+        <div className="overflow-x-auto"> {/* Scroll seulement si nécessaire */}
+          <div className="min-w-fit space-y-2">
 
             {/* HEADER */}
             <div className="flex px-4 py-3 bg-white/5 text-white font-semibold uppercase text-sm border-b border-white/30 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[150px]">Date</div>
-              <div className="min-w-[120px] text-center">Hommes</div>
-              <div className="min-w-[120px] text-center">Femmes</div>
-              <div className="min-w-[120px] text-center">Jeunes</div>
-              <div className="min-w-[130px] text-center text-orange-400">Total</div>
-              <div className="min-w-[120px] text-center">Enfants</div>
-              <div className="min-w-[140px] text-center">Connectés</div>
-              <div className="min-w-[150px] text-center">Nouveaux Venus</div>
-              <div className="min-w-[180px] text-center">Nouveaux Convertis</div>
-              <div className="min-w-[140px] text-center text-orange-400">Actions</div>
+              <div className="w-[150px]">Date</div>
+              <div className="w-[120px] text-center">Hommes</div>
+              <div className="w-[120px] text-center">Femmes</div>
+              <div className="w-[120px] text-center">Jeunes</div>
+              <div className="w-[130px] text-center text-orange-400">Total</div>
+              <div className="w-[120px] text-center">Enfants</div>
+              <div className="w-[140px] text-center">Connectés</div>
+              <div className="w-[150px] text-center">Nouveaux Venus</div>
+              <div className="w-[180px] text-center">Nouveaux Convertis</div>
+              <div className="w-[140px] text-center text-orange-400">Actions</div>
             </div>
 
             {/* LIGNES */}
@@ -230,24 +195,43 @@ function Attendance() {
               return (
                 <div
                   key={r.id}
-                  className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-purple-500"
+                  className="flex items-center px-4 py-3 bg-white/10 rounded-lg border-l-4 border-l-purple-500"
                 >
-                  <div className="min-w-[150px] text-white font-semibold">{r.date}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
-                  <div className="min-w-[130px] text-center text-orange-400 font-bold">{total}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
-                  <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
-                  <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
-                  <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
-                  <div className="min-w-[140px] flex justify-center gap-3">
-                    <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
-                    <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
+                  <div className="w-[150px] text-white font-semibold">{r.date}</div>
+                  <div className="w-[120px] text-center text-white">{r.hommes}</div>
+                  <div className="w-[120px] text-center text-white">{r.femmes}</div>
+                  <div className="w-[120px] text-center text-white">{r.jeunes}</div>
+                  <div className="w-[130px] text-center text-orange-400 font-bold">
+                    {total}
+                  </div>
+                  <div className="w-[120px] text-center text-white">{r.enfants}</div>
+                  <div className="w-[140px] text-center text-white">{r.connectes}</div>
+                  <div className="w-[150px] text-center text-white">{r.nouveauxVenus}</div>
+                  <div className="w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
+                  <div className="w-[140px] flex justify-center gap-3">
+                    <button onClick={() => handleEdit(r)} className="text-blue-400">✏️</button>
+                    <button onClick={() => handleDelete(r.id)} className="text-red-400">🗑️</button>
                   </div>
                 </div>
               );
             })}
+
+            {/* TOTAL GENERAL */}
+            <div className="flex items-center px-4 py-4 mt-3 bg-white/15 rounded-xl border-t border-white/50 shadow-inner">
+              <div className="w-[150px] text-white font-bold">TOTAL</div>
+
+              <div className="w-[120px] text-center text-white font-bold">{totalHommes}</div>
+              <div className="w-[120px] text-center text-white font-bold">{totalFemmes}</div>
+              <div className="w-[120px] text-center text-white font-bold">{totalJeunes}</div>
+              <div className="w-[130px] text-center text-orange-400 font-bold">
+                {totalGeneral}
+              </div>
+              <div className="w-[120px] text-center text-white font-bold">{totalEnfants}</div>
+              <div className="w-[140px] text-center text-white font-bold">{totalConnectes}</div>
+              <div className="w-[150px] text-center text-white font-bold">{totalNV}</div>
+              <div className="w-[180px] text-center text-white font-bold">{totalNC}</div>
+              <div className="w-[140px]"></div>
+            </div>
 
           </div>
         </div>

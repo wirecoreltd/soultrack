@@ -159,6 +159,35 @@ function Attendance() {
     else fetchRapports();
   };
 
+  // 🔹 TOTAL GLOBAL BAS
+const totalGlobal = reports.reduce(
+  (acc, r) => {
+    acc.hommes += Number(r.hommes || 0);
+    acc.femmes += Number(r.femmes || 0);
+    acc.jeunes += Number(r.jeunes || 0);
+    acc.enfants += Number(r.enfants || 0);
+    acc.connectes += Number(r.connectes || 0);
+    acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
+    acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
+    return acc;
+  },
+  {
+    hommes: 0,
+    femmes: 0,
+    jeunes: 0,
+    enfants: 0,
+    connectes: 0,
+    nouveauxVenus: 0,
+    nouveauxConvertis: 0,
+  }
+);
+
+const totalPrincipal =
+  totalGlobal.hommes +
+  totalGlobal.femmes +
+  totalGlobal.jeunes;
+
+
   if (loading) return <p className="text-center mt-10 text-lg text-white">Chargement...</p>;
 
   return (
@@ -264,6 +293,21 @@ function Attendance() {
                 <div className="min-w-[140px] text-center flex justify-center gap-2">
                   <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
                   <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
+
+            {/* 🔹 TOTAL BAS */}
+<div className="flex items-center px-4 py-4 mt-2 rounded-xl bg-white/20 border-t border-white/40 font-bold">
+  <div className="min-w-[150px] text-white uppercase">TOTAL</div>
+  <div className="min-w-[120px] text-center text-white">{totalGlobal.hommes}</div>
+  <div className="min-w-[120px] text-center text-white">{totalGlobal.femmes}</div>
+  <div className="min-w-[120px] text-center text-white">{totalGlobal.jeunes}</div>
+  <div className="min-w-[130px] text-center text-orange-400">{totalPrincipal}</div>
+  <div className="min-w-[120px] text-center text-white">{totalGlobal.enfants}</div>
+  <div className="min-w-[140px] text-center text-white">{totalGlobal.connectes}</div>
+  <div className="min-w-[150px] text-center text-white">{totalGlobal.nouveauxVenus}</div>
+  <div className="min-w-[180px] text-center text-white">{totalGlobal.nouveauxConvertis}</div>
+  <div className="min-w-[140px]"></div>
+</div>
+
                 </div>
               </div>
             );

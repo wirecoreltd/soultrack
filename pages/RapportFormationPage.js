@@ -255,7 +255,7 @@ function RapportFormation() {
               <div className="min-w-[200px] text-center">Nom Formation</div>
               <div className="min-w-[120px] text-center">Hommes</div>
               <div className="min-w-[120px] text-center">Femmes</div>
-              <div className="min-w-[120px] text-center">Total</div>
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold">Total</div>
               <div className="min-w-[150px] text-center">Actions</div>
             </div>
         
@@ -271,8 +271,8 @@ function RapportFormation() {
                   <div className="min-w-[180px] text-white -ml-0.5">{r.date_fin}</div>
                   <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
                   <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                  <div className="min-w-[120px] text-center text-orange-500 font-semibold ml-1">{r.femmes}</div>
-                  <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
+                  <div className="min-w-[120px] text-center text-white ml-2">{r.femmes}</div>
+                  <div className="min-w-[120px] text-center text-orange-500 font-semibold">{total}</div>
                   <div className="min-w-[150px] text-center">
                     <button
                       onClick={() => handleEdit(r)}

@@ -34,9 +34,7 @@ function Attendance() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
 
-  /* =============================
-     LOAD SUPERVISEUR
-  ==============================*/
+  /* ================= LOAD SUPERVISEUR ================= */
   useEffect(() => {
     const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -59,9 +57,7 @@ function Attendance() {
     loadSuperviseur();
   }, []);
 
-  /* =============================
-     FETCH
-  ==============================*/
+  /* ================= FETCH ================= */
   const fetchRapports = async () => {
     if (!superviseur.eglise_id || !superviseur.branche_id) return;
 
@@ -86,17 +82,12 @@ function Attendance() {
     fetchRapports();
   }, [superviseur]);
 
-  /* =============================
-     FORM
-  ==============================*/
+  /* ================= FORM ================= */
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
 
-    // 🔒 Empêche valeur négative
     const safeValue =
-      e.target.type === "number"
-        ? Math.max(0, Number(value))
-        : value;
+      type === "number" ? Math.max(0, Number(value)) : value;
 
     setFormData((prev) => ({
       ...prev,
@@ -149,16 +140,10 @@ function Attendance() {
   if (loading)
     return <p className="text-center mt-10 text-white">Chargement...</p>;
 
-  /* =============================
-     TOTAL GENERAL
-  ==============================*/
+  /* ================= TOTAL ================= */
   const totalHommes = reports.reduce((s, r) => s + Number(r.hommes || 0), 0);
   const totalFemmes = reports.reduce((s, r) => s + Number(r.femmes || 0), 0);
   const totalJeunes = reports.reduce((s, r) => s + Number(r.jeunes || 0), 0);
-  const totalEnfants = reports.reduce((s, r) => s + Number(r.enfants || 0), 0);
-  const totalConnectes = reports.reduce((s, r) => s + Number(r.connectes || 0), 0);
-  const totalNV = reports.reduce((s, r) => s + Number(r.nouveauxVenus || 0), 0);
-  const totalNC = reports.reduce((s, r) => s + Number(r.nouveauxConvertis || 0), 0);
   const totalGeneral = totalHommes + totalFemmes + totalJeunes;
 
   return (
@@ -169,9 +154,53 @@ function Attendance() {
         Rapports d'assistance
       </h1>
 
-      {/* TABLE */}
+      {/* ================= FORMULAIRE ================= */}
+      <div className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          {[
+            { label: "Date", name: "date", type: "date" },
+            { label: "Hommes", name: "hommes", type: "number" },
+            { label: "Femmes", name: "femmes", type: "number" },
+            { label: "Jeunes", name: "jeunes", type: "number" },
+            { label: "Enfants", name: "enfants", type: "number" },
+            { label: "Connectés", name: "connectes", type: "number" },
+            { label: "Nouveaux venus", name: "nouveauxVenus", type: "number" },
+            { label: "Nouveaux convertis", name: "nouveauxConvertis", type: "number" },
+          ].map((field) => (
+            <div key={field.name} className="flex flex-col">
+              <label className="text-white mb-1 font-medium">
+                {field.label}
+              </label>
+              <input
+                type={field.type}
+                name={field.name}
+                value={formData[field.name]}
+                onChange={handleChange}
+                min={field.type === "number" ? "0" : undefined}
+                className="input bg-white/20 text-white"
+                required={field.type === "date"}
+              />
+            </div>
+          ))}
+
+          <button
+            type="submit"
+            className="col-span-1 md:col-span-2 w-full 
+              bg-gradient-to-r from-blue-400 to-indigo-500
+              text-white font-bold text-lg
+              py-4 rounded-2xl shadow-lg
+              hover:from-blue-500 hover:to-indigo-600
+              transition-all duration-300"
+          >
+            {editId ? "Mettre à jour" : "Ajouter le rapport"}
+          </button>
+        </form>
+      </div>
+
+      {/* ================= TABLE ================= */}
       <div className="max-w-6xl w-full mt-6 mb-6">
-        <div className="overflow-x-auto"> {/* Scroll seulement si nécessaire */}
+        <div className="overflow-x-auto">
           <div className="min-w-fit space-y-2">
 
             {/* HEADER */}
@@ -181,33 +210,18 @@ function Attendance() {
               <div className="w-[120px] text-center">Femmes</div>
               <div className="w-[120px] text-center">Jeunes</div>
               <div className="w-[130px] text-center text-orange-400">Total</div>
-              <div className="w-[120px] text-center">Enfants</div>
-              <div className="w-[140px] text-center">Connectés</div>
-              <div className="w-[150px] text-center">Nouveaux Venus</div>
-              <div className="w-[180px] text-center">Nouveaux Convertis</div>
-              <div className="w-[140px] text-center text-orange-400">Actions</div>
+              <div className="w-[140px] text-center">Actions</div>
             </div>
 
-            {/* LIGNES */}
             {reports.map((r) => {
               const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
-
               return (
-                <div
-                  key={r.id}
-                  className="flex items-center px-4 py-3 bg-white/10 rounded-lg border-l-4 border-l-purple-500"
-                >
-                  <div className="w-[150px] text-white font-semibold">{r.date}</div>
+                <div key={r.id} className="flex items-center px-4 py-3 bg-white/10 rounded-lg">
+                  <div className="w-[150px] text-white">{r.date}</div>
                   <div className="w-[120px] text-center text-white">{r.hommes}</div>
                   <div className="w-[120px] text-center text-white">{r.femmes}</div>
                   <div className="w-[120px] text-center text-white">{r.jeunes}</div>
-                  <div className="w-[130px] text-center text-orange-400 font-bold">
-                    {total}
-                  </div>
-                  <div className="w-[120px] text-center text-white">{r.enfants}</div>
-                  <div className="w-[140px] text-center text-white">{r.connectes}</div>
-                  <div className="w-[150px] text-center text-white">{r.nouveauxVenus}</div>
-                  <div className="w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
+                  <div className="w-[130px] text-center text-orange-400 font-bold">{total}</div>
                   <div className="w-[140px] flex justify-center gap-3">
                     <button onClick={() => handleEdit(r)} className="text-blue-400">✏️</button>
                     <button onClick={() => handleDelete(r.id)} className="text-red-400">🗑️</button>
@@ -216,20 +230,13 @@ function Attendance() {
               );
             })}
 
-            {/* TOTAL GENERAL */}
-            <div className="flex items-center px-4 py-4 mt-3 bg-white/15 rounded-xl border-t border-white/50 shadow-inner">
+            {/* TOTAL BAS */}
+            <div className="flex items-center px-4 py-4 mt-3 bg-white/15 rounded-xl border-t border-white/50">
               <div className="w-[150px] text-white font-bold">TOTAL</div>
-
               <div className="w-[120px] text-center text-white font-bold">{totalHommes}</div>
               <div className="w-[120px] text-center text-white font-bold">{totalFemmes}</div>
               <div className="w-[120px] text-center text-white font-bold">{totalJeunes}</div>
-              <div className="w-[130px] text-center text-orange-400 font-bold">
-                {totalGeneral}
-              </div>
-              <div className="w-[120px] text-center text-white font-bold">{totalEnfants}</div>
-              <div className="w-[140px] text-center text-white font-bold">{totalConnectes}</div>
-              <div className="w-[150px] text-center text-white font-bold">{totalNV}</div>
-              <div className="w-[180px] text-center text-white font-bold">{totalNC}</div>
+              <div className="w-[130px] text-center text-orange-400 font-bold">{totalGeneral}</div>
               <div className="w-[140px]"></div>
             </div>
 
@@ -238,6 +245,14 @@ function Attendance() {
       </div>
 
       <Footer />
+
+      <style jsx>{`
+        .input {
+          border: 1px solid #ccc;
+          border-radius: 12px;
+          padding: 10px;
+        }
+      `}</style>
     </div>
   );
 }

@@ -301,7 +301,7 @@ const totalPrincipal =
 
             {/* 🔹 TOTAL BAS */}
             <div className="flex items-center px-4 py-4 mt-2 rounded-xl bg-white/20 border-t border-white/40 font-bold">
-              <div className="min-w-[150px] text-orange-400 font-semibold uppercase">TOTAL</div>
+              <div className="min-w-[150px] text-orange-400 font-semibold uppercase ml-1">TOTAL</div>
               <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
               <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
               <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.jeunes}</div>

@@ -292,8 +292,9 @@ const totalPrincipal =
                 <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
                 <div className="min-w-[140px] text-center flex justify-center gap-2">
                   <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
-                  <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
+                  <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>           
 
+                </div>
             {/* 🔹 TOTAL BAS */}
 <div className="flex items-center px-4 py-4 mt-2 rounded-xl bg-white/20 border-t border-white/40 font-bold">
   <div className="min-w-[150px] text-white uppercase">TOTAL</div>
@@ -307,8 +308,6 @@ const totalPrincipal =
   <div className="min-w-[180px] text-center text-white">{totalGlobal.nouveauxConvertis}</div>
   <div className="min-w-[140px]"></div>
 </div>
-
-                </div>
               </div>
             );
           })}

@@ -271,7 +271,7 @@ function RapportFormation() {
                   <div className="min-w-[180px] text-white -ml-0.5">{r.date_fin}</div>
                   <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
                   <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                  <div className="min-w-[120px] text-center text-white ml-0">{r.femmes}</div>
+                  <div className="min-w-[120px] text-center text-white ml-0.5">{r.femmes}</div>
                   <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
                   <div className="min-w-[150px] text-center">
                     <button

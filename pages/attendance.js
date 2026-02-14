@@ -264,7 +264,7 @@ const totalPrincipal =
         <div className="w-max space-y-2">
           {/* HEADER */}
           <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[150px]">Date</div>
+            <div className="min-w-[150px] ml-1">Date</div>
             <div className="min-w-[120px] text-center">Hommes</div>
             <div className="min-w-[120px] text-center">Femmes</div>
             <div className="min-w-[120px] text-center">Jeunes</div>

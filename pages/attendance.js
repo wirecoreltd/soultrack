@@ -198,51 +198,117 @@ function Attendance() {
         </form>
       </div>
 
-      {/* ================= TABLE ================= */}
-      <div className="max-w-6xl w-full mt-6 mb-6">
-        <div className="overflow-x-auto">
-          <div className="min-w-fit space-y-2">
+      {/* TABLE */}
+<div className="max-w-7xl w-full mt-6 mb-6">
+  <div className="overflow-x-auto">
+    <div className="min-w-fit space-y-2">
 
-            {/* HEADER */}
-            <div className="flex px-4 py-3 bg-white/5 text-white font-semibold uppercase text-sm border-b border-white/30 rounded-t-xl whitespace-nowrap">
-              <div className="w-[150px]">Date</div>
-              <div className="w-[120px] text-center">Hommes</div>
-              <div className="w-[120px] text-center">Femmes</div>
-              <div className="w-[120px] text-center">Jeunes</div>
-              <div className="w-[130px] text-center text-orange-400">Total</div>
-              <div className="w-[140px] text-center">Actions</div>
-            </div>
-
-            {reports.map((r) => {
-              const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
-              return (
-                <div key={r.id} className="flex items-center px-4 py-3 bg-white/10 rounded-lg">
-                  <div className="w-[150px] text-white">{r.date}</div>
-                  <div className="w-[120px] text-center text-white">{r.hommes}</div>
-                  <div className="w-[120px] text-center text-white">{r.femmes}</div>
-                  <div className="w-[120px] text-center text-white">{r.jeunes}</div>
-                  <div className="w-[130px] text-center text-orange-400 font-bold">{total}</div>
-                  <div className="w-[140px] flex justify-center gap-3">
-                    <button onClick={() => handleEdit(r)} className="text-blue-400">✏️</button>
-                    <button onClick={() => handleDelete(r.id)} className="text-red-400">🗑️</button>
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* TOTAL BAS */}
-            <div className="flex items-center px-4 py-4 mt-3 bg-white/15 rounded-xl border-t border-white/50">
-              <div className="w-[150px] text-white font-bold">TOTAL</div>
-              <div className="w-[120px] text-center text-white font-bold">{totalHommes}</div>
-              <div className="w-[120px] text-center text-white font-bold">{totalFemmes}</div>
-              <div className="w-[120px] text-center text-white font-bold">{totalJeunes}</div>
-              <div className="w-[130px] text-center text-orange-400 font-bold">{totalGeneral}</div>
-              <div className="w-[140px]"></div>
-            </div>
-
-          </div>
-        </div>
+      {/* HEADER */}
+      <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+        <div className="min-w-[150px]">Date</div>
+        <div className="min-w-[120px] text-center">Hommes</div>
+        <div className="min-w-[120px] text-center">Femmes</div>
+        <div className="min-w-[120px] text-center">Jeunes</div>
+        <div className="min-w-[130px] text-center text-orange-400 font-semibold">Total</div>
+        <div className="min-w-[120px] text-center">Enfants</div>
+        <div className="min-w-[140px] text-center">Connectés</div>
+        <div className="min-w-[150px] text-center">Nouveaux Venus</div>
+        <div className="min-w-[180px] text-center">Nouveaux Convertis</div>
+        <div className="min-w-[140px] text-center">Actions</div>
       </div>
+
+      {/* LIGNES */}
+      {reports.map((r) => {
+        const total =
+          Number(r.hommes || 0) +
+          Number(r.femmes || 0) +
+          Number(r.jeunes || 0);
+
+        return (
+          <div
+            key={r.id}
+            className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-purple-500"
+          >
+            <div className="min-w-[150px] text-white font-semibold">{r.date}</div>
+            <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+            <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+            <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
+            <div className="min-w-[130px] text-center text-orange-400 font-semibold">{total}</div>
+            <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
+            <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
+            <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
+            <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
+            <div className="min-w-[140px] text-center flex justify-center gap-2">
+              <button
+                onClick={() => handleEdit(r)}
+                className="text-blue-400 hover:text-blue-600"
+              >
+                ✏️
+              </button>
+              <button
+                onClick={() => handleDelete(r.id)}
+                className="text-red-400 hover:text-red-600"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* TOTAL GENERAL BAS */}
+      <div className="flex items-center px-4 py-4 mt-3 border-t border-white/50 bg-white/15 rounded-xl">
+
+        <div className="min-w-[150px] text-white font-bold">
+          TOTAL
+        </div>
+
+        <div className="min-w-[120px] text-center text-white font-bold">
+          {reports.reduce((s, r) => s + Number(r.hommes || 0), 0)}
+        </div>
+
+        <div className="min-w-[120px] text-center text-white font-bold">
+          {reports.reduce((s, r) => s + Number(r.femmes || 0), 0)}
+        </div>
+
+        <div className="min-w-[120px] text-center text-white font-bold">
+          {reports.reduce((s, r) => s + Number(r.jeunes || 0), 0)}
+        </div>
+
+        <div className="min-w-[130px] text-center text-orange-400 font-bold">
+          {reports.reduce(
+            (s, r) =>
+              s +
+              Number(r.hommes || 0) +
+              Number(r.femmes || 0) +
+              Number(r.jeunes || 0),
+            0
+          )}
+        </div>
+
+        <div className="min-w-[120px] text-center text-white font-bold">
+          {reports.reduce((s, r) => s + Number(r.enfants || 0), 0)}
+        </div>
+
+        <div className="min-w-[140px] text-center text-white font-bold">
+          {reports.reduce((s, r) => s + Number(r.connectes || 0), 0)}
+        </div>
+
+        <div className="min-w-[150px] text-center text-white font-bold">
+          {reports.reduce((s, r) => s + Number(r.nouveauxVenus || 0), 0)}
+        </div>
+
+        <div className="min-w-[180px] text-center text-white font-bold">
+          {reports.reduce((s, r) => s + Number(r.nouveauxConvertis || 0), 0)}
+        </div>
+
+        <div className="min-w-[140px]"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 
       <Footer />
 

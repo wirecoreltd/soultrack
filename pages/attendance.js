@@ -17,7 +17,6 @@ export default function AttendancePage() {
 function Attendance() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [superviseur, setSuperviseur] = useState({ eglise_id: null, branche_id: null });
 
   const [formData, setFormData] = useState({
@@ -33,35 +32,36 @@ function Attendance() {
 
   const [editId, setEditId] = useState(null);
   const [message, setMessage] = useState("");
-
-  // 🔹 Filtres date
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
 
-  // 🔹 Charger eglise/branche du superviseur connecté
   useEffect(() => {
     const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("profiles")
         .select("eglise_id, branche_id")
         .eq("id", user.id)
         .single();
 
-      if (error) console.error("Erreur fetch superviseur :", error);
-      else setSuperviseur({ eglise_id: data.eglise_id, branche_id: data.branche_id });
+      if (data) {
+        setSuperviseur({
+          eglise_id: data.eglise_id,
+          branche_id: data.branche_id,
+        });
+      }
     };
 
     loadSuperviseur();
   }, []);
 
-  // 🔹 Fetch reports filtré par eglise/branche + date
   const fetchRapports = async () => {
     if (!superviseur.eglise_id || !superviseur.branche_id) return;
 
     setLoading(true);
+
     let query = supabase
       .from("attendance")
       .select("*")
@@ -72,9 +72,8 @@ function Attendance() {
     if (dateDebut) query = query.gte("date", dateDebut);
     if (dateFin) query = query.lte("date", dateFin);
 
-    const { data, error } = await query;
-    if (error) console.error("❌ Erreur fetch:", error);
-    else setReports(data || []);
+    const { data } = await query;
+    setReports(data || []);
     setLoading(false);
   };
 
@@ -89,76 +88,53 @@ function Attendance() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("⏳ Enregistrement en cours...");
 
-    try {
-      const rapportAvecEglise = {
-        ...formData,
-        eglise_id: superviseur.eglise_id,
-        branche_id: superviseur.branche_id,
-      };
+    const payload = {
+      ...formData,
+      eglise_id: superviseur.eglise_id,
+      branche_id: superviseur.branche_id,
+    };
 
-      if (editId) {
-        const { error } = await supabase
-          .from("attendance")
-          .update(rapportAvecEglise)
-          .eq("id", editId);
-        if (error) throw error;
-        setMessage("✅ Rapport mis à jour !");
-      } else {
-        const { error } = await supabase
-          .from("attendance")
-          .insert([rapportAvecEglise]);
-        if (error) throw error;
-        setMessage("✅ Rapport ajouté !");
-      }
-
-      setTimeout(() => setMessage(""), 3000); // disparaît après 3s
-
-      setFormData({
-        date: "",
-        hommes: 0,
-        femmes: 0,
-        jeunes: 0,
-        enfants: 0,
-        connectes: 0,
-        nouveauxVenus: 0,
-        nouveauxConvertis: 0,
-      });
-      setEditId(null);
-      fetchRapports();
-    } catch (err) {
-      console.error(err);
-      setMessage("❌ " + err.message);
+    if (editId) {
+      await supabase.from("attendance").update(payload).eq("id", editId);
+      setMessage("✅ Rapport mis à jour !");
+    } else {
+      await supabase.from("attendance").insert([payload]);
+      setMessage("✅ Rapport ajouté !");
     }
+
+    setTimeout(() => setMessage(""), 3000);
+
+    setFormData({
+      date: "",
+      hommes: 0,
+      femmes: 0,
+      jeunes: 0,
+      enfants: 0,
+      connectes: 0,
+      nouveauxVenus: 0,
+      nouveauxConvertis: 0,
+    });
+
+    setEditId(null);
+    fetchRapports();
   };
 
-  const handleEdit = (report) => {
-    setEditId(report.id);
-    setFormData({
-      date: report.date,
-      hommes: report.hommes,
-      femmes: report.femmes,
-      jeunes: report.jeunes,
-      enfants: report.enfants,
-      connectes: report.connectes,
-      nouveauxVenus: report.nouveauxVenus,
-      nouveauxConvertis: report.nouveauxConvertis,
-    });
+  const handleEdit = (r) => {
+    setEditId(r.id);
+    setFormData(r);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Voulez-vous vraiment supprimer ce rapport ?")) return;
-    const { error } = await supabase
-      .from("attendance")
-      .delete()
-      .eq("id", id);
-    if (error) console.error("❌ Erreur delete:", error);
-    else fetchRapports();
+    if (!confirm("Supprimer ce rapport ?")) return;
+    await supabase.from("attendance").delete().eq("id", id);
+    fetchRapports();
   };
 
-  if (loading) return <p className="text-center mt-10 text-lg text-white">Chargement...</p>;
+  if (loading) {
+    return <p className="text-center mt-10 text-white">Chargement...</p>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -168,7 +144,7 @@ function Attendance() {
         Rapports d'assistance
       </h1>
 
-      {/* 🔹 Formulaire */}
+      {/* FORMULAIRE */}
       <div className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[
@@ -180,46 +156,45 @@ function Attendance() {
             { label: "Connectés", name: "connectes", type: "number" },
             { label: "Nouveaux venus", name: "nouveauxVenus", type: "number" },
             { label: "Nouveaux convertis", name: "nouveauxConvertis", type: "number" },
-          ].map((field) => (
-            <div key={field.name} className="flex flex-col">
-              <label htmlFor={field.name} className="font-medium mb-1 text-white">
-                {field.label}
-              </label>
+          ].map((f) => (
+            <div key={f.name} className="flex flex-col">
+              <label className="text-white mb-1 font-medium">{f.label}</label>
               <input
-                type={field.type}
-                name={field.name}
-                id={field.name}
-                value={formData[field.name]}
+                type={f.type}
+                name={f.name}
+                value={formData[f.name]}
                 onChange={handleChange}
-                className="input bg-white/20 text-white placeholder-white"
-                required={field.type === "date"}
+                className="bg-white/20 text-white rounded-xl px-4 py-2 border border-white/30"
               />
             </div>
           ))}
 
-          <button
-            type="submit"
-            className="col-span-1 md:col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
-          >
-            {editId ? "Mettre à jour" : "Ajouter le rapport"}
-          </button>
+          <div className="col-span-1 md:col-span-2 flex justify-center mt-4">
+            <button
+              type="submit"
+              className="w-full md:w-2/3 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-4 text-lg rounded-2xl shadow-lg hover:from-blue-500 hover:to-indigo-600 transition-all"
+            >
+              {editId ? "Modifier le rapport" : "Ajouter le rapport"}
+            </button>
+          </div>
         </form>
-        {message && <p className="mt-4 text-center font-medium text-white">{message}</p>}
+
+        {message && <p className="mt-4 text-center text-white">{message}</p>}
       </div>
 
-      {/* 🔹 FILTRE DATE */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">
+      {/* FILTRE DATE */}
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg flex gap-4 flex-wrap text-white justify-center">
         <input
           type="date"
           value={dateDebut}
           onChange={(e) => setDateDebut(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+          className="bg-transparent border border-white/40 rounded-lg px-3 py-2"
         />
         <input
           type="date"
           value={dateFin}
           onChange={(e) => setDateFin(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+          className="bg-transparent border border-white/40 rounded-lg px-3 py-2"
         />
         <button
           onClick={fetchRapports}
@@ -229,58 +204,56 @@ function Attendance() {
         </button>
       </div>
 
-      {/* 🔹 Tableau des rapports */}
-      <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6">
-        <div className="w-max space-y-2">
-          {/* HEADER */}
-          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[150px]">Date</div>
-            <div className="min-w-[120px] text-center">Hommes</div>
-            <div className="min-w-[120px] text-center">Femmes</div>
-            <div className="min-w-[120px] text-center">Jeunes</div>
-            <div className="min-w-[130px] text-center text-orange-400 font-semibold">Total</div>
-            <div className="min-w-[120px] text-center">Enfants</div>
-            <div className="min-w-[140px] text-center">Connectés</div>
-            <div className="min-w-[150px] text-center">Nouveaux Venus</div>
-            <div className="min-w-[180px] text-center">Nouveaux Convertis</div>
-            <div className="min-w-[140px] text-center text-orange-400 font-semibold">Actions</div>
-          </div>
+      {/* TABLEAU */}
+      <div className="max-w-6xl w-full mt-6 mb-6">
+        <div className="w-full overflow-x-auto">
+          <div className="min-w-max space-y-2">
 
-          {/* LIGNES */}
-          {reports.map((r) => {
-            const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
-            return (
-              <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-purple-500">
-                <div className="min-w-[150px] text-white font-semibold">{r.date}</div>
-                <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
-                <div className="min-w-[130px] text-center text-orange-400 font-semibold">{total}</div>
-                <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
-                <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
-                <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
-                <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
-                <div className="min-w-[140px] text-center flex justify-center gap-2">
-                  <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
-                  <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
+            {/* HEADER */}
+            <div className="flex px-4 py-3 bg-white/5 text-white font-semibold uppercase text-sm border-b border-white/30 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[150px]">Date</div>
+              <div className="min-w-[120px] text-center">Hommes</div>
+              <div className="min-w-[120px] text-center">Femmes</div>
+              <div className="min-w-[120px] text-center">Jeunes</div>
+              <div className="min-w-[130px] text-center text-orange-400">Total</div>
+              <div className="min-w-[120px] text-center">Enfants</div>
+              <div className="min-w-[140px] text-center">Connectés</div>
+              <div className="min-w-[150px] text-center">Nouveaux Venus</div>
+              <div className="min-w-[180px] text-center">Nouveaux Convertis</div>
+              <div className="min-w-[140px] text-center text-orange-400">Actions</div>
+            </div>
+
+            {/* LIGNES */}
+            {reports.map((r) => {
+              const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
+
+              return (
+                <div
+                  key={r.id}
+                  className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-purple-500"
+                >
+                  <div className="min-w-[150px] text-white font-semibold">{r.date}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
+                  <div className="min-w-[130px] text-center text-orange-400 font-bold">{total}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
+                  <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
+                  <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
+                  <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
+                  <div className="min-w-[140px] flex justify-center gap-3">
+                    <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
+                    <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+
+          </div>
         </div>
       </div>
 
       <Footer />
-
-      <style jsx>{`
-        .input {
-          width: 100%;
-          border: 1px solid #ccc;
-          border-radius: 12px;
-          padding: 10px;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-      `}</style>
     </div>
   );
 }

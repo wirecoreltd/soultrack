@@ -271,7 +271,7 @@ function RapportFormation() {
                   <div className="min-w-[180px] text-white -ml-0.5">{r.date_fin}</div>
                   <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
                   <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                  <div className="min-w-[120px] text-center text-white ml-2">{r.femmes}</div>
+                  <div className="min-w-[120px] text-center text-white ml-0.5">{r.femmes}</div>
                   <div className="min-w-[120px] text-center text-orange-500 font-semibold">{total}</div>
                   <div className="min-w-[150px] text-center">
                     <button
@@ -294,7 +294,7 @@ function RapportFormation() {
               <div className="min-w-[120px] text-center text-orange-500 font-semibold -ml-1">
                 {rapports.reduce((sum, r) => sum + Number(r.hommes), 0)}
               </div>
-              <div className="min-w-[120px] text-center text-orange-500 font-semibold -ml-1">
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold ml-0.5">
                 {rapports.reduce((sum, r) => sum + Number(r.femmes), 0)}
               </div>
               <div className="min-w-[120px] text-center text-orange-500 font-semibold -ml-1">

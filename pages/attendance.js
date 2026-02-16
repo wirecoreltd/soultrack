@@ -314,87 +314,98 @@ function Attendance() {
         </div>
       </div>
 
-    {/* 🔹 Cartes Mobile (mobile only) */}
+   {/* 🔹 Cartes Mobile (mobile only) */}
 <div className="w-full max-w-3xl mt-6 mb-6 block sm:hidden">
   {reports.length === 0 ? (
     <p className="text-white/70 text-center">Aucun rapport trouvé</p>
   ) : reports.length === 1 ? (
-    // Carte verticale détaillée pour 1 rapport
-    <div className="bg-white/10 p-4 rounded-2xl shadow-md border-l-4 border-l-green-500">
-      <p className="text-white font-semibold mb-1">Date: {reports[0].date}</p>
-      <p className="text-white">Hommes: {reports[0].hommes}</p>
-      <p className="text-white">Femmes: {reports[0].femmes}</p>
-      <p className="text-white">Jeunes: {reports[0].jeunes}</p>
-      <p className="text-orange-400 font-semibold">
-        Total: {Number(reports[0].hommes) + Number(reports[0].femmes) + Number(reports[0].jeunes)}
-      </p>
-      <p className="text-white">Enfants: {reports[0].enfants}</p>
-      <p className="text-white">Connectés: {reports[0].connectes}</p>
-      <p className="text-white">Nouveaux Venus: {reports[0].nouveauxVenus}</p>
-      <p className="text-white">Nouveaux Convertis: {reports[0].nouveauxConvertis}</p>
-      <div className="flex gap-2 mt-2">
-        <button onClick={() => handleEdit(reports[0])} className="text-blue-400 hover:text-blue-600">✏️</button>
-        <button onClick={() => handleDelete(reports[0].id)} className="text-red-400 hover:text-red-600">🗑️</button>
-      </div>
+    <div className="bg-white/10 p-4 rounded-2xl shadow-md border-l-4 border-l-green-500 text-white">
+      {(() => {
+        const r = reports[0];
+        const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
+        return (
+          <>
+            <p className="font-semibold mb-2">Date : {r.date}</p>
+            <p>Hommes : {r.hommes}</p>
+            <p>Femmes : {r.femmes}</p>
+            <p>Jeunes : {r.jeunes}</p>
+            <p className="text-orange-400 font-semibold text-lg">
+              Total : {total}
+            </p>
+            <p>Enfants : {r.enfants}</p>
+            <p>Connectés : {r.connectes}</p>
+            <p>Nouveaux Venus : {r.nouveauxVenus}</p>
+            <p>Nouveaux Convertis : {r.nouveauxConvertis}</p>
+
+            <div className="flex gap-3 mt-3">
+              <button
+                onClick={() => handleEdit(r)}
+                className="text-blue-400 hover:text-blue-600"
+              >
+                ✏️
+              </button>
+              <button
+                onClick={() => handleDelete(r.id)}
+                className="text-red-400 hover:text-red-600"
+              >
+                🗑️
+              </button>
+            </div>
+          </>
+        );
+      })()}
     </div>
   ) : (
-    // Mini-cartes horizontales pour plusieurs rapports
     <div className="space-y-2">
       {reports.map((r) => {
         const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
         return (
-          <div key={r.id} className="bg-white/10 p-3 rounded-xl shadow-md flex justify-between items-center border-l-4 border-l-green-500">
-            <div className="flex flex-col text-white">
+          <div
+            key={r.id}
+            className="bg-white/10 p-3 rounded-xl shadow-md flex justify-between items-center border-l-4 border-l-green-500 text-white"
+          >
+            <div className="flex flex-col">
               <span className="font-semibold">{r.date}</span>
-              <span>H: {r.hommes} F: {r.femmes} J: {r.jeunes}</span>
-              <span className="text-orange-400 font-semibold">Total: {total}</span>
+              <span>H:{r.hommes} F:{r.femmes} J:{r.jeunes}</span>
+              <span className="text-orange-400 font-semibold">
+                Total : {total}
+              </span>
             </div>
+
             <div className="flex gap-2">
-              <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
-              <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
+              <button
+                onClick={() => handleEdit(r)}
+                className="text-blue-400 hover:text-blue-600"
+              >
+                ✏️
+              </button>
+              <button
+                onClick={() => handleDelete(r.id)}
+                className="text-red-400 hover:text-red-600"
+              >
+                🗑️
+              </button>
             </div>
           </div>
         );
       })}
 
-      {/* 🔹 TOTAL MOBILE */}
+      {/* TOTAL MOBILE */}
       <div className="bg-white/20 p-3 rounded-xl shadow-md mt-2 border-t border-white/40 font-bold text-orange-400">
-        <p>Total Hommes: {totalGlobal.hommes}</p>
-        <p>Total Femmes: {totalGlobal.femmes}</p>
-        <p>Total Jeunes: {totalGlobal.jeunes}</p>
-        <p>Total Principal: {totalPrincipal}</p>
-        <p>Total Enfants: {totalGlobal.enfants}</p>
-        <p>Total Connectés: {totalGlobal.connectes}</p>
-        <p>Total Nouveaux Venus: {totalGlobal.nouveauxVenus}</p>
-        <p>Total Nouveaux Convertis: {totalGlobal.nouveauxConvertis}</p>
+        <p>Total Hommes : {totalGlobal.hommes}</p>
+        <p>Total Femmes : {totalGlobal.femmes}</p>
+        <p>Total Jeunes : {totalGlobal.jeunes}</p>
+        <p>Total Principal : {totalPrincipal}</p>
+        <p>Total Enfants : {totalGlobal.enfants}</p>
+        <p>Total Connectés : {totalGlobal.connectes}</p>
+        <p>Total Nouveaux Venus : {totalGlobal.nouveauxVenus}</p>
+        <p>Total Nouveaux Convertis : {totalGlobal.nouveauxConvertis}</p>
       </div>
     </div>
   )}
 </div>
 
-
-
-       {/* 🔹 Actions */}
-<div className="flex justify-end gap-3 mt-3">
-  <button
-    onClick={() => handleEdit(r)}
-    className="text-blue-400 hover:text-blue-600"
-  >
-    ✏️
-  </button>
-  <button
-    onClick={() => handleDelete(r.id)}
-    className="text-red-400 hover:text-red-600"
-  >
-    🗑️
-  </button>
-</div>
-
-);
-})}
-</div>
-
-  <Footer />
+<Footer />
 
 <style jsx>{`
   .input {

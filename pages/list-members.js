@@ -723,7 +723,7 @@ const handleAfterSend = (memberId, type, cible) => {
 
       {/* Barre de recherche */}
       <div className="w-full max-w-4xl flex justify-center mb-2">
-        <input type="text" placeholder="Recherche..." value={search} onChange={e => setSearch(e.target.value)} className="w-2/3 px-3 py-1 rounded-md border text-black"/>
+        <input type="text" placeholder="Recherche..." value={search} onChange={e => setSearch(e.target.value)} className="w-full sm:w-2/3 px-3 py-1 rounded-md border text-black"/>
       </div>
 
       {/* Filtre */}

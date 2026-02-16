@@ -58,7 +58,7 @@ export default function HomePage() {
 
             <div className="flex gap-4">
               <button
-                onClick={() => router.push("/signup-eglise")}
+                onClick={() => router.push("/SignupEglise")}
                 className="bg-blue-600 text-white font-semibold px-6 py-3 rounded-2xl hover:bg-blue-700 transition"
               >
                 Commencer gratuitement

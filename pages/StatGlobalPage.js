@@ -259,7 +259,7 @@ const totalPrincipal =
         <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
           <div className="w-max space-y-2"> {/* plus large pour total */}
             {/* HEADER */}
-            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[180px] ml-1">Type</div>
               <div className="min-w-[120px] text-center">Hommes</div>
               <div className="min-w-[120px] text-center">Femmes</div>
@@ -269,8 +269,7 @@ const totalPrincipal =
               <div className="min-w-[150px] text-center">Nouveaux Venus</div>
               <div className="min-w-[180px] text-center">Nouveau Converti</div>
               <div className="min-w-[140px] text-center">Réconciliation</div>
-              <div className="min-w-[160px] text-center">Moissonneurs</div>
-              <div className="min-w-[130px] text-center">Total</div>
+              <div className="min-w-[160px] text-center">Moissonneurs</div>              
             </div>
 
             {/* LIGNES */}
@@ -297,7 +296,7 @@ const totalPrincipal =
             })}
   {/* 🔹 TOTAL GENERAL BAS */}
 <div className="flex items-center px-4 py-4 mt-3 rounded-xl bg-white/20 border-t border-white/40 font-bold">
-  <div className="min-w-[180px] text-white uppercase ml-1">TOTAL</div>
+  <div className="min-w-[180px] text-orange-400 font-semibold uppercase ml-1">TOTAL</div>
 
   <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.hommes}</div>
   <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.femmes}</div>

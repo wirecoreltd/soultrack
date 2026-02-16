@@ -34,10 +34,11 @@ function Attendance() {
   const [editId, setEditId] = useState(null);
   const [message, setMessage] = useState("");
 
+  // 🔹 Filtres date
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
 
-  // 🔹 Charger eglise/branche
+  // 🔹 Charger eglise/branche du superviseur connecté
   useEffect(() => {
     const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -52,10 +53,11 @@ function Attendance() {
       if (error) console.error("Erreur fetch superviseur :", error);
       else setSuperviseur({ eglise_id: data.eglise_id, branche_id: data.branche_id });
     };
+
     loadSuperviseur();
   }, []);
 
-  // 🔹 Fetch rapports
+  // 🔹 Fetch reports filtré par eglise/branche + date
   const fetchRapports = async () => {
     if (!superviseur.eglise_id || !superviseur.branche_id) return;
 
@@ -111,7 +113,8 @@ function Attendance() {
         setMessage("✅ Rapport ajouté !");
       }
 
-      setTimeout(() => setMessage(""), 3000);
+      setTimeout(() => setMessage(""), 3000); // disparaît après 3s
+
       setFormData({
         date: "",
         hommes: 0,
@@ -155,30 +158,34 @@ function Attendance() {
     else fetchRapports();
   };
 
-  const totalGlobal = reports.reduce(
-    (acc, r) => {
-      acc.hommes += Number(r.hommes || 0);
-      acc.femmes += Number(r.femmes || 0);
-      acc.jeunes += Number(r.jeunes || 0);
-      acc.enfants += Number(r.enfants || 0);
-      acc.connectes += Number(r.connectes || 0);
-      acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
-      acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
-      return acc;
-    },
-    {
-      hommes: 0,
-      femmes: 0,
-      jeunes: 0,
-      enfants: 0,
-      connectes: 0,
-      nouveauxVenus: 0,
-      nouveauxConvertis: 0,
-    }
-  );
+  // 🔹 TOTAL GLOBAL BAS
+const totalGlobal = reports.reduce(
+  (acc, r) => {
+    acc.hommes += Number(r.hommes || 0);
+    acc.femmes += Number(r.femmes || 0);
+    acc.jeunes += Number(r.jeunes || 0);
+    acc.enfants += Number(r.enfants || 0);
+    acc.connectes += Number(r.connectes || 0);
+    acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
+    acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
+    return acc;
+  },
+  {
+    hommes: 0,
+    femmes: 0,
+    jeunes: 0,
+    enfants: 0,
+    connectes: 0,
+    nouveauxVenus: 0,
+    nouveauxConvertis: 0,
+  }
+);
 
-  const totalPrincipal =
-    totalGlobal.hommes + totalGlobal.femmes + totalGlobal.jeunes;
+const totalPrincipal =
+  totalGlobal.hommes +
+  totalGlobal.femmes +
+  totalGlobal.jeunes;
+
 
   if (loading) return <p className="text-center mt-10 text-lg text-white">Chargement...</p>;
 
@@ -230,40 +237,43 @@ function Attendance() {
       </div>
 
       {/* 🔹 FILTRE DATE */}
-      <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-4 flex flex-wrap justify-center gap-4 text-white w-full max-w-3xl">
-        <div className="flex flex-col w-full sm:w-auto">
-          <label htmlFor="dateDebut" className="font-medium mb-1">Date de début</label>
-          <input
-            type="date"
-            id="dateDebut"
-            value={dateDebut}
-            onChange={(e) => setDateDebut(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-          />
+        <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-4 flex flex-wrap justify-center gap-4 text-white w-full max-w-3xl">
+          
+          <div className="flex flex-col w-full sm:w-auto">
+            <label htmlFor="dateDebut" className="font-medium mb-1">Date de début</label>
+            <input
+              type="date"
+              id="dateDebut"
+              value={dateDebut}
+              onChange={(e) => setDateDebut(e.target.value)}
+              className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+            />
+          </div>
+        
+          <div className="flex flex-col w-full sm:w-auto">
+            <label htmlFor="dateFin" className="font-medium mb-1">Date de fin</label>
+            <input
+              type="date"
+              id="dateFin"
+              value={dateFin}
+              onChange={(e) => setDateFin(e.target.value)}
+              className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+            />
+          </div>
+        
+          <button
+            onClick={fetchRapports}
+            className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end"
+          >
+            Générer
+          </button>
         </div>
 
-        <div className="flex flex-col w-full sm:w-auto">
-          <label htmlFor="dateFin" className="font-medium mb-1">Date de fin</label>
-          <input
-            type="date"
-            id="dateFin"
-            value={dateFin}
-            onChange={(e) => setDateFin(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-          />
-        </div>
 
-        <button
-          onClick={fetchRapports}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end"
-        >
-          Générer
-        </button>
-      </div>
-
-      {/* 🔹 Tableau PC */}
-      <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6 hidden sm:block">
+      {/* 🔹 Tableau des rapports */}
+      <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6">
         <div className="w-max space-y-2">
+          {/* HEADER */}
           <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
             <div className="min-w-[150px] ml-1">Date</div>
             <div className="min-w-[120px] text-center">Hommes</div>
@@ -277,6 +287,7 @@ function Attendance() {
             <div className="min-w-[140px] text-center text-orange-400 font-semibold">Actions</div>
           </div>
 
+          {/* LIGNES */}
           {reports.map((r) => {
             const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
             return (
@@ -292,130 +303,40 @@ function Attendance() {
                 <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
                 <div className="min-w-[140px] text-center flex justify-center gap-2">
                   <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
-                  <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
-                </div>
-              </div>
+                  <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>           
+
+                </div>            
+              </div>       
             );
           })}
 
-          {/* TOTAL BAS PC */}
-          <div className="flex items-center px-4 py-4 mt-2 rounded-xl bg-white/20 border-t border-white/40 font-bold">
-            <div className="min-w-[150px] text-orange-400 font-semibold uppercase ml-1">TOTAL</div>
-            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
-            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
-            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.jeunes}</div>
-            <div className="min-w-[130px] text-center text-orange-400">{totalPrincipal}</div>
-            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.enfants}</div>
-            <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGlobal.connectes}</div>
-            <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalGlobal.nouveauxVenus}</div>
-            <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGlobal.nouveauxConvertis}</div>
-            <div className="min-w-[140px]"></div>
-          </div>
+            {/* 🔹 TOTAL BAS */}
+            <div className="flex items-center px-4 py-4 mt-2 rounded-xl bg-white/20 border-t border-white/40 font-bold">
+              <div className="min-w-[150px] text-orange-400 font-semibold uppercase ml-1">TOTAL</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.jeunes}</div>
+              <div className="min-w-[130px] text-center text-orange-400">{totalPrincipal}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.enfants}</div>
+              <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGlobal.connectes}</div>
+              <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalGlobal.nouveauxVenus}</div>
+              <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGlobal.nouveauxConvertis}</div>
+              <div className="min-w-[140px]"></div>
+            </div>
         </div>
       </div>
 
-   {/* 🔹 Cartes Mobile (mobile only) */}
-<div className="w-full max-w-3xl mt-6 mb-6 block sm:hidden">
-  {reports.length === 0 ? (
-    <p className="text-white/70 text-center">Aucun rapport trouvé</p>
-  ) : reports.length === 1 ? (
-    <div className="bg-white/10 p-4 rounded-2xl shadow-md border-l-4 border-l-green-500 text-white">
-      {(() => {
-        const r = reports[0];
-        const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
-        return (
-          <>
-            <p className="font-semibold mb-2">Date : {r.date}</p>
-            <p>Hommes : {r.hommes}</p>
-            <p>Femmes : {r.femmes}</p>
-            <p>Jeunes : {r.jeunes}</p>
-            <p className="text-orange-400 font-semibold text-lg">
-              Total : {total}
-            </p>
-            <p>Enfants : {r.enfants}</p>
-            <p>Connectés : {r.connectes}</p>
-            <p>Nouveaux Venus : {r.nouveauxVenus}</p>
-            <p>Nouveaux Convertis : {r.nouveauxConvertis}</p>
+      <Footer />
 
-            <div className="flex gap-3 mt-3">
-              <button
-                onClick={() => handleEdit(r)}
-                className="text-blue-400 hover:text-blue-600"
-              >
-                ✏️
-              </button>
-              <button
-                onClick={() => handleDelete(r.id)}
-                className="text-red-400 hover:text-red-600"
-              >
-                🗑️
-              </button>
-            </div>
-          </>
-        );
-      })()}
+      <style jsx>{`
+        .input {
+          width: 100%;
+          border: 1px solid #ccc;
+          border-radius: 12px;
+          padding: 10px;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+      `}</style>
     </div>
-  ) : (
-    <div className="space-y-2">
-      {reports.map((r) => {
-        const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
-        return (
-          <div
-            key={r.id}
-            className="bg-white/10 p-3 rounded-xl shadow-md flex justify-between items-center border-l-4 border-l-green-500 text-white"
-          >
-            <div className="flex flex-col">
-              <span className="font-semibold">{r.date}</span>
-              <span>H:{r.hommes} F:{r.femmes} J:{r.jeunes}</span>
-              <span className="text-orange-400 font-semibold">
-                Total : {total}
-              </span>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleEdit(r)}
-                className="text-blue-400 hover:text-blue-600"
-              >
-                ✏️
-              </button>
-              <button
-                onClick={() => handleDelete(r.id)}
-                className="text-red-400 hover:text-red-600"
-              >
-                🗑️
-              </button>
-            </div>
-          </div>
-        );
-      })}
-
-      {/* TOTAL MOBILE */}
-      <div className="bg-white/20 p-3 rounded-xl shadow-md mt-2 border-t border-white/40 font-bold text-orange-400">
-        <p>Total Hommes : {totalGlobal.hommes}</p>
-        <p>Total Femmes : {totalGlobal.femmes}</p>
-        <p>Total Jeunes : {totalGlobal.jeunes}</p>
-        <p>Total Principal : {totalPrincipal}</p>
-        <p>Total Enfants : {totalGlobal.enfants}</p>
-        <p>Total Connectés : {totalGlobal.connectes}</p>
-        <p>Total Nouveaux Venus : {totalGlobal.nouveauxVenus}</p>
-        <p>Total Nouveaux Convertis : {totalGlobal.nouveauxConvertis}</p>
-      </div>
-    </div>
-  )}
-</div>
-
-<Footer />
-
-<style jsx>{`
-  .input {
-    width: 100%;
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    padding: 10px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  }
-`}</style>
-</div>
-);
+  );
 }

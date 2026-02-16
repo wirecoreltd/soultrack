@@ -132,54 +132,73 @@ export default function RapportEvangelisation() {
 
           {/* LIGNES */}
           {rapports.map((r) => {
-            const total =
-              (Number(r.hommes) || 0) +
-              (Number(r.femmes) || 0);
-
+            const total = (Number(r.hommes) || 0) + (Number(r.femmes) || 0);
+          
             return (
-              <div
-                key={r.id}
-                className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
-              >
-                <div className="min-w-[150px] text-white">
-                  {new Date(r.date).toLocaleDateString()}
+              <div key={r.id} className="w-full md:w-max">
+                {/* Desktop : tableau horizontal */}
+                <div className="hidden md:flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500">
+                  <div className="min-w-[150px] text-white">{new Date(r.date).toLocaleDateString()}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.hommes ?? "-"}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.femmes ?? "-"}</div>
+                  <div className="min-w-[120px] text-center text-orange-500 font-semibold">{total}</div>
+                  <div className="min-w-[150px] text-center text-white">{r.priere ?? "-"}</div>
+                  <div className="min-w-[180px] text-center text-white">{r.nouveau_converti ?? "-"}</div>
+                  <div className="min-w-[160px] text-center text-white">{r.reconciliation ?? "-"}</div>
+                  <div className="min-w-[160px] text-center text-white">{r.moissonneurs ?? "-"}</div>
+                  <div className="min-w-[140px] text-center">
+                    <button
+                      onClick={() => {
+                        setSelectedRapport(r);
+                        setEditOpen(true);
+                      }}
+                      className="text-orange-400 underline hover:text-orange-500"
+                    >
+                      Modifier
+                    </button>
+                  </div>
                 </div>
-
-                <div className="min-w-[120px] text-center text-white -ml-0.5">
-                  {r.hommes ?? "-"}
-                </div>
-
-                <div className="min-w-[120px] text-center text-white">
-                  {r.femmes ?? "-"}
-                </div>
-
-                <div className="min-w-[120px] text-center text-orange-500 font-semibold">
-                  {total}
-                </div>
-
-                <div className="min-w-[150px] text-center text-white">
-                  {r.priere ?? "-"}
-                </div>
-
-                <div className="min-w-[180px] text-center text-white">
-                  {r.nouveau_converti ?? "-"}
-                </div>
-
-                <div className="min-w-[160px] text-center text-white">
-                  {r.reconciliation ?? "-"}
-                </div>
-
-                <div className="min-w-[160px] text-center text-white">
-                  {r.moissonneurs ?? "-"}
-                </div>
-
-                <div className="min-w-[140px] text-center">
+          
+                {/* Mobile : carte verticale */}
+                <div className="flex flex-col md:hidden bg-white/10 rounded-lg p-4 mb-3 hover:bg-white/20 border-l-4 border-l-blue-500 transition">
+                  <div className="flex justify-between text-white font-semibold mb-1">
+                    <span>Date :</span>
+                    <span>{new Date(r.date).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex justify-between text-white mb-1">
+                    <span>Hommes :</span>
+                    <span>{r.hommes ?? "-"}</span>
+                  </div>
+                  <div className="flex justify-between text-white mb-1">
+                    <span>Femmes :</span>
+                    <span>{r.femmes ?? "-"}</span>
+                  </div>
+                  <div className="flex justify-between text-orange-500 font-semibold mb-1">
+                    <span>Total :</span>
+                    <span>{total}</span>
+                  </div>
+                  <div className="flex justify-between text-white mb-1">
+                    <span>Prière :</span>
+                    <span>{r.priere ?? "-"}</span>
+                  </div>
+                  <div className="flex justify-between text-white mb-1">
+                    <span>Nouveau Converti :</span>
+                    <span>{r.nouveau_converti ?? "-"}</span>
+                  </div>
+                  <div className="flex justify-between text-white mb-1">
+                    <span>Réconciliation :</span>
+                    <span>{r.reconciliation ?? "-"}</span>
+                  </div>
+                  <div className="flex justify-between text-white mb-2">
+                    <span>Moissonneurs :</span>
+                    <span>{r.moissonneurs ?? "-"}</span>
+                  </div>
                   <button
                     onClick={() => {
                       setSelectedRapport(r);
                       setEditOpen(true);
                     }}
-                    className="text-orange-400 underline hover:text-orange-500"
+                    className="self-end text-orange-400 underline hover:text-orange-500"
                   >
                     Modifier
                   </button>

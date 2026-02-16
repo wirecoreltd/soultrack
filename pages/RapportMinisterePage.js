@@ -45,49 +45,64 @@ function RapportMinistere() {
 
   // 🔹 Générer rapport
   const fetchRapport = async () => {
-  if (!egliseId || !brancheId) return;
+  console.log("Eglise:", egliseId);
+  console.log("Branche:", brancheId);
+
+  if (!egliseId || !brancheId) {
+    console.log("ID manquant");
+    return;
+  }
 
   setLoading(true);
 
-  let query = supabase
+  const { data, error } = await supabase
     .from("membres_complets")
-    .select('"Ministere", created_at')
+    .select('"Ministere", created_at, eglise_id, branche_id')
     .eq("eglise_id", egliseId)
     .eq("branche_id", brancheId)
     .not("Ministere", "is", null);
 
-  if (dateDebut) query = query.gte("created_at", dateDebut);
-  if (dateFin) query = query.lte("created_at", dateFin);
-
-  const { data, error } = await query;
-
   if (error) {
-    console.error(error);
+    console.error("Erreur Supabase:", error);
     setLoading(false);
     return;
   }
 
+  console.log("DATA:", data);
+
   const counts = {};
 
   data.forEach((membre) => {
-    if (Array.isArray(membre.Ministere)) {
-      membre.Ministere.forEach((ministere) => {
-        if (!counts[ministere]) counts[ministere] = 0;
-        counts[ministere]++;
+    let ministeres = membre.Ministere;
+
+    // Si c'est une string JSON → on parse
+    if (typeof ministeres === "string") {
+      try {
+        ministeres = JSON.parse(ministeres);
+      } catch {
+        ministeres = [ministeres];
+      }
+    }
+
+    if (Array.isArray(ministeres)) {
+      ministeres.forEach((min) => {
+        if (!counts[min]) counts[min] = 0;
+        counts[min]++;
       });
     }
   });
 
-  const result = Object.entries(counts)
-    .map(([nom, total]) => ({
-      ministere: nom,
-      total,
-    }))
-    .sort((a, b) => b.total - a.total); // tri décroissant
+  const result = Object.entries(counts).map(([nom, total]) => ({
+    ministere: nom,
+    total,
+  }));
+
+  console.log("RESULT:", result);
 
   setRapports(result);
   setLoading(false);
 };
+
 
 
   return (

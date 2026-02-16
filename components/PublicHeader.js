@@ -10,7 +10,7 @@ export default function PublicHeader() {
 
   const navItems = [
     { label: "Accueil", path: "/HomePage" },
-    { label: "Process", path: "/ParcoursSoulTrack" },
+    { label: "Process", path: "/CommentCaMarche" },
     { label: "À propos", path: "/about" },
     { label: "Pricing", path: "/pricing" },
     { label: "Contact", path: "/contact" },

@@ -388,7 +388,7 @@ function Attendance() {
             🗑️
           </button>
         </div>
-      </div>
+     
     );
   })}
 </div>

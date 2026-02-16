@@ -104,7 +104,7 @@ function ListConseillers() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6 bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200">
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       <HeaderPages />
 
       <div className="text-center mb-6">

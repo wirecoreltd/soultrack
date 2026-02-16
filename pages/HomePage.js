@@ -140,8 +140,8 @@ export default function HomePage() {
               <Image
                 src="/Espace Membre.png"
                 alt="Membres Hub"
-                width={900}
-                height={600}
+                width={500}
+                height={200}
                 className="rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border"
               />
             </div>

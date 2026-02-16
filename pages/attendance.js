@@ -393,8 +393,7 @@ function Attendance() {
 })}
 </div>
 
-
-<Footer />
+  <Footer />
 
 <style jsx>{`
   .input {

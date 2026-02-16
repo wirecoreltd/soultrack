@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -17,7 +16,8 @@ export default function AttendancePage() {
 
 function Attendance() {
   const [reports, setReports] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [showTable, setShowTable] = useState(false);
 
   const [superviseur, setSuperviseur] = useState({ eglise_id: null, branche_id: null });
 
@@ -34,6 +34,13 @@ function Attendance() {
 
   const [editId, setEditId] = useState(null);
   const [message, setMessage] = useState("");
+
+  // 🔹 Totaux membres par état
+  const [totauxMembres, setTotauxMembres] = useState({
+    Existant: { hommes: 0, femmes: 0, total: 0 },
+    Inactif: { hommes: 0, femmes: 0, total: 0 },
+    Nouveau: { hommes: 0, femmes: 0, total: 0 },
+  });
 
   // 🔹 Filtres date
   const [dateDebut, setDateDebut] = useState("");
@@ -63,6 +70,7 @@ function Attendance() {
     if (!superviseur.eglise_id || !superviseur.branche_id) return;
 
     setLoading(true);
+
     let query = supabase
       .from("attendance")
       .select("*")
@@ -76,12 +84,45 @@ function Attendance() {
     const { data, error } = await query;
     if (error) console.error("❌ Erreur fetch:", error);
     else setReports(data || []);
+
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchRapports();
-  }, [superviseur]);
+  // 🔹 Fetch membres totaux par état
+  const fetchTotauxMembres = async () => {
+    if (!superviseur.eglise_id || !superviseur.branche_id) return;
+
+    const { data, error } = await supabase
+      .from("membres_complets")
+      .select("etat_contact, sexe")
+      .eq("eglise_id", superviseur.eglise_id)
+      .eq("branche_id", superviseur.branche_id);
+
+    if (error) return;
+
+    const initial = {
+      Existant: { hommes: 0, femmes: 0, total: 0 },
+      Inactif: { hommes: 0, femmes: 0, total: 0 },
+      Nouveau: { hommes: 0, femmes: 0, total: 0 },
+    };
+
+    data.forEach((m) => {
+      if (initial[m.etat_contact]) {
+        if (m.sexe === "Homme") initial[m.etat_contact].hommes++;
+        if (m.sexe === "Femme") initial[m.etat_contact].femmes++;
+        initial[m.etat_contact].total++;
+      }
+    });
+
+    setTotauxMembres(initial);
+  };
+
+  // 🔹 Générer la table et les totaux
+  const handleGenerate = async () => {
+    await fetchRapports();
+    await fetchTotauxMembres();
+    setShowTable(true);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -114,7 +155,7 @@ function Attendance() {
         setMessage("✅ Rapport ajouté !");
       }
 
-      setTimeout(() => setMessage(""), 3000); // disparaît après 3s
+      setTimeout(() => setMessage(""), 3000);
 
       setFormData({
         date: "",
@@ -128,6 +169,7 @@ function Attendance() {
       });
       setEditId(null);
       fetchRapports();
+      fetchTotauxMembres();
     } catch (err) {
       console.error(err);
       setMessage("❌ " + err.message);
@@ -156,37 +198,36 @@ function Attendance() {
       .delete()
       .eq("id", id);
     if (error) console.error("❌ Erreur delete:", error);
-    else fetchRapports();
+    else {
+      fetchRapports();
+      fetchTotauxMembres();
+    }
   };
 
-  // 🔹 TOTAL GLOBAL BAS
-const totalGlobal = reports.reduce(
-  (acc, r) => {
-    acc.hommes += Number(r.hommes || 0);
-    acc.femmes += Number(r.femmes || 0);
-    acc.jeunes += Number(r.jeunes || 0);
-    acc.enfants += Number(r.enfants || 0);
-    acc.connectes += Number(r.connectes || 0);
-    acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
-    acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
-    return acc;
-  },
-  {
-    hommes: 0,
-    femmes: 0,
-    jeunes: 0,
-    enfants: 0,
-    connectes: 0,
-    nouveauxVenus: 0,
-    nouveauxConvertis: 0,
-  }
-);
+  // 🔹 Totaux globaux pour la table
+  const totalGlobal = reports.reduce(
+    (acc, r) => {
+      acc.hommes += Number(r.hommes || 0);
+      acc.femmes += Number(r.femmes || 0);
+      acc.jeunes += Number(r.jeunes || 0);
+      acc.enfants += Number(r.enfants || 0);
+      acc.connectes += Number(r.connectes || 0);
+      acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
+      acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
+      return acc;
+    },
+    {
+      hommes: 0,
+      femmes: 0,
+      jeunes: 0,
+      enfants: 0,
+      connectes: 0,
+      nouveauxVenus: 0,
+      nouveauxConvertis: 0,
+    }
+  );
 
-const totalPrincipal =
-  totalGlobal.hommes +
-  totalGlobal.femmes +
-  totalGlobal.jeunes;
-
+  const totalPrincipal = totalGlobal.hommes + totalGlobal.femmes + totalGlobal.jeunes;
 
   if (loading) return <p className="text-center mt-10 text-lg text-white">Chargement...</p>;
 
@@ -198,46 +239,68 @@ const totalPrincipal =
         Rapports d'assistance
       </h1>
 
-      {/* 🔹 Formulaire */}
-      <div className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[
-            { label: "Date", name: "date", type: "date" },
-            { label: "Hommes", name: "hommes", type: "number" },
-            { label: "Femmes", name: "femmes", type: "number" },
-            { label: "Jeunes", name: "jeunes", type: "number" },
-            { label: "Enfants", name: "enfants", type: "number" },
-            { label: "Connectés", name: "connectes", type: "number" },
-            { label: "Nouveaux venus", name: "nouveauxVenus", type: "number" },
-            { label: "Nouveaux convertis", name: "nouveauxConvertis", type: "number" },
-          ].map((field) => (
-            <div key={field.name} className="flex flex-col">
-              <label htmlFor={field.name} className="font-medium mb-1 text-white">
-                {field.label}
-              </label>
-              <input
-                type={field.type}
-                name={field.name}
-                id={field.name}
-                value={formData[field.name]}
-                onChange={handleChange}
-                className="input bg-white/20 text-white placeholder-white"
-                required={field.type === "date"}
-              />
+      {/* FORMULAIRE + TOTAL MEMBRES À DROITE */}
+      <div className="flex flex-col md:flex-row w-full max-w-6xl gap-6">
+
+        <div className="flex-1 bg-white/10 rounded-3xl p-6 shadow-lg">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { label: "Date", name: "date", type: "date" },
+              { label: "Hommes", name: "hommes", type: "number" },
+              { label: "Femmes", name: "femmes", type: "number" },
+              { label: "Jeunes", name: "jeunes", type: "number" },
+              { label: "Enfants", name: "enfants", type: "number" },
+              { label: "Connectés", name: "connectes", type: "number" },
+              { label: "Nouveaux venus", name: "nouveauxVenus", type: "number" },
+              { label: "Nouveaux convertis", name: "nouveauxConvertis", type: "number" },
+            ].map((field) => (
+              <div key={field.name} className="flex flex-col">
+                <label htmlFor={field.name} className="font-medium mb-1 text-white">
+                  {field.label}
+                </label>
+                <input
+                  type={field.type}
+                  name={field.name}
+                  id={field.name}
+                  value={formData[field.name]}
+                  onChange={handleChange}
+                  className="input bg-white/20 text-white placeholder-white"
+                  required={field.type === "date"}
+                />
+              </div>
+            ))}
+
+            <button
+              type="submit"
+              className="col-span-1 md:col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
+            >
+              {editId ? "Mettre à jour" : "Ajouter le rapport"}
+            </button>
+            {message && <p className="mt-4 text-center font-medium text-white">{message}</p>}
+          </form>
+        </div>
+
+        {/* TOTAL MEMBRES À DROITE */}
+        <div className="flex-1 bg-white/10 p-6 rounded-2xl shadow-lg">
+          <h2 className="text-xl font-bold mb-4">Totaux Membres</h2>
+          <div className="flex justify-between font-semibold mb-2 border-b border-white/20">
+            <div>Etat</div>
+            <div>Hommes</div>
+            <div>Femmes</div>
+            <div>Total</div>
+          </div>
+          {Object.entries(totauxMembres).map(([etat, value]) => (
+            <div key={etat} className="flex justify-between py-1 border-b border-white/10">
+              <div>{etat}</div>
+              <div>{value.hommes}</div>
+              <div>{value.femmes}</div>
+              <div className="text-orange-400 font-bold">{value.total}</div>
             </div>
           ))}
-
-          <button
-            type="submit"
-            className="col-span-1 md:col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
-          >
-            {editId ? "Mettre à jour" : "Ajouter le rapport"}
-          </button>
-        </form>
-        {message && <p className="mt-4 text-center font-medium text-white">{message}</p>}
+        </div>
       </div>
 
-      {/* 🔹 FILTRE DATE */}
+      {/* FILTRE DATE + GENERER */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">
         <input
           type="date"
@@ -252,68 +315,64 @@ const totalPrincipal =
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <button
-          onClick={fetchRapports}
+          onClick={handleGenerate}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
         >
           Générer
         </button>
       </div>
 
-      {/* 🔹 Tableau des rapports */}
-      <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6">
-        <div className="w-max space-y-2">
-          {/* HEADER */}
-          <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[150px] ml-1">Date</div>
-            <div className="min-w-[120px] text-center">Hommes</div>
-            <div className="min-w-[120px] text-center">Femmes</div>
-            <div className="min-w-[120px] text-center">Jeunes</div>
-            <div className="min-w-[130px] text-center text-orange-400 font-semibold">Total</div>
-            <div className="min-w-[120px] text-center">Enfants</div>
-            <div className="min-w-[140px] text-center">Connectés</div>
-            <div className="min-w-[150px] text-center">Nouveaux Venus</div>
-            <div className="min-w-[180px] text-center">Nouveaux Convertis</div>
-            <div className="min-w-[140px] text-center text-orange-400 font-semibold">Actions</div>
-          </div>
+      {/* TABLE RAPPORTS */}
+      {showTable && (
+        <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6">
+          <div className="w-max space-y-2">
+            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[150px] ml-1">Date</div>
+              <div className="min-w-[120px] text-center">Hommes</div>
+              <div className="min-w-[120px] text-center">Femmes</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">Total</div>
+              <div className="min-w-[120px] text-center">Enfants</div>
+              <div className="min-w-[140px] text-center">Connectés</div>
+              <div className="min-w-[150px] text-center">Nouveaux Venus</div>
+              <div className="min-w-[180px] text-center">Nouveaux Convertis</div>
+              <div className="min-w-[140px] text-center">Actions</div>
+            </div>
 
-          {/* LIGNES */}
-          {reports.map((r) => {
-            const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
-            return (
-              <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-purple-500">
-                <div className="min-w-[150px] text-white font-semibold">{r.date}</div>
-                <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
-                <div className="min-w-[130px] text-center text-orange-400 font-semibold">{total}</div>
-                <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
-                <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
-                <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
-                <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
-                <div className="min-w-[140px] text-center flex justify-center gap-2">
-                  <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
-                  <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>           
+            {reports.map((r) => {
+              const total = Number(r.hommes || 0) + Number(r.femmes || 0) + Number(r.jeunes || 0);
+              return (
+                <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-purple-500">
+                  <div className="min-w-[150px] text-white font-semibold">{r.date}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+                  <div className="min-w-[120px] text-center text-orange-400 font-bold">{total}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
+                  <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
+                  <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
+                  <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
+                  <div className="min-w-[140px] text-center flex justify-center gap-2">
+                    <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
+                    <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
+                  </div>
+                </div>
+              );
+            })}
 
-                </div>            
-              </div>       
-            );
-          })}
-
-            {/* 🔹 TOTAL BAS */}
+            {/* TOTAL GLOBAL */}
             <div className="flex items-center px-4 py-4 mt-2 rounded-xl bg-white/20 border-t border-white/40 font-bold">
               <div className="min-w-[150px] text-orange-400 font-semibold uppercase ml-1">TOTAL</div>
               <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
               <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.jeunes}</div>
-              <div className="min-w-[130px] text-center text-orange-400">{totalPrincipal}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalPrincipal}</div>
               <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.enfants}</div>
               <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGlobal.connectes}</div>
               <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalGlobal.nouveauxVenus}</div>
               <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGlobal.nouveauxConvertis}</div>
               <div className="min-w-[140px]"></div>
             </div>
+          </div>
         </div>
-      </div>
+      )}
 
       <Footer />
 

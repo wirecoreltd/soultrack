@@ -107,7 +107,7 @@ export default function RapportEvangelisation() {
                </div>
         <button
           onClick={fetchRapports}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end"
         >
           Générer
         </button>

@@ -2,8 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import PublicHeader from "../../components/PublicHeader";
-import Footer from "../../components/Footer";
+import PublicHeader from "../components/PublicHeader";
+import Footer from "../components/Footer";
 
 export default function CommentCaMarche() {
   const router = useRouter();

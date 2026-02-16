@@ -314,7 +314,7 @@ function Attendance() {
         </div>
       </div>
 
-      {/* 🔹 Cartes Mobile (mobile only) */}
+    {/* 🔹 Cartes Mobile (mobile only) */}
 <div className="w-full max-w-3xl mt-6 mb-6 block sm:hidden">
   {reports.length === 0 ? (
     <p className="text-white/70 text-center">Aucun rapport trouvé</p>
@@ -371,6 +371,7 @@ function Attendance() {
     </div>
   )}
 </div>
+
 
 
        {/* 🔹 Actions */}

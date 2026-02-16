@@ -101,7 +101,7 @@ export default function RapportHub() {
 
         {/* Rapport Ministere */}
         <Link
-          href="/RapportBaptemePage"
+          href="/RapportMinisterePage"
           className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
           border-t-4 border-[#3B82F6] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
         >

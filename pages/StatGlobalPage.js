@@ -182,6 +182,36 @@ function StatGlobalPage() {
     { label: "Cellules", data: { total: cellulesCount }, border: "border-l-yellow-500" },
   ].filter((r) => typeRapport === "Tous" || r.label === typeRapport);
 
+  const totalGeneral = rapports.reduce(
+  (acc, r) => {
+    acc.hommes += Number(r.data?.hommes) || 0;
+    acc.femmes += Number(r.data?.femmes) || 0;
+    acc.jeunes += Number(r.data?.jeunes) || 0;
+    acc.enfants += Number(r.data?.enfants) || 0;
+    acc.connectes += Number(r.data?.connectes) || 0;
+    acc.nouveauxVenus += Number(r.data?.nouveauxVenus) || 0;
+    acc.nouveauxConvertis += Number(r.data?.nouveauxConvertis) || 0;
+    acc.reconciliations += Number(r.data?.reconciliations) || 0;
+    acc.moissonneurs += Number(r.data?.moissonneurs) || 0;
+    return acc;
+  },
+  {
+    hommes: 0,
+    femmes: 0,
+    jeunes: 0,
+    enfants: 0,
+    connectes: 0,
+    nouveauxVenus: 0,
+    nouveauxConvertis: 0,
+    reconciliations: 0,
+    moissonneurs: 0,
+  }
+);
+
+const totalPrincipal =
+  totalGeneral.hommes + totalGeneral.femmes;
+
+
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
@@ -266,6 +296,22 @@ function StatGlobalPage() {
                 </div>
               );
             })}
+  {/* 🔹 TOTAL GENERAL BAS */}
+<div className="flex items-center px-4 py-4 mt-3 rounded-xl bg-white/20 border-t border-white/40 font-bold">
+  <div className="min-w-[180px] text-white uppercase">TOTAL</div>
+
+  <div className="min-w-[120px] text-center text-white">{totalGeneral.hommes}</div>
+  <div className="min-w-[120px] text-center text-white">{totalGeneral.femmes}</div>
+  <div className="min-w-[120px] text-center text-white">{totalGeneral.jeunes}</div>
+  <div className="min-w-[120px] text-center text-white">{totalGeneral.enfants}</div>
+  <div className="min-w-[140px] text-center text-white">{totalGeneral.connectes}</div>
+  <div className="min-w-[150px] text-center text-white">{totalGeneral.nouveauxVenus}</div>
+  <div className="min-w-[180px] text-center text-white">{totalGeneral.nouveauxConvertis}</div>
+  <div className="min-w-[140px] text-center text-white">{totalGeneral.reconciliations}</div>
+  <div className="min-w-[160px] text-center text-white">{totalGeneral.moissonneurs}</div>
+  <div className="min-w-[130px] text-center text-orange-400">{totalPrincipal}</div>
+</div>
+
           </div>
         </div>
       )}

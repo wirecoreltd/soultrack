@@ -289,48 +289,46 @@ const totalPrincipal =
 
          {/* 🔹 Cartes mobile (mobile only) */}
           <div className="w-full max-w-3xl mt-6 mb-6 space-y-4 block sm:hidden">
-            {reports.length === 0 && (
+            {reports.length === 0 ? (
               <p className="text-white/70 text-center">Aucun rapport trouvé</p>
+            ) : (
+              <>
+                {reports.map((r) => {
+                  const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
+                  return (
+                    <div key={r.id} className="bg-white/10 rounded-2xl p-4 text-white border-l-4 border-l-green-500 hover:bg-white/20 transition">
+                      <div className="flex justify-between mb-1"><span className="font-semibold">Date :</span><span>{r.date}</span></div>
+                      <div className="flex justify-between mb-1"><span>Hommes :</span><span>{r.hommes}</span></div>
+                      <div className="flex justify-between mb-1"><span>Femmes :</span><span>{r.femmes}</span></div>
+                      <div className="flex justify-between mb-1"><span>Jeunes :</span><span>{r.jeunes}</span></div>
+                      <div className="flex justify-between mb-1 text-orange-400 font-semibold"><span>Total :</span><span>{total}</span></div>
+                      <div className="flex justify-between mb-1"><span>Enfants :</span><span>{r.enfants}</span></div>
+                      <div className="flex justify-between mb-1"><span>Connectés :</span><span>{r.connectes}</span></div>
+                      <div className="flex justify-between mb-1"><span>Nouveaux venus :</span><span>{r.nouveauxVenus}</span></div>
+                      <div className="flex justify-between mb-2"><span>Nouveaux convertis :</span><span>{r.nouveauxConvertis}</span></div>
+                      <div className="flex justify-end gap-3">
+                        <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
+                        <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
+                      </div>
+                    </div>
+                  );
+                })}
+          
+                {/* 🔹 TOTAL BAS mobile */}
+                <div className="bg-white/20 rounded-2xl p-4 text-orange-400 font-semibold border-t border-white/40">
+                  <div className="flex justify-between mb-1"><span>TOTAL Hommes :</span><span>{totalGlobal.hommes}</span></div>
+                  <div className="flex justify-between mb-1"><span>TOTAL Femmes :</span><span>{totalGlobal.femmes}</span></div>
+                  <div className="flex justify-between mb-1"><span>TOTAL Jeunes :</span><span>{totalGlobal.jeunes}</span></div>
+                  <div className="flex justify-between mb-1"><span>TOTAL Principal :</span><span>{totalPrincipal}</span></div>
+                  <div className="flex justify-between mb-1"><span>TOTAL Enfants :</span><span>{totalGlobal.enfants}</span></div>
+                  <div className="flex justify-between mb-1"><span>TOTAL Connectés :</span><span>{totalGlobal.connectes}</span></div>
+                  <div className="flex justify-between mb-1"><span>TOTAL Nouveaux venus :</span><span>{totalGlobal.nouveauxVenus}</span></div>
+                  <div className="flex justify-between"><span>TOTAL Nouveaux convertis :</span><span>{totalGlobal.nouveauxConvertis}</span></div>
+                </div>
+              </>
             )}
+          </div>
 
-          {/* LIGNES */}
-          {reports.map((r) => {
-            const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
-            return (
-              <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500">
-                <div className="min-w-[150px] text-white font-semibold">{r.date}</div>
-                <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
-                <div className="min-w-[130px] text-center text-orange-400 font-semibold">{total}</div>
-                <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
-                <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
-                <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
-                <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
-                <div className="min-w-[140px] text-center flex justify-center gap-2">
-                  <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
-                  <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>           
-
-                </div>            
-              </div>       
-            );
-          })}
-
-            {/* 🔹 TOTAL BAS */}
-            <div className="flex items-center px-4 py-4 mt-2 rounded-xl bg-white/20 border-t border-white/40 font-bold">
-              <div className="min-w-[150px] text-orange-400 font-semibold uppercase ml-1">TOTAL</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.jeunes}</div>
-              <div className="min-w-[130px] text-center text-orange-400">{totalPrincipal}</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.enfants}</div>
-              <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGlobal.connectes}</div>
-              <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalGlobal.nouveauxVenus}</div>
-              <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGlobal.nouveauxConvertis}</div>
-              <div className="min-w-[140px]"></div>
-            </div>
-        </div>
-      </div>
 
       <Footer />
 

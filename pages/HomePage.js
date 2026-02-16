@@ -127,7 +127,6 @@ export default function HomePage() {
       {/* SHOWCASE */}
       <section className="py-16 px-6 bg-white">
         <div className="max-w-6xl mx-auto space-y-20">
-
           {[
             {
               title: "👥 Membres Hub",
@@ -163,12 +162,12 @@ export default function HomePage() {
                 <p className="text-gray-600 text-sm">{item.desc}</p>
               </div>
 
-              <div className="lg:w-1/2 mt-6 lg:mt-0">
+              <div className="lg:w-1/2 mt-6 lg:mt-0 flex justify-center">
                 <Image
                   src={item.img}
                   alt={item.title}
-                  width={500}
-                  height={300}
+                  width={item.title.includes("Fiche") ? 350 : 500}
+                  height={item.title.includes("Fiche") ? 220 : 300}
                   className="rounded-xl shadow-lg border border-blue-100"
                 />
               </div>
@@ -178,7 +177,7 @@ export default function HomePage() {
       </section>
 
       {/* TESTIMONIALS */}
-      <section className="py-16 px-6 bg-indigo-50">
+      <section className="py-16 px-6 bg-blue-600 text-white">
         <div className="max-w-6xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-10">
             Ils font confiance à SoulTrack
@@ -188,7 +187,7 @@ export default function HomePage() {
             {testimonials.map((t, i) => (
               <div
                 key={i}
-                className="bg-white p-6 rounded-xl shadow-md border border-indigo-100"
+                className="bg-white text-gray-800 p-6 rounded-xl shadow-lg"
               >
                 <Image
                   src={t.avatar}
@@ -209,13 +208,19 @@ export default function HomePage() {
       </section>
 
       {/* FINAL CTA */}
-      <section className="py-20 px-6 bg-gradient-to-r from-blue-600 to-indigo-700 text-white text-center">
-        <h2 className="text-2xl lg:text-3xl font-bold mb-6">
-          Prêt à digitaliser votre église ?
+      <section className="py-20 px-6 bg-white text-center">
+        <h2 className="text-2xl lg:text-3xl font-bold mb-6 text-gray-900">
+          Prêt à faire grandir votre église avec plus de clarté et d’impact ?
         </h2>
+
+        <p className="text-gray-600 mb-8">
+          Centralisez votre organisation et concentrez-vous sur l’essentiel :
+          les âmes.
+        </p>
+
         <button
           onClick={() => router.push("/SignupEglise")}
-          className="bg-white text-blue-700 px-8 py-4 rounded-xl font-semibold shadow-lg hover:scale-105 transition"
+          className="bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:scale-105 transition"
         >
           🚀 Créer mon compte maintenant
         </button>

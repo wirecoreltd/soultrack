@@ -314,62 +314,68 @@ function Attendance() {
         </div>
       </div>
 
-      {/* 🔹 Cartes MOBILE */}
-      <div className="w-full max-w-3xl mt-6 mb-6 space-y-4 block sm:hidden">
-        {reports.length === 0 && (
-          <p className="text-white/70 text-center">Aucun rapport trouvé</p>
-        )}
+      {/* 🔹 Cartes mobile (mobile only) */}
+<div className="w-full max-w-3xl mt-6 mb-6 space-y-4 block sm:hidden">
+  {reports.length === 0 && (
+    <p className="text-white/70 text-center">Aucun rapport trouvé</p>
+  )}
 
-        <>
-          {reports.map((r) => {
-            const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
-            return (
-              <div key={r.id} className="flex flex-col bg-white/10 hover:bg-white/20 rounded-2xl p-4 transition border-l-4 border-l-green-500">
-                <div className="text-white font-semibold mb-2">{r.date}</div>
-                <div className="flex justify-between text-white">
-                  <span>Hommes: {r.hommes}</span>
-                  <span>Femmes: {r.femmes}</span>
-                  <span>Jeunes: {r.jeunes}</span>
-                </div>
-                <div className="flex justify-between text-orange-400 font-semibold mt-1">
-                  Total: {total}
-                </div>
-                <div className="flex justify-between text-white mt-1">
-                  <span>Enfants: {r.enfants}</span>
-                  <span>Connectés: {r.connectes}</span>
-                </div>
-                <div className="flex justify-between text-white mt-1">
-                  <span>Nouveaux Venus: {r.nouveauxVenus}</span>
-                  <span>Nouveaux Convertis: {r.nouveauxConvertis}</span>
-                </div>
-                <div className="flex justify-center gap-4 mt-2">
-                  <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
-                  <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
-                </div>
-              </div>
-            );
-          })}
+  {/* 🔹 Total global mobile (en haut) */}
+  <div className="px-4 py-3 rounded-xl bg-white/20 border-l-4 border-l-yellow-400 font-bold text-white">
+    <p className="text-center mb-2">TOTAL GLOBAL</p>
+    <div className="flex flex-wrap justify-between text-sm">
+      <span>Hommes: {totalGlobal.hommes}</span>
+      <span>Femmes: {totalGlobal.femmes}</span>
+      <span>Jeunes: {totalGlobal.jeunes}</span>
+      <span>Total principal: {totalPrincipal}</span>
+      <span>Enfants: {totalGlobal.enfants}</span>
+      <span>Connectés: {totalGlobal.connectes}</span>
+      <span>Nouveaux venus: {totalGlobal.nouveauxVenus}</span>
+      <span>Nouveaux convertis: {totalGlobal.nouveauxConvertis}</span>
+    </div>
+  </div>
 
-          {/* TOTAL MOBILE */}
-          <div className="flex flex-col bg-white/20 p-4 rounded-2xl border-t border-white/40 text-orange-400 font-bold">
-            <div className="mb-2">TOTAL</div>
-            <div className="flex justify-between">
-              <span>Hommes: {totalGlobal.hommes}</span>
-              <span>Femmes: {totalGlobal.femmes}</span>
-              <span>Jeunes: {totalGlobal.jeunes}</span>
-              <span>Total: {totalPrincipal}</span>
-            </div>
-            <div className="flex justify-between mt-1">
-              <span>Enfants: {totalGlobal.enfants}</span>
-              <span>Connectés: {totalGlobal.connectes}</span>
-            </div>
-            <div className="flex justify-between mt-1">
-              <span>Nouveaux Venus: {totalGlobal.nouveauxVenus}</span>
-              <span>Nouveaux Convertis: {totalGlobal.nouveauxConvertis}</span>
-            </div>
-          </div>
-        </>
+  {/* 🔹 Lignes / Cartes */}
+  {reports.map((r) => {
+    const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
+    return (
+      <div
+        key={r.id}
+        className="flex flex-col px-4 py-4 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500"
+      >
+        <p className="text-white font-semibold mb-2">{r.date}</p>
+
+        <div className="grid grid-cols-2 gap-2 text-white text-sm">
+          <div>Hommes: {r.hommes}</div>
+          <div>Femmes: {r.femmes}</div>
+          <div>Jeunes: {r.jeunes}</div>
+          <div className="text-orange-400 font-semibold">Total: {total}</div>
+          <div>Enfants: {r.enfants}</div>
+          <div>Connectés: {r.connectes}</div>
+          <div>Nouveaux venus: {r.nouveauxVenus}</div>
+          <div>Nouveaux convertis: {r.nouveauxConvertis}</div>
+        </div>
+
+        {/* 🔹 Actions */}
+        <div className="flex justify-end gap-3 mt-3">
+          <button
+            onClick={() => handleEdit(r)}
+            className="text-blue-400 hover:text-blue-600"
+          >
+            ✏️
+          </button>
+          <button
+            onClick={() => handleDelete(r.id)}
+            className="text-red-400 hover:text-red-600"
+          >
+            🗑️
+          </button>
+        </div>
       </div>
+    );
+  })}
+</div>
+
 
       <Footer />
 

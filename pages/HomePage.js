@@ -32,6 +32,33 @@ export default function HomePage() {
     },
   ];
 
+  const hubs = [
+    {
+      title: "👥 Membres Hub",
+      desc: "Gérez chaque membre avec une fiche complète incluant informations personnelles, statut spirituel, cellule d’appartenance, historique de présence et suivi pastoral. Une vue claire pour accompagner chaque personne avec précision.",
+      img: "/Espace Membre.png",
+      bg: "bg-blue-50",
+    },
+    {
+      title: "✝️ Évangélisation Hub",
+      desc: "Suivez les nouvelles âmes, les conversions, les baptêmes et les parcours d’intégration. Visualisez l’impact de vos actions d’évangélisation et identifiez les prochaines étapes pour un meilleur accompagnement.",
+      img: "/Espace Evangelisation.png",
+      bg: "bg-indigo-50",
+    },
+    {
+      title: "🏠 Cellules Hub",
+      desc: "Organisez vos responsables, gérez les groupes, suivez les présences hebdomadaires et analysez la croissance de vos cellules. Un outil essentiel pour structurer et développer votre ministère local.",
+      img: "/Espace Cellule.png",
+      bg: "bg-blue-100/60",
+    },
+    {
+      title: "📋 Fiche détaillée",
+      desc: "Accédez à une vue complète d’un membre : informations clés, historique, suivi spirituel, intégration en cellule et interactions pastorales. Tout est centralisé pour un accompagnement personnalisé.",
+      img: "/Details Membre.png",
+      bg: "bg-indigo-100/60",
+    },
+  ];
+
   return (
     <div className="bg-white text-gray-900">
       <PublicHeader />
@@ -68,10 +95,6 @@ export default function HomePage() {
                 Connexion
               </button>
             </div>
-
-            <div className="mt-6 text-sm text-white/80">
-              ✔ Installation rapide &nbsp; ✔ Support inclus &nbsp; ✔ Sécurisé
-            </div>
           </div>
 
           <div className="lg:w-1/2 mt-10 lg:mt-0">
@@ -86,93 +109,36 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* FEATURES */}
-      <section className="py-16 px-6 bg-blue-50">
-        <div className="max-w-6xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-10">
-            Une solution complète pour votre ministère
-          </h2>
+      {/* SHOWCASE HUBS */}
+      <section className="py-16">
+        <div className="max-w-6xl mx-auto space-y-16">
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: "👥",
-                title: "Gestion des membres",
-                desc: "Fiches détaillées, suivi spirituel, statut et historique complet.",
-              },
-              {
-                icon: "🏠",
-                title: "Organisation des cellules",
-                desc: "Responsables, présences et rapports centralisés.",
-              },
-              {
-                icon: "📊",
-                title: "Statistiques intelligentes",
-                desc: "Analysez la croissance et prenez de meilleures décisions.",
-              },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition border border-blue-100"
-              >
-                <div className="text-3xl mb-3">{item.icon}</div>
-                <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-                <p className="text-gray-600 text-sm">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* SHOWCASE */}
-      <section className="py-16 px-6 bg-white">
-        <div className="max-w-6xl mx-auto space-y-20">
-          {[
-            {
-              title: "👥 Membres Hub",
-              desc: "Vue claire de tous vos membres avec statut, cellule et évolution.",
-              img: "/Espace Membre.png",
-            },
-            {
-              title: "✝️ Évangélisation Hub",
-              desc: "Suivi des nouvelles âmes, conversions et baptêmes.",
-              img: "/Espace Evangelisation.png",
-            },
-            {
-              title: "🏠 Cellules Hub",
-              desc: "Organisation des responsables et analyse de croissance.",
-              img: "/Espace Cellule.png",
-            },
-            {
-              title: "📋 Fiche détaillée",
-              desc: "Historique complet d’un membre : présence, cellule et suivi.",
-              img: "/Details Membre.png",
-            },
-          ].map((item, i) => (
+          {hubs.map((hub, i) => (
             <div
               key={i}
-              className={`lg:flex lg:items-center lg:gap-14 ${
-                i % 2 !== 0 ? "lg:flex-row-reverse" : ""
-              }`}
+              className={`${hub.bg} rounded-3xl px-8 py-12 lg:flex lg:items-center lg:gap-14 shadow-sm`}
             >
-              <div className="lg:w-1/2">
+              <div className={`lg:w-1/2 ${i % 2 !== 0 ? "lg:order-2" : ""}`}>
                 <h3 className="text-2xl font-bold mb-4 text-blue-700">
-                  {item.title}
+                  {hub.title}
                 </h3>
-                <p className="text-gray-600 text-sm">{item.desc}</p>
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  {hub.desc}
+                </p>
               </div>
 
-              <div className="lg:w-1/2 mt-6 lg:mt-0 flex justify-center">
+              <div className="lg:w-1/2 mt-8 lg:mt-0 flex justify-center">
                 <Image
-                  src={item.img}
-                  alt={item.title}
-                  width={item.title.includes("Fiche") ? 350 : 500}
-                  height={item.title.includes("Fiche") ? 220 : 300}
-                  className="rounded-xl shadow-lg border border-blue-100"
+                  src={hub.img}
+                  alt={hub.title}
+                  width={hub.title.includes("Fiche") ? 250 : 480}
+                  height={hub.title.includes("Fiche") ? 150 : 280}
+                  className="rounded-xl shadow-lg border border-white"
                 />
               </div>
             </div>
           ))}
+
         </div>
       </section>
 
@@ -210,12 +176,12 @@ export default function HomePage() {
       {/* FINAL CTA */}
       <section className="py-20 px-6 bg-white text-center">
         <h2 className="text-2xl lg:text-3xl font-bold mb-6 text-gray-900">
-          Prêt à faire grandir votre église avec plus de clarté et d’impact ?
+          Prêt à faire passer votre église au niveau supérieur ?
         </h2>
 
         <p className="text-gray-600 mb-8">
-          Centralisez votre organisation et concentrez-vous sur l’essentiel :
-          les âmes.
+          Structurez votre organisation, suivez votre croissance et concentrez-vous
+          sur votre mission.
         </p>
 
         <button

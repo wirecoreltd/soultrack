@@ -138,7 +138,7 @@ export default function HomePage() {
             </div>
             <div className="lg:w-1/2">
               <Image
-                src="/membres-hub.png"
+                src="/Espace Membre.png"
                 alt="Membres Hub"
                 width={900}
                 height={600}

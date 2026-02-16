@@ -199,10 +199,10 @@ export default function HomePage() {
             </div>
             <div className="lg:w-1/2">
               <Image
-                src="/fiche-contact.png"
+                src="/Details Membre.png"
                 alt="Fiche contact"
-                width={900}
-                height={600}
+                width={200}
+                height={500}
                 className="rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border"
               />
             </div>

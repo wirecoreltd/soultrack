@@ -316,18 +316,18 @@ function Attendance() {
 
       {/* 🔹 Cartes Mobile (mobile only) */}
 <div className="w-full max-w-3xl mt-6 mb-6 block sm:hidden">
-  {reports.length === 0 && (
+  {reports.length === 0 ? (
     <p className="text-white/70 text-center">Aucun rapport trouvé</p>
-  )}
-
-  {reports.length === 1 ? (
+  ) : reports.length === 1 ? (
     // Carte verticale détaillée pour 1 rapport
     <div className="bg-white/10 p-4 rounded-2xl shadow-md border-l-4 border-l-green-500">
       <p className="text-white font-semibold mb-1">Date: {reports[0].date}</p>
       <p className="text-white">Hommes: {reports[0].hommes}</p>
       <p className="text-white">Femmes: {reports[0].femmes}</p>
       <p className="text-white">Jeunes: {reports[0].jeunes}</p>
-      <p className="text-orange-400 font-semibold">Total: {Number(reports[0].hommes)+Number(reports[0].femmes)+Number(reports[0].jeunes)}</p>
+      <p className="text-orange-400 font-semibold">
+        Total: {Number(reports[0].hommes) + Number(reports[0].femmes) + Number(reports[0].jeunes)}
+      </p>
       <p className="text-white">Enfants: {reports[0].enfants}</p>
       <p className="text-white">Connectés: {reports[0].connectes}</p>
       <p className="text-white">Nouveaux Venus: {reports[0].nouveauxVenus}</p>

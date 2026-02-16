@@ -45,46 +45,50 @@ function RapportMinistere() {
 
   // 🔹 Générer rapport
   const fetchRapport = async () => {
-    if (!egliseId || !brancheId) return;
+  if (!egliseId || !brancheId) return;
 
-    setLoading(true);
+  setLoading(true);
 
-    let query = supabase
-      .from("membres_complets")
-      .select('"Ministere", created_at')
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId)
-      .not("Ministere", "is", null);
+  let query = supabase
+    .from("membres_complets")
+    .select('"Ministere", created_at')
+    .eq("eglise_id", egliseId)
+    .eq("branche_id", brancheId)
+    .not("Ministere", "is", null);
 
-    if (dateDebut) query = query.gte("created_at", dateDebut);
-    if (dateFin) query = query.lte("created_at", dateFin);
+  if (dateDebut) query = query.gte("created_at", dateDebut);
+  if (dateFin) query = query.lte("created_at", dateFin);
 
-    const { data, error } = await query;
+  const { data, error } = await query;
 
-    if (error) {
-      console.error(error);
-      setLoading(false);
-      return;
+  if (error) {
+    console.error(error);
+    setLoading(false);
+    return;
+  }
+
+  const counts = {};
+
+  data.forEach((membre) => {
+    if (Array.isArray(membre.Ministere)) {
+      membre.Ministere.forEach((ministere) => {
+        if (!counts[ministere]) counts[ministere] = 0;
+        counts[ministere]++;
+      });
     }
+  });
 
-    // 🔥 Regroupement par ministère
-    const counts = {};
-
-    data.forEach((m) => {
-      const ministere = m.Ministere;
-      if (!counts[ministere]) counts[ministere] = 0;
-      counts[ministere]++;
-    });
-
-    // Transformer en tableau
-    const result = Object.entries(counts).map(([nom, total]) => ({
+  const result = Object.entries(counts)
+    .map(([nom, total]) => ({
       ministere: nom,
       total,
-    }));
+    }))
+    .sort((a, b) => b.total - a.total); // tri décroissant
 
-    setRapports(result);
-    setLoading(false);
-  };
+  setRapports(result);
+  setLoading(false);
+};
+
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">

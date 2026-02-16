@@ -373,25 +373,26 @@ function Attendance() {
 </div>
 
 
-        {/* 🔹 Actions */}
-        <div className="flex justify-end gap-3 mt-3">
-          <button
-            onClick={() => handleEdit(r)}
-            className="text-blue-400 hover:text-blue-600"
-          >
-            ✏️
-          </button>
-          <button
-            onClick={() => handleDelete(r.id)}
-            className="text-red-400 hover:text-red-600"
-          >
-            🗑️
-          </button>
-        </div>
-     
-    );
-  })}
+       {/* 🔹 Actions */}
+<div className="flex justify-end gap-3 mt-3">
+  <button
+    onClick={() => handleEdit(r)}
+    className="text-blue-400 hover:text-blue-600"
+  >
+    ✏️
+  </button>
+  <button
+    onClick={() => handleDelete(r.id)}
+    className="text-red-400 hover:text-red-600"
+  >
+    🗑️
+  </button>
 </div>
+
+);
+})}
+</div>
+
 
 
       <Footer />

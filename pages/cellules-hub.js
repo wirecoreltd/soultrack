@@ -109,19 +109,8 @@ function CellulesHubContent() {
                 <div className="text-lg font-bold text-gray-800 text-center">
                   Suivis des membres
                 </div>
-              </Link>
-            
-            </div>
-
-
-        {/* 🔹 Bouton popup ajouté sous les cartes */}
-        <div className="w-full max-w-md mb-10">
-          <SendLinkPopup
-            label="Envoyer l'appli – Évangélisé"
-            type="ajouter_evangelise"
-            buttonColor="from-[#09203F] to-[#537895]"
-          />
-        </div>
+              </Link>            
+            </div>        
 
         {/* 🔹 Verset biblique / texte motivant */}
         <div className="mt-auto mb-4 text-center text-white text-lg font-handwriting max-w-2xl">

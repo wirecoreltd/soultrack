@@ -157,7 +157,7 @@ export default function HomePage() {
             </div>
             <div className="lg:w-1/2">
               <Image
-                src="/Espace Evangelisation"
+                src="/Espace Evangelisation.png"
                 alt="Evangélisation Hub"
                 width={500}
                 height={200}
@@ -177,7 +177,7 @@ export default function HomePage() {
             </div>
             <div className="lg:w-1/2">
               <Image
-                src="/Espace Cellule"
+                src="/Espace Cellule.png"
                 alt="Cellules Hub"
                 width={500}
                 height={200}

@@ -22,7 +22,7 @@ export default function PublicHeader() {
         {/* Logo */}
         <div
           className="flex items-center cursor-pointer"
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/HomePage")}
         >
           <Image src="/logo.png" alt="Logo SoulTrack" width={50} height={50} />
           <span className="ml-3 text-2xl font-bold text-gray-800">SoulTrack</span>

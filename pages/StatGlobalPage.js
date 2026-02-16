@@ -32,10 +32,7 @@ function StatGlobalPage() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data } = await supabase
@@ -55,7 +52,6 @@ function StatGlobalPage() {
 
   const fetchStats = async () => {
     if (!egliseId || !brancheId) return;
-
     setLoading(true);
 
     // ================= ATTENDANCE =================
@@ -78,6 +74,7 @@ function StatGlobalPage() {
       connectes: 0,
       nouveauxVenus: 0,
       nouveauxConvertis: 0,
+      reconciliations: 0,
       moissonneurs: 0,
     };
 
@@ -89,6 +86,7 @@ function StatGlobalPage() {
       attendanceTotals.connectes += Number(r.connectes) || 0;
       attendanceTotals.nouveauxVenus += Number(r.nouveauxVenus) || 0;
       attendanceTotals.nouveauxConvertis += Number(r.nouveauxConvertis) || 0;
+      attendanceTotals.reconciliations += Number(r.reconciliations) || 0;
       attendanceTotals.moissonneurs += Number(r.moissonneurs) || 0;
     });
 
@@ -109,59 +107,42 @@ function StatGlobalPage() {
     const evanTotals = {
       hommes: 0,
       femmes: 0,
-      jeunes: 0,
-      enfants: 0,
-      connectes: 0,
-      nouveauxVenus: 0,
       nouveauxConvertis: 0,
-      moissonneurs: 0,
+      reconciliations: 0,
     };
 
     evanData?.forEach((r) => {
       if (r.sexe === "Homme") evanTotals.hommes++;
       if (r.sexe === "Femme") evanTotals.femmes++;
       if (r.type_conversion === "Nouveau converti") evanTotals.nouveauxConvertis++;
+      if (r.type_conversion === "Réconciliation") evanTotals.reconciliations++;
     });
 
     setEvanStats(evanTotals);
 
     // ================= BAPTEME =================
-    let baptemeQuery = supabase
+    const { data: baptemeData } = await supabase
       .from("baptemes")
       .select("hommes, femmes")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
 
-    if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
-    if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
-
-    const { data: baptemeData } = await baptemeQuery;
-
-    const baptemeTotals = {
+    setBaptemeStats({
       hommes: baptemeData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
       femmes: baptemeData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
-    };
-
-    setBaptemeStats(baptemeTotals);
+    });
 
     // ================= FORMATION =================
-    let formationQuery = supabase
+    const { data: formationData } = await supabase
       .from("formations")
       .select("hommes, femmes")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
 
-    if (dateDebut) formationQuery = formationQuery.gte("date_debut", dateDebut);
-    if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin);
-
-    const { data: formationData } = await formationQuery;
-
-    const formationTotals = {
+    setFormationStats({
       hommes: formationData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
       femmes: formationData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
-    };
-
-    setFormationStats(formationTotals);
+    });
 
     const { count } = await supabase
       .from("cellules")
@@ -170,40 +151,10 @@ function StatGlobalPage() {
       .eq("branche_id", brancheId);
 
     setCellulesCount(count || 0);
-
     setLoading(false);
   };
 
-  const totalGeneral = rapports.reduce(
-  (acc, r) => {
-    acc.hommes += Number(r.data?.hommes) || 0;
-    acc.femmes += Number(r.data?.femmes) || 0;
-    acc.jeunes += Number(r.data?.jeunes) || 0;
-    acc.enfants += Number(r.data?.enfants) || 0;
-    acc.connectes += Number(r.data?.connectes) || 0;
-    acc.nouveauxVenus += Number(r.data?.nouveauxVenus) || 0;
-    acc.nouveauxConvertis += Number(r.data?.nouveauxConvertis) || 0;
-    acc.reconciliations += Number(r.data?.reconciliations) || 0;
-    acc.moissonneurs += Number(r.data?.moissonneurs) || 0;
-    return acc;
-  },
-  {
-    hommes: 0,
-    femmes: 0,
-    jeunes: 0,
-    enfants: 0,
-    connectes: 0,
-    nouveauxVenus: 0,
-    nouveauxConvertis: 0,
-    reconciliations: 0,
-    moissonneurs: 0,
-  }
-);
-
-const totalFinal =
-  totalGeneral.hommes + totalGeneral.femmes;
-
-
+  // ================= RAPPORTS =================
   const rapports = [
     { label: "Culte", data: attendanceStats, border: "border-l-orange-500" },
     { label: "Evangelisation", data: evanStats, border: "border-l-green-500" },
@@ -212,6 +163,35 @@ const totalFinal =
     { label: "Cellules", data: { total: cellulesCount }, border: "border-l-yellow-500" },
   ].filter((r) => typeRapport === "Tous" || r.label === typeRapport);
 
+  // ================= TOTAL GENERAL =================
+  const totalGeneral = rapports.reduce(
+    (acc, r) => {
+      acc.hommes += Number(r.data?.hommes) || 0;
+      acc.femmes += Number(r.data?.femmes) || 0;
+      acc.jeunes += Number(r.data?.jeunes) || 0;
+      acc.enfants += Number(r.data?.enfants) || 0;
+      acc.connectes += Number(r.data?.connectes) || 0;
+      acc.nouveauxVenus += Number(r.data?.nouveauxVenus) || 0;
+      acc.nouveauxConvertis += Number(r.data?.nouveauxConvertis) || 0;
+      acc.reconciliations += Number(r.data?.reconciliations) || 0;
+      acc.moissonneurs += Number(r.data?.moissonneurs) || 0;
+      return acc;
+    },
+    {
+      hommes: 0,
+      femmes: 0,
+      jeunes: 0,
+      enfants: 0,
+      connectes: 0,
+      nouveauxVenus: 0,
+      nouveauxConvertis: 0,
+      reconciliations: 0,
+      moissonneurs: 0,
+    }
+  );
+
+  const totalFinal = totalGeneral.hommes + totalGeneral.femmes;
+
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
@@ -219,97 +199,31 @@ const totalFinal =
         Statistiques Globales
       </h1>
 
-      {/* FILTRES */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
-        <input
-          type="date"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <input
-          type="date"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <select
-          value={typeRapport}
-          onChange={(e) => setTypeRapport(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        >
-          <option className="text-black" value="Tous">Tous</option>
-          <option className="text-black" value="Culte">Culte</option>
-          <option className="text-black" value="Evangelisation">Evangelisation</option>
-          <option className="text-black" value="Baptême">Baptême</option>
-          <option className="text-black" value="Formation">Formation</option>
-          <option className="text-black" value="Cellules">Cellules</option>
-        </select>
-
-        <button
-          onClick={fetchStats}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-        >
-          Générer
-        </button>
-      </div>
-
-      {/* TABLE */}
       {!loading && attendanceStats && (
-        <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
-          <div className="w-max space-y-2"> {/* plus large pour total */}
-            {/* HEADER */}
-            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[180px] ml-1">Type</div>
-              <div className="min-w-[120px] text-center">Hommes</div>
-              <div className="min-w-[120px] text-center">Femmes</div>
-              <div className="min-w-[120px] text-center">Jeunes</div>
-              <div className="min-w-[120px] text-center">Enfants</div>
-              <div className="min-w-[140px] text-center">Connectés</div>
-              <div className="min-w-[150px] text-center">Nouveaux Venus</div>
-              <div className="min-w-[180px] text-center">Nouveau Converti</div>
-              <div className="min-w-[140px] text-center">Réconciliation</div>
-              <div className="min-w-[160px] text-center">Moissonneurs</div>
-              <div className="min-w-[130px] text-center">Total</div>
-            </div>
+        <div className="w-full max-w-full overflow-x-auto mt-6">
+          <div className="w-max space-y-2">
 
-            {/* LIGNES */}
             {rapports.map((r, idx) => {
               const total =
-                (Number(r.data?.hommes) || 0) + (Number(r.data?.femmes) || 0);
+                (Number(r.data?.hommes) || 0) +
+                (Number(r.data?.femmes) || 0);
+
               return (
-                <div
-                  key={idx}
-                  className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${r.border}`}
-                >
+                <div key={idx} className="flex items-center px-4 py-3 rounded-lg bg-white/10 border-l-4">
                   <div className="min-w-[180px] text-white font-semibold">{r.label}</div>
                   <div className="min-w-[120px] text-center text-white">{r.data?.hommes ?? "-"}</div>
                   <div className="min-w-[120px] text-center text-white">{r.data?.femmes ?? "-"}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.data?.jeunes ?? "-"}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.data?.enfants ?? "-"}</div>
-                  <div className="min-w-[140px] text-center text-white">{r.data?.connectes ?? "-"}</div>
-                  <div className="min-w-[150px] text-center text-white">{r.data?.nouveauxVenus ?? "-"}</div>
-                  <div className="min-w-[180px] text-center text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
-                  <div className="min-w-[140px] text-center text-white">{r.data?.reconciliations ?? "-"}</div>         
-                  <div className="min-w-[160px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>
-                  <div className="min-w-[130px] text-center text-white font-bold">{total ?? r.data?.total ?? "-"}</div>
+                  <div className="min-w-[130px] text-center text-white font-bold">{total || r.data?.total || 0}</div>
                 </div>
               );
             })}
-  {/* 🔹 TOTAL GLOBAL BAS */}
-<div className="flex items-center px-4 py-4 mt-2 rounded-xl bg-white/20 border-t border-white/40 font-bold">
-  <div className="min-w-[180px] text-white uppercase ml-1">TOTAL</div>
-  <div className="min-w-[120px] text-center text-white">{totalGeneral.hommes}</div>
-  <div className="min-w-[120px] text-center text-white">{totalGeneral.femmes}</div>
-  <div className="min-w-[120px] text-center text-white">{totalGeneral.jeunes}</div>
-  <div className="min-w-[120px] text-center text-white">{totalGeneral.enfants}</div>
-  <div className="min-w-[140px] text-center text-white">{totalGeneral.connectes}</div>
-  <div className="min-w-[150px] text-center text-white">{totalGeneral.nouveauxVenus}</div>
-  <div className="min-w-[180px] text-center text-white">{totalGeneral.nouveauxConvertis}</div>
-  <div className="min-w-[140px] text-center text-white">{totalGeneral.reconciliations}</div>
-  <div className="min-w-[160px] text-center text-white">{totalGeneral.moissonneurs}</div>
-  <div className="min-w-[130px] text-center text-orange-400 font-bold">{totalFinal}</div>
-</div>
+
+            <div className="flex items-center px-4 py-4 mt-2 rounded-xl bg-white/20 font-bold">
+              <div className="min-w-[180px] text-white uppercase">TOTAL</div>
+              <div className="min-w-[120px] text-center text-white">{totalGeneral.hommes}</div>
+              <div className="min-w-[120px] text-center text-white">{totalGeneral.femmes}</div>
+              <div className="min-w-[130px] text-center text-orange-400 font-bold">{totalFinal}</div>
+            </div>
 
           </div>
         </div>

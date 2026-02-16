@@ -30,6 +30,7 @@ function StatGlobalPage() {
 
   const [loading, setLoading] = useState(false);
 
+  // ================= PROFILE =================
   useEffect(() => {
     const fetchProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -50,8 +51,10 @@ function StatGlobalPage() {
     fetchProfile();
   }, []);
 
+  // ================= FETCH STATS =================
   const fetchStats = async () => {
     if (!egliseId || !brancheId) return;
+
     setLoading(true);
 
     // ================= ATTENDANCE =================
@@ -121,11 +124,16 @@ function StatGlobalPage() {
     setEvanStats(evanTotals);
 
     // ================= BAPTEME =================
-    const { data: baptemeData } = await supabase
+    let baptemeQuery = supabase
       .from("baptemes")
       .select("hommes, femmes")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
+
+    if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
+    if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
+
+    const { data: baptemeData } = await baptemeQuery;
 
     setBaptemeStats({
       hommes: baptemeData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
@@ -133,11 +141,16 @@ function StatGlobalPage() {
     });
 
     // ================= FORMATION =================
-    const { data: formationData } = await supabase
+    let formationQuery = supabase
       .from("formations")
       .select("hommes, femmes")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
+
+    if (dateDebut) formationQuery = formationQuery.gte("date_debut", dateDebut);
+    if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin);
+
+    const { data: formationData } = await formationQuery;
 
     setFormationStats({
       hommes: formationData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
@@ -151,46 +164,17 @@ function StatGlobalPage() {
       .eq("branche_id", brancheId);
 
     setCellulesCount(count || 0);
+
     setLoading(false);
   };
 
-  // ================= RAPPORTS =================
   const rapports = [
-    { label: "Culte", data: attendanceStats, border: "border-l-orange-500" },
-    { label: "Evangelisation", data: evanStats, border: "border-l-green-500" },
-    { label: "Baptême", data: baptemeStats, border: "border-l-purple-500" },
-    { label: "Formation", data: formationStats, border: "border-l-blue-500" },
-    { label: "Cellules", data: { total: cellulesCount }, border: "border-l-yellow-500" },
+    { label: "Culte", data: attendanceStats },
+    { label: "Evangelisation", data: evanStats },
+    { label: "Baptême", data: baptemeStats },
+    { label: "Formation", data: formationStats },
+    { label: "Cellules", data: { total: cellulesCount } },
   ].filter((r) => typeRapport === "Tous" || r.label === typeRapport);
-
-  // ================= TOTAL GENERAL =================
-  const totalGeneral = rapports.reduce(
-    (acc, r) => {
-      acc.hommes += Number(r.data?.hommes) || 0;
-      acc.femmes += Number(r.data?.femmes) || 0;
-      acc.jeunes += Number(r.data?.jeunes) || 0;
-      acc.enfants += Number(r.data?.enfants) || 0;
-      acc.connectes += Number(r.data?.connectes) || 0;
-      acc.nouveauxVenus += Number(r.data?.nouveauxVenus) || 0;
-      acc.nouveauxConvertis += Number(r.data?.nouveauxConvertis) || 0;
-      acc.reconciliations += Number(r.data?.reconciliations) || 0;
-      acc.moissonneurs += Number(r.data?.moissonneurs) || 0;
-      return acc;
-    },
-    {
-      hommes: 0,
-      femmes: 0,
-      jeunes: 0,
-      enfants: 0,
-      connectes: 0,
-      nouveauxVenus: 0,
-      nouveauxConvertis: 0,
-      reconciliations: 0,
-      moissonneurs: 0,
-    }
-  );
-
-  const totalFinal = totalGeneral.hommes + totalGeneral.femmes;
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -199,35 +183,42 @@ function StatGlobalPage() {
         Statistiques Globales
       </h1>
 
-      {!loading && attendanceStats && (
-        <div className="w-full max-w-full overflow-x-auto mt-6">
-          <div className="w-max space-y-2">
+      {/* ================= FILTRES ================= */}
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
+        <input
+          type="date"
+          value={dateDebut}
+          onChange={(e) => setDateDebut(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
 
-            {rapports.map((r, idx) => {
-              const total =
-                (Number(r.data?.hommes) || 0) +
-                (Number(r.data?.femmes) || 0);
+        <input
+          type="date"
+          value={dateFin}
+          onChange={(e) => setDateFin(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
 
-              return (
-                <div key={idx} className="flex items-center px-4 py-3 rounded-lg bg-white/10 border-l-4">
-                  <div className="min-w-[180px] text-white font-semibold">{r.label}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.data?.hommes ?? "-"}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.data?.femmes ?? "-"}</div>
-                  <div className="min-w-[130px] text-center text-white font-bold">{total || r.data?.total || 0}</div>
-                </div>
-              );
-            })}
+        <select
+          value={typeRapport}
+          onChange={(e) => setTypeRapport(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        >
+          <option className="text-black" value="Tous">Tous</option>
+          <option className="text-black" value="Culte">Culte</option>
+          <option className="text-black" value="Evangelisation">Evangelisation</option>
+          <option className="text-black" value="Baptême">Baptême</option>
+          <option className="text-black" value="Formation">Formation</option>
+          <option className="text-black" value="Cellules">Cellules</option>
+        </select>
 
-            <div className="flex items-center px-4 py-4 mt-2 rounded-xl bg-white/20 font-bold">
-              <div className="min-w-[180px] text-white uppercase">TOTAL</div>
-              <div className="min-w-[120px] text-center text-white">{totalGeneral.hommes}</div>
-              <div className="min-w-[120px] text-center text-white">{totalGeneral.femmes}</div>
-              <div className="min-w-[130px] text-center text-orange-400 font-bold">{totalFinal}</div>
-            </div>
-
-          </div>
-        </div>
-      )}
+        <button
+          onClick={fetchStats}
+          className="bg-[#2a2f85] px-8 py-3 rounded-2xl font-bold hover:bg-[#1f2366] transition"
+        >
+          Générer
+        </button>
+      </div>
 
       <Footer />
     </div>

@@ -5,18 +5,8 @@ import React from "react";
 import supabase from "../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import HeaderPages from "../components/HeaderPages";
-import ProtectedRoute from "../components/ProtectedRoute";
-import Footer from "../components/Footer";
 
-export default function ListConseillersPage() {
-  return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
-      <ListConseillers />
-    </ProtectedRoute>
-  );
-}
-
-function ListConseillers() {
+export default function ListConseillers() {
   const [conseillers, setConseillers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -169,7 +159,6 @@ function ListConseillers() {
           </div>
         )}
       </div>
-           <Footer />
     </div>
   );
 }

@@ -328,38 +328,43 @@ export default function AddMember() {
           )}
 
           {/* Besoins */}
-          <p className="text-sm sm:text-base font-semibold mb-1">Besoins</p>
-          {besoinsOptions.map(item => (
-            <label key={item} className="flex items-center gap-1 mb-2 text-sm sm:text-base">
+            <label className="text-sm sm:text-base font-bold mb-1">Besoins</label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {besoinsOptions.map((item) => (
+                <label key={item} className="flex items-center gap-1 text-sm">
+                  <input
+                    type="checkbox"
+                    value={item}
+                    checked={formData.besoin.includes(item)}
+                    onChange={handleBesoinChange}
+                    className="w-4 h-4 sm:w-5 sm:h-5"
+                  />
+                  {item}
+                </label>
+              ))}
+              <label className="flex items-center gap-1 text-sm">
+                <input
+                  type="checkbox"
+                  value="Autre"
+                  checked={showBesoinLibre}
+                  onChange={handleBesoinChange}
+                  className="w-4 h-4 sm:w-5 sm:h-5"
+                />
+                Autre
+              </label>
+            </div>
+            
+            {showBesoinLibre && (
               <input
-                type="checkbox"
-                value={item}
-                checked={formData.besoin.includes(item)}
-                onChange={handleBesoinChange}
-                className="w-4 h-4 sm:w-5 sm:h-5 rounded border-gray-400 cursor-pointer"
+                type="text"
+                placeholder="Précisez..."
+                value={formData.besoinLibre}
+                onChange={(e) =>
+                  setFormData({ ...formData, besoinLibre: e.target.value })
+                }
+                className="input mb-2"
               />
-              {item}
-            </label>
-          ))}
-          <label className="flex items-center gap-3 mb-2 text-sm sm:text-base">
-            <input
-              type="checkbox"
-              value="Autre"
-              checked={showBesoinLibre}
-              onChange={handleBesoinChange}
-              className="w-4 h-4 sm:w-5 sm:h-5 rounded border-gray-400 cursor-pointer"
-            />
-            Autre
-          </label>
-          {showBesoinLibre && (
-            <input
-              type="text"
-              placeholder="Précisez..."
-              value={formData.besoinLibre}
-              onChange={(e) => setFormData({ ...formData, besoinLibre: e.target.value })}
-              className="input mt-1"
-            />
-          )}
+            )}
 
           {/* Informations supplémentaires */}
           <label className="text-sm sm:text-base font-semibold">Informations supplémentaires</label>

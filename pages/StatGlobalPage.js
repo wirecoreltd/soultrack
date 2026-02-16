@@ -291,25 +291,24 @@ const totalPrincipal =
                   <div className="min-w-[150px] text-center text-white">{r.data?.nouveauxVenus ?? "-"}</div>
                   <div className="min-w-[180px] text-center text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
                   <div className="min-w-[140px] text-center text-white">{r.data?.reconciliations ?? "-"}</div>         
-                  <div className="min-w-[160px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>
-                  <div className="min-w-[130px] text-center text-white font-bold">{total ?? r.data?.total ?? "-"}</div>
+                  <div className="min-w-[160px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>                 
                 </div>
               );
             })}
   {/* 🔹 TOTAL GENERAL BAS */}
 <div className="flex items-center px-4 py-4 mt-3 rounded-xl bg-white/20 border-t border-white/40 font-bold">
-  <div className="min-w-[180px] text-white uppercase">TOTAL</div>
+  <div className="min-w-[180px] text-white uppercase ml-1">TOTAL</div>
 
-  <div className="min-w-[120px] text-center text-white">{totalGeneral.hommes}</div>
-  <div className="min-w-[120px] text-center text-white">{totalGeneral.femmes}</div>
-  <div className="min-w-[120px] text-center text-white">{totalGeneral.jeunes}</div>
-  <div className="min-w-[120px] text-center text-white">{totalGeneral.enfants}</div>
-  <div className="min-w-[140px] text-center text-white">{totalGeneral.connectes}</div>
-  <div className="min-w-[150px] text-center text-white">{totalGeneral.nouveauxVenus}</div>
-  <div className="min-w-[180px] text-center text-white">{totalGeneral.nouveauxConvertis}</div>
-  <div className="min-w-[140px] text-center text-white">{totalGeneral.reconciliations}</div>
-  <div className="min-w-[160px] text-center text-white">{totalGeneral.moissonneurs}</div>
-  <div className="min-w-[130px] text-center text-orange-400">{totalPrincipal}</div>
+  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.hommes}</div>
+  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.femmes}</div>
+  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.jeunes}</div>
+  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.enfants}</div>
+  <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGeneral.connectes}</div>
+  <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalGeneral.nouveauxVenus}</div>
+  <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGeneral.nouveauxConvertis}</div>
+  <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGeneral.reconciliations}</div>
+  <div className="min-w-[160px] text-center text-orange-400 font-semibold">{totalGeneral.moissonneurs}</div>
+  <div className="min-w-[130px] text-center text-orange-400 font-semibold">{totalPrincipal}</div>
 </div>
 
           </div>

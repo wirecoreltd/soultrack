@@ -12,19 +12,22 @@ export default function HomePage() {
     {
       name: "Past. Jean",
       church: "Église Bethel",
-      message: "SoulTrack a révolutionné la gestion de nos cellules et membres.",
+      message:
+        "SoulTrack a transformé la gestion de nos cellules et membres.",
       avatar: "/avatar1.png",
     },
     {
       name: "Past. Marie",
       church: "Église Grâce",
-      message: "Un outil simple et efficace pour suivre nos rapports et présences.",
+      message:
+        "Un outil clair et puissant pour suivre notre croissance spirituelle.",
       avatar: "/avatar2.png",
     },
     {
       name: "Past. Samuel",
       church: "Église Lumière",
-      message: "Les statistiques claires nous permettent de mieux planifier.",
+      message:
+        "Les statistiques nous aident à prendre de meilleures décisions.",
       avatar: "/avatar3.png",
     },
   ];
@@ -34,21 +37,20 @@ export default function HomePage() {
       <PublicHeader />
 
       {/* HERO */}
-      <section className="relative pt-24 pb-32 bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
+      <section className="pt-24 pb-32 bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
         <div className="max-w-7xl mx-auto px-6 lg:flex lg:items-center lg:justify-between">
-          
           <div className="lg:w-1/2">
             <span className="bg-white/20 px-4 py-1 rounded-full text-sm">
-              🚀 Plateforme de gestion d’église moderne
+              🚀 Plateforme moderne pour églises
             </span>
 
             <h1 className="text-5xl font-extrabold mt-6 mb-6 leading-tight">
-              Gérez votre église avec clarté et efficacité
+              Centralisez toute la gestion de votre église
             </h1>
 
             <p className="text-lg text-white/90 mb-8">
-              Membres, cellules, présences, rapports et statistiques.
-              Tout centralisé dans une seule plateforme intelligente.
+              Membres, cellules, évangélisation, présences et statistiques.
+              Une solution simple, claire et puissante.
             </p>
 
             <div className="flex gap-4">
@@ -71,13 +73,12 @@ export default function HomePage() {
           <div className="lg:w-1/2 mt-12 lg:mt-0">
             <Image
               src="/hero-illustration.png"
-              alt="SoulTrack dashboard"
-              width={600}
-              height={400}
-              className="rounded-2xl shadow-2xl"
+              alt="Dashboard SoulTrack"
+              width={700}
+              height={450}
+              className="rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.3)]"
             />
           </div>
-
         </div>
       </section>
 
@@ -85,41 +86,133 @@ export default function HomePage() {
       <section className="py-24 px-6 bg-gray-50">
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-12">
-            Tout ce dont votre église a besoin
+            Une solution complète pour votre ministère
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-
             <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition">
               <div className="text-4xl mb-4">👥</div>
-              <h3 className="text-xl font-semibold mb-3">Gestion des membres</h3>
+              <h3 className="text-xl font-semibold mb-3">
+                Gestion des membres
+              </h3>
               <p className="text-gray-600">
-                Suivi complet du parcours spirituel, statut, conversion et cellule.
+                Suivi complet du parcours spirituel et administratif.
               </p>
             </div>
 
             <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition">
               <div className="text-4xl mb-4">🏠</div>
-              <h3 className="text-xl font-semibold mb-3">Organisation des cellules</h3>
+              <h3 className="text-xl font-semibold mb-3">
+                Organisation des cellules
+              </h3>
               <p className="text-gray-600">
-                Gérez responsables, présences et rapports facilement.
+                Responsables, présences et rapports centralisés.
               </p>
             </div>
 
             <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition">
               <div className="text-4xl mb-4">📊</div>
-              <h3 className="text-xl font-semibold mb-3">Statistiques intelligentes</h3>
+              <h3 className="text-xl font-semibold mb-3">
+                Statistiques intelligentes
+              </h3>
               <p className="text-gray-600">
-                Données visuelles pour guider vos décisions et votre croissance.
+                Visualisez la croissance et prenez de meilleures décisions.
               </p>
             </div>
-
           </div>
         </div>
       </section>
 
+      {/* PRODUCT SHOWCASE */}
+      <section className="py-24 px-6 bg-white">
+        <div className="max-w-7xl mx-auto space-y-32">
+
+          {/* Membres Hub */}
+          <div className="lg:flex lg:items-center lg:gap-16">
+            <div className="lg:w-1/2">
+              <h3 className="text-3xl font-bold mb-6">👥 Membres Hub</h3>
+              <p className="text-gray-600 mb-6">
+                Une vue claire de tous vos membres, leur statut, cellule
+                et évolution spirituelle.
+              </p>
+            </div>
+            <div className="lg:w-1/2">
+              <Image
+                src="/membres-hub.png"
+                alt="Membres Hub"
+                width={900}
+                height={600}
+                className="rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border"
+              />
+            </div>
+          </div>
+
+          {/* Evangélisation Hub */}
+          <div className="lg:flex lg:flex-row-reverse lg:items-center lg:gap-16">
+            <div className="lg:w-1/2">
+              <h3 className="text-3xl font-bold mb-6">✝️ Évangélisation Hub</h3>
+              <p className="text-gray-600 mb-6">
+                Suivez conversions, baptêmes et nouvelles âmes facilement.
+              </p>
+            </div>
+            <div className="lg:w-1/2">
+              <Image
+                src="/evangelisation-hub.png"
+                alt="Evangélisation Hub"
+                width={900}
+                height={600}
+                className="rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border"
+              />
+            </div>
+          </div>
+
+          {/* Cellules Hub */}
+          <div className="lg:flex lg:items-center lg:gap-16">
+            <div className="lg:w-1/2">
+              <h3 className="text-3xl font-bold mb-6">🏠 Cellules Hub</h3>
+              <p className="text-gray-600 mb-6">
+                Organisez vos responsables, suivez les présences
+                et analysez la croissance.
+              </p>
+            </div>
+            <div className="lg:w-1/2">
+              <Image
+                src="/cellules-hub.png"
+                alt="Cellules Hub"
+                width={900}
+                height={600}
+                className="rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border"
+              />
+            </div>
+          </div>
+
+          {/* Fiche Contact */}
+          <div className="lg:flex lg:flex-row-reverse lg:items-center lg:gap-16">
+            <div className="lg:w-1/2">
+              <h3 className="text-3xl font-bold mb-6">
+                📋 Fiche détaillée d’un membre
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Historique complet, présence, cellule, évolution
+                et suivi spirituel.
+              </p>
+            </div>
+            <div className="lg:w-1/2">
+              <Image
+                src="/fiche-contact.png"
+                alt="Fiche contact"
+                width={900}
+                height={600}
+                className="rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border"
+              />
+            </div>
+          </div>
+
+        </div>
+      </section>
+
       {/* TESTIMONIALS */}
-      <section className="py-24 px-6">
+      <section className="py-24 px-6 bg-gray-50">
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-12">
             Ils font confiance à SoulTrack
@@ -147,7 +240,7 @@ export default function HomePage() {
       {/* FINAL CTA */}
       <section className="py-24 px-6 bg-gradient-to-r from-blue-600 to-indigo-700 text-white text-center">
         <h2 className="text-3xl font-bold mb-6">
-          Prêt à moderniser la gestion de votre église ?
+          Prêt à transformer la gestion de votre église ?
         </h2>
         <button
           onClick={() => router.push("/SignupEglise")}

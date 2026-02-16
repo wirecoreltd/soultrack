@@ -291,7 +291,7 @@ const totalPrincipal =
           {reports.map((r) => {
             const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
             return (
-              <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-purple-500">
+              <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500">
                 <div className="min-w-[150px] text-white font-semibold">{r.date}</div>
                 <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
                 <div className="min-w-[120px] text-center text-white">{r.femmes}</div>

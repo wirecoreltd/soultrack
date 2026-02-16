@@ -88,23 +88,27 @@ export default function RapportEvangelisation() {
       {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">
         <div className="flex flex-col w-full sm:w-auto">
-            <label htmlFor="dateDebut" className="font-medium mb-1">Date de début</label>
-        <input
-          type="date"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-          className="border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-white"
-        />
-            </div>
-            <div className="flex flex-col w-full sm:w-auto">
-            <label htmlFor="dateFin" className="font-medium mb-1">Date de fin</label>
-        <input
-          type="date"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-          className="border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-white"
-        />
-               </div>
+          <label htmlFor="dateDebut" className="font-medium mb-1">
+            Date de début
+          </label>
+          <input
+            type="date"
+            value={dateDebut}
+            onChange={(e) => setDateDebut(e.target.value)}
+            className="border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-white"
+          />
+        </div>
+        <div className="flex flex-col w-full sm:w-auto">
+          <label htmlFor="dateFin" className="font-medium mb-1">
+            Date de fin
+          </label>
+          <input
+            type="date"
+            value={dateFin}
+            onChange={(e) => setDateFin(e.target.value)}
+            className="border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-white"
+          />
+        </div>
         <button
           onClick={fetchRapports}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end"
@@ -114,45 +118,58 @@ export default function RapportEvangelisation() {
       </div>
 
       {message && (
-        <div className="text-center text-white mt-4 font-medium">
-          {message}
-        </div>
+        <div className="text-center text-white mt-4 font-medium">{message}</div>
       )}
 
       {/* TABLE */}
-      <div className="w-full flex justify-center mt-8 overflow-x-auto">
-        <div className="w-max space-y-2">
-
-          {/* HEADER */}
-          <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[150px] px-1.5">Date</div>
-            <div className="min-w-[120px] text-center">Hommes</div>
-            <div className="min-w-[120px] text-center">Femmes</div>
-            <div className="min-w-[120px] text-center">Total</div>
-            <div className="min-w-[150px] text-center">Prière</div>
-            <div className="min-w-[180px] text-center">Nouveau Converti</div>
-            <div className="min-w-[160px] text-center">Réconciliation</div>
-            <div className="min-w-[160px] text-center">Moissonneurs</div>
-            <div className="min-w-[140px] text-center">Actions</div>
+      <div className="w-full flex justify-center mt-8">
+        <div className="w-full md:w-max space-y-2 overflow-x-auto">
+          {/* HEADER Desktop */}
+          <div className="hidden md:flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+            <div className="md:min-w-[150px] px-1.5">Date</div>
+            <div className="md:min-w-[120px] text-center">Hommes</div>
+            <div className="md:min-w-[120px] text-center">Femmes</div>
+            <div className="md:min-w-[120px] text-center">Total</div>
+            <div className="md:min-w-[150px] text-center">Prière</div>
+            <div className="md:min-w-[180px] text-center">Nouveau Converti</div>
+            <div className="md:min-w-[160px] text-center">Réconciliation</div>
+            <div className="md:min-w-[160px] text-center">Moissonneurs</div>
+            <div className="md:min-w-[140px] text-center">Actions</div>
           </div>
 
           {/* LIGNES */}
           {rapports.map((r) => {
             const total = (Number(r.hommes) || 0) + (Number(r.femmes) || 0);
-          
+
             return (
-              <div key={r.id} className="w-full md:w-max">
+              <div key={r.id} className="w-full">
                 {/* Desktop : tableau horizontal */}
                 <div className="hidden md:flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500">
-                  <div className="min-w-[150px] text-white">{new Date(r.date).toLocaleDateString()}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.hommes ?? "-"}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.femmes ?? "-"}</div>
-                  <div className="min-w-[120px] text-center text-orange-500 font-semibold">{total}</div>
-                  <div className="min-w-[150px] text-center text-white">{r.priere ?? "-"}</div>
-                  <div className="min-w-[180px] text-center text-white">{r.nouveau_converti ?? "-"}</div>
-                  <div className="min-w-[160px] text-center text-white">{r.reconciliation ?? "-"}</div>
-                  <div className="min-w-[160px] text-center text-white">{r.moissonneurs ?? "-"}</div>
-                  <div className="min-w-[140px] text-center">
+                  <div className="md:min-w-[150px] text-white">
+                    {new Date(r.date).toLocaleDateString()}
+                  </div>
+                  <div className="md:min-w-[120px] text-center text-white">
+                    {r.hommes ?? "-"}
+                  </div>
+                  <div className="md:min-w-[120px] text-center text-white">
+                    {r.femmes ?? "-"}
+                  </div>
+                  <div className="md:min-w-[120px] text-center text-orange-500 font-semibold">
+                    {total}
+                  </div>
+                  <div className="md:min-w-[150px] text-center text-white">
+                    {r.priere ?? "-"}
+                  </div>
+                  <div className="md:min-w-[180px] text-center text-white">
+                    {r.nouveau_converti ?? "-"}
+                  </div>
+                  <div className="md:min-w-[160px] text-center text-white">
+                    {r.reconciliation ?? "-"}
+                  </div>
+                  <div className="md:min-w-[160px] text-center text-white">
+                    {r.moissonneurs ?? "-"}
+                  </div>
+                  <div className="md:min-w-[140px] text-center">
                     <button
                       onClick={() => {
                         setSelectedRapport(r);
@@ -164,7 +181,7 @@ export default function RapportEvangelisation() {
                     </button>
                   </div>
                 </div>
-          
+
                 {/* Mobile : carte verticale */}
                 <div className="flex flex-col md:hidden bg-white/10 rounded-lg p-4 mb-3 hover:bg-white/20 border-l-4 border-l-blue-500 transition">
                   <div className="flex justify-between text-white font-semibold mb-1">
@@ -213,47 +230,35 @@ export default function RapportEvangelisation() {
             );
           })}
 
-          {/* TOTAL GENERAL */}
-            <div className="flex items-center px-5 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
-              {/* "TOTAL" reste aligné */}
-              <div className="min-w-[150px] font-bold text-orange-500">
-                TOTAL
-              </div>
-            
-              {/* Les chiffres légèrement décalés */}
-              <div className="min-w-[120px] text-center text-orange-500 font-semibold -ml-1">
-                {rapports.reduce((s, r) => s + Number(r.hommes || 0), 0)}
-              </div>
-            
-              <div className="min-w-[120px] text-center text-orange-500 font-semibold ml-0">
-                {rapports.reduce((s, r) => s + Number(r.femmes || 0), 0)}
-              </div>
-            
-              <div className="min-w-[120px] text-center text-orange-500 font-semibold ml-0.3">
-                {rapports.reduce(
-                  (s, r) => s + Number(r.hommes || 0) + Number(r.femmes || 0),
-                  0
-                )}
-              </div>
-            
-              <div className="min-w-[150px] text-center text-orange-500 font-semibold -ml-0.4">
-                {rapports.reduce((s, r) => s + Number(r.priere || 0), 0)}
-              </div>
-            
-              <div className="min-w-[180px] text-center text-orange-500 font-semibold ml-0">
-                {rapports.reduce((s, r) => s + Number(r.nouveau_converti || 0), 0)}
-              </div>
-            
-              <div className="min-w-[160px] text-center text-orange-500 font-semibold ml-0">
-                {rapports.reduce((s, r) => s + Number(r.reconciliation || 0), 0)}
-              </div>
-            
-              <div className="min-w-[160px] text-center text-orange-500 font-semibold ml-0">
-                {rapports.reduce((s, r) => s + Number(r.moissonneurs || 0), 0)}
-              </div>
-            
-              <div className="min-w-[140px]"></div>
+          {/* TOTAL GENERAL Desktop */}
+          <div className="hidden md:flex items-center px-5 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
+            <div className="md:min-w-[150px] font-bold text-orange-500">TOTAL</div>
+            <div className="md:min-w-[120px] text-center text-orange-500 font-semibold">
+              {rapports.reduce((s, r) => s + Number(r.hommes || 0), 0)}
             </div>
+            <div className="md:min-w-[120px] text-center text-orange-500 font-semibold">
+              {rapports.reduce((s, r) => s + Number(r.femmes || 0), 0)}
+            </div>
+            <div className="md:min-w-[120px] text-center text-orange-500 font-semibold">
+              {rapports.reduce(
+                (s, r) => s + Number(r.hommes || 0) + Number(r.femmes || 0),
+                0
+              )}
+            </div>
+            <div className="md:min-w-[150px] text-center text-orange-500 font-semibold">
+              {rapports.reduce((s, r) => s + Number(r.priere || 0), 0)}
+            </div>
+            <div className="md:min-w-[180px] text-center text-orange-500 font-semibold">
+              {rapports.reduce((s, r) => s + Number(r.nouveau_converti || 0), 0)}
+            </div>
+            <div className="md:min-w-[160px] text-center text-orange-500 font-semibold">
+              {rapports.reduce((s, r) => s + Number(r.reconciliation || 0), 0)}
+            </div>
+            <div className="md:min-w-[160px] text-center text-orange-500 font-semibold">
+              {rapports.reduce((s, r) => s + Number(r.moissonneurs || 0), 0)}
+            </div>
+            <div className="md:min-w-[140px]"></div>
+          </div>
 
           {rapports.length === 0 && (
             <div className="text-white/70 px-4 py-6 text-center">

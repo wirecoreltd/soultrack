@@ -113,7 +113,7 @@ function CellulesHubContent() {
             </div>        
 
         {/* 🔹 Verset biblique / texte motivant */}
-        <div className="mt-auto mb-4 text-center text-white text-lg font-handwriting max-w-2xl">
+        <div className="mt-auto mb-4 text-center text-white text-lg italic max-w-2xl leading-relaxed tracking-wide font-light">
           La famille est le plus grand trésor. Prenez soin les uns des autres avec amour et patience. <br />
           1 Corinthiens 12:14 ❤️
         </div>

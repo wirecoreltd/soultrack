@@ -5,8 +5,18 @@ import React from "react";
 import supabase from "../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import HeaderPages from "../components/HeaderPages";
+import ProtectedRoute from "../components/ProtectedRoute";
+import Footer from "../components/Footer";
 
-export default function ListConseillers() {
+export default function ListConseillersPage() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
+      <ListConseillers />
+    </ProtectedRoute>
+  );
+}
+
+function ListConseillers() {
   const [conseillers, setConseillers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -15,7 +25,6 @@ export default function ListConseillers() {
   const fetchConseillers = async () => {
     setLoading(true);
     try {
-      // 🔹 Récupérer l'utilisateur connecté
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Utilisateur non connecté");
 
@@ -30,7 +39,6 @@ export default function ListConseillers() {
       const eglise_id = String(currentUserProfile.eglise_id);
       const branche_id = String(currentUserProfile.branche_id);
 
-      // 🔹 Récupérer les conseillers de la même église et branche
       const { data: profiles, error: errConseillers } = await supabase
         .from("profiles")
         .select("id, prenom, nom, email, telephone, role, responsable_id")
@@ -45,7 +53,6 @@ export default function ListConseillers() {
         return;
       }
 
-      // 🔹 Compter les contacts assignés à chaque conseiller
       const conseillersIds = profiles.map((p) => p.id);
       const { data: membres } = await supabase
         .from("membres_complets")
@@ -59,7 +66,6 @@ export default function ListConseillers() {
         contactSetMap[m.conseiller_id].add(m.id);
       });
 
-      // 🔹 Récupérer les noms des responsables
       const responsablesIds = profiles.map((p) => p.responsable_id).filter(Boolean);
       let responsableMap = {};
       if (responsablesIds.length > 0) {
@@ -91,7 +97,6 @@ export default function ListConseillers() {
     fetchConseillers();
   }, []);
 
-  // 🔹 Filtrer selon la recherche
   const filteredConseillers = conseillers.filter(
     (c) =>
       c.prenom.toLowerCase().includes(search.toLowerCase()) ||
@@ -99,12 +104,12 @@ export default function ListConseillers() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "#333699" }}>
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6 bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200">
       <HeaderPages />
 
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">Liste des Conseillers</h1>
-        <p className="text-white text-lg max-w-xl mx-auto italic">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Liste des Conseillers</h1>
+        <p className="text-white text-sm sm:text-lg max-w-xl mx-auto italic">
           Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
         </p>
       </div>
@@ -116,49 +121,49 @@ export default function ListConseillers() {
           placeholder="Recherche..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-2/3 px-3 py-2 rounded-md border text-black"
+          className="w-full sm:w-2/3 px-3 py-2 rounded-md border text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
       </div>
 
       {/* Bouton Ajouter un conseiller */}
-      <div className="w-full max-w-6xl flex justify-end mb-6">
+      <div className="w-full max-w-6xl flex justify-end mb-6 px-2 sm:px-0">
         <button
           onClick={() => router.push("/create-conseiller")}
-          className="text-white font-semibold px-4 py-2 rounded shadow text-sm hover:shadow-lg transition"
+          className="text-white font-semibold px-4 py-2 rounded shadow text-sm sm:text-base hover:shadow-lg transition"
         >
           ➕ Ajouter un Conseiller
         </button>
       </div>
 
       {/* Liste cartes */}
-      <div className="w-full max-w-6xl">
+      <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
         {loading ? (
-          <p className="text-center text-white">Chargement...</p>
+          <p className="text-center text-white col-span-full">Chargement...</p>
         ) : filteredConseillers.length === 0 ? (
-          <p className="text-center text-white">Aucun conseiller trouvé pour votre église et votre branche.</p>
+          <p className="text-center text-white col-span-full">Aucun conseiller trouvé pour votre église et votre branche.</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
-            {filteredConseillers.map((c) => (
-              <div key={c.id} className="bg-white rounded-2xl shadow-lg w-full overflow-hidden transition hover:shadow-2xl">
-                <div className="w-full h-[6px] bg-blue-500 rounded-t-2xl" />
-                <div className="p-4 flex flex-col items-center">
-                  <h2 className="font-bold text-black text-base text-center mb-1">{c.prenom} {c.nom}</h2>
-                  <p className="text-sm text-gray-700 mb-1">📞 {c.telephone || "—"}</p>
-                  <p className="text-sm text-gray-700 mb-1">✉️ {c.email || "—"}</p>
-                  <p className="text-sm text-gray-700 mt-2">👤 Responsable : <span className="font-semibold">{c.responsable_nom}</span></p>
-                  <p className="text-sm text-gray-800 mt-2 font-semibold">🔔 Contacts assignés : {c.totalContacts}</p>
-                  <button
-                    onClick={() => router.push(`/list-members?conseiller_id=${c.id}`)}
-                    className="mt-2 px-3 py-1 bg-[#333699] text-white rounded-md hover:bg-blue-600"
-                  >
-                    Voir les contacts
-                  </button>
-                </div>
+          filteredConseillers.map((c) => (
+            <div key={c.id} className="bg-white rounded-2xl shadow-lg w-full max-w-sm overflow-hidden transition hover:shadow-2xl">
+              <div className="w-full h-[6px] bg-blue-500 rounded-t-2xl" />
+              <div className="p-4 flex flex-col items-center">
+                <h2 className="font-bold text-black text-base sm:text-lg text-center mb-1">{c.prenom} {c.nom}</h2>
+                <p className="text-sm sm:text-base text-gray-700 mb-1">📞 {c.telephone || "—"}</p>
+                <p className="text-sm sm:text-base text-gray-700 mb-1">✉️ {c.email || "—"}</p>
+                <p className="text-sm sm:text-base text-gray-700 mt-2">👤 Responsable : <span className="font-semibold">{c.responsable_nom}</span></p>
+                <p className="text-sm sm:text-base text-gray-800 mt-2 font-semibold">🔔 Contacts assignés : {c.totalContacts}</p>
+                <button
+                  onClick={() => router.push(`/list-members?conseiller_id=${c.id}`)}
+                  className="mt-2 px-3 py-1 bg-[#333699] text-white rounded-md hover:bg-blue-600 text-sm sm:text-base"
+                >
+                  Voir les contacts
+                </button>
               </div>
-            ))}
-          </div>
+            </div>
+          ))
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }

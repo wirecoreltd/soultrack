@@ -48,7 +48,7 @@ export default function PublicHeader() {
           </button>
 
           <button
-            onClick={() => router.push("/signup-eglise")}
+            onClick={() => router.push("/signupEglise")}
             className="ml-2 px-4 py-2 border border-blue-500 text-blue-500 rounded-2xl hover:bg-blue-500 hover:text-white transition font-semibold"
           >
             Inscription
@@ -94,7 +94,7 @@ export default function PublicHeader() {
 
           <button
             onClick={() => {
-              router.push("/signup-eglise");
+              router.push("/signupEglise");
               setOpenMenu(false);
             }}
             className="mt-2 px-4 py-2 border border-blue-500 text-blue-500 rounded-2xl hover:bg-blue-500 hover:text-white transition font-semibold"

@@ -72,7 +72,7 @@ export default function HomePage() {
 
           <div className="lg:w-1/2 mt-12 lg:mt-0">
             <Image
-              src="/hero-illustration.png"
+              src="/Dashboard.png"
               alt="Dashboard SoulTrack"
               width={700}
               height={450}

@@ -27,7 +27,7 @@ export default function RapportBesoinPage() {
 }
 
 function RapportBesoin() {
-  const [rapports, setRapports] = useState([]);
+  const [besoinsCount, setBesoinsCount] = useState({});
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [message, setMessage] = useState("");
@@ -37,8 +37,7 @@ function RapportBesoin() {
     try {
       let query = supabase
         .from("membres_complets")
-        .select("nom, prenom, besoin, created_at")
-        .order("created_at", { ascending: false });
+        .select("besoin, created_at");
 
       if (dateDebut) query = query.gte("created_at", dateDebut);
       if (dateFin) query = query.lte("created_at", dateFin);
@@ -46,7 +45,23 @@ function RapportBesoin() {
       const { data, error } = await query;
       if (error) throw error;
 
-      setRapports(data || []);
+      // Compter le nombre par besoin
+      const count = {};
+      data.forEach((r) => {
+        if (!r.besoin) return;
+        try {
+          const besoinsArray = JSON.parse(r.besoin);
+          besoinsArray.forEach((b) => {
+            if (!count[b]) count[b] = 0;
+            count[b]++;
+          });
+        } catch {
+          if (!count[r.besoin]) count[r.besoin] = 0;
+          count[r.besoin]++;
+        }
+      });
+
+      setBesoinsCount(count);
       setMessage("");
     } catch (err) {
       console.error(err);
@@ -54,30 +69,13 @@ function RapportBesoin() {
     }
   };
 
-  // Préparer les données du chart
-  const besoinsCount = {};
-  rapports.forEach((r) => {
-    if (!r.besoin) return;
-    try {
-      const besoinsArray = JSON.parse(r.besoin);
-      besoinsArray.forEach((b) => {
-        if (!besoinsCount[b]) besoinsCount[b] = 0;
-        besoinsCount[b]++;
-      });
-    } catch {
-      // Si ce n'est pas un JSON valide
-      if (!besoinsCount[r.besoin]) besoinsCount[r.besoin] = 0;
-      besoinsCount[r.besoin]++;
-    }
-  });
-
   const chartData = {
     labels: Object.keys(besoinsCount),
     datasets: [
       {
         label: "Nombre de personnes",
         data: Object.values(besoinsCount),
-        backgroundColor: "rgba(59, 130, 246, 0.8)",
+        backgroundColor: "rgba(59,130,246,0.8)",
         borderRadius: 6,
       },
     ],
@@ -94,15 +92,8 @@ function RapportBesoin() {
       },
     },
     scales: {
-      x: {
-        ticks: { color: "#ffffff" },
-        grid: { display: false },
-      },
-      y: {
-        ticks: { color: "#ffffff", stepSize: 1 },
-        beginAtZero: true,
-        grid: { color: "rgba(255,255,255,0.1)" },
-      },
+      x: { ticks: { color: "#ffffff" }, grid: { display: false } },
+      y: { ticks: { color: "#ffffff", stepSize: 1 }, beginAtZero: true, grid: { color: "rgba(255,255,255,0.1)" } },
     },
   };
 
@@ -135,25 +126,20 @@ function RapportBesoin() {
 
       {message && <p className="mt-4 text-center font-medium text-white">{message}</p>}
 
-      {/* Tableau */}
+      {/* Tableau Besoin | Nombre */}
       <div className="w-full flex justify-center mt-6 mb-6">
         <div className="w-max overflow-x-auto space-y-2">
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[200px]">Nom</div>
-            <div className="min-w-[200px]">Prénom</div>
-            <div className="min-w-[250px]">Besoin(s)</div>
-            <div className="min-w-[200px]">Date</div>
+            <div className="min-w-[250px]">Besoin</div>
+            <div className="min-w-[150px] text-center">Nombre</div>
           </div>
-
-          {rapports.map((r) => (
+          {Object.keys(besoinsCount).map((b) => (
             <div
-              key={r.id}
+              key={b}
               className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500 whitespace-nowrap"
             >
-              <div className="min-w-[200px] text-white font-semibold">{r.nom}</div>
-              <div className="min-w-[200px] text-white">{r.prenom}</div>
-              <div className="min-w-[250px] text-white">{r.besoin}</div>
-              <div className="min-w-[200px] text-white">{new Date(r.created_at).toLocaleDateString()}</div>
+              <div className="min-w-[250px] text-white font-semibold">{b}</div>
+              <div className="min-w-[150px] text-center text-white">{besoinsCount[b]}</div>
             </div>
           ))}
         </div>

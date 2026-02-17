@@ -1,43 +1,55 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
+
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   BarElement,
-  Title,
   Tooltip,
-  Legend
+  Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 export default function RapportBesoinPage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableSuivi"]}>
       <RapportBesoin />
     </ProtectedRoute>
   );
 }
 
 function RapportBesoin() {
-  const [besoinsCount, setBesoinsCount] = useState({});
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
+  const [besoinsCount, setBesoinsCount] = useState({});
   const [message, setMessage] = useState("");
 
-  const fetchRapports = async () => {
-    setMessage("⏳ Génération en cours...");
+  const fetchRapport = async () => {
+    setMessage("⏳ Chargement...");
+
     try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", session.session.user.id)
+        .single();
+
       let query = supabase
         .from("membres_complets")
-        .select("besoin, created_at");
+        .select("besoin, created_at")
+        .eq("eglise_id", profile.eglise_id)
+        .eq("branche_id", profile.branche_id);
 
       if (dateDebut) query = query.gte("created_at", dateDebut);
       if (dateFin) query = query.lte("created_at", dateFin);
@@ -45,30 +57,27 @@ function RapportBesoin() {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Compter le nombre par besoin
-     
-const count = {};
-data.forEach((r) => {
-  if (!r.besoin) return;
+      const count = {};
 
-  let besoinsArray = [];
-  try {
-    besoinsArray = JSON.parse(r.besoin); // si c'est un array JSON
-    if (!Array.isArray(besoinsArray)) besoinsArray = [besoinsArray];
-  } catch {
-    besoinsArray = [r.besoin]; // si c'est juste un string
-  }
+      data.forEach((r) => {
+        if (!r.besoin) return;
 
-  besoinsArray.forEach((b) => {
-    if (!count[b]) count[b] = 0;
-    count[b]++;
-  });
-});
+        let besoinsArray = [];
 
+        try {
+          besoinsArray = JSON.parse(r.besoin);
+          if (!Array.isArray(besoinsArray)) {
+            besoinsArray = [besoinsArray];
+          }
         } catch {
-          if (!count[r.besoin]) count[r.besoin] = 0;
-          count[r.besoin]++;
+          besoinsArray = [r.besoin];
         }
+
+        besoinsArray.forEach((b) => {
+          const clean = b.trim();
+          if (!count[clean]) count[clean] = 0;
+          count[clean]++;
+        });
       });
 
       setBesoinsCount(count);
@@ -79,41 +88,63 @@ data.forEach((r) => {
     }
   };
 
+  const labels = Object.keys(besoinsCount);
+  const values = Object.values(besoinsCount);
+
   const chartData = {
-    labels: Object.keys(besoinsCount),
+    labels,
     datasets: [
       {
-        label: "Nombre de personnes",
-        data: Object.values(besoinsCount),
-        backgroundColor: "rgba(59,130,246,0.8)",
-        borderRadius: 6,
+        label: "Nombre",
+        data: values,
+        backgroundColor: "rgba(255,255,255,0.85)",
+        borderRadius: 8,
+        barThickness: 30,
       },
     ],
   };
 
   const chartOptions = {
     responsive: true,
+    animation: {
+      duration: 1000,
+    },
     plugins: {
       legend: { display: false },
       tooltip: {
-        callbacks: {
-          label: (context) => ` ${context.parsed.y} personne(s)`,
-        },
+        backgroundColor: "#1f2366",
+        titleColor: "#fff",
+        bodyColor: "#fff",
       },
     },
     scales: {
-      x: { ticks: { color: "#ffffff" }, grid: { display: false } },
-      y: { ticks: { color: "#ffffff", stepSize: 1 }, beginAtZero: true, grid: { color: "rgba(255,255,255,0.1)" } },
+      x: {
+        ticks: { color: "#ffffff" },
+        grid: { display: false },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          color: "#ffffff",
+          precision: 0,
+        },
+        grid: {
+          color: "rgba(255,255,255,0.1)",
+        },
+      },
     },
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-      <h1 className="text-2xl font-bold text-white mt-4 mb-6 text-center">Rapport Besoin</h1>
 
-      {/* Filtres */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">
+      <h1 className="text-2xl font-bold text-white mt-4 mb-6">
+        Rapport Besoins
+      </h1>
+
+      {/* FILTRES */}
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg flex gap-4 flex-wrap text-white mb-6">
         <input
           type="date"
           value={dateDebut}
@@ -127,38 +158,43 @@ data.forEach((r) => {
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <button
-          onClick={fetchRapports}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+          onClick={fetchRapport}
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition"
         >
           Générer
         </button>
       </div>
 
-      {message && <p className="mt-4 text-center font-medium text-white">{message}</p>}
+      {message && (
+        <p className="text-white mb-4 font-medium">{message}</p>
+      )}
 
-      {/* Tableau Besoin | Nombre */}
-      <div className="w-full flex justify-center mt-6 mb-6">
-        <div className="w-max overflow-x-auto space-y-2">
-          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[250px]">Besoin</div>
-            <div className="min-w-[150px] text-center">Nombre</div>
+      {/* TABLEAU */}
+      {labels.length > 0 && (
+        <div className="w-full max-w-[600px] bg-white/10 rounded-2xl shadow-lg p-6 mb-8">
+          <div className="flex justify-between text-white font-bold border-b border-white/30 pb-2 mb-2">
+            <span>Besoin</span>
+            <span>Nombre</span>
           </div>
-          {Object.keys(besoinsCount).map((b) => (
+
+          {labels.map((b, i) => (
             <div
               key={b}
-              className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500 whitespace-nowrap"
+              className="flex justify-between text-white py-2 border-b border-white/10"
             >
-              <div className="min-w-[250px] text-white font-semibold">{b}</div>
-              <div className="min-w-[150px] text-center text-white">{besoinsCount[b]}</div>
+              <span>{b}</span>
+              <span className="font-semibold">{values[i]}</span>
             </div>
           ))}
         </div>
-      </div>
+      )}
 
-      {/* Chart */}
-      <div className="w-full max-w-4xl mt-6 p-6 bg-white/10 rounded-3xl shadow-lg">
-        <Bar data={chartData} options={chartOptions} />
-      </div>
+      {/* CHART */}
+      {labels.length > 0 && (
+        <div className="w-full max-w-[800px] bg-gradient-to-r from-indigo-600 to-blue-600 rounded-3xl p-8 shadow-2xl">
+          <Bar data={chartData} options={chartOptions} />
+        </div>
+      )}
 
       <Footer />
     </div>

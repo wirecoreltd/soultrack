@@ -19,6 +19,9 @@ function RapportBesoin() {
   const [loading, setLoading] = useState(false);
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
+  const [dateDebut, setDateDebut] = useState("");
+  const [dateFin, setDateFin] = useState("");
+  const [generated, setGenerated] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -40,21 +43,23 @@ function RapportBesoin() {
     fetchUser();
   }, []);
 
-  useEffect(() => {
-    if (egliseId && brancheId) {
-      fetchRapport();
-    }
-  }, [egliseId, brancheId]);
-
   const fetchRapport = async () => {
-    setLoading(true);
+    if (!egliseId || !brancheId) return;
 
-    const { data, error } = await supabase
+    setLoading(true);
+    setGenerated(true);
+
+    let query = supabase
       .from("membres_complets")
-      .select("besoin")
+      .select("besoin, created_at")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId)
       .not("besoin", "is", null);
+
+    if (dateDebut) query = query.gte("created_at", dateDebut);
+    if (dateFin) query = query.lte("created_at", dateFin);
+
+    const { data, error } = await query;
 
     if (error) {
       console.error(error);
@@ -104,51 +109,80 @@ function RapportBesoin() {
         🔥 Rapport des Besoins
       </h1>
 
-      <div className="w-full flex justify-center mb-10">
-        <div className="w-max overflow-x-auto space-y-2">
-
-          {/* HEADER */}
-          <div className="flex text-sm font-semibold uppercase text-white px-6 py-4 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[250px]">Besoin</div>
-            <div className="min-w-[150px] text-center text-orange-400 font-semibold">
-              Nombre
-            </div>
-          </div>
-
-          {/* ROWS */}
-          {loading ? (
-            <div className="text-white text-center py-6">
-              Chargement...
-            </div>
-          ) : (
-            rapports.map((item, index) => (
-              <div
-                key={index}
-                className="flex items-center px-6 py-4 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-indigo-500"
-              >
-                <div className="min-w-[250px] text-white font-semibold">
-                  {item.nom}
-                </div>
-                <div className="min-w-[150px] text-center text-orange-400 font-bold">
-                  {item.total}
-                </div>
-              </div>
-            ))
-          )}
-
-          {/* TOTAL GLOBAL */}
-          {rapports.length > 0 && (
-            <div className="flex items-center px-6 py-4 rounded-xl bg-white/20 border-t-4 border-white mt-2 backdrop-blur-sm shadow-inner">
-              <div className="min-w-[250px] text-white font-bold">
-                TOTAL
-              </div>
-              <div className="min-w-[150px] text-center text-orange-400 font-extrabold text-lg">
-                {totalGlobal}
-              </div>
-            </div>
-          )}
-        </div>
+      {/* FILTRES */}
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg flex justify-center gap-4 flex-wrap text-white mb-8">
+        <input
+          type="date"
+          value={dateDebut}
+          onChange={(e) => setDateDebut(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <input
+          type="date"
+          value={dateFin}
+          onChange={(e) => setDateFin(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <button
+          onClick={fetchRapport}
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] font-semibold"
+        >
+          Générer
+        </button>
       </div>
+
+      {/* TABLE */}
+      {generated && (
+        <div className="w-full flex justify-center mb-10">
+          <div className="w-max overflow-x-auto space-y-2">
+
+            {/* HEADER */}
+            <div className="flex text-sm font-semibold uppercase text-white px-6 py-4 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[250px]">Besoin</div>
+              <div className="min-w-[150px] text-center text-orange-400 font-semibold">
+                Nombre
+              </div>
+            </div>
+
+            {/* ROWS */}
+            {loading ? (
+              <div className="text-white text-center py-6">
+                Chargement...
+              </div>
+            ) : rapports.length === 0 ? (
+              <div className="text-white text-center py-6">
+                Aucun résultat
+              </div>
+            ) : (
+              rapports.map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center px-6 py-4 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-indigo-500"
+                >
+                  <div className="min-w-[250px] text-white font-semibold">
+                    {item.nom}
+                  </div>
+                  <div className="min-w-[150px] text-center text-orange-400 font-bold">
+                    {item.total}
+                  </div>
+                </div>
+              ))
+            )}
+
+            {/* TOTAL GLOBAL */}
+            {rapports.length > 0 && (
+              <div className="flex items-center px-6 py-4 rounded-xl bg-white/20 border-t-4 border-white mt-2 backdrop-blur-sm shadow-inner">
+                <div className="min-w-[250px] text-white font-bold">
+                  TOTAL
+                </div>
+                <div className="min-w-[150px] text-center text-orange-400 font-extrabold text-lg">
+                  {totalGlobal}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

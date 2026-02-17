@@ -13,13 +13,10 @@ import {
   LinearScale,
   Tooltip,
   Legend,
-  ArcElement,
-  LineElement,
-  PointElement,
-  TimeScale,
 } from "chart.js";
 
-import { Bar, Doughnut, Line } from "react-chartjs-2";
+import ChartDataLabels from "chartjs-plugin-datalabels";
+import { Bar } from "react-chartjs-2";
 
 ChartJS.register(
   BarElement,
@@ -27,10 +24,7 @@ ChartJS.register(
   LinearScale,
   Tooltip,
   Legend,
-  ArcElement,
-  LineElement,
-  PointElement,
-  TimeScale
+  ChartDataLabels
 );
 
 export default function RapportBesoinPage() {
@@ -47,12 +41,7 @@ function RapportBesoin() {
 
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-
   const [rapports, setRapports] = useState([]);
-  const [totalMembres, setTotalMembres] = useState(0);
-  const [hommes, setHommes] = useState(0);
-  const [femmes, setFemmes] = useState(0);
-  const [monthlyData, setMonthlyData] = useState({});
   const [generated, setGenerated] = useState(false);
 
   useEffect(() => {
@@ -82,7 +71,7 @@ function RapportBesoin() {
 
     let query = supabase
       .from("membres_complets")
-      .select("besoin, sexe, created_at")
+      .select("besoin")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
 
@@ -94,22 +83,8 @@ function RapportBesoin() {
     if (!data) return;
 
     const counts = {};
-    let h = 0;
-    let f = 0;
-    const monthly = {};
 
     data.forEach((m) => {
-      if (m.sexe === "Homme") h++;
-      if (m.sexe === "Femme") f++;
-
-      const month = new Date(m.created_at).toLocaleString("fr-FR", {
-        month: "short",
-        year: "numeric",
-      });
-
-      if (!monthly[month]) monthly[month] = 0;
-      monthly[month]++;
-
       if (m.besoin) {
         try {
           const besoins = JSON.parse(m.besoin);
@@ -121,139 +96,109 @@ function RapportBesoin() {
       }
     });
 
-    const { count } = await supabase
-      .from("membres_complets")
-      .select("*", { count: "exact", head: true })
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId);
-
-    setTotalMembres(count || 0);
-    setHommes(h);
-    setFemmes(f);
-
     const result = Object.entries(counts).map(([nom, total]) => ({
       nom,
       total,
-      pourcentage: count ? ((total / count) * 100).toFixed(1) : 0,
     }));
 
     setRapports(result.sort((a, b) => b.total - a.total));
-    setMonthlyData(monthly);
     setGenerated(true);
   };
 
-  const totalGlobal = rapports.reduce((sum, r) => sum + r.total, 0);
-
-  const barData = {
+  const chartData = {
     labels: rapports.map((r) => r.nom),
     datasets: [
       {
         label: "Nombre",
         data: rapports.map((r) => r.total),
-        backgroundColor: "rgba(255,140,0,0.8)",
-        borderRadius: 8,
+        backgroundColor: "rgba(255,140,0,0.9)",
+        borderRadius: 12,
+        barThickness: 30,
+        hoverBackgroundColor: "rgba(255,100,0,1)",
       },
     ],
   };
 
-  const doughnutData = {
-    labels: rapports.map((r) => r.nom),
-    datasets: [
-      {
-        data: rapports.map((r) => r.total),
-        backgroundColor: [
-          "#ff6b6b","#4ecdc4","#1a535c","#ffa600",
-          "#5f27cd","#00d2d3","#ff9ff3","#54a0ff"
-        ],
+  const chartOptions = {
+    plugins: {
+      legend: { display: false },
+      datalabels: {
+        color: "#ffffff",
+        anchor: "end",
+        align: "top",
+        font: { weight: "bold", size: 14 },
       },
-    ],
-  };
-
-  const genderData = {
-    labels: ["Hommes", "Femmes"],
-    datasets: [
-      {
-        label: "Répartition",
-        data: [hommes, femmes],
-        backgroundColor: ["#36A2EB", "#FF6384"],
+    },
+    scales: {
+      x: {
+        ticks: { color: "#ffffff" },
+        grid: { display: false },
       },
-    ],
-  };
-
-  const lineData = {
-    labels: Object.keys(monthlyData),
-    datasets: [
-      {
-        label: "Nouveaux membres",
-        data: Object.values(monthlyData),
-        borderColor: "#00ffcc",
-        backgroundColor: "rgba(0,255,204,0.2)",
-        tension: 0.4,
-        fill: true,
+      y: {
+        ticks: { color: "#ffffff" },
+        grid: { color: "rgba(255,255,255,0.1)" },
       },
-    ],
+    },
+    animation: {
+      duration: 1500,
+    },
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-[#1f1c2c] to-[#333699]">
+    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-[#141e30] to-[#243b55]">
       <HeaderPages />
 
       <h1 className="text-3xl font-bold text-white mt-4">
         📊 Rapport des Besoins
       </h1>
 
-      {/* FILTRES */}
+      {/* FILTRE */}
       <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
-        <input type="date" value={dateDebut}
+        <input
+          type="date"
+          value={dateDebut}
           onChange={(e) => setDateDebut(e.target.value)}
           className="border border-white/30 rounded-lg px-3 py-2 bg-transparent text-white"
         />
-        <input type="date" value={dateFin}
+        <input
+          type="date"
+          value={dateFin}
           onChange={(e) => setDateFin(e.target.value)}
           className="border border-white/30 rounded-lg px-3 py-2 bg-transparent text-white"
         />
-        <button onClick={fetchRapport}
-          className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-2 rounded-xl hover:scale-105 transition-all">
+        <button
+          onClick={fetchRapport}
+          className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-2 rounded-xl hover:scale-105 transition-all"
+        >
           Générer
         </button>
       </div>
 
       {generated && (
         <>
-          {/* BAR CHART */}
-          <div className="w-full max-w-5xl bg-white/10 p-6 rounded-2xl mt-10">
-            <Bar data={barData} />
-          </div>
+          {/* TABLE EN HAUT */}
+          <div className="w-full max-w-4xl mt-10">
+            <div className="flex text-white font-semibold px-6 py-3 bg-white/5 rounded-t-xl">
+              <div className="flex-1">Besoin</div>
+              <div className="w-32 text-right">Nombre</div>
+            </div>
 
-          {/* DOUGHNUT */}
-          <div className="w-full max-w-md bg-white/10 p-6 rounded-2xl mt-10">
-            <Doughnut data={doughnutData} />
-          </div>
-
-          {/* GENDER */}
-          <div className="w-full max-w-md bg-white/10 p-6 rounded-2xl mt-10">
-            <Bar data={genderData} />
-          </div>
-
-          {/* EVOLUTION */}
-          <div className="w-full max-w-5xl bg-white/10 p-6 rounded-2xl mt-10">
-            <Line data={lineData} />
-          </div>
-
-          {/* TABLEAU */}
-          <div className="w-full max-w-5xl mt-10">
             {rapports.map((r, i) => (
-              <div key={i}
-                className="flex justify-between px-6 py-3 bg-white/10 rounded-lg text-white mb-2 hover:bg-white/20 transition-all">
-                <span>{r.nom}</span>
-                <span>{r.total} ({r.pourcentage}%)</span>
+              <div
+                key={i}
+                className="flex px-6 py-3 bg-white/10 text-white border-b border-white/10 hover:bg-white/20 transition"
+              >
+                <div className="flex-1">{r.nom}</div>
+                <div className="w-32 text-right font-bold">
+                  {r.total}
+                </div>
               </div>
             ))}
+          </div>
 
-            <div className="flex justify-between px-6 py-4 bg-orange-500/30 rounded-lg text-white font-bold mt-4">
-              <span>Total général</span>
-              <span>{totalGlobal}</span>
-            </div>
+          {/* CHART EN BAS */}
+          <div className="w-full max-w-5xl mt-12 bg-white/5 p-8 rounded-3xl shadow-2xl backdrop-blur-lg border border-white/10">
+            <Bar data={chartData} options={chartOptions} />
           </div>
         </>
       )}

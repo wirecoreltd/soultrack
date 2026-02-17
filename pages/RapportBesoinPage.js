@@ -8,64 +8,35 @@ export default function RapportBesoins() {
   const [rapports, setRapports] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [egliseId, setEgliseId] = useState(null);
-  const [brancheId, setBrancheId] = useState(null);
-
   // =============================
-  // 🔹 Récupérer session + IDs
+  // 🔹 FETCH DIRECT (SANS metadata)
   // =============================
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (user) {
-        setEgliseId(user.user_metadata.eglise_id || null);
-        setBrancheId(user.user_metadata.branche_id || null);
-      }
-    };
-
-    getUser();
-  }, []);
-
-  // =============================
-  // 🔹 Récupérer rapports
-  // =============================
-  useEffect(() => {
-    if (!egliseId) return;
-
     const fetchRapports = async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("membres_complets")
-        .select("*")
-        .eq("eglise_id", egliseId);
+        .select("besoins");
 
-      if (brancheId) {
-        query = query.eq("branche_id", brancheId);
-      }
-
-      const { data, error } = await query;
-
-      if (!error) {
-        setRapports(data || []);
-      } else {
+      if (error) {
         console.error(error);
+      } else {
+        setRapports(data || []);
       }
 
       setLoading(false);
     };
 
     fetchRapports();
-  }, [egliseId, brancheId]);
+  }, []);
 
   // =============================
-  // 🔹 Calcul des besoins (CORRIGÉ)
+  // 🔹 Calcul besoins
   // =============================
   const besoinsCount = {};
 
   rapports.forEach((r) => {
     if (!r.besoins) return;
 
-    // transforme "Finances, Santé" en tableau
     const besoinsArray = r.besoins
       .split(",")
       .map((b) => b.trim())

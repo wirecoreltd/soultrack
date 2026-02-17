@@ -46,15 +46,25 @@ function RapportBesoin() {
       if (error) throw error;
 
       // Compter le nombre par besoin
-      const count = {};
-      data.forEach((r) => {
-        if (!r.besoin) return;
-        try {
-          const besoinsArray = JSON.parse(r.besoin);
-          besoinsArray.forEach((b) => {
-            if (!count[b]) count[b] = 0;
-            count[b]++;
-          });
+     
+const count = {};
+data.forEach((r) => {
+  if (!r.besoin) return;
+
+  let besoinsArray = [];
+  try {
+    besoinsArray = JSON.parse(r.besoin); // si c'est un array JSON
+    if (!Array.isArray(besoinsArray)) besoinsArray = [besoinsArray];
+  } catch {
+    besoinsArray = [r.besoin]; // si c'est juste un string
+  }
+
+  besoinsArray.forEach((b) => {
+    if (!count[b]) count[b] = 0;
+    count[b]++;
+  });
+});
+
         } catch {
           if (!count[r.besoin]) count[r.besoin] = 0;
           count[r.besoin]++;

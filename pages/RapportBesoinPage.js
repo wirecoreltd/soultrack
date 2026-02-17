@@ -2,208 +2,193 @@
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
-import HeaderPages from "../components/HeaderPages";
-import Footer from "../components/Footer";
-import ProtectedRoute from "../components/ProtectedRoute";
-
 import {
   Chart as ChartJS,
-  BarElement,
   CategoryScale,
   LinearScale,
+  BarElement,
   Tooltip,
   Legend,
 } from "chart.js";
-
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { Bar } from "react-chartjs-2";
 
 ChartJS.register(
-  BarElement,
   CategoryScale,
   LinearScale,
+  BarElement,
   Tooltip,
   Legend,
   ChartDataLabels
 );
 
 export default function RapportBesoinPage() {
-  return (
-    <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
-      <RapportBesoin />
-    </ProtectedRoute>
-  );
-}
+  const [dateStart, setDateStart] = useState("");
+  const [dateEnd, setDateEnd] = useState("");
+  const [rapport, setRapport] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-function RapportBesoin() {
-  const [egliseId, setEgliseId] = useState(null);
-  const [brancheId, setBrancheId] = useState(null);
+  const handleGenerate = async () => {
+    if (!dateStart || !dateEnd) {
+      alert("Veuillez sélectionner une période");
+      return;
+    }
 
-  const [dateDebut, setDateDebut] = useState("");
-  const [dateFin, setDateFin] = useState("");
-  const [rapports, setRapports] = useState([]);
-  const [generated, setGenerated] = useState(false);
+    setLoading(true);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data } = await supabase
-        .from("profiles")
-        .select("eglise_id, branche_id")
-        .eq("id", user.id)
-        .single();
-
-      if (data) {
-        setEgliseId(data.eglise_id);
-        setBrancheId(data.branche_id);
-      }
-    };
-
-    fetchProfile();
-  }, []);
-
-  const fetchRapport = async () => {
-    if (!egliseId || !brancheId) return;
-
-    setGenerated(false);
-
-    let query = supabase
+    const { data, error } = await supabase
       .from("membres_complets")
-      .select("besoin")
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId);
+      .select("besoins, created_at")
+      .gte("created_at", dateStart)
+      .lte("created_at", dateEnd);
 
-    if (dateDebut) query = query.gte("created_at", dateDebut);
-    if (dateFin) query = query.lte("created_at", dateFin);
+    if (error) {
+      console.error(error);
+      setLoading(false);
+      return;
+    }
 
-    const { data } = await query;
+    const besoinsCount = {};
 
-    if (!data) return;
-
-    const counts = {};
-
-    data.forEach((m) => {
-      if (m.besoin) {
-        try {
-          const besoins = JSON.parse(m.besoin);
-          besoins.forEach((b) => {
-            if (!counts[b]) counts[b] = 0;
-            counts[b]++;
-          });
-        } catch {}
+    data.forEach((membre) => {
+      if (Array.isArray(membre.besoins)) {
+        membre.besoins.forEach((besoin) => {
+          besoinsCount[besoin] = (besoinsCount[besoin] || 0) + 1;
+        });
       }
     });
 
-    const result = Object.entries(counts).map(([nom, total]) => ({
-      nom,
-      total,
+    const result = Object.entries(besoinsCount).map(([key, value]) => ({
+      besoin: key,
+      total: value,
     }));
 
-    setRapports(result.sort((a, b) => b.total - a.total));
-    setGenerated(true);
+    setRapport(result);
+    setLoading(false);
   };
 
   const chartData = {
-    labels: rapports.map((r) => r.nom),
+    labels: rapport.map((r) => r.besoin),
     datasets: [
       {
-        label: "Nombre",
-        data: rapports.map((r) => r.total),
-        backgroundColor: "rgba(255,140,0,0.9)",
-        borderRadius: 12,
-        barThickness: 30,
-        hoverBackgroundColor: "rgba(255,100,0,1)",
+        label: "Nombre de personnes",
+        data: rapport.map((r) => r.total),
+        backgroundColor: "rgba(99,102,241,0.8)",
+        borderRadius: 8,
+        barPercentage: 0.5,
+        categoryPercentage: 0.5,
       },
     ],
   };
 
   const chartOptions = {
+    responsive: true,
     plugins: {
-      legend: { display: false },
+      legend: {
+        labels: {
+          color: "#fff",
+        },
+      },
       datalabels: {
-        color: "#ffffff",
+        color: "#fff",
         anchor: "end",
         align: "top",
-        font: { weight: "bold", size: 14 },
+        font: {
+          weight: "bold",
+        },
       },
     },
     scales: {
       x: {
-        ticks: { color: "#ffffff" },
-        grid: { display: false },
+        ticks: {
+          color: "#fff",
+        },
+        grid: {
+          display: false,
+        },
       },
       y: {
-        ticks: { color: "#ffffff" },
-        grid: { color: "rgba(255,255,255,0.1)" },
+        ticks: {
+          color: "#fff",
+          stepSize: 1,
+        },
+        grid: {
+          color: "rgba(255,255,255,0.1)",
+        },
       },
-    },
-    animation: {
-      duration: 1500,
     },
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-[#141e30] to-[#243b55]">
-      <HeaderPages />
-
-      <h1 className="text-3xl font-bold text-white mt-4">
-        📊 Rapport des Besoins
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 p-8 text-white">
+      <h1 className="text-3xl font-bold mb-8">
+        📊 Rapport par Besoin
       </h1>
 
       {/* FILTRE */}
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
-        <input
-          type="date"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-          className="border border-white/30 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <input
-          type="date"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-          className="border border-white/30 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
+      <div className="flex gap-4 mb-8 items-end">
+        <div>
+          <label className="block text-sm mb-1">Date début</label>
+          <input
+            type="date"
+            className="p-2 rounded bg-white text-black"
+            value={dateStart}
+            onChange={(e) => setDateStart(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm mb-1">Date fin</label>
+          <input
+            type="date"
+            className="p-2 rounded bg-white text-black"
+            value={dateEnd}
+            onChange={(e) => setDateEnd(e.target.value)}
+          />
+        </div>
+
         <button
-          onClick={fetchRapport}
-          className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-2 rounded-xl hover:scale-105 transition-all"
+          onClick={handleGenerate}
+          className="bg-indigo-600 hover:bg-indigo-700 px-6 py-2 rounded font-semibold shadow-lg transition"
         >
           Générer
         </button>
       </div>
 
-      {generated && (
-        <>
-          {/* TABLE EN HAUT */}
-          <div className="w-full max-w-4xl mt-10">
-            <div className="flex text-white font-semibold px-6 py-3 bg-white/5 rounded-t-xl">
-              <div className="flex-1">Besoin</div>
-              <div className="w-32 text-right">Nombre</div>
-            </div>
+      {/* TABLE EN HAUT */}
+      {rapport.length > 0 && (
+        <div className="bg-white text-black rounded-xl shadow-xl p-6 mb-12">
+          <h2 className="text-xl font-bold mb-4">
+            🔥 Résultat affiché
+          </h2>
 
-            {rapports.map((r, i) => (
-              <div
-                key={i}
-                className="flex px-6 py-3 bg-white/10 text-white border-b border-white/10 hover:bg-white/20 transition"
-              >
-                <div className="flex-1">{r.nom}</div>
-                <div className="w-32 text-right font-bold">
-                  {r.total}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* CHART EN BAS */}
-          <div className="w-full max-w-5xl mt-12 bg-white/5 p-8 rounded-3xl shadow-2xl backdrop-blur-lg border border-white/10">
-            <Bar data={chartData} options={chartOptions} />
-          </div>
-        </>
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b">
+                <th className="py-2">Besoin</th>
+                <th className="py-2">Nombre</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rapport.map((item, index) => (
+                <tr key={index} className="border-b">
+                  <td className="py-2">{item.besoin}</td>
+                  <td className="py-2 font-bold">{item.total}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
-      <Footer />
+      {/* CHART EN BAS */}
+      {rapport.length > 0 && (
+        <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-8 shadow-2xl">
+          <Bar data={chartData} options={chartOptions} />
+        </div>
+      )}
+
+      {loading && <p>Chargement...</p>}
     </div>
   );
 }

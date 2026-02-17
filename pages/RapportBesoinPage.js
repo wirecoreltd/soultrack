@@ -2,20 +2,42 @@
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
+import HeaderPages from "../components/HeaderPages";
+import Footer from "../components/Footer";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function RapportBesoinPage() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
+      <RapportBesoin />
+    </ProtectedRoute>
+  );
+}
+
+function RapportBesoin() {
   const [rapports, setRapports] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
 
   useEffect(() => {
-    const storedEglise = localStorage.getItem("eglise_id");
-    const storedBranche = localStorage.getItem("branche_id");
+    const fetchUser = async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) return;
 
-    setEgliseId(storedEglise);
-    setBrancheId(storedBranche);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", session.session.user.id)
+        .single();
+
+      if (profile) {
+        setEgliseId(profile.eglise_id);
+        setBrancheId(profile.branche_id);
+      }
+    };
+
+    fetchUser();
   }, []);
 
   useEffect(() => {
@@ -43,16 +65,28 @@ export default function RapportBesoinPage() {
     const counts = {};
 
     data.forEach((membre) => {
-      const besoin = membre.besoin?.trim();
+      if (!membre.besoin) return;
 
-      if (besoin) {
-        if (!counts[besoin]) counts[besoin] = 0;
-        counts[besoin]++;
+      let besoinsArray = [];
+
+      try {
+        besoinsArray =
+          typeof membre.besoin === "string"
+            ? JSON.parse(membre.besoin)
+            : membre.besoin;
+      } catch (err) {
+        console.error("Erreur JSON:", err);
+        return;
       }
+
+      besoinsArray.forEach((b) => {
+        if (!counts[b]) counts[b] = 0;
+        counts[b]++;
+      });
     });
 
     const result = Object.entries(counts).map(([nom, total]) => ({
-      besoin: nom,
+      nom,
       total,
     }));
 
@@ -60,50 +94,63 @@ export default function RapportBesoinPage() {
     setLoading(false);
   };
 
+  const totalGlobal = rapports.reduce((acc, curr) => acc + curr.total, 0);
+
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6 text-center">
+    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+      <HeaderPages />
+
+      <h1 className="text-2xl font-bold text-white mt-4 mb-6 text-center">
         🔥 Rapport des Besoins
       </h1>
 
-      {loading ? (
-        <p className="text-center">Chargement...</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white rounded-xl shadow-md">
-            <thead>
-              <tr className="bg-gray-100 text-black text-left">
-                <th className="p-4">Besoin</th>
-                <th className="p-4 text-center">Nombre</th>
-              </tr>
-            </thead>
+      <div className="w-full flex justify-center mb-10">
+        <div className="w-max overflow-x-auto space-y-2">
 
-            <tbody>
-              {rapports.map((item, index) => (
-                <tr
-                  key={index}
-                  className="border-b hover:bg-gray-50 transition"
-                >
-                  <td className="p-4 text-black">{item.besoin}</td>
-                  <td className="p-4 text-center font-bold text-indigo-600">
-                    {item.total}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+          {/* HEADER */}
+          <div className="flex text-sm font-semibold uppercase text-white px-6 py-4 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+            <div className="min-w-[250px]">Besoin</div>
+            <div className="min-w-[150px] text-center text-orange-400 font-semibold">
+              Nombre
+            </div>
+          </div>
 
-            {/* TOTAL GLOBAL */}
-            <tfoot>
-              <tr className="bg-gray-100 font-bold border-t-2 border-white">
-                <td className="p-4 text-black">TOTAL</td>
-                <td className="p-4 text-center text-indigo-700">
-                  {rapports.reduce((acc, curr) => acc + curr.total, 0)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+          {/* ROWS */}
+          {loading ? (
+            <div className="text-white text-center py-6">
+              Chargement...
+            </div>
+          ) : (
+            rapports.map((item, index) => (
+              <div
+                key={index}
+                className="flex items-center px-6 py-4 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-indigo-500"
+              >
+                <div className="min-w-[250px] text-white font-semibold">
+                  {item.nom}
+                </div>
+                <div className="min-w-[150px] text-center text-orange-400 font-bold">
+                  {item.total}
+                </div>
+              </div>
+            ))
+          )}
+
+          {/* TOTAL GLOBAL */}
+          {rapports.length > 0 && (
+            <div className="flex items-center px-6 py-4 rounded-xl bg-white/20 border-t-4 border-white mt-2 backdrop-blur-sm shadow-inner">
+              <div className="min-w-[250px] text-white font-bold">
+                TOTAL
+              </div>
+              <div className="min-w-[150px] text-center text-orange-400 font-extrabold text-lg">
+                {totalGlobal}
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
+
+      <Footer />
     </div>
   );
 }

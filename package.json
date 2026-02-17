@@ -17,6 +17,7 @@
     "react-dom": "18.2.0",
     "recharts": "^2.x.x",
     "chart.js": "^4.3.0",
+    "chartjs-plugin-datalabels": "^2.2.0"
     "react-chartjs-2": "^5.2.0",
     "@supabase/supabase-js": "2.32.0",
     "framer-motion": "^10.12.16",

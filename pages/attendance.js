@@ -148,7 +148,17 @@ function Attendance() {
 
     const { data, error } = await query;
     if (error) console.error(error);
-    else setReports(data || []);
+    else {
+      setReports(data || []);
+      // 🔹 Tous les mois collapsés par défaut après génération
+      const grouped = (data || []).reduce((acc, r) => {
+        const d = new Date(r.date);
+        const monthYear = d.toLocaleString("fr-FR", { month: "long", year: "numeric" });
+        acc[monthYear] = true; // collapsed = true
+        return acc;
+      }, {});
+      setCollapsedMonths(grouped);
+    }
     setLoading(false);
   };
 
@@ -187,7 +197,10 @@ function Attendance() {
   // 🔹 Group by month
   const groupedByMonth = reports.reduce((acc, r) => {
     const dateObj = new Date(r.date);
-    const monthYear = dateObj.toLocaleString("fr-FR", { month: "long", year: "numeric" });
+    let month = dateObj.toLocaleString("fr-FR", { month: "long" });
+    month = month.charAt(0).toUpperCase() + month.slice(1); // Proper Case
+    const year = dateObj.getFullYear();
+    const monthYear = `${month} ${year}`;
     if (!acc[monthYear]) acc[monthYear] = [];
     acc[monthYear].push(r);
     return acc;
@@ -219,9 +232,7 @@ function Attendance() {
             { label: "Nouveaux convertis", name: "nouveauxConvertis", type: "number" },
           ].map((field) => (
             <div key={field.name} className="flex flex-col">
-              <label htmlFor={field.name} className="font-medium mb-1 text-white">
-                {field.label}
-              </label>
+              <label htmlFor={field.name} className="font-medium mb-1 text-white">{field.label}</label>
               <input
                 type={field.type}
                 name={field.name}
@@ -247,100 +258,77 @@ function Attendance() {
       <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-4 flex flex-wrap justify-center gap-4 text-white w-full max-w-3xl">
         <div className="flex flex-col w-full sm:w-auto">
           <label htmlFor="dateDebut" className="font-medium mb-1">Date de début</label>
-          <input
-            type="date"
-            id="dateDebut"
-            value={dateDebut}
-            onChange={(e) => setDateDebut(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-          />
+          <input type="date" id="dateDebut" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
         </div>
-
         <div className="flex flex-col w-full sm:w-auto">
           <label htmlFor="dateFin" className="font-medium mb-1">Date de fin</label>
-          <input
-            type="date"
-            id="dateFin"
-            value={dateFin}
-            onChange={(e) => setDateFin(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-          />
+          <input type="date" id="dateFin" value={dateFin} onChange={(e) => setDateFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
         </div>
-
-        <button
-          onClick={fetchRapports}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end"
-        >
-          Générer
-        </button>
+        <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end">Générer</button>
       </div>
 
-      {/* 🔹 Tableau */}
-      <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6">
-        {loading && <p className="text-white text-center py-4">Chargement...</p>}
+      {loading && <p className="text-center mt-10 text-lg text-white">Chargement...</p>}
 
-        {!loading && Object.keys(groupedByMonth).length > 0 && (
-          <div className="w-max space-y-2">
-            {/* HEADER */}
-            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[150px] ml-1">Date</div>
-              <div className="min-w-[120px] text-center">Hommes</div>
-              <div className="min-w-[120px] text-center">Femmes</div>
-              <div className="min-w-[120px] text-center">Jeunes</div>
-              <div className="min-w-[130px] text-center text-orange-400 font-semibold">Total</div>
-              <div className="min-w-[120px] text-center">Enfants</div>
-              <div className="min-w-[140px] text-center">Connectés</div>
-              <div className="min-w-[150px] text-center">Nouveaux Venus</div>
-              <div className="min-w-[180px] text-center">Nouveaux Convertis</div>
-              <div className="min-w-[140px] text-center text-orange-400 font-semibold">Actions</div>
-            </div>
+      {/* 🔹 Tableau collapsé */}
+      {!loading && reports.length > 0 && (
+        <div className="max-w-5xl w-full mt-6 mb-6 space-y-3">
+          {Object.keys(groupedByMonth).map((month) => {
+            const monthReports = groupedByMonth[month];
+            const monthTotals = monthReports.reduce((acc, r) => {
+              acc.hommes += Number(r.hommes || 0);
+              acc.femmes += Number(r.femmes || 0);
+              acc.jeunes += Number(r.jeunes || 0);
+              acc.enfants += Number(r.enfants || 0);
+              acc.connectes += Number(r.connectes || 0);
+              acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
+              acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
+              return acc;
+            }, {
+              hommes:0,femmes:0,jeunes:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0
+            });
 
-            {/* GROUP BY MONTH */}
-            {Object.entries(groupedByMonth).map(([month, monthReports]) => {
-              const collapsed = collapsedMonths[month] ?? false;
-              const monthTotal = monthReports.reduce((acc, r) => {
-                acc.hommes += Number(r.hommes || 0);
-                acc.femmes += Number(r.femmes || 0);
-                acc.jeunes += Number(r.jeunes || 0);
-                acc.enfants += Number(r.enfants || 0);
-                acc.connectes += Number(r.connectes || 0);
-                acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
-                acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
-                return acc;
-              }, {
-                hommes: 0,
-                femmes: 0,
-                jeunes: 0,
-                enfants: 0,
-                connectes: 0,
-                nouveauxVenus: 0,
-                nouveauxConvertis: 0,
-              });
+            return (
+              <div key={month} className="bg-white/10 rounded-xl overflow-hidden">
+                {/* Header mois */}
+                <div
+                  className="flex justify-between items-center cursor-pointer px-4 py-2 bg-white/20 hover:bg-white/30 font-semibold text-white"
+                  onClick={() => toggleMonth(month)}
+                >
+                  <span>{month}</span>
+                  <span className="text-orange-400">
+                    Total: {monthTotals.hommes+monthTotals.femmes+monthTotals.jeunes}
+                  </span>
+                </div>
 
-              return (
-                <div key={month}>
-                  <div
-                    className="flex items-center px-4 py-2 cursor-pointer bg-white/20 hover:bg-white/30 rounded-lg"
-                    onClick={() => toggleMonth(month)}
-                  >
-                    <span className="text-white font-semibold mr-2">{collapsed ? "+" : "–"}</span>
-                    <span className="text-white font-semibold">{month}</span>
-                  </div>
+                {/* Lignes mois */}
+                {!collapsedMonths[month] && (
+                  <div className="overflow-x-auto">
+                    <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 whitespace-nowrap">
+                      <div className="min-w-[150px]">Date</div>
+                      <div className="min-w-[120px] text-center">Hommes</div>
+                      <div className="min-w-[120px] text-center">Femmes</div>
+                      <div className="min-w-[120px] text-center">Jeunes</div>
+                      <div className="min-w-[120px] text-center">Total</div>
+                      <div className="min-w-[120px] text-center">Enfants</div>
+                      <div className="min-w-[140px] text-center">Connectés</div>
+                      <div className="min-w-[150px] text-center">Nouveaux Venus</div>
+                      <div className="min-w-[180px] text-center">Nouveaux Convertis</div>
+                      <div className="min-w-[140px] text-center">Actions</div>
+                    </div>
 
-                  {!collapsed &&
-                    monthReports.map((r) => {
-                      const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
+                    {monthReports.map((r) => {
+                      const total = Number(r.hommes || 0) + Number(r.femmes || 0) + Number(r.jeunes || 0);
                       return (
-                        <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500">
-                          <div className="min-w-[150px] text-white font-semibold">{formatDate(r.date)}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
-                          <div className="min-w-[130px] text-center text-orange-400 font-semibold">{total}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
-                          <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
-                          <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
-                          <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
+                        <div key={r.id} className="flex items-center px-4 py-2 border-b border-white/20 hover:bg-white/10 text-white">
+                          <div className="min-w-[150px]">{formatDate(r.date)}</div>
+                          <div className="min-w-[120px] text-center">{r.hommes}</div>
+                          <div className="min-w-[120px] text-center">{r.femmes}</div>
+                          <div className="min-w-[120px] text-center">{r.jeunes}</div>
+                          <div className="min-w-[120px] text-center text-orange-400">{total}</div>
+                          <div className="min-w-[120px] text-center">{r.enfants}</div>
+                          <div className="min-w-[140px] text-center">{r.connectes}</div>
+                          <div className="min-w-[150px] text-center">{r.nouveauxVenus}</div>
+                          <div className="min-w-[180px] text-center">{r.nouveauxConvertis}</div>
                           <div className="min-w-[140px] text-center flex justify-center gap-2">
                             <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
                             <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
@@ -349,41 +337,40 @@ function Attendance() {
                       );
                     })}
 
-                  {/* Total du mois */}
-                  {!collapsed && (
-                    <div className="flex items-center px-4 py-3 mt-1 rounded-xl bg-white/20 border-t border-white/40 font-bold">
-                      <div className="min-w-[150px] text-orange-400 font-semibold ml-1">TOTAL {month}</div>
-                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotal.hommes}</div>
-                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotal.femmes}</div>
-                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotal.jeunes}</div>
-                      <div className="min-w-[130px] text-center text-orange-400">{monthTotal.hommes + monthTotal.femmes + monthTotal.jeunes}</div>
-                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotal.enfants}</div>
-                      <div className="min-w-[140px] text-center text-orange-400 font-semibold">{monthTotal.connectes}</div>
-                      <div className="min-w-[150px] text-center text-orange-400 font-semibold">{monthTotal.nouveauxVenus}</div>
-                      <div className="min-w-[180px] text-center text-orange-400 font-semibold">{monthTotal.nouveauxConvertis}</div>
+                    {/* Total mois */}
+                    <div className="flex items-center px-4 py-3 bg-white/20 font-bold border-t border-white/30 text-orange-400">
+                      <div className="min-w-[150px]">TOTAL {month}</div>
+                      <div className="min-w-[120px] text-center">{monthTotals.hommes}</div>
+                      <div className="min-w-[120px] text-center">{monthTotals.femmes}</div>
+                      <div className="min-w-[120px] text-center">{monthTotals.jeunes}</div>
+                      <div className="min-w-[120px] text-center">{monthTotals.hommes+monthTotals.femmes+monthTotals.jeunes}</div>
+                      <div className="min-w-[120px] text-center">{monthTotals.enfants}</div>
+                      <div className="min-w-[140px] text-center">{monthTotals.connectes}</div>
+                      <div className="min-w-[150px] text-center">{monthTotals.nouveauxVenus}</div>
+                      <div className="min-w-[180px] text-center">{monthTotals.nouveauxConvertis}</div>
                       <div className="min-w-[140px]"></div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
-            {/* TOTAL GLOBAL */}
-            <div className="flex items-center px-4 py-4 mt-2 rounded-xl bg-white/20 border-t border-white/40 font-bold">
-              <div className="min-w-[150px] text-orange-400 font-semibold uppercase ml-1">TOTAL GLOBAL</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.jeunes}</div>
-              <div className="min-w-[130px] text-center text-orange-400">{totalGlobal.hommes + totalGlobal.femmes + totalGlobal.jeunes}</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.enfants}</div>
-              <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGlobal.connectes}</div>
-              <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalGlobal.nouveauxVenus}</div>
-              <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGlobal.nouveauxConvertis}</div>
-              <div className="min-w-[140px]"></div>
-            </div>
+          {/* Total global */}
+          <div className="flex items-center px-4 py-3 mt-2 rounded-xl bg-white/20 border-t border-white/40 font-bold text-orange-400">
+            <div className="min-w-[150px]">TOTAL GLOBAL</div>
+            <div className="min-w-[120px] text-center">{totalGlobal.hommes}</div>
+            <div className="min-w-[120px] text-center">{totalGlobal.femmes}</div>
+            <div className="min-w-[120px] text-center">{totalGlobal.jeunes}</div>
+            <div className="min-w-[120px] text-center">{totalGlobal.hommes+totalGlobal.femmes+totalGlobal.jeunes}</div>
+            <div className="min-w-[120px] text-center">{totalGlobal.enfants}</div>
+            <div className="min-w-[140px] text-center">{totalGlobal.connectes}</div>
+            <div className="min-w-[150px] text-center">{totalGlobal.nouveauxVenus}</div>
+            <div className="min-w-[180px] text-center">{totalGlobal.nouveauxConvertis}</div>
+            <div className="min-w-[140px]"></div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <Footer />
 

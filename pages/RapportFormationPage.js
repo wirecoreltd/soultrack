@@ -226,7 +226,7 @@ function RapportFormation() {
         </div>
         <div className="min-w-[400px] text-center text-white font-bold ml-100">{totalMonth.hommes}</div>
         <div className="min-w-[400px] text-center text-white font-bold">{totalMonth.femmes}</div>
-        <div className="min-w-[400px] text-center text-orange-500 font-semibold ml-20">{totalMonth.total}</div>
+        <div className="min-w-[250px] text-center text-orange-500 font-semibold ml-20">{totalMonth.total}</div>
         <div className="min-w-[200px]"></div>
         <div className="min-w-[150px]"></div>
       </div>

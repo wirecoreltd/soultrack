@@ -361,6 +361,45 @@ function Attendance() {
               </div>
             );
           })}
+            {/* TOTAL GLOBAL */}
+{reports.length > 0 && (
+  <div className="flex items-center px-4 py-3 mt-4 rounded-lg bg-white/30 text-white font-bold whitespace-nowrap">
+    <div className="min-w-[150px]">TOTAL GLOBAL</div>
+    <div className="min-w-[120px] text-center">
+      {reports.reduce((sum, r) => sum + Number(r.hommes || 0), 0)}
+    </div>
+    <div className="min-w-[120px] text-center">
+      {reports.reduce((sum, r) => sum + Number(r.femmes || 0), 0)}
+    </div>
+    <div className="min-w-[120px] text-center">
+      {reports.reduce((sum, r) => sum + Number(r.jeunes || 0), 0)}
+    </div>
+    <div className="min-w-[130px] text-center text-orange-400">
+      {reports.reduce(
+        (sum, r) =>
+          sum +
+          Number(r.hommes || 0) +
+          Number(r.femmes || 0) +
+          Number(r.jeunes || 0),
+        0
+      )}
+    </div>
+    <div className="min-w-[120px] text-center">
+      {reports.reduce((sum, r) => sum + Number(r.enfants || 0), 0)}
+    </div>
+    <div className="min-w-[140px] text-center">
+      {reports.reduce((sum, r) => sum + Number(r.connectes || 0), 0)}
+    </div>
+    <div className="min-w-[150px] text-center">
+      {reports.reduce((sum, r) => sum + Number(r.nouveauxVenus || 0), 0)}
+    </div>
+    <div className="min-w-[180px] text-center">
+      {reports.reduce((sum, r) => sum + Number(r.nouveauxConvertis || 0), 0)}
+    </div>
+    <div className="min-w-[140px]"></div>
+  </div>
+)}
+
         </div>
       </div>
       )}

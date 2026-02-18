@@ -18,11 +18,11 @@ function RapportMinistere() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [rapports, setRapports] = useState([]);
-  const [totalMembres, setTotalMembres] = useState(0);
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Charger profil utilisateur
   useEffect(() => {
     const fetchUser = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -39,9 +39,11 @@ function RapportMinistere() {
         setBrancheId(profile.branche_id);
       }
     };
+
     fetchUser();
   }, []);
 
+  // Générer rapport
   const fetchRapport = async () => {
     if (!egliseId || !brancheId) return;
 
@@ -49,7 +51,7 @@ function RapportMinistere() {
 
     let query = supabase
       .from("membres_complets")
-      .select("id, Ministere, created_at, eglise_id, branche_id")
+      .select('"Ministere", created_at, eglise_id, branche_id')
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId)
       .not("Ministere", "is", null);
@@ -66,11 +68,9 @@ function RapportMinistere() {
     }
 
     const counts = {};
-    const membresUniques = new Set();
+    let totalServiteurs = 0;
 
     data.forEach((membre) => {
-      membresUniques.add(membre.id); // Chaque membre = 1 pour total
-
       let ministeres = membre.Ministere;
 
       if (typeof ministeres === "string") {
@@ -87,22 +87,23 @@ function RapportMinistere() {
           if (!clean) return;
           if (!counts[clean]) counts[clean] = 0;
           counts[clean]++;
+          totalServiteurs++;
         });
       }
     });
 
-    const total = membresUniques.size;
-
-    const result = Object.entries(counts).map(([nom, totalMin]) => ({
+    const result = Object.entries(counts).map(([nom, total]) => ({
       ministere: nom,
-      total: totalMin,
-      pourcentage: total > 0 ? ((totalMin / total) * 100).toFixed(1) : 0,
+      total,
+      pourcentage: totalServiteurs > 0 ? ((total / totalServiteurs) * 100).toFixed(1) : 0,
     }));
 
-    setTotalMembres(total);
     setRapports(result);
     setLoading(false);
   };
+
+  // Calcul total général
+  const totalGeneral = rapports.reduce((sum, r) => sum + r.total, 0);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -137,57 +138,49 @@ function RapportMinistere() {
       {/* TABLEAU */}
       {rapports.length > 0 && (
         <div className="w-full flex justify-center mt-6 mb-6">
-  <div className="w-max overflow-x-auto space-y-2">
-    {/* HEADER */}
-    <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-      <div className="min-w-[200px]">Ministère</div>
-      <div className="min-w-[100px] text-center text-orange-400 font-semibold">
-        Nombre
-      </div>
-      <div className="min-w-[150px] text-center font-semibold">
-        Serv./Min.
-      </div>
-      <div className="min-w-[100px] text-center font-semibold">
-        % total
-      </div>
-    </div>
+          <div className="w-max overflow-x-auto space-y-2">
+            {/* HEADER */}
+            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[250px]">Ministère</div>
+              <div className="min-w-[150px] text-center text-orange-400 font-semibold">
+                Nombre de Serviteurs
+              </div>
+              <div className="min-w-[150px] text-center font-semibold">
+                % du total
+              </div>
+            </div>
 
-    {loading && (
-      <div className="text-white text-center py-4">Chargement...</div>
-    )}
+            {loading && (
+              <div className="text-white text-center py-4">Chargement...</div>
+            )}
 
-    {rapports.map((r, index) => (
-      <div
-        key={index}
-        className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
-      >
-        <div className="min-w-[200px] text-white font-semibold">
-          {r.ministere}
-        </div>
-        <div className="min-w-[100px] text-center text-orange-400 font-bold">
-          {r.totalMembres} {/* total de serviteurs uniques */}
-        </div>
-        <div className="min-w-[150px] text-center text-orange-400 font-bold">
-          {r.total} {/* serviteurs par ministère */}
-        </div>
-        <div className="min-w-[100px] text-center font-semibold">
-          {r.pourcentage} %
-        </div>
-      </div>
-    ))}
+            {rapports.map((r, index) => (
+              <div
+                key={index}
+                className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
+              >
+                <div className="min-w-[250px] text-white font-semibold">
+                  {r.ministere}
+                </div>
+                <div className="min-w-[150px] text-center text-orange-400 font-bold">
+                  {r.total}
+                </div>
+                <div className="min-w-[150px] text-center font-semibold">
+                  {r.pourcentage} %
+                </div>
+              </div>
+            ))}
 
-    {/* Total général */}
-    <div className="flex items-center px-4 py-3 rounded-lg bg-white/20 border-t border-white/30">
-      <div className="min-w-[200px] text-white font-bold">Total membres</div>
-      <div className="min-w-[100px] text-center text-orange-400 font-bold">
-        {totalMembres}
-      </div>
-      <div className="min-w-[150px] text-center font-bold"></div>
-      <div className="min-w-[100px] text-center font-bold">100 %</div>
-    </div>
-  </div>
-</div>
-
+            {/* Total général */}
+            <div className="flex items-center px-4 py-3 rounded-lg bg-white/20 border-t border-white/30">
+              <div className="min-w-[250px] text-white font-bold">Total</div>
+              <div className="min-w-[150px] text-center text-orange-400 font-bold">
+                {totalGeneral}
+              </div>
+              <div className="min-w-[150px] text-center font-bold">100 %</div>
+            </div>
+          </div>
+        </div>
       )}
 
       <Footer />

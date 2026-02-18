@@ -34,7 +34,7 @@ function RapportBesoin() {
 
   const fetchRapport = async () => {
     setMessage("⏳ Chargement...");
-    setBesoinsCount({});
+    setBesoinsCount({}); // 🔥 reset pour éviter doublons
 
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -61,28 +61,39 @@ function RapportBesoin() {
       const count = {};
 
       (data || []).forEach((r) => {
-        if (!r.besoin) return;
+  if (!r.besoin) return;
 
-        let besoinsArray = [];
+  let besoinsArray = [];
 
-        try {
-          if (r.besoin.startsWith("[")) {
-            besoinsArray = JSON.parse(r.besoin);
-          } else {
-            besoinsArray = r.besoin.split(",");
-          }
-        } catch {
-          besoinsArray = r.besoin.split(",");
-        }
+  try {
+    // Si c'est du JSON
+    if (r.besoin.startsWith("[")) {
+      besoinsArray = JSON.parse(r.besoin);
+    } else {
+      // Force séparation même si mal formaté
+      besoinsArray = r.besoin.split(",");
+    }
+  } catch {
+    besoinsArray = r.besoin.split(",");
+  }
 
-        besoinsArray.forEach((b) => {
-          const clean = b.trim();
-          if (!clean) return;
+  besoinsArray.forEach((b) => {
+    const clean = b.trim();
 
-          if (!count[clean]) count[clean] = 0;
-          count[clean]++;
-        });
-      });
+    if (!clean) return;
+
+    // 🔥 Sécurité supplémentaire :
+    // si jamais il reste une virgule dedans
+    clean.split(",").forEach((finalBesoin) => {
+      const final = finalBesoin.trim();
+      if (!final) return;
+
+      if (!count[final]) count[final] = 0;
+      count[final]++;
+    });
+  });
+});
+
 
       setBesoinsCount(count);
       setMessage("");
@@ -94,7 +105,6 @@ function RapportBesoin() {
 
   const labels = Object.keys(besoinsCount);
   const values = Object.values(besoinsCount);
-  const total = values.reduce((acc, val) => acc + val, 0);
 
   const chartData = {
     labels,
@@ -114,15 +124,9 @@ function RapportBesoin() {
     plugins: {
       legend: { display: false },
       tooltip: {
-        callbacks: {
-          label: function (context) {
-            const value = context.raw;
-            const percent = total
-              ? ((value / total) * 100).toFixed(1)
-              : 0;
-            return `${value} (${percent}%)`;
-          },
-        },
+        backgroundColor: "#1f2366",
+        titleColor: "#fff",
+        bodyColor: "#fff",
       },
     },
     scales: {
@@ -189,9 +193,7 @@ function RapportBesoin() {
               className="flex justify-between text-white py-2 border-b border-white/10"
             >
               <span>{b}</span>
-              <span className="font-semibold">
-                {values[i]}
-              </span>
+              <span className="font-semibold">{values[i]}</span>
             </div>
           ))}
         </div>
@@ -199,7 +201,7 @@ function RapportBesoin() {
 
       {/* CHART */}
       {labels.length > 0 && (
-        <div className="w-full max-w-[800px] bg-white/10 rounded-2xl shadow-lg p-8">
+        <div className="w-full max-w-[800px] bg-gradient-to-r from-indigo-600 to-blue-600 rounded-3xl p-8 shadow-2xl">
           <Bar data={chartData} options={chartOptions} />
         </div>
       )}

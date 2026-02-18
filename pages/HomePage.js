@@ -12,46 +12,33 @@ export default function HomePage() {
     <div className="bg-white text-gray-900">
       <PublicHeader />
 
-      {/* HERO */}
-      <section className="pt-20 pb-20 bg-gradient-to-br from-blue-700 to-indigo-800 text-white">
-        <div className="max-w-3xl mx-auto px-6 text-center">
+      <section className="pt-24 pb-24 bg-gradient-to-br from-blue-700 to-indigo-800 text-white">
+  <div className="max-w-3xl mx-auto px-6 text-center space-y-6">
 
-          {/* Phrase centrale */}
-          <p className="text-xl lg:text-2xl italic mb-8">
-            Le ministère est un appel. Le suivi est une responsabilité.
-          </p>
+    {/* Bloc central méditatif et fluide */}
+    <p className="text-lg lg:text-xl leading-relaxed text-white/90">
+      Chaque membre porte une histoire, chaque absence peut révéler une saison difficile et chaque silence peut cacher une bataille invisible.  
+      Un berger attentif ne dirige pas seulement : il discerne, il veille, il accompagne avec intention.
+    </p>
 
-          <div className="space-y-4 text-white/90 text-lg mb-6 leading-relaxed">
-            <p>Chaque membre porte une histoire.</p>
-            <p>Chaque absence peut révéler une saison difficile.</p>
-            <p>Chaque silence peut cacher une bataille invisible.</p>
-          </div>
+    <p className="italic text-white/80">
+      “Prenez soin du troupeau de Dieu…” – 1 Pierre 5:2
+    </p>
 
-          <div className="space-y-2 text-lg mb-6">
-            <p>Un berger attentif ne dirige pas seulement.</p>
-            <p>Il discerne.</p>
-            <p>Il veille.</p>
-            <p>Il accompagne avec intention.</p>
-          </div>
+    <p className="leading-relaxed text-white/90 font-medium">
+      Aimer, c’est aussi organiser. Servir une église, c’est structurer. Veiller, c’est suivre avec sagesse.
+    </p>
 
-          <p className="italic text-white/80 mb-8">
-            “Prenez soin du troupeau de Dieu…” – 1 Pierre 5:2
-          </p>
+    <button
+      onClick={() => router.push("/SignupEglise")}
+      className="mt-6 bg-white text-blue-700 px-8 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 transition"
+    >
+      🚀 Découvrir SoulTrack
+    </button>
 
-          <div className="space-y-2 font-medium mb-10">
-            <p>Aimer, c’est aussi organiser.</p>
-            <p>Servir une église, c’est aussi structurer.</p>
-            <p>Veiller, c’est aussi suivre avec sagesse.</p>
-          </div>
+  </div>
+</section>
 
-          <button
-            onClick={() => router.push("/SignupEglise")}
-            className="bg-white text-blue-700 px-8 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 transition"
-          >
-            🚀 Découvrir SoulTrack
-          </button>
-        </div>
-      </section>
 
       {/* TRANSITION */}
       <section className="py-16 px-6 bg-white text-center">

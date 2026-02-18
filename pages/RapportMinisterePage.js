@@ -23,8 +23,8 @@ function RapportMinistere() {
   const [loading, setLoading] = useState(false);
   const [totalServiteurs, setTotalServiteurs] = useState(0);
   const [totalMembres, setTotalMembres] = useState(0);
+  const [message, setMessage] = useState("");
 
-  // 🔹 Charger profil utilisateur
   useEffect(() => {
     const fetchUser = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -41,69 +41,95 @@ function RapportMinistere() {
         setBrancheId(profile.branche_id);
       }
     };
-
     fetchUser();
   }, []);
 
-  // 🔹 Générer rapport
   const fetchRapport = async () => {
-    if (!egliseId || !brancheId) return;
     setLoading(true);
+    setRapports([]);
+    setTotalServiteurs(0);
+    setTotalMembres(0);
+    setMessage("⏳ Chargement...");
 
-    let query = supabase
-      .from("membres_complets")
-      .select('"Ministere", created_at, eglise_id, branche_id')
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId)
-      .not("Ministere", "is", null);
-
-    if (dateDebut) query = query.gte("created_at", dateDebut);
-    if (dateFin) query = query.lte("created_at", dateFin);
-
-    const { data, error } = await query;
-    if (error) {
-      console.error("Erreur Supabase:", error);
+    if (!egliseId || !brancheId) {
+      setMessage("❌ ID de l'église manquant");
       setLoading(false);
       return;
     }
 
-    const counts = {};
-    let totalMembresLocal = 0;
-    let totalServiteursLocal = 0;
+    try {
+      // 🔹 Récupérer tous les membres selon filtre date
+      let query = supabase
+        .from("membres_complets")
+        .select(
+          `"Ministere", star, etat_contact, eglise_id, branche_id`
+        )
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
 
-    data.forEach((membre) => {
-      totalMembresLocal++;
+      if (dateDebut) query = query.gte("created_at", dateDebut);
+      if (dateFin) query = query.lte("created_at", dateFin);
 
-      let ministeres = membre.Ministere;
+      const { data, error } = await query;
+      if (error) throw error;
 
-      if (typeof ministeres === "string") {
-        try {
-          ministeres = JSON.parse(ministeres);
-        } catch {
-          ministeres = [ministeres];
+      let counts = {};
+      let totalServiteursLocal = 0;
+      let totalMembresLocal = 0;
+
+      data.forEach((membre) => {
+        // Compter le membre si existant ou nouveau
+        if (
+          membre.etat_contact === "existant" ||
+          membre.etat_contact === "nouveau"
+        ) {
+          totalMembresLocal++;
         }
-      }
 
-      if (Array.isArray(ministeres)) {
-        ministeres.forEach((min) => {
-          if (!counts[min]) counts[min] = 0;
-          counts[min]++;
+        // Compter les serviteurs : star = "oui"
+        if (membre.star === "oui") {
           totalServiteursLocal++;
-        });
-      }
-    });
+        }
 
-    const result = Object.entries(counts).map(([nom, total]) => ({
-      ministere: nom,
-      total,
-      pourcentage: totalMembresLocal > 0 ? ((total / totalMembresLocal) * 100).toFixed(1) : 0,
-    }));
+        // Comptage par ministère
+        let ministeres = membre.Ministere;
+        if (ministeres) {
+          if (typeof ministeres === "string") {
+            try {
+              ministeres = JSON.parse(ministeres);
+            } catch {
+              ministeres = [ministeres];
+            }
+          }
 
-    setRapports(result);
-    setTotalServiteurs(totalServiteursLocal);
-    setTotalMembres(totalMembresLocal);
+          if (Array.isArray(ministeres)) {
+            ministeres.forEach((min) => {
+              if (!counts[min]) counts[min] = 0;
+              counts[min]++;
+            });
+          }
+        }
+      });
+
+      const result = Object.entries(counts).map(([nom, total]) => ({
+        ministere: nom,
+        total,
+      }));
+
+      setRapports(result);
+      setTotalServiteurs(totalServiteursLocal);
+      setTotalMembres(totalMembresLocal);
+      setMessage("");
+    } catch (err) {
+      console.error(err);
+      setMessage("❌ " + err.message);
+    }
+
     setLoading(false);
   };
+
+  const pourcentageServiteurs =
+    totalMembres > 0 ? ((totalServiteurs / totalMembres) * 100).toFixed(1) : 0;
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -113,23 +139,8 @@ function RapportMinistere() {
         Rapport Ministère
       </h1>
 
-      {/* 🔹 Filtres et carrés */}
-      <div className="flex flex-wrap justify-center gap-4 mb-6">
-        {/* Carré Total Serviteurs */}
-        <div className="bg-white/10 px-6 py-4 rounded-2xl shadow-lg flex flex-col items-center min-w-[180px]">
-          <span className="text-white text-sm">Serviteurs / Ministère</span>
-          <span className="text-orange-400 font-bold text-2xl">{totalServiteurs}</span>
-        </div>
-
-        {/* Carré % total */}
-        <div className="bg-white/10 px-6 py-4 rounded-2xl shadow-lg flex flex-col items-center min-w-[180px]">
-          <span className="text-white text-sm">% sur le total des membres</span>
-          <span className="text-orange-400 font-bold text-2xl">
-            {totalMembres > 0 ? ((totalServiteurs / totalMembres) * 100).toFixed(1) : 0} %
-          </span>
-        </div>
-
-        {/* Filtres date */}
+      {/* 🔹 FILTRES */}
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">
         <input
           type="date"
           value={dateDebut}
@@ -150,22 +161,33 @@ function RapportMinistere() {
         </button>
       </div>
 
-      {/* 🔹 Tableau */}
+      {/* 🔹 Carrés */}
+      <div className="flex flex-wrap justify-center gap-4 mt-4 mb-6">
+        <div className="bg-white/10 px-6 py-4 rounded-2xl shadow-lg flex flex-col items-center min-w-[180px]">
+          <span className="text-white text-sm">Serviteurs / Ministère</span>
+          <span className="text-orange-400 font-bold text-2xl">{totalServiteurs}</span>
+        </div>
+
+        <div className="bg-white/10 px-6 py-4 rounded-2xl shadow-lg flex flex-col items-center min-w-[180px]">
+          <span className="text-white text-sm">% sur total membres</span>
+          <span className="text-orange-400 font-bold text-2xl">{pourcentageServiteurs} %</span>
+        </div>
+      </div>
+
+      {message && <p className="text-white mb-4">{message}</p>}
+
+      {/* 🔹 TABLEAU */}
       {rapports.length > 0 && (
         <div className="w-full flex justify-center mt-6 mb-6">
           <div className="w-max overflow-x-auto space-y-2">
-            {/* HEADER */}
             <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[250px]">Ministère</div>
               <div className="min-w-[150px] text-center text-orange-400 font-semibold">
                 Serviteurs / Ministère
               </div>
-              <div className="min-w-[150px] text-center">% du total</div>
             </div>
 
-            {loading && (
-              <div className="text-white text-center py-4">Chargement...</div>
-            )}
+            {loading && <div className="text-white text-center py-4">Chargement...</div>}
 
             {rapports.map((r, index) => (
               <div
@@ -173,12 +195,7 @@ function RapportMinistere() {
                 className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
               >
                 <div className="min-w-[250px] text-white font-semibold">{r.ministere}</div>
-                <div className="min-w-[150px] text-center text-orange-400 font-bold">
-                  {r.total}
-                </div>
-                <div className="min-w-[150px] text-center font-semibold">
-                  {r.pourcentage} %
-                </div>
+                <div className="min-w-[150px] text-center text-orange-400 font-bold">{r.total}</div>
               </div>
             ))}
           </div>

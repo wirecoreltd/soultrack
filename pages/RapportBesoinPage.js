@@ -52,7 +52,6 @@ function RapportBesoin() {
         if (!r.besoin) return;
 
         let besoinsArray = [];
-
         try {
           if (r.besoin.startsWith("[")) {
             besoinsArray = JSON.parse(r.besoin);
@@ -98,30 +97,39 @@ function RapportBesoin() {
       </h1>
 
       {/* FILTRES */}
-      <div className="flex flex-col w-full sm:w-auto">
-            <label htmlFor="dateDebut" className="font-medium mb-1">Date de début</label>
-        <input
-          type="date"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        </div>  
-        <div className="flex flex-col w-full sm:w-auto">
-            <label htmlFor="dateFin" className="font-medium mb-1">Date de fin</label>    
-        <input
-          type="date"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-             </div> 
-        <button
-          onClick={fetchRapport}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition"
-        >
-          Générer
-        </button>
+      <div className="flex flex-wrap gap-4 mb-6">
+        <div className="flex flex-col">
+          <label htmlFor="dateDebut" className="font-medium mb-1 text-white">
+            Date de début
+          </label>
+          <input
+            type="date"
+            value={dateDebut}
+            onChange={(e) => setDateDebut(e.target.value)}
+            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+          />
+        </div>
+
+        <div className="flex flex-col">
+          <label htmlFor="dateFin" className="font-medium mb-1 text-white">
+            Date de fin
+          </label>
+          <input
+            type="date"
+            value={dateFin}
+            onChange={(e) => setDateFin(e.target.value)}
+            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+          />
+        </div>
+
+        <div className="flex items-end">
+          <button
+            onClick={fetchRapport}
+            className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition"
+          >
+            Générer
+          </button>
+        </div>
       </div>
 
       {message && <p className="text-white mb-4">{message}</p>}
@@ -134,7 +142,7 @@ function RapportBesoin() {
             <div className="text-orange-400">Nombre</div>
             <div>% du total des membres</div>
           </div>
-      
+
           {labels.map((b, i) => (
             <div
               key={b}
@@ -142,10 +150,11 @@ function RapportBesoin() {
             >
               <div className="text-left pl-2">{b}</div>
               <div className="text-orange-400 font-semibold">{values[i]}</div>
-              <div className="font-semibold">{((values[i] / total) * 100).toFixed(1)} %</div>
+              <div className="font-semibold">
+                {total > 0 ? ((values[i] / total) * 100).toFixed(1) : 0} %
+              </div>
             </div>
-          ))}      
-          
+          ))}
         </div>
       )}
 

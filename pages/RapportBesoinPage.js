@@ -34,7 +34,7 @@ function RapportBesoin() {
 
   const fetchRapport = async () => {
     setMessage("⏳ Chargement...");
-    setBesoinsCount({}); // 🔥 reset pour éviter doublons
+    setBesoinsCount({});
 
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -61,39 +61,28 @@ function RapportBesoin() {
       const count = {};
 
       (data || []).forEach((r) => {
-  if (!r.besoin) return;
+        if (!r.besoin) return;
 
-  let besoinsArray = [];
+        let besoinsArray = [];
 
-  try {
-    // Si c'est du JSON
-    if (r.besoin.startsWith("[")) {
-      besoinsArray = JSON.parse(r.besoin);
-    } else {
-      // Force séparation même si mal formaté
-      besoinsArray = r.besoin.split(",");
-    }
-  } catch {
-    besoinsArray = r.besoin.split(",");
-  }
+        try {
+          if (r.besoin.startsWith("[")) {
+            besoinsArray = JSON.parse(r.besoin);
+          } else {
+            besoinsArray = r.besoin.split(",");
+          }
+        } catch {
+          besoinsArray = r.besoin.split(",");
+        }
 
-  besoinsArray.forEach((b) => {
-    const clean = b.trim();
+        besoinsArray.forEach((b) => {
+          const clean = b.trim();
+          if (!clean) return;
 
-    if (!clean) return;
-
-    // 🔥 Sécurité supplémentaire :
-    // si jamais il reste une virgule dedans
-    clean.split(",").forEach((finalBesoin) => {
-      const final = finalBesoin.trim();
-      if (!final) return;
-
-      if (!count[final]) count[final] = 0;
-      count[final]++;
-    });
-  });
-});
-
+          if (!count[clean]) count[clean] = 0;
+          count[clean]++;
+        });
+      });
 
       setBesoinsCount(count);
       setMessage("");
@@ -105,6 +94,7 @@ function RapportBesoin() {
 
   const labels = Object.keys(besoinsCount);
   const values = Object.values(besoinsCount);
+  const total = values.reduce((acc, val) => acc + val, 0);
 
   const chartData = {
     labels,
@@ -124,9 +114,15 @@ function RapportBesoin() {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: "#1f2366",
-        titleColor: "#fff",
-        bodyColor: "#fff",
+        callbacks: {
+          label: function (context) {
+            const value = context.raw;
+            const percent = total
+              ? ((value / total) * 100).toFixed(1)
+              : 0;
+            return `${value} (${percent}%)`;
+          },
+        },
       },
     },
     scales: {
@@ -146,45 +142,6 @@ function RapportBesoin() {
       },
     },
   };
-
-  const total = besoinData.reduce((acc, item) => acc + item.nombre, 0);
-
-  const options = {
-  responsive: true,
-  plugins: {
-    legend: {
-      display: false,
-    },
-    tooltip: {
-      callbacks: {
-        label: function (context) {
-          const value = context.raw;
-          const percent = ((value / total) * 100).toFixed(1);
-          return `${value} (${percent}%)`;
-        },
-      },
-    },
-  },
-  scales: {
-    x: {
-      ticks: {
-        color: "white",
-      },
-      grid: {
-        display: false,
-      },
-    },
-    y: {
-      ticks: {
-        color: "white",
-      },
-      grid: {
-        color: "rgba(255,255,255,0.1)",
-      },
-    },
-  },
-};
-
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -232,7 +189,9 @@ function RapportBesoin() {
               className="flex justify-between text-white py-2 border-b border-white/10"
             >
               <span>{b}</span>
-              <span className="font-semibold">{values[i]}</span>
+              <span className="font-semibold">
+                {values[i]}
+              </span>
             </div>
           ))}
         </div>
@@ -240,21 +199,10 @@ function RapportBesoin() {
 
       {/* CHART */}
       {labels.length > 0 && (
-        <div className="w-full max-w-[800px] bg-gray-800 rounded-xl p-6 shadow-lg mt-6">
+        <div className="w-full max-w-[800px] bg-white/10 rounded-2xl shadow-lg p-8">
           <Bar data={chartData} options={chartOptions} />
         </div>
       )}
-  datasets: [
-  {
-    label: "Nombre",
-    data: besoinData.map((item) => item.nombre),
-    backgroundColor: "#3B82F6",
-    borderRadius: 8,
-    barPercentage: 0.5,
-    categoryPercentage: 0.5,
-  },
-],
-
 
       <Footer />
     </div>

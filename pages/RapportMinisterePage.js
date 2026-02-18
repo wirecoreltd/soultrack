@@ -22,7 +22,7 @@ function RapportMinistere() {
   const [brancheId, setBrancheId] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Charger profil utilisateur
+  // 🔹 Charger profil utilisateur
   useEffect(() => {
     const fetchUser = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -43,67 +43,67 @@ function RapportMinistere() {
     fetchUser();
   }, []);
 
-  // Générer rapport
+  // 🔹 Générer rapport
   const fetchRapport = async () => {
-    if (!egliseId || !brancheId) return;
+  console.log("Eglise:", egliseId);
+  console.log("Branche:", brancheId);
 
-    setLoading(true);
+  if (!egliseId || !brancheId) {
+    console.log("ID manquant");
+    return;
+  }
 
-    let query = supabase
-      .from("membres_complets")
-      .select('"Ministere", created_at, eglise_id, branche_id')
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId)
-      .not("Ministere", "is", null);
+  setLoading(true);
 
-    if (dateDebut) query = query.gte("created_at", dateDebut);
-    if (dateFin) query = query.lte("created_at", dateFin);
+  const { data, error } = await supabase
+    .from("membres_complets")
+    .select('"Ministere", created_at, eglise_id, branche_id')
+    .eq("eglise_id", egliseId)
+    .eq("branche_id", brancheId)
+    .not("Ministere", "is", null);
 
-    const { data, error } = await query;
+  if (error) {
+    console.error("Erreur Supabase:", error);
+    setLoading(false);
+    return;
+  }
 
-    if (error) {
-      console.error("Erreur Supabase:", error);
-      setLoading(false);
-      return;
+  console.log("DATA:", data);
+
+  const counts = {};
+
+  data.forEach((membre) => {
+    let ministeres = membre.Ministere;
+
+    // Si c'est une string JSON → on parse
+    if (typeof ministeres === "string") {
+      try {
+        ministeres = JSON.parse(ministeres);
+      } catch {
+        ministeres = [ministeres];
+      }
     }
 
-    const counts = {};
-    let totalServiteurs = 0;
+    if (Array.isArray(ministeres)) {
+      ministeres.forEach((min) => {
+        if (!counts[min]) counts[min] = 0;
+        counts[min]++;
+      });
+    }
+  });
 
-    data.forEach((membre) => {
-      let ministeres = membre.Ministere;
+  const result = Object.entries(counts).map(([nom, total]) => ({
+    ministere: nom,
+    total,
+  }));
 
-      if (typeof ministeres === "string") {
-        try {
-          ministeres = JSON.parse(ministeres);
-        } catch {
-          ministeres = [ministeres];
-        }
-      }
+  console.log("RESULT:", result);
 
-      if (Array.isArray(ministeres)) {
-        ministeres.forEach((min) => {
-          const clean = min.trim();
-          if (!clean) return;
-          if (!counts[clean]) counts[clean] = 0;
-          counts[clean]++;
-          totalServiteurs++;
-        });
-      }
-    });
+  setRapports(result);
+  setLoading(false);
+};
 
-    const result = Object.entries(counts).map(([nom, total]) => ({
-      ministere: nom,
-      total,
-      pourcentage: totalServiteurs > 0 ? ((total / totalServiteurs) * 100).toFixed(1) : 0,
-    }));
 
-    setRapports(result);
-    setLoading(false);
-  };
-
-  // Calcul total général
-  const totalGeneral = rapports.reduce((sum, r) => sum + r.total, 0);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -113,7 +113,7 @@ function RapportMinistere() {
         Rapport Ministère
       </h1>
 
-      {/* FILTRES */}
+      {/* 🔹 Filtres */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">
         <input
           type="date"
@@ -135,55 +135,50 @@ function RapportMinistere() {
         </button>
       </div>
 
-      {/* TABLEAU */}
-      {rapports.length > 0 && (
-        <div className="w-full flex justify-center mt-6 mb-6">
-          <div className="w-max overflow-x-auto space-y-2">
-            {/* HEADER */}
-            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[250px]">Ministère</div>
-              <div className="min-w-[150px] text-center text-orange-400 font-semibold">
-                Nombre de Serviteurs
-              </div>
-              <div className="min-w-[150px] text-center font-semibold">
-                % du total
-              </div>
-            </div>
-
-            {loading && (
-              <div className="text-white text-center py-4">Chargement...</div>
-            )}
-
-            {rapports.map((r, index) => (
-              <div
-                key={index}
-                className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
-              >
-                <div className="min-w-[250px] text-white font-semibold">
-                  {r.ministere}
-                </div>
-                <div className="min-w-[150px] text-center text-orange-400 font-bold">
-                  {r.total}
-                </div>
-                <div className="min-w-[150px] text-center font-semibold">
-                  {r.pourcentage} %
-                </div>
-              </div>
-            ))}
-
-            {/* Total général */}
-            <div className="flex items-center px-4 py-3 rounded-lg bg-white/20 border-t border-white/30">
-              <div className="min-w-[250px] text-white font-bold">Total</div>
-              <div className="min-w-[150px] text-center text-orange-400 font-bold">
-                {totalGeneral}
-              </div>
-              <div className="min-w-[150px] text-center font-bold">100 %</div>
+      {/* 🔹 Tableau */}
+      <div className="w-full flex justify-center mt-6 mb-6">
+        <div className="w-max overflow-x-auto space-y-2">
+          {/* HEADER */}
+          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+            <div className="min-w-[250px]">Ministère</div>
+            <div className="min-w-[150px] text-center text-orange-400 font-semibold">
+              Nombre de Serviteurs
             </div>
           </div>
+
+          {loading && (
+            <div className="text-white text-center py-4">
+              Chargement...
+            </div>
+          )}
+
+          {rapports.map((r, index) => (
+            <div
+              key={index}
+              className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
+            >
+              <div className="min-w-[250px] text-white font-semibold">
+                {r.ministere}
+              </div>
+              <div className="min-w-[150px] text-center text-orange-400 font-bold">
+                {r.total}
+              </div>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
 
       <Footer />
+
+      <style jsx>{`
+        .input {
+          width: 100%;
+          border: 1px solid #ccc;
+          border-radius: 12px;
+          padding: 10px;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+      `}</style>
     </div>
   );
 }

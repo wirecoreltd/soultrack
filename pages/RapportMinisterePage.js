@@ -45,65 +45,60 @@ function RapportMinistere() {
 
   // 🔹 Générer rapport
   const fetchRapport = async () => {
-  console.log("Eglise:", egliseId);
-  console.log("Branche:", brancheId);
+    if (!egliseId || !brancheId) return;
+    setLoading(true);
 
-  if (!egliseId || !brancheId) {
-    console.log("ID manquant");
-    return;
-  }
+    let query = supabase
+      .from("membres_complets")
+      .select('"Ministere", created_at, eglise_id, branche_id')
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId)
+      .not("Ministere", "is", null);
 
-  setLoading(true);
+    if (dateDebut) query = query.gte("created_at", dateDebut);
+    if (dateFin) query = query.lte("created_at", dateFin);
 
-  const { data, error } = await supabase
-    .from("membres_complets")
-    .select('"Ministere", created_at, eglise_id, branche_id')
-    .eq("eglise_id", egliseId)
-    .eq("branche_id", brancheId)
-    .not("Ministere", "is", null);
+    const { data, error } = await query;
+    if (error) {
+      console.error("Erreur Supabase:", error);
+      setLoading(false);
+      return;
+    }
 
-  if (error) {
-    console.error("Erreur Supabase:", error);
-    setLoading(false);
-    return;
-  }
+    const counts = {};
+    let totalMembres = 0;
 
-  console.log("DATA:", data);
+    data.forEach((membre) => {
+      totalMembres++;
 
-  const counts = {};
+      let ministeres = membre.Ministere;
 
-  data.forEach((membre) => {
-    let ministeres = membre.Ministere;
-
-    // Si c'est une string JSON → on parse
-    if (typeof ministeres === "string") {
-      try {
-        ministeres = JSON.parse(ministeres);
-      } catch {
-        ministeres = [ministeres];
+      // Si c'est une string JSON → on parse
+      if (typeof ministeres === "string") {
+        try {
+          ministeres = JSON.parse(ministeres);
+        } catch {
+          ministeres = [ministeres];
+        }
       }
-    }
 
-    if (Array.isArray(ministeres)) {
-      ministeres.forEach((min) => {
-        if (!counts[min]) counts[min] = 0;
-        counts[min]++;
-      });
-    }
-  });
+      if (Array.isArray(ministeres)) {
+        ministeres.forEach((min) => {
+          if (!counts[min]) counts[min] = 0;
+          counts[min]++;
+        });
+      }
+    });
 
-  const result = Object.entries(counts).map(([nom, total]) => ({
-    ministere: nom,
-    total,
-  }));
+    const result = Object.entries(counts).map(([nom, total]) => ({
+      ministere: nom,
+      total,
+      pourcentage: totalMembres > 0 ? ((total / totalMembres) * 100).toFixed(1) : 0,
+    }));
 
-  console.log("RESULT:", result);
-
-  setRapports(result);
-  setLoading(false);
-};
-
-
+    setRapports(result);
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -136,49 +131,41 @@ function RapportMinistere() {
       </div>
 
       {/* 🔹 Tableau */}
-      <div className="w-full flex justify-center mt-6 mb-6">
-        <div className="w-max overflow-x-auto space-y-2">
-          {/* HEADER */}
-          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[250px]">Ministère</div>
-            <div className="min-w-[150px] text-center text-orange-400 font-semibold">
-              Nombre de Serviteurs
+      {rapports.length > 0 && (
+        <div className="w-full flex justify-center mt-6 mb-6">
+          <div className="w-max overflow-x-auto space-y-2">
+            {/* HEADER */}
+            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[250px]">Ministère</div>
+              <div className="min-w-[150px] text-center text-orange-400 font-semibold">
+                Nombre de serviteurs
+              </div>
+              <div className="min-w-[150px] text-center">% du total</div>
             </div>
+
+            {loading && (
+              <div className="text-white text-center py-4">Chargement...</div>
+            )}
+
+            {rapports.map((r, index) => (
+              <div
+                key={index}
+                className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
+              >
+                <div className="min-w-[250px] text-white font-semibold">{r.ministere}</div>
+                <div className="min-w-[150px] text-center text-orange-400 font-bold">
+                  {r.total}
+                </div>
+                <div className="min-w-[150px] text-center font-semibold">
+                  {r.pourcentage} %
+                </div>
+              </div>
+            ))}
           </div>
-
-          {loading && (
-            <div className="text-white text-center py-4">
-              Chargement...
-            </div>
-          )}
-
-          {rapports.map((r, index) => (
-            <div
-              key={index}
-              className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
-            >
-              <div className="min-w-[250px] text-white font-semibold">
-                {r.ministere}
-              </div>
-              <div className="min-w-[150px] text-center text-orange-400 font-bold">
-                {r.total}
-              </div>
-            </div>
-          ))}
         </div>
-      </div>
+      )}
 
       <Footer />
-
-      <style jsx>{`
-        .input {
-          width: 100%;
-          border: 1px solid #ccc;
-          border-radius: 12px;
-          padding: 10px;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-      `}</style>
     </div>
   );
 }

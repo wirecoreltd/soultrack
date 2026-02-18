@@ -21,6 +21,8 @@ function RapportMinistere() {
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [totalServiteurs, setTotalServiteurs] = useState(0);
+  const [totalMembres, setTotalMembres] = useState(0);
 
   // 🔹 Charger profil utilisateur
   useEffect(() => {
@@ -66,14 +68,14 @@ function RapportMinistere() {
     }
 
     const counts = {};
-    let totalMembres = 0;
+    let totalMembresLocal = 0;
+    let totalServiteursLocal = 0;
 
     data.forEach((membre) => {
-      totalMembres++;
+      totalMembresLocal++;
 
       let ministeres = membre.Ministere;
 
-      // Si c'est une string JSON → on parse
       if (typeof ministeres === "string") {
         try {
           ministeres = JSON.parse(ministeres);
@@ -86,6 +88,7 @@ function RapportMinistere() {
         ministeres.forEach((min) => {
           if (!counts[min]) counts[min] = 0;
           counts[min]++;
+          totalServiteursLocal++;
         });
       }
     });
@@ -93,10 +96,12 @@ function RapportMinistere() {
     const result = Object.entries(counts).map(([nom, total]) => ({
       ministere: nom,
       total,
-      pourcentage: totalMembres > 0 ? ((total / totalMembres) * 100).toFixed(1) : 0,
+      pourcentage: totalMembresLocal > 0 ? ((total / totalMembresLocal) * 100).toFixed(1) : 0,
     }));
 
     setRapports(result);
+    setTotalServiteurs(totalServiteursLocal);
+    setTotalMembres(totalMembresLocal);
     setLoading(false);
   };
 
@@ -108,8 +113,23 @@ function RapportMinistere() {
         Rapport Ministère
       </h1>
 
-      {/* 🔹 Filtres */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">
+      {/* 🔹 Filtres et carrés */}
+      <div className="flex flex-wrap justify-center gap-4 mb-6">
+        {/* Carré Total Serviteurs */}
+        <div className="bg-white/10 px-6 py-4 rounded-2xl shadow-lg flex flex-col items-center min-w-[180px]">
+          <span className="text-white text-sm">Serviteurs / Ministère</span>
+          <span className="text-orange-400 font-bold text-2xl">{totalServiteurs}</span>
+        </div>
+
+        {/* Carré % total */}
+        <div className="bg-white/10 px-6 py-4 rounded-2xl shadow-lg flex flex-col items-center min-w-[180px]">
+          <span className="text-white text-sm">% sur le total des membres</span>
+          <span className="text-orange-400 font-bold text-2xl">
+            {totalMembres > 0 ? ((totalServiteurs / totalMembres) * 100).toFixed(1) : 0} %
+          </span>
+        </div>
+
+        {/* Filtres date */}
         <input
           type="date"
           value={dateDebut}
@@ -138,7 +158,7 @@ function RapportMinistere() {
             <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[250px]">Ministère</div>
               <div className="min-w-[150px] text-center text-orange-400 font-semibold">
-                Nombre de serviteurs
+                Serviteurs / Ministère
               </div>
               <div className="min-w-[150px] text-center">% du total</div>
             </div>

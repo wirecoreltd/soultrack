@@ -147,6 +147,45 @@ function RapportBesoin() {
     },
   };
 
+  const total = besoinData.reduce((acc, item) => acc + item.nombre, 0);
+
+  const options = {
+  responsive: true,
+  plugins: {
+    legend: {
+      display: false,
+    },
+    tooltip: {
+      callbacks: {
+        label: function (context) {
+          const value = context.raw;
+          const percent = ((value / total) * 100).toFixed(1);
+          return `${value} (${percent}%)`;
+        },
+      },
+    },
+  },
+  scales: {
+    x: {
+      ticks: {
+        color: "white",
+      },
+      grid: {
+        display: false,
+      },
+    },
+    y: {
+      ticks: {
+        color: "white",
+      },
+      grid: {
+        color: "rgba(255,255,255,0.1)",
+      },
+    },
+  },
+};
+
+
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
@@ -201,10 +240,21 @@ function RapportBesoin() {
 
       {/* CHART */}
       {labels.length > 0 && (
-        <div className="w-full max-w-[800px] bg-gradient-to-r from-indigo-600 to-blue-600 rounded-3xl p-8 shadow-2xl">
+        <div className="w-full max-w-[800px] bg-gray-800 rounded-xl p-6 shadow-lg mt-6">
           <Bar data={chartData} options={chartOptions} />
         </div>
       )}
+  datasets: [
+  {
+    label: "Nombre",
+    data: besoinData.map((item) => item.nombre),
+    backgroundColor: "#3B82F6",
+    borderRadius: 8,
+    barPercentage: 0.5,
+    categoryPercentage: 0.5,
+  },
+],
+
 
       <Footer />
     </div>

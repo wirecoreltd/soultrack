@@ -34,6 +34,7 @@ function RapportBesoin() {
 
   const fetchRapport = async () => {
     setMessage("⏳ Chargement...");
+    setBesoinsCount({}); // 🔥 reset pour éviter doublons
 
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -57,76 +58,34 @@ function RapportBesoin() {
       const { data, error } = await query;
       if (error) throw error;
 
-     // Compter le nombre par besoin
-        const fetchRapport = async () => {
-  if (!formData.eglise_id || !formData.branche_id) return;
+      const count = {};
 
-  setRapportData([]); // 🔥 reset
+      (data || []).forEach((r) => {
+        if (!r.besoin) return;
 
-  let query = supabase
-    .from("membres_complets")
-    .select("besoin")
-    .eq("eglise_id", formData.eglise_id)
-    .eq("branche_id", formData.branche_id);
+        let besoinsArray = [];
 
-  if (dateDebut) query = query.gte("created_at", dateDebut);
-  if (dateFin) query = query.lte("created_at", dateFin);
+        if (r.besoin.startsWith("[")) {
+          try {
+            besoinsArray = JSON.parse(r.besoin);
+          } catch {
+            besoinsArray = [];
+          }
+        } else {
+          besoinsArray = r.besoin.split(",");
+        }
 
-  const { data, error } = await query;
+        besoinsArray.forEach((b) => {
+          const clean = b.trim();
+          if (!clean) return;
 
-  if (error) {
-    console.error(error);
-    return;
-  }
+          if (!count[clean]) {
+            count[clean] = 0;
+          }
 
-  // ✅ DECLARATION ICI
-  const count = {};
-
-  (data || []).forEach((r) => {
-    if (!r.besoin) return;
-
-    let besoinsArray = [];
-
-    if (r.besoin.startsWith("[")) {
-      try {
-        besoinsArray = JSON.parse(r.besoin);
-      } catch {
-        besoinsArray = [];
-      }
-    } else {
-      besoinsArray = r.besoin.split(",");
-    }
-
-    besoinsArray.forEach((b) => {
-      const clean = b.trim();
-      if (!clean) return;
-
-      if (!count[clean]) {
-        count[clean] = 0;
-      }
-
-      count[clean]++;
-    });
-  });
-
-  const result = Object.entries(count).map(([key, value]) => ({
-    besoin: key,
-    total: value,
-  }));
-
-  setRapportData(result);
-};
-
-        
-          const result = Object.keys(count).map((key) => ({
-            besoin: key,
-            total: count[key],
-          }));
-        
-          setRapportData(result); // 🔥 set UNE SEULE FOIS à la fin
-        };
-
-
+          count[clean]++;
+        });
+      });
 
       setBesoinsCount(count);
       setMessage("");
@@ -145,18 +104,15 @@ function RapportBesoin() {
       {
         label: "Nombre",
         data: values,
-        backgroundColor: "rgba(255,255,255,0.85)",
-        borderRadius: 8,
-        barThickness: 30,
+        backgroundColor: "rgba(255,255,255,0.9)",
+        borderRadius: 10,
+        barThickness: 35,
       },
     ],
   };
 
   const chartOptions = {
     responsive: true,
-    animation: {
-      duration: 1000,
-    },
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -213,11 +169,9 @@ function RapportBesoin() {
         </button>
       </div>
 
-      {message && (
-        <p className="text-white mb-4 font-medium">{message}</p>
-      )}
+      {message && <p className="text-white mb-4">{message}</p>}
 
-      {/* TABLEAU */}
+      {/* TABLE */}
       {labels.length > 0 && (
         <div className="w-full max-w-[600px] bg-white/10 rounded-2xl shadow-lg p-6 mb-8">
           <div className="flex justify-between text-white font-bold border-b border-white/30 pb-2 mb-2">

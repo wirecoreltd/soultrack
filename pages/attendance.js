@@ -46,13 +46,9 @@ function Attendance() {
         .eq("id", user.id)
         .single();
 
-      if (data) {
-        setSuperviseur({
-          eglise_id: data.eglise_id,
-          branche_id: data.branche_id
-        });
-      }
+      if (data) setSuperviseur(data);
     };
+
     loadSuperviseur();
   }, []);
 
@@ -63,70 +59,29 @@ function Attendance() {
       .from("attendance")
       .select("*")
       .eq("eglise_id", superviseur.eglise_id)
-      .eq("branche_id", superviseur.branche_id);
+      .eq("branche_id", superviseur.branche_id)
+      .order("date", { ascending: true });
 
     if (dateDebut) query = query.gte("date", dateDebut);
     if (dateFin) query = query.lte("date", dateFin);
 
-    query = query.order("date", { ascending: true });
-
     const { data } = await query;
+
     setReports(data || []);
     setShowTable(true);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const payload = {
-      ...formData,
-      eglise_id: superviseur.eglise_id,
-      branche_id: superviseur.branche_id,
-    };
-
-    if (editId) {
-      await supabase.from("attendance").update(payload).eq("id", editId);
-    } else {
-      await supabase.from("attendance").insert([payload]);
-    }
-
-    setFormData({
-      date: "",
-      hommes: 0,
-      femmes: 0,
-      jeunes: 0,
-      enfants: 0,
-      connectes: 0,
-      nouveauxVenus: 0,
-      nouveauxConvertis: 0,
-    });
-
-    setEditId(null);
-    setShowTable(false);
-  };
-
-  const handleEdit = (r) => {
-    setEditId(r.id);
-    setFormData(r);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleDelete = async (id) => {
-    await supabase.from("attendance").delete().eq("id", id);
-    fetchRapports();
-  };
-
-  const getMonthNameFR = (monthIndex) => {
+  const getMonthNameFR = (index) => {
     const months = [
       "Janvier","Février","Mars","Avril","Mai","Juin",
       "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
     ];
-    return months[monthIndex];
+    return months[index];
   };
 
   const groupByMonth = (data) => {
     const map = {};
-    data.forEach(r => {
+    data.forEach((r) => {
       const d = new Date(r.date);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       if (!map[key]) map[key] = [];
@@ -147,8 +102,8 @@ function Attendance() {
     acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
     return acc;
   }, {
-    hommes: 0,femmes: 0,jeunes: 0,enfants: 0,
-    connectes: 0,nouveauxVenus: 0,nouveauxConvertis: 0
+    hommes:0,femmes:0,jeunes:0,enfants:0,
+    connectes:0,nouveauxVenus:0,nouveauxConvertis:0
   });
 
   return (
@@ -161,23 +116,18 @@ function Attendance() {
 
       {/* FORMULAIRE */}
       <div className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 mb-6">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Object.keys(formData).map((key) => (
             <input
               key={key}
               type={key === "date" ? "date" : "number"}
-              name={key}
               value={formData[key]}
               onChange={(e) =>
                 setFormData({ ...formData, [key]: e.target.value })
               }
               className="bg-white/20 text-white p-2 rounded-lg"
-              required={key === "date"}
             />
           ))}
-          <button className="col-span-2 bg-indigo-500 py-3 rounded-xl text-white font-bold">
-            {editId ? "Mettre à jour" : "Ajouter"}
-          </button>
         </form>
       </div>
 
@@ -190,13 +140,27 @@ function Attendance() {
         </button>
       </div>
 
-      {/* TABLE */}
+      {/* TABLEAU */}
       {showTable && (
         <div className="max-w-6xl w-full mt-6 space-y-2">
+
+          {/* HEADER */}
+          <div className="flex font-semibold uppercase text-white px-4 py-3 bg-white/5 rounded-lg">
+            <div className="min-w-[150px]">Date</div>
+            <div className="min-w-[100px] text-center">Hommes</div>
+            <div className="min-w-[100px] text-center">Femmes</div>
+            <div className="min-w-[100px] text-center">Jeunes</div>
+            <div className="min-w-[100px] text-center">Enfants</div>
+            <div className="min-w-[120px] text-center">Connectés</div>
+            <div className="min-w-[150px] text-center">Nouveaux</div>
+            <div className="min-w-[150px] text-center">Convertis</div>
+          </div>
 
           {Object.entries(groupedReports).map(([monthKey, monthReports]) => {
             const [year, monthIndex] = monthKey.split("-").map(Number);
             const label = `${getMonthNameFR(monthIndex)} ${year}`;
+
+            const isExpanded = expandedMonths[monthKey];
 
             const monthTotal = monthReports.reduce((acc, r) => {
               acc.hommes += Number(r.hommes || 0);
@@ -215,9 +179,9 @@ function Attendance() {
             return (
               <div key={monthKey} className="space-y-1">
 
-                {/* HEADER MOIS */}
+                {/* MOIS */}
                 <div
-                  className="flex justify-between bg-white/20 text-white px-4 py-3 rounded-lg cursor-pointer font-bold"
+                  className="flex px-4 py-3 bg-white/20 text-white font-bold rounded-lg cursor-pointer"
                   onClick={() =>
                     setExpandedMonths(prev => ({
                       ...prev,
@@ -225,31 +189,51 @@ function Attendance() {
                     }))
                   }
                 >
-                  <div>{label}</div>
-                  <div>Total: {monthTotal.hommes + monthTotal.femmes + monthTotal.jeunes}</div>
+                  {isExpanded ? "➖ " : "➕ "} {label}
                 </div>
 
-                {/* LIGNES */}
-                {expandedMonths[monthKey] &&
-                  monthReports.map((r) => (
-                    <div key={r.id} className="flex justify-between bg-white/10 text-white px-4 py-2 rounded-lg">
-                      <div>{new Date(r.date).toLocaleDateString("fr-FR")}</div>
-                      <div>{r.hommes + r.femmes + r.jeunes}</div>
-                      <div className="flex gap-2">
-                        <button onClick={() => handleEdit(r)}>✏️</button>
-                        <button onClick={() => handleDelete(r.id)}>🗑️</button>
-                      </div>
+                {/* TOTAL MOIS */}
+                <div className="flex px-4 py-2 bg-white/10 text-white rounded-lg">
+                  <div className="min-w-[150px] font-semibold">Total {label}</div>
+                  <div className="min-w-[100px] text-center">{monthTotal.hommes}</div>
+                  <div className="min-w-[100px] text-center">{monthTotal.femmes}</div>
+                  <div className="min-w-[100px] text-center">{monthTotal.jeunes}</div>
+                  <div className="min-w-[100px] text-center">{monthTotal.enfants}</div>
+                  <div className="min-w-[120px] text-center">{monthTotal.connectes}</div>
+                  <div className="min-w-[150px] text-center">{monthTotal.nouveauxVenus}</div>
+                  <div className="min-w-[150px] text-center">{monthTotal.nouveauxConvertis}</div>
+                </div>
+
+                {/* LIGNES DETAILS */}
+                {isExpanded && monthReports.map(r => (
+                  <div key={r.id} className="flex px-4 py-2 bg-white/5 text-white rounded-lg">
+                    <div className="min-w-[150px]">
+                      {new Date(r.date).toLocaleDateString("fr-FR")}
                     </div>
-                  ))}
+                    <div className="min-w-[100px] text-center">{r.hommes}</div>
+                    <div className="min-w-[100px] text-center">{r.femmes}</div>
+                    <div className="min-w-[100px] text-center">{r.jeunes}</div>
+                    <div className="min-w-[100px] text-center">{r.enfants}</div>
+                    <div className="min-w-[120px] text-center">{r.connectes}</div>
+                    <div className="min-w-[150px] text-center">{r.nouveauxVenus}</div>
+                    <div className="min-w-[150px] text-center">{r.nouveauxConvertis}</div>
+                  </div>
+                ))}
 
               </div>
             );
           })}
 
           {/* TOTAL GLOBAL */}
-          <div className="bg-white/30 text-white font-bold px-4 py-3 rounded-lg mt-4 flex justify-between">
-            <div>TOTAL GLOBAL</div>
-            <div>{totalGlobal.hommes + totalGlobal.femmes + totalGlobal.jeunes}</div>
+          <div className="flex px-4 py-4 bg-white/30 text-white font-bold rounded-lg mt-4">
+            <div className="min-w-[150px]">TOTAL GLOBAL</div>
+            <div className="min-w-[100px] text-center">{totalGlobal.hommes}</div>
+            <div className="min-w-[100px] text-center">{totalGlobal.femmes}</div>
+            <div className="min-w-[100px] text-center">{totalGlobal.jeunes}</div>
+            <div className="min-w-[100px] text-center">{totalGlobal.enfants}</div>
+            <div className="min-w-[120px] text-center">{totalGlobal.connectes}</div>
+            <div className="min-w-[150px] text-center">{totalGlobal.nouveauxVenus}</div>
+            <div className="min-w-[150px] text-center">{totalGlobal.nouveauxConvertis}</div>
           </div>
 
         </div>

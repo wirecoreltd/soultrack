@@ -271,16 +271,102 @@ function Attendance() {
         </button>
       </div>
 
-      {/* Tableau */}
-      {loading && <p className="text-center mt-6 text-white">Chargement...</p>}
-      {showTable && reports.length > 0 && (
-        <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6">
-          {/* ... le reste de la table avec grouping par mois ... */}
-          {/* Tu peux réutiliser exactement le code de collapse précédent */}
+      {/* 🔹 Tableau des rapports */}
+      {showTable && (
+      <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6">
+        <div className="w-max space-y-2">
+          {/* HEADER */}
+          <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+            <div className="min-w-[150px] ml-1">Date</div>
+            <div className="min-w-[120px] text-center">Hommes</div>
+            <div className="min-w-[120px] text-center">Femmes</div>
+            <div className="min-w-[120px] text-center">Jeunes</div>
+            <div className="min-w-[130px] text-center text-orange-400 font-semibold">Total</div>
+            <div className="min-w-[120px] text-center">Enfants</div>
+            <div className="min-w-[140px] text-center">Connectés</div>
+            <div className="min-w-[150px] text-center">Nouveaux Venus</div>
+            <div className="min-w-[180px] text-center">Nouveaux Convertis</div>
+            <div className="min-w-[140px] text-center text-orange-400 font-semibold">Actions</div>
+          </div>
+
+          {/* LIGNES */}
+          {Object.entries(groupedReports).map(([monthKey, monthReports]) => {
+            const [year, monthIndex] = monthKey.split("-").map(Number);
+            const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+
+            const totalMonth = monthReports.reduce((acc, r) => {
+              acc.hommes += Number(r.hommes || 0);
+              acc.femmes += Number(r.femmes || 0);
+              acc.jeunes += Number(r.jeunes || 0);
+              acc.enfants += Number(r.enfants || 0);
+              acc.connectes += Number(r.connectes || 0);
+              acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
+              acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
+              return acc;
+            }, {
+              hommes: 0,
+              femmes: 0,
+              jeunes: 0,
+              enfants: 0,
+              connectes: 0,
+              nouveauxVenus: 0,
+              nouveauxConvertis: 0,
+            });
+
+            const isExpanded = expandedMonths[monthKey] || false;
+
+            return (
+              <div key={monthKey} className="space-y-1">
+                {monthReports.length > 1 && (
+                  <div
+                    className="flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer"
+                    onClick={() => toggleMonth(monthKey)}
+                  >
+                    <div className="min-w-[150px] text-white font-semibold">
+                      {isExpanded ? "➖ " : "➕ "} {monthLabel}
+                    </div>
+                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
+                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
+                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.jeunes}</div>
+                    <div className="min-w-[130px] text-center text-orange-400 font-semibold">
+                      {totalMonth.hommes + totalMonth.femmes + totalMonth.jeunes}
+                    </div>
+                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.enfants}</div>
+                    <div className="min-w-[140px] text-center text-white font-bold">{totalMonth.connectes}</div>
+                    <div className="min-w-[150px] text-center text-white font-bold">{totalMonth.nouveauxVenus}</div>
+                    <div className="min-w-[180px] text-center text-white font-bold">{totalMonth.nouveauxConvertis}</div>
+                  </div>
+                )}
+
+                {(isExpanded || monthReports.length === 1) && monthReports.map((r) => {
+                  const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
+                  return (
+                    <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500">
+                      <div className="min-w-[150px] text-white">{formatDateFR(r.date)}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
+                      <div className="min-w-[130px] text-center text-orange-400 font-semibold">{total}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
+                      <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
+                      <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
+                      <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
+                      <div className="min-w-[140px] text-center flex justify-center gap-2">
+                        <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
+                        <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
+      </div>
       )}
 
       <Footer />
+
       <style jsx>{`
         .input {
           width: 100%;

@@ -384,16 +384,16 @@ function Attendance() {
           })}
 
           {/* TOTAL GLOBAL */}
-          <div className="flex items-center px-6 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
+          <div className="flex items-center px-6 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl text-orange-500 font-semibold">
             <div className="min-w-[150px]">Total Global</div>
-            <div className="min-w-[120px] text-center">{totalGlobal.hommes}</div>
-            <div className="min-w-[120px] text-center">{totalGlobal.femmes}</div>
-            <div className="min-w-[120px] text-center">{totalGlobal.jeunes}</div>
-            <div className="min-w-[130px] text-center">{totalGlobal.hommes + totalGlobal.femmes + totalGlobal.jeunes}</div>
-            <div className="min-w-[120px] text-center">{totalGlobal.enfants}</div>
-            <div className="min-w-[140px] text-center">{totalGlobal.connectes}</div>
-            <div className="min-w-[150px] text-center">{totalGlobal.nouveauxVenus}</div>
-            <div className="min-w-[180px] text-center">{totalGlobal.nouveauxConvertis}</div>
+            <div className="min-w-[120px] text-center text-orange-500 font-semibold">{totalGlobal.hommes}</div>
+            <div className="min-w-[120px] text-center text-orange-500 font-semibold">{totalGlobal.femmes}</div>
+            <div className="min-w-[120px] text-center text-orange-500 font-semibold">{totalGlobal.jeunes}</div>
+            <div className="min-w-[130px] text-center text-orange-500 font-semibold">{totalGlobal.hommes + totalGlobal.femmes + totalGlobal.jeunes}</div>
+            <div className="min-w-[120px] text-center text-orange-500 font-semibold">{totalGlobal.enfants}</div>
+            <div className="min-w-[140px] text-center text-orange-500 font-semibold">{totalGlobal.connectes}</div>
+            <div className="min-w-[150px] text-center text-orange-500 font-semibold">{totalGlobal.nouveauxVenus}</div>
+            <div className="min-w-[180px] text-center text-orange-500 font-semibold">{totalGlobal.nouveauxConvertis}</div>
             <div className="min-w-[140px]"></div>
           </div>
         </div>

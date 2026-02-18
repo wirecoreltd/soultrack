@@ -58,34 +58,62 @@ function RapportBesoin() {
       if (error) throw error;
 
      // Compter le nombre par besoin
-const count = {};
+        const fetchRapport = async () => {
+          if (!formData.eglise_id || !formData.branche_id) return;
+        
+          // 🔥 RESET ICI
+          setRapportData([]);
+        
+          let query = supabase
+            .from("membres_complets")
+            .select("besoin")
+            .eq("eglise_id", formData.eglise_id)
+            .eq("branche_id", formData.branche_id);
+        
+          if (dateDebut) query = query.gte("created_at", dateDebut);
+          if (dateFin) query = query.lte("created_at", dateFin);
+        
+          const { data, error } = await query;
+        
+          if (error) {
+            console.error(error);
+            return;
+          }
+        
+          const count = {};
+        
+          data.forEach((r) => {
+            if (!r.besoin) return;
+        
+            let besoinsArray = [];
+        
+            if (r.besoin.startsWith("[")) {
+              try {
+                besoinsArray = JSON.parse(r.besoin);
+              } catch {
+                besoinsArray = [];
+              }
+            } else {
+              besoinsArray = r.besoin.split(",");
+            }
+        
+            besoinsArray.forEach((b) => {
+              const clean = b.trim();
+              if (!clean) return;
+        
+              if (!count[clean]) count[clean] = 0;
+              count[clean]++;
+            });
+          });
+        
+          const result = Object.keys(count).map((key) => ({
+            besoin: key,
+            total: count[key],
+          }));
+        
+          setRapportData(result); // 🔥 set UNE SEULE FOIS à la fin
+        };
 
-data.forEach((r) => {
-  if (!r.besoin) return;
-
-  let besoinsArray = [];
-
-  // Cas 1 : JSON array
-  if (r.besoin.startsWith("[")) {
-    try {
-      besoinsArray = JSON.parse(r.besoin);
-    } catch {
-      besoinsArray = [];
-    }
-  } else {
-    // Cas 2 : string séparée par virgule
-    besoinsArray = r.besoin.split(",");
-  }
-
-  besoinsArray.forEach((b) => {
-    const besoinClean = b.trim();
-
-    if (!besoinClean) return;
-
-    if (!count[besoinClean]) count[besoinClean] = 0;
-    count[besoinClean]++;
-  });
-});
 
 
       setBesoinsCount(count);

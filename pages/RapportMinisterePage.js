@@ -61,9 +61,7 @@ function RapportMinistere() {
       // 🔹 Récupérer tous les membres selon filtre date
       let query = supabase
         .from("membres_complets")
-        .select(
-          `"Ministere", star, etat_contact, eglise_id, branche_id`
-        )
+        .select(`Ministere, star, etat_contact, eglise_id, branche_id`)
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
 
@@ -78,36 +76,41 @@ function RapportMinistere() {
       let totalMembresLocal = 0;
 
       data.forEach((membre) => {
-        // Compter le membre si existant ou nouveau
-        if (
-          membre.etat_contact === "existant" ||
-          membre.etat_contact === "nouveau"
-        ) {
+        // ✅ Compter seulement membres existants ou nouveaux
+        if (["Existant", "Nouveau"].includes(membre.etat_contact)) {
           totalMembresLocal++;
         }
 
-        // Compter les serviteurs : star = "oui"
-        if (membre.star === "oui") {
+        // ✅ Compter serviteurs
+        if (membre.star === "true" || membre.star === "oui") {
           totalServiteursLocal++;
         }
 
-        // Comptage par ministère
-        let ministeres = membre.Ministere;
-        if (ministeres) {
-          if (typeof ministeres === "string") {
-            try {
-              ministeres = JSON.parse(ministeres);
-            } catch {
-              ministeres = [ministeres];
+        // ✅ Comptage par ministère
+        if (membre.Ministere) {
+          let ministeres = [];
+
+          try {
+            if (typeof membre.Ministere === "string") {
+              // On parse si JSON
+              if (membre.Ministere.startsWith("[")) {
+                ministeres = JSON.parse(membre.Ministere);
+              } else {
+                // sinon split par virgule
+                ministeres = membre.Ministere.split(",").map((m) => m.trim());
+              }
+            } else if (Array.isArray(membre.Ministere)) {
+              ministeres = membre.Ministere;
             }
+          } catch {
+            ministeres = membre.Ministere.split(",").map((m) => m.trim());
           }
 
-          if (Array.isArray(ministeres)) {
-            ministeres.forEach((min) => {
-              if (!counts[min]) counts[min] = 0;
-              counts[min]++;
-            });
-          }
+          ministeres.forEach((min) => {
+            if (!min) return;
+            if (!counts[min]) counts[min] = 0;
+            counts[min]++;
+          });
         }
       });
 

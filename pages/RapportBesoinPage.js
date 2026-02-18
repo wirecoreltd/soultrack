@@ -61,39 +61,33 @@ function RapportBesoin() {
       const count = {};
 
       (data || []).forEach((r) => {
-  if (!r.besoin) return;
+        if (!r.besoin) return;
 
-  let besoinsArray = [];
+        let besoinsArray = [];
 
-  try {
-    // Si c'est du JSON
-    if (r.besoin.startsWith("[")) {
-      besoinsArray = JSON.parse(r.besoin);
-    } else {
-      // Force séparation même si mal formaté
-      besoinsArray = r.besoin.split(",");
-    }
-  } catch {
-    besoinsArray = r.besoin.split(",");
-  }
+        try {
+          if (r.besoin.startsWith("[")) {
+            besoinsArray = JSON.parse(r.besoin);
+          } else {
+            besoinsArray = r.besoin.split(",");
+          }
+        } catch {
+          besoinsArray = r.besoin.split(",");
+        }
 
-  besoinsArray.forEach((b) => {
-    const clean = b.trim();
+        besoinsArray.forEach((b) => {
+          const clean = b.trim();
+          if (!clean) return;
 
-    if (!clean) return;
+          clean.split(",").forEach((finalBesoin) => {
+            const final = finalBesoin.trim();
+            if (!final) return;
 
-    // 🔥 Sécurité supplémentaire :
-    // si jamais il reste une virgule dedans
-    clean.split(",").forEach((finalBesoin) => {
-      const final = finalBesoin.trim();
-      if (!final) return;
-
-      if (!count[final]) count[final] = 0;
-      count[final]++;
-    });
-  });
-});
-
+            if (!count[final]) count[final] = 0;
+            count[final]++;
+          });
+        });
+      });
 
       setBesoinsCount(count);
       setMessage("");
@@ -105,47 +99,7 @@ function RapportBesoin() {
 
   const labels = Object.keys(besoinsCount);
   const values = Object.values(besoinsCount);
-
-  const chartData = {
-    labels,
-    datasets: [
-      {
-        label: "Nombre",
-        data: values,
-        backgroundColor: "rgba(255,255,255,0.9)",
-        borderRadius: 10,
-        barThickness: 35,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: "#1f2366",
-        titleColor: "#fff",
-        bodyColor: "#fff",
-      },
-    },
-    scales: {
-      x: {
-        ticks: { color: "#ffffff" },
-        grid: { display: false },
-      },
-      y: {
-        beginAtZero: true,
-        ticks: {
-          color: "#ffffff",
-          precision: 0,
-        },
-        grid: {
-          color: "rgba(255,255,255,0.1)",
-        },
-      },
-    },
-  };
+  const total = values.reduce((a, b) => a + b, 0);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -185,6 +139,7 @@ function RapportBesoin() {
           <div className="flex justify-between text-white font-bold border-b border-white/30 pb-2 mb-2">
             <span>Besoin</span>
             <span>Nombre</span>
+            <span>%</span>
           </div>
 
           {labels.map((b, i) => (
@@ -194,10 +149,13 @@ function RapportBesoin() {
             >
               <span>{b}</span>
               <span className="font-semibold">{values[i]}</span>
+              <span className="font-semibold">
+                {((values[i] / total) * 100).toFixed(1)} %
+              </span>
             </div>
           ))}
         </div>
-      )}      
+      )}
 
       <Footer />
     </div>

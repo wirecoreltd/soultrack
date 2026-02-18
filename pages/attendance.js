@@ -16,10 +16,9 @@ export default function AttendancePage() {
 
 function Attendance() {
   const [reports, setReports] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [showTable, setShowTable] = useState(false);
-  const [superviseur, setSuperviseur] = useState({ eglise_id: null, branche_id: null });
   const [expandedMonths, setExpandedMonths] = useState({});
+  const [superviseur, setSuperviseur] = useState({ eglise_id: null, branche_id: null });
 
   const [formData, setFormData] = useState({
     date: "",
@@ -33,7 +32,6 @@ function Attendance() {
   });
 
   const [editId, setEditId] = useState(null);
-  const [message, setMessage] = useState("");
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
 
@@ -61,9 +59,6 @@ function Attendance() {
   const fetchRapports = async () => {
     if (!superviseur.eglise_id || !superviseur.branche_id) return;
 
-    setLoading(true);
-    setShowTable(false);
-
     let query = supabase
       .from("attendance")
       .select("*")
@@ -77,13 +72,7 @@ function Attendance() {
 
     const { data } = await query;
     setReports(data || []);
-    setLoading(false);
     setShowTable(true);
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -116,9 +105,9 @@ function Attendance() {
     setShowTable(false);
   };
 
-  const handleEdit = (report) => {
-    setEditId(report.id);
-    setFormData(report);
+  const handleEdit = (r) => {
+    setEditId(r.id);
+    setFormData(r);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -127,22 +116,17 @@ function Attendance() {
     fetchRapports();
   };
 
-  const formatDateFR = (d) => {
-    const dateObj = new Date(d);
-    return dateObj.toLocaleDateString("fr-FR");
-  };
-
   const getMonthNameFR = (monthIndex) => {
     const months = [
       "Janvier","Février","Mars","Avril","Mai","Juin",
       "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
     ];
-    return months[monthIndex] || "";
+    return months[monthIndex];
   };
 
-  const groupByMonth = (reports) => {
+  const groupByMonth = (data) => {
     const map = {};
-    reports.forEach(r => {
+    data.forEach(r => {
       const d = new Date(r.date);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       if (!map[key]) map[key] = [];
@@ -151,16 +135,8 @@ function Attendance() {
     return map;
   };
 
-  const toggleMonth = (key) => {
-    setExpandedMonths(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
-  };
-
   const groupedReports = groupByMonth(reports);
 
-  // 🔥 TOTAL GLOBAL
   const totalGlobal = reports.reduce((acc, r) => {
     acc.hommes += Number(r.hommes || 0);
     acc.femmes += Number(r.femmes || 0);
@@ -171,78 +147,109 @@ function Attendance() {
     acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
     return acc;
   }, {
-    hommes: 0,
-    femmes: 0,
-    jeunes: 0,
-    enfants: 0,
-    connectes: 0,
-    nouveauxVenus: 0,
-    nouveauxConvertis: 0,
+    hommes: 0,femmes: 0,jeunes: 0,enfants: 0,
+    connectes: 0,nouveauxVenus: 0,nouveauxConvertis: 0
   });
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold text-white mt-4 mb-6 text-center">
+      <h1 className="text-2xl font-bold text-white mt-4 mb-6">
         Rapports d'assistance
       </h1>
 
+      {/* FORMULAIRE */}
+      <div className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 mb-6">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Object.keys(formData).map((key) => (
+            <input
+              key={key}
+              type={key === "date" ? "date" : "number"}
+              name={key}
+              value={formData[key]}
+              onChange={(e) =>
+                setFormData({ ...formData, [key]: e.target.value })
+              }
+              className="bg-white/20 text-white p-2 rounded-lg"
+              required={key === "date"}
+            />
+          ))}
+          <button className="col-span-2 bg-indigo-500 py-3 rounded-xl text-white font-bold">
+            {editId ? "Mettre à jour" : "Ajouter"}
+          </button>
+        </form>
+      </div>
+
       {/* FILTRE */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg flex gap-4 text-white w-full max-w-3xl">
-        <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} className="bg-transparent border px-3 py-2 rounded-lg"/>
-        <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} className="bg-transparent border px-3 py-2 rounded-lg"/>
-        <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl">
+      <div className="bg-white/10 p-4 rounded-2xl flex gap-4 text-white w-full max-w-3xl">
+        <input type="date" value={dateDebut} onChange={(e)=>setDateDebut(e.target.value)} className="bg-transparent border p-2 rounded"/>
+        <input type="date" value={dateFin} onChange={(e)=>setDateFin(e.target.value)} className="bg-transparent border p-2 rounded"/>
+        <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 rounded-xl">
           Générer
         </button>
       </div>
 
       {/* TABLE */}
       {showTable && (
-        <div className="max-w-6xl w-full overflow-x-auto mt-6 mb-6 space-y-2">
+        <div className="max-w-6xl w-full mt-6 space-y-2">
 
-          {/* HEADER */}
-          <div className="flex font-semibold text-white px-4 py-3 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[150px]">Date</div>
-            <div className="min-w-[120px] text-center">Hommes</div>
-            <div className="min-w-[120px] text-center">Femmes</div>
-            <div className="min-w-[120px] text-center">Jeunes</div>
-            <div className="min-w-[120px] text-center">Enfants</div>
-            <div className="min-w-[140px] text-center">Connectés</div>
-            <div className="min-w-[150px] text-center">Nouveaux Venus</div>
-            <div className="min-w-[180px] text-center">Nouveaux Convertis</div>
-            <div className="min-w-[140px] text-center">Actions</div>
-          </div>
+          {Object.entries(groupedReports).map(([monthKey, monthReports]) => {
+            const [year, monthIndex] = monthKey.split("-").map(Number);
+            const label = `${getMonthNameFR(monthIndex)} ${year}`;
 
-          {/* LIGNES */}
-          {reports.map(r => (
-            <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 border-l-4 border-l-green-500 whitespace-nowrap">
-              <div className="min-w-[150px] text-white">{formatDateFR(r.date)}</div>
-              <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-              <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-              <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
-              <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
-              <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
-              <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
-              <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
-              <div className="min-w-[140px] text-center flex justify-center gap-2">
-                <button onClick={() => handleEdit(r)}>✏️</button>
-                <button onClick={() => handleDelete(r.id)}>🗑️</button>
+            const monthTotal = monthReports.reduce((acc, r) => {
+              acc.hommes += Number(r.hommes || 0);
+              acc.femmes += Number(r.femmes || 0);
+              acc.jeunes += Number(r.jeunes || 0);
+              acc.enfants += Number(r.enfants || 0);
+              acc.connectes += Number(r.connectes || 0);
+              acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
+              acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
+              return acc;
+            }, {
+              hommes:0,femmes:0,jeunes:0,enfants:0,
+              connectes:0,nouveauxVenus:0,nouveauxConvertis:0
+            });
+
+            return (
+              <div key={monthKey} className="space-y-1">
+
+                {/* HEADER MOIS */}
+                <div
+                  className="flex justify-between bg-white/20 text-white px-4 py-3 rounded-lg cursor-pointer font-bold"
+                  onClick={() =>
+                    setExpandedMonths(prev => ({
+                      ...prev,
+                      [monthKey]: !prev[monthKey]
+                    }))
+                  }
+                >
+                  <div>{label}</div>
+                  <div>Total: {monthTotal.hommes + monthTotal.femmes + monthTotal.jeunes}</div>
+                </div>
+
+                {/* LIGNES */}
+                {expandedMonths[monthKey] &&
+                  monthReports.map((r) => (
+                    <div key={r.id} className="flex justify-between bg-white/10 text-white px-4 py-2 rounded-lg">
+                      <div>{new Date(r.date).toLocaleDateString("fr-FR")}</div>
+                      <div>{r.hommes + r.femmes + r.jeunes}</div>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleEdit(r)}>✏️</button>
+                        <button onClick={() => handleDelete(r.id)}>🗑️</button>
+                      </div>
+                    </div>
+                  ))}
+
               </div>
-            </div>
-          ))}
+            );
+          })}
 
-          {/* ✅ TOTAL GLOBAL */}
-          <div className="flex items-center px-4 py-3 rounded-lg bg-white/20 font-bold text-white whitespace-nowrap border-t border-white/40">
-            <div className="min-w-[150px]">TOTAL GLOBAL</div>
-            <div className="min-w-[120px] text-center">{totalGlobal.hommes}</div>
-            <div className="min-w-[120px] text-center">{totalGlobal.femmes}</div>
-            <div className="min-w-[120px] text-center">{totalGlobal.jeunes}</div>
-            <div className="min-w-[120px] text-center">{totalGlobal.enfants}</div>
-            <div className="min-w-[140px] text-center">{totalGlobal.connectes}</div>
-            <div className="min-w-[150px] text-center">{totalGlobal.nouveauxVenus}</div>
-            <div className="min-w-[180px] text-center">{totalGlobal.nouveauxConvertis}</div>
-            <div className="min-w-[140px]"></div>
+          {/* TOTAL GLOBAL */}
+          <div className="bg-white/30 text-white font-bold px-4 py-3 rounded-lg mt-4 flex justify-between">
+            <div>TOTAL GLOBAL</div>
+            <div>{totalGlobal.hommes + totalGlobal.femmes + totalGlobal.jeunes}</div>
           </div>
 
         </div>

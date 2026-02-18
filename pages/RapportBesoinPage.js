@@ -125,7 +125,7 @@ function RapportBesoin() {
         <div className="flex items-end">
           <button
             onClick={fetchRapport}
-            className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition"
+            className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition text-white"
           >
             Générer
           </button>

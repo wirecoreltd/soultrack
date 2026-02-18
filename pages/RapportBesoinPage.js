@@ -57,28 +57,36 @@ function RapportBesoin() {
       const { data, error } = await query;
       if (error) throw error;
 
-      const count = {};
+     // Compter le nombre par besoin
+const count = {};
 
-      data.forEach((r) => {
-        if (!r.besoin) return;
+data.forEach((r) => {
+  if (!r.besoin) return;
 
-        let besoinsArray = [];
+  let besoinsArray = [];
 
-        try {
-          besoinsArray = JSON.parse(r.besoin);
-          if (!Array.isArray(besoinsArray)) {
-            besoinsArray = [besoinsArray];
-          }
-        } catch {
-          besoinsArray = [r.besoin];
-        }
+  // Cas 1 : JSON array
+  if (r.besoin.startsWith("[")) {
+    try {
+      besoinsArray = JSON.parse(r.besoin);
+    } catch {
+      besoinsArray = [];
+    }
+  } else {
+    // Cas 2 : string séparée par virgule
+    besoinsArray = r.besoin.split(",");
+  }
 
-        besoinsArray.forEach((b) => {
-          const clean = b.trim();
-          if (!count[clean]) count[clean] = 0;
-          count[clean]++;
-        });
-      });
+  besoinsArray.forEach((b) => {
+    const besoinClean = b.trim();
+
+    if (!besoinClean) return;
+
+    if (!count[besoinClean]) count[besoinClean] = 0;
+    count[besoinClean]++;
+  });
+});
+
 
       setBesoinsCount(count);
       setMessage("");

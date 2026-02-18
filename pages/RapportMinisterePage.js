@@ -76,27 +76,24 @@ function RapportMinistere() {
       let totalMembresLocal = 0;
 
       data.forEach((membre) => {
-        // ✅ Compter seulement membres existants ou nouveaux
-        if (["Existant", "Nouveau"].includes(membre.etat_contact)) {
-          totalMembresLocal++;
-        }
+        const etatOk = ["Existant", "Nouveau"].includes(membre.etat_contact);
+        const isServiteur = membre.star === "true" || membre.star === "oui";
 
-        // ✅ Compter serviteurs
-        if (membre.star === "true" || membre.star === "oui") {
-          totalServiteursLocal++;
-        }
+        // Compter le total de membres valides pour le pourcentage
+        if (etatOk) totalMembresLocal++;
 
-        // ✅ Comptage par ministère
-        if (membre.Ministere) {
+        // Compter les serviteurs
+        if (etatOk && isServiteur) totalServiteursLocal++;
+
+        // Comptage par ministère seulement si serviteur et membre valide
+        if (etatOk && isServiteur && membre.Ministere) {
           let ministeres = [];
 
           try {
             if (typeof membre.Ministere === "string") {
-              // On parse si JSON
               if (membre.Ministere.startsWith("[")) {
                 ministeres = JSON.parse(membre.Ministere);
               } else {
-                // sinon split par virgule
                 ministeres = membre.Ministere.split(",").map((m) => m.trim());
               }
             } else if (Array.isArray(membre.Ministere)) {
@@ -167,7 +164,7 @@ function RapportMinistere() {
       {/* 🔹 Carrés */}
       <div className="flex flex-wrap justify-center gap-4 mt-4 mb-6">
         <div className="bg-white/10 px-6 py-4 rounded-2xl shadow-lg flex flex-col items-center min-w-[180px]">
-          <span className="text-white text-sm">Serviteurs / Ministère</span>
+          <span className="text-white text-sm">Nombre de serviteurs</span>
           <span className="text-orange-400 font-bold text-2xl">{totalServiteurs}</span>
         </div>
 
@@ -186,7 +183,7 @@ function RapportMinistere() {
             <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[250px]">Ministère</div>
               <div className="min-w-[150px] text-center text-orange-400 font-semibold">
-                Serviteurs / Ministère
+                Nombre de serviteurs
               </div>
             </div>
 

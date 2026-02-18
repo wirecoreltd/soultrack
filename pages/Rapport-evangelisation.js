@@ -231,7 +231,7 @@ export default function RapportEvangelisation() {
           })}
 
           {/* TOTAL GENERAL Desktop */}
-          <div className="hidden md:flex items-center px-5 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
+          <div className="flex items-center px-4 py-4 mt-6 rounded-lg bg-white/30 text-white font-bold whitespace-nowrap border-t-2 border-white">
             <div className="md:min-w-[150px] font-bold text-orange-500">TOTAL</div>
             <div className="md:min-w-[120px] text-center text-orange-500 font-semibold">
               {rapports.reduce((s, r) => s + Number(r.hommes || 0), 0)}

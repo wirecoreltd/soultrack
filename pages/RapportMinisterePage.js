@@ -137,48 +137,57 @@ function RapportMinistere() {
       {/* TABLEAU */}
       {rapports.length > 0 && (
         <div className="w-full flex justify-center mt-6 mb-6">
-          <div className="w-max overflow-x-auto space-y-2">
-            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[250px]">Ministère</div>
-              <div className="min-w-[150px] text-center text-orange-400 font-semibold">
-                Nombre de serviteurs
-              </div>
-              <div className="min-w-[150px] text-center font-semibold">
-                % du total des membres
-              </div>
-            </div>
+  <div className="w-max overflow-x-auto space-y-2">
+    {/* HEADER */}
+    <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+      <div className="min-w-[200px]">Ministère</div>
+      <div className="min-w-[100px] text-center text-orange-400 font-semibold">
+        Nombre
+      </div>
+      <div className="min-w-[150px] text-center font-semibold">
+        Serv./Min.
+      </div>
+      <div className="min-w-[100px] text-center font-semibold">
+        % total
+      </div>
+    </div>
 
-            {loading && (
-              <div className="text-white text-center py-4">Chargement...</div>
-            )}
+    {loading && (
+      <div className="text-white text-center py-4">Chargement...</div>
+    )}
 
-            {rapports.map((r, index) => (
-              <div
-                key={index}
-                className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
-              >
-                <div className="min-w-[250px] text-white font-semibold">
-                  {r.ministere}
-                </div>
-                <div className="min-w-[150px] text-center text-orange-400 font-bold">
-                  {r.total}
-                </div>
-                <div className="min-w-[150px] text-center font-semibold">
-                  {r.pourcentage} %
-                </div>
-              </div>
-            ))}
-
-            {/* Total général */}
-            <div className="flex items-center px-4 py-3 rounded-lg bg-white/20 border-t border-white/30">
-              <div className="min-w-[250px] text-white font-bold">Total membres</div>
-              <div className="min-w-[150px] text-center text-orange-400 font-bold">
-                {totalMembres}
-              </div>
-              <div className="min-w-[150px] text-center font-bold">100 %</div>
-            </div>
-          </div>
+    {rapports.map((r, index) => (
+      <div
+        key={index}
+        className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
+      >
+        <div className="min-w-[200px] text-white font-semibold">
+          {r.ministere}
         </div>
+        <div className="min-w-[100px] text-center text-orange-400 font-bold">
+          {r.totalMembres} {/* total de serviteurs uniques */}
+        </div>
+        <div className="min-w-[150px] text-center text-orange-400 font-bold">
+          {r.total} {/* serviteurs par ministère */}
+        </div>
+        <div className="min-w-[100px] text-center font-semibold">
+          {r.pourcentage} %
+        </div>
+      </div>
+    ))}
+
+    {/* Total général */}
+    <div className="flex items-center px-4 py-3 rounded-lg bg-white/20 border-t border-white/30">
+      <div className="min-w-[200px] text-white font-bold">Total membres</div>
+      <div className="min-w-[100px] text-center text-orange-400 font-bold">
+        {totalMembres}
+      </div>
+      <div className="min-w-[150px] text-center font-bold"></div>
+      <div className="min-w-[100px] text-center font-bold">100 %</div>
+    </div>
+  </div>
+</div>
+
       )}
 
       <Footer />

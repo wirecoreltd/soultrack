@@ -229,7 +229,7 @@ function RapportFormation() {
                         <div className="min-w-[180px] text-white">{r.date_debut}</div>
                         <div className="min-w-[180px] text-white">{r.date_fin}</div>
                         <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
-                        <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                        <div className="min-w-[120px] text-center text-white ml-7">{r.hommes}</div>
                         <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
                         <div className="min-w-[120px] text-center text-orange-500 font-semibold">{total}</div>
                         <div className="min-w-[150px] text-center">

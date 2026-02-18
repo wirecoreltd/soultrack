@@ -18,11 +18,11 @@ function RapportMinistere() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [rapports, setRapports] = useState([]);
+  const [totalMembres, setTotalMembres] = useState(0);
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Charger profil utilisateur
   useEffect(() => {
     const fetchUser = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -39,11 +39,9 @@ function RapportMinistere() {
         setBrancheId(profile.branche_id);
       }
     };
-
     fetchUser();
   }, []);
 
-  // Générer rapport
   const fetchRapport = async () => {
     if (!egliseId || !brancheId) return;
 
@@ -51,7 +49,7 @@ function RapportMinistere() {
 
     let query = supabase
       .from("membres_complets")
-      .select('"Ministere", created_at, eglise_id, branche_id')
+      .select("id, Ministere, created_at, eglise_id, branche_id")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId)
       .not("Ministere", "is", null);
@@ -68,9 +66,11 @@ function RapportMinistere() {
     }
 
     const counts = {};
-    let totalServiteurs = 0;
+    const membresUniques = new Set();
 
     data.forEach((membre) => {
+      membresUniques.add(membre.id); // Chaque membre = 1 pour total
+
       let ministeres = membre.Ministere;
 
       if (typeof ministeres === "string") {
@@ -87,23 +87,22 @@ function RapportMinistere() {
           if (!clean) return;
           if (!counts[clean]) counts[clean] = 0;
           counts[clean]++;
-          totalServiteurs++;
         });
       }
     });
 
-    const result = Object.entries(counts).map(([nom, total]) => ({
+    const total = membresUniques.size;
+
+    const result = Object.entries(counts).map(([nom, totalMin]) => ({
       ministere: nom,
-      total,
-      pourcentage: totalServiteurs > 0 ? ((total / totalServiteurs) * 100).toFixed(1) : 0,
+      total: totalMin,
+      pourcentage: total > 0 ? ((totalMin / total) * 100).toFixed(1) : 0,
     }));
 
+    setTotalMembres(total);
     setRapports(result);
     setLoading(false);
   };
-
-  // Calcul total général
-  const totalGeneral = rapports.reduce((sum, r) => sum + r.total, 0);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -139,14 +138,13 @@ function RapportMinistere() {
       {rapports.length > 0 && (
         <div className="w-full flex justify-center mt-6 mb-6">
           <div className="w-max overflow-x-auto space-y-2">
-            {/* HEADER */}
             <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[250px]">Ministère</div>
               <div className="min-w-[150px] text-center text-orange-400 font-semibold">
-                Nombre de Serviteurs
+                Nombre de serviteurs
               </div>
               <div className="min-w-[150px] text-center font-semibold">
-                % du total
+                % du total des membres
               </div>
             </div>
 
@@ -173,9 +171,9 @@ function RapportMinistere() {
 
             {/* Total général */}
             <div className="flex items-center px-4 py-3 rounded-lg bg-white/20 border-t border-white/30">
-              <div className="min-w-[250px] text-white font-bold">Total</div>
+              <div className="min-w-[250px] text-white font-bold">Total membres</div>
               <div className="min-w-[150px] text-center text-orange-400 font-bold">
-                {totalGeneral}
+                {totalMembres}
               </div>
               <div className="min-w-[150px] text-center font-bold">100 %</div>
             </div>

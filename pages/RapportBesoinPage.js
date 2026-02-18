@@ -17,35 +17,46 @@ export default function RapportBesoinPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [besoinData, setBesoinData] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
   const handleGenerate = async () => {
-    if (!dateDebut || !dateFin) return;
-
-    setLoading(true);
+    setMessage("Chargement...");
 
     const { data, error } = await supabase
       .from("membres_complets")
-      .select("besoins, created_at")
-      .gte("created_at", dateDebut)
-      .lte("created_at", dateFin);
+      .select("besoin, created_at");
 
     if (error) {
       console.error(error);
-      setLoading(false);
+      setMessage("Erreur requête");
       return;
     }
 
+    console.log("DATA SUPABASE:", data);
+
     const counts = {};
 
-    data.forEach((item) => {
-      if (!item.besoins) return;
+    (data || []).forEach((item) => {
+      if (!item.besoin) return;
 
-      const besoinsArray = item.besoins.split(",").map((b) => b.trim());
+      let besoinsArray = [];
+
+      if (item.besoin.startsWith("[")) {
+        try {
+          besoinsArray = JSON.parse(item.besoin);
+        } catch {
+          besoinsArray = [];
+        }
+      } else {
+        besoinsArray = item.besoin.split(",");
+      }
 
       besoinsArray.forEach((b) => {
-        if (!counts[b]) counts[b] = 0;
-        counts[b]++;
+        const clean = b.trim();
+        if (!clean) return;
+
+        if (!counts[clean]) counts[clean] = 0;
+        counts[clean]++;
       });
     });
 
@@ -55,7 +66,7 @@ export default function RapportBesoinPage() {
     }));
 
     setBesoinData(formatted);
-    setLoading(false);
+    setMessage("");
   };
 
   const total = besoinData.reduce((acc, item) => acc + item.nombre, 0);
@@ -64,12 +75,10 @@ export default function RapportBesoinPage() {
     labels: besoinData.map((item) => item.besoin),
     datasets: [
       {
-        label: "Nombre",
         data: besoinData.map((item) => item.nombre),
-        backgroundColor: "rgba(59,130,246,0.8)",
-        borderRadius: 12,
-        barPercentage: 0.5,
-        categoryPercentage: 0.5,
+        backgroundColor: "rgba(255,255,255,0.8)",
+        borderRadius: 8,
+        barThickness: 30,
       },
     ],
   };
@@ -79,9 +88,6 @@ export default function RapportBesoinPage() {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: "#111827",
-        titleColor: "#fff",
-        bodyColor: "#fff",
         callbacks: {
           label: function (context) {
             const value = context.raw;
@@ -95,72 +101,56 @@ export default function RapportBesoinPage() {
     },
     scales: {
       x: {
-        ticks: { color: "#ffffff" },
+        ticks: { color: "#fff" },
         grid: { display: false },
       },
       y: {
-        ticks: { color: "#ffffff" },
+        beginAtZero: true,
+        ticks: { color: "#fff" },
         grid: { color: "rgba(255,255,255,0.1)" },
       },
-    },
-    animation: {
-      duration: 1200,
-      easing: "easeOutQuart",
     },
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-8 text-white">
-      <h1 className="text-3xl font-bold mb-8 text-center">
-        📊 Rapport des Besoins
+    <div className="min-h-screen bg-[#333699] p-8 text-white">
+      <h1 className="text-2xl font-bold mb-6 text-center">
+        Rapport Besoins
       </h1>
 
-      {/* FILTRE */}
-      <div className="bg-gray-800/80 backdrop-blur-md rounded-2xl p-6 shadow-xl mb-8 flex flex-col md:flex-row gap-4 justify-center items-center">
-        <input
-          type="date"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-          className="bg-gray-900 text-white px-4 py-2 rounded-xl"
-        />
-        <input
-          type="date"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-          className="bg-gray-900 text-white px-4 py-2 rounded-xl"
-        />
+      <div className="text-center mb-6">
         <button
           onClick={handleGenerate}
-          className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-3 rounded-xl font-bold hover:scale-105 transition-all"
+          className="bg-white text-[#333699] px-6 py-2 rounded-xl font-bold"
         >
-          {loading ? "Génération..." : "Générer"}
+          Générer
         </button>
       </div>
 
-      {/* TABLE */}
+      {message && <p className="text-center mb-4">{message}</p>}
+
       {besoinData.length > 0 && (
         <>
-          <div className="bg-gray-800/80 backdrop-blur-md rounded-2xl p-6 shadow-xl mb-10">
-            <table className="w-full text-center">
-              <thead>
-                <tr className="border-b border-gray-600">
-                  <th className="py-3">Besoin</th>
-                  <th className="py-3">Nombre</th>
-                </tr>
-              </thead>
-              <tbody>
-                {besoinData.map((item, index) => (
-                  <tr key={index} className="border-b border-gray-700">
-                    <td className="py-2">{item.besoin}</td>
-                    <td className="py-2 font-bold">{item.nombre}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* TABLE */}
+          <div className="bg-white/10 rounded-2xl p-6 mb-8">
+            <div className="flex justify-between font-bold border-b border-white/30 pb-2 mb-2">
+              <span>Besoin</span>
+              <span>Nombre</span>
+            </div>
+
+            {besoinData.map((item, index) => (
+              <div
+                key={index}
+                className="flex justify-between py-2 border-b border-white/10"
+              >
+                <span>{item.besoin}</span>
+                <span>{item.nombre}</span>
+              </div>
+            ))}
           </div>
 
           {/* GRAPH */}
-          <div className="bg-gray-800/80 backdrop-blur-md rounded-2xl p-8 shadow-xl">
+          <div className="bg-white/10 rounded-2xl p-8">
             <Bar data={chartData} options={options} />
           </div>
         </>

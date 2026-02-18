@@ -17,8 +17,6 @@ export default function AttendancePage() {
 function Attendance() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [showTable, setShowTable] = useState(false);
-
   const [superviseur, setSuperviseur] = useState({ eglise_id: null, branche_id: null });
 
   const [formData, setFormData] = useState({
@@ -38,9 +36,9 @@ function Attendance() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
 
-  const [expandedMonths, setExpandedMonths] = useState({});
+  const [collapsedMonths, setCollapsedMonths] = useState({});
 
-  // Charger eglise/branche du superviseur connecté
+  // 🔹 Charger eglise/branche du superviseur
   useEffect(() => {
     const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -58,32 +56,7 @@ function Attendance() {
     loadSuperviseur();
   }, []);
 
-  const fetchRapports = async () => {
-    if (!superviseur.eglise_id || !superviseur.branche_id) return;
-
-    setLoading(true);
-    setShowTable(false);
-
-    let query = supabase
-      .from("attendance")
-      .select("*")
-      .eq("eglise_id", superviseur.eglise_id)
-      .eq("branche_id", superviseur.branche_id);
-
-    if (dateDebut) query = query.gte("date", dateDebut);
-    if (dateFin) query = query.lte("date", dateFin);
-
-    // Order by date croissante
-    query = query.order("date", { ascending: true });
-
-    const { data, error } = await query;
-    if (error) console.error("❌ Erreur fetch:", error);
-    else setReports(data || []);
-
-    setLoading(false);
-    setShowTable(true);
-  };
-
+  // 🔹 Formulaire handlers
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -92,7 +65,6 @@ function Attendance() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("⏳ Enregistrement en cours...");
-
     try {
       const rapportAvecEglise = {
         ...formData,
@@ -116,7 +88,6 @@ function Attendance() {
       }
 
       setTimeout(() => setMessage(""), 3000);
-
       setFormData({
         date: "",
         hommes: 0,
@@ -128,24 +99,24 @@ function Attendance() {
         nouveauxConvertis: 0,
       });
       setEditId(null);
-      setShowTable(false);
+      fetchRapports();
     } catch (err) {
       console.error(err);
       setMessage("❌ " + err.message);
     }
   };
 
-  const handleEdit = (report) => {
-    setEditId(report.id);
+  const handleEdit = (r) => {
+    setEditId(r.id);
     setFormData({
-      date: report.date,
-      hommes: report.hommes,
-      femmes: report.femmes,
-      jeunes: report.jeunes,
-      enfants: report.enfants,
-      connectes: report.connectes,
-      nouveauxVenus: report.nouveauxVenus,
-      nouveauxConvertis: report.nouveauxConvertis,
+      date: r.date,
+      hommes: r.hommes,
+      femmes: r.femmes,
+      jeunes: r.jeunes,
+      enfants: r.enfants,
+      connectes: r.connectes,
+      nouveauxVenus: r.nouveauxVenus,
+      nouveauxConvertis: r.nouveauxConvertis,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -156,45 +127,75 @@ function Attendance() {
       .from("attendance")
       .delete()
       .eq("id", id);
-    if (error) console.error("❌ Erreur delete:", error);
+    if (error) console.error(error);
     else fetchRapports();
   };
 
-  const formatDateFR = (d) => {
+  // 🔹 Fetch reports
+  const fetchRapports = async () => {
+    if (!superviseur.eglise_id || !superviseur.branche_id) return;
+    setLoading(true);
+
+    let query = supabase
+      .from("attendance")
+      .select("*")
+      .eq("eglise_id", superviseur.eglise_id)
+      .eq("branche_id", superviseur.branche_id)
+      .order("date", { ascending: true });
+
+    if (dateDebut) query = query.gte("date", dateDebut);
+    if (dateFin) query = query.lte("date", dateFin);
+
+    const { data, error } = await query;
+    if (error) console.error(error);
+    else setReports(data || []);
+    setLoading(false);
+  };
+
+  // 🔹 Total global
+  const totalGlobal = reports.reduce(
+    (acc, r) => {
+      acc.hommes += Number(r.hommes || 0);
+      acc.femmes += Number(r.femmes || 0);
+      acc.jeunes += Number(r.jeunes || 0);
+      acc.enfants += Number(r.enfants || 0);
+      acc.connectes += Number(r.connectes || 0);
+      acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
+      acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
+      return acc;
+    },
+    {
+      hommes: 0,
+      femmes: 0,
+      jeunes: 0,
+      enfants: 0,
+      connectes: 0,
+      nouveauxVenus: 0,
+      nouveauxConvertis: 0,
+    }
+  );
+
+  // 🔹 Helper date format
+  const formatDate = (d) => {
     const dateObj = new Date(d);
-    const day = String(dateObj.getDate()).padStart(2, "0");
-    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-    const year = dateObj.getFullYear();
-    return `${day}/${month}/${year}`;
+    const dd = String(dateObj.getDate()).padStart(2, "0");
+    const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const yyyy = dateObj.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
   };
 
-  const getMonthNameFR = (monthIndex) => {
-    const months = [
-      "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-      "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
-    ];
-    return months[monthIndex] || "";
-  };
+  // 🔹 Group by month
+  const groupedByMonth = reports.reduce((acc, r) => {
+    const dateObj = new Date(r.date);
+    const monthYear = dateObj.toLocaleString("fr-FR", { month: "long", year: "numeric" });
+    if (!acc[monthYear]) acc[monthYear] = [];
+    acc[monthYear].push(r);
+    return acc;
+  }, {});
 
-  const groupByMonth = (reports) => {
-    const map = {};
-    reports.forEach((r) => {
-      const d = new Date(r.date);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-      if (!map[key]) map[key] = [];
-      map[key].push(r);
-    });
-    return map;
+  const toggleMonth = (month) => {
+    setCollapsedMonths((prev) => ({ ...prev, [month]: !prev[month] }));
   };
-
-  const toggleMonth = (monthKey) => {
-    setExpandedMonths((prev) => ({
-      ...prev,
-      [monthKey]: !prev[monthKey],
-    }));
-  };
-
-  const groupedReports = groupByMonth(reports);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -204,10 +205,10 @@ function Attendance() {
         Rapports d'assistance
       </h1>
 
-      {/* Formulaire */}
+      {/* 🔹 Formulaire */}
       <div className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[ 
+          {[
             { label: "Date", name: "date", type: "date" },
             { label: "Hommes", name: "hommes", type: "number" },
             { label: "Femmes", name: "femmes", type: "number" },
@@ -218,7 +219,9 @@ function Attendance() {
             { label: "Nouveaux convertis", name: "nouveauxConvertis", type: "number" },
           ].map((field) => (
             <div key={field.name} className="flex flex-col">
-              <label htmlFor={field.name} className="font-medium mb-1 text-white">{field.label}</label>
+              <label htmlFor={field.name} className="font-medium mb-1 text-white">
+                {field.label}
+              </label>
               <input
                 type={field.type}
                 name={field.name}
@@ -230,7 +233,6 @@ function Attendance() {
               />
             </div>
           ))}
-
           <button
             type="submit"
             className="col-span-1 md:col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
@@ -241,7 +243,7 @@ function Attendance() {
         {message && <p className="mt-4 text-center font-medium text-white">{message}</p>}
       </div>
 
-      {/* Filtre date */}
+      {/* 🔹 Filtres */}
       <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-4 flex flex-wrap justify-center gap-4 text-white w-full max-w-3xl">
         <div className="flex flex-col w-full sm:w-auto">
           <label htmlFor="dateDebut" className="font-medium mb-1">Date de début</label>
@@ -253,6 +255,7 @@ function Attendance() {
             className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
           />
         </div>
+
         <div className="flex flex-col w-full sm:w-auto">
           <label htmlFor="dateFin" className="font-medium mb-1">Date de fin</label>
           <input
@@ -263,6 +266,7 @@ function Attendance() {
             className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
           />
         </div>
+
         <button
           onClick={fetchRapports}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end"
@@ -271,99 +275,115 @@ function Attendance() {
         </button>
       </div>
 
-      {/* 🔹 Tableau des rapports */}
-      {showTable && (
+      {/* 🔹 Tableau */}
       <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6">
-        <div className="w-max space-y-2">
-          {/* HEADER */}
-          <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[150px] ml-1">Date</div>
-            <div className="min-w-[120px] text-center">Hommes</div>
-            <div className="min-w-[120px] text-center">Femmes</div>
-            <div className="min-w-[120px] text-center">Jeunes</div>
-            <div className="min-w-[130px] text-center text-orange-400 font-semibold">Total</div>
-            <div className="min-w-[120px] text-center">Enfants</div>
-            <div className="min-w-[140px] text-center">Connectés</div>
-            <div className="min-w-[150px] text-center">Nouveaux Venus</div>
-            <div className="min-w-[180px] text-center">Nouveaux Convertis</div>
-            <div className="min-w-[140px] text-center text-orange-400 font-semibold">Actions</div>
-          </div>
+        {loading && <p className="text-white text-center py-4">Chargement...</p>}
 
-          {/* LIGNES */}
-          {Object.entries(groupedReports).map(([monthKey, monthReports]) => {
-            const [year, monthIndex] = monthKey.split("-").map(Number);
-            const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+        {!loading && Object.keys(groupedByMonth).length > 0 && (
+          <div className="w-max space-y-2">
+            {/* HEADER */}
+            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[150px] ml-1">Date</div>
+              <div className="min-w-[120px] text-center">Hommes</div>
+              <div className="min-w-[120px] text-center">Femmes</div>
+              <div className="min-w-[120px] text-center">Jeunes</div>
+              <div className="min-w-[130px] text-center text-orange-400 font-semibold">Total</div>
+              <div className="min-w-[120px] text-center">Enfants</div>
+              <div className="min-w-[140px] text-center">Connectés</div>
+              <div className="min-w-[150px] text-center">Nouveaux Venus</div>
+              <div className="min-w-[180px] text-center">Nouveaux Convertis</div>
+              <div className="min-w-[140px] text-center text-orange-400 font-semibold">Actions</div>
+            </div>
 
-            const totalMonth = monthReports.reduce((acc, r) => {
-              acc.hommes += Number(r.hommes || 0);
-              acc.femmes += Number(r.femmes || 0);
-              acc.jeunes += Number(r.jeunes || 0);
-              acc.enfants += Number(r.enfants || 0);
-              acc.connectes += Number(r.connectes || 0);
-              acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
-              acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
-              return acc;
-            }, {
-              hommes: 0,
-              femmes: 0,
-              jeunes: 0,
-              enfants: 0,
-              connectes: 0,
-              nouveauxVenus: 0,
-              nouveauxConvertis: 0,
-            });
+            {/* GROUP BY MONTH */}
+            {Object.entries(groupedByMonth).map(([month, monthReports]) => {
+              const collapsed = collapsedMonths[month] ?? false;
+              const monthTotal = monthReports.reduce((acc, r) => {
+                acc.hommes += Number(r.hommes || 0);
+                acc.femmes += Number(r.femmes || 0);
+                acc.jeunes += Number(r.jeunes || 0);
+                acc.enfants += Number(r.enfants || 0);
+                acc.connectes += Number(r.connectes || 0);
+                acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
+                acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
+                return acc;
+              }, {
+                hommes: 0,
+                femmes: 0,
+                jeunes: 0,
+                enfants: 0,
+                connectes: 0,
+                nouveauxVenus: 0,
+                nouveauxConvertis: 0,
+              });
 
-            const isExpanded = expandedMonths[monthKey] || false;
-
-            return (
-              <div key={monthKey} className="space-y-1">
-                {monthReports.length > 1 && (
+              return (
+                <div key={month}>
                   <div
-                    className="flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer"
-                    onClick={() => toggleMonth(monthKey)}
+                    className="flex items-center px-4 py-2 cursor-pointer bg-white/20 hover:bg-white/30 rounded-lg"
+                    onClick={() => toggleMonth(month)}
                   >
-                    <div className="min-w-[150px] text-white font-semibold">
-                      {isExpanded ? "➖ " : "➕ "} {monthLabel}
-                    </div>
-                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
-                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
-                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.jeunes}</div>
-                    <div className="min-w-[130px] text-center text-orange-400 font-semibold">
-                      {totalMonth.hommes + totalMonth.femmes + totalMonth.jeunes}
-                    </div>
-                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.enfants}</div>
-                    <div className="min-w-[140px] text-center text-white font-bold">{totalMonth.connectes}</div>
-                    <div className="min-w-[150px] text-center text-white font-bold">{totalMonth.nouveauxVenus}</div>
-                    <div className="min-w-[180px] text-center text-white font-bold">{totalMonth.nouveauxConvertis}</div>
+                    <span className="text-white font-semibold mr-2">{collapsed ? "+" : "–"}</span>
+                    <span className="text-white font-semibold">{month}</span>
                   </div>
-                )}
 
-                {(isExpanded || monthReports.length === 1) && monthReports.map((r) => {
-                  const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
-                  return (
-                    <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500">
-                      <div className="min-w-[150px] text-white">{formatDateFR(r.date)}</div>
-                      <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                      <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                      <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
-                      <div className="min-w-[130px] text-center text-orange-400 font-semibold">{total}</div>
-                      <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
-                      <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
-                      <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
-                      <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
-                      <div className="min-w-[140px] text-center flex justify-center gap-2">
-                        <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
-                        <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
-                      </div>
+                  {!collapsed &&
+                    monthReports.map((r) => {
+                      const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
+                      return (
+                        <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500">
+                          <div className="min-w-[150px] text-white font-semibold">{formatDate(r.date)}</div>
+                          <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                          <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+                          <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
+                          <div className="min-w-[130px] text-center text-orange-400 font-semibold">{total}</div>
+                          <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
+                          <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
+                          <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
+                          <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
+                          <div className="min-w-[140px] text-center flex justify-center gap-2">
+                            <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
+                            <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                  {/* Total du mois */}
+                  {!collapsed && (
+                    <div className="flex items-center px-4 py-3 mt-1 rounded-xl bg-white/20 border-t border-white/40 font-bold">
+                      <div className="min-w-[150px] text-orange-400 font-semibold ml-1">TOTAL {month}</div>
+                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotal.hommes}</div>
+                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotal.femmes}</div>
+                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotal.jeunes}</div>
+                      <div className="min-w-[130px] text-center text-orange-400">{monthTotal.hommes + monthTotal.femmes + monthTotal.jeunes}</div>
+                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotal.enfants}</div>
+                      <div className="min-w-[140px] text-center text-orange-400 font-semibold">{monthTotal.connectes}</div>
+                      <div className="min-w-[150px] text-center text-orange-400 font-semibold">{monthTotal.nouveauxVenus}</div>
+                      <div className="min-w-[180px] text-center text-orange-400 font-semibold">{monthTotal.nouveauxConvertis}</div>
+                      <div className="min-w-[140px]"></div>
                     </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* TOTAL GLOBAL */}
+            <div className="flex items-center px-4 py-4 mt-2 rounded-xl bg-white/20 border-t border-white/40 font-bold">
+              <div className="min-w-[150px] text-orange-400 font-semibold uppercase ml-1">TOTAL GLOBAL</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.jeunes}</div>
+              <div className="min-w-[130px] text-center text-orange-400">{totalGlobal.hommes + totalGlobal.femmes + totalGlobal.jeunes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.enfants}</div>
+              <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGlobal.connectes}</div>
+              <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalGlobal.nouveauxVenus}</div>
+              <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGlobal.nouveauxConvertis}</div>
+              <div className="min-w-[140px]"></div>
+            </div>
+          </div>
+        )}
       </div>
-      )}
 
       <Footer />
 

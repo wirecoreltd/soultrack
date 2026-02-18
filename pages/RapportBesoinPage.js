@@ -6,18 +6,6 @@ import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend,
-} from "chart.js";
-import { Bar } from "react-chartjs-2";
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
-
 export default function RapportBesoinPage() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "ResponsableSuivi"]}>
@@ -34,7 +22,7 @@ function RapportBesoin() {
 
   const fetchRapport = async () => {
     setMessage("⏳ Chargement...");
-    setBesoinsCount({}); // 🔥 reset pour éviter doublons
+    setBesoinsCount({}); // reset pour éviter doublons
 
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -136,24 +124,30 @@ function RapportBesoin() {
       {/* TABLE */}
       {labels.length > 0 && (
         <div className="w-full max-w-[600px] bg-white/10 rounded-2xl shadow-lg p-6 mb-8">
-          <div className="flex justify-between text-white font-bold border-b border-white/30 pb-2 mb-2">
-            <span>Besoin</span>
-            <span>Nombre</span>
-            <span>%</span>
+          <div className="grid grid-cols-3 text-white font-bold border-b border-white/30 pb-2 mb-2 text-center">
+            <div>Besoin</div>
+            <div>Nombre</div>
+            <div>% du total des membres</div>
           </div>
 
           {labels.map((b, i) => (
             <div
               key={b}
-              className="flex justify-between text-white py-2 border-b border-white/10"
+              className="grid grid-cols-3 text-white py-2 border-b border-white/10 text-center"
             >
-              <span>{b}</span>
-              <span className="font-semibold">{values[i]}</span>
-              <span className="font-semibold">
+              <div className="text-left pl-2">{b}</div>
+              <div className="font-semibold">{values[i]}</div>
+              <div className="font-semibold">
                 {((values[i] / total) * 100).toFixed(1)} %
-              </span>
+              </div>
             </div>
           ))}
+
+          <div className="grid grid-cols-3 text-white font-bold pt-2 text-center">
+            <div className="text-left pl-2">Total</div>
+            <div>{total}</div>
+            <div>100 %</div>
+          </div>
         </div>
       )}
 

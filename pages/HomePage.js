@@ -38,14 +38,14 @@ export default function HomePage() {
 
       {/* HERO */}
       <section className="pt-24 pb-32 bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
-        <div className="max-w-6xl mx-auto px-6 lg:flex lg:items-center lg:justify-between">
+        <div className="max-w-7xl mx-auto px-6 lg:flex lg:items-center lg:justify-between">
           <div className="lg:w-1/2">
             <span className="bg-white/20 px-4 py-1 rounded-full text-sm">
               🚀 Plateforme moderne pour églises
             </span>
 
-            <h1 className="text-4xl md:text-5xl font-extrabold mt-6 mb-6 leading-tight">
-              Centralisez la gestion de votre église
+            <h1 className="text-5xl font-extrabold mt-6 mb-6 leading-tight">
+              Centralisez toute la gestion de votre église
             </h1>
 
             <p className="text-lg text-white/90 mb-8">
@@ -89,7 +89,6 @@ export default function HomePage() {
         </h2>
         <p className="text-lg md:text-xl text-gray-800 leading-relaxed">
           Chaque membre porte une histoire, chaque absence peut révéler une saison difficile et chaque silence peut cacher une bataille invisible.  
-          <br /><br />
           Un berger attentif ne dirige pas seulement : il discerne, il veille, il accompagne avec intention.
           <br /><br />
           “Prenez soin du troupeau de Dieu…” – 1 Pierre 5:2
@@ -100,7 +99,7 @@ export default function HomePage() {
 
       {/* FEATURES */}
       <section className="py-20 px-6 bg-gray-50">
-        <div className="max-w-6xl mx-auto text-center">
+        <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-12">
             Une solution complète pour votre ministère
           </h2>
@@ -122,7 +121,7 @@ export default function HomePage() {
                 Organisation des communautés
               </h3>
               <p className="text-gray-600">
-                Chaque cellule ou famille est encadrée par un leader. Suivez la croissance, les présences et l’accompagnement spirituel.
+                Chaque cellule ou famille est encadrée par un leader. Suivez la croissance, les présences et l’accompagnement spirituel de chaque groupe pour mieux soutenir votre église.
               </p>
             </div>
 

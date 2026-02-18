@@ -8,7 +8,7 @@ import Footer from "../components/Footer";
 
 export default function RapportEvangelisation() {
   const [rapports, setRapports] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedRapport, setSelectedRapport] = useState(null);
 
@@ -20,6 +20,7 @@ export default function RapportEvangelisation() {
   const [message, setMessage] = useState("");
 
   const [expandedMonths, setExpandedMonths] = useState({});
+  const [showTable, setShowTable] = useState(false);
 
   // 🔹 Récupération profil
   useEffect(() => {
@@ -48,6 +49,7 @@ export default function RapportEvangelisation() {
     if (!egliseId || !brancheId) return;
 
     setLoading(true);
+    setShowTable(false);
 
     let query = supabase
       .from("rapport_evangelisation")
@@ -63,11 +65,8 @@ export default function RapportEvangelisation() {
 
     setRapports(data || []);
     setLoading(false);
+    setShowTable(true);
   };
-
-  useEffect(() => {
-    if (egliseId && brancheId) fetchRapports();
-  }, [egliseId, brancheId]);
 
   const handleSaveRapport = async (updated) => {
     await supabase.from("rapport_evangelisation").upsert(updated);
@@ -104,11 +103,7 @@ export default function RapportEvangelisation() {
   };
 
   const groupedReports = groupByMonth(rapports);
-
   const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500","border-pink-500","border-indigo-500"];
-
-  if (loading)
-    return <p className="text-center mt-10 text-white">Chargement...</p>;
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -147,78 +142,104 @@ export default function RapportEvangelisation() {
       {message && <div className="text-center text-white mt-4 font-medium">{message}</div>}
 
       {/* TABLEAU GROUPÉ PAR MOIS */}
-      <div className="w-full flex justify-center mt-8">
-        <div className="w-full md:w-max space-y-2 overflow-x-auto">
-          {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
-            const [year, monthIndex] = monthKey.split("-").map(Number);
-            const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-            const totalMonth = monthReports.reduce((acc, r) => {
-              const t = (Number(r.hommes)||0) + (Number(r.femmes)||0);
-              acc.hommes += Number(r.hommes||0);
-              acc.femmes += Number(r.femmes||0);
-              acc.total += t;
-              return acc;
-            }, {hommes:0,femmes:0,total:0});
-            const isExpanded = expandedMonths[monthKey] || false;
-            const borderColor = borderColors[idx % borderColors.length];
+      {showTable && (
+        <div className="w-full flex justify-center mt-8">
+          <div className="w-full md:w-max space-y-2 overflow-x-auto">
 
-            return (
-              <div key={monthKey} className="space-y-1">
-                {/* Header mois */}
-                <div
-                  className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer ${borderColor}`}
-                  onClick={() => toggleMonth(monthKey)}
-                >
-                  <div className="min-w-[150px] text-white font-semibold">
-                    {isExpanded ? "➖ " : "➕ "} {monthLabel}
-                  </div>
-                  <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
-                  <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
-                  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.total}</div>
-                </div>
+            {/* HEADER Desktop */}
+            <div className="hidden md:flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="md:min-w-[150px] px-1.5">Date</div>
+              <div className="md:min-w-[120px] text-center">Hommes</div>
+              <div className="md:min-w-[120px] text-center">Femmes</div>
+              <div className="md:min-w-[120px] text-center">Total</div>
+              <div className="md:min-w-[150px] text-center">Prière</div>
+              <div className="md:min-w-[180px] text-center">Nouveau Converti</div>
+              <div className="md:min-w-[160px] text-center">Réconciliation</div>
+              <div className="md:min-w-[160px] text-center">Moissonneurs</div>
+              <div className="md:min-w-[140px] text-center">Actions</div>
+            </div>
 
-                {isExpanded && monthReports.map((r) => {
-                  const total = (Number(r.hommes)||0) + (Number(r.femmes)||0);
-                  return (
-                    <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500">
-                      <div className="min-w-[150px] text-white">{new Date(r.date).toLocaleDateString()}</div>
-                      <div className="min-w-[120px] text-center text-white">{r.hommes ?? "-"}</div>
-                      <div className="min-w-[120px] text-center text-white">{r.femmes ?? "-"}</div>
-                      <div className="min-w-[120px] text-center text-orange-500 font-semibold">{total}</div>
-                      <div className="min-w-[150px] text-center text-white">{r.priere ?? "-"}</div>
-                      <div className="min-w-[180px] text-center text-white">{r.nouveau_converti ?? "-"}</div>
-                      <div className="min-w-[160px] text-center text-white">{r.reconciliation ?? "-"}</div>
-                      <div className="min-w-[160px] text-center text-white">{r.moissonneurs ?? "-"}</div>
-                      <div className="min-w-[140px] text-center">
-                        <button
-                          onClick={() => { setSelectedRapport(r); setEditOpen(true); }}
-                          className="text-orange-400 underline hover:text-orange-500"
-                        >
-                          Modifier
-                        </button>
-                      </div>
+            {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
+              const [year, monthIndex] = monthKey.split("-").map(Number);
+              const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+
+              const totalMonth = monthReports.reduce((acc,r)=>{
+                acc.hommes += Number(r.hommes||0);
+                acc.femmes += Number(r.femmes||0);
+                acc.total += (Number(r.hommes||0) + Number(r.femmes||0));
+                acc.priere += Number(r.priere||0);
+                acc.nouveau_converti += Number(r.nouveau_converti||0);
+                acc.reconciliation += Number(r.reconciliation||0);
+                acc.moissonneurs += Number(r.moissonneurs||0);
+                return acc;
+              }, {hommes:0,femmes:0,total:0,priere:0,nouveau_converti:0,reconciliation:0,moissonneurs:0});
+
+              const isExpanded = expandedMonths[monthKey] || false;
+              const borderColor = borderColors[idx % borderColors.length];
+
+              return (
+                <div key={monthKey} className="space-y-1">
+                  {/* HEADER MOIS */}
+                  <div className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer ${borderColor}`}
+                       onClick={()=>toggleMonth(monthKey)}>
+                    <div className="min-w-[150px] text-white font-semibold">
+                      {isExpanded ? "➖ " : "➕ "} {monthLabel}
                     </div>
-                  );
-                })}
-              </div>
-            );
-          })}
+                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
+                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
+                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.total}</div>
+                    <div className="min-w-[150px] text-center text-white font-bold">{totalMonth.priere}</div>
+                    <div className="min-w-[180px] text-center text-white font-bold">{totalMonth.nouveau_converti}</div>
+                    <div className="min-w-[160px] text-center text-white font-bold">{totalMonth.reconciliation}</div>
+                    <div className="min-w-[160px] text-center text-white font-bold">{totalMonth.moissonneurs}</div>
+                  </div>
 
-          {/* TOTAL GENERAL */}
-          <div className="flex items-center px-4 py-4 mt-6 rounded-lg bg-white/30 text-white font-bold whitespace-nowrap border-t-2 border-white">
-            <div className="min-w-[150px] font-bold text-orange-500">TOTAL</div>
-            <div className="min-w-[120px] text-center text-orange-500 font-semibold">
-              {rapports.reduce((s,r)=>s+Number(r.hommes||0),0)}
+                  {/* Lignes rapports */}
+                  {isExpanded && monthReports.map((r)=>{
+                    const total = (Number(r.hommes)||0) + (Number(r.femmes)||0);
+                    return (
+                      <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500">
+                        <div className="min-w-[150px] text-white">{new Date(r.date).toLocaleDateString()}</div>
+                        <div className="min-w-[120px] text-center text-white">{r.hommes ?? "-"}</div>
+                        <div className="min-w-[120px] text-center text-white">{r.femmes ?? "-"}</div>
+                        <div className="min-w-[120px] text-center text-orange-500 font-semibold">{total}</div>
+                        <div className="min-w-[150px] text-center text-white">{r.priere ?? "-"}</div>
+                        <div className="min-w-[180px] text-center text-white">{r.nouveau_converti ?? "-"}</div>
+                        <div className="min-w-[160px] text-center text-white">{r.reconciliation ?? "-"}</div>
+                        <div className="min-w-[160px] text-center text-white">{r.moissonneurs ?? "-"}</div>
+                        <div className="min-w-[140px] text-center">
+                          <button onClick={()=>{setSelectedRapport(r);setEditOpen(true);}}
+                                  className="text-orange-400 underline hover:text-orange-500">Modifier</button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })}
+
+            {/* TOTAL GENERAL */}
+            <div className="flex items-center px-4 py-4 mt-6 rounded-lg bg-white/30 text-white font-bold whitespace-nowrap border-t-2 border-white">
+              <div className="min-w-[150px] font-bold text-orange-500">TOTAL</div>
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold">{rapports.reduce((s,r)=>s+Number(r.hommes||0),0)}</div>
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold">{rapports.reduce((s,r)=>s+Number(r.femmes||0),0)}</div>
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold">{rapports.reduce((s,r)=>(s+(Number(r.hommes||0)+Number(r.femmes||0))),0)}</div>
+              <div className="min-w-[150px] text-center text-orange-500 font-semibold">{rapports.reduce((s,r)=>s+Number(r.priere||0),0)}</div>
+              <div className="min-w-[180px] text-center text-orange-500 font-semibold">{rapports.reduce((s,r)=>s+Number(r.nouveau_converti||0),0)}</div>
+              <div className="min-w-[160px] text-center text-orange-500 font-semibold">{rapports.reduce((s,r)=>s+Number(r.reconciliation||0),0)}</div>
+              <div className="min-w-[160px] text-center text-orange-500 font-semibold">{rapports.reduce((s,r)=>s+Number(r.moissonneurs||0),0)}</div>
+              <div className="min-w-[140px]"></div>
             </div>
-            <div className="min-w-[120px] text-center text-orange-500 font-semibold">
-              {rapports.reduce((s,r)=>s+Number(r.femmes||0),0)}
-            </div>
-            <div className="min-w-[120px] text-center text-orange-500 font-semibold">
-              {rapports.reduce((s,r)=>(s+(Number(r.hommes||0)+Number(r.femmes||0))),0)}
-            </div>
+
+            {rapports.length === 0 && (
+              <div className="text-white/70 px-4 py-6 text-center">
+                Aucun rapport trouvé
+              </div>
+            )}
+
           </div>
         </div>
-      </div>
+      )}
 
       {selectedRapport && (
         <EditEvanRapportLine

@@ -15,9 +15,8 @@ import {
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import ChartDataLabels from "chartjs-plugin-datalabels";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend, ChartDataLabels);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 export default function RapportBesoinPage() {
   return (
@@ -30,7 +29,7 @@ export default function RapportBesoinPage() {
 function RapportBesoin() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-  const [besoinsCount, setBesoinsCount] = useState({});
+  const [rapportData, setRapportData] = useState([]);
   const [message, setMessage] = useState("");
 
   const fetchRapport = async () => {
@@ -48,7 +47,7 @@ function RapportBesoin() {
 
       let query = supabase
         .from("membres_complets")
-        .select("besoin, created_at")
+        .select("besoin, id")
         .eq("eglise_id", profile.eglise_id)
         .eq("branche_id", profile.branche_id);
 
@@ -58,36 +57,43 @@ function RapportBesoin() {
       const { data, error } = await query;
       if (error) throw error;
 
-      // 🔥 Compter le nombre par besoin
+      // 🔥 Comptage par besoin
       const count = {};
+      const membreIds = new Set(); // pour total membres uniques
 
       (data || []).forEach((r) => {
         if (!r.besoin) return;
 
+        membreIds.add(r.id);
+
         let besoinsArray = [];
-        try {
-          if (r.besoin.startsWith("[")) {
+
+        if (r.besoin.startsWith("[")) {
+          try {
             besoinsArray = JSON.parse(r.besoin);
-          } else {
-            besoinsArray = r.besoin.split(",");
+          } catch {
+            besoinsArray = [];
           }
-        } catch {
+        } else {
           besoinsArray = r.besoin.split(",");
         }
 
         besoinsArray.forEach((b) => {
           const clean = b.trim();
           if (!clean) return;
-          clean.split(",").forEach((finalBesoin) => {
-            const final = finalBesoin.trim();
-            if (!final) return;
-            if (!count[final]) count[final] = 0;
-            count[final]++;
-          });
+          count[clean] = (count[clean] || 0) + 1;
         });
       });
 
-      setBesoinsCount(count);
+      const totalMembres = membreIds.size;
+
+      const result = Object.entries(count).map(([key, value]) => ({
+        besoin: key,
+        total: value,
+        percent: ((value / totalMembres) * 100).toFixed(1),
+      }));
+
+      setRapportData(result);
       setMessage("");
     } catch (err) {
       console.error(err);
@@ -95,9 +101,9 @@ function RapportBesoin() {
     }
   };
 
-  const labels = Object.keys(besoinsCount);
-  const values = Object.values(besoinsCount);
-  const total = values.reduce((a, b) => a + b, 0);
+  const labels = rapportData.map((r) => r.besoin);
+  const values = rapportData.map((r) => r.total);
+  const percents = rapportData.map((r) => r.percent);
 
   const chartData = {
     labels,
@@ -105,9 +111,9 @@ function RapportBesoin() {
       {
         label: "Nombre",
         data: values,
-        backgroundColor: "rgba(255,255,255,0.2)",
+        backgroundColor: "rgba(255,255,255,0.15)",
         borderRadius: 8,
-        barThickness: 30,
+        barThickness: 25,
       },
     ],
   };
@@ -121,21 +127,19 @@ function RapportBesoin() {
         backgroundColor: "#1f2366",
         titleColor: "#fff",
         bodyColor: "#fff",
-      },
-      datalabels: {
-        color: "#ffffff",
-        anchor: "end",
-        align: "end",
-        formatter: (value) => {
-          if (!total) return value;
-          const percent = ((value / total) * 100).toFixed(1);
-          return `${value} (${percent}%)`;
+        callbacks: {
+          label: function (context) {
+            const idx = context.dataIndex;
+            return `${values[idx]} (${percents[idx]}%)`;
+          },
         },
-        font: { weight: "bold" },
       },
     },
     scales: {
-      x: { ticks: { color: "#ffffff" }, grid: { display: false } },
+      x: {
+        ticks: { color: "#ffffff" },
+        grid: { display: false },
+      },
       y: {
         beginAtZero: true,
         ticks: { color: "#ffffff", precision: 0 },
@@ -175,29 +179,31 @@ function RapportBesoin() {
       {message && <p className="text-white mb-4 font-medium">{message}</p>}
 
       {/* TABLEAU */}
-      {labels.length > 0 && (
+      {rapportData.length > 0 && (
         <div className="w-full max-w-[600px] bg-white/10 rounded-2xl shadow-lg p-6 mb-8">
           <div className="flex justify-between text-white font-bold border-b border-white/30 pb-2 mb-2">
             <span>Besoin</span>
             <span>Nombre</span>
+            <span>%</span>
           </div>
 
-          {labels.map((b, i) => (
+          {rapportData.map((r) => (
             <div
-              key={b}
+              key={r.besoin}
               className="flex justify-between text-white py-2 border-b border-white/10"
             >
-              <span>{b}</span>
-              <span className="font-semibold">{values[i]}</span>
+              <span>{r.besoin}</span>
+              <span className="font-semibold">{r.total}</span>
+              <span className="font-semibold">{r.percent}%</span>
             </div>
           ))}
         </div>
       )}
 
       {/* CHART */}
-      {labels.length > 0 && (
+      {rapportData.length > 0 && (
         <div className="w-full max-w-[800px] bg-white/10 rounded-3xl p-8 shadow-2xl">
-          <Bar data={chartData} options={chartOptions} plugins={[ChartDataLabels]} />
+          <Bar data={chartData} options={chartOptions} />
         </div>
       )}
 

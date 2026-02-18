@@ -98,19 +98,24 @@ function RapportBesoin() {
       </h1>
 
       {/* FILTRES */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg flex gap-4 flex-wrap text-white mb-6">
+      <div className="flex flex-col w-full sm:w-auto">
+            <label htmlFor="dateDebut" className="font-medium mb-1">Date de début</label>
         <input
           type="date"
           value={dateDebut}
           onChange={(e) => setDateDebut(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
+        </div>  
+        <div className="flex flex-col w-full sm:w-auto">
+            <label htmlFor="dateFin" className="font-medium mb-1">Date de fin</label>    
         <input
           type="date"
           value={dateFin}
           onChange={(e) => setDateFin(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
+             </div> 
         <button
           onClick={fetchRapport}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition"
@@ -139,13 +144,8 @@ function RapportBesoin() {
               <div className="text-orange-400 font-semibold">{values[i]}</div>
               <div className="font-semibold">{((values[i] / total) * 100).toFixed(1)} %</div>
             </div>
-          ))}
-      
-          <div className="grid grid-cols-3 text-white font-bold pt-2 text-center">
-            <div className="text-left pl-2">Total</div>
-            <div className="text-orange-400">{total}</div>
-            <div>100 %</div>
-          </div>
+          ))}      
+          
         </div>
       )}
 

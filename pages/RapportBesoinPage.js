@@ -125,27 +125,25 @@ function RapportBesoin() {
       {labels.length > 0 && (
         <div className="w-full max-w-[600px] bg-white/10 rounded-2xl shadow-lg p-6 mb-8">
           <div className="grid grid-cols-3 text-white font-bold border-b border-white/30 pb-2 mb-2 text-center">
-            <div>Besoin</div>
-            <div>Nombre</div>
+            <div className="text-left pl-2">Besoin</div>
+            <div className="text-orange-400">Nombre</div>
             <div>% du total des membres</div>
           </div>
-
+      
           {labels.map((b, i) => (
             <div
               key={b}
               className="grid grid-cols-3 text-white py-2 border-b border-white/10 text-center"
             >
               <div className="text-left pl-2">{b}</div>
-              <div className="font-semibold">{values[i]}</div>
-              <div className="font-semibold">
-                {((values[i] / total) * 100).toFixed(1)} %
-              </div>
+              <div className="text-orange-400 font-semibold">{values[i]}</div>
+              <div className="font-semibold">{((values[i] / total) * 100).toFixed(1)} %</div>
             </div>
           ))}
-
+      
           <div className="grid grid-cols-3 text-white font-bold pt-2 text-center">
             <div className="text-left pl-2">Total</div>
-            <div>{total}</div>
+            <div className="text-orange-400">{total}</div>
             <div>100 %</div>
           </div>
         </div>

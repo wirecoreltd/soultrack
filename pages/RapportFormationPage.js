@@ -29,14 +29,22 @@ function RapportFormation() {
   const [filterFin, setFilterFin] = useState("");
   const [rapports, setRapports] = useState([]);
   const [editRapport, setEditRapport] = useState(null);
+  const [collapsedMonths, setCollapsedMonths] = useState({}); // 🔹 pour collapse
 
-  // 🔹 Format date dd/mm/yyyy
   const formatDate = (dateString) => {
     const d = new Date(dateString);
     const day = String(d.getDate()).padStart(2, "0");
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const year = d.getFullYear();
     return `${day}/${month}/${year}`;
+  };
+
+  // 🔹 Retourne 'YYYY-MM' pour le regroupement par mois
+  const getMonthKey = (dateString) => {
+    const d = new Date(dateString);
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${year}-${month}`;
   };
 
   useEffect(() => {
@@ -125,6 +133,19 @@ function RapportFormation() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // 🔹 Toggle collapse par mois
+  const toggleMonth = (monthKey) => {
+    setCollapsedMonths((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
+  };
+
+  // 🔹 Regroupement des rapports par mois
+  const rapportsByMonth = rapports.reduce((acc, r) => {
+    const key = getMonthKey(r.date_debut);
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(r);
+    return acc;
+  }, {});
+
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
@@ -146,7 +167,6 @@ function RapportFormation() {
               className="input"
             />
           </div>
-
           <div className="flex flex-col">
             <label className="text-white mb-1">Date Fin</label>
             <input
@@ -159,7 +179,6 @@ function RapportFormation() {
               className="input"
             />
           </div>
-
           <div className="flex flex-col col-span-2">
             <label className="text-white mb-1">Nom de la Formation</label>
             <input
@@ -173,7 +192,6 @@ function RapportFormation() {
               className="input"
             />
           </div>
-
           <div className="flex flex-col">
             <label className="text-white mb-1">Hommes</label>
             <input
@@ -185,7 +203,6 @@ function RapportFormation() {
               className="input"
             />
           </div>
-
           <div className="flex flex-col">
             <label className="text-white mb-1">Femmes</label>
             <input
@@ -197,7 +214,6 @@ function RapportFormation() {
               className="input"
             />
           </div>
-
           <div className="col-span-2 flex justify-center mt-4">
             <button
               type="submit"
@@ -231,65 +247,62 @@ function RapportFormation() {
         </button>
       </div>
 
-      {/* Tableau */}
+      {/* Tableau collapse par mois */}
       <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
-        <div className="w-max space-y-2">
-          {/* HEADER */}
-          <div className="flex font-semibold uppercase text-white px-2 py-2 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[120px]">Date Début</div>
-            <div className="min-w-[120px]">Date Fin</div>
-            <div className="min-w-[180px] text-center">Nom Formation</div>
-            <div className="min-w-[80px] text-center">Hommes</div>
-            <div className="min-w-[80px] text-center">Femmes</div>
-            <div className="min-w-[80px] text-center text-orange-500 font-semibold">Total</div>
-            <div className="min-w-[120px] text-center">Actions</div>
-          </div>
+        <div className="w-max space-y-4">
+          {Object.entries(rapportsByMonth).map(([month, items]) => {
+            const monthName = new Date(month + "-01").toLocaleString("fr-FR", { month: "long", year: "numeric" });
+            const collapsed = collapsedMonths[month] ?? false;
 
-          {rapports.map((r) => {
-            const total = Number(r.hommes) + Number(r.femmes);
             return (
-              <div
-                key={r.id}
-                className="flex items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
-              >
-                <div className="min-w-[120px] text-white">{formatDate(r.date_debut)}</div>
-                <div className="min-w-[120px] text-white">{formatDate(r.date_fin)}</div>
-                <div className="min-w-[180px] text-white text-center">{r.nom_formation}</div>
-                <div className="min-w-[80px] text-center text-white">{r.hommes}</div>
-                <div className="min-w-[80px] text-center text-white">{r.femmes}</div>
-                <div className="min-w-[80px] text-center text-orange-500 font-semibold">{total}</div>
-                <div className="min-w-[120px] text-center">
-                  <button
-                    onClick={() => handleEdit(r)}
-                    className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-2 py-1 rounded-xl"
-                  >
-                    Modifier
-                  </button>
+              <div key={month} className="bg-white/10 rounded-xl">
+                <div
+                  className="px-4 py-2 cursor-pointer font-semibold text-white flex justify-between items-center hover:bg-white/20 transition"
+                  onClick={() => toggleMonth(month)}
+                >
+                  <span>{monthName}</span>
+                  <span>{collapsed ? "▼" : "▲"}</span>
                 </div>
+                {!collapsed && (
+                  <div className="space-y-2">
+                    <div className="flex font-semibold uppercase text-white px-2 py-2 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+                      <div className="min-w-[120px]">Date Début</div>
+                      <div className="min-w-[120px]">Date Fin</div>
+                      <div className="min-w-[180px] text-center">Nom Formation</div>
+                      <div className="min-w-[80px] text-center">Hommes</div>
+                      <div className="min-w-[80px] text-center">Femmes</div>
+                      <div className="min-w-[80px] text-center text-orange-500 font-semibold">Total</div>
+                      <div className="min-w-[120px] text-center">Actions</div>
+                    </div>
+                    {items.map((r) => {
+                      const total = Number(r.hommes) + Number(r.femmes);
+                      return (
+                        <div
+                          key={r.id}
+                          className="flex items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
+                        >
+                          <div className="min-w-[120px] text-white">{formatDate(r.date_debut)}</div>
+                          <div className="min-w-[120px] text-white">{formatDate(r.date_fin)}</div>
+                          <div className="min-w-[180px] text-white text-center">{r.nom_formation}</div>
+                          <div className="min-w-[80px] text-center text-white">{r.hommes}</div>
+                          <div className="min-w-[80px] text-center text-white">{r.femmes}</div>
+                          <div className="min-w-[80px] text-center text-orange-500 font-semibold">{total}</div>
+                          <div className="min-w-[120px] text-center">
+                            <button
+                              onClick={() => handleEdit(r)}
+                              className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-2 py-1 rounded-xl"
+                            >
+                              Modifier
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}
-
-          {/* TOTAL GENERAL */}
-          <div className="flex items-center px-2 py-2 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
-            <div className="min-w-[120px] text-orange-500 font-semibold">TOTAL</div>
-            <div className="min-w-[120px]"></div>
-            <div className="min-w-[180px]"></div>
-            <div className="min-w-[80px] text-center text-orange-500 font-semibold">
-              {rapports.reduce((sum, r) => sum + Number(r.hommes), 0)}
-            </div>
-            <div className="min-w-[80px] text-center text-orange-500 font-semibold">
-              {rapports.reduce((sum, r) => sum + Number(r.femmes), 0)}
-            </div>
-            <div className="min-w-[80px] text-center text-orange-500 font-semibold">
-              {rapports.reduce((sum, r) => sum + Number(r.hommes) + Number(r.femmes), 0)}
-            </div>
-            <div className="min-w-[120px]"></div>
-          </div>
-
-          {rapports.length === 0 && (
-            <div className="text-white/70 px-4 py-4 text-center">Aucun rapport trouvé</div>
-          )}
         </div>
       </div>
 

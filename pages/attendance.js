@@ -17,6 +17,7 @@ export default function AttendancePage() {
 function Attendance() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showTable, setShowTable] = useState(false);
 
   const [superviseur, setSuperviseur] = useState({ eglise_id: null, branche_id: null });
 
@@ -69,21 +70,20 @@ function Attendance() {
       .from("attendance")
       .select("*")
       .eq("eglise_id", superviseur.eglise_id)
-      .eq("branche_id", superviseur.branche_id)
-      .order("date", { ascending: false });
+      .eq("branche_id", superviseur.branche_id);
 
     if (dateDebut) query = query.gte("date", dateDebut);
     if (dateFin) query = query.lte("date", dateFin);
+
+    // ⚡ Order by date croissante
+    query = query.order("date", { ascending: true });
 
     const { data, error } = await query;
     if (error) console.error("❌ Erreur fetch:", error);
     else setReports(data || []);
     setLoading(false);
+    setShowTable(true); // On affiche la table seulement après "Générer"
   };
-
-  useEffect(() => {
-    fetchRapports();
-  }, [superviseur]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -129,7 +129,7 @@ function Attendance() {
         nouveauxConvertis: 0,
       });
       setEditId(null);
-      fetchRapports();
+      setShowTable(false); // Cache table après ajout
     } catch (err) {
       console.error(err);
       setMessage("❌ " + err.message);
@@ -279,6 +279,7 @@ function Attendance() {
       </div>
 
       {/* 🔹 Tableau des rapports */}
+      {showTable && (
       <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6">
         <div className="w-max space-y-2">
           {/* HEADER */}
@@ -323,7 +324,6 @@ function Attendance() {
 
             return (
               <div key={monthKey} className="space-y-1">
-                {/* Ligne mois si >1 */}
                 {monthReports.length > 1 && (
                   <div
                     className="flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer"
@@ -345,7 +345,6 @@ function Attendance() {
                   </div>
                 )}
 
-                {/* Lignes détaillées */}
                 {(isExpanded || monthReports.length === 1) && monthReports.map((r) => {
                   const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
                   return (
@@ -371,6 +370,7 @@ function Attendance() {
           })}
         </div>
       </div>
+      )}
 
       <Footer />
 

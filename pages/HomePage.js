@@ -14,44 +14,42 @@ export default function HomePage() {
 
       {/* HERO */}
       <section className="pt-20 pb-20 bg-gradient-to-br from-blue-700 to-indigo-800 text-white">
-        <div className="max-w-4xl mx-auto px-6 text-center">
+        <div className="max-w-3xl mx-auto px-6 text-center">
 
-          <h1 className="text-3xl lg:text-4xl font-bold mb-8 leading-tight">
+          {/* Phrase centrale */}
+          <p className="text-xl lg:text-2xl italic mb-8">
             Le ministère est un appel. Le suivi est une responsabilité.
-          </h1>
+          </p>
 
-          <div className="space-y-4 text-white/95 text-lg">
+          <div className="space-y-4 text-white/90 text-lg mb-6 leading-relaxed">
             <p>Chaque membre porte une histoire.</p>
             <p>Chaque absence peut révéler une saison difficile.</p>
             <p>Chaque silence peut cacher une bataille invisible.</p>
           </div>
 
-          <div className="mt-8 space-y-2 text-lg">
+          <div className="space-y-2 text-lg mb-6">
             <p>Un berger attentif ne dirige pas seulement.</p>
             <p>Il discerne.</p>
             <p>Il veille.</p>
             <p>Il accompagne avec intention.</p>
           </div>
 
-          <p className="mt-8 italic text-white/80">
+          <p className="italic text-white/80 mb-8">
             “Prenez soin du troupeau de Dieu…” – 1 Pierre 5:2
           </p>
 
-          <div className="mt-8 space-y-2 font-medium">
+          <div className="space-y-2 font-medium mb-10">
             <p>Aimer, c’est aussi organiser.</p>
-            <p>Servir, c’est aussi structurer.</p>
+            <p>Servir une église, c’est aussi structurer.</p>
             <p>Veiller, c’est aussi suivre avec sagesse.</p>
           </div>
 
-          <div className="mt-10">
-            <button
-              onClick={() => router.push("/SignupEglise")}
-              className="bg-white text-blue-700 px-8 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 transition"
-            >
-              🚀 Découvrir SoulTrack
-            </button>
-          </div>
-
+          <button
+            onClick={() => router.push("/SignupEglise")}
+            className="bg-white text-blue-700 px-8 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 transition"
+          >
+            🚀 Découvrir SoulTrack
+          </button>
         </div>
       </section>
 
@@ -59,7 +57,7 @@ export default function HomePage() {
       <section className="py-16 px-6 bg-white text-center">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl lg:text-3xl font-bold text-blue-700 mb-6">
-            Une vision spirituelle mérite une structure claire.
+            Une vision spirituelle mérite une structure claire
           </h2>
 
           <p className="text-gray-700 leading-relaxed">
@@ -131,12 +129,11 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto">
 
           <h2 className="text-2xl lg:text-3xl font-bold mb-6">
-            Exercez votre ministère avec clarté et sagesse.
+            Accompagnez chaque membre avec sagesse et clarté
           </h2>
 
           <p className="mb-8 text-white/90">
-            Donnez à votre église les outils nécessaires pour accompagner 
-            chaque âme avec attention et intention.
+            Donnez à votre église les outils nécessaires pour suivre chaque âme, comprendre ses besoins et agir avec intention.
           </p>
 
           <button

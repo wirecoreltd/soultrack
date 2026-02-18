@@ -61,31 +61,39 @@ function RapportBesoin() {
       const count = {};
 
       (data || []).forEach((r) => {
-        if (!r.besoin) return;
+  if (!r.besoin) return;
 
-        let besoinsArray = [];
+  let besoinsArray = [];
 
-        if (r.besoin.startsWith("[")) {
-          try {
-            besoinsArray = JSON.parse(r.besoin);
-          } catch {
-            besoinsArray = [];
-          }
-        } else {
-          besoinsArray = r.besoin.split(",");
-        }
+  try {
+    // Si c'est du JSON
+    if (r.besoin.startsWith("[")) {
+      besoinsArray = JSON.parse(r.besoin);
+    } else {
+      // Force séparation même si mal formaté
+      besoinsArray = r.besoin.split(",");
+    }
+  } catch {
+    besoinsArray = r.besoin.split(",");
+  }
 
-        besoinsArray.forEach((b) => {
-          const clean = b.trim();
-          if (!clean) return;
+  besoinsArray.forEach((b) => {
+    const clean = b.trim();
 
-          if (!count[clean]) {
-            count[clean] = 0;
-          }
+    if (!clean) return;
 
-          count[clean]++;
-        });
-      });
+    // 🔥 Sécurité supplémentaire :
+    // si jamais il reste une virgule dedans
+    clean.split(",").forEach((finalBesoin) => {
+      const final = finalBesoin.trim();
+      if (!final) return;
+
+      if (!count[final]) count[final] = 0;
+      count[final]++;
+    });
+  });
+});
+
 
       setBesoinsCount(count);
       setMessage("");

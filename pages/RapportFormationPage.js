@@ -224,9 +224,9 @@ function RapportFormation() {
         <div className="min-w-[180px] text-white font-semibold">
           {isExpanded ? "➖" : "➕"} {monthLabel}
         </div>
-        <div className="min-w-[450px] text-center text-white font-bold">{totalMonth.hommes}</div>
-        <div className="min-w-[450px] text-center text-white font-bold">{totalMonth.femmes}</div>
-        <div className="min-w-[450px] text-center text-orange-500 font-semibold">{totalMonth.total}</div>
+        <div className="min-w-[120px] text-center text-white font-bold ml-20">{totalMonth.hommes}</div>
+        <div className="min-w-[120px] text-center text-white font-bold ml-20">{totalMonth.femmes}</div>
+        <div className="min-w-[120px] text-center text-orange-500 font-semibold ml-20">{totalMonth.total}</div>
         <div className="min-w-[200px]"></div>
         <div className="min-w-[150px]"></div>
       </div>

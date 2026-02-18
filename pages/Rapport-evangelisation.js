@@ -200,7 +200,7 @@ export default function RapportEvangelisation() {
                     return (
                       <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500">
                         <div className="min-w-[150px] text-white">{new Date(r.date).toLocaleDateString()}</div>
-                        <div className="min-w-[120px] text-center text-white ml-0">{r.hommes ?? "-"}</div>
+                        <div className="min-w-[120px] text-center text-white -ml-1">{r.hommes ?? "-"}</div>
                         <div className="min-w-[120px] text-center text-white">{r.femmes ?? "-"}</div>
                         <div className="min-w-[120px] text-center text-orange-500 font-semibold">{total}</div>
                         <div className="min-w-[150px] text-center text-white">{r.priere ?? "-"}</div>

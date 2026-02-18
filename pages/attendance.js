@@ -384,7 +384,7 @@ function Attendance() {
           })}
 
           {/* TOTAL GLOBAL */}
-          <div className="flex items-center px-4 py-3 mt-2 rounded-lg bg-white text-black font-bold">
+          <div className="flex items-center px-6 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
             <div className="min-w-[150px]">Total Global</div>
             <div className="min-w-[120px] text-center">{totalGlobal.hommes}</div>
             <div className="min-w-[120px] text-center">{totalGlobal.femmes}</div>

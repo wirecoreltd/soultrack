@@ -13,154 +13,140 @@ export default function HomePage() {
       <PublicHeader />
 
       {/* HERO */}
-      <section className="pt-24 pb-28 bg-gradient-to-br from-blue-700 to-indigo-800 text-white">
-        <div className="max-w-5xl mx-auto px-6 text-center">
+      <section className="pt-20 pb-20 bg-gradient-to-br from-blue-700 to-indigo-800 text-white">
+        <div className="max-w-4xl mx-auto px-6 text-center">
 
-          <h1 className="text-4xl lg:text-5xl font-extrabold mb-6 leading-tight">
-            Connaître son troupeau est une responsabilité spirituelle.
+          <h1 className="text-3xl lg:text-4xl font-bold mb-8 leading-tight">
+            Le ministère est un appel. Le suivi est une responsabilité.
           </h1>
 
-          <p className="text-lg text-white/90 mb-4 max-w-3xl mx-auto">
-            Le berger qui laisse 99 brebis pour chercher celle qui est perdue
-            savait exactement combien il en avait.
+          <div className="space-y-4 text-white/95 text-lg">
+            <p>Chaque membre porte une histoire.</p>
+            <p>Chaque absence peut révéler une saison difficile.</p>
+            <p>Chaque silence peut cacher une bataille invisible.</p>
+          </div>
+
+          <div className="mt-8 space-y-2 text-lg">
+            <p>Un berger attentif ne dirige pas seulement.</p>
+            <p>Il discerne.</p>
+            <p>Il veille.</p>
+            <p>Il accompagne avec intention.</p>
+          </div>
+
+          <p className="mt-8 italic text-white/80">
+            “Prenez soin du troupeau de Dieu…” – 1 Pierre 5:2
           </p>
 
-          <p className="italic text-white/80 mb-8">
-            “Si un homme a cent brebis…” – Matthieu 18:12
-          </p>
+          <div className="mt-8 space-y-2 font-medium">
+            <p>Aimer, c’est aussi organiser.</p>
+            <p>Servir, c’est aussi structurer.</p>
+            <p>Veiller, c’est aussi suivre avec sagesse.</p>
+          </div>
 
-          <p className="text-lg max-w-3xl mx-auto mb-10">
-            Pour accompagner, il faut connaître.  
-            Pour restaurer, il faut suivre.  
-            Pour faire grandir, il faut mesurer.
-          </p>
-
-          <button
-            onClick={() => router.push("/SignupEglise")}
-            className="bg-white text-blue-700 px-8 py-4 rounded-xl font-semibold shadow-lg hover:scale-105 transition"
-          >
-            🚀 Commencer gratuitement
-          </button>
+          <div className="mt-10">
+            <button
+              onClick={() => router.push("/SignupEglise")}
+              className="bg-white text-blue-700 px-8 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 transition"
+            >
+              🚀 Découvrir SoulTrack
+            </button>
+          </div>
 
         </div>
       </section>
 
-      {/* CONSCIENCE + REALITE */}
-      <section className="py-20 px-6 bg-blue-50 text-center">
-        <div className="max-w-5xl mx-auto">
-
-          <h2 className="text-3xl font-bold mb-6">
-            L’amour pastoral nécessite de la structure.
+      {/* TRANSITION */}
+      <section className="py-16 px-6 bg-white text-center">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl lg:text-3xl font-bold text-blue-700 mb-6">
+            Une vision spirituelle mérite une structure claire.
           </h2>
 
-          <p className="text-gray-700 leading-relaxed mb-10">
-            Derrière chaque absence se cache peut-être une difficulté.
-            Derrière chaque silence se cache peut-être une lutte.
-            Sans visibilité claire, certaines brebis peuvent s’éloigner
-            sans que personne ne le remarque.
+          <p className="text-gray-700 leading-relaxed">
+            SoulTrack a été conçu pour aider les églises à exercer un leadership 
+            attentif, organisé et intentionnel.  
+            Parce que bien accompagner commence par bien connaître.
           </p>
+        </div>
+      </section>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-xl shadow border">
-              👥 Membres non suivis
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow border">
-              📉 Croissance non mesurée
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow border">
-              ❌ Absences invisibles
-            </div>
+      {/* HUBS */}
+      <section className="py-16 px-6 bg-blue-50">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
+
+          <div className="bg-white p-6 rounded-2xl shadow hover:shadow-xl transition">
+            <h3 className="text-xl font-semibold mb-3 text-blue-700">
+              👥 Membres Hub
+            </h3>
+            <p className="text-gray-600 text-sm">
+              Centralisez les informations essentielles de chaque membre : 
+              coordonnées, situation spirituelle, suivi pastoral et notes privées.
+            </p>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl shadow hover:shadow-xl transition">
+            <h3 className="text-xl font-semibold mb-3 text-blue-600">
+              📖 Cellule Hub
+            </h3>
+            <p className="text-gray-600 text-sm">
+              Organisez les groupes de maison, suivez les présences, 
+              identifiez les absences répétées et accompagnez efficacement.
+            </p>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl shadow hover:shadow-xl transition">
+            <h3 className="text-xl font-semibold mb-3 text-indigo-600">
+              🌍 Évangélisation Hub
+            </h3>
+            <p className="text-gray-600 text-sm">
+              Suivez les nouvelles âmes, planifiez les visites et assurez 
+              un accompagnement structuré dès le premier contact.
+            </p>
           </div>
 
         </div>
       </section>
 
-      {/* SOLUTION TECH + SPIRITUEL */}
-      <section className="py-20 px-6 bg-white">
-        <div className="max-w-6xl mx-auto lg:flex lg:items-center lg:gap-16">
+      {/* IMAGE DASHBOARD */}
+      <section className="py-16 px-6 bg-white">
+        <div className="max-w-5xl mx-auto text-center">
+          <h2 className="text-2xl lg:text-3xl font-bold mb-8">
+            Une vision claire de votre troupeau
+          </h2>
 
-          <div className="lg:w-1/2">
-
-            <h2 className="text-3xl font-bold mb-6 text-blue-700">
-              SoulTrack allie vision spirituelle et intelligence numérique.
-            </h2>
-
-            <p className="text-gray-700 mb-6 leading-relaxed">
-              Une plateforme moderne conçue pour aider les responsables
-              à exercer un leadership éclairé, structuré et intentionnel.
-            </p>
-
-            <ul className="space-y-3 text-gray-700">
-              <li>✔ Fiches membres détaillées</li>
-              <li>✔ Suivi des présences et cellules</li>
-              <li>✔ Évangélisation organisée</li>
-              <li>✔ Tableaux de bord stratégiques</li>
-              <li>✔ Données centralisées et sécurisées</li>
-            </ul>
-
-            <p className="mt-6 text-gray-600">
-              Non pour contrôler, mais pour mieux servir.
-            </p>
-
-          </div>
-
-          <div className="lg:w-1/2 mt-10 lg:mt-0">
+          <div className="flex justify-center">
             <Image
               src="/Dashboard.png"
               alt="Dashboard SoulTrack"
-              width={600}
-              height={350}
+              width={750}
+              height={420}
               className="rounded-2xl shadow-2xl border"
             />
           </div>
-
-        </div>
-      </section>
-
-      {/* IMPACT */}
-      <section className="py-20 px-6 bg-gradient-to-r from-blue-600 to-indigo-700 text-white text-center">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
-
-          <div>
-            <div className="text-4xl font-bold">Clarté</div>
-            <p className="mt-3 text-white/90">
-              Une vision précise de votre communauté.
-            </p>
-          </div>
-
-          <div>
-            <div className="text-4xl font-bold">Anticipation</div>
-            <p className="mt-3 text-white/90">
-              Identifier rapidement les besoins.
-            </p>
-          </div>
-
-          <div>
-            <div className="text-4xl font-bold">Croissance</div>
-            <p className="mt-3 text-white/90">
-              Mesurer et structurer le développement.
-            </p>
-          </div>
-
         </div>
       </section>
 
       {/* CTA FINAL */}
-      <section className="py-20 px-6 text-center bg-white">
-        <h2 className="text-2xl lg:text-3xl font-bold mb-6">
-          Être un bon intendant, c’est connaître ce que Dieu nous confie.
-        </h2>
+      <section className="py-16 px-6 bg-gradient-to-r from-blue-600 to-indigo-700 text-white text-center">
+        <div className="max-w-4xl mx-auto">
 
-        <p className="text-gray-600 mb-8">
-          Donnez à votre église les outils nécessaires pour accompagner chaque âme avec attention.
-        </p>
+          <h2 className="text-2xl lg:text-3xl font-bold mb-6">
+            Exercez votre ministère avec clarté et sagesse.
+          </h2>
 
-        <button
-          onClick={() => router.push("/SignupEglise")}
-          className="bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:scale-105 transition"
-        >
-          🚀 Créer mon compte maintenant
-        </button>
+          <p className="mb-8 text-white/90">
+            Donnez à votre église les outils nécessaires pour accompagner 
+            chaque âme avec attention et intention.
+          </p>
+
+          <button
+            onClick={() => router.push("/SignupEglise")}
+            className="bg-white text-blue-700 px-8 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 transition"
+          >
+            🚀 Créer mon compte
+          </button>
+
+        </div>
       </section>
 
       <Footer />

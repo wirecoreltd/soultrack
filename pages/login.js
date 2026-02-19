@@ -132,7 +132,7 @@ export default function LoginPage() {
           onClick={() => router.push("/SignupEglise")}
           className="mt-4 text-orange-400 underline hover:text-blue-800"
         >
-          Ceéer Eglise
+          Création de compte
         </button>
 
             

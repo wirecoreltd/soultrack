@@ -360,7 +360,11 @@ export default function MembresCellule() {
           }}
         />
       )}
-<Footer />
-    </div>
-  );
+
+      </>
+    )}
+
+    <Footer />
+  </div>
+);
 }

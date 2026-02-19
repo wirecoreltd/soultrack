@@ -66,37 +66,42 @@ function RapportFormation() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (editRapport) {
-      await supabase
-        .from("formations")
-        .update({
-          date_debut: formData.date_debut,
-          date_fin: formData.date_fin,
-          nom_formation: formData.nom_formation,
-          hommes: formData.hommes,
-          femmes: formData.femmes,
-          formateur: formData.formateur,
-        })
-        .eq("id", editRapport.id);
-      setEditRapport(null);
-    } else {
-      await supabase.from("formations").insert([formData]);
-    }
+  if (!formData.eglise_id || !formData.branche_id) return;
 
-    setFormData((prev) => ({
-      ...prev,
-      date_debut: "",
-      date_fin: "",
-      nom_formation: "",
-      hommes: 0,
-      femmes: 0,
-      formateur: "",
-    }));
+  if (editRapport) {
+    await supabase
+      .from("formations")
+      .update({
+        date_debut: formData.date_debut,
+        date_fin: formData.date_fin,
+        nom_formation: formData.nom_formation,
+        hommes: formData.hommes,
+        femmes: formData.femmes,
+        formateur: formData.formateur,
+      })
+      .eq("id", editRapport.id);
+    setEditRapport(null);
+  } else {
+    await supabase.from("formations").insert([formData]);
+  }
 
-    fetchRapports();
-  };
+  // Reset du formulaire
+  setFormData((prev) => ({
+    ...prev,
+    date_debut: "",
+    date_fin: "",
+    nom_formation: "",
+    hommes: 0,
+    femmes: 0,
+    formateur: "",
+  }));
+
+  // ⚡ Appel de fetchRapports avec les bons IDs
+  fetchRapports();
+};
+
 
   const fetchRapports = async () => {
     if (!formData.eglise_id || !formData.branche_id) return;

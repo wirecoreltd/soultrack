@@ -127,6 +127,15 @@ export default function LoginPage() {
         >
           Mot de passe oublié ?
         </button>
+            
+        <button
+          onClick={() => router.push("/SignupEglise")}
+          className="mt-4 text-blue-600 underline hover:text-blue-800"
+        >
+          Ceéer une l'Eglise ?
+        </button>
+
+            
       </div>
     </div>
   );

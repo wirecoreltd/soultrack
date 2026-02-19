@@ -216,7 +216,7 @@ function RapportFormation() {
             {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
               const [year, monthIndex] = monthKey.split("-").map(Number);
               const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-
+            
               const totalMonth = monthReports.reduce(
                 (acc, r) => {
                   acc.hommes += Number(r.hommes || 0);
@@ -226,13 +226,12 @@ function RapportFormation() {
                 },
                 { hommes: 0, femmes: 0, total: 0 }
               );
-
+            
               const isExpanded = expandedMonths[monthKey] || false;
               const borderColor = borderColors[idx % borderColors.length];
-
+            
               return (
                 <div key={monthKey} className="space-y-1">
-
                   {/* Ligne Mois */}
                   <div
                     className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer ${borderColor}`}
@@ -254,52 +253,50 @@ function RapportFormation() {
                     </div>
                     <div className="min-w-[150px]"></div>
                   </div>
-
+            
                   {/* Lignes rapports */}
                   {isExpanded &&
-  monthReports.map((r) => {
-    const total = Number(r.hommes || 0) + Number(r.femmes || 0);
+                    monthReports.map((r) => {
+                      const total = Number(r.hommes || 0) + Number(r.femmes || 0);
+            
+                      return (
+                        <div
+                          key={r.id}
+                          className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
+                        >
+                          <div className="min-w-[180px] text-white text-center">
+                            {formatDate(r.date_debut)}
+                          </div>
+                          <div className="min-w-[180px] text-white text-center">
+                            {formatDate(r.date_fin)}
+                          </div>
+                          <div className="min-w-[200px] text-center text-white">
+                            {r.nom_formation}
+                          </div>
+                          <div className="min-w-[120px] text-center text-white">
+                            {r.hommes}
+                          </div>
+                          <div className="min-w-[120px] text-center text-white">
+                            {r.femmes}
+                          </div>
+                          <div className="min-w-[120px] text-center text-orange-500 font-semibold">
+                            {total}
+                          </div>
+                          <div className="min-w-[150px] text-center">
+                            <button
+                              onClick={() => handleEdit(r)}
+                              className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-4 py-1 rounded-xl"
+                            >
+                              Modifier
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              );
+            })}
 
-    return (
-      <div
-        key={r.id}
-        className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
-      >
-        <div className="min-w-[180px] text-white text-center">
-          {formatDate(r.date_debut)}
-        </div>
-
-        <div className="min-w-[180px] text-white text-center">
-          {formatDate(r.date_fin)}
-        </div>
-
-        <div className="min-w-[200px] text-center text-white">
-          {r.nom_formation}
-        </div>
-
-        <div className="min-w-[120px] text-center text-white">
-          {r.hommes}
-        </div>
-
-        <div className="min-w-[120px] text-center text-white">
-          {r.femmes}
-        </div>
-
-        <div className="min-w-[120px] text-center text-orange-500 font-semibold">
-          {total}
-        </div>
-
-        <div className="min-w-[150px] text-center">
-          <button
-            onClick={() => handleEdit(r)}
-            className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-4 py-1 rounded-xl"
-          >
-            Modifier
-          </button>
-        </div>
-      </div>
-    );
-  })}
 
 
             {/* TOTAL GENERAL */}

@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
@@ -23,7 +24,7 @@ export default function AddMember() {
     priere_salut: "",
     type_conversion: "",
     eglise_id: "",
-    branche_id: "", // ajout branche_id
+    branche_id: "",
   });
 
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
@@ -33,7 +34,7 @@ export default function AddMember() {
 
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
 
-  // ➤ Récupérer eglise_id et branche_id de l'utilisateur connecté
+  // Récupération eglise_id et branche_id de l'utilisateur connecté
   useEffect(() => {
     const fetchUserEglise = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -41,7 +42,7 @@ export default function AddMember() {
 
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id") // récupère les deux
+        .select("eglise_id, branche_id")
         .eq("id", session.session.user.id)
         .single();
 
@@ -52,6 +53,7 @@ export default function AddMember() {
           branche_id: profile.branche_id,
         }));
       }
+      setLoading(false);
     };
 
     fetchUserEglise();
@@ -82,13 +84,13 @@ export default function AddMember() {
 
     if (value === "Autre") {
       setShowBesoinLibre(checked);
-      if (!checked) setFormData((prev) => ({ ...prev, besoinLibre: "" }));
+      if (!checked) setFormData(prev => ({ ...prev, besoinLibre: "" }));
     }
 
-    setFormData((prev) => {
+    setFormData(prev => {
       const updatedBesoin = checked
         ? [...prev.besoin, value]
-        : prev.besoin.filter((b) => b !== value);
+        : prev.besoin.filter(b => b !== value);
       return { ...prev, besoin: updatedBesoin };
     });
   };
@@ -96,8 +98,9 @@ export default function AddMember() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Concat besoin avec besoinLibre si coché
     const finalBesoin = showBesoinLibre && formData.besoinLibre
-      ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
+      ? [...formData.besoin.filter(b => b !== "Autre"), formData.besoinLibre]
       : formData.besoin;
 
     const dataToSend = {
@@ -105,25 +108,22 @@ export default function AddMember() {
       besoin: finalBesoin,
       etat_contact: "Nouveau",
       eglise_id: formData.eglise_id,
-      branche_id: formData.branche_id, // envoi branche_id aussi
+      branche_id: formData.branche_id,
     };
 
     delete dataToSend.besoinLibre;
 
     try {
       // Vérifier si le téléphone existe déjà
+      if (!formData.telephone) throw new Error("Le téléphone est requis.");
+
       const { data: existing } = await supabase
         .from("membres_complets")
         .select("id")
         .eq("telephone", formData.telephone)
         .single();
 
-      const newContact = {
-        ...dataToSend,
-        id: existing?.id || Date.now(),
-        deja_existant: !!existing,
-        isNouveau: true,
-      };
+      if (existing) throw new Error("Ce numéro de téléphone existe déjà.");
 
       const { error } = await supabase.from("membres_complets").insert([dataToSend]);
       if (error) throw error;
@@ -131,7 +131,8 @@ export default function AddMember() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         sexe: "",
         nom: "",
         prenom: "",
@@ -145,18 +146,17 @@ export default function AddMember() {
         infos_supplementaires: "",
         priere_salut: "",
         type_conversion: "",
-        eglise_id: formData.eglise_id,
-        branche_id: formData.branche_id,
-      });
+      }));
       setShowBesoinLibre(false);
 
     } catch (err) {
-      alert(err.message);
+      setErrorMsg(err.message || "Erreur lors de l'ajout du membre.");
     }
   };
 
   const handleCancel = () => {
-    setFormData({
+    setFormData(prev => ({
+      ...prev,
       sexe: "",
       nom: "",
       prenom: "",
@@ -170,10 +170,9 @@ export default function AddMember() {
       infos_supplementaires: "",
       priere_salut: "",
       type_conversion: "",
-      eglise_id: formData.eglise_id,
-      branche_id: formData.branche_id,
-    });
+    }));
     setShowBesoinLibre(false);
+    setErrorMsg("");
   };
 
   if (loading) return <p className="text-center mt-10">Vérification du lien...</p>;
@@ -190,7 +189,7 @@ export default function AddMember() {
         </button>
 
         <div className="flex justify-center mb-4 sm:mb-6">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={70} height={70} className="sm:w-[80px] sm:h-[60px]" />
+          <Image src="/logo.png" alt="SoulTrack Logo" width={70} height={70} />
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">Ajouter un nouveau membre</h1>
@@ -204,7 +203,7 @@ export default function AddMember() {
           <input
             type="text"
             value={formData.prenom}
-            onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
+            onChange={e => setFormData({...formData, prenom: e.target.value})}
             className="input"
             required
           />
@@ -214,7 +213,7 @@ export default function AddMember() {
           <input
             type="text"
             value={formData.nom}
-            onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+            onChange={e => setFormData({...formData, nom: e.target.value})}
             className="input"
             required
           />
@@ -224,8 +223,9 @@ export default function AddMember() {
           <input
             type="text"
             value={formData.telephone}
-            onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+            onChange={e => setFormData({...formData, telephone: e.target.value})}
             className="input"
+            required
           />
 
           {/* WhatsApp */}
@@ -233,7 +233,7 @@ export default function AddMember() {
             <input
               type="checkbox"
               checked={formData.is_whatsapp}
-              onChange={(e) => setFormData({ ...formData, is_whatsapp: e.target.checked })}
+              onChange={e => setFormData({...formData, is_whatsapp: e.target.checked})}
             />
             Numéro WhatsApp
           </label>
@@ -243,7 +243,7 @@ export default function AddMember() {
           <input
             type="text"
             value={formData.ville}
-            onChange={(e) => setFormData({ ...formData, ville: e.target.value })}
+            onChange={e => setFormData({...formData, ville: e.target.value})}
             className="input"
           />
 
@@ -251,7 +251,7 @@ export default function AddMember() {
           <label className="text-sm sm:text-base font-semibold">Sexe</label>
           <select
             value={formData.sexe}
-            onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}
+            onChange={e => setFormData({...formData, sexe: e.target.value})}
             className="input"
             required
           >
@@ -260,11 +260,11 @@ export default function AddMember() {
             <option value="Femme">Femme</option>
           </select>
 
-          {/* Raison de la venue */}
-          <label className="text-sm sm:text-base font-semibold">Raison de la venue</label>
+          {/* Statut */}
+          <label className="text-sm sm:text-base font-semibold">Statut</label>
           <select
             value={formData.statut}
-            onChange={(e) => setFormData({ ...formData, statut: e.target.value })}
+            onChange={e => setFormData({...formData, statut: e.target.value})}
             className="input"
             required
           >
@@ -279,7 +279,7 @@ export default function AddMember() {
           <label className="text-sm sm:text-base font-semibold">Comment est-il venu ?</label>
           <select
             value={formData.venu}
-            onChange={(e) => setFormData({ ...formData, venu: e.target.value })}
+            onChange={e => setFormData({...formData, venu: e.target.value})}
             className="input"
             required
           >
@@ -296,28 +296,24 @@ export default function AddMember() {
             className="input"
             value={formData.priere_salut}
             required
-            onChange={(e) => {
-              const value = e.target.value;
-              setFormData({
-                ...formData,
-                priere_salut: value,
-                type_conversion: value === "Oui" ? formData.type_conversion : "",
-              });
-            }}
+            onChange={e => setFormData({
+              ...formData,
+              priere_salut: e.target.value,
+              type_conversion: e.target.value === "Oui" ? formData.type_conversion : "",
+            })}
           >
             <option value="">-- Choisir --</option>
             <option value="Oui">Oui</option>
             <option value="Non">Non</option>
           </select>
 
-          {/* Type de conversion */}
           {formData.priere_salut === "Oui" && (
             <>
               <label className="text-sm sm:text-base font-semibold">Type de conversion</label>
               <select
                 className="input"
                 value={formData.type_conversion}
-                onChange={(e) => setFormData({ ...formData, type_conversion: e.target.value })}
+                onChange={e => setFormData({...formData, type_conversion: e.target.value})}
                 required
               >
                 <option value="">-- Choisir --</option>
@@ -328,55 +324,53 @@ export default function AddMember() {
           )}
 
           {/* Besoins */}
-            <label className="text-sm sm:text-base font-bold mb-1">Besoins</label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {besoinsOptions.map((item) => (
-                <label key={item} className="flex items-center gap-1 text-sm">
-                  <input
-                    type="checkbox"
-                    value={item}
-                    checked={formData.besoin.includes(item)}
-                    onChange={handleBesoinChange}
-                    className="w-4 h-4 sm:w-5 sm:h-5"
-                  />
-                  {item}
-                </label>
-              ))}
-              <label className="flex items-center gap-1 text-sm">
+          <label className="text-sm sm:text-base font-bold mb-1">Besoins</label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {besoinsOptions.map(item => (
+              <label key={item} className="flex items-center gap-1 text-sm">
                 <input
                   type="checkbox"
-                  value="Autre"
-                  checked={showBesoinLibre}
+                  value={item}
+                  checked={formData.besoin.includes(item)}
                   onChange={handleBesoinChange}
                   className="w-4 h-4 sm:w-5 sm:h-5"
                 />
-                Autre
+                {item}
               </label>
-            </div>
-            
-            {showBesoinLibre && (
+            ))}
+            <label className="flex items-center gap-1 text-sm">
               <input
-                type="text"
-                placeholder="Précisez..."
-                value={formData.besoinLibre}
-                onChange={(e) =>
-                  setFormData({ ...formData, besoinLibre: e.target.value })
-                }
-                className="input mb-2"
+                type="checkbox"
+                value="Autre"
+                checked={showBesoinLibre}
+                onChange={handleBesoinChange}
+                className="w-4 h-4 sm:w-5 sm:h-5"
               />
-            )}
+              Autre
+            </label>
+          </div>
 
-          {/* Informations supplémentaires */}
+          {showBesoinLibre && (
+            <input
+              type="text"
+              placeholder="Précisez..."
+              value={formData.besoinLibre}
+              onChange={e => setFormData({...formData, besoinLibre: e.target.value})}
+              className="input mb-2"
+            />
+          )}
+
+          {/* Infos supplémentaires */}
           <label className="text-sm sm:text-base font-semibold">Informations supplémentaires</label>
           <textarea
             placeholder="..."
             rows={2}
             value={formData.infos_supplementaires}
-            onChange={(e) => setFormData({ ...formData, infos_supplementaires: e.target.value })}
+            onChange={e => setFormData({...formData, infos_supplementaires: e.target.value})}
             className="input"
           />
 
-           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">
             <button type="button" onClick={handleCancel} className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               Annuler
             </button>

@@ -5,6 +5,7 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Footer from "../components/Footer";
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react"; // icônes collapse
 
 export default function StatGlobalPageWrapper() {
   return (
@@ -22,22 +23,13 @@ function StatGlobalPage() {
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
 
-  const [attendanceStats, setAttendanceStats] = useState(null);
-  const [evanStats, setEvanStats] = useState(null);
-  const [baptemeStats, setBaptemeStats] = useState(null);
-  const [formationStats, setFormationStats] = useState(null);
-  const [cellulesCount, setCellulesCount] = useState(0);
-  const [serviteurStats, setServiteurStats] = useState(null);
-
-  const [loading, setLoading] = useState(false);
+  const [statsByMonth, setStatsByMonth] = useState([]); // tableau de mois avec stats
   const [collapsedMonths, setCollapsedMonths] = useState({}); // pour toggle collapse
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data } = await supabase
@@ -58,182 +50,71 @@ function StatGlobalPage() {
     if (!egliseId || !brancheId) return;
     setLoading(true);
 
-    // ---------------- ATTENDANCE ----------------
-    let attendanceQuery = supabase
-      .from("attendance")
-      .select("*")
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId);
-
-    if (dateDebut) attendanceQuery = attendanceQuery.gte("date", dateDebut);
-    if (dateFin) attendanceQuery = attendanceQuery.lte("date", dateFin);
-
-    const { data: attendanceData } = await attendanceQuery;
-
-    const attendanceTotals = {
-      hommes: 0,
-      femmes: 0,
-      jeunes: 0,
-      enfants: 0,
-      connectes: 0,
-      nouveauxVenus: 0,
-      nouveauxConvertis: 0,
-      moissonneurs: 0,
-    };
-
-    attendanceData?.forEach((r) => {
-      attendanceTotals.hommes += Number(r.hommes) || 0;
-      attendanceTotals.femmes += Number(r.femmes) || 0;
-      attendanceTotals.jeunes += Number(r.jeunes) || 0;
-      attendanceTotals.enfants += Number(r.enfants) || 0;
-      attendanceTotals.connectes += Number(r.connectes) || 0;
-      attendanceTotals.nouveauxVenus += Number(r.nouveauxVenus) || 0;
-      attendanceTotals.nouveauxConvertis += Number(r.nouveauxConvertis) || 0;
-      attendanceTotals.moissonneurs += Number(r.moissonneurs) || 0;
-    });
-
-    setAttendanceStats(attendanceTotals);
-
-    // ---------------- EVANGELISATION ----------------
-    let evanQuery = supabase
+    // ================= FETCH TOUT =================
+    let query = supabase
       .from("evangelises")
       .select("*")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
 
-    if (dateDebut) evanQuery = evanQuery.gte("created_at", dateDebut);
-    if (dateFin) evanQuery = evanQuery.lte("created_at", dateFin);
+    if (dateDebut) query = query.gte("created_at", dateDebut);
+    if (dateFin) query = query.lte("created_at", dateFin);
 
-    const { data: evanData } = await evanQuery;
+    const { data } = await query;
 
-    const evanTotals = {
-      hommes: 0,
-      femmes: 0,
-      jeunes: 0,
-      enfants: 0,
-      connectes: 0,
-      nouveauxVenus: 0,
-      nouveauxConvertis: 0,
-      moissonneurs: 0,
-    };
-
-    evanData?.forEach((r) => {
-      if (r.sexe === "Homme") evanTotals.hommes++;
-      if (r.sexe === "Femme") evanTotals.femmes++;
-      if (r.type_conversion === "Nouveau converti") evanTotals.nouveauxConvertis++;
+    // ================= GROUPE PAR MOIS =================
+    const grouped = {};
+    data?.forEach((r) => {
+      const month = new Date(r.created_at).toLocaleString("fr-FR", { month: "long", year: "numeric" });
+      if (!grouped[month]) grouped[month] = [];
+      grouped[month].push(r);
     });
 
-    setEvanStats(evanTotals);
+    // ================= CALCULE STATS PAR MOIS =================
+    const monthsStats = Object.keys(grouped).map((month) => {
+      const evanData = grouped[month];
 
-    // ---------------- BAPTEME ----------------
-    let baptemeQuery = supabase
-      .from("baptemes")
-      .select("hommes, femmes")
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId);
+      // Rapports pour ce mois
+      const rapports = [];
 
-    if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
-    if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
+      // Evangelisation
+      const evanTotals = {
+        hommes: 0,
+        femmes: 0,
+        jeunes: 0,
+        enfants: 0,
+        connectes: 0,
+        nouveauxVenus: 0,
+        nouveauxConvertis: 0,
+        moissonneurs: 0
+      };
+      evanData.forEach(r => {
+        if (r.sexe === "Homme") evanTotals.hommes++;
+        if (r.sexe === "Femme") evanTotals.femmes++;
+        if (r.type_conversion === "Nouveau converti") evanTotals.nouveauxConvertis++;
+      });
+      rapports.push({ label: "Evangelisation", data: evanTotals, border: "border-l-green-500" });
 
-    const { data: baptemeData } = await baptemeQuery;
+      // Serviteur
+      const serviteurTotals = { hommes: 0, femmes: 0 };
+      evanData.forEach(r => {
+        if (r.star && ["Existant", "Nouveau"].includes(r.etat_contact)) {
+          if (r.sexe === "Homme") serviteurTotals.hommes++;
+          if (r.sexe === "Femme") serviteurTotals.femmes++;
+        }
+      });
+      rapports.push({ label: "Serviteur", data: serviteurTotals, border: "border-l-pink-500" });
 
-    const baptemeTotals = {
-      hommes: baptemeData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
-      femmes: baptemeData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
-    };
+      return { month, rapports };
+    });
 
-    setBaptemeStats(baptemeTotals);
-
-    // ---------------- FORMATION ----------------
-    let formationQuery = supabase
-      .from("formations")
-      .select("hommes, femmes, nom_formation, date_debut, date_fin")
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId);
-
-    if (dateDebut) formationQuery = formationQuery.gte("date_debut", dateDebut);
-    if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin);
-
-    const { data: formationData } = await formationQuery;
-
-    const formationTotals = {
-      hommes: formationData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
-      femmes: formationData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
-    };
-
-    setFormationStats(formationTotals);
-
-    // ---------------- CELLULES ----------------
-    const { count } = await supabase
-      .from("cellules")
-      .select("id", { count: "exact", head: true })
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId);
-
-    setCellulesCount(count || 0);
-
-    // ---------------- SERVITEURS ----------------
-    let serviteurQuery = supabase
-      .from("membres_complets")
-      .select("id, sexe")
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId)
-      .eq("star", true)
-      .in("etat_contact", ["Existant", "Nouveau"]);
-
-    if (dateDebut) serviteurQuery = serviteurQuery.gte("created_at", dateDebut);
-    if (dateFin) serviteurQuery = serviteurQuery.lte("created_at", dateFin);
-
-    const { data: serviteurData } = await serviteurQuery;
-
-    const serviteurTotals = {
-      hommes: serviteurData?.filter((r) => r.sexe === "Homme").length || 0,
-      femmes: serviteurData?.filter((r) => r.sexe === "Femme").length || 0,
-    };
-
-    setServiteurStats(serviteurTotals);
-
+    setStatsByMonth(monthsStats);
     setLoading(false);
   };
 
   const toggleMonth = (month) => {
-    setCollapsedMonths((prev) => ({ ...prev, [month]: !prev[month] }));
+    setCollapsedMonths(prev => ({ ...prev, [month]: !prev[month] }));
   };
-
-  const rapports = [
-    { label: "Culte", data: attendanceStats, border: "border-l-orange-500" },
-    { label: "Evangelisation", data: evanStats, border: "border-l-green-500" },
-    { label: "Baptême", data: baptemeStats, border: "border-l-purple-500" },
-    { label: "Formation", data: formationStats, border: "border-l-blue-500" },
-    { label: "Cellules", data: { total: cellulesCount }, border: "border-l-yellow-500" },
-    { label: "Serviteur", data: serviteurStats, border: "border-l-pink-500" },
-  ].filter((r) => typeRapport === "Tous" || r.label === typeRapport);
-
-  const totalGeneral = rapports.reduce(
-    (acc, r) => {
-      acc.hommes += Number(r.data?.hommes) || 0;
-      acc.femmes += Number(r.data?.femmes) || 0;
-      acc.jeunes += Number(r.data?.jeunes) || 0;
-      acc.enfants += Number(r.data?.enfants) || 0;
-      acc.connectes += Number(r.data?.connectes) || 0;
-      acc.nouveauxVenus += Number(r.data?.nouveauxVenus) || 0;
-      acc.nouveauxConvertis += Number(r.data?.nouveauxConvertis) || 0;
-      acc.reconciliations += Number(r.data?.reconciliations) || 0;
-      acc.moissonneurs += Number(r.data?.moissonneurs) || 0;
-      return acc;
-    },
-    {
-      hommes: 0,
-      femmes: 0,
-      jeunes: 0,
-      enfants: 0,
-      connectes: 0,
-      nouveauxVenus: 0,
-      nouveauxConvertis: 0,
-      reconciliations: 0,
-      moissonneurs: 0,
-    }
-  );
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -260,11 +141,8 @@ function StatGlobalPage() {
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         >
           <option className="text-black" value="Tous">Tous</option>
-          {rapports.map((r) => (
-            <option key={r.label} className="text-black" value={r.label}>
-              {r.label}
-            </option>
-          ))}
+          <option className="text-black" value="Evangelisation">Evangelisation</option>
+          <option className="text-black" value="Serviteur">Serviteur</option>
         </select>
         <button
           onClick={fetchStats}
@@ -275,82 +153,59 @@ function StatGlobalPage() {
       </div>
 
       {/* TABLE COLLAPSIBLE PAR MOIS */}
-      {!loading && attendanceStats && (
+      {!loading && statsByMonth.length > 0 && (
         <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
           <div className="w-max space-y-2">
-            {["Février 2026"].map((monthKey) => {
-              const isExpanded = collapsedMonths[monthKey] ?? true;
-              const monthRapports = rapports; // ici on garde tous les rapports pour le mois
+            {statsByMonth.map(({ month, rapports }) => {
+              const isExpanded = collapsedMonths[month] ?? true;
 
-              const totalMonth = monthRapports.reduce(
-                (acc, r) => {
-                  acc.hommes += Number(r.data?.hommes) || 0;
-                  acc.femmes += Number(r.data?.femmes) || 0;
-                  return acc;
-                },
-                { hommes: 0, femmes: 0 }
-              );
+              // Calcul total mois
+              const totalMonth = rapports.reduce((acc, r) => {
+                acc.hommes += r.data?.hommes || 0;
+                acc.femmes += r.data?.femmes || 0;
+                return acc;
+              }, { hommes: 0, femmes: 0 });
 
               return (
-                <div key={monthKey} className="space-y-1">
+                <div key={month} className="space-y-1">
                   {/* HEADER MOIS */}
                   <div
                     className="flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 border-l-blue-500"
-                    onClick={() => toggleMonth(monthKey)}
+                    onClick={() => toggleMonth(month)}
                   >
                     <div className="min-w-[200px] text-white font-semibold">
-                      {isExpanded ? "➖ " : "➕ "} {monthKey}
+                      {isExpanded ? <ChevronUpIcon className="inline w-5 h-5 mr-1" /> : <ChevronDownIcon className="inline w-5 h-5 mr-1" />}
+                      {month}
                     </div>
-                    <div className="min-w-[120px] text-center text-white font-bold">
-                      {totalMonth.hommes}
-                    </div>
-                    <div className="min-w-[120px] text-center text-white font-bold">
-                      {totalMonth.femmes}
-                    </div>
-                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">
-                      {totalMonth.hommes + totalMonth.femmes}
-                    </div>
+                    <div className="min-w-[200px]"></div>
+                    <div className="min-w-[200px]"></div>
+                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
+                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
+                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.hommes + totalMonth.femmes}</div>
+                    <div className="min-w-[150px]"></div>
                   </div>
 
-                  {/* LIGNES DU MOIS */}
-                  {(isExpanded || monthRapports.length === 1) &&
-                    monthRapports.map((r, idx) => {
-                      const total = (Number(r.data?.hommes) || 0) + (Number(r.data?.femmes) || 0);
-                      return (
-                        <div
-                          key={r.label}
-                          className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${r.border}`}
-                        >
-                          <div className="min-w-[200px] text-white font-semibold">{r.label}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.data?.hommes ?? "-"}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.data?.femmes ?? "-"}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.data?.jeunes ?? "-"}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.data?.enfants ?? "-"}</div>
-                          <div className="min-w-[140px] text-center text-white">{r.data?.connectes ?? "-"}</div>
-                          <div className="min-w-[150px] text-center text-white">{r.data?.nouveauxVenus ?? "-"}</div>
-                          <div className="min-w-[180px] text-center text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
-                          <div className="min-w-[140px] text-center text-white">{r.data?.reconciliations ?? "-"}</div>
-                          <div className="min-w-[160px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>
-                        </div>
-                      );
-                    })}
+                  {/* LIGNES RAPPORTS */}
+                  {isExpanded && rapports.map((r, idx) => (
+                    <div
+                      key={idx}
+                      className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${r.border}`}
+                    >
+                      <div className="min-w-[180px] text-white font-semibold">{r.label}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.data?.hommes ?? "-"}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.data?.femmes ?? "-"}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.data?.jeunes ?? "-"}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.data?.enfants ?? "-"}</div>
+                      <div className="min-w-[140px] text-center text-white">{r.data?.connectes ?? "-"}</div>
+                      <div className="min-w-[150px] text-center text-white">{r.data?.nouveauxVenus ?? "-"}</div>
+                      <div className="min-w-[180px] text-center text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
+                      <div className="min-w-[140px] text-center text-white">{r.data?.reconciliations ?? "-"}</div>
+                      <div className="min-w-[160px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>
+                    </div>
+                  ))}
                 </div>
               );
             })}
-          </div>
-
-          {/* TOTAL GENERAL BAS */}
-          <div className="flex items-center px-4 py-4 mt-3 rounded-xl bg-white/20 border-t border-white/40 font-bold">
-            <div className="min-w-[200px] text-orange-400 font-semibold uppercase ml-1">TOTAL</div>
-            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.hommes}</div>
-            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.femmes}</div>
-            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.jeunes}</div>
-            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.enfants}</div>
-            <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGeneral.connectes}</div>
-            <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalGeneral.nouveauxVenus}</div>
-            <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGeneral.nouveauxConvertis}</div>
-            <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGeneral.reconciliations}</div>
-            <div className="min-w-[160px] text-center text-orange-400 font-semibold">{totalGeneral.moissonneurs}</div>
           </div>
         </div>
       )}

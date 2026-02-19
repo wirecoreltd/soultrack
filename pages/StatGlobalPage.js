@@ -18,6 +18,8 @@ export default function StatGlobalPageWrapper() {
 function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
+  const [typeRapport, setTypeRapport] = useState("Tous");
+
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
 
@@ -27,7 +29,9 @@ function StatGlobalPage() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data } = await supabase
@@ -41,88 +45,97 @@ function StatGlobalPage() {
         setBrancheId(data.branche_id);
       }
     };
-
     fetchProfile();
   }, []);
 
   const fetchStats = async () => {
     if (!egliseId || !brancheId) return;
-
     setLoading(true);
 
-    let query = supabase
+    // ================= FETCH TOUT =================
+    let evanQuery = supabase
       .from("evangelises")
       .select("*")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
 
-    if (dateDebut) query = query.gte("created_at", dateDebut);
-    if (dateFin) query = query.lte("created_at", dateFin);
+    if (dateDebut) evanQuery = evanQuery.gte("created_at", dateDebut);
+    if (dateFin) evanQuery = evanQuery.lte("created_at", dateFin);
 
-    const { data } = await query;
+    const { data: evanData } = await evanQuery;
 
+    let serviteurQuery = supabase
+      .from("membres_complets")
+      .select("*")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId)
+      .eq("star", true)
+      .in("etat_contact", ["Existant", "Nouveau"]);
+
+    if (dateDebut) serviteurQuery = serviteurQuery.gte("created_at", dateDebut);
+    if (dateFin) serviteurQuery = serviteurQuery.lte("created_at", dateFin);
+
+    const { data: serviteurData } = await serviteurQuery;
+
+    // ================= GROUPE PAR MOIS =================
     const grouped = {};
 
-    data?.forEach((r) => {
+    // Evangelisation
+    evanData?.forEach((r) => {
       const month = new Date(r.created_at).toLocaleString("fr-FR", {
         month: "long",
         year: "numeric",
       });
-
-      if (!grouped[month]) grouped[month] = [];
-      grouped[month].push(r);
+      if (!grouped[month]) grouped[month] = { Evangelisation: [], Serviteur: [] };
+      grouped[month].Evangelisation.push(r);
     });
 
-    const monthsStats = Object.keys(grouped).map((month) => {
-      const rows = grouped[month];
-
-      const evanTotals = { hommes: 0, femmes: 0 };
-      const serviteurTotals = { hommes: 0, femmes: 0 };
-
-      rows.forEach((r) => {
-        if (r.sexe === "Homme") evanTotals.hommes++;
-        if (r.sexe === "Femme") evanTotals.femmes++;
-
-        if (r.star && ["Existant", "Nouveau"].includes(r.etat_contact)) {
-          if (r.sexe === "Homme") serviteurTotals.hommes++;
-          if (r.sexe === "Femme") serviteurTotals.femmes++;
-        }
+    // Serviteur
+    serviteurData?.forEach((r) => {
+      const month = new Date(r.created_at).toLocaleString("fr-FR", {
+        month: "long",
+        year: "numeric",
       });
+      if (!grouped[month]) grouped[month] = { Evangelisation: [], Serviteur: [] };
+      grouped[month].Serviteur.push(r);
+    });
+
+    // ================= CALCULE STAT PAR MOIS =================
+    const monthsStats = Object.keys(grouped).map((month) => {
+      const evan = grouped[month].Evangelisation;
+      const serv = grouped[month].Serviteur;
+
+      const evanTotals = {
+        hommes: evan.filter((r) => r.sexe === "Homme").length,
+        femmes: evan.filter((r) => r.sexe === "Femme").length,
+      };
+
+      const servTotals = {
+        hommes: serv.filter((r) => r.sexe === "Homme").length,
+        femmes: serv.filter((r) => r.sexe === "Femme").length,
+      };
 
       return {
         month,
         rapports: [
           { label: "Evangelisation", data: evanTotals, border: "border-l-green-500" },
-          { label: "Serviteur", data: serviteurTotals, border: "border-l-pink-500" },
+          { label: "Serviteur", data: servTotals, border: "border-l-yellow-500" },
         ],
       };
     });
 
     setStatsByMonth(monthsStats);
-
-    // 🔥 Tous les mois fermés par défaut
-    const initialCollapse = {};
-    monthsStats.forEach((m) => {
-      initialCollapse[m.month] = false;
-    });
-    setCollapsedMonths(initialCollapse);
-
     setLoading(false);
   };
 
   const toggleMonth = (month) => {
-    setCollapsedMonths((prev) => ({
-      ...prev,
-      [month]: !prev[month],
-    }));
+    setCollapsedMonths((prev) => ({ ...prev, [month]: !prev[month] }));
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-      <h1 className="text-3xl font-bold text-white mt-4">
-        Statistiques Globales
-      </h1>
+      <h1 className="text-3xl font-bold text-white mt-4">Statistiques Globales</h1>
 
       {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
@@ -146,57 +159,38 @@ function StatGlobalPage() {
         </button>
       </div>
 
+      {/* TABLE COLLAPSE */}
       {!loading && statsByMonth.length > 0 && (
-        <div className="w-full max-w-full overflow-x-auto mt-6">
-          <div className="w-max space-y-4">
-
-            {statsByMonth.map((item) => {
-              const mois = item.month;
-              const isOpen = collapsedMonths[mois] || false;
-
-              const totalHommes =
-                item.rapports.reduce((sum, r) => sum + (r.data.hommes || 0), 0);
-              const totalFemmes =
-                item.rapports.reduce((sum, r) => sum + (r.data.femmes || 0), 0);
-
+        <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+          <div className="w-max space-y-2">
+            {statsByMonth.map((monthData) => {
+              const isCollapsed = collapsedMonths[monthData.month] ?? true;
               return (
-                <div key={mois}>
-
+                <div key={monthData.month}>
                   {/* HEADER MOIS */}
                   <div
-                    onClick={() => toggleMonth(mois)}
                     className="flex items-center justify-between px-4 py-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20"
+                    onClick={() => toggleMonth(monthData.month)}
                   >
-                    <div className="font-semibold text-white capitalize">
-                      {mois}
-                    </div>
-
-                    {isOpen ? (
-                      <ChevronUpIcon size={20} className="text-white" />
+                    <div className="font-semibold text-white">{monthData.month}</div>
+                    {isCollapsed ? (
+                      <ChevronDownIcon className="w-5 h-5 text-white" />
                     ) : (
-                      <ChevronDownIcon size={20} className="text-white" />
+                      <ChevronUpIcon className="w-5 h-5 text-white" />
                     )}
                   </div>
 
-                  {/* CONTENU */}
-                  {isOpen && (
-                    <div className="space-y-2 mt-2">
-
-                      {item.rapports.map((r, idx) => (
+                  {/* LIGNES DU MOIS */}
+                  {!isCollapsed && (
+                    <div className="space-y-2 mt-1">
+                      {monthData.rapports.map((r, idx) => (
                         <div
                           key={idx}
                           className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${r.border}`}
                         >
-                          <div className="min-w-[180px] text-white font-semibold">
-                            {r.label}
-                          </div>
-                          <div className="min-w-[120px] text-center text-white">
-                            {r.data.hommes}
-                          </div>
-                          <div className="min-w-[120px] text-center text-white">
-                            {r.data.femmes}
-                          </div>
-
+                          <div className="min-w-[180px] text-white font-semibold">{r.label}</div>
+                          <div className="min-w-[120px] text-center text-white">{r.data?.hommes ?? 0}</div>
+                          <div className="min-w-[120px] text-center text-white">{r.data?.femmes ?? 0}</div>
                           <div className="min-w-[120px] text-center text-white">-</div>
                           <div className="min-w-[120px] text-center text-white">-</div>
                           <div className="min-w-[140px] text-center text-white">-</div>
@@ -207,18 +201,22 @@ function StatGlobalPage() {
                         </div>
                       ))}
 
-                      {/* TOTAL */}
+                      {/* TOTAL DU MOIS */}
                       <div className="flex items-center px-4 py-4 mt-1 rounded-xl bg-white/20 border-t border-white/40 font-bold">
                         <div className="min-w-[180px] text-orange-400 font-semibold uppercase ml-1">
                           TOTAL
                         </div>
-                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">
-                          {totalHommes}
-                        </div>
-                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">
-                          {totalFemmes}
-                        </div>
-
+                        {["hommes","femmes"].map((k) => {
+                          const total = monthData.rapports.reduce((acc,r) => acc + (r.data?.[k]||0),0);
+                          return (
+                            <div
+                              key={k}
+                              className="min-w-[120px] text-center text-orange-400 font-semibold"
+                            >
+                              {total}
+                            </div>
+                          );
+                        })}
                         <div className="min-w-[120px] text-center text-orange-400 font-semibold">-</div>
                         <div className="min-w-[120px] text-center text-orange-400 font-semibold">-</div>
                         <div className="min-w-[140px] text-center text-orange-400 font-semibold">-</div>
@@ -227,14 +225,11 @@ function StatGlobalPage() {
                         <div className="min-w-[140px] text-center text-orange-400 font-semibold">-</div>
                         <div className="min-w-[160px] text-center text-orange-400 font-semibold">-</div>
                       </div>
-
                     </div>
                   )}
-
                 </div>
               );
             })}
-
           </div>
         </div>
       )}

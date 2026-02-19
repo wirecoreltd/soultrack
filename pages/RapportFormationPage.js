@@ -30,6 +30,8 @@ function RapportFormation() {
   const [rapports, setRapports] = useState([]);
   const [editRapport, setEditRapport] = useState(null);
 
+  const [expandedMonths, setExpandedMonths] = useState({});
+
   useEffect(() => {
     const fetchUser = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -54,6 +56,8 @@ function RapportFormation() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (editRapport) return handleUpdate();
+
     await supabase.from("formations").insert([formData]);
     setFormData((prev) => ({
       ...prev,
@@ -123,20 +127,49 @@ function RapportFormation() {
     fetchRapports();
   };
 
+  // 🔹 Fonctions pour collapse par mois
+  const getMonthNameFR = (monthIndex) => {
+    const months = [
+      "Janvier","Février","Mars","Avril","Mai","Juin",
+      "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
+    ];
+    return months[monthIndex] || "";
+  };
+
+  const groupByMonth = (rapports) => {
+    const map = {};
+    rapports.forEach(r => {
+      const d = new Date(r.date_debut);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      if (!map[key]) map[key] = [];
+      map[key].push(r);
+    });
+    return map;
+  };
+
+  const toggleMonth = (monthKey) => {
+    setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
+  };
+
+  const groupedReports = groupByMonth(rapports);
+
+  const totalGlobal = rapports.reduce((acc, r) => {
+    acc.hommes += Number(r.hommes || 0);
+    acc.femmes += Number(r.femmes || 0);
+    return acc;
+  }, { hommes: 0, femmes: 0 });
+
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
       <h1 className="text-3xl font-bold text-white mt-4 mb-2">
         Rapport Formation
       </h1>
-      <p className="text-white/80 mb-6">Résumé des formations par date</p>
+      <p className="text-white/80 mb-6">Résumé des formations par mois</p>
 
       {/* Formulaire */}
       <div className="max-w-2xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
-        <form
-          onSubmit={editRapport ? handleUpdate : handleSubmit}
-          className="grid grid-cols-2 gap-4"
-        >
+        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
           <div className="flex flex-col">
             <label className="text-white mb-1">Date Début</label>
             <input
@@ -201,7 +234,6 @@ function RapportFormation() {
             />
           </div>
 
-          {/* Bouton Ajouter / Modifier centré et plus large */}
           <div className="col-span-2 flex justify-center mt-4">
             <button
               type="submit"
@@ -245,65 +277,81 @@ function RapportFormation() {
         </button>
       </div>
 
-      {/* Tableau */}
-        <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
-          <div className="w-max space-y-2">
-            {/* HEADER */}
-            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[180px]">Date Début</div>
-              <div className="min-w-[180px]">Date Fin</div>
-              <div className="min-w-[200px] text-center">Nom Formation</div>
-              <div className="min-w-[120px] text-center">Hommes</div>
-              <div className="min-w-[120px] text-center">Femmes</div>
-              <div className="min-w-[120px] text-center">Total</div>
-              <div className="min-w-[150px] text-center">Actions</div>
-            </div>
-        
-            {/* LIGNES */}
-            {rapports.map((r) => {
-              const total = Number(r.hommes) + Number(r.femmes);
-              return (
-                <div
-                  key={r.id}
-                  className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
-                >
-                  <div className="min-w-[180px] text-white">{r.date_debut}</div>
-                  <div className="min-w-[180px] text-white">{r.date_fin}</div>
-                  <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                  <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
-                  <div className="min-w-[150px] text-center">
-                    <button
-                      onClick={() => handleEdit(r)}
-                      className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-4 py-1 rounded-xl"
-                    >
-                      Modifier
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-        
-            {/* TOTAL GENERAL */}
-            <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
-              <div className="min-w-[180px] text-white font-bold">TOTAL</div>
-              <div className="min-w-[180px]"></div>
-              <div className="min-w-[200px]"></div>
-              <div className="min-w-[120px] text-center text-white font-bold">
-                {rapports.reduce((sum, r) => sum + Number(r.hommes), 0)}
-              </div>
-              <div className="min-w-[120px] text-center text-white font-bold">
-                {rapports.reduce((sum, r) => sum + Number(r.femmes), 0)}
-              </div>
-              <div className="min-w-[120px] text-center text-white font-bold">
-                {rapports.reduce((sum, r) => sum + Number(r.hommes) + Number(r.femmes), 0)}
-              </div>
-              <div className="min-w-[150px]"></div>
-            </div>
-          </div>
-        </div>
+      {/* Tableau collapsible par mois */}
+      <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
+        <div className="w-max space-y-2">
 
+          {/* Header */}
+          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+            <div className="min-w-[200px]">Date Début</div>
+            <div className="min-w-[200px]">Date Fin</div>
+            <div className="min-w-[200px] text-center">Nom Formation</div>
+            <div className="min-w-[120px] text-center">Hommes</div>
+            <div className="min-w-[120px] text-center">Femmes</div>
+            <div className="min-w-[120px] text-center">Total</div>
+            <div className="min-w-[150px] text-center">Actions</div>
+          </div>
+
+          {/* Lignes par mois */}
+          {Object.entries(groupedReports).map(([monthKey, monthRapports], idx) => {
+            const [year, monthIndex] = monthKey.split("-").map(Number);
+            const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+            const totalMonth = monthRapports.reduce((acc, r) => {
+              acc.hommes += Number(r.hommes);
+              acc.femmes += Number(r.femmes);
+              return acc;
+            }, { hommes: 0, femmes: 0 });
+            const isExpanded = expandedMonths[monthKey] || false;
+            const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500"];
+            const borderColor = borderColors[idx % borderColors.length];
+
+            return (
+              <div key={monthKey} className="space-y-1">
+                <div
+                  className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer ${borderColor}`}
+                  onClick={() => toggleMonth(monthKey)}
+                >
+                  <div className="min-w-[200px] text-white font-semibold">
+                    {isExpanded ? "➖ " : "➕ "} {monthLabel}
+                  </div>
+                  <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
+                  <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
+                  <div className="min-w-[120px] text-center text-orange-400 font-bold">{totalMonth.hommes + totalMonth.femmes}</div>
+                </div>
+
+                {(isExpanded || monthRapports.length === 1) && monthRapports.map(r => {
+                  const total = Number(r.hommes) + Number(r.femmes);
+                  return (
+                    <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500">
+                      <div className="min-w-[200px] text-white">{r.date_debut}</div>
+                      <div className="min-w-[200px] text-white">{r.date_fin}</div>
+                      <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+                      <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
+                      <div className="min-w-[150px] text-center">
+                        <button onClick={() => handleEdit(r)} className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-4 py-1 rounded-xl">Modifier</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          })}
+
+          {/* TOTAL GLOBAL */}
+          <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
+            <div className="min-w-[200px] text-white font-bold">TOTAL</div>
+            <div className="min-w-[200px]"></div>
+            <div className="min-w-[200px]"></div>
+            <div className="min-w-[120px] text-center text-white font-bold">{totalGlobal.hommes}</div>
+            <div className="min-w-[120px] text-center text-white font-bold">{totalGlobal.femmes}</div>
+            <div className="min-w-[120px] text-center text-white font-bold">{totalGlobal.hommes + totalGlobal.femmes}</div>
+            <div className="min-w-[150px]"></div>
+          </div>
+
+        </div>
+      </div>
 
       <Footer />
 

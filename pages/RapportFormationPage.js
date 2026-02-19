@@ -176,8 +176,24 @@ function RapportFormation() {
 
       {/* Filtres */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">
-        <input type="date" value={filterDebut} onChange={(e)=>setFilterDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
-        <input type="date" value={filterFin} onChange={(e)=>setFilterFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
+        <input
+  type="date"
+  lang="fr"
+  value={filterDebut}
+  onChange={(e)=>setFilterDebut(e.target.value)}
+  className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  title="Format : jj/mm/aaaa"
+/>
+
+<input
+  type="date"
+  lang="fr"
+  value={filterFin}
+  onChange={(e)=>setFilterFin(e.target.value)}
+  className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  title="Format : jj/mm/aaaa"
+/>
+
         <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
       </div>
 

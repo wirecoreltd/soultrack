@@ -213,7 +213,7 @@ function RapportFormation() {
                     </div>
                     <div className="min-w-[180px]"></div>
                     <div className="min-w-[200px]"></div>
-                    <div className="min-w-[120px] text-center text-white font-bold ml-1">
+                    <div className="min-w-[120px] text-center text-white font-bold ml-1.5">
                       {totalMonth.hommes}
                     </div>
                     <div className="min-w-[120px] text-center text-white font-bold">
@@ -231,8 +231,12 @@ function RapportFormation() {
                       const total = Number(r.hommes) + Number(r.femmes);
                       return (
                         <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500">
-                          <div className="min-w-[180px] text-white">{r.date_debut}</div>
-                          <div className="min-w-[180px] text-white">{r.date_fin}</div>
+                          <div className="min-w-[120px] text-white">
+                            {formatDate(r.date_debut)}
+                          </div>
+                          <div className="min-w-[120px] text-white">
+                            {formatDate(r.date_fin)}
+                          </div>
                           <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
                           <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
                           <div className="min-w-[120px] text-center text-white">{r.femmes}</div>

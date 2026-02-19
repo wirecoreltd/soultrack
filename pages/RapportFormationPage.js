@@ -213,7 +213,7 @@ function RapportFormation() {
                     </div>
                     <div className="min-w-[180px]"></div>
                     <div className="min-w-[200px]"></div>
-                    <div className="min-w-[120px] text-center text-white font-bold">
+                    <div className="min-w-[120px] text-center text-white font-bold ml-1">
                       {totalMonth.hommes}
                     </div>
                     <div className="min-w-[120px] text-center text-white font-bold">

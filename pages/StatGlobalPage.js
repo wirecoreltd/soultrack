@@ -129,18 +129,19 @@ function StatGlobalPage() {
       </div>
 
       {!loading && attendanceStats && (
+        {/* TABLE COLLAPSIBLE PAR MOIS */}
         <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
           <div className="w-max space-y-2">
             {/* On regroupe par mois */}
             {["Février 2026"].map((mois) => {
-              const showRows = true; // tu peux ajouter un état pour toggle si besoin
+              const showRows = true; // toggle si besoin
               return (
                 <div key={mois}>
                   {/* HEADER MOIS */}
                   <div className="flex items-center justify-between px-4 py-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20">
                     <div className="font-semibold text-white">{mois}</div>
                   </div>
-      
+        
                   {/* LIGNES DU MOIS */}
                   {showRows && (
                     <div className="space-y-2 mt-1">
@@ -157,7 +158,7 @@ function StatGlobalPage() {
                         <div className="min-w-[140px] text-center text-white">-</div>
                         <div className="min-w-[160px] text-center text-white">-</div>
                       </div>
-      
+        
                       {/* SERVITEUR */}
                       <div className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-yellow-500">
                         <div className="min-w-[180px] text-white font-semibold">Serviteur</div>
@@ -171,7 +172,7 @@ function StatGlobalPage() {
                         <div className="min-w-[140px] text-center text-white">-</div>
                         <div className="min-w-[160px] text-center text-white">-</div>
                       </div>
-      
+        
                       {/* TOTAL GENERAL */}
                       <div className="flex items-center px-4 py-4 mt-1 rounded-xl bg-white/20 border-t border-white/40 font-bold">
                         <div className="min-w-[180px] text-orange-400 font-semibold uppercase ml-1">TOTAL</div>
@@ -192,7 +193,7 @@ function StatGlobalPage() {
             })}
           </div>
         </div>
-      )}
+
 
       <Footer />
     </div>

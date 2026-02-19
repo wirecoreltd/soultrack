@@ -282,7 +282,7 @@ function RapportFormation() {
         <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
           <div className="w-max space-y-2">
             {/* Header */}
-            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[200px]">Date Début</div>
               <div className="min-w-[200px]">Date Fin</div>
               <div className="min-w-[200px] text-center">Nom Formation</div>
@@ -327,7 +327,7 @@ function RapportFormation() {
                     <div className="min-w-[200px]"></div>
                     <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
                     <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
-                    <div className="min-w-[120px] text-center text-orange-400 font-bold">
+                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">
                       {totalMonth.hommes + totalMonth.femmes}
                     </div>
                     <div className="min-w-[150px]"></div>
@@ -346,7 +346,7 @@ function RapportFormation() {
                           <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
                           <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
                           <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                          <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
+                          <div className="min-w-[120px] text-center text-orange-400 font-semibold">{total}</div>
                           <div className="min-w-[150px] text-center">
                             <button
                               onClick={() => handleEdit(r)}
@@ -369,7 +369,7 @@ function RapportFormation() {
               <div className="min-w-[200px]"></div>
               <div className="min-w-[120px] text-center text-white font-bold">{totalGlobal.hommes}</div>
               <div className="min-w-[120px] text-center text-white font-bold">{totalGlobal.femmes}</div>
-              <div className="min-w-[120px] text-center text-white font-bold">{totalGlobal.hommes + totalGlobal.femmes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-1.5">{totalGlobal.hommes + totalGlobal.femmes}</div>
               <div className="min-w-[150px]"></div>
             </div>
           </div>

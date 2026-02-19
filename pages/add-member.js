@@ -182,7 +182,7 @@ export default function AddMember() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-4 sm:p-6">
       <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-3xl shadow-lg relative">
         <button
-          onClick={() => router.back()}
+          onClick={() => window.close()}
           className="absolute top-3 right-3 sm:top-4 sm:right-4 text-black font-bold hover:text-gray-800 transition-colors text-xl"
           aria-label="Fermer"
         >

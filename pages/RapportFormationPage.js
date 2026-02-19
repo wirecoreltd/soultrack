@@ -394,9 +394,9 @@ function RapportFormation() {
               <div className="min-w-[200px] text-white font-bold">TOTAL</div>
               <div className="min-w-[200px]"></div>
               <div className="min-w-[200px]"></div>
-              <div className="min-w-[120px] text-center text-white font-bold">{totalGlobal.hommes}</div>
-              <div className="min-w-[120px] text-center text-white font-bold">{totalGlobal.femmes}</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-2">{totalGlobal.hommes + totalGlobal.femmes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-2">{totalGlobal.hommes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes + totalGlobal.femmes}</div>
               <div className="min-w-[150px]"></div>
             </div>
 

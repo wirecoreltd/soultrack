@@ -18,8 +18,6 @@ export default function StatGlobalPageWrapper() {
 function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-  const [typeRapport, setTypeRapport] = useState("Tous");
-
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
 
@@ -52,16 +50,16 @@ function StatGlobalPage() {
 
     setLoading(true);
 
-    let evanQuery = supabase
+    let query = supabase
       .from("evangelises")
       .select("*")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
 
-    if (dateDebut) evanQuery = evanQuery.gte("created_at", dateDebut);
-    if (dateFin) evanQuery = evanQuery.lte("created_at", dateFin);
+    if (dateDebut) query = query.gte("created_at", dateDebut);
+    if (dateFin) query = query.lte("created_at", dateFin);
 
-    const { data } = await evanQuery;
+    const { data } = await query;
 
     const grouped = {};
 
@@ -76,12 +74,12 @@ function StatGlobalPage() {
     });
 
     const monthsStats = Object.keys(grouped).map((month) => {
-      const evanData = grouped[month];
+      const rows = grouped[month];
 
       const evanTotals = { hommes: 0, femmes: 0 };
       const serviteurTotals = { hommes: 0, femmes: 0 };
 
-      evanData.forEach((r) => {
+      rows.forEach((r) => {
         if (r.sexe === "Homme") evanTotals.hommes++;
         if (r.sexe === "Femme") evanTotals.femmes++;
 
@@ -101,6 +99,14 @@ function StatGlobalPage() {
     });
 
     setStatsByMonth(monthsStats);
+
+    // 🔥 Tous les mois fermés par défaut
+    const initialCollapse = {};
+    monthsStats.forEach((m) => {
+      initialCollapse[m.month] = false;
+    });
+    setCollapsedMonths(initialCollapse);
+
     setLoading(false);
   };
 
@@ -118,13 +124,24 @@ function StatGlobalPage() {
         Statistiques Globales
       </h1>
 
+      {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
-        <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
-        <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
-        <button onClick={fetchStats}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">
+        <input
+          type="date"
+          value={dateDebut}
+          onChange={(e) => setDateDebut(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <input
+          type="date"
+          value={dateFin}
+          onChange={(e) => setDateFin(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <button
+          onClick={fetchStats}
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+        >
           Générer
         </button>
       </div>
@@ -135,16 +152,12 @@ function StatGlobalPage() {
 
             {statsByMonth.map((item) => {
               const mois = item.month;
-        const isOpen = collapsedMonths[mois] ?? true;
+              const isOpen = collapsedMonths[mois] || false;
 
-              const totalGeneral = item.rapports.reduce(
-                (acc, r) => {
-                  acc.hommes += r.data.hommes || 0;
-                  acc.femmes += r.data.femmes || 0;
-                  return acc;
-                },
-                { hommes: 0, femmes: 0 }
-              );
+              const totalHommes =
+                item.rapports.reduce((sum, r) => sum + (r.data.hommes || 0), 0);
+              const totalFemmes =
+                item.rapports.reduce((sum, r) => sum + (r.data.femmes || 0), 0);
 
               return (
                 <div key={mois}>
@@ -165,16 +178,25 @@ function StatGlobalPage() {
                     )}
                   </div>
 
-                  {/* LIGNES */}
+                  {/* CONTENU */}
                   {isOpen && (
                     <div className="space-y-2 mt-2">
 
                       {item.rapports.map((r, idx) => (
-                        <div key={idx}
-                          className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${r.border}`}>
-                          <div className="min-w-[180px] text-white font-semibold">{r.label}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.data.hommes}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.data.femmes}</div>
+                        <div
+                          key={idx}
+                          className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${r.border}`}
+                        >
+                          <div className="min-w-[180px] text-white font-semibold">
+                            {r.label}
+                          </div>
+                          <div className="min-w-[120px] text-center text-white">
+                            {r.data.hommes}
+                          </div>
+                          <div className="min-w-[120px] text-center text-white">
+                            {r.data.femmes}
+                          </div>
+
                           <div className="min-w-[120px] text-center text-white">-</div>
                           <div className="min-w-[120px] text-center text-white">-</div>
                           <div className="min-w-[140px] text-center text-white">-</div>
@@ -191,11 +213,12 @@ function StatGlobalPage() {
                           TOTAL
                         </div>
                         <div className="min-w-[120px] text-center text-orange-400 font-semibold">
-                          {totalGeneral.hommes}
+                          {totalHommes}
                         </div>
                         <div className="min-w-[120px] text-center text-orange-400 font-semibold">
-                          {totalGeneral.femmes}
+                          {totalFemmes}
                         </div>
+
                         <div className="min-w-[120px] text-center text-orange-400 font-semibold">-</div>
                         <div className="min-w-[120px] text-center text-orange-400 font-semibold">-</div>
                         <div className="min-w-[140px] text-center text-orange-400 font-semibold">-</div>

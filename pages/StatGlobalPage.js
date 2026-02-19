@@ -128,50 +128,71 @@ function StatGlobalPage() {
         <button onClick={fetchStats} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
       </div>
 
-      {/* COLLAPSE PAR MOIS */}
-      <div className="w-full max-w-full mt-6">
-        {statsByMonth.map(({ month, stats }) => {
-          const collapsed = collapsedMonths[month];
-          const totalGeneral = stats.reduce((acc, r) => {
-            acc.hommes += r.data?.hommes || 0;
-            acc.femmes += r.data?.femmes || 0;
-            return acc;
-          }, { hommes: 0, femmes: 0 });
-
-          return (
-            <div key={month} className="mb-4 bg-white/10 rounded-2xl">
-              {/* HEADER MOIS */}
-              <div
-                className="flex justify-between items-center px-6 py-3 cursor-pointer font-semibold text-white border-b border-white/30"
-                onClick={() => toggleMonth(month)}
-              >
-                <span>{month}</span>
-                {collapsed ? <ChevronUpIcon className="w-5 h-5"/> : <ChevronDownIcon className="w-5 h-5"/>}
-              </div>
-
-              {/* CONTENU COLLAPSIBLE */}
-              {collapsed && (
-                <div className="px-4 py-3 space-y-2">
-                  {stats.map((r, idx) => (
-                    <div key={idx} className={`flex items-center px-4 py-3 rounded-lg bg-white/10 border-l-4 ${r.border}`}>
-                      <div className="min-w-[180px] text-white font-semibold">{r.label}</div>
-                      <div className="min-w-[120px] text-center text-white">{r.data?.hommes ?? "-"}</div>
-                      <div className="min-w-[120px] text-center text-white">{r.data?.femmes ?? "-"}</div>
-                    </div>
-                  ))}
-
-                  {/* TOTAL MOIS */}
-                  <div className="flex items-center px-4 py-3 mt-2 rounded-lg bg-white/20 border-t border-white/40 font-bold">
-                    <div className="min-w-[180px] text-orange-400 font-semibold">TOTAL</div>
-                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.hommes}</div>
-                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.femmes}</div>
+      {!loading && attendanceStats && (
+        <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+          <div className="w-max space-y-2">
+            {/* On regroupe par mois */}
+            {["Février 2026"].map((mois) => {
+              const showRows = true; // tu peux ajouter un état pour toggle si besoin
+              return (
+                <div key={mois}>
+                  {/* HEADER MOIS */}
+                  <div className="flex items-center justify-between px-4 py-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20">
+                    <div className="font-semibold text-white">{mois}</div>
                   </div>
+      
+                  {/* LIGNES DU MOIS */}
+                  {showRows && (
+                    <div className="space-y-2 mt-1">
+                      {/* EVANGELISATION */}
+                      <div className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500">
+                        <div className="min-w-[180px] text-white font-semibold">Evangelisation</div>
+                        <div className="min-w-[120px] text-center text-white">10</div>
+                        <div className="min-w-[120px] text-center text-white">4</div>
+                        <div className="min-w-[120px] text-center text-white">-</div>
+                        <div className="min-w-[120px] text-center text-white">-</div>
+                        <div className="min-w-[140px] text-center text-white">-</div>
+                        <div className="min-w-[150px] text-center text-white">-</div>
+                        <div className="min-w-[180px] text-center text-white">-</div>
+                        <div className="min-w-[140px] text-center text-white">-</div>
+                        <div className="min-w-[160px] text-center text-white">-</div>
+                      </div>
+      
+                      {/* SERVITEUR */}
+                      <div className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-yellow-500">
+                        <div className="min-w-[180px] text-white font-semibold">Serviteur</div>
+                        <div className="min-w-[120px] text-center text-white">0</div>
+                        <div className="min-w-[120px] text-center text-white">0</div>
+                        <div className="min-w-[120px] text-center text-white">-</div>
+                        <div className="min-w-[120px] text-center text-white">-</div>
+                        <div className="min-w-[140px] text-center text-white">-</div>
+                        <div className="min-w-[150px] text-center text-white">-</div>
+                        <div className="min-w-[180px] text-center text-white">-</div>
+                        <div className="min-w-[140px] text-center text-white">-</div>
+                        <div className="min-w-[160px] text-center text-white">-</div>
+                      </div>
+      
+                      {/* TOTAL GENERAL */}
+                      <div className="flex items-center px-4 py-4 mt-1 rounded-xl bg-white/20 border-t border-white/40 font-bold">
+                        <div className="min-w-[180px] text-orange-400 font-semibold uppercase ml-1">TOTAL</div>
+                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">10</div>
+                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">4</div>
+                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">-</div>
+                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">-</div>
+                        <div className="min-w-[140px] text-center text-orange-400 font-semibold">-</div>
+                        <div className="min-w-[150px] text-center text-orange-400 font-semibold">-</div>
+                        <div className="min-w-[180px] text-center text-orange-400 font-semibold">-</div>
+                        <div className="min-w-[140px] text-center text-orange-400 font-semibold">-</div>
+                        <div className="min-w-[160px] text-center text-orange-400 font-semibold">-</div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

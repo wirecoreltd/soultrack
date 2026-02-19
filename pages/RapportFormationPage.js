@@ -6,8 +6,6 @@ import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 
-const [showTable, setShowTable] = useState(false);
-
 export default function RapportFormationPage() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "ResponsableFormation"]}>
@@ -15,9 +13,6 @@ export default function RapportFormationPage() {
     </ProtectedRoute>
   );
 }
-
-
-
 
 function RapportFormation() {
   const [formData, setFormData] = useState({
@@ -37,7 +32,6 @@ function RapportFormation() {
   const [expandedMonths, setExpandedMonths] = useState({});
 
   /* ================= USER ================= */
-
   useEffect(() => {
     const fetchUser = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -61,7 +55,6 @@ function RapportFormation() {
   }, []);
 
   /* ================= FETCH ================= */
-
   const fetchRapports = async () => {
     let query = supabase
       .from("formations")
@@ -84,7 +77,6 @@ function RapportFormation() {
   }, [formData.eglise_id, formData.branche_id, filterDebut, filterFin]);
 
   /* ================= CRUD ================= */
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (editRapport) return handleUpdate();
@@ -144,7 +136,6 @@ function RapportFormation() {
   };
 
   /* ================= UTIL ================= */
-
   const getMonthNameFR = (monthIndex) => {
     const months = [
       "Janvier","Février","Mars","Avril","Mai","Juin",
@@ -177,10 +168,6 @@ function RapportFormation() {
     setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
   };
 
-    const handleGenerate = () => {
-    setShowTable(true);
-  };
-
   const groupedReports = Object.entries(groupByMonth(rapports))
     .sort((a, b) => {
       const [yearA, monthA] = a[0].split("-").map(Number);
@@ -195,7 +182,6 @@ function RapportFormation() {
   }, { hommes: 0, femmes: 0 });
 
   /* ================= RENDER ================= */
-
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
@@ -209,10 +195,8 @@ function RapportFormation() {
       </p>
 
       {/* ================= FORMULAIRE ================= */}
-
       <div className="max-w-2xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
-
           <div className="flex flex-col">
             <label className="text-white mb-1">Date Début</label>
             <input
@@ -284,12 +268,10 @@ function RapportFormation() {
               {editRapport ? "Modifier" : "Ajouter le rapport"}
             </button>
           </div>
-
         </form>
       </div>
 
       {/* ================= FILTRES ================= */}
-
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
         <input
           type="date"
@@ -304,7 +286,7 @@ function RapportFormation() {
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <button
-          onClick={handleGenerate}
+          onClick={fetchRapports}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
         >
           Générer
@@ -312,7 +294,6 @@ function RapportFormation() {
       </div>
 
       {/* ================= TABLEAU ================= */}
-
       <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
         <div className="w-max space-y-2">
 
@@ -421,7 +402,6 @@ function RapportFormation() {
           color: white;
         }
       `}</style>
-
     </div>
   );
 }

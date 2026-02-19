@@ -257,39 +257,50 @@ function RapportFormation() {
 
                   {/* Lignes rapports */}
                   {isExpanded &&
-                    monthReports.map((r) => {
-                      const total = Number(r.hommes) + Number(r.femmes);
-                      return (
-                        <div className="flex flex-col">
-                          <label className="text-sm text-white mb-1">
-                            Date début (dd/mm/yyyy)
-                          </label>
-                          <input
-                            type="date"
-                            value={filterDebut}
-                            onChange={(e)=>setFilterDebut(e.target.value)}
-                            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-                          />
-                        </div>
+  monthReports.map((r) => {
+    const total = Number(r.hommes || 0) + Number(r.femmes || 0);
 
-                          <div className="min-w-[120px] text-white">
-                            {formatDate(r.date_fin)}
-                          </div>
-                          <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                          <div className="min-w-[120px] text-center text-orange-500 font-semibold">{total}</div>
-                          <div className="min-w-[150px] text-center">
-                            <button onClick={() => handleEdit(r)} className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-4 py-1 rounded-xl">
-                              Modifier
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              );
-            })}
+    return (
+      <div
+        key={r.id}
+        className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
+      >
+        <div className="min-w-[180px] text-white text-center">
+          {formatDate(r.date_debut)}
+        </div>
+
+        <div className="min-w-[180px] text-white text-center">
+          {formatDate(r.date_fin)}
+        </div>
+
+        <div className="min-w-[200px] text-center text-white">
+          {r.nom_formation}
+        </div>
+
+        <div className="min-w-[120px] text-center text-white">
+          {r.hommes}
+        </div>
+
+        <div className="min-w-[120px] text-center text-white">
+          {r.femmes}
+        </div>
+
+        <div className="min-w-[120px] text-center text-orange-500 font-semibold">
+          {total}
+        </div>
+
+        <div className="min-w-[150px] text-center">
+          <button
+            onClick={() => handleEdit(r)}
+            className="text-orange-400 underline hover:text-orange-500 hover:no-underline px-4 py-1 rounded-xl"
+          >
+            Modifier
+          </button>
+        </div>
+      </div>
+    );
+  })}
+
 
             {/* TOTAL GENERAL */}
             <div className="flex items-center px-6 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">

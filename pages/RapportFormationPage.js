@@ -21,6 +21,7 @@ function RapportFormation() {
     nom_formation: "",
     hommes: 0,
     femmes: 0,
+    formateur: "",
     eglise_id: null,
     branche_id: null,
   });
@@ -55,18 +56,14 @@ function RapportFormation() {
   }, []);
 
   const formatDate = (dateString) => {
-  if (!dateString) return "";
-
-  const d = new Date(dateString);
-  if (isNaN(d)) return dateString;
-
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-
-  return `${day}/${month}/${year}`;
-};
-
+    if (!dateString) return "";
+    const d = new Date(dateString);
+    if (isNaN(d)) return dateString;
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -80,6 +77,7 @@ function RapportFormation() {
           nom_formation: formData.nom_formation,
           hommes: formData.hommes,
           femmes: formData.femmes,
+          formateur: formData.formateur,
         })
         .eq("id", editRapport.id);
       setEditRapport(null);
@@ -94,6 +92,7 @@ function RapportFormation() {
       nom_formation: "",
       hommes: 0,
       femmes: 0,
+      formateur: "",
     }));
 
     fetchRapports();
@@ -128,6 +127,7 @@ function RapportFormation() {
       nom_formation: r.nom_formation,
       hommes: r.hommes,
       femmes: r.femmes,
+      formateur: r.formateur || "",
     }));
   };
 
@@ -175,83 +175,83 @@ function RapportFormation() {
       <p className="text-white/80 mb-6">Résumé des formations par date</p>
 
       {/* Formulaire de création de rapport */}
-        <div className="max-w-2xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
-            <div className="flex gap-4 w-full">
-              <div className="flex flex-col flex-1">
-                <label className="text-white font-medium mb-1">Date de début</label>
-                <input
-                  type="date"
-                  required
-                  value={formData.date_debut}
-                  onChange={(e) => setFormData({ ...formData, date_debut: e.target.value })}
-                  className="input bg-white/20 text-white placeholder-white w-full py-1"
-                />
-              </div>
-              <div className="flex flex-col flex-1">
-                <label className="text-white font-medium mb-1">Date de fin</label>
-                <input
-                  type="date"
-                  required
-                  value={formData.date_fin}
-                  onChange={(e) => setFormData({ ...formData, date_fin: e.target.value })}
-                  className="input bg-white/20 text-white placeholder-white w-full py-1"
-                />
-              </div>
-            </div>
-        
-            <div className="flex flex-col">
-              <label className="text-white font-medium mb-1">Nom de la formation</label>
+      <div className="max-w-2xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
+          <div className="flex gap-4 w-full">
+            <div className="flex flex-col flex-1">
+              <label className="text-white font-medium mb-1">Date de début</label>
               <input
-                type="text"
+                type="date"
                 required
-                value={formData.nom_formation}
-                onChange={(e) => setFormData({ ...formData, nom_formation: e.target.value })}
+                value={formData.date_debut}
+                onChange={(e) => setFormData({ ...formData, date_debut: e.target.value })}
                 className="input bg-white/20 text-white placeholder-white w-full py-1"
               />
             </div>
-        
-            <div className="flex gap-4 w-full">
-              <div className="flex flex-col flex-1">
-                <label className="text-white font-medium mb-1">Hommes</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={formData.hommes}
-                  onChange={(e) => setFormData({ ...formData, hommes: Number(e.target.value) })}
-                  className="input bg-white/20 text-white placeholder-white w-full py-1"
-                />
-              </div>
-              <div className="flex flex-col flex-1">
-                <label className="text-white font-medium mb-1">Femmes</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={formData.femmes}
-                  onChange={(e) => setFormData({ ...formData, femmes: Number(e.target.value) })}
-                  className="input bg-white/20 text-white placeholder-white w-full py-1"
-                />
-              </div>
-            </div>
-        
-            <div className="flex flex-col">
-              <label className="text-white font-medium mb-1">Formateur</label>
+            <div className="flex flex-col flex-1">
+              <label className="text-white font-medium mb-1">Date de fin</label>
               <input
-                type="text"
-                value={formData.formateur || ""}
-                onChange={(e) => setFormData({ ...formData, formateur: e.target.value })}
+                type="date"
+                required
+                value={formData.date_fin}
+                onChange={(e) => setFormData({ ...formData, date_fin: e.target.value })}
                 className="input bg-white/20 text-white placeholder-white w-full py-1"
               />
             </div>
-        
-            <button
-              type="submit"
-              className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
-            >
-              {editRapport ? "Mettre à jour" : "Ajouter le rapport"}
-            </button>
-          </form>
-        </div>
+          </div>
+
+          <div className="flex flex-col">
+            <label className="text-white font-medium mb-1">Nom de la formation</label>
+            <input
+              type="text"
+              required
+              value={formData.nom_formation}
+              onChange={(e) => setFormData({ ...formData, nom_formation: e.target.value })}
+              className="input bg-white/20 text-white placeholder-white w-full py-1"
+            />
+          </div>
+
+          <div className="flex gap-4 w-full">
+            <div className="flex flex-col flex-1">
+              <label className="text-white font-medium mb-1">Hommes</label>
+              <input
+                type="number"
+                min={0}
+                value={formData.hommes}
+                onChange={(e) => setFormData({ ...formData, hommes: Number(e.target.value) })}
+                className="input bg-white/20 text-white placeholder-white w-full py-1"
+              />
+            </div>
+            <div className="flex flex-col flex-1">
+              <label className="text-white font-medium mb-1">Femmes</label>
+              <input
+                type="number"
+                min={0}
+                value={formData.femmes}
+                onChange={(e) => setFormData({ ...formData, femmes: Number(e.target.value) })}
+                className="input bg-white/20 text-white placeholder-white w-full py-1"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col">
+            <label className="text-white font-medium mb-1">Formateur</label>
+            <input
+              type="text"
+              value={formData.formateur || ""}
+              onChange={(e) => setFormData({ ...formData, formateur: e.target.value })}
+              className="input bg-white/20 text-white placeholder-white w-full py-1"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
+          >
+            {editRapport ? "Mettre à jour" : "Ajouter le rapport"}
+          </button>
+        </form>
+      </div>
 
       {/* Filtres */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">
@@ -259,20 +259,18 @@ function RapportFormation() {
           type="date"
           lang="fr"
           value={filterDebut}
-          onChange={(e)=>setFilterDebut(e.target.value)}
+          onChange={(e) => setFilterDebut(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
           title="Format : jj/mm/aaaa"
         />
-        
         <input
           type="date"
           lang="fr"
           value={filterFin}
-          onChange={(e)=>setFilterFin(e.target.value)}
+          onChange={(e) => setFilterFin(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
           title="Format : jj/mm/aaaa"
         />
-
         <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
       </div>
 
@@ -375,8 +373,6 @@ function RapportFormation() {
                 </div>
               );
             })}
-
-
 
             {/* TOTAL GENERAL */}
             <div className="flex items-center px-6 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">

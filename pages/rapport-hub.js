@@ -5,6 +5,7 @@ import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import HeaderPages from "../components/HeaderPages";
 
 export default function RapportHub() {
   const router = useRouter();
@@ -21,30 +22,7 @@ export default function RapportHub() {
       className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* 🔹 Top bar */}
-      <div className="w-full max-w-5xl mb-6">
-        <div className="flex justify-between items-center">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-white hover:text-gray-200 transition-colors"
-          >
-            ← Retour
-          </button>
-
-          <LogoutLink />
-        </div>
-
-        <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">
-            👋 Bienvenue {userName}
-          </p>
-        </div>
-      </div>
-
-      {/* 🔹 Logo centré */}
-      <div className="mb-6">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
-      </div>
+      <HeaderPages />
 
       {/* 🔹 Titre */}
       <div className="text-center mb-4">

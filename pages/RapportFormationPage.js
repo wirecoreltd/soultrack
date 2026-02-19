@@ -260,10 +260,18 @@ function RapportFormation() {
                     monthReports.map((r) => {
                       const total = Number(r.hommes) + Number(r.femmes);
                       return (
-                        <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500">
-                          <div className="min-w-[120px] text-white">
-                            {formatDate(r.date_debut)}
-                          </div>
+                        <div className="flex flex-col">
+                          <label className="text-sm text-white mb-1">
+                            Date début (dd/mm/yyyy)
+                          </label>
+                          <input
+                            type="date"
+                            value={filterDebut}
+                            onChange={(e)=>setFilterDebut(e.target.value)}
+                            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+                          />
+                        </div>
+
                           <div className="min-w-[120px] text-white">
                             {formatDate(r.date_fin)}
                           </div>

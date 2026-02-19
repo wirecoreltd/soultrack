@@ -41,8 +41,9 @@ function CreateInternalUserContent() {
         const { data: membersData, error } = await supabase
           .from("membres_complets")
           .select("id, prenom, nom, telephone")
-          .in("etat_contact", ["Nouveau", "Existant"])
-          .eq("star", TRUE);
+          .eq("star", true)
+          .eq("eglise_id", profileData.eglise_id)
+          .eq("branche_id", profileData.branche_id);
 
         if (error) throw error;
         setMembers(membersData || []);

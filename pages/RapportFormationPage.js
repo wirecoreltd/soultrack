@@ -6,6 +6,9 @@ import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 
+if (!dateString) return "";
+if (isNaN(d)) return dateString;
+
 export default function RapportFormationPage() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "ResponsableFormation"]}>

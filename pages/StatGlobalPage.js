@@ -1,211 +1,334 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
-import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
+import Footer from "../components/Footer";
 
-export default function StatGlobalPage() {
+export default function StatGlobalPageWrapper() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
-      <StatGlobal />
+    <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
+      <StatGlobalPage />
     </ProtectedRoute>
   );
 }
 
-function StatGlobal() {
-  const [reports, setReports] = useState([]);
-  const [showTable, setShowTable] = useState(false);
-  const [superviseur, setSuperviseur] = useState({ eglise_id: null, branche_id: null });
+function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-  const [expandedMonths, setExpandedMonths] = useState({});
+  const [typeRapport, setTypeRapport] = useState("Tous");
+  const [serviteurStats, setServiteurStats] = useState(null);
+  const [egliseId, setEgliseId] = useState(null);
+  const [brancheId, setBrancheId] = useState(null);
+  const [attendanceStats, setAttendanceStats] = useState(null);
+  const [evanStats, setEvanStats] = useState(null);
+  const [baptemeStats, setBaptemeStats] = useState(null);
+  const [formationStats, setFormationStats] = useState(null);
+  const [cellulesCount, setCellulesCount] = useState(0);
 
-  // Charger eglise/branche du superviseur connecté
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    const loadSuperviseur = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+    const fetchProfile = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) return;
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("profiles")
         .select("eglise_id, branche_id")
         .eq("id", user.id)
         .single();
 
-      if (error) console.error("Erreur fetch superviseur :", error);
-      else setSuperviseur({ eglise_id: data.eglise_id, branche_id: data.branche_id });
+      if (data) {
+        setEgliseId(data.eglise_id);
+        setBrancheId(data.branche_id);
+      }
     };
-    loadSuperviseur();
+
+    fetchProfile();
   }, []);
 
-  const fetchRapports = async () => {
-    if (!superviseur.eglise_id || !superviseur.branche_id) return;
+  const fetchStats = async () => {
+    if (!egliseId || !brancheId) return;
 
-    setShowTable(false);
+    setLoading(true);
 
-    let query = supabase
-      .from("stat_global") // <-- table contenant les colonnes hommes, femmes, etc.
+    // ================= ATTENDANCE =================
+    let attendanceQuery = supabase
+      .from("attendance")
       .select("*")
-      .eq("eglise_id", superviseur.eglise_id)
-      .eq("branche_id", superviseur.branche_id);
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId);
 
-    if (dateDebut) query = query.gte("date", dateDebut);
-    if (dateFin) query = query.lte("date", dateFin);
+    if (dateDebut) attendanceQuery = attendanceQuery.gte("date", dateDebut);
+    if (dateFin) attendanceQuery = attendanceQuery.lte("date", dateFin);
 
-    query = query.order("date", { ascending: true });
+    const { data: attendanceData } = await attendanceQuery;
 
-    const { data, error } = await query;
-    if (error) console.error("Erreur fetch:", error);
-    else setReports(data || []);
+    const attendanceTotals = {
+      hommes: 0,
+      femmes: 0,
+      jeunes: 0,
+      enfants: 0,
+      connectes: 0,
+      nouveauxVenus: 0,
+      nouveauxConvertis: 0,
+      moissonneurs: 0,
+    };
 
-    setShowTable(true);
-  };
-
-  const groupByMonth = (reports) => {
-    const map = {};
-    reports.forEach((r) => {
-      const d = new Date(r.date);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-      if (!map[key]) map[key] = [];
-      map[key].push(r);
+    attendanceData?.forEach((r) => {
+      attendanceTotals.hommes += Number(r.hommes) || 0;
+      attendanceTotals.femmes += Number(r.femmes) || 0;
+      attendanceTotals.jeunes += Number(r.jeunes) || 0;
+      attendanceTotals.enfants += Number(r.enfants) || 0;
+      attendanceTotals.connectes += Number(r.connectes) || 0;
+      attendanceTotals.nouveauxVenus += Number(r.nouveauxVenus) || 0;
+      attendanceTotals.nouveauxConvertis += Number(r.nouveauxConvertis) || 0;
+      attendanceTotals.moissonneurs += Number(r.moissonneurs) || 0;
     });
-    return map;
+
+    setAttendanceStats(attendanceTotals);
+
+    // ================= EVANGELISATION =================
+    let evanQuery = supabase
+      .from("evangelises")
+      .select("*")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId);
+
+    if (dateDebut) evanQuery = evanQuery.gte("created_at", dateDebut);
+    if (dateFin) evanQuery = evanQuery.lte("created_at", dateFin);
+
+    const { data: evanData } = await evanQuery;
+
+    const evanTotals = {
+      hommes: 0,
+      femmes: 0,
+      jeunes: 0,
+      enfants: 0,
+      connectes: 0,
+      nouveauxVenus: 0,
+      nouveauxConvertis: 0,
+      moissonneurs: 0,
+    };
+
+    evanData?.forEach((r) => {
+      if (r.sexe === "Homme") evanTotals.hommes++;
+      if (r.sexe === "Femme") evanTotals.femmes++;
+      if (r.type_conversion === "Nouveau converti") evanTotals.nouveauxConvertis++;
+    });
+
+    setEvanStats(evanTotals);
+
+    // ================= BAPTEME =================
+    let baptemeQuery = supabase
+      .from("baptemes")
+      .select("hommes, femmes")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId);
+
+    if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
+    if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
+
+    const { data: baptemeData } = await baptemeQuery;
+
+    const baptemeTotals = {
+      hommes: baptemeData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
+      femmes: baptemeData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
+    };
+
+    setBaptemeStats(baptemeTotals);
+
+    // ================= FORMATION =================
+    let formationQuery = supabase
+      .from("formations")
+      .select("hommes, femmes")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId);
+
+    if (dateDebut) formationQuery = formationQuery.gte("date_debut", dateDebut);
+    if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin);
+
+    const { data: formationData } = await formationQuery;
+
+    const formationTotals = {
+      hommes: formationData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
+      femmes: formationData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
+    };
+
+    setFormationStats(formationTotals);
+
+    const { count } = await supabase
+      .from("cellules")
+      .select("id", { count: "exact", head: true })
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId);
+
+    setCellulesCount(count || 0);
+
+    // ================= SERVITEURS =================
+      let serviteurQuery = supabase
+        .from("membres_complets")
+        .select("id, sexe")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId)
+        .eq("star", true)
+        .in("etat_contact", ["Existant", "Nouveau"]);
+      
+      if (dateDebut) serviteurQuery = serviteurQuery.gte("created_at", dateDebut);
+      if (dateFin) serviteurQuery = serviteurQuery.lte("created_at", dateFin);
+      
+      const { data: serviteurData } = await serviteurQuery;
+      
+      const serviteurTotals = {
+        hommes: serviteurData?.filter(r => r.sexe === "Homme").length || 0,
+        femmes: serviteurData?.filter(r => r.sexe === "Femme").length || 0,
+      };      
+      setServiteurStats(serviteurTotals);
+
+    setLoading(false);
   };
 
-  const toggleMonth = (monthKey) => {
-    setExpandedMonths((prev) => ({
-      ...prev,
-      [monthKey]: !prev[monthKey],
-    }));
-  };
+  const rapports = [
+    { label: "Culte", data: attendanceStats, border: "border-l-orange-500" },
+    { label: "Evangelisation", data: evanStats, border: "border-l-green-500" },
+    { label: "Baptême", data: baptemeStats, border: "border-l-purple-500" },
+    { label: "Formation", data: formationStats, border: "border-l-blue-500" },
+    { label: "Cellules", data: { total: cellulesCount }, border: "border-l-yellow-500" },
+    { label: "Serviteur", data: serviteurStats, border: "border-l-pink-500" },     
+  ].filter((r) => typeRapport === "Tous" || r.label === typeRapport);
 
-  const formatDateFR = (d) => {
-    const dateObj = new Date(d);
-    return `${String(dateObj.getDate()).padStart(2,"0")}/${String(dateObj.getMonth()+1).padStart(2,"0")}/${dateObj.getFullYear()}`;
-  };
-
-  const getMonthNameFR = (monthIndex) => {
-    const months = [
-      "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-      "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
-    ];
-    return months[monthIndex] || "";
-  };
-
-  const groupedReports = groupByMonth(reports);
-
-  const totalGlobal = reports.reduce((acc, r) => {
-    acc.hommes += Number(r.hommes || 0);
-    acc.femmes += Number(r.femmes || 0);
-    acc.jeunes += Number(r.jeunes || 0);
-    acc.enfants += Number(r.enfants || 0);
-    acc.connectes += Number(r.connectes || 0);
-    acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
-    acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
+  const totalGeneral = rapports.reduce(
+  (acc, r) => {
+    acc.hommes += Number(r.data?.hommes) || 0;
+    acc.femmes += Number(r.data?.femmes) || 0;
+    acc.jeunes += Number(r.data?.jeunes) || 0;
+    acc.enfants += Number(r.data?.enfants) || 0;
+    acc.connectes += Number(r.data?.connectes) || 0;
+    acc.nouveauxVenus += Number(r.data?.nouveauxVenus) || 0;
+    acc.nouveauxConvertis += Number(r.data?.nouveauxConvertis) || 0;
+    acc.reconciliations += Number(r.data?.reconciliations) || 0;
+    acc.moissonneurs += Number(r.data?.moissonneurs) || 0;
     return acc;
-  }, { hommes:0,femmes:0,jeunes:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0 });
+  },
+  {
+    hommes: 0,
+    femmes: 0,
+    jeunes: 0,
+    enfants: 0,
+    connectes: 0,
+    nouveauxVenus: 0,
+    nouveauxConvertis: 0,
+    reconciliations: 0,
+    moissonneurs: 0,
+  }
+);
 
-  const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500","border-pink-500","border-indigo-500"];
+const totalPrincipal =
+  totalGeneral.hommes + totalGeneral.femmes;
+
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-      <h1 className="text-2xl font-bold text-white mt-4 mb-6 text-center">Statistiques Globales</h1>
+      <h1 className="text-3xl font-bold text-white mt-4">
+        Statistiques Globales
+      </h1>
 
-      {/* Filtre */}
-      <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-4 flex flex-wrap justify-center gap-4 text-white w-full max-w-3xl">
-        <div className="flex flex-col w-full sm:w-auto">
-          <label className="font-medium mb-1">Date début</label>
-          <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)}
-                 className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
-        </div>
-        <div className="flex flex-col w-full sm:w-auto">
-          <label className="font-medium mb-1">Date fin</label>
-          <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
-                 className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
-        </div>
-        <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end">
+      {/* FILTRES */}
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
+        <input
+          type="date"
+          value={dateDebut}
+          onChange={(e) => setDateDebut(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <input
+          type="date"
+          value={dateFin}
+          onChange={(e) => setDateFin(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <select
+          value={typeRapport}
+          onChange={(e) => setTypeRapport(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        >
+          <option className="text-black" value="Tous">Tous</option>
+          <option className="text-black" value="Culte">Culte</option>
+          <option className="text-black" value="Evangelisation">Evangelisation</option>
+          <option className="text-black" value="Baptême">Baptême</option>
+          <option className="text-black" value="Formation">Formation</option>
+          <option className="text-black" value="Serviteur">Serviteur</option>            
+          <option className="text-black" value="Cellules">Cellules</option>
+        </select>
+
+        <button
+          onClick={fetchStats}
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+        >
           Générer
         </button>
       </div>
 
-      {/* Tableau groupé par mois */}
-      {showTable && (
-        <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6">
-          <div className="w-max space-y-2">
+      {/* TABLE */}
+      {!loading && attendanceStats && (
+        <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+          <div className="w-max space-y-2"> {/* plus large pour total */}
             {/* HEADER */}
             <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[150px]">Mois</div>
+              <div className="min-w-[180px] ml-1">Type</div>
               <div className="min-w-[120px] text-center">Hommes</div>
               <div className="min-w-[120px] text-center">Femmes</div>
               <div className="min-w-[120px] text-center">Jeunes</div>
               <div className="min-w-[120px] text-center">Enfants</div>
               <div className="min-w-[140px] text-center">Connectés</div>
-              <div className="min-w-[150px] text-center">Nouveaux venus</div>
-              <div className="min-w-[180px] text-center">Nouveaux convertis</div>
+              <div className="min-w-[150px] text-center">Nouveaux Venus</div>
+              <div className="min-w-[180px] text-center">Nouveau Converti</div>
+              <div className="min-w-[140px] text-center">Réconciliation</div>
+              <div className="min-w-[160px] text-center">Moissonneurs</div>              
             </div>
 
-            {/* Lignes par mois */}
-            {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
-              const [year, monthIndex] = monthKey.split("-").map(Number);
-              const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-
-              const totalMonth = monthReports.reduce((acc,r)=>{
-                acc.hommes += Number(r.hommes||0);
-                acc.femmes += Number(r.femmes||0);
-                acc.jeunes += Number(r.jeunes||0);
-                acc.enfants += Number(r.enfants||0);
-                acc.connectes += Number(r.connectes||0);
-                acc.nouveauxVenus += Number(r.nouveauxVenus||0);
-                acc.nouveauxConvertis += Number(r.nouveauxConvertis||0);
-                return acc;
-              }, {hommes:0,femmes:0,jeunes:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0});
-
-              const isExpanded = expandedMonths[monthKey] || false;
-              const borderColor = borderColors[idx % borderColors.length];
-
+            {/* LIGNES */}
+            {rapports.map((r, idx) => {
+              const total =
+                (Number(r.data?.hommes) || 0) + (Number(r.data?.femmes) || 0);
               return (
-                <div key={monthKey} className="space-y-1">
-                  <div className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer ${borderColor}`} onClick={()=>toggleMonth(monthKey)}>
-                    <div className="min-w-[150px] text-white font-semibold">{isExpanded ? "➖ " : "➕ "} {monthLabel}</div>
-                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
-                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
-                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.jeunes}</div>
-                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.enfants}</div>
-                    <div className="min-w-[140px] text-center text-white font-bold">{totalMonth.connectes}</div>
-                    <div className="min-w-[150px] text-center text-white font-bold">{totalMonth.nouveauxVenus}</div>
-                    <div className="min-w-[180px] text-center text-white font-bold">{totalMonth.nouveauxConvertis}</div>
-                  </div>
-
-                  {isExpanded && monthReports.map(r=>(
-                    <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500">
-                      <div className="min-w-[150px] text-white">{formatDateFR(r.date)}</div>
-                      <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                      <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                      <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
-                      <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
-                      <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
-                      <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
-                      <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
-                    </div>
-                  ))}
+                <div
+                  key={idx}
+                  className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${r.border}`}
+                >
+                  <div className="min-w-[180px] text-white font-semibold">{r.label}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.data?.hommes ?? "-"}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.data?.femmes ?? "-"}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.data?.jeunes ?? "-"}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.data?.enfants ?? "-"}</div>
+                  <div className="min-w-[140px] text-center text-white">{r.data?.connectes ?? "-"}</div>
+                  <div className="min-w-[150px] text-center text-white">{r.data?.nouveauxVenus ?? "-"}</div>
+                  <div className="min-w-[180px] text-center text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
+                  <div className="min-w-[140px] text-center text-white">{r.data?.reconciliations ?? "-"}</div>         
+                  <div className="min-w-[160px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>                 
                 </div>
-              )
+              );
             })}
+  {/* 🔹 TOTAL GENERAL BAS */}
+<div className="flex items-center px-4 py-4 mt-3 rounded-xl bg-white/20 border-t border-white/40 font-bold">
+  <div className="min-w-[180px] text-orange-400 font-semibold uppercase ml-1">TOTAL</div>
 
-            {/* Total global */}
-            <div className="flex items-center px-6 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl text-orange-500 font-semibold">
-              <div className="min-w-[150px]">Total Global</div>
-              <div className="min-w-[120px] text-center">{totalGlobal.hommes}</div>
-              <div className="min-w-[120px] text-center">{totalGlobal.femmes}</div>
-              <div className="min-w-[120px] text-center">{totalGlobal.jeunes}</div>
-              <div className="min-w-[120px] text-center">{totalGlobal.enfants}</div>
-              <div className="min-w-[140px] text-center">{totalGlobal.connectes}</div>
-              <div className="min-w-[150px] text-center">{totalGlobal.nouveauxVenus}</div>
-              <div className="min-w-[180px] text-center">{totalGlobal.nouveauxConvertis}</div>
-            </div>
+  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.hommes}</div>
+  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.femmes}</div>
+  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.jeunes}</div>
+  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.enfants}</div>
+  <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGeneral.connectes}</div>
+  <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalGeneral.nouveauxVenus}</div>
+  <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGeneral.nouveauxConvertis}</div>
+  <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGeneral.reconciliations}</div>
+  <div className="min-w-[160px] text-center text-orange-400 font-semibold">{totalGeneral.moissonneurs}</div> 
+</div>
 
           </div>
         </div>

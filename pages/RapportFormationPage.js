@@ -31,6 +31,8 @@ function RapportFormation() {
   const [editRapport, setEditRapport] = useState(null);
   const [expandedMonths, setExpandedMonths] = useState({});
 
+  /* ================= USER ================= */
+
   useEffect(() => {
     const fetchUser = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -53,6 +55,8 @@ function RapportFormation() {
     fetchUser();
   }, []);
 
+  /* ================= FETCH ================= */
+
   const fetchRapports = async () => {
     let query = supabase
       .from("formations")
@@ -73,6 +77,8 @@ function RapportFormation() {
       fetchRapports();
     }
   }, [formData.eglise_id, formData.branche_id, filterDebut, filterFin]);
+
+  /* ================= CRUD ================= */
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -132,12 +138,23 @@ function RapportFormation() {
     fetchRapports();
   };
 
+  /* ================= UTIL ================= */
+
   const getMonthNameFR = (monthIndex) => {
     const months = [
       "Janvier","Février","Mars","Avril","Mai","Juin",
       "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
     ];
     return months[monthIndex] || "";
+  };
+
+  const formatDateFR = (dateString) => {
+    if (!dateString) return "";
+    const d = new Date(dateString);
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   const groupByMonth = (rapports) => {
@@ -155,13 +172,20 @@ function RapportFormation() {
     setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
   };
 
-  const groupedReports = groupByMonth(rapports);
+  const groupedReports = Object.entries(groupByMonth(rapports))
+    .sort((a, b) => {
+      const [yearA, monthA] = a[0].split("-").map(Number);
+      const [yearB, monthB] = b[0].split("-").map(Number);
+      return new Date(yearA, monthA) - new Date(yearB, monthB);
+    });
 
   const totalGlobal = rapports.reduce((acc, r) => {
     acc.hommes += Number(r.hommes || 0);
     acc.femmes += Number(r.femmes || 0);
     return acc;
   }, { hommes: 0, femmes: 0 });
+
+  /* ================= RENDER ================= */
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -176,6 +200,7 @@ function RapportFormation() {
       </p>
 
       {/* ================= FORMULAIRE ================= */}
+
       <div className="max-w-2xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
 
@@ -255,6 +280,7 @@ function RapportFormation() {
       </div>
 
       {/* ================= FILTRES ================= */}
+
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
         <input
           type="date"
@@ -276,11 +302,11 @@ function RapportFormation() {
         </button>
       </div>
 
-      {/* TABLEAU */}
+      {/* ================= TABLEAU ================= */}
+
       <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
         <div className="w-max space-y-2">
 
-          {/* HEADER */}
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
             <div className="min-w-[200px]">Date Début</div>
             <div className="min-w-[200px]">Date Fin</div>
@@ -291,8 +317,7 @@ function RapportFormation() {
             <div className="min-w-[150px] text-center">Actions</div>
           </div>
 
-          {/* MOIS */}
-          {Object.entries(groupedReports).map(([monthKey, monthRapports], idx) => {
+          {groupedReports.map(([monthKey, monthRapports], idx) => {
             const [year, monthIndex] = monthKey.split("-").map(Number);
             const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
 
@@ -303,13 +328,20 @@ function RapportFormation() {
             }, { hommes: 0, femmes: 0 });
 
             const isExpanded = expandedMonths[monthKey] || false;
-            const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500"];
+
+            const borderColors = [
+              "border-red-500",
+              "border-green-500",
+              "border-blue-500",
+              "border-yellow-500",
+              "border-purple-500"
+            ];
+
             const borderColor = borderColors[idx % borderColors.length];
 
             return (
               <div key={monthKey} className="space-y-1">
-                
-                {/* LIGNE MOIS CORRIGÉE */}
+
                 <div
                   className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 ${borderColor}`}
                   onClick={() => toggleMonth(monthKey)}
@@ -317,39 +349,35 @@ function RapportFormation() {
                   <div className="min-w-[200px] text-white font-semibold">
                     {isExpanded ? "➖ " : "➕ "} {monthLabel}
                   </div>
-
                   <div className="min-w-[200px]"></div>
                   <div className="min-w-[200px]"></div>
-
-                  <div className="min-w-[120px] text-center text-white font-bold">
-                    {totalMonth.hommes}
-                  </div>
-
-                  <div className="min-w-[120px] text-center text-white font-bold">
-                    {totalMonth.femmes}
-                  </div>
-
+                  <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
+                  <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
                   <div className="min-w-[120px] text-center text-orange-400 font-bold">
                     {totalMonth.hommes + totalMonth.femmes}
                   </div>
-
                   <div className="min-w-[150px]"></div>
                 </div>
 
-                {/* DÉTAILS */}
                 {(isExpanded || monthRapports.length === 1) &&
                   monthRapports.map(r => {
                     const total = Number(r.hommes) + Number(r.femmes);
                     return (
-                      <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500">
-                        <div className="min-w-[200px] text-white">{r.date_debut}</div>
-                        <div className="min-w-[200px] text-white">{r.date_fin}</div>
+                      <div
+                        key={r.id}
+                        className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}
+                      >
+                        <div className="min-w-[200px] text-white">{formatDateFR(r.date_debut)}</div>
+                        <div className="min-w-[200px] text-white">{formatDateFR(r.date_fin)}</div>
                         <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
                         <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
                         <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
                         <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
                         <div className="min-w-[150px] text-center">
-                          <button onClick={() => handleEdit(r)} className="text-orange-400 underline hover:text-orange-500 px-4 py-1 rounded-xl">
+                          <button
+                            onClick={() => handleEdit(r)}
+                            className="text-orange-400 underline hover:text-orange-500 px-4 py-1 rounded-xl"
+                          >
                             Modifier
                           </button>
                         </div>
@@ -360,7 +388,6 @@ function RapportFormation() {
             );
           })}
 
-          {/* TOTAL GLOBAL */}
           <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
             <div className="min-w-[200px] text-white font-bold">TOTAL</div>
             <div className="min-w-[200px]"></div>
@@ -384,10 +411,8 @@ function RapportFormation() {
           background: rgba(255, 255, 255, 0.05);
           color: white;
         }
-        .input::placeholder {
-          color: #e0e0e0;
-        }
       `}</style>
+
     </div>
   );
 }

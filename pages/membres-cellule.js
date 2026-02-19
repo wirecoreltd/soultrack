@@ -160,44 +160,61 @@ export default function MembresCellule() {
       )
     );
 
-  if (loading) return <p className="text-white mt-10 text-center">Chargement...</p>;
-  if (message) return <p className="text-white mt-10 text-center">{message}</p>;
-
   // ================= RENDER =================
   return (
-    <>
-    <div className="min-h-screen p-6" style={{ backgroundColor: "#333699" }}>
-      <HeaderPages />
+    
+  <div className="min-h-screen p-6" style={{ backgroundColor: "#333699" }}>
+    <HeaderPages />
 
-      <h1 className="text-white text-2xl font-bold text-center mb-4">
-        {cellules.length > 1 ? "Membres de mes cellules" : "Membre de ma cellule"}
-      </h1>          
+    <h1 className="text-white text-2xl font-bold text-center mb-4">
+      {cellules.length > 1 ? "Membres de mes cellules" : "Membre de ma cellule"}
+    </h1>
 
-      {/* Recherche + filtre */}
-      <div className="w-full flex flex-col items-center mb-4 gap-2">
-        <input
-          type="text"
-          placeholder="Recherche..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="w-full max-w-md px-3 py-2 rounded-md border text-black focus:outline-none"
-        />
-        <div className="flex items-center gap-3">
-          <select
-            value={filterCellule}
-            onChange={e => setFilterCellule(e.target.value)}
-            className="px-3 py-2 rounded-md border text-black text-sm"
-          >
-            <option value="">-- Toutes les cellules --</option>
-            {cellules.map(c => (
-              <option key={c.id} value={c.id}>
-                {c.cellule_full}
-              </option>
-            ))}
-          </select>
-          <span className="text-white text-sm">{filteredMembres.length} membres</span>
-        </div>
+    {/* ================= ETAT LOADING ================= */}
+    {loading && (
+      <div className="text-center mt-10 text-white">
+        Chargement...
       </div>
+    )}
+
+    {/* ================= MESSAGE VIDE ================= */}
+    {!loading && message && (
+      <div className="text-center mt-10 text-white">
+        {message}
+      </div>
+    )}
+
+    {/* ================= CONTENU NORMAL ================= */}
+    {!loading && !message && (
+      <>
+        {/* Recherche + filtre */}
+        <div className="w-full flex flex-col items-center mb-4 gap-2">
+          <input
+            type="text"
+            placeholder="Recherche..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full max-w-md px-3 py-2 rounded-md border text-black focus:outline-none"
+          />
+
+          <div className="flex items-center gap-3">
+            <select
+              value={filterCellule}
+              onChange={e => setFilterCellule(e.target.value)}
+              className="px-3 py-2 rounded-md border text-black text-sm"
+            >
+              <option value="">-- Toutes les cellules --</option>
+              {cellules.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.cellule_full}
+                </option>
+              ))}
+            </select>
+            <span className="text-white text-sm">
+              {filteredMembres.length} membres
+            </span>
+          </div>
+        </div>
 
       {/* Toggle Vue Carte / Vue Table */}
       <div className="w-full max-w-6xl flex justify-center mb-6">

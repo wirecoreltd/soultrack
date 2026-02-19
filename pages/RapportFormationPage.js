@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
@@ -30,9 +30,12 @@ function RapportFormation() {
   const [rapports, setRapports] = useState([]);
   const [editRapport, setEditRapport] = useState(null);
   const [expandedMonths, setExpandedMonths] = useState({});
-  const [showTable, setShowTable] = useState(false); // <- contrôle l'affichage du tableau
+  const [showTable, setShowTable] = useState(false);
+
+  const formRef = useRef(null); // Référence pour scroll automatique
 
   /* ================= USER ================= */
+
   useEffect(() => {
     const fetchUser = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -56,6 +59,7 @@ function RapportFormation() {
   }, []);
 
   /* ================= FETCH ================= */
+
   const fetchRapports = async () => {
     let query = supabase
       .from("formations")
@@ -69,9 +73,11 @@ function RapportFormation() {
 
     const { data } = await query;
     setRapports(data || []);
+    setShowTable(true); // Affiche la table uniquement après clic sur "Générer"
   };
 
   /* ================= CRUD ================= */
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (editRapport) return handleUpdate();
@@ -100,6 +106,9 @@ function RapportFormation() {
       hommes: r.hommes,
       femmes: r.femmes,
     });
+
+    // Scroll automatique vers le formulaire
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const handleUpdate = async () => {
@@ -117,6 +126,7 @@ function RapportFormation() {
       .eq("id", editRapport.id);
 
     setEditRapport(null);
+
     setFormData((prev) => ({
       ...prev,
       date_debut: "",
@@ -130,6 +140,7 @@ function RapportFormation() {
   };
 
   /* ================= UTIL ================= */
+
   const getMonthNameFR = (monthIndex) => {
     const months = [
       "Janvier","Février","Mars","Avril","Mai","Juin",
@@ -176,16 +187,24 @@ function RapportFormation() {
   }, { hommes: 0, femmes: 0 });
 
   /* ================= RENDER ================= */
+
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-3xl font-bold text-white mt-4 mb-2">Rapport Formation</h1>
-      <p className="text-white/80 mb-6">Résumé des formations par mois</p>
+      <h1 className="text-3xl font-bold text-white mt-4 mb-2">
+        Rapport Formation
+      </h1>
+
+      <p className="text-white/80 mb-6">
+        Résumé des formations par mois
+      </p>
 
       {/* ================= FORMULAIRE ================= */}
-      <div className="max-w-2xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
+
+      <div ref={formRef} className="max-w-2xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+
           <div className="flex flex-col">
             <label className="text-white mb-1">Date Début</label>
             <input
@@ -198,6 +217,7 @@ function RapportFormation() {
               className="input"
             />
           </div>
+
           <div className="flex flex-col">
             <label className="text-white mb-1">Date Fin</label>
             <input
@@ -210,6 +230,7 @@ function RapportFormation() {
               className="input"
             />
           </div>
+
           <div className="flex flex-col col-span-2">
             <label className="text-white mb-1">Nom de la Formation</label>
             <input
@@ -222,6 +243,7 @@ function RapportFormation() {
               className="input"
             />
           </div>
+
           <div className="flex flex-col">
             <label className="text-white mb-1">Hommes</label>
             <input
@@ -233,6 +255,7 @@ function RapportFormation() {
               className="input"
             />
           </div>
+
           <div className="flex flex-col">
             <label className="text-white mb-1">Femmes</label>
             <input
@@ -244,6 +267,7 @@ function RapportFormation() {
               className="input"
             />
           </div>
+
           <div className="col-span-2 flex justify-center mt-4">
             <button
               type="submit"
@@ -252,10 +276,12 @@ function RapportFormation() {
               {editRapport ? "Modifier" : "Ajouter le rapport"}
             </button>
           </div>
+
         </form>
       </div>
 
       {/* ================= FILTRES ================= */}
+
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
         <input
           type="date"
@@ -270,7 +296,7 @@ function RapportFormation() {
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <button
-          onClick={() => { fetchRapports(); setShowTable(true); }}
+          onClick={fetchRapports}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
         >
           Générer
@@ -278,11 +304,12 @@ function RapportFormation() {
       </div>
 
       {/* ================= TABLEAU ================= */}
+
       {showTable && (
         <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
           <div className="w-max space-y-2">
-            {/* Header */}
-            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+
+            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[200px]">Date Début</div>
               <div className="min-w-[200px]">Date Fin</div>
               <div className="min-w-[200px] text-center">Nom Formation</div>
@@ -316,6 +343,7 @@ function RapportFormation() {
 
               return (
                 <div key={monthKey} className="space-y-1">
+
                   <div
                     className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 ${borderColor}`}
                     onClick={() => toggleMonth(monthKey)}
@@ -325,8 +353,8 @@ function RapportFormation() {
                     </div>
                     <div className="min-w-[200px]"></div>
                     <div className="min-w-[200px]"></div>
-                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.hommes}</div>
-                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.femmes}</div>
+                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
+                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
                     <div className="min-w-[120px] text-center text-orange-400 font-semibold">
                       {totalMonth.hommes + totalMonth.femmes}
                     </div>
@@ -346,7 +374,7 @@ function RapportFormation() {
                           <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
                           <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
                           <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                          <div className="min-w-[120px] text-center text-orange-400 font-semibold">{total}</div>
+                          <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
                           <div className="min-w-[150px] text-center">
                             <button
                               onClick={() => handleEdit(r)}
@@ -362,16 +390,16 @@ function RapportFormation() {
               );
             })}
 
-            {/* TOTAL GLOBAL */}
             <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
-              <div className="min-w-[200px] text-orange-400 font-semibold">TOTAL</div>
+              <div className="min-w-[200px] text-white font-bold">TOTAL</div>
               <div className="min-w-[200px]"></div>
               <div className="min-w-[200px]"></div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
+              <div className="min-w-[120px] text-center text-white font-bold">{totalGlobal.hommes}</div>
+              <div className="min-w-[120px] text-center text-white font-bold">{totalGlobal.femmes}</div>
               <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-2">{totalGlobal.hommes + totalGlobal.femmes}</div>
               <div className="min-w-[150px]"></div>
             </div>
+
           </div>
         </div>
       )}

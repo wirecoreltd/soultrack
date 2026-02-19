@@ -18,10 +18,9 @@ function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [typeRapport, setTypeRapport] = useState("Tous");
-
+  const [serviteurStats, setServiteurStats] = useState(null);
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
-
   const [attendanceStats, setAttendanceStats] = useState(null);
   const [evanStats, setEvanStats] = useState(null);
   const [baptemeStats, setBaptemeStats] = useState(null);
@@ -171,6 +170,26 @@ function StatGlobalPage() {
 
     setCellulesCount(count || 0);
 
+    // ================= SERVITEURS =================
+      let serviteurQuery = supabase
+        .from("membres_complets")
+        .select("id, sexe")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId)
+        .eq("star", true)
+        .in("etat_contact", ["Existant", "Nouveau"]);
+      
+      if (dateDebut) serviteurQuery = serviteurQuery.gte("created_at", dateDebut);
+      if (dateFin) serviteurQuery = serviteurQuery.lte("created_at", dateFin);
+      
+      const { data: serviteurData } = await serviteurQuery;
+      
+      const serviteurTotals = {
+        hommes: serviteurData?.filter(r => r.sexe === "Homme").length || 0,
+        femmes: serviteurData?.filter(r => r.sexe === "Femme").length || 0,
+      };      
+      setServiteurStats(serviteurTotals);
+
     setLoading(false);
   };
 
@@ -180,6 +199,7 @@ function StatGlobalPage() {
     { label: "Baptême", data: baptemeStats, border: "border-l-purple-500" },
     { label: "Formation", data: formationStats, border: "border-l-blue-500" },
     { label: "Cellules", data: { total: cellulesCount }, border: "border-l-yellow-500" },
+    { label: "Serviteur", data: serviteurStats, border: "border-l-pink-500" },     
   ].filter((r) => typeRapport === "Tous" || r.label === typeRapport);
 
   const totalGeneral = rapports.reduce(
@@ -243,6 +263,7 @@ const totalPrincipal =
           <option className="text-black" value="Evangelisation">Evangelisation</option>
           <option className="text-black" value="Baptême">Baptême</option>
           <option className="text-black" value="Formation">Formation</option>
+          <option className="text-black" value="Serviteur">Serviteur</option>            
           <option className="text-black" value="Cellules">Cellules</option>
         </select>
 

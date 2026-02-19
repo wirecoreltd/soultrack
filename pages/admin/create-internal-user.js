@@ -122,7 +122,8 @@ function CreateInternalUserContent() {
             <option value="ResponsableIntegration">Responsable Intégration</option>
             <option value="ResponsableCellule">Responsable Cellule</option>
             <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
-            <option value="SuperviseurCellule">Superviseur Cellules</option>            
+            <option value="SuperviseurCellule">Superviseur Cellules</option>
+            <option value="Conseiller">Conseiller</option>   
           </select>
 
           {formData.role === "ResponsableCellule" && (

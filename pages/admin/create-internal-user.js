@@ -42,7 +42,7 @@ function CreateInternalUserContent() {
           .from("membres_complets")
           .select("id, prenom, nom, telephone")
           .in("etat_contact", ["Nouveau", "Existant"])
-          .eq("star", true);
+          .eq("star", TRUE);
 
         if (error) throw error;
         setMembers(membersData || []);

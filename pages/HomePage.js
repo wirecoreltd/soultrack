@@ -156,26 +156,7 @@ export default function HomePage() {
                 className="rounded-2xl shadow-lg border"
               />
             </div>
-          </div>
-
-          {/* Fiche contact */}
-          <div className="lg:flex lg:flex-row-reverse lg:items-center lg:gap-12 bg-white p-6 rounded-2xl shadow-lg">
-            <div className="lg:w-1/2">
-              <h3 className="text-3xl font-bold mb-4">📋 Fiche détaillée d’un membre</h3>
-              <p className="text-gray-700 mb-4">
-                Accédez à l’historique complet, la présence aux cultes, la cellule, l’évolution et le suivi spirituel. Chaque membre est suivi avec soin et attention.
-              </p>
-            </div>
-            <div className="lg:w-1/2">
-              <Image
-                src="/Details Membre.png"
-                alt="Fiche contact"
-                width={100} // moitié de la taille originale
-                height={250}
-                className="rounded-2xl shadow-lg border"
-              />
-            </div>
-          </div>
+          </div>          
 
         </div>
       </section>

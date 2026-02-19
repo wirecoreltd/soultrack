@@ -6,6 +6,8 @@ import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 
+const [showTable, setShowTable] = useState(false);
+
 export default function RapportFormationPage() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "ResponsableFormation"]}>
@@ -13,6 +15,9 @@ export default function RapportFormationPage() {
     </ProtectedRoute>
   );
 }
+
+
+
 
 function RapportFormation() {
   const [formData, setFormData] = useState({
@@ -172,6 +177,10 @@ function RapportFormation() {
     setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
   };
 
+    const handleGenerate = () => {
+    setShowTable(true);
+  };
+
   const groupedReports = Object.entries(groupByMonth(rapports))
     .sort((a, b) => {
       const [yearA, monthA] = a[0].split("-").map(Number);
@@ -295,7 +304,7 @@ function RapportFormation() {
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <button
-          onClick={fetchRapports}
+          onClick={handleGenerate}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
         >
           Générer

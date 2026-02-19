@@ -129,8 +129,7 @@ function StatGlobalPage() {
       </div>
 
       {!loading && attendanceStats && (
-        {/* TABLE COLLAPSIBLE PAR MOIS */}
-        <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+  <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
           <div className="w-max space-y-2">
             {/* On regroupe par mois */}
             {["Février 2026"].map((mois) => {

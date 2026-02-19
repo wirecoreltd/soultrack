@@ -183,9 +183,10 @@ export default function AddMember() {
       <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-3xl shadow-lg relative">
         <button
           onClick={() => router.back()}
-          className="absolute top-3 left-3 sm:top-4 sm:left-4 flex items-center text-black font-semibold hover:text-gray-800 transition-colors"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 text-black font-bold hover:text-gray-800 transition-colors text-xl"
+          aria-label="Fermer"
         >
-          ← Retour
+          ✕
         </button>
 
         <div className="flex justify-center mb-4 sm:mb-6">

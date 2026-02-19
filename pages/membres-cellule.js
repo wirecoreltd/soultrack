@@ -165,6 +165,7 @@ export default function MembresCellule() {
 
   // ================= RENDER =================
   return (
+    <>
     <div className="min-h-screen p-6" style={{ backgroundColor: "#333699" }}>
       <HeaderPages />
 

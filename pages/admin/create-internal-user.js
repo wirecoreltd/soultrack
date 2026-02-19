@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
-import supabase from "../lib/supabaseClient";
-import ProtectedRoute from "../components/ProtectedRoute";
+import supabase from "../../lib/supabaseClient";
+import ProtectedRoute from "../../components/ProtectedRoute";
 
 export default function CreateInternalUserPage() {
   return (

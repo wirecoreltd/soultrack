@@ -50,13 +50,15 @@ function CreateInternalUserContent() {
           .single();
         if (!profile) return;
 
-        const { data: membersData } = await supabase
-          .from("membres_complets")
-          .select("id, prenom, nom, telephone")
-          .in("etat_contact", "existant")
-          .eq("star", true)
-          .eq("eglise_id", profile.eglise_id)
-          .eq("branche_id", profile.branche_id);
+        const { data: membersData, error } = await supabase
+        .from("membres_complets")
+        .select("id, prenom, nom, telephone")
+        .eq("star", "true") // STRING
+        .in("etat_contact", ["existant", "nouveau"]) // minuscules
+        .eq("eglise_id", profile.eglise_id)
+        .eq("branche_id", profile.branche_id);
+
+        console.log("Members récupérés :", membersData);
 
         setMembers(membersData || []);
       } catch (err) {

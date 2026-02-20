@@ -9,20 +9,20 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     nom: "",
     email: "",
     telephone: "",
-    role: "",
-    role_description: "",
+    roles: [],
   });
 
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Liste des rôles techniques + description
-  const roles = [
+  // Liste des rôles techniques + labels
+  const allRoles = [
     { value: "Administrateur", label: "Administrateur" },
+    { value: "ResponsableIntegration", label: "Responsable Intégration" },
     { value: "ResponsableCellule", label: "Responsable Cellule" },
     { value: "ResponsableEvangelisation", label: "Responsable Évangélisation" },
+    { value: "SuperviseurCellule", label: "Superviseur Cellule" },
     { value: "Conseiller", label: "Conseiller" },
-    { value: "ResponsableIntegration", label: "Responsable Intégration" },
   ];
 
   useEffect(() => {
@@ -32,25 +32,22 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
       nom: user.nom || "",
       email: user.email || "",
       telephone: user.telephone || "",
-      role: user.role || "",
-      role_description: user.role_description || "",
+      roles: user.roles || [],
     });
   }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
 
-    // Quand on change le rôle, on change aussi automatiquement la description
-    if (name === "role") {
-      const roleFound = roles.find(r => r.value === value);
-      setForm(prev => ({
-        ...prev,
-        role: value,
-        role_description: roleFound ? roleFound.label : ""
-      }));
-    } else {
-      setForm(prev => ({ ...prev, [name]: value }));
-    }
+  const handleRoleChange = (roleValue) => {
+    setForm(prev => {
+      const roles = prev.roles.includes(roleValue)
+        ? prev.roles.filter(r => r !== roleValue)
+        : [...prev.roles, roleValue];
+      return { ...prev, roles };
+    });
   };
 
   const handleSave = async () => {
@@ -64,8 +61,8 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         nom: form.nom,
         email: form.email,
         telephone: form.telephone,
-        role: form.role,
-        role_description: form.role_description,
+        roles: form.roles,
+        role_description: form.roles.join(" / "), // pour affichage dans list
       })
       .eq("id", user.id)
       .select();
@@ -104,12 +101,19 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
           <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" className="input" />
           <input type="text" name="telephone" value={form.telephone} onChange={handleChange} placeholder="Téléphone" className="input" />
 
-          <select name="role" value={form.role} onChange={handleChange} className="input">
-            <option value="">-- Sélectionnez un rôle --</option>
-            {roles.map(r => (
-              <option key={r.value} value={r.value}>{r.label}</option>
+          <div className="flex flex-col gap-2">
+            <label className="font-semibold">Rôles :</label>
+            {allRoles.map(r => (
+              <label key={r.value} className="inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={form.roles.includes(r.value)}
+                  onChange={() => handleRoleChange(r.value)}
+                />
+                {r.label}
+              </label>
             ))}
-          </select>
+          </div>
 
           <div className="flex gap-4 mt-4">
             <button onClick={onClose} className="flex-1 bg-gray-400 text-white font-bold py-3 rounded-2xl hover:bg-gray-500 transition">Annuler</button>

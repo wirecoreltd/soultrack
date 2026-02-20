@@ -250,7 +250,7 @@ function ListMembersContent() {
     // 2. récupérer eglise_id & branche_id
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("id, eglise_id, branche_id")
+      .select("id, eglise_id, branche_id, role")
       .eq("id", user.id)
       .single();
 

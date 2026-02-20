@@ -11,7 +11,7 @@ import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 
-export default function Administrateur() {
+function AdministrateurContent() {
   const router = useRouter();
   const [userName, setUserName] = useState("Utilisateur");
 
@@ -113,7 +113,7 @@ export default function Administrateur() {
     </div>
   );
 }
-// ✅ Wrapper avec ProtectedRoute
+
 export default function Administrateur() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur"]}>

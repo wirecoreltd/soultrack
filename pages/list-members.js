@@ -74,9 +74,12 @@ if (userProfile?.roles) {
 }
   //--------------------------------------//
 
-  const canAddMember =
-  userProfile?.role === "Admin" ||
-  userProfile?.role === "ResponsableIntegration";
+const role = userProfile?.role?.toLowerCase();
+
+// Autorisation
+const canAddMember =
+  role === "admin" ||
+  role === "responsableintegration";
 
   
 
@@ -805,13 +808,13 @@ console.log("rolesArray:", rolesArray);
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
       
-        {/* 🔥 Bouton visible seulement si l'utilisateur N'EST PAS Conseiller */}
+        {/* 🔥 Bouton visible seulement si l'utilisateur N'EST PAS Conseiller */}        
         {canAddMember && (
           <button
-            onClick={() => setShowAddPopup(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-xl"
+            onClick={() => router.push("/AddContact")}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl"
           >
-           ➕ Ajouter un membre
+            ➕ Ajouter un membre
           </button>
         )}
       </div>

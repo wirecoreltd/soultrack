@@ -72,8 +72,13 @@ if (userProfile?.roles) {
       .split(",");
   }
 }
-
   //--------------------------------------//
+
+  const canAddMember =
+  userProfile?.role === "Admin" ||
+  userProfile?.role === "ResponsableIntegration";
+
+  
 
   const [view, setView] = useState(() => {
     if (typeof window !== "undefined") {
@@ -801,10 +806,14 @@ console.log("rolesArray:", rolesArray);
         </button>
       
         {/* 🔥 Bouton visible seulement si l'utilisateur N'EST PAS Conseiller */}
-         {userProfile?.role !== "Conseiller" && (
-   <button> ➕Ajouter un membre</button>          
-      )}
-
+        {canAddMember && (
+          <button
+            onClick={() => setShowAddPopup(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-xl"
+          >
+           ➕ Ajouter un membre
+          </button>
+        )}
       </div>
 
       {/* ==================== VUE CARTE ==================== */}

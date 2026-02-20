@@ -12,8 +12,20 @@ import Footer from "../../components/Footer";
    Ligne utilisateur
 ========================= */
 function UserRow({ u, setSelectedUser, setDeleteUser }) {
-  // Affichage multi-roles
-  const rolesDisplay = u.roles?.join(" / ") || "-";
+  // Table de correspondance pour l'affichage lisible des rôles
+  const roleLabels = {
+    Administrateur: "Administrateur",
+    ResponsableIntegration: "Responsable Intégration",
+    ResponsableCellule: "Responsable Cellule",
+    ResponsableEvangelisation: "Responsable Évangélisation",
+    SuperviseurCellule: "Superviseur Cellule",
+    Conseiller: "Conseiller",
+  };
+
+  // Construire la chaîne à afficher pour les rôles
+  const rolesDisplay = (u.roles && u.roles.length > 0)
+    ? u.roles.map(role => roleLabels[role] || role).join(" / ")
+    : roleLabels[u.role] || u.role || "";
 
   return (
     <div className="flex flex-row items-center px-4 py-2 rounded-lg gap-2 bg-white/15 border-l-4 text-sm" style={{ borderLeftColor: "#F59E0B" }}>
@@ -28,6 +40,7 @@ function UserRow({ u, setSelectedUser, setDeleteUser }) {
     </div>
   );
 }
+
 
 /* =========================
    Page principale

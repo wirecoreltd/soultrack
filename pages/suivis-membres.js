@@ -358,11 +358,18 @@ return (
                     )}
         
                   <p className="text-sm text-black-700 mb-1">
-                    🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}
-                  </p>
-                  <p className="text-sm text-black-700 mb-1">
-                    👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}
-                  </p>
+                  🏠 Cellule : {m.cellule_id 
+                    ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") 
+                    : "—"}
+                </p>
+                <p className="text-sm text-black-700 mb-1">
+                  👤 Conseiller : {m.conseiller_id 
+                    ? (() => {
+                        const cons = conseillers.find(c => c.id === m.conseiller_id);
+                        return cons ? `${cons.prenom} ${cons.nom}` : "—";
+                      })()
+                    : "—"}
+                </p>
                     
                   <p className="self-end text-[11px] text-gray-400 mt-3">Créé le {formatDateFr(m.date_premiere_visite)}</p>
         
@@ -461,11 +468,18 @@ return (
             {uniqueMembers.length === 0 && <div className="px-2 py-2 text-white text-center bg-gray-600 rounded">Aucun membre en suivi</div>}
 
             {uniqueMembers.map(m => {
-              const attribue = m.conseiller_id
-                ? `👤 ${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim()
-                : m.cellule_id
-                ? `🏠 ${cellules.find(c => c.id === m.cellule_id)?.cellule_full || ""}`
-                : "—";
+              const attribue = (() => {
+              if (m.conseiller_id) {
+                const cons = conseillers.find(c => c.id === m.conseiller_id);
+                return cons ? `👤 ${cons.prenom} ${cons.nom}` : "—";
+              }
+              if (m.cellule_id) {
+                const cell = cellules.find(c => c.id === m.cellule_id);
+                return cell ? `🏠 ${cell.cellule_full}` : "—";
+              }
+              return "—";
+            })();
+
 
               return (
                 <div key={m.id} className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>

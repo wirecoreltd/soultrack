@@ -59,15 +59,20 @@ function ListMembersContent() {
   const [userProfile, setUserProfile] = useState(null);  
   
 //--------------------------------------//
-  // 🔑 Sécurité : attendre que userProfile soit chargé
-if (!userProfile) return null;
+   // 🔒 Sécurisation maximale des rôles
+  let rolesArray = [];
 
-// 🔑 Transformer roles en vrai tableau
-const rolesArray = Array.isArray(userProfile.roles)
-  ? userProfile.roles
-  : typeof userProfile.roles === "string"
-  ? JSON.parse(userProfile.roles || "[]")
-  : [];
+  if (userProfile?.roles) {
+    if (Array.isArray(userProfile.roles)) {
+      rolesArray = userProfile.roles;
+    } else {
+      try {
+        rolesArray = JSON.parse(userProfile.roles);
+      } catch (e) {
+        rolesArray = [];
+      }
+    }
+  };
 
   //--------------------------------------//
 
@@ -792,14 +797,14 @@ useEffect(() => {
         </button>
       
         {/* 🔥 Bouton visible seulement si l'utilisateur N'EST PAS Conseiller */}
-        {!rolesArray.includes("Conseiller") && (
-  <button
-    onClick={() => router.push("/AddContact")}
-    className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-  >
-    ➕ Ajouter un membre
-  </button>
-)}
+         {userProfile && !rolesArray.includes("Conseiller") && (
+        <button
+          onClick={() => router.push("/AddContact")}
+          className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+        >
+          ➕ Ajouter un membre
+        </button>
+      )}
 
       </div>
 

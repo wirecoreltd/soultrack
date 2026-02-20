@@ -106,7 +106,7 @@ export default function AddMember() {
     const dataToSend = {
       ...formData,
       besoin: finalBesoin,
-      etat_contact: "Nouveau",
+      etat_contact: "nouveau",
       eglise_id: formData.eglise_id,
       branche_id: formData.branche_id,
     };

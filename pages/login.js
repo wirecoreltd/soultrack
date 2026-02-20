@@ -1,4 +1,3 @@
-// pages/login.js
 "use client";
 
 import { useState } from "react";
@@ -13,62 +12,55 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
-  e.preventDefault();
-  setError(null);
-  setLoading(true);
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
 
-  try {
-    // 1️⃣ Connexion à Supabase
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      // 1️⃣ Connexion à Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (authError || !authData.user) {
-      setError("❌ Email ou mot de passe incorrect");
+      if (authError || !authData.user) {
+        setError("❌ Email ou mot de passe incorrect");
+        setLoading(false);
+        return;
+      }
+
+      const user = authData.user;
+
+      // 2️⃣ Récupérer le profil complet avec roles[]
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, role, roles, prenom, nom, telephone")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) {
+        setError("❌ Impossible de récupérer le profil");
+        setLoading(false);
+        return;
+      }
+
+      // 3️⃣ Stocker les rôles et le profil
+      const roles = profile.roles || [];
+      localStorage.setItem("userRole", JSON.stringify(roles));
+      localStorage.setItem("profile", JSON.stringify(profile));
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("userId", user.id);
+
+      // 4️⃣ Redirection unique vers index
+      router.push("/");
+
+    } catch (err) {
+      console.error(err);
+      setError("❌ Erreur lors de la connexion");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const user = authData.user;
-    localStorage.setItem("userEmail", email);
-    localStorage.setItem("userId", user.id);
-
-    // 2️⃣ Récupérer le profil complet avec roles[]
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("id, role, roles, prenom, nom, telephone")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError) {
-      setError("❌ Impossible de récupérer le profil");
-      setLoading(false);
-      return;
-    }
-
-    // 3️⃣ Stocker les rôles et le profil
-    const roles = profile.roles || [];
-    localStorage.setItem("userRole", JSON.stringify(roles));
-    localStorage.setItem("profile", JSON.stringify(profile));
-
-    // 4️⃣ Redirection selon priorité des rôles
-    if (roles.includes("Administrateur")) router.push("/");
-    else if (roles.includes("ResponsableIntegration")) router.push("/membres-hub");
-    else if (roles.includes("ResponsableEvangelisation")) router.push("/evangelisation-hub");
-    else if (roles.includes("ResponsableCellule")) router.push("/cellules-hub");
-    else if (roles.includes("SuperviseurCellule")) router.push("/cellules-hub");
-    else if (roles.includes("Conseiller")) router.push("/conseiller-hub");
-    else router.push("/");
-
-  } catch (err) {
-    console.error(err);
-    setError("❌ Erreur lors de la connexion");
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
@@ -116,15 +108,13 @@ export default function LoginPage() {
         >
           Mot de passe oublié ?
         </button>
-            
+
         <button
           onClick={() => router.push("/SignupEglise")}
           className="mt-4 text-orange-400 underline hover:text-orange-400"
         >
           Création de compte
         </button>
-
-            
       </div>
     </div>
   );

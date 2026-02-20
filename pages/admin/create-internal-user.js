@@ -53,7 +53,7 @@ function CreateInternalUserContent() {
         const { data: membersData } = await supabase
           .from("membres_complets")
           .select("id, prenom, nom, telephone")
-          .in("etat_contact", ["Nouveau", "Existant"])
+          .in("etat_contact", "existant"])
           .eq("star", true)
           .eq("eglise_id", profile.eglise_id)
           .eq("branche_id", profile.branche_id);

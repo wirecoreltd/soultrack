@@ -262,47 +262,47 @@ useEffect(() => {
   const channel = supabase.channel("realtime:membres_complets");
 
   const fetchScopedMembers = async () => {
-    if (!scopedQuery || !userProfile) return;
+  if (!scopedQuery || !userProfile) return;
 
-    try {
-      // 🔹 Récupération membres scoped (eglise + branche déjà filtrés)
-      const { data, error } = await scopedQuery("membres_complets")
-        .order("created_at", { ascending: false });
+  try {
+    let query = scopedQuery("membres_complets")
+      .order("created_at", { ascending: false });
 
-      if (error) throw error;
-
-      let membresFiltres = data || [];
-
-      // 🔹 FILTRAGE PAR ROLE
-
-      // Conseiller → uniquement ses contacts
-      if (userProfile.role === "Conseiller") {
-        membresFiltres = membresFiltres.filter(
-          (m) => m.conseiller_id === userProfile.id
-        );
-      }
-
-      // ResponsableCellule → uniquement les membres de ses cellules
-      if (userProfile.role === "ResponsableCellule") {
-        const { data: cellulesData, error: celluleError } = await scopedQuery("cellules")
-          .select("id")
-          .eq("responsable_id", userProfile.id);
-
-        if (celluleError) throw celluleError;
-
-        const celluleIds = cellulesData?.map((c) => c.id) || [];
-
-        membresFiltres = membresFiltres.filter((m) =>
-          celluleIds.includes(m.cellule_id)
-        );
-      }
-
-      setAllMembers(membresFiltres);
-
-    } catch (err) {
-      console.error("❌ Erreur fetchScopedMembers:", err);
+    // 🔹 Conseiller → uniquement ses contacts
+    if (userProfile.role === "Conseiller") {
+      query = query.eq("conseiller_id", userProfile.id);
     }
-  };
+
+    // 🔹 ResponsableCellule → uniquement ses cellules
+    if (userProfile.role === "ResponsableCellule") {
+      const { data: cellulesData, error: celluleError } = await scopedQuery("cellules")
+        .select("id")
+        .eq("responsable_id", userProfile.id);
+
+      if (celluleError) throw celluleError;
+
+      const celluleIds = cellulesData?.map((c) => c.id) || [];
+
+      if (celluleIds.length > 0) {
+        query = query.in("cellule_id", celluleIds);
+      } else {
+        // aucune cellule → aucun membre
+        setAllMembers([]);
+        return;
+      }
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    setAllMembers(data || []);
+
+  } catch (err) {
+    console.error("❌ Erreur fetchScopedMembers:", err);
+  }
+};
+
 
   // 🔹 Premier chargement
   fetchScopedMembers();

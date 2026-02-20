@@ -62,17 +62,16 @@ function ListMembersContent() {
    // 🔒 Sécurisation maximale des rôles
   let rolesArray = [];
 
-  if (userProfile?.roles) {
-    if (Array.isArray(userProfile.roles)) {
-      rolesArray = userProfile.roles;
-    } else {
-      try {
-        rolesArray = JSON.parse(userProfile.roles);
-      } catch (e) {
-        rolesArray = [];
-      }
-    }
-  };
+if (userProfile?.roles) {
+  if (Array.isArray(userProfile.roles)) {
+    rolesArray = userProfile.roles;
+  } else if (typeof userProfile.roles === "string") {
+    rolesArray = userProfile.roles
+      .replace("{", "")
+      .replace("}", "")
+      .split(",");
+  }
+}
 
   //--------------------------------------//
 
@@ -464,6 +463,11 @@ useEffect(() => {
             return m.besoin;
           }
         })();
+
+    console.log("userProfile:", userProfile);
+console.log("roles:", userProfile?.roles);
+console.log("rolesArray:", rolesArray);
+
 
     return (
    

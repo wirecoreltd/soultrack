@@ -169,8 +169,7 @@ function ListMembersContent() {
     };
 
 
-        // -------------------- Fetch membres via scopedQuery --------------------
-        // -------------------- Fetch membres via scopedQuery avec multi-roles --------------------
+// -------------------- Fetch membres via scopedQuery avec multi-roles --------------------
 useEffect(() => {
   if (!scopedQuery || !userProfile) return;
 
@@ -182,20 +181,11 @@ useEffect(() => {
         .eq("eglise_id", userProfile.eglise_id)
         .eq("branche_id", userProfile.branche_id);
 
-      // 🔹 Transformer roles JSON string en tableau
-      let rolesArray = [];
-      if (userProfile.roles) {
-        try {
-          rolesArray = typeof userProfile.roles === "string" ? JSON.parse(userProfile.roles) : userProfile.roles;
-        } catch {
-          rolesArray = [userProfile.roles];
-        }
-      } else if (userProfile.role) {
-        rolesArray = [userProfile.role];
-      }
+      // 🔹 userProfile.roles est déjà un ARRAY PostgreSQL, donc on peut utiliser includes
+      const rolesArray = Array.isArray(userProfile.roles) ? userProfile.roles : [userProfile.role];
 
       // 🔐 Filtrage pour les Conseillers
-      if (rolesArray.includes("Conseiller")) {
+      if (rolesArray.includes("Conseiller") || rolesArray.includes("ResponsableIntegration")) {
         query = query.eq("conseiller_id", userProfile.id);
       }
 
@@ -216,11 +206,6 @@ useEffect(() => {
         }
       }
 
-      // 🔐 Filtrage pour les Responsables d’Intégration (si tu veux un comportement similaire à Conseiller)
-      if (rolesArray.includes("ResponsableIntegration")) {
-        query = query.eq("conseiller_id", userProfile.id);
-      }
-
       const { data, error } = await query.order("created_at", { ascending: false });
       if (error) throw error;
 
@@ -234,6 +219,7 @@ useEffect(() => {
 
   fetchMembers();
 }, [userProfile, scopedQuery, setAllMembers]);
+
 
   // -------------------- Récupérer la session Supabase --------------------
     useEffect(() => {

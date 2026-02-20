@@ -27,7 +27,7 @@ function CreateInternalUserContent() {
     password: "",
     confirmPassword: "",
     telephone: "",
-    role: "",
+    roles: "",
     cellule_nom: "",
     cellule_zone: "",
   });
@@ -184,14 +184,23 @@ function CreateInternalUserContent() {
           <input name="confirmPassword" type="password" placeholder="Confirmer mot de passe" value={formData.confirmPassword} onChange={handleChange} className="input" required />
 
           {/* Rôle */}
-          <select name="role" value={formData.role} onChange={handleChange} className="input" required>
-            <option value="">-- Sélectionner un rôle --</option>
+          <select
+            name="roles"
+            multiple
+            value={formData.roles}
+            onChange={(e) => {
+              const selected = Array.from(e.target.selectedOptions, option => option.value);
+              setFormData({ ...formData, roles: selected });
+            }}
+            className="input"
+            required
+          >
             <option value="Administrateur">Administrateur</option>
             <option value="ResponsableIntegration">Responsable Intégration</option>
             <option value="ResponsableCellule">Responsable Cellule</option>
             <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
             <option value="SuperviseurCellule">Superviseur Cellules</option>
-            <option value="Conseiller">Conseiller</option>   
+            <option value="Conseiller">Conseiller</option>
           </select>
 
           {/* Cellule si rôle ResponsableCellule */}

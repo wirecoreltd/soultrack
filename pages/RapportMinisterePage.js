@@ -78,7 +78,8 @@ function RapportMinistere() {
       let totalMembresLocal = 0;
 
       data.forEach((membre) => {
-        const etatOk = ["existant", "nouveau"].includes(
+        //const etatOk = ["existant", "nouveau"].includes(
+          const etatOk = ["existant"].includes(
           membre.etat_contact?.toString().trim().toLowerCase()
         );
 

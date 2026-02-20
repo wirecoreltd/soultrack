@@ -17,7 +17,7 @@ import Footer from "../components/Footer";
 
 export default function SuivisMembres() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableIntegration"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableCellule", "ResponsableIntegration"]}>
       <SuivisMembresContent />
     </ProtectedRoute>
   );

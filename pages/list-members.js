@@ -262,34 +262,36 @@ useEffect(() => {
   const channel = supabase.channel("realtime:membres_complets");
 
   const fetchScopedMembers = async () => {
-  if (!scopedQuery || !userProfile) return;
+  if (!userProfile) return;
 
   try {
-    let query = scopedQuery("membres_complets")
+    let query = supabase
+      .from("membres_complets")
+      .select("*")
+      .eq("eglise_id", userProfile.eglise_id)
+      .eq("branche_id", userProfile.branche_id)
       .order("created_at", { ascending: false });
 
-    // 🔹 Conseiller → uniquement ses contacts
+    // 🔹 Conseiller
     if (userProfile.role === "Conseiller") {
       query = query.eq("conseiller_id", userProfile.id);
     }
 
-    // 🔹 ResponsableCellule → uniquement ses cellules
+    // 🔹 ResponsableCellule
     if (userProfile.role === "ResponsableCellule") {
-      const { data: cellulesData, error: celluleError } = await scopedQuery("cellules")
+      const { data: cellulesData } = await supabase
+        .from("cellules")
         .select("id")
         .eq("responsable_id", userProfile.id);
 
-      if (celluleError) throw celluleError;
+      const celluleIds = cellulesData?.map(c => c.id) || [];
 
-      const celluleIds = cellulesData?.map((c) => c.id) || [];
-
-      if (celluleIds.length > 0) {
-        query = query.in("cellule_id", celluleIds);
-      } else {
-        // aucune cellule → aucun membre
+      if (celluleIds.length === 0) {
         setAllMembers([]);
         return;
       }
+
+      query = query.in("cellule_id", celluleIds);
     }
 
     const { data, error } = await query;
@@ -302,7 +304,6 @@ useEffect(() => {
     console.error("❌ Erreur fetchScopedMembers:", err);
   }
 };
-
 
   // 🔹 Premier chargement
   fetchScopedMembers();

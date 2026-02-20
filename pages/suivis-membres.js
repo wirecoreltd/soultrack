@@ -75,10 +75,9 @@ export default function SuivisMembres() {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error("Utilisateur non connecté");
 
-      // 🔹 Récupérer profil complet
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("id, prenom, nom, role, eglise_id, branche_id") // <-- ajout eglise_id et branche_id
+        .select("id, prenom, nom, role, eglise_id, branche_id")
         .eq("id", user.id)
         .single();
       if (profileError || !profileData) throw profileError;
@@ -86,23 +85,35 @@ export default function SuivisMembres() {
       setPrenom(profileData.prenom || "cher membre");
       setRole(profileData.role);
 
+      // 🔹 Fetch cellules pour l'église / branche
+      const { data: cellulesData } = await supabase
+        .from("cellules")
+        .select("id, cellule_full, responsable_id")
+        .eq("eglise_id", profileData.eglise_id)
+        .eq("branche_id", profileData.branche_id);
+      setCellules(cellulesData || []);
+
+      // 🔹 Fetch conseillers pour l'église / branche
+      const { data: conseillersData } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom")
+        .eq("role", "Conseiller")
+        .eq("eglise_id", profileData.eglise_id)
+        .eq("branche_id", profileData.branche_id);
+      setConseillers(conseillersData || []);
+
       // 🔹 Requête membres_complets filtrée
       let query = supabase
         .from("membres_complets")
         .select("*")
-        .eq("eglise_id", profileData.eglise_id)   // filtrage automatique église
-        .eq("branche_id", profileData.branche_id) // filtrage automatique branche
+        .eq("eglise_id", profileData.eglise_id)
+        .eq("branche_id", profileData.branche_id)
         .order("created_at", { ascending: false });
 
-      // Filtrage spécial par rôle
       if (profileData.role === "Conseiller") {
         query = query.eq("conseiller_id", profileData.id);
       } else if (profileData.role === "ResponsableCellule") {
-        const { data: cellulesData } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("responsable_id", profileData.id);
-        const celluleIds = cellulesData?.map(c => c.id) || [];
+        const celluleIds = cellulesData?.filter(c => c.responsable_id === profileData.id).map(c => c.id) || [];
         if (celluleIds.length > 0) query = query.in("cellule_id", celluleIds);
         else query = query.eq("id", -1);
       }
@@ -112,6 +123,7 @@ export default function SuivisMembres() {
 
       setAllMembers(data || []);
       if (!data || data.length === 0) setMessage("Aucun membre à afficher.");
+
     } catch (err) {
       console.error("❌ Erreur fetchMembresComplets:", err);
       setMessage("Erreur lors de la récupération des membres.");
@@ -122,6 +134,7 @@ export default function SuivisMembres() {
 
   fetchMembresComplets();
 }, [setAllMembers]);
+
 
   const handleCommentChange = (id, value) => {
     setCommentChanges(prev => ({ ...prev, [id]: value }));

@@ -780,14 +780,15 @@ useEffect(() => {
         </button>
       
         {/* Bouton Ajouter un membre */}
-        {userProfile && !userProfile.roles?.includes("Conseiller") && (
-          <button
-            onClick={() => router.push("/AddContact")}
-            className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-          >
-            ➕ Ajouter un membre
-          </button>
-        )}
+        {userProfile && !JSON.parse(userProfile.roles || "[]").includes("Conseiller") && (
+  <button
+    onClick={() => router.push("/AddContact")}
+    className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+  >
+    ➕ Ajouter un membre
+  </button>
+)}
+
       </div>
 
       {/* ==================== VUE CARTE ==================== */}

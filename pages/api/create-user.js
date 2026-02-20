@@ -76,6 +76,8 @@ export default async function handler(req, res) {
         nom,
         email,
         telephone: telephone || null,
+        role: role,  // rôle principal
+        roles: [role],  // tableau officiel
         role_description: role,
         eglise_id: adminProfile.eglise_id,
         branche_id: adminProfile.branche_id,

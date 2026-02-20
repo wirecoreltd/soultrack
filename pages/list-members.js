@@ -74,12 +74,15 @@ if (userProfile?.roles) {
 }
   //--------------------------------------//
 
-const role = userProfile?.role?.toLowerCase();
+const router = useRouter();
 
-// Autorisation
+const role = userProfile?.role;
+
 const canAddMember =
-  role === "admin" ||
-  role === "responsableintegration";
+  role === "Administrateur" ||
+  role === "ResponsableIntegration";
+
+
 
   
 
@@ -472,10 +475,7 @@ useEffect(() => {
           }
         })();
 
-    console.log("userProfile:", userProfile);
-console.log("roles:", userProfile?.roles);
-console.log("rolesArray:", rolesArray);
-
+    console.log("ROLE EXACT:", role);
 
     return (
    
@@ -810,13 +810,14 @@ console.log("rolesArray:", rolesArray);
       
         {/* 🔥 Bouton visible seulement si l'utilisateur N'EST PAS Conseiller */}        
         {canAddMember && (
-          <button
-            onClick={() => router.push("/AddContact")}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl"
-          >
-            ➕ Ajouter un membre
-          </button>
-        )}
+  <button
+    onClick={() => router.push("/AddContact")}
+    className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-green-600 hover:bg-green-700"
+  >
+    ➕ Ajouter un membre
+  </button>
+)}
+
       </div>
 
       {/* ==================== VUE CARTE ==================== */}

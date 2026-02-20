@@ -52,7 +52,7 @@ export default function ProtectedRoute({ allowedRoles = [], children }) {
         <HeaderPages />
 
         <div className="flex-1 flex flex-col justify-center items-center text-center p-6">         
-          <h3 className="text-5xl font-bold text-red-600 mb-4">🚫 Accès refusé</h3>
+          <h3 className="text-3xl font-bold text-red-600 mb-4">🚫 Accès refusé</h3>
           <p className="text-xl text-white max-w-md">
             Vous n’avez pas les permissions nécessaires pour accéder à cette page.
           </p>

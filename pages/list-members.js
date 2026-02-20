@@ -66,7 +66,7 @@ function ListMembersContent() {
     return "card";
   });
 
-  const { scopedQuery } = useChurchScope(); // 🔑 Utilisation correcte du hook scopedQuery
+  const { profile, loading, scopedQuery } = useChurchScope(); // 🔑 Utilisation correcte du hook scopedQuery
 
   // -------------------- Toast --------------------
   const showToast = (msg) => {
@@ -169,49 +169,7 @@ function ListMembersContent() {
   };
 
   // -------------------- Fetch membres via scopedQuery --------------------
-      useEffect(() => {
-        if (!scopedQuery || !userProfile) return;
       
-        const fetchMembers = async () => {
-          try {
-            let query = scopedQuery("membres_complets");
-      
-            // 🔐 FILTRAGE DIRECT BASE DE DONNÉES
-            if (userProfile.role === "Conseiller") {
-              query = query.eq("conseiller_id", userProfile.id);
-            }
-      
-            if (userProfile.role === "ResponsableCellule") {
-              const { data: cellulesData } = await scopedQuery("cellules")
-                .select("id")
-                .eq("responsable_id", userProfile.id);
-      
-              const celluleIds = cellulesData?.map(c => c.id) || [];
-      
-              if (celluleIds.length > 0) {
-                query = query.in("cellule_id", celluleIds);
-              } else {
-                setAllMembers([]);
-                return;
-              }
-            }
-      
-            const { data, error } = await query.order("created_at", {
-              ascending: false,
-            });
-      
-            if (error) throw error;
-      
-            setAllMembers(data || []);
-            setLoading(false);
-      
-          } catch (err) {
-            console.error("Erreur fetchMembers:", err);
-          }
-        };
-      
-        fetchMembers();
-      }, [scopedQuery, userProfile]);
 
 
   // -------------------- Récupérer la session Supabase --------------------
@@ -227,7 +185,48 @@ function ListMembersContent() {
         setSession(session);
       });
     
-      return () => {
+      return () => {useEffect(() => {
+  if (loading || !profile) return; // 🔹 bloquer tant que profile pas chargé
+
+  const fetchMembers = async () => {
+    try {
+      let query = scopedQuery("membres_complets");
+      if (!query) return;
+
+      // 🔹 FILTRAGE DIRECT DANS LA BASE
+      if (profile.role === "Conseiller") {
+        query = query.eq("conseiller_id", profile.id);
+      }
+
+      if (profile.role === "ResponsableCellule") {
+        const { data: cellulesData } = await scopedQuery("cellules")
+          .select("id")
+          .eq("responsable_id", profile.id);
+
+        const celluleIds = cellulesData?.map(c => c.id) || [];
+
+        if (celluleIds.length > 0) {
+          query = query.in("cellule_id", celluleIds);
+        } else {
+          setAllMembers([]);
+          return;
+        }
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
+      if (error) throw error;
+
+      setAllMembers(data || []);
+      setLoading(false);
+
+    } catch (err) {
+      console.error("Erreur fetchMembers:", err);
+    }
+  };
+
+  fetchMembers();
+}, [profile, loading, scopedQuery]);
+
         listener.subscription.unsubscribe();
       };
     }, []);

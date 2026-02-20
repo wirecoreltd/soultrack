@@ -7,7 +7,7 @@ import supabase from "../lib/supabaseClient";
 export default function AddContact() {
   const router = useRouter();
 
-  const [etatContact, setEtatContact] = useState("Nouveau");
+  const [etatContact, setEtatContact] = useState("nouveau");
   const [formData, setFormData] = useState({
     prenom: "",
     nom: "",
@@ -143,8 +143,8 @@ export default function AddContact() {
           onChange={(e) => setEtatContact(e.target.value)}
           className="input mb-3"
         >
-          <option value="Nouveau">Nouveau</option>
-          <option value="Existant">Existant</option>
+          <option value="nouveau">Nouveau</option>
+          <option value="existant">Existant</option>
         </select>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">

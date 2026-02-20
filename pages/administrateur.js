@@ -9,6 +9,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function Administrateur() {
   const router = useRouter();
@@ -110,5 +111,13 @@ export default function Administrateur() {
       </div>
         <Footer />
     </div>
+  );
+}
+// ✅ Wrapper avec ProtectedRoute
+export default function Administrateur() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur"]}>
+      <AdministrateurContent />
+    </ProtectedRoute>
   );
 }

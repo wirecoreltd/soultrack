@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
+import HeaderPages from "./HeaderPages";
+import Footer from "./Footer";
 
-export default function ProtectedRoute({ children, allowedRoles = [] }) {
+export default function ProtectedRoute({ allowedRoles = [], children }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
@@ -13,7 +15,8 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
     const checkAccess = async () => {
       const { data } = await supabase.auth.getSession();
       if (!data?.session) {
-        router.replace("/login");
+        setHasAccess(false);
+        setLoading(false);
         return;
       }
 
@@ -21,31 +24,45 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
       let roles = [];
       if (storedRoles) {
         try {
-          roles = JSON.parse(storedRoles);
-          if (!Array.isArray(roles)) roles = [roles];
+          const parsedRoles = JSON.parse(storedRoles);
+          roles = Array.isArray(parsedRoles) ? parsedRoles : [parsedRoles];
         } catch {
           roles = [storedRoles];
         }
       }
 
-      // Administrateur a toujours accès
-      if (roles.includes("Administrateur")) {
+      if (allowedRoles.length === 0 || roles.some(r => allowedRoles.includes(r))) {
         setHasAccess(true);
-      } else if (allowedRoles.length === 0) {
-        setHasAccess(true); // si pas de rôle défini, on laisse l’accès
       } else {
-        setHasAccess(roles.some(r => allowedRoles.includes(r)));
+        setHasAccess(false);
       }
-
       setLoading(false);
     };
 
     checkAccess();
-  }, [router, allowedRoles]);
+  }, [allowedRoles]);
 
-  if (loading) return null;
+  if (loading) {
+    return <p className="text-center mt-10 text-white text-lg">Chargement...</p>;
+  }
 
-  if (!hasAccess) return <p className="text-red-600 text-center mt-10">🚫 Accès refusé<br/>Vous n’avez pas les permissions nécessaires pour accéder à cette page.</p>;
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200">
+        <HeaderPages />
+
+        <div className="flex-1 flex flex-col justify-center items-center text-center p-6">
+          <img src="/logo.png" alt="Logo SoulTrack" className="w-32 h-32 mb-6 opacity-20" />
+          <h1 className="text-5xl font-bold text-red-600 mb-4">🚫 Accès refusé</h1>
+          <p className="text-xl text-gray-700 max-w-md">
+            Vous n’avez pas les permissions nécessaires pour accéder à cette page.
+          </p>
+        </div>
+
+        <Footer />
+      </div>
+    );
+  }
 
   return <>{children}</>;
 }

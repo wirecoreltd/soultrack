@@ -4,9 +4,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
 import Image from "next/image";
+import ProtectedRoute from "../../components/ProtectedRoute";
 
 export default function CreateInternalUserPage() {
-  return <CreateInternalUserContent />;
+  return (
+    <ProtectedRoute>
+      <CreateInternalUserContent />
+    </ProtectedRoute>
+  );
 }
 
 function CreateInternalUserContent() {
@@ -28,7 +33,17 @@ function CreateInternalUserContent() {
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [rolesToHide, setRolesToHide] = useState([]); // rôles à ne pas afficher (ex: Conseiller)
+  const [rolesToHide, setRolesToHide] = useState([]);
+
+  // ➤ Tous les rôles avec nom lisible
+  const allRoles = [
+    { key: "Administrateur", label: "Administrateur" },
+    { key: "ResponsableIntegration", label: "Responsable Integration" },
+    { key: "ResponsableCellule", label: "Responsable Cellule" },
+    { key: "ResponsableEvangelisation", label: "Responsable Evangelisation" },
+    { key: "SuperviseurCellule", label: "Superviseur Cellule" },
+    { key: "Conseiller", label: "Conseiller" },
+  ];
 
   // ➤ Récupérer les membres existants
   useEffect(() => {
@@ -51,7 +66,7 @@ function CreateInternalUserContent() {
           .eq("star", true)
           .eq("eglise_id", profile.eglise_id)
           .eq("branche_id", profile.branche_id)
-          .in("etat_contact", ["existant"]); // uniquement existant
+          .in("etat_contact", ["existant"]);
 
         setMembers(membersData || []);
       } catch (err) {
@@ -80,8 +95,8 @@ function CreateInternalUserContent() {
         roles: [],
       }));
 
-      // Vérifier si ce membre est déjà Conseiller
-      const checkConseiller = async () => {
+      // Vérifier tous les rôles déjà attribués à ce membre
+      const checkExistingRoles = async () => {
         const { data: profilesData } = await supabase
           .from("profiles")
           .select("roles")
@@ -90,13 +105,15 @@ function CreateInternalUserContent() {
           .eq("telephone", member.telephone);
 
         let hide = [];
-        if (profilesData?.some(p => p.roles?.includes("Conseiller"))) {
-          hide.push("Conseiller");
-        }
-        setRolesToHide(hide);
+        profilesData?.forEach(p => {
+          if (p.roles?.length) hide.push(...p.roles);
+        });
+
+        // Supprimer les doublons
+        setRolesToHide([...new Set(hide)]);
       };
 
-      checkConseiller();
+      checkExistingRoles();
     }
   }, [selectedMemberId, members]);
 
@@ -112,75 +129,66 @@ function CreateInternalUserContent() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (formData.password !== formData.confirmPassword) {
-    setMessage("❌ Les mots de passe ne correspondent pas.");
-    return;
-  }
-
-  if (!formData.roles || formData.roles.length === 0) {
-    setMessage("❌ Sélectionnez au moins un rôle !");
-    return;
-  }
-
-  setLoading(true);
-  setMessage("⏳ Création en cours...");
-
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      setMessage("❌ Session expirée");
-      setLoading(false);
+    if (formData.password !== formData.confirmPassword) {
+      setMessage("❌ Les mots de passe ne correspondent pas.");
       return;
     }
 
-    // ⚠️ On envoie maintenant roles au lieu de role
-    const res = await fetch("/api/create-user", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ ...formData, member_id: selectedMemberId, roles: formData.roles }),
-    });
-
-    const data = await res.json().catch(() => null);
-
-    if (res.ok) {
-      setMessage("✅ Utilisateur créé avec succès !");
-      setSelectedMemberId("");
-      setFormData({
-        prenom: "",
-        nom: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        telephone: "",
-        roles: [],
-        cellule_nom: "",
-        cellule_zone: "",
-      });
-    } else {
-      setMessage(`❌ ${data?.error || "Erreur serveur"}`);
+    if (!formData.roles || formData.roles.length === 0) {
+      setMessage("❌ Sélectionnez au moins un rôle !");
+      return;
     }
-  } catch (err) {
-    setMessage("❌ " + err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+
+    setLoading(true);
+    setMessage("⏳ Création en cours...");
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setMessage("❌ Session expirée");
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch("/api/create-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ ...formData, member_id: selectedMemberId, roles: formData.roles }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (res.ok) {
+        setMessage("✅ Utilisateur créé avec succès !");
+        setSelectedMemberId("");
+        setFormData({
+          prenom: "",
+          nom: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          telephone: "",
+          roles: [],
+          cellule_nom: "",
+          cellule_zone: "",
+        });
+        setRolesToHide([]);
+      } else {
+        setMessage(`❌ ${data?.error || "Erreur serveur"}`);
+      }
+    } catch (err) {
+      setMessage("❌ " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCancel = () => router.push("/admin/list-users");
-
-  const allRoles = [
-    "Administrateur",
-    "ResponsableIntegration",
-    "ResponsableCellule",
-    "ResponsableEvangelisation",
-    "SuperviseurCellule",
-    "Conseiller",
-  ];
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
@@ -214,21 +222,20 @@ function CreateInternalUserContent() {
 
           <div className="flex flex-col gap-2">
             <label className="font-semibold">Rôles :</label>
-            {allRoles.map(role => (
-              !rolesToHide.includes(role) && (
-                <label key={role} className="inline-flex items-center gap-2">
+            {allRoles.map(role =>
+              !rolesToHide.includes(role.key) && (
+                <label key={role.key} className="inline-flex items-center gap-2">
                   <input
                     type="checkbox"
-                    checked={formData.roles.includes(role)}
-                    onChange={() => handleRoleChange(role)}
+                    checked={formData.roles.includes(role.key)}
+                    onChange={() => handleRoleChange(role.key)}
                   />
-                  {role}
+                  {role.label}
                 </label>
               )
-            ))}
+            )}
           </div>
 
-          {/* Champs cellule si ResponsableCellule sélectionné */}
           {formData.roles.includes("ResponsableCellule") && (
             <div className="flex flex-col gap-2">
               <input name="cellule_nom" placeholder="Nom cellule" value={formData.cellule_nom} onChange={handleChange} className="input" />

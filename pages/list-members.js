@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useSearchParams } from "next/navigation";
 import { useMembers } from "../context/MembersContext";
-import Header from "../components/Header";N
+import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/ProtectedRoute";

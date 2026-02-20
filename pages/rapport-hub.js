@@ -6,8 +6,9 @@ import LogoutLink from "../components/LogoutLink";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import HeaderPages from "../components/HeaderPages";
+import ProtectedRoute from "../components/ProtectedRoute";
 
-export default function RapportHub() {
+  function RapportHubContent() {
   const router = useRouter();
   const [userName, setUserName] = useState("");
 
@@ -115,5 +116,13 @@ export default function RapportHub() {
         Actes 2:47 ✨
       </div>
     </div>
+  );
+}
+
+export default function Administrateur() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur"]}>
+      <RapportHubContent />
+    </ProtectedRoute>
   );
 }

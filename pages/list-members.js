@@ -74,17 +74,11 @@ if (userProfile?.roles) {
 }
   //--------------------------------------//
 
-const router = useRouter();
-
 const role = userProfile?.role;
 
 const canAddMember =
   role === "Administrateur" ||
-  role === "ResponsableIntegration";
-
-
-
-  
+  role === "ResponsableIntegration";  
 
   const [view, setView] = useState(() => {
     if (typeof window !== "undefined") {
@@ -475,7 +469,7 @@ useEffect(() => {
           }
         })();
 
-    //console.log("ROLE EXACT:", role);
+    console.log("ROLE EXACT:", role);
 
     return (
    

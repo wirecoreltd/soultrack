@@ -112,58 +112,64 @@ function CreateInternalUserContent() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      setMessage("❌ Les mots de passe ne correspondent pas.");
+  e.preventDefault();
+
+  if (formData.password !== formData.confirmPassword) {
+    setMessage("❌ Les mots de passe ne correspondent pas.");
+    return;
+  }
+
+  if (!formData.roles || formData.roles.length === 0) {
+    setMessage("❌ Sélectionnez au moins un rôle !");
+    return;
+  }
+
+  setLoading(true);
+  setMessage("⏳ Création en cours...");
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setMessage("❌ Session expirée");
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setMessage("⏳ Création en cours...");
+    // ⚠️ On envoie maintenant roles au lieu de role
+    const res = await fetch("/api/create-user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ ...formData, member_id: selectedMemberId, roles: formData.roles }),
+    });
 
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setMessage("❌ Session expirée");
-        setLoading(false);
-        return;
-      }
+    const data = await res.json().catch(() => null);
 
-      const res = await fetch("/api/create-user", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ ...formData, member_id: selectedMemberId }),
+    if (res.ok) {
+      setMessage("✅ Utilisateur créé avec succès !");
+      setSelectedMemberId("");
+      setFormData({
+        prenom: "",
+        nom: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        telephone: "",
+        roles: [],
+        cellule_nom: "",
+        cellule_zone: "",
       });
-
-      const data = await res.json().catch(() => null);
-
-      if (res.ok) {
-        setMessage("✅ Utilisateur créé avec succès !");
-        setSelectedMemberId("");
-        setFormData({
-          prenom: "",
-          nom: "",
-          email: "",
-          password: "",
-          confirmPassword: "",
-          telephone: "",
-          roles: [],
-          cellule_nom: "",
-          cellule_zone: "",
-        });
-        setRolesToHide([]);
-      } else {
-        setMessage(`❌ ${data?.error || "Erreur serveur"}`);
-      }
-    } catch (err) {
-      setMessage("❌ " + err.message);
-    } finally {
-      setLoading(false);
+    } else {
+      setMessage(`❌ ${data?.error || "Erreur serveur"}`);
     }
-  };
+  } catch (err) {
+    setMessage("❌ " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCancel = () => router.push("/admin/list-users");
 

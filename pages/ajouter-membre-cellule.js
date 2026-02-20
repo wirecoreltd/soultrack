@@ -378,8 +378,7 @@ useEffect(() => {
             padding: 12px;
           }
         `}</style>
-      </div>
-           <Footer />
+      </div>           
     </div>
   );
 }

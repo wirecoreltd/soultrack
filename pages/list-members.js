@@ -262,58 +262,41 @@ const handleAfterSend = (memberId, type, cible) => {
   const channel = supabase.channel("realtime:membres_complets");
 
   const fetchScopedMembers = async () => {
-    if (!scopedQuery) return;
-    try {
-      const query = scopedQuery("membres_complets");
-      if (!query) return;
-      const { data } = await query.order("created_at", { ascending: false });
-      if (data) setAllMembers(data);
-    } catch (err) {
-      console.error("Erreur fetchMembers realtime:", err);
-    }
-  };
-
-  channel.on(
-    "postgres_changes",
-    { event: "*", schema: "public", table: "membres_complets" },
-    fetchScopedMembers
-  );
-
-  channel.on(
-    "postgres_changes",
-    { event: "*", schema: "public", table: "cellules" },
-    () => {
-      fetchCellules();
-      fetchScopedMembers();
-    }
-  );
-
-  channel.on(
-    "postgres_changes",
-    { event: "*", schema: "public", table: "profiles" },
-    () => {
-      fetchConseillers();
-      fetchScopedMembers();
-    }
-  );
+  if (!scopedQuery || !userProfile) return;
 
   try {
-    channel.subscribe();
+    const { data, error } = await scopedQuery("membres_complets")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    let membresFiltres = data || [];
+
+    // 🔹 FILTRAGE PAR ROLE
+    if (userProfile.role === "Conseiller") {
+      membresFiltres = membresFiltres.filter(
+        (m) => m.conseiller_id == userProfile.id
+      );
+    }
+
+    if (userProfile.role === "ResponsableCellule") {
+      const { data: cellulesData } = await scopedQuery("cellules")
+        .select("id")
+        .eq("responsable_id", userProfile.id);
+
+      const celluleIds = cellulesData?.map((c) => c.id) || [];
+
+      membresFiltres = membresFiltres.filter((m) =>
+        celluleIds.includes(m.cellule_id)
+      );
+    }
+
+    setAllMembers(membresFiltres);
+
   } catch (err) {
-    console.warn("Erreur subscription realtime:", err);
+    console.error("Erreur fetchMembers:", err);
   }
-
-  realtimeChannelRef.current = channel;
-
-  return () => {
-    try {
-      if (realtimeChannelRef.current) {
-        realtimeChannelRef.current.unsubscribe();
-        realtimeChannelRef.current = null;
-      }
-    } catch (e) {}
-  };
-}, [scopedQuery, setAllMembers]);
+};
 
   // -------------------- Filtrage --------------------
   const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {

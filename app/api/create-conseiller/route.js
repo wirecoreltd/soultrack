@@ -67,6 +67,7 @@ export async function POST(req) {
         nom,
         telephone,
         role: "Conseiller",
+        roles: ["Conseiller"],
         responsable_id,
         must_change_password: true,
         eglise_id: responsable.eglise_id,

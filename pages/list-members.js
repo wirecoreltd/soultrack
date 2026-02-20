@@ -268,7 +268,7 @@ useEffect(() => {
     // 2. récupérer eglise_id & branche_id
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("id, eglise_id, branche_id, role")
+      .select("id, eglise_id, branche_id, roles, role")
       .eq("id", user.id)
       .single();
 
@@ -801,13 +801,8 @@ console.log("rolesArray:", rolesArray);
         </button>
       
         {/* 🔥 Bouton visible seulement si l'utilisateur N'EST PAS Conseiller */}
-         {userProfile && !rolesArray.includes("Conseiller") && (
-        <button
-          onClick={() => router.push("/AddContact")}
-          className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-        >
-          ➕ Ajouter un membre
-        </button>
+         {userProfile?.role !== "Conseiller" && (
+   <button> ➕Ajouter un membre</button>          
       )}
 
       </div>

@@ -170,54 +170,70 @@ function ListMembersContent() {
 
 
         // -------------------- Fetch membres via scopedQuery --------------------
-        useEffect(() => {
-        if (!scopedQuery || !userProfile) return;
-      
-        const fetchMembers = async () => {
-          try {
-            let query = supabase
-              .from("membres_complets")
-              .select("*")
-              .eq("eglise_id", userProfile.eglise_id)
-              .eq("branche_id", userProfile.branche_id);
-      
-            // 🔐 Filtrage Conseiller
-            if (userProfile.role === "Conseiller") {
-              query = query.eq("conseiller_id", userProfile.id);
-            }
-      
-            // 🔐 Filtrage ResponsableCellule
-            if (userProfile.role === "ResponsableCellule") {
-              const { data: cellulesData } = await supabase
-                .from("cellules")
-                .select("id")
-                .eq("responsable_id", userProfile.id);
-      
-              const celluleIds = cellulesData?.map(c => c.id) || [];
-              if (celluleIds.length > 0) {
-                query = query.in("cellule_id", celluleIds);
-              } else {
-                setAllMembers([]);
-                setLoading(false);
-                return;
-              }
-            }
-      
-            const { data, error } = await query.order("created_at", { ascending: false });
-            if (error) throw error;
-      
-            setAllMembers(data || []);
-            setLoading(false);
-          } catch (err) {
-            console.error("Erreur fetchMembers:", err);
-            setLoading(false);
-          }
-        };
-      
-        fetchMembers();
-      }, [userProfile, setAllMembers]);
+        // -------------------- Fetch membres via scopedQuery avec multi-roles --------------------
+useEffect(() => {
+  if (!scopedQuery || !userProfile) return;
 
+  const fetchMembers = async () => {
+    try {
+      let query = supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("eglise_id", userProfile.eglise_id)
+        .eq("branche_id", userProfile.branche_id);
 
+      // 🔹 Transformer roles JSON string en tableau
+      let rolesArray = [];
+      if (userProfile.roles) {
+        try {
+          rolesArray = typeof userProfile.roles === "string" ? JSON.parse(userProfile.roles) : userProfile.roles;
+        } catch {
+          rolesArray = [userProfile.roles];
+        }
+      } else if (userProfile.role) {
+        rolesArray = [userProfile.role];
+      }
+
+      // 🔐 Filtrage pour les Conseillers
+      if (rolesArray.includes("Conseiller")) {
+        query = query.eq("conseiller_id", userProfile.id);
+      }
+
+      // 🔐 Filtrage pour les Responsables de Cellule
+      if (rolesArray.includes("ResponsableCellule")) {
+        const { data: cellulesData } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", userProfile.id);
+
+        const celluleIds = cellulesData?.map(c => c.id) || [];
+        if (celluleIds.length > 0) {
+          query = query.in("cellule_id", celluleIds);
+        } else {
+          setAllMembers([]);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 🔐 Filtrage pour les Responsables d’Intégration (si tu veux un comportement similaire à Conseiller)
+      if (rolesArray.includes("ResponsableIntegration")) {
+        query = query.eq("conseiller_id", userProfile.id);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
+      if (error) throw error;
+
+      setAllMembers(data || []);
+      setLoading(false);
+    } catch (err) {
+      console.error("Erreur fetchMembers:", err);
+      setLoading(false);
+    }
+  };
+
+  fetchMembers();
+}, [userProfile, scopedQuery, setAllMembers]);
 
   // -------------------- Récupérer la session Supabase --------------------
     useEffect(() => {

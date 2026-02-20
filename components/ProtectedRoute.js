@@ -11,20 +11,42 @@ export default function ProtectedRoute({ allowedRoles = [], children }) {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
-        setUserRole(profile?.role || null);
-      }
-      setLoading(false);
-    };
-    fetchRole();
-  }, []);
+  const checkAccess = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("roles")
+      .eq("id", user.id)
+      .single();
+
+    if (error || !profile) {
+      router.push("/login");
+      return;
+    }
+
+    const userRoles = profile.roles || [];
+
+    const hasAccess = userRoles.some(role =>
+      allowedRoles.includes(role)
+    );
+
+    if (!hasAccess) {
+      router.push("/login");
+      return;
+    }
+
+    setLoading(false);
+  };
+
+  checkAccess();
+}, []);
+
 
   if (loading) return <div className="text-white text-center mt-20">Chargement...</div>;
 

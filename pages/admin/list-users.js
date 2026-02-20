@@ -12,11 +12,14 @@ import Footer from "../../components/Footer";
    Ligne utilisateur
 ========================= */
 function UserRow({ u, setSelectedUser, setDeleteUser }) {
+  // Affichage multi-roles
+  const rolesDisplay = u.roles?.join(" / ") || "-";
+
   return (
     <div className="flex flex-row items-center px-4 py-2 rounded-lg gap-2 bg-white/15 border-l-4 text-sm" style={{ borderLeftColor: "#F59E0B" }}>
       <div className="flex-[2] text-white font-semibold">{u.prenom} {u.nom}</div>
       <div className="flex-[2] text-white">{u.email}</div>
-      <div className="flex-[2] text-white font-medium">{u.role_description}</div>
+      <div className="flex-[2] text-white font-medium">{rolesDisplay}</div>
       {/* Actions */}
       <div className="flex-[1] flex justify-center gap-2">
         <button onClick={() => setSelectedUser(u)} className="text-blue-400 hover:text-blue-600 text-lg">✏️</button>
@@ -89,7 +92,7 @@ function ListUsersContent() {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, prenom, nom, email, telephone, role_description, created_at")
+      .select("id, prenom, nom, email, telephone, roles, created_at")
       .eq("eglise_id", userScope.eglise_id)
       .eq("branche_id", userScope.branche_id)
       .order("created_at", { ascending: true });
@@ -101,8 +104,10 @@ function ListUsersContent() {
     }
 
     setUsers(data || []);
-    const uniqueRoles = [...new Set((data || []).map(u => u.role_description).filter(Boolean))];
-    setRoles(uniqueRoles);
+
+    // Liste unique de tous les rôles pour le filtre
+    const allRoles = Array.from(new Set((data || []).flatMap(u => u.roles || [])));
+    setRoles(allRoles);
     setLoading(false);
   };
 
@@ -130,7 +135,7 @@ function ListUsersContent() {
      Filtrage + recherche
   ========================== */
   const filteredUsers = users
-    .filter(u => (role ? u.role_description === role : true))
+    .filter(u => role ? u.roles?.includes(role) : true)
     .filter(u => u.prenom.toLowerCase().includes(search.toLowerCase()) || u.nom.toLowerCase().includes(search.toLowerCase()));
 
   if (loading) return <p className="text-center mt-10 text-white text-lg">Chargement...</p>;
@@ -140,56 +145,50 @@ function ListUsersContent() {
       <HeaderPages />
 
       <h1 className="text-4xl text-white text-center mb-6 font-bold">Gestion des utilisateurs</h1>
-     
- {/* Barre recherche / filtre / actions*/}
-                       <div className="max-w-6xl w-full mx-auto mb-6 flex flex-col gap-3">
-              
-              {/* Search bar centrée */}
-              <div className="flex justify-center">
-                <input
-                  type="text"
-                  placeholder="Chercher un membre..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full sm:w-1/2 px-4 py-2 rounded-md text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                />
-              </div>
-            
-              {/* Filter + compteur centrés */}
-              <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="px-4 py-2 rounded-md text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                >
-                  <option value="">Tous les rôles</option>
-                  {roles.map(r => <option key={r} value={r}>{r}</option>)}
-                </select>
-            
-                <span className="text-white text-sm font-medium">
-                  Total : {filteredUsers.length}
-                </span>
-              </div>
-            
-              {/* Bouton Ajouter un utilisateur aligné à droite */}
-              <div className="flex justify-end">
-                <button
-                   onClick={() => router.push("/admin/create-internal-user")}
-                   className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-                 >
-                   ➕ Ajouter un utilisateur
-                 </button>
-              </div>
-            </div>
 
-      {/* ========================= 
-         Liste des utilisateurs
-      ========================== */}
+      {/* Barre recherche / filtre / actions */}
+      <div className="max-w-6xl w-full mx-auto mb-6 flex flex-col gap-3">
+        <div className="flex justify-center">
+          <input
+            type="text"
+            placeholder="Chercher un membre..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full sm:w-1/2 px-4 py-2 rounded-md text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+          />
+        </div>
+
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="px-4 py-2 rounded-md text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+          >
+            <option value="">Tous les rôles</option>
+            {roles.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+
+          <span className="text-white text-sm font-medium">
+            Total : {filteredUsers.length}
+          </span>
+        </div>
+
+        <div className="flex justify-end">
+          <button
+             onClick={() => router.push("/admin/create-internal-user")}
+             className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+           >
+             ➕ Ajouter un utilisateur
+           </button>
+        </div>
+      </div>
+
+      {/* Liste des utilisateurs */}
       <div className="max-w-6xl mx-auto space-y-2">
         <div className="hidden sm:flex text-sm font-semibold text-white border-b pb-2">
           <div className="flex-[2]">Nom complet</div>
           <div className="flex-[2]">Email</div>
-          <div className="flex-[2]">Rôle</div>
+          <div className="flex-[2]">Rôles</div>
           <div className="flex-[1] text-center">Actions</div>
         </div>
 
@@ -202,9 +201,7 @@ function ListUsersContent() {
         )}
       </div>
 
-      {/* =========================
-         Modals
-      ========================== */}
+      {/* Modals */}
       {selectedUser && <EditUserModal user={selectedUser} onClose={() => setSelectedUser(null)} onUpdated={handleUpdated} />}
 
       {deleteUser && (
@@ -219,7 +216,8 @@ function ListUsersContent() {
           </div>
         </div>
       )}
-         <Footer />
+
+      <Footer />
     </div>
   );
 }

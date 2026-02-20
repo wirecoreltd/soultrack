@@ -26,6 +26,9 @@ const roleCards = {
   SuperviseurCellule: [
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" },
   ],
+  Conseiller: [
+    { path: "/conseiller-hub", label: "Conseiller Hub", emoji: "📝", color: "#F59E0B" },
+  ],
   Membre: [],
 };
 

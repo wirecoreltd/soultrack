@@ -153,37 +153,66 @@ function ListMembersContent() {
   };
 
   // -------------------- Après showToast --------------------
-const handleAfterSend = (memberId, type, cible) => {
-  console.log("Contact envoyé :", memberId, type, cible);
-  showToast("✅ Contact envoyé !");
-  
-  // Optionnel : mettre à jour le membre localement ou rafraîchir la liste
-  // Par exemple si tu veux marquer le suivi comme "envoyé"
-  setAllMembers(prev =>
-    prev.map(m =>
-      m.id === memberId
-        ? { ...m, suivi_envoye: true } // tu peux créer un champ temporaire pour suivi
-        : m
-    )
-  );
-};
-
+  const handleAfterSend = (memberId, type, cible) => {
+    console.log("Contact envoyé :", memberId, type, cible);
+    showToast("✅ Contact envoyé !");
+    
+    // Optionnel : mettre à jour le membre localement ou rafraîchir la liste
+    // Par exemple si tu veux marquer le suivi comme "envoyé"
+    setAllMembers(prev =>
+      prev.map(m =>
+        m.id === memberId
+          ? { ...m, suivi_envoye: true } // tu peux créer un champ temporaire pour suivi
+          : m
+      )
+    );
+  };
 
   // -------------------- Fetch membres via scopedQuery --------------------
-  useEffect(() => {
-    if (!scopedQuery) return;
+      useEffect(() => {
+        if (!scopedQuery || !userProfile) return;
+      
+        const fetchMembers = async () => {
+          try {
+            let query = scopedQuery("membres_complets");
+      
+            // 🔐 FILTRAGE DIRECT BASE DE DONNÉES
+            if (userProfile.role === "Conseiller") {
+              query = query.eq("conseiller_id", userProfile.id);
+            }
+      
+            if (userProfile.role === "ResponsableCellule") {
+              const { data: cellulesData } = await scopedQuery("cellules")
+                .select("id")
+                .eq("responsable_id", userProfile.id);
+      
+              const celluleIds = cellulesData?.map(c => c.id) || [];
+      
+              if (celluleIds.length > 0) {
+                query = query.in("cellule_id", celluleIds);
+              } else {
+                setAllMembers([]);
+                return;
+              }
+            }
+      
+            const { data, error } = await query.order("created_at", {
+              ascending: false,
+            });
+      
+            if (error) throw error;
+      
+            setAllMembers(data || []);
+            setLoading(false);
+      
+          } catch (err) {
+            console.error("Erreur fetchMembers:", err);
+          }
+        };
+      
+        fetchMembers();
+      }, [scopedQuery, userProfile]);
 
-    const fetchMembers = async () => {
-      const { data, error } = await scopedQuery("membres_complets").order("created_at", {
-        ascending: false,
-      });
-      if (error) console.error("Erreur fetchMembers:", error);
-      else setAllMembers(data || []);
-      setLoading(false);
-    };
-
-    fetchMembers();
-  }, [scopedQuery, setAllMembers]);
 
   // -------------------- Récupérer la session Supabase --------------------
     useEffect(() => {

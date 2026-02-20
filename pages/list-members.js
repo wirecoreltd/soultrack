@@ -58,6 +58,14 @@ function ListMembersContent() {
   const router = useRouter();
   const [userProfile, setUserProfile] = useState(null);
 
+  const rolesArray = React.useMemo(() => {
+    if (!userProfile || !userProfile.roles) return [];
+    return Array.isArray(userProfile.roles)
+      ? userProfile.roles
+      : typeof userProfile.roles === "string"
+      ? JSON.parse(userProfile.roles || "[]")
+      : [];
+  }, [userProfile]);
 
   const [view, setView] = useState(() => {
     if (typeof window !== "undefined") {
@@ -779,23 +787,15 @@ useEffect(() => {
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
       
-        {/* Bouton Ajouter un membre */}
-        // 🔑 Transforme roles en vrai tableau
-          const rolesArray = Array.isArray(userProfile.roles)
-            ? userProfile.roles
-            : typeof userProfile.roles === "string"
-            ? JSON.parse(userProfile.roles || "[]")
-            : [];
-          
-          // 🔑 Afficher le bouton seulement si l'utilisateur N'EST PAS Conseiller
-          {userProfile && !rolesArray.includes("Conseiller") && (
-            <button
-              onClick={() => router.push("/AddContact")}
-              className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-            >
-              ➕ Ajouter un membre
-            </button>
-          )}
+        {/* 🔥 Bouton visible seulement si l'utilisateur N'EST PAS Conseiller */}
+        {!rolesArray.includes("Conseiller") && (
+          <button
+            onClick={() => router.push("/AddContact")}
+            className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-blue-600 hover:bg-blue-700"
+          >
+            ➕ Ajouter un membre
+          </button>
+        )}
       </div>
 
       {/* ==================== VUE CARTE ==================== */}

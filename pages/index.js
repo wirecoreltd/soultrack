@@ -36,12 +36,14 @@ export default function IndexPage() {
 
   useEffect(() => {
     const init = async () => {
+      // 1️⃣ Vérifier session Supabase
       const { data } = await supabase.auth.getSession();
       if (!data?.session) {
         router.replace("/SignupEglise");
         return;
       }
 
+      // 2️⃣ Récupérer les rôles depuis localStorage
       const storedRoles = localStorage.getItem("userRole");
       if (storedRoles) {
         try {
@@ -57,13 +59,11 @@ export default function IndexPage() {
     init();
   }, [router]);
 
-  const handleRedirect = (path) => {
-    router.push(path.startsWith("/") ? path : "/" + path);
-  };
-
   if (loading) return null;
 
+  // 3️⃣ Construire la liste des cartes à afficher
   let cardsToShow = [];
+
   if (roles.includes("Administrateur")) {
     Object.values(roleCards).forEach((cards) => {
       cards.forEach((card) => {
@@ -81,8 +81,15 @@ export default function IndexPage() {
     });
   }
 
+  const handleRedirect = (path) => {
+    router.push(path.startsWith("/") ? path : "/" + path);
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 text-center space-y-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+    <div
+      className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+    >
       <HeaderPages />
 
       <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl">

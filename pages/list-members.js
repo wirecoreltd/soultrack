@@ -66,7 +66,7 @@ function ListMembersContent() {
     return "card";
   });
 
-  const { profile, loading, scopedQuery } = useChurchScope(); // 🔑 Utilisation correcte du hook scopedQuery
+  const { scopedQuery } = useChurchScope(); // 🔑 Utilisation correcte du hook scopedQuery
 
   // -------------------- Toast --------------------
   const showToast = (msg) => {
@@ -153,23 +153,64 @@ function ListMembersContent() {
   };
 
   // -------------------- Après showToast --------------------
-  const handleAfterSend = (memberId, type, cible) => {
-    console.log("Contact envoyé :", memberId, type, cible);
-    showToast("✅ Contact envoyé !");
-    
-    // Optionnel : mettre à jour le membre localement ou rafraîchir la liste
-    // Par exemple si tu veux marquer le suivi comme "envoyé"
-    setAllMembers(prev =>
-      prev.map(m =>
-        m.id === memberId
-          ? { ...m, suivi_envoye: true } // tu peux créer un champ temporaire pour suivi
-          : m
-      )
-    );
-  };
+const handleAfterSend = (memberId, type, cible) => {
+  console.log("Contact envoyé :", memberId, type, cible);
+  showToast("✅ Contact envoyé !");
+  
+  // Optionnel : mettre à jour le membre localement ou rafraîchir la liste
+  // Par exemple si tu veux marquer le suivi comme "envoyé"
+  setAllMembers(prev =>
+    prev.map(m =>
+      m.id === memberId
+        ? { ...m, suivi_envoye: true } // tu peux créer un champ temporaire pour suivi
+        : m
+    )
+  );
+};
+
 
   // -------------------- Fetch membres via scopedQuery --------------------
-      
+  useEffect(() => {
+  if (!scopedQuery || !userProfile) return;
+
+  const fetchMembers = async () => {
+    try {
+      let query = scopedQuery("membres_complets");
+
+      // 🔐 FILTRAGE DIRECT BASE DE DONNÉES
+      if (userProfile.role === "Conseiller") {
+        query = query.eq("conseiller_id", userProfile.id);
+      }
+
+      if (userProfile.role === "ResponsableCellule") {
+        const { data: cellulesData, error: cellulesError } = await scopedQuery("cellules")
+          .select("id")
+          .eq("responsable_id", userProfile.id);
+
+        const celluleIds = cellulesData?.map(c => c.id) || [];
+
+        if (celluleIds.length > 0) {
+          query = query.in("cellule_id", celluleIds);
+        } else {
+          setAllMembers([]);
+          setLoading(false);
+          return;
+        }
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setAllMembers(data || []);
+      setLoading(false);
+    } catch (err) {
+      console.error("Erreur fetchMembers:", err);
+    }
+  };
+
+  fetchMembers();
+}, [scopedQuery, userProfile, setAllMembers]);
 
 
   // -------------------- Récupérer la session Supabase --------------------
@@ -185,48 +226,7 @@ function ListMembersContent() {
         setSession(session);
       });
     
-      return () => {useEffect(() => {
-  if (loading || !profile) return; // 🔹 bloquer tant que profile pas chargé
-
-  const fetchMembers = async () => {
-    try {
-      let query = scopedQuery("membres_complets");
-      if (!query) return;
-
-      // 🔹 FILTRAGE DIRECT DANS LA BASE
-      if (profile.role === "Conseiller") {
-        query = query.eq("conseiller_id", profile.id);
-      }
-
-      if (profile.role === "ResponsableCellule") {
-        const { data: cellulesData } = await scopedQuery("cellules")
-          .select("id")
-          .eq("responsable_id", profile.id);
-
-        const celluleIds = cellulesData?.map(c => c.id) || [];
-
-        if (celluleIds.length > 0) {
-          query = query.in("cellule_id", celluleIds);
-        } else {
-          setAllMembers([]);
-          return;
-        }
-      }
-
-      const { data, error } = await query.order("created_at", { ascending: false });
-      if (error) throw error;
-
-      setAllMembers(data || []);
-      setLoading(false);
-
-    } catch (err) {
-      console.error("Erreur fetchMembers:", err);
-    }
-  };
-
-  fetchMembers();
-}, [profile, loading, scopedQuery]);
-
+      return () => {
         listener.subscription.unsubscribe();
       };
     }, []);
@@ -279,7 +279,7 @@ function ListMembersContent() {
 
 
   // -------------------- Realtime --------------------
-useEffect(() => {
+  useEffect(() => {
   if (realtimeChannelRef.current) {
     try {
       realtimeChannelRef.current.unsubscribe();
@@ -290,72 +290,58 @@ useEffect(() => {
   const channel = supabase.channel("realtime:membres_complets");
 
   const fetchScopedMembers = async () => {
-  if (!userProfile) return;
+    if (!scopedQuery) return;
+    try {
+      const query = scopedQuery("membres_complets");
+      if (!query) return;
+      const { data } = await query.order("created_at", { ascending: false });
+      if (data) setAllMembers(data);
+    } catch (err) {
+      console.error("Erreur fetchMembers realtime:", err);
+    }
+  };
+
+  channel.on(
+    "postgres_changes",
+    { event: "*", schema: "public", table: "membres_complets" },
+    fetchScopedMembers
+  );
+
+  channel.on(
+    "postgres_changes",
+    { event: "*", schema: "public", table: "cellules" },
+    () => {
+      fetchCellules();
+      fetchScopedMembers();
+    }
+  );
+
+  channel.on(
+    "postgres_changes",
+    { event: "*", schema: "public", table: "profiles" },
+    () => {
+      fetchConseillers();
+      fetchScopedMembers();
+    }
+  );
 
   try {
-    let query = supabase
-      .from("membres_complets")
-      .select("*")
-      .eq("eglise_id", userProfile.eglise_id)
-      .eq("branche_id", userProfile.branche_id)
-      .order("created_at", { ascending: false });
-
-    // 🔹 Conseiller
-    if (userProfile.role === "Conseiller") {
-      query = query.eq("conseiller_id", userProfile.id);
-    }
-
-    // 🔹 ResponsableCellule
-    if (userProfile.role === "ResponsableCellule") {
-      const { data: cellulesData } = await supabase
-        .from("cellules")
-        .select("id")
-        .eq("responsable_id", userProfile.id);
-
-      const celluleIds = cellulesData?.map(c => c.id) || [];
-
-      if (celluleIds.length === 0) {
-        setAllMembers([]);
-        return;
-      }
-
-      query = query.in("cellule_id", celluleIds);
-    }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-
-    setAllMembers(data || []);
-
+    channel.subscribe();
   } catch (err) {
-    console.error("❌ Erreur fetchScopedMembers:", err);
+    console.warn("Erreur subscription realtime:", err);
   }
-};
-
-  // 🔹 Premier chargement
-  fetchScopedMembers();
-
-  // 🔹 Realtime listener
-  channel
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "membres_complets" },
-      () => {
-        fetchScopedMembers();
-      }
-    )
-    .subscribe();
 
   realtimeChannelRef.current = channel;
 
   return () => {
-    if (realtimeChannelRef.current) {
-      realtimeChannelRef.current.unsubscribe();
-      realtimeChannelRef.current = null;
-    }
+    try {
+      if (realtimeChannelRef.current) {
+        realtimeChannelRef.current.unsubscribe();
+        realtimeChannelRef.current = null;
+      }
+    } catch (e) {}
   };
-}, [scopedQuery, userProfile, setAllMembers]);
+}, [scopedQuery, setAllMembers]);
 
   // -------------------- Filtrage --------------------
   const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {

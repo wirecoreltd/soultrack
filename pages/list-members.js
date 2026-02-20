@@ -59,12 +59,14 @@ function ListMembersContent() {
   const [userProfile, setUserProfile] = useState(null);  
   
 //--------------------------------------//
-  const rolesArray = userProfile
-    ? Array.isArray(userProfile.roles)
-      ? userProfile.roles
-      : typeof userProfile.roles === "string"
-      ? JSON.parse(userProfile.roles || "[]")
-      : []
+  // 🔑 Si userProfile n'est pas encore chargé, on ne montre rien
+  if (!userProfile) return null;
+
+  // 🔑 Transforme roles en vrai tableau
+  const rolesArray = Array.isArray(userProfile.roles)
+    ? userProfile.roles
+    : typeof userProfile.roles === "string"
+    ? JSON.parse(userProfile.roles || "[]")
     : [];
   //--------------------------------------//
 
@@ -789,7 +791,7 @@ useEffect(() => {
         </button>
       
         {/* 🔥 Bouton visible seulement si l'utilisateur N'EST PAS Conseiller */}
-        {userProfile && !rolesArray.includes("Conseiller") && (
+        {!rolesArray.includes("Conseiller") && (
         <button
           onClick={() => router.push("/AddContact")}
           className="text-white font-semibold px-4 py-2 rounded shadow text-sm"

@@ -184,24 +184,33 @@ function CreateInternalUserContent() {
           <input name="confirmPassword" type="password" placeholder="Confirmer mot de passe" value={formData.confirmPassword} onChange={handleChange} className="input" required />
 
           {/* Rôle */}
-          <select
-            name="roles"
-            multiple
-            value={formData.roles}
-            onChange={(e) => {
-              const selected = Array.from(e.target.selectedOptions, option => option.value);
-              setFormData({ ...formData, roles: selected });
-            }}
-            className="input"
-            required
-          >
-            <option value="Administrateur">Administrateur</option>
-            <option value="ResponsableIntegration">Responsable Intégration</option>
-            <option value="ResponsableCellule">Responsable Cellule</option>
-            <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
-            <option value="SuperviseurCellule">Superviseur Cellules</option>
-            <option value="Conseiller">Conseiller</option>
-          </select>
+          <div className="flex flex-col gap-2">
+  <p className="font-semibold">Sélectionner les rôles :</p>
+  
+  {["Administrateur","ResponsableIntegration","ResponsableCellule","ResponsableEvangelisation","SuperviseurCellule","Conseiller"].map((role) => (
+    <label key={role} className="flex items-center gap-2">
+      <input
+        type="checkbox"
+        value={role}
+        checked={formData.roles.includes(role)}
+        onChange={(e) => {
+          const checked = e.target.checked;
+          setFormData((prev) => {
+            let updatedRoles = [...prev.roles];
+            if (checked) {
+              updatedRoles.push(role);
+            } else {
+              updatedRoles = updatedRoles.filter(r => r !== role);
+            }
+            return { ...prev, roles: updatedRoles };
+          });
+        }}
+      />
+      {role}
+    </label>
+  ))}
+</div>
+
 
           {/* Cellule si rôle ResponsableCellule */}
           {formData.role === "ResponsableCellule" && (

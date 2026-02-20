@@ -4,52 +4,50 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 
-export default function ProtectedRoute({ allowedRoles = [], children }) {
-  const [userRoles, setUserRoles] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function ProtectedRoute({ children, allowedRoles = [] }) {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
-    const fetchRoles = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role, roles")
-          .eq("id", user.id)
-          .single();
+    const checkAccess = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data?.session) {
+        router.replace("/login");
+        return;
+      }
 
-        // Si `roles` existe, on prend le tableau, sinon fallback sur role string
-        if (profile?.roles && profile.roles.length > 0) {
-          setUserRoles(profile.roles);
-        } else if (profile?.role) {
-          setUserRoles([profile.role]);
+      const storedRoles = localStorage.getItem("userRole");
+      let roles = [];
+      if (storedRoles) {
+        try {
+          roles = JSON.parse(storedRoles);
+          if (!Array.isArray(roles)) roles = [roles];
+        } catch {
+          roles = [storedRoles];
         }
       }
+
+      // ✅ Administrateur a toujours accès
+      if (roles.includes("Administrateur")) {
+        setHasAccess(true);
+      } else if (allowedRoles.length === 0) {
+        // Si pas de roles spécifiés, on autorise tous les utilisateurs connectés
+        setHasAccess(true);
+      } else {
+        // Vérifie si l'utilisateur a au moins un rôle autorisé
+        setHasAccess(roles.some(r => allowedRoles.includes(r)));
+      }
+
       setLoading(false);
     };
-    fetchRoles();
-  }, []);
 
-  if (loading) return <div className="text-white text-center mt-20">Chargement...</div>;
+    checkAccess();
+  }, [router, allowedRoles]);
 
-  // ✅ Vérification : au moins un rôle correspond à allowedRoles
-  const hasAccess = userRoles.some(r => allowedRoles.includes(r));
+  if (loading) return null;
 
-  if (!hasAccess) {
-    return (
-      <div className="min-h-screen flex flex-col justify-center items-center bg-gray-800 text-white p-6 text-center">
-        <h1 className="text-2xl font-bold mb-4">🚫 Accès refusé</h1>
-        <p className="mb-6">Vous n’avez pas les permissions nécessaires pour accéder à cette page.</p>
-        <button
-          onClick={() => router.back()}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold"
-        >
-          ← Retour
-        </button>
-      </div>
-    );
-  }
+  if (!hasAccess) return <p className="text-red-600 text-center mt-10">🚫 Accès refusé<br/>Vous n’avez pas les permissions nécessaires pour accéder à cette page.</p>;
 
-  return children;
+  return <>{children}</>;
 }

@@ -28,14 +28,12 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
         }
       }
 
-      // ✅ Administrateur a toujours accès
+      // Administrateur a toujours accès
       if (roles.includes("Administrateur")) {
         setHasAccess(true);
       } else if (allowedRoles.length === 0) {
-        // Si pas de roles spécifiés, on autorise tous les utilisateurs connectés
-        setHasAccess(true);
+        setHasAccess(true); // si pas de rôle défini, on laisse l’accès
       } else {
-        // Vérifie si l'utilisateur a au moins un rôle autorisé
         setHasAccess(roles.some(r => allowedRoles.includes(r)));
       }
 

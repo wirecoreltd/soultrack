@@ -256,6 +256,23 @@ function CreateInternalUserContent() {
             </>
           )}
 
+{/* Ministère si serviteur */}
+          {selectedMemberId === "add-serviteur" && (
+            <div className="flex flex-col gap-2">
+              <label className="font-semibold">Ministères :</label>
+              {ministereOptions.map(m => (
+                <label key={m} className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.ministere.includes(m)}
+                    onChange={() => handleMinistereChange(m)}
+                  />
+                  {m}
+                </label>
+              ))}
+            </div>
+          )}
+
           <input name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="input" required />
           <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
           <input name="confirmPassword" placeholder="Confirmer mot de passe" type="password" value={formData.confirmPassword} onChange={handleChange} className="input" required />
@@ -274,24 +291,7 @@ function CreateInternalUserContent() {
                 </label>
               )
             )}
-          </div>
-
-          {/* Ministère si serviteur */}
-          {selectedMemberId === "add-serviteur" && (
-            <div className="flex flex-col gap-2">
-              <label className="font-semibold">Ministères :</label>
-              {ministereOptions.map(m => (
-                <label key={m} className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.ministere.includes(m)}
-                    onChange={() => handleMinistereChange(m)}
-                  />
-                  {m}
-                </label>
-              ))}
-            </div>
-          )}
+          </div>          
 
           {formData.roles.includes("ResponsableCellule") && (
             <div className="flex flex-col gap-2">

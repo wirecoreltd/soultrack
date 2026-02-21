@@ -62,8 +62,8 @@ function RapportMinistere() {
 
     try {
       let query = supabase
-        .from("profiles")
-        .select(`roles, star, etat_contact, eglise_id, branche_id`)
+        .from("membres_complets")
+        .select(`Ministere, star, etat_contact, eglise_id, branche_id`)
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
 
@@ -77,40 +77,47 @@ function RapportMinistere() {
       let totalServiteursLocal = 0;
       let totalMembresLocal = 0;
 
-      data.forEach((profile) => {
-        const etatOk = ["existant"].includes(
-          profile.etat_contact?.toString().trim().toLowerCase()
+      data.forEach((membre) => {
+        //const etatOk = ["existant", "nouveau"].includes(
+          const etatOk = ["existant"].includes(
+          membre.etat_contact?.toString().trim().toLowerCase()
         );
 
         const isServiteur =
-          profile.star?.toString().trim().toLowerCase() === "true" ||
-          profile.star?.toString().trim().toLowerCase() === "oui";
+          membre.star?.toString().trim().toLowerCase() === "true" ||
+          membre.star?.toString().trim().toLowerCase() === "oui";
 
         if (etatOk) totalMembresLocal++;
         if (etatOk && isServiteur) totalServiteursLocal++;
 
-        // Comptage par rôle
-        if (etatOk && isServiteur && profile.roles?.length) {
-          let roles = [];
+        // Comptage par ministère
+        if (etatOk && isServiteur && membre.Ministere) {
+          let ministeres = [];
+
           try {
-            if (typeof profile.roles === "string") {
-              if (profile.roles.startsWith("[")) roles = JSON.parse(profile.roles);
-              else roles = profile.roles.split(",").map((r) => r.trim());
-            } else if (Array.isArray(profile.roles)) roles = profile.roles;
+            if (typeof membre.Ministere === "string") {
+              if (membre.Ministere.startsWith("[")) {
+                ministeres = JSON.parse(membre.Ministere);
+              } else {
+                ministeres = membre.Ministere.split(",").map((m) => m.trim());
+              }
+            } else if (Array.isArray(membre.Ministere)) {
+              ministeres = membre.Ministere;
+            }
           } catch {
-            roles = profile.roles.split(",").map((r) => r.trim());
+            ministeres = membre.Ministere.split(",").map((m) => m.trim());
           }
 
-          roles.forEach((role) => {
-            if (!role) return;
-            if (!counts[role]) counts[role] = 0;
-            counts[role]++;
+          ministeres.forEach((min) => {
+            if (!min) return;
+            if (!counts[min]) counts[min] = 0;
+            counts[min]++;
           });
         }
       });
 
       setRapports(
-        Object.entries(counts).map(([role, total]) => ({ ministere: role, total }))
+        Object.entries(counts).map(([nom, total]) => ({ ministere: nom, total }))
       );
       setTotalServiteurs(totalServiteursLocal);
       setTotalMembres(totalMembresLocal);
@@ -176,12 +183,12 @@ function RapportMinistere() {
         </div>
       )}
 
-      {/* 🔹 Tableau rôles */}
+      {/* 🔹 Tableau ministères */}
       <div className="w-full flex justify-center mt-6 mb-6">
         <div className="w-max overflow-x-auto space-y-2">
           {/* HEADER */}
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[250px]">Ministère / Rôle</div>
+            <div className="min-w-[250px]">Ministère</div>
             <div className="min-w-[150px] text-center text-orange-400 font-semibold">
               Nombre de serviteurs
             </div>

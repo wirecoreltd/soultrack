@@ -29,9 +29,9 @@ function CreateInternalUserContent() {
     roles: [],
     cellule_nom: "",
     cellule_zone: "",
+    ministere: [], // <-- pour serviteur
   });
 
-  const [ministeresSelected, setMinisteresSelected] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [rolesToHide, setRolesToHide] = useState([]);
@@ -53,6 +53,7 @@ function CreateInternalUserContent() {
     "Modération",
   ];
 
+  // ➤ Tous les rôles avec nom lisible
   const allRoles = [
     { key: "Administrateur", label: "Administrateur" },
     { key: "ResponsableIntegration", label: "Responsable Integration" },
@@ -97,9 +98,8 @@ function CreateInternalUserContent() {
   // ➤ Pré-remplissage infos et calcul des rôles à cacher
   useEffect(() => {
     if (!selectedMemberId || selectedMemberId === "add-serviteur") {
-      setFormData(prev => ({ ...prev, prenom: "", nom: "", telephone: "", roles: [] }));
+      setFormData(prev => ({ ...prev, prenom: "", nom: "", telephone: "", roles: [], ministere: [] }));
       setRolesToHide([]);
-      setMinisteresSelected([]);
       return;
     }
 
@@ -134,12 +134,22 @@ function CreateInternalUserContent() {
   }, [selectedMemberId, members]);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
   const handleRoleChange = (role) => {
     setFormData(prev => {
       const roles = prev.roles.includes(role)
         ? prev.roles.filter(r => r !== role)
         : [...prev.roles, role];
       return { ...prev, roles };
+    });
+  };
+
+  const handleMinistereChange = (ministere) => {
+    setFormData(prev => {
+      const list = prev.ministere.includes(ministere)
+        ? prev.ministere.filter(m => m !== ministere)
+        : [...prev.ministere, ministere];
+      return { ...prev, ministere: list };
     });
   };
 
@@ -156,11 +166,6 @@ function CreateInternalUserContent() {
       return;
     }
 
-    if (selectedMemberId === "add-serviteur" && ministeresSelected.length === 0) {
-      setMessage("❌ Sélectionnez au moins un ministère pour le serviteur !");
-      return;
-    }
-
     setLoading(true);
     setMessage("⏳ Création en cours...");
 
@@ -172,22 +177,10 @@ function CreateInternalUserContent() {
         return;
       }
 
-      // 🔎 Profil admin pour eglise/branche
-      const { data: adminProfile } = await supabase
-        .from("profiles")
-        .select("eglise_id, branche_id")
-        .eq("id", session.user.id)
-        .single();
+      const body = { ...formData, member_id: selectedMemberId, roles: formData.roles };
 
-      // 👤 Création Auth + profile
-      const body = {
-        ...formData,
-        member_id: selectedMemberId,
-        roles: formData.roles,
-        ministeresSelected,
-        eglise_id: adminProfile.eglise_id,
-        branche_id: adminProfile.branche_id,
-      };
+      // Si c'est un serviteur, indiquer pour l'API
+      if (selectedMemberId === "add-serviteur") body.addServiteur = true;
 
       const res = await fetch("/api/create-user", {
         method: "POST",
@@ -203,7 +196,6 @@ function CreateInternalUserContent() {
       if (res.ok) {
         setMessage("✅ Utilisateur créé avec succès !");
         setSelectedMemberId("");
-        setMinisteresSelected([]);
         setFormData({
           prenom: "",
           nom: "",
@@ -214,6 +206,7 @@ function CreateInternalUserContent() {
           roles: [],
           cellule_nom: "",
           cellule_zone: "",
+          ministere: [],
         });
         setRolesToHide([]);
       } else {
@@ -249,34 +242,61 @@ function CreateInternalUserContent() {
             required
           >
             <option value="">-- Choisir un membre existant --</option>
-            {members.map(m => <option key={m.id} value={m.id}>{m.prenom} {m.nom}</option>)}
+            {members.map(m => (
+              <option key={m.id} value={m.id}>{m.prenom} {m.nom}</option>
+            ))}
             <option value="add-serviteur">➕ Ajouter un Serviteur</option>
           </select>
 
           {(selectedMemberId === "add-serviteur" || selectedMemberId) && (
             <>
-              <input name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input" required />
-              <input name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input" required />
+              <input name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input" />
+              <input name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input" />
               <input name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={handleChange} className="input" />
-
-              <input name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="input" required />
-              <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
-              <input name="confirmPassword" placeholder="Confirmer mot de passe" type="password" value={formData.confirmPassword} onChange={handleChange} className="input" required />
             </>
           )}
 
+          <input name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="input" required />
+          <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
+          <input name="confirmPassword" placeholder="Confirmer mot de passe" type="password" value={formData.confirmPassword} onChange={handleChange} className="input" required />
+
+          <div className="flex flex-col gap-2">
+            <label className="font-semibold">Rôles :</label>
+            {allRoles.map(role =>
+              !rolesToHide.includes(role.key) && (
+                <label key={role.key} className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.roles.includes(role.key)}
+                    onChange={() => handleRoleChange(role.key)}
+                  />
+                  {role.label}
+                </label>
+              )
+            )}
+          </div>
+
+          {/* Ministère si serviteur */}
           {selectedMemberId === "add-serviteur" && (
             <div className="flex flex-col gap-2">
               <label className="font-semibold">Ministères :</label>
-              <select
-                multiple
-                value={ministeresSelected}
-                onChange={(e) => setMinisteresSelected(Array.from(e.target.selectedOptions, option => option.value))}
-                className="input"
-              >
-                {ministereOptions.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
-              <p className="text-sm text-gray-500">Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs ministères</p>
+              {ministereOptions.map(m => (
+                <label key={m} className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.ministere.includes(m)}
+                    onChange={() => handleMinistereChange(m)}
+                  />
+                  {m}
+                </label>
+              ))}
+            </div>
+          )}
+
+          {formData.roles.includes("ResponsableCellule") && (
+            <div className="flex flex-col gap-2">
+              <input name="cellule_nom" placeholder="Nom cellule" value={formData.cellule_nom} onChange={handleChange} className="input" />
+              <input name="cellule_zone" placeholder="Zone cellule" value={formData.cellule_zone} onChange={handleChange} className="input" />
             </div>
           )}
 

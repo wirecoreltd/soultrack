@@ -62,19 +62,24 @@ function ListMembersContent() {
    // 🔒 Sécurisation maximale des rôles
   let rolesArray = [];
 
-  if (userProfile?.roles) {
-    if (Array.isArray(userProfile.roles)) {
-      rolesArray = userProfile.roles;
-    } else {
-      try {
-        rolesArray = JSON.parse(userProfile.roles);
-      } catch (e) {
-        rolesArray = [];
-      }
-    }
-  };
-
+if (userProfile?.roles) {
+  if (Array.isArray(userProfile.roles)) {
+    rolesArray = userProfile.roles;
+  } else if (typeof userProfile.roles === "string") {
+    rolesArray = userProfile.roles
+      .replace("{", "")
+      .replace("}", "")
+      .split(",");
+  }
+}
   //--------------------------------------//
+
+const role = userProfile?.role;
+
+const canAddMember =
+  role === "Administrateur" ||
+  role === "ResponsableIntegration";
+
 
   const [view, setView] = useState(() => {
     if (typeof window !== "undefined") {
@@ -269,7 +274,7 @@ useEffect(() => {
     // 2. récupérer eglise_id & branche_id
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("id, eglise_id, branche_id, role")
+      .select("id, eglise_id, branche_id, roles, role")
       .eq("id", user.id)
       .single();
 
@@ -464,6 +469,8 @@ useEffect(() => {
             return m.besoin;
           }
         })();
+
+    console.log("ROLE ACTUEL:", role);
 
     return (
    
@@ -796,16 +803,15 @@ useEffect(() => {
           {view === "card" ? "Vue Table" : "Vue Carte"}
         </button>
       
-        {/* 🔥 Bouton visible seulement si l'utilisateur N'EST PAS Conseiller */}
-         {userProfile && !rolesArray.includes("Conseiller") && (
-        <button
-          onClick={() => router.push("/AddContact")}
-          className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-        >
-          ➕ Ajouter un membre
-        </button>
-      )}
-
+        {/* 🔥 Bouton visible seulement si l'utilisateur N'EST PAS Conseiller */}        
+       {canAddMember && (
+          <button
+            onClick={() => router.push("/AddContact")}
+            className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+          >
+            ➕ Ajouter un membre
+          </button>
+        )}
       </div>
 
       {/* ==================== VUE CARTE ==================== */}

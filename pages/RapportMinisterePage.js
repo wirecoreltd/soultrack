@@ -46,6 +46,8 @@ function RapportMinistere() {
     fetchUser();
   }, []);
 
+  console.log("DATA:", data);
+
   // 🔹 Générer rapport
   const fetchRapport = async () => {
     setLoading(true);

@@ -79,16 +79,25 @@ function RapportMinistere() {
 
       data.forEach((membre) => {
         //const etatOk = ["existant", "nouveau"].includes(
-          const etatOk = ["existant"].includes(
-          membre.etat_contact?.toString().trim().toLowerCase()
-        );
+          const etatOk = ["existant", "nouveau"].includes(
+  membre.etat_contact?.toString().trim().toLowerCase()
+);
 
-        const isServiteur =
-          membre.star?.toString().trim().toLowerCase() === "true" ||
-          membre.star?.toString().trim().toLowerCase() === "oui";
+        data.forEach((membre) => {
+  const etat = membre.etat_contact?.toString().trim().toLowerCase();
 
-        if (etatOk) totalMembresLocal++;
-        if (etatOk && isServiteur) totalServiteursLocal++;
+  const etatOk = ["existant", "nouveau"].includes(etat);
+
+  const isServiteur =
+    membre.star === true ||
+    membre.star?.toString().trim().toLowerCase() === "true" ||
+    membre.star?.toString().trim().toLowerCase() === "oui";
+
+  if (etatOk) totalMembresLocal++;
+
+  if (etatOk && isServiteur) totalServiteursLocal++;
+});
+
 
         // Comptage par ministère
         if (etatOk && isServiteur && membre.Ministere) {
@@ -177,7 +186,10 @@ function RapportMinistere() {
               % de serviteurs / total
             </div>
             <div className="text-2xl font-bold text-orange-400">
-              {((totalServiteurs / totalMembres) * 100).toFixed(1)} %
+              {totalMembres > 0
+  ? ((totalServiteurs / totalMembres) * 100).toFixed(1)
+  : 0} %
+
             </div>
           </div>
         </div>

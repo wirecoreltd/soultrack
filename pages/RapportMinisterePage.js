@@ -28,16 +28,17 @@ function RapportMinistere() {
   // 🔹 Charger profil utilisateur
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) return;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (!user) return;
 
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from("profiles")
         .select("eglise_id, branche_id")
-        .eq("id", session.session.user.id)
+        .eq("id", user.id)
         .single();
 
-      if (profile) {
+      if (!error && profile) {
         setEgliseId(profile.eglise_id);
         setBrancheId(profile.branche_id);
       }
@@ -45,8 +46,6 @@ function RapportMinistere() {
 
     fetchUser();
   }, []);
-
-  console.log("DATA:", data);
 
   // 🔹 Générer rapport
   const fetchRapport = async () => {
@@ -57,7 +56,7 @@ function RapportMinistere() {
     setMessage("⏳ Chargement...");
 
     if (!egliseId || !brancheId) {
-      setMessage("❌ ID de l'église manquant");
+      setMessage("❌ ID de l'église ou branche manquant");
       setLoading(false);
       return;
     }
@@ -65,7 +64,7 @@ function RapportMinistere() {
     try {
       let query = supabase
         .from("membres_complets")
-        .select(`Ministere, star, etat_contact, eglise_id, branche_id`)
+        .select("Ministere, star, etat_contact, created_at")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
 
@@ -80,56 +79,56 @@ function RapportMinistere() {
       let totalMembresLocal = 0;
 
       data.forEach((membre) => {
-        //const etatOk = ["existant", "nouveau"].includes(
-          const etatOk = ["existant", "nouveau"].includes(
-  membre.etat_contact?.toString().trim().toLowerCase()
-);
+        const etat = membre.etat_contact?.toString().trim().toLowerCase();
+        const etatOk = ["existant", "nouveau"].includes(etat);
 
-        data.forEach((membre) => {
-  const etat = membre.etat_contact?.toString().trim().toLowerCase();
+        const isServiteur =
+          membre.star === true ||
+          membre.star?.toString().trim().toLowerCase() === "true" ||
+          membre.star?.toString().trim().toLowerCase() === "oui";
 
-  const etatOk = ["existant", "nouveau"].includes(etat);
+        if (etatOk) totalMembresLocal++;
 
-  const isServiteur =
-    membre.star === true ||
-    membre.star?.toString().trim().toLowerCase() === "true" ||
-    membre.star?.toString().trim().toLowerCase() === "oui";
+        if (etatOk && isServiteur) {
+          totalServiteursLocal++;
 
-  if (etatOk) totalMembresLocal++;
+          if (membre.Ministere) {
+            let ministeres = [];
 
-  if (etatOk && isServiteur) totalServiteursLocal++;
-});
-
-
-        // Comptage par ministère
-        if (etatOk && isServiteur && membre.Ministere) {
-          let ministeres = [];
-
-          try {
-            if (typeof membre.Ministere === "string") {
-              if (membre.Ministere.startsWith("[")) {
-                ministeres = JSON.parse(membre.Ministere);
-              } else {
-                ministeres = membre.Ministere.split(",").map((m) => m.trim());
+            try {
+              if (typeof membre.Ministere === "string") {
+                if (membre.Ministere.startsWith("[")) {
+                  ministeres = JSON.parse(membre.Ministere);
+                } else {
+                  ministeres = membre.Ministere
+                    .split(",")
+                    .map((m) => m.trim());
+                }
+              } else if (Array.isArray(membre.Ministere)) {
+                ministeres = membre.Ministere;
               }
-            } else if (Array.isArray(membre.Ministere)) {
-              ministeres = membre.Ministere;
+            } catch {
+              ministeres = membre.Ministere
+                .split(",")
+                .map((m) => m.trim());
             }
-          } catch {
-            ministeres = membre.Ministere.split(",").map((m) => m.trim());
-          }
 
-          ministeres.forEach((min) => {
-            if (!min) return;
-            if (!counts[min]) counts[min] = 0;
-            counts[min]++;
-          });
+            ministeres.forEach((min) => {
+              if (!min) return;
+              if (!counts[min]) counts[min] = 0;
+              counts[min]++;
+            });
+          }
         }
       });
 
       setRapports(
-        Object.entries(counts).map(([nom, total]) => ({ ministere: nom, total }))
+        Object.entries(counts).map(([nom, total]) => ({
+          ministere: nom,
+          total,
+        }))
       );
+
       setTotalServiteurs(totalServiteursLocal);
       setTotalMembres(totalMembresLocal);
       setMessage("");
@@ -171,10 +170,10 @@ function RapportMinistere() {
         </button>
       </div>
 
-      {/* 🔹 Carrés chiffres */}
+      {/* 🔹 Résumé */}
       {totalMembres > 0 && (
         <div className="flex gap-4 mt-6 flex-wrap justify-center">
-          <div className="bg-white/10 px-6 py-4 rounded-2xl shadow-lg text-white min-w-[220px] text-center">
+          <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
             <div className="text-sm uppercase font-semibold mb-1">
               Nombre de serviteurs
             </div>
@@ -183,27 +182,26 @@ function RapportMinistere() {
             </div>
           </div>
 
-          <div className="bg-white/10 px-6 py-4 rounded-2xl shadow-lg text-white min-w-[220px] text-center">
+          <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
             <div className="text-sm uppercase font-semibold mb-1">
               % de serviteurs / total
             </div>
             <div className="text-2xl font-bold text-orange-400">
               {totalMembres > 0
-  ? ((totalServiteurs / totalMembres) * 100).toFixed(1)
-  : 0} %
-
+                ? ((totalServiteurs / totalMembres) * 100).toFixed(1)
+                : 0}{" "}
+              %
             </div>
           </div>
         </div>
       )}
 
-      {/* 🔹 Tableau ministères */}
+      {/* 🔹 Tableau */}
       <div className="w-full flex justify-center mt-6 mb-6">
         <div className="w-max overflow-x-auto space-y-2">
-          {/* HEADER */}
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
             <div className="min-w-[250px]">Ministère</div>
-            <div className="min-w-[150px] text-center text-orange-400 font-semibold">
+            <div className="min-w-[150px] text-center text-orange-400">
               Nombre de serviteurs
             </div>
           </div>

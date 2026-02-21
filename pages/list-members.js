@@ -472,6 +472,18 @@ useEffect(() => {
 
     console.log("ROLE ACTUEL:", role);
 
+    const getConseillerName = (id) => {
+        if (!id) return "—";
+      
+        const conseiller = conseillers.find(
+          (c) => String(c.id) === String(id)
+        );
+      
+        if (!conseiller) return "—";
+      
+        return `${conseiller.prenom} ${conseiller.nom}`;
+      };
+
     return (
    
         <div key={m.id} className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative">
@@ -555,8 +567,8 @@ useEffect(() => {
                 <p className="text-[11px] text-gray-400">
                   Créé le {formatDateFr(m.created_at)}</p></div>   
             <p>🏠 Cellule : {m.cellule_id ? `${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` : "—"}</p>
-            <p>👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
-          </div>            
+            <p>👤 Conseiller : {getConseillerName(m.conseiller_id)}</p>
+            </div>            
 
           <div className="mt-2 w-full">
             <label className="font-semibold text-sm">Envoyer ce contact en suivi :</label>
@@ -772,7 +784,7 @@ useEffect(() => {
           </div>
         </div>
       );
-    };
+    };  
 
   // -------------------- Rendu --------------------
   return (
@@ -924,8 +936,8 @@ useEffect(() => {
                   {m.cellule_id
                     ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
                     : m.conseiller_id
-                    ? `👤 ${conseillers.find((c) => c.id === m.conseiller_id)?.prenom} ${conseillers.find((c) => c.id === m.conseiller_id)?.nom}`
-                    : "—"}
+                      ? `👤 ${getConseillerName(m.conseiller_id)}`
+                      : "—"}
                 </div>
             
                 <div className="flex-[1]">

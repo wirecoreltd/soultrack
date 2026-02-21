@@ -294,12 +294,13 @@ useEffect(() => {
 
     // 4. conseillers filtrés
     const { data: conseillersData } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom, telephone")
-      .eq("role", "Conseiller")
-      .eq("eglise_id", profile.eglise_id)
-      .eq("branche_id", profile.branche_id)
-      .order("prenom");
+  .from("profiles")
+  .select("id, prenom, nom, telephone")
+  .contains("roles", ["Conseiller"]) // 🔥 IMPORTANT
+  .eq("eglise_id", profile.eglise_id)
+  .eq("branche_id", profile.branche_id)
+  .order("prenom");
+
 
     if (conseillersData) setConseillers(conseillersData);
   };

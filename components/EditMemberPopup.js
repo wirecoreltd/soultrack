@@ -82,10 +82,10 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     const loadData = async () => {
       try {
         const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
-        const { data: conseillersData } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom")
-          .eq("role", "Conseiller");
+        const { data: conseillersData, error } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom")
+        .or('role.eq.Conseiller,roles.cs.{"Conseiller"}');
         if (!mounted) return;
         setCellules(cellulesData || []);
         setConseillers(conseillersData || []);

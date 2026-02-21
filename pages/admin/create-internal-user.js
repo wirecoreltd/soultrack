@@ -36,16 +36,6 @@ function CreateInternalUserContent() {
   const [loading, setLoading] = useState(false);
   const [rolesToHide, setRolesToHide] = useState([]);
 
-  const allRoles = [
-    { key: "Administrateur", label: "Administrateur" },
-    { key: "ResponsableIntegration", label: "Responsable Integration" },
-    { key: "ResponsableCellule", label: "Responsable Cellule" },
-    { key: "ResponsableEvangelisation", label: "Responsable Evangelisation" },
-    { key: "SuperviseurCellule", label: "Superviseur Cellule" },
-    { key: "Conseiller", label: "Conseiller" },
-    { key: "Serviteur", label: "Serviteur" },
-  ];
-
   const ministereOptions = [
     "Intercession",
     "Louange",
@@ -63,7 +53,16 @@ function CreateInternalUserContent() {
     "Modération",
   ];
 
-  // Récupérer membres existants
+  const allRoles = [
+    { key: "Administrateur", label: "Administrateur" },
+    { key: "ResponsableIntegration", label: "Responsable Integration" },
+    { key: "ResponsableCellule", label: "Responsable Cellule" },
+    { key: "ResponsableEvangelisation", label: "Responsable Evangelisation" },
+    { key: "SuperviseurCellule", label: "Superviseur Cellule" },
+    { key: "Conseiller", label: "Conseiller" },
+  ];
+
+  // ➤ Récupérer les membres existants
   useEffect(() => {
     const fetchMembers = async () => {
       try {
@@ -75,6 +74,7 @@ function CreateInternalUserContent() {
           .select("eglise_id, branche_id")
           .eq("id", session.user.id)
           .single();
+
         if (!profile) return;
 
         const { data: membersData } = await supabase
@@ -90,14 +90,16 @@ function CreateInternalUserContent() {
         console.error("Erreur fetchMembers:", err);
       }
     };
+
     fetchMembers();
   }, []);
 
-  // Pré-remplissage infos et calcul des rôles à cacher
+  // ➤ Pré-remplissage infos et calcul des rôles à cacher
   useEffect(() => {
-    if (!selectedMemberId) {
+    if (!selectedMemberId || selectedMemberId === "add-serviteur") {
       setFormData(prev => ({ ...prev, prenom: "", nom: "", telephone: "", roles: [] }));
       setRolesToHide([]);
+      setMinisteresSelected([]);
       return;
     }
 
@@ -123,8 +125,10 @@ function CreateInternalUserContent() {
         profilesData?.forEach(p => {
           if (p.roles?.length) hide.push(...p.roles);
         });
+
         setRolesToHide([...new Set(hide)]);
       };
+
       checkExistingRoles();
     }
   }, [selectedMemberId, members]);
@@ -141,12 +145,19 @@ function CreateInternalUserContent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (formData.password !== formData.confirmPassword) {
       setMessage("❌ Les mots de passe ne correspondent pas.");
       return;
     }
+
     if (!formData.roles || formData.roles.length === 0) {
       setMessage("❌ Sélectionnez au moins un rôle !");
+      return;
+    }
+
+    if (selectedMemberId === "add-serviteur" && ministeresSelected.length === 0) {
+      setMessage("❌ Sélectionnez au moins un ministère pour le serviteur !");
       return;
     }
 
@@ -155,7 +166,28 @@ function CreateInternalUserContent() {
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { setMessage("❌ Session expirée"); setLoading(false); return; }
+      if (!session) {
+        setMessage("❌ Session expirée");
+        setLoading(false);
+        return;
+      }
+
+      // 🔎 Profil admin pour eglise/branche
+      const { data: adminProfile } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", session.user.id)
+        .single();
+
+      // 👤 Création Auth + profile
+      const body = {
+        ...formData,
+        member_id: selectedMemberId,
+        roles: formData.roles,
+        ministeresSelected,
+        eglise_id: adminProfile.eglise_id,
+        branche_id: adminProfile.branche_id,
+      };
 
       const res = await fetch("/api/create-user", {
         method: "POST",
@@ -163,12 +195,7 @@ function CreateInternalUserContent() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ 
-          ...formData, 
-          member_id: selectedMemberId, 
-          roles: formData.roles,
-          ministeresSelected // <-- tableau des ministères
-        }),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json().catch(() => null);
@@ -194,7 +221,9 @@ function CreateInternalUserContent() {
       }
     } catch (err) {
       setMessage("❌ " + err.message);
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => router.push("/admin/list-users");
@@ -202,7 +231,9 @@ function CreateInternalUserContent() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
-        <button onClick={() => router.back()} className="absolute top-4 left-4 text-gray-700 hover:text-gray-900">← Retour</button>
+        <button onClick={() => router.back()} className="absolute top-4 left-4 text-gray-700 hover:text-gray-900">
+          ← Retour
+        </button>
 
         <div className="flex justify-center mb-6">
           <Image src="/logo.png" alt="Logo SoulTrack" width={80} height={80} />
@@ -211,30 +242,30 @@ function CreateInternalUserContent() {
         <h1 className="text-3xl font-bold text-center mb-6">Créer un utilisateur</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <select value={selectedMemberId} onChange={(e) => setSelectedMemberId(e.target.value)} className="input" required>
+          <select
+            value={selectedMemberId}
+            onChange={(e) => setSelectedMemberId(e.target.value)}
+            className="input"
+            required
+          >
             <option value="">-- Choisir un membre existant --</option>
-            {members.length > 0 ? members.map(m => <option key={m.id} value={m.id}>{m.prenom} {m.nom}</option>) : <option disabled>Aucun membre disponible</option>}
+            {members.map(m => <option key={m.id} value={m.id}>{m.prenom} {m.nom}</option>)}
+            <option value="add-serviteur">➕ Ajouter un Serviteur</option>
           </select>
 
-          <input name="prenom" placeholder="Prénom" value={formData.prenom} readOnly className="input" />
-          <input name="nom" placeholder="Nom" value={formData.nom} readOnly className="input" />
-          <input name="telephone" placeholder="Téléphone" value={formData.telephone} readOnly className="input" />
-          <input name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="input" required />
-          <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
-          <input name="confirmPassword" placeholder="Confirmer mot de passe" type="password" value={formData.confirmPassword} onChange={handleChange} className="input" required />
+          {(selectedMemberId === "add-serviteur" || selectedMemberId) && (
+            <>
+              <input name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input" required />
+              <input name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input" required />
+              <input name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={handleChange} className="input" />
 
-          <div className="flex flex-col gap-2">
-            <label className="font-semibold">Rôles :</label>
-            {allRoles.map(role => !rolesToHide.includes(role.key) && (
-              <label key={role.key} className="inline-flex items-center gap-2">
-                <input type="checkbox" checked={formData.roles.includes(role.key)} onChange={() => handleRoleChange(role.key)} />
-                {role.label}
-              </label>
-            ))}
-          </div>
+              <input name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="input" required />
+              <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
+              <input name="confirmPassword" placeholder="Confirmer mot de passe" type="password" value={formData.confirmPassword} onChange={handleChange} className="input" required />
+            </>
+          )}
 
-          {/* Multi-select ministères pour Serviteur */}
-          {formData.roles.includes("Serviteur") && (
+          {selectedMemberId === "add-serviteur" && (
             <div className="flex flex-col gap-2">
               <label className="font-semibold">Ministères :</label>
               <select
@@ -246,13 +277,6 @@ function CreateInternalUserContent() {
                 {ministereOptions.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
               <p className="text-sm text-gray-500">Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs ministères</p>
-            </div>
-          )}
-
-          {formData.roles.includes("ResponsableCellule") && (
-            <div className="flex flex-col gap-2">
-              <input name="cellule_nom" placeholder="Nom cellule" value={formData.cellule_nom} onChange={handleChange} className="input" />
-              <input name="cellule_zone" placeholder="Zone cellule" value={formData.cellule_zone} onChange={handleChange} className="input" />
             </div>
           )}
 

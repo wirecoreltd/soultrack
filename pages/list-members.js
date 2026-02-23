@@ -984,7 +984,9 @@ useEffect(() => {
               >
                 <div className="flex-[2] text-white font-semibold flex items-center gap-1">
                   <span>{m.prenom} {m.nom}</span>
-                  {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
+                  {m.star === true && m.etat_contact?.trim().toLowerCase() === "existant" && (
+                    <span className="text-yellow-400 ml-1">⭐</span>
+                  )}
                 </div>
             
                 <div className="flex-[1] text-white">

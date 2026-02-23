@@ -48,34 +48,39 @@ export default function AcceptInvitation() {
 
 
   const handleSubmit = async () => {
-    if (!choice) return;
+  if (!choice) return;
 
-    setSubmitting(true);
+  setSubmitting(true);
 
-    await supabase
+  // 🔎 Vérifier si déjà supervisée
+  if (choice === "acceptee") {
+    const { data: existing } = await supabase
       .from("eglise_supervisions")
-      .update({
-        statut: choice,
-        approved_at: choice === "acceptee" ? new Date().toISOString() : null,
-      })
-      .eq("invitation_token", token);
+      .select("*")
+      .eq("supervisee_eglise_id", invitation.supervisee_eglise_id)
+      .eq("statut", "acceptee")
+      .maybeSingle();
 
-    if (choice === "acceptee") {
-      setMessage(
-        `Vous êtes maintenant sous la supervision de ${invitation.eglise_nom}`
-      );
-    } else if (choice === "refusee") {
-      setMessage(
-        `Vous avez refusé l’invitation de ${invitation.eglise_nom}`
-      );
-    } else {
-      setMessage(
-        "Invitation laissée en attente. Vous pourrez décider plus tard."
-      );
+    if (existing && existing.id !== invitation.id) {
+      alert("Cette église est déjà sous supervision.");
+      setSubmitting(false);
+      return;
     }
+  }
 
-    setTimeout(() => router.push("/"), 3000);
-  };
+  await supabase
+    .from("eglise_supervisions")
+    .update({
+      statut: choice,
+      approved_at: choice === "acceptee" ? new Date().toISOString() : null,
+    })
+    .eq("invitation_token", token);
+
+  setMessage("Décision enregistrée.");
+
+  setTimeout(() => router.push("/"), 3000);
+};
+
 
   if (loading) return <div className="p-10">Chargement…</div>;
   if (!invitation) return <div className="p-10">Invitation introuvable</div>;

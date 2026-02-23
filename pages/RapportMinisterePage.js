@@ -109,11 +109,19 @@ function RapportMinistere() {
 
       // 🔹 Comptage par date
       const serviteursParDate = {};
-      statsData.forEach((s) => {
-        const date = s.date_action?.split("T")[0] || s.date_action;
-        if (!serviteursParDate[date]) serviteursParDate[date] = new Set();
-        serviteursParDate[date].add(s.membre_id);
-      });
+        statsData.forEach((s) => {
+          if (s.type !== "ministere") return; // ne prendre que ministere
+          const date = s.date_action?.split("T")[0] || s.date_action;
+          if (!serviteursParDate[date]) serviteursParDate[date] = new Set();
+          serviteursParDate[date].add(s.membre_id);
+        });
+        
+        // Transformer les Sets en nombres
+        const serviteursParDateFinal = Object.entries(serviteursParDate).map(
+          ([date, set]) => ({ date, total: set.size })
+        );
+
+        console.log("Serviteurs par date:", serviteursParDateFinal);
 
       // 🔹 Transformer les Sets en nombres
       const serviteursParDateFinal = Object.entries(serviteursParDate).map(

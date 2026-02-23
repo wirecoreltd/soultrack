@@ -319,7 +319,7 @@ function Attendance() {
                             whitespace-nowrap border-l-4 border-transparent">
 
               <div className="min-w-[150px] pl-2">Culte / Date</div>
-              <div className="min-w-[120px] text-center">Hommes</div>
+              <div className="min-w-[120px] text-center ml-3">Hommes</div>
               <div className="min-w-[120px] text-center">Femmes</div>
               <div className="min-w-[120px] text-center">Jeunes</div>
               <div className="min-w-[130px] text-center text-orange-400 font-semibold">Total</div>
@@ -380,10 +380,7 @@ function Attendance() {
                   {(isExpanded || monthReports.length === 1) &&
                     monthReports.map((r) => {
                       const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
-                      const culteLabel =
-                        r.numero_culte === 1
-                          ? "1er Culte"
-                          : `${r.numero_culte}ème Culte`;
+                      const culteLabel = `Culte ${r.numero_culte}`;
 
                       return (
                         <div

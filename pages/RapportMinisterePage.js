@@ -25,7 +25,6 @@ function RapportMinistere() {
   const [totalMembres, setTotalMembres] = useState(0);
   const [message, setMessage] = useState("");
 
-  // 🔹 Charger profil utilisateur
   useEffect(() => {
     const fetchUser = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -43,11 +42,9 @@ function RapportMinistere() {
         setBrancheId(profile.branche_id);
       }
     };
-
     fetchUser();
   }, []);
 
-  // 🔹 Générer rapport
   const fetchRapport = async () => {
     setLoading(true);
     setRapports([]);
@@ -62,21 +59,21 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 Total membres (etat_contact = existant/nouveau)
-      const { data: membresValides, error: errorMembres } = await supabase
+      // 🔹 Membres valides pour % serviteurs
+      const { data: membres, error: errorMembres } = await supabase
         .from("membres_complets")
-        .select("id, etat_contact, sexe")
+        .select("id, sexe, etat_contact")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
 
       if (errorMembres) throw errorMembres;
 
-      const membresValidesFiltered = membresValides.filter((m) =>
+      const membresValides = membres.filter((m) =>
         ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
       );
-      setTotalMembres(membresValidesFiltered.length);
+      setTotalMembres(membresValides.length);
 
-      // 🔹 Logs ministère
+      // 🔹 Logs ministère filtrés par date
       const { data: ministereLogs, error: errorLogs } = await supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, date_action")
@@ -88,16 +85,17 @@ function RapportMinistere() {
 
       if (errorLogs) throw errorLogs;
 
+      // 🔹 Comptage unique par membre + date + ministère
       const counts = {};
-      let totalServiteursLocal = 0;
-
+      const serviteursParMembreDate = new Set();
       ministereLogs.forEach((log) => {
-        const membre = membresValides.find((m) => m.id === log.membre_id);
+        const membre = membres.find((m) => m.id === log.membre_id);
+        if (!membre) return;
+
         const sexe =
-          membre?.sexe?.toLowerCase() === "homme" ? "hommes" : "femmes";
+          membre.sexe?.toLowerCase() === "homme" ? "hommes" : "femmes";
 
-        totalServiteursLocal++;
-
+        // Split valeurs en ministères
         let ministeres = [];
         try {
           if (log.valeur.startsWith("[")) ministeres = JSON.parse(log.valeur);
@@ -109,6 +107,11 @@ function RapportMinistere() {
         ministeres.forEach((m) => {
           const clean = m.trim();
           if (!clean) return;
+
+          const keyUnique = `${log.date_action}-${log.membre_id}-${clean}`;
+          if (serviteursParMembreDate.has(keyUnique)) return; // déjà compté
+          serviteursParMembreDate.add(keyUnique);
+
           if (!counts[clean])
             counts[clean] = { total: 0, hommes: 0, femmes: 0 };
           counts[clean].total++;
@@ -124,7 +127,7 @@ function RapportMinistere() {
         }))
       );
 
-      setTotalServiteurs(totalServiteursLocal);
+      setTotalServiteurs(serviteursParMembreDate.size);
       setMessage("");
     } catch (err) {
       console.error(err);

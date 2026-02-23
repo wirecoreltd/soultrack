@@ -63,13 +63,22 @@ function RapportMinistere() {
 
     try {
       // 🔹 Récupérer tous les membres valides pour total membres
-      const { data: membres, error: membresError } = await supabase
-        .from("membres_complets")
-        .select("id, sexe, etat_contact")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .in("etat_contact", ["existant", "nouveau"]);
-      if (membresError) throw membresError;
+      // 🔹 Charger les membres pour avoir le sexe
+const { data: membres, error: membresError } = await supabase
+  .from("membres_complets")
+  .select("id, sexe")
+  .eq("eglise_id", egliseId)
+  .eq("branche_id", brancheId);
+
+if (membresError) throw membresError;
+
+// Créer le mapping membre_id -> sexe
+const membresMap = {};
+membres.forEach((m) => {
+  const sexe = m.sexe?.toString().trim().toLowerCase();
+  membresMap[m.id] = sexe === "homme" ? "homme" : "femme";
+});
+
 
       setTotalMembres(membres.length);
 

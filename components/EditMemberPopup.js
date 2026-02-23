@@ -383,8 +383,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
               </select>
             </div>
 
-
-
            {/* Formation*/}
           <div className="flex flex-col">
             <label className="font-medium">Formation</label>
@@ -471,7 +469,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
           {/* Besoins */}
           <div className="flex flex-col">
-            <label className="font-medium">Besoins</label>
+            <label className="font-medium">Difficultés / Besoins</label>
             {besoinsOptions.map(b => (
               <label key={b} className="flex items-center gap-2">
                 <input type="checkbox" value={b} checked={formData.besoin.includes(b)} onChange={handleBesoinChange} className="accent-[#25297e]" />

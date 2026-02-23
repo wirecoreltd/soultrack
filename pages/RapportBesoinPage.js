@@ -1,223 +1,183 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 
-export default function RapportMinisterePage() {
+export default function RapportBesoinPage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
-      <RapportMinistere />
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableSuivi"]}>
+      <RapportBesoin />
     </ProtectedRoute>
   );
 }
 
-function RapportMinistere() {
+function RapportBesoin() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-  const [rapports, setRapports] = useState([]);
-  const [egliseId, setEgliseId] = useState(null);
-  const [brancheId, setBrancheId] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [totalServiteurs, setTotalServiteurs] = useState(0);
+  const [besoinsCount, setBesoinsCount] = useState({});
   const [totalMembres, setTotalMembres] = useState(0);
   const [message, setMessage] = useState("");
 
-  // 🔹 Charger profil utilisateur
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData?.session?.user;
-      if (!user) return;
-
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("eglise_id, branche_id")
-        .eq("id", user.id)
-        .single();
-
-      if (!error && profile) {
-        setEgliseId(profile.eglise_id);
-        setBrancheId(profile.branche_id);
-      }
-    };
-
-    fetchUser();
-  }, []);
-
-  // 🔹 Générer rapport
   const fetchRapport = async () => {
-    setLoading(true);
-    setRapports([]);
-    setTotalServiteurs(0);
-    setTotalMembres(0);
     setMessage("⏳ Chargement...");
-
-    if (!egliseId || !brancheId) {
-      setMessage("❌ ID de l'église ou branche manquant");
-      setLoading(false);
-      return;
-    }
+    setBesoinsCount({});
+    setTotalMembres(0);
 
     try {
-      // 🔹 Récupérer tous les membres pour total et sexe
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", session.session.user.id)
+        .single();
+
+      // 🔹 Total membres valides pour %
       const { data: membres, error: errorMembres } = await supabase
         .from("membres_complets")
-        .select("id, etat_contact, sexe")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
+        .select("id, etat_contact, sexe, created_at")
+        .eq("eglise_id", profile.eglise_id)
+        .eq("branche_id", profile.branche_id)
         .gte("created_at", dateDebut || "1900-01-01")
         .lte("created_at", dateFin || "2999-12-31");
 
       if (errorMembres) throw errorMembres;
 
-      const membresValides = membres.filter((m) =>
+      const totalMembresLocal = membres.filter((m) =>
         ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
-      );
+      ).length;
+      setTotalMembres(totalMembresLocal);
 
-      setTotalMembres(membresValides.length);
-
-      // 🔹 Récupérer tous les logs de ministère
-      const { data: ministereLogs, error: errorLogs } = await supabase
+      // 🔹 Compter besoins avec sexe
+      const { data: besoinsData, error: errorBesoins } = await supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, date_action")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .eq("type", "ministere")
+        .eq("eglise_id", profile.eglise_id)
+        .eq("branche_id", profile.branche_id)
+        .eq("type", "besoin")
         .gte("date_action", dateDebut || "1900-01-01")
         .lte("date_action", dateFin || "2999-12-31");
 
-      if (errorLogs) throw errorLogs;
+      if (errorBesoins) throw errorBesoins;
 
-      const counts = {}; // { ministere: { total: X, hommes: Y, femmes: Z } }
-      let totalServiteursLocal = 0;
+      const count = {}; // { besoin: { total: X, hommes: Y, femmes: Z } }
 
-      (ministereLogs || []).forEach((log) => {
-        const membre = membresValides.find((m) => m.id === log.membre_id);
-        if (!membre) return; // ignorer membres non valides
+      (besoinsData || []).forEach((r) => {
+        if (!r.valeur) return;
 
-        const sexe = membre.sexe?.toLowerCase() === "homme" ? "hommes" : "femmes";
-        totalServiteursLocal++;
+        // trouver le membre correspondant pour le sexe
+        const membre = membres.find((m) => m.id === r.membre_id);
+        const sexe = membre?.sexe?.toLowerCase() === "homme" ? "hommes" : "femmes";
 
-        let ministeres = [];
+        let besoinsArray = [];
         try {
-          if (log.valeur.startsWith("[")) ministeres = JSON.parse(log.valeur);
-          else ministeres = log.valeur.split(",");
+          if (r.valeur.startsWith("[")) {
+            besoinsArray = JSON.parse(r.valeur);
+          } else {
+            besoinsArray = r.valeur.split(",");
+          }
         } catch {
-          ministeres = log.valeur.split(",");
+          besoinsArray = r.valeur.split(",");
         }
 
-        ministeres.forEach((m) => {
-          const clean = m.trim();
+        besoinsArray.forEach((b) => {
+          const clean = b.trim();
           if (!clean) return;
-          if (!counts[clean]) counts[clean] = { total: 0, hommes: 0, femmes: 0 };
-          counts[clean].total++;
-          if (sexe === "hommes") counts[clean].hommes++;
-          else counts[clean].femmes++;
+          if (!count[clean]) count[clean] = { total: 0, hommes: 0, femmes: 0 };
+          count[clean].total++;
+          if (sexe === "hommes") count[clean].hommes++;
+          else count[clean].femmes++;
         });
       });
 
-      setRapports(
-        Object.entries(counts).map(([ministere, values]) => ({
-          ministere,
-          ...values,
-        }))
-      );
-
-      setTotalServiteurs(totalServiteursLocal);
+      setBesoinsCount(count);
       setMessage("");
     } catch (err) {
       console.error(err);
       setMessage("❌ " + err.message);
     }
-
-    setLoading(false);
   };
+
+  const labels = Object.keys(besoinsCount);
+  const values = Object.values(besoinsCount);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold text-white mt-4 mb-6 text-center">
-        Rapport Ministère
+      <h1 className="text-2xl font-bold text-white mt-4 mb-6">
+        Rapport Difficultés / Besoins
       </h1>
 
-      {/* 🔹 Filtres */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">
-        <input
-          type="date"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <input
-          type="date"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <button
-          onClick={fetchRapport}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-        >
-          Générer
-        </button>
+      {/* FILTRES */}
+      <div className="flex flex-wrap gap-4 mb-6">
+        <div className="flex flex-col">
+          <label htmlFor="dateDebut" className="font-medium mb-1 text-white">
+            Date de début
+          </label>
+          <input
+            type="date"
+            value={dateDebut}
+            onChange={(e) => setDateDebut(e.target.value)}
+            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+          />
+        </div>
+
+        <div className="flex flex-col">
+          <label htmlFor="dateFin" className="font-medium mb-1 text-white">
+            Date de fin
+          </label>
+          <input
+            type="date"
+            value={dateFin}
+            onChange={(e) => setDateFin(e.target.value)}
+            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+          />
+        </div>
+
+        <div className="flex items-end">
+          <button
+            onClick={fetchRapport}
+            className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition text-white"
+          >
+            Générer
+          </button>
+        </div>
       </div>
 
-      {/* 🔹 Résumé */}
-      {totalMembres > 0 && (
-        <div className="flex gap-4 mt-6 flex-wrap justify-center">
-          <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
-            <div className="text-sm uppercase font-semibold mb-1">
-              Nombre de serviteurs
-            </div>
-            <div className="text-2xl font-bold text-orange-400">{totalServiteurs}</div>
+      {message && <p className="text-white mb-4">{message}</p>}
+
+      {/* TABLEAU */}
+      {labels.length > 0 && (
+        <div className="w-full max-w-[700px] bg-white/10 rounded-2xl shadow-lg p-6 mb-8">
+          <div className="grid grid-cols-5 text-white font-bold border-b border-white/30 pb-2 mb-2 text-center">
+            <div className="text-left pl-2">Besoin</div>
+            <div className="text-orange-400">Nombre</div>
+            <div>Homme</div>
+            <div>Femme</div>
+            <div>% du total membres</div>
           </div>
 
-          <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
-            <div className="text-sm uppercase font-semibold mb-1">
-              % Serviteurs / Total
-            </div>
-            <div className="text-2xl font-bold text-orange-400">
-              {((totalServiteurs / totalMembres) * 100).toFixed(1)} %
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 🔹 Tableau Ministère */}
-      <div className="w-full flex justify-center mt-6 mb-6">
-        <div className="w-max overflow-x-auto space-y-2">
-          <div className="grid grid-cols-5 text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[200px]">Ministère</div>
-            <div className="min-w-[100px] text-center text-orange-400">Total</div>
-            <div className="min-w-[80px] text-center">Homme</div>
-            <div className="min-w-[80px] text-center">Femme</div>
-            <div className="min-w-[100px] text-center">% sur total membres</div>
-          </div>
-
-          {loading && <div className="text-white text-center py-4">Chargement...</div>}
-
-          {rapports.map((r, index) => (
+          {labels.map((b, i) => (
             <div
-              key={index}
-              className="grid grid-cols-5 text-white px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
+              key={b}
+              className="grid grid-cols-5 text-white py-2 border-b border-white/10 text-center"
             >
-              <div className="min-w-[200px] font-semibold">{r.ministere}</div>
-              <div className="min-w-[100px] text-center text-orange-400 font-bold">{r.total}</div>
-              <div className="min-w-[80px] text-center">{r.hommes}</div>
-              <div className="min-w-[80px] text-center">{r.femmes}</div>
-              <div className="min-w-[100px] text-center font-semibold">
-                {totalMembres > 0 ? ((r.total / totalMembres) * 100).toFixed(1) : 0} %
+              <div className="text-left pl-2">{b}</div>
+              <div className="text-orange-400 font-semibold">{values[i].total}</div>
+              <div className="font-semibold">{values[i].hommes}</div>
+              <div className="font-semibold">{values[i].femmes}</div>
+              <div className="font-semibold">
+                {totalMembres > 0 ? ((values[i].total / totalMembres) * 100).toFixed(1) : 0} %
               </div>
             </div>
           ))}
         </div>
-      </div>
-
-      {message && <p className="text-white text-center">{message}</p>}
+      )}
 
       <Footer />
     </div>

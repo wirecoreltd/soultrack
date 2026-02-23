@@ -67,7 +67,7 @@ function RapportMinistere() {
         .select("membre_id, valeur, date_action")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId)
-        .eq("type", "ministere");
+        .eq("type", "ministere"); // seulement ministere
 
       if (dateDebut) queryStats = queryStats.gte("date_action", dateDebut);
       if (dateFin) queryStats = queryStats.lte("date_action", dateFin);
@@ -75,10 +75,10 @@ function RapportMinistere() {
       const { data: statsData, error: statsError } = await queryStats;
       if (statsError) throw statsError;
 
-      // 🔹 Récupérer tous les membres pour le % (star et état)
+      // 🔹 Récupérer tous les membres pour le % (etat_contact existant ou nouveau)
       let queryMembres = supabase
         .from("membres_complets")
-        .select("id, star, etat_contact")
+        .select("id, etat_contact")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
 
@@ -92,26 +92,25 @@ function RapportMinistere() {
       const totalMembresLocal = membresData.filter((m) =>
         ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
       ).length;
-
-      // 🔹 Total serviteurs = star = true + etat_contact = existant
-      const totalServiteursLocal = membresData.filter(
-        (m) => m.star === true && m.etat_contact?.toLowerCase() === "existant"
-      ).length;
-
       setTotalMembres(totalMembresLocal);
-      setTotalServiteurs(totalServiteursLocal);
 
-      // 🔹 Comptage par ministère (1 membre par ministère par date)
-      const ministereMap = {};
+      // 🔹 Comptage serviteurs depuis stats_ministere_besoin
+      const serviteursSet = new Set(); // pour total serviteurs uniques
+      const ministereMap = {}; // pour tableau ministères
 
       statsData.forEach((s) => {
         if (!s.membre_id || !s.valeur || !s.date_action) return;
 
-        const key = `${s.membre_id}_${s.date_action}`;
-        if (!ministereMap[s.valeur]) ministereMap[s.valeur] = new Set();
+        // clé unique membre + date pour éviter doublons
+        const uniqueKey = `${s.membre_id}_${s.date_action}`;
+        serviteursSet.add(uniqueKey);
 
-        ministereMap[s.valeur].add(key);
+        // Comptage par ministère
+        if (!ministereMap[s.valeur]) ministereMap[s.valeur] = new Set();
+        ministereMap[s.valeur].add(uniqueKey);
       });
+
+      setTotalServiteurs(serviteursSet.size);
 
       const rapportsArray = Object.entries(ministereMap).map(
         ([ministere, setValues]) => ({

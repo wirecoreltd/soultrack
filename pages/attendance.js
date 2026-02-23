@@ -322,7 +322,7 @@ function Attendance() {
               <div className="min-w-[120px] text-center ml-3">Hommes</div>
               <div className="min-w-[120px] text-center">Femmes</div>
               <div className="min-w-[120px] text-center">Jeunes</div>
-              <div className="min-w-[130px] text-center text-orange-400 font-semibold ml-1">Total</div>
+              <div className="min-w-[130px] text-center text-orange-400 font-semibold -ml-1">Total</div>
               <div className="min-w-[120px] text-center">Enfants</div>
               <div className="min-w-[140px] text-center">Connectés</div>
               <div className="min-w-[150px] text-center">Nouveaux Venus</div>

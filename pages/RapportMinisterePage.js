@@ -62,7 +62,7 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 Récupérer tous les membres valides pour total
+      // 🔹 Total membres (etat_contact = existant/nouveau)
       const { data: membresValides, error: errorMembres } = await supabase
         .from("membres_complets")
         .select("id, etat_contact, sexe")
@@ -74,10 +74,9 @@ function RapportMinistere() {
       const membresValidesFiltered = membresValides.filter((m) =>
         ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
       );
-
       setTotalMembres(membresValidesFiltered.length);
 
-      // 🔹 Récupérer les logs ministère
+      // 🔹 Logs ministère
       const { data: ministereLogs, error: errorLogs } = await supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, date_action")
@@ -139,8 +138,9 @@ function RapportMinistere() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold text-white mt-4 mb-6 text-center">
-        Rapport Ministère
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
+        <span className="text-white">Rapport</span>{" "}
+        <span className="text-amber-300">Ministère</span>
       </h1>
 
       {/* 🔹 Filtres */}
@@ -192,36 +192,30 @@ function RapportMinistere() {
       )}
 
       {/* 🔹 Tableau */}
-      <div className="w-full flex justify-center mt-6 mb-6">
-        <div className="w-max overflow-x-auto space-y-2">
-          <div className="grid grid-cols-5 text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap text-center">
-            <div className="text-left pl-2 col-span-2">Ministère</div>
-            <div className="text-orange-400">Total</div>
-            <div>Hommes</div>
-            <div>Femmes</div>
-          </div>
-
-          {loading && (
-            <div className="text-white text-center py-4 col-span-5">
-              Chargement...
+      {rapports.length > 0 && (
+        <div className="w-full flex justify-center mt-6 mb-6">
+          <div className="w-max overflow-x-auto space-y-2">
+            <div className="grid grid-cols-4 text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl text-center">
+              <div className="text-left pl-2">Ministère</div>
+              <div>Hommes</div>
+              <div>Femmes</div>
+              <div>Total</div>
             </div>
-          )}
 
-          {rapports.map((r, index) => (
-            <div
-              key={index}
-              className="grid grid-cols-5 text-white py-2 border-b border-white/10 text-center items-center hover:bg-white/10 rounded-lg"
-            >
-              <div className="text-left pl-2 col-span-2 font-semibold">
-                {r.ministere}
+            {rapports.map((r, index) => (
+              <div
+                key={index}
+                className="grid grid-cols-4 text-white py-2 border-b border-white/10 text-center hover:bg-white/10 rounded-lg items-center"
+              >
+                <div className="text-left pl-2 font-semibold">{r.ministere}</div>
+                <div>{r.hommes}</div>
+                <div>{r.femmes}</div>
+                <div className="text-orange-400 font-bold">{r.total}</div>
               </div>
-              <div className="text-orange-400 font-bold">{r.total}</div>
-              <div className="font-semibold">{r.hommes}</div>
-              <div className="font-semibold">{r.femmes}</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {message && <p className="text-white text-center">{message}</p>}
 

@@ -217,6 +217,8 @@ function Attendance() {
   });
 
   const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500","border-pink-500","border-indigo-500"];
+  
+
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -322,7 +324,7 @@ function Attendance() {
               <div className="min-w-[120px] text-center ml-3">Hommes</div>
               <div className="min-w-[120px] text-center">Femmes</div>
               <div className="min-w-[120px] text-center">Jeunes</div>
-              <div className="min-w-[130px] text-center text-orange-400 font-semibold -ml-1">Total</div>
+              <div className="min-w-[130px] text-center text-orange-400 font-semibold -ml-2">Total</div>
               <div className="min-w-[120px] text-center">Enfants</div>
               <div className="min-w-[140px] text-center">Connectés</div>
               <div className="min-w-[150px] text-center">Nouveaux Venus</div>
@@ -384,12 +386,12 @@ function Attendance() {
 
                       return (
                         <div
-                          key={r.id}
-                          className="flex items-center px-4 py-2 rounded-lg 
-                                     bg-white/10 hover:bg-white/20 transition 
-                                     border-l-4 border-l-green-500"
-                        >
-                          <div className="min-w-[150px] pl-2 text-white">
+                           key={r.id}
+                            className={`flex items-center px-4 py-2 rounded-lg 
+                                       bg-white/10 hover:bg-white/20 transition 
+                                       border-l-4 ${borderColor}`}
+                          >
+                          <div className={`min-w-[150px] pl-2 font-semibold ${borderColor.replace("border-", "text-")}`}>
                             {`${culteLabel} : ${formatDateFR(r.date)}`}
                           </div>
 

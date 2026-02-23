@@ -364,7 +364,7 @@ function Attendance() {
                       {isExpanded ? "➖" : "➕"} {monthLabel}
                     </div>
 
-                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.hommes}</div>
+                    <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-1">{totalMonth.hommes}</div>
                     <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.femmes}</div>
                     <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.jeunes}</div>
                     <div className="min-w-[130px] text-center text-orange-400 font-semibold">

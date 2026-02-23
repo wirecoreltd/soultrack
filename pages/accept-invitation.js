@@ -79,15 +79,8 @@ export default function AcceptInvitation() {
 
       <div className="w-full max-w-md flex justify-between items-center mt-4 mb-6">
         <h1 className="text-2xl font-bold text-white">
-          Invitation de supervision
-        </h1>
-
-        <button
-          onClick={() => router.push("/")}
-          className="bg-white text-[#333699] px-4 py-2 rounded-xl font-semibold"
-        >
-          Dashboard
-        </button>
+          Invitation de l'église superviseur
+        </h1>       
       </div>
 
       {/* CARD */}

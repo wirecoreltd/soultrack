@@ -74,52 +74,45 @@ function RapportMinistere() {
       setTotalMembres(membres.length);
 
       // 🔹 Récupérer tous les logs de serviteurs
-      let query = supabase
-        .from("stats_ministere_besoin")
-        .select("membre_id, valeur as ministere")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .eq("type", "ministere");
+      // 🔹 Récupérer tous les logs de serviteurs
+let query = supabase
+  .from("stats_ministere_besoin")
+  .select("membre_id, valeur")  // ⚡ pas de "as ministere"
+  .eq("eglise_id", egliseId)
+  .eq("branche_id", brancheId)
+  .eq("type", "ministere");
 
-      if (dateDebut) query = query.gte("date_action", dateDebut);
-      if (dateFin) query = query.lte("date_action", dateFin);
+if (dateDebut) query = query.gte("date_action", dateDebut);
+if (dateFin) query = query.lte("date_action", dateFin);
 
-      const { data: logs, error: logsError } = await query;
-      if (logsError) throw logsError;
+const { data: logs, error: logsError } = await query;
+if (logsError) throw logsError;
 
-      // 🔹 Map des membres pour retrouver le sexe
-      const membresMap = {};
-      membres.forEach((m) => {
-        membresMap[m.id] = m.sexe?.toLowerCase() || "inconnu";
-      });
+// 🔹 Compter serviteurs par ministère, homme/femme
+const counts = {};
+const serviteursIds = new Set(); // éviter double comptage du même serviteur par ministère
 
-      // 🔹 Compter serviteurs par ministère, homme/femme
-      const counts = {};
-      const serviteursIds = new Set(); // éviter double comptage du même serviteur par ministère
+logs.forEach((log) => {
+  const membreId = log.membre_id;
+  const ministere = log.valeur || "Non défini"; // ⚡ ici on renomme
+  if (!membreId || !ministere) return;
 
-      logs.forEach((log) => {
-        const membreId = log.membre_id;
-        const ministere = log.ministere || "Non défini";
-        if (!membreId || !ministere) return;
+  const key = ministere;
 
-        const key = ministere;
+  // initialiser
+  if (!counts[key]) counts[key] = { hommes: 0, femmes: 0, total: 0 };
 
-        // initialiser
-        if (!counts[key]) counts[key] = { hommes: 0, femmes: 0, total: 0 };
+  const uniqueKey = `${ministere}_${membreId}`;
+  if (serviteursIds.has(uniqueKey)) return;
+  serviteursIds.add(uniqueKey);
 
-        // éviter double comptage d’un même membre sur ce ministère pour ce rapport
-        const uniqueKey = `${ministere}_${membreId}`;
-        if (serviteursIds.has(uniqueKey)) return;
-        serviteursIds.add(uniqueKey);
+  const sexe = membresMap[membreId];
+  if (sexe === "homme") counts[key].hommes++;
+  else if (sexe === "femme") counts[key].femmes++;
 
-        const sexe = membresMap[membreId];
-        if (sexe === "homme") counts[key].hommes++;
-        else if (sexe === "femme") counts[key].femmes++;
-        else {
-          // si inconnu, compter dans total seulement
-        }
-        counts[key].total++;
-      });
+  counts[key].total++;
+});
+
 
       setRapports(
         Object.entries(counts).map(([ministere, vals]) => ({

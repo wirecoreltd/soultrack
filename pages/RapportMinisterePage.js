@@ -47,7 +47,6 @@ function RapportMinistere() {
     fetchUser();
   }, []);
 
-  // 🔹 Générer rapport
   const fetchRapport = async () => {
     setLoading(true);
     setRapports([]);
@@ -62,7 +61,7 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 Récupérer les stats_ministere_besoin
+      // 🔹 Récupérer stats ministères
       let queryStats = supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, date_action")
@@ -76,7 +75,7 @@ function RapportMinistere() {
       const { data: statsData, error: statsError } = await queryStats;
       if (statsError) throw statsError;
 
-      // 🔹 Récupérer les membres pour le total
+      // 🔹 Récupérer membres
       let queryMembres = supabase
         .from("membres_complets")
         .select("id, etat_contact")
@@ -93,31 +92,45 @@ function RapportMinistere() {
       const totalMembresLocal = membresData.filter((m) =>
         ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
       ).length;
+
       setTotalMembres(totalMembresLocal);
 
-      // 🔹 Comptage serviteurs par date et par ministère
-      const serviteursSet = new Set(); // pour total
-      const counts = {}; // pour les ministères
+      // 🔥 CORRECTION IMPORTANTE
+      // Déduplication par membre + date
+      const serviteursGlobalSet = new Set();
+      const ministereMap = {};
 
       statsData.forEach((s) => {
-        // compte pour le total serviteurs
-        serviteursSet.add(s.membre_id);
+        if (!s.membre_id || !s.date_action) return;
 
-        // compte par ministère
+        // clé unique membre + date
+        const uniqueKey = `${s.membre_id}_${s.date_action}`;
+        serviteursGlobalSet.add(uniqueKey);
+
+        // Déduplication aussi par ministère
         if (!s.valeur) return;
-        if (!counts[s.valeur]) counts[s.valeur] = 0;
-        counts[s.valeur]++;
+
+        const ministereKey = `${s.valeur}_${uniqueKey}`;
+
+        if (!ministereMap[s.valeur]) {
+          ministereMap[s.valeur] = new Set();
+        }
+
+        ministereMap[s.valeur].add(ministereKey);
       });
 
-      setTotalServiteurs(serviteursSet.size);
+      // Total serviteurs uniques par jour
+      setTotalServiteurs(serviteursGlobalSet.size);
 
-      setRapports(
-        Object.entries(counts).map(([ministere, total]) => ({
+      // Transformer en tableau
+      const rapportsArray = Object.entries(ministereMap).map(
+        ([ministere, setValues]) => ({
           ministere,
-          total,
-        }))
+          total: setValues.size,
+        })
       );
 
+      setRapports(rapportsArray);
       setMessage("");
     } catch (err) {
       console.error(err);
@@ -163,7 +176,9 @@ function RapportMinistere() {
           <div className="text-sm uppercase font-semibold mb-1">
             Nombre total de serviteurs
           </div>
-          <div className="text-2xl font-bold text-orange-400">{totalServiteurs}</div>
+          <div className="text-2xl font-bold text-orange-400">
+            {totalServiteurs}
+          </div>
         </div>
 
         <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
@@ -171,12 +186,15 @@ function RapportMinistere() {
             % de serviteurs / membres
           </div>
           <div className="text-2xl font-bold text-orange-400">
-            {totalMembres > 0 ? ((totalServiteurs / totalMembres) * 100).toFixed(1) : 0} %
+            {totalMembres > 0
+              ? ((totalServiteurs / totalMembres) * 100).toFixed(1)
+              : 0}{" "}
+            %
           </div>
         </div>
       </div>
 
-      {/* 🔹 Tableau des ministères */}
+      {/* 🔹 Tableau */}
       <div className="w-full flex justify-center mt-6 mb-6">
         <div className="w-max overflow-x-auto space-y-2">
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">

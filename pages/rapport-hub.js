@@ -95,7 +95,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
           border-t-4 border-[#3B82F6] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
         >
           <div className="text-4xl mb-2">❓</div>
-          <div className="text-lg font-bold text-gray-800 text-center">Rapport par Besoin</div>
+          <div className="text-lg font-bold text-gray-800 text-center">Rapport par Difficultés / Besoins</div>
         </Link>
 
         {/* Statistiques globales */}

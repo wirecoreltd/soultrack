@@ -62,36 +62,48 @@ function RapportMinistere() {
     }
 
     try {
-      const { data, error } = await supabase
-        .from("stats_ministere_besoin")
-        .select("type, valeur, date_action")
+      // 🔹 Comptage des serviteurs
+      const { data: membres, error: membresError } = await supabase
+        .from("membres_complets")
+        .select("id, star, etat_contact")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId)
+        .gte("created_at", dateDebut || "1900-01-01")
+        .lte("created_at", dateFin || "2999-12-31");
+
+      if (membresError) throw membresError;
+
+      const serviteurs = membres.filter(
+        (m) =>
+          (m.star === true ||
+            m.star?.toString().trim().toLowerCase() === "true" ||
+            m.star?.toString().trim().toLowerCase() === "oui") &&
+          m.etat_contact?.toString().trim().toLowerCase() === "existant"
+      );
+
+      setTotalServiteurs(serviteurs.length);
+      setTotalMembres(membres.length);
+
+      // 🔹 Comptage des ministères depuis les logs
+      const { data: logs, error: logsError } = await supabase
+        .from("stats_ministere_besoin")
+        .select("valeur")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId)
+        .eq("type", "ministere")
         .gte("date_action", dateDebut || "1900-01-01")
         .lte("date_action", dateFin || "2999-12-31");
 
-      if (error) throw error;
+      if (logsError) throw logsError;
 
-      // 🔹 Calcul des serviteurs et ministères
       let counts = {};
-      let serviteursCount = 0;
-
-      data.forEach((log) => {
-        if (log.type === "serviteur") {
-          serviteursCount++;
-        } else if (log.type === "ministere") {
-          if (!counts[log.valeur]) counts[log.valeur] = 0;
-          counts[log.valeur]++;
-        }
+      logs.forEach((log) => {
+        if (!counts[log.valeur]) counts[log.valeur] = 0;
+        counts[log.valeur]++;
       });
 
-      setTotalServiteurs(serviteursCount);
-      setTotalMembres(serviteursCount); // On peut ajuster si tu veux inclure tous les membres
       setRapports(
-        Object.entries(counts).map(([nom, total]) => ({
-          ministere: nom,
-          total,
-        }))
+        Object.entries(counts).map(([ministere, total]) => ({ ministere, total }))
       );
 
       setMessage("");
@@ -139,15 +151,11 @@ function RapportMinistere() {
           <div className="text-sm uppercase font-semibold mb-1">
             Nombre de serviteurs
           </div>
-          <div className="text-2xl font-bold text-orange-400">
-            {totalServiteurs}
-          </div>
+          <div className="text-2xl font-bold text-orange-400">{totalServiteurs}</div>
         </div>
 
         <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
-          <div className="text-sm uppercase font-semibold mb-1">
-            % serviteurs / total
-          </div>
+          <div className="text-sm uppercase font-semibold mb-1">% serviteurs / total</div>
           <div className="text-2xl font-bold text-orange-400">
             {totalMembres > 0
               ? ((totalServiteurs / totalMembres) * 100).toFixed(1)
@@ -162,26 +170,18 @@ function RapportMinistere() {
         <div className="w-max overflow-x-auto space-y-2">
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
             <div className="min-w-[250px]">Ministère / Serviteur</div>
-            <div className="min-w-[150px] text-center text-orange-400">
-              Nombre
-            </div>
+            <div className="min-w-[150px] text-center text-orange-400">Nombre</div>
           </div>
 
-          {loading && (
-            <div className="text-white text-center py-4">Chargement...</div>
-          )}
+          {loading && <div className="text-white text-center py-4">Chargement...</div>}
 
           {rapports.map((r, index) => (
             <div
               key={index}
               className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
             >
-              <div className="min-w-[250px] text-white font-semibold">
-                {r.ministere}
-              </div>
-              <div className="min-w-[150px] text-center text-orange-400 font-bold">
-                {r.total}
-              </div>
+              <div className="min-w-[250px] text-white font-semibold">{r.ministere}</div>
+              <div className="min-w-[150px] text-center text-orange-400 font-bold">{r.total}</div>
             </div>
           ))}
         </div>

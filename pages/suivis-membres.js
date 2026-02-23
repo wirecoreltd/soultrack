@@ -269,7 +269,7 @@ return (
         <p>🔥 Baptême de Feu : {m.bapteme_esprit || ""}</p>        
         <p>✒️ Formation : {m.Formation || "—"}</p>  
         <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>      
-        <p>❓ Besoin : {formatArrayField(m.besoin)}</p>
+        <p>❓ Difficultés / Besoins : {formatArrayField(m.besoin)}</p>
         <p>📝 Infos : {m.infos_supplementaires || ""}</p>
         <p>🧩 Comment est-il venu : {m.venu || ""}</p>
         <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? ""}</p>

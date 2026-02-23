@@ -22,7 +22,6 @@ function RapportMinistere() {
   const [brancheId, setBrancheId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [totalServiteurs, setTotalServiteurs] = useState(0);
-  const [totalMembres, setTotalMembres] = useState(0);
   const [message, setMessage] = useState("");
 
   // 🔹 Charger profil utilisateur
@@ -52,7 +51,6 @@ function RapportMinistere() {
     setLoading(true);
     setRapports([]);
     setTotalServiteurs(0);
-    setTotalMembres(0);
     setMessage("⏳ Chargement...");
 
     if (!egliseId || !brancheId) {
@@ -62,42 +60,33 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 Comptage des serviteurs
-      const { data: membres, error: membresError } = await supabase
-        .from("membres_complets")
-        .select("id, star, etat_contact")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .gte("created_at", dateDebut || "1900-01-01")
-        .lte("created_at", dateFin || "2999-12-31");
-
-      if (membresError) throw membresError;
-
-      const serviteurs = membres.filter(
-        (m) =>
-          (m.star === true ||
-            m.star?.toString().trim().toLowerCase() === "true" ||
-            m.star?.toString().trim().toLowerCase() === "oui") &&
-          m.etat_contact?.toString().trim().toLowerCase() === "existant"
-      );
-
-      setTotalServiteurs(serviteurs.length);
-      setTotalMembres(membres.length);
-
-      // 🔹 Comptage des ministères depuis les logs
-      const { data: logs, error: logsError } = await supabase
+      // 🔹 Récupérer tous les logs 'ministere' filtrés par date
+      const { data, error } = await supabase
         .from("stats_ministere_besoin")
-        .select("valeur")
+        .select("valeur, date_action")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId)
         .eq("type", "ministere")
         .gte("date_action", dateDebut || "1900-01-01")
         .lte("date_action", dateFin || "2999-12-31");
 
-      if (logsError) throw logsError;
+      if (error) throw error;
 
+      // 🔹 Compter le nombre de serviteurs total (distinct membre_id)
+      const { data: totalData, error: totalError } = await supabase
+        .from("stats_ministere_besoin")
+        .select("membre_id", { count: "exact", head: true })
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId)
+        .eq("type", "ministere")
+        .gte("date_action", dateDebut || "1900-01-01")
+        .lte("date_action", dateFin || "2999-12-31");
+
+      if (totalError) throw totalError;
+
+      // 🔹 Compter par ministère
       let counts = {};
-      logs.forEach((log) => {
+      data.forEach((log) => {
         if (!counts[log.valeur]) counts[log.valeur] = 0;
         counts[log.valeur]++;
       });
@@ -106,6 +95,7 @@ function RapportMinistere() {
         Object.entries(counts).map(([ministere, total]) => ({ ministere, total }))
       );
 
+      setTotalServiteurs(totalData?.count || 0);
       setMessage("");
     } catch (err) {
       console.error(err);
@@ -153,23 +143,13 @@ function RapportMinistere() {
           </div>
           <div className="text-2xl font-bold text-orange-400">{totalServiteurs}</div>
         </div>
-
-        <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
-          <div className="text-sm uppercase font-semibold mb-1">% serviteurs / total</div>
-          <div className="text-2xl font-bold text-orange-400">
-            {totalMembres > 0
-              ? ((totalServiteurs / totalMembres) * 100).toFixed(1)
-              : 0}{" "}
-            %
-          </div>
-        </div>
       </div>
 
       {/* 🔹 Tableau */}
       <div className="w-full flex justify-center mt-6 mb-6">
         <div className="w-max overflow-x-auto space-y-2">
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[250px]">Ministère / Serviteur</div>
+            <div className="min-w-[250px]">Ministère</div>
             <div className="min-w-[150px] text-center text-orange-400">Nombre</div>
           </div>
 

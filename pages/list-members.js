@@ -514,6 +514,18 @@ useEffect(() => {
     localStorage.setItem("members_view", view);
   }, [view]);
 
+  const getConseillerName = (id) => {
+        if (!id) return "—";
+      
+        const conseiller = conseillers.find(
+          (c) => String(c.id) === String(id)
+        );
+      
+        if (!conseiller) return "—";
+      
+        return `${conseiller.prenom} ${conseiller.nom}`;
+      };
+  
   // -------------------- renderMemberCard --------------------
   const renderMemberCard = (m) => {
     const isOpen = detailsOpen[m.id];
@@ -530,19 +542,7 @@ useEffect(() => {
           }
         })();
 
-    console.log("ROLE ACTUEL:", role);
-
-    const getConseillerName = (id) => {
-        if (!id) return "—";
-      
-        const conseiller = conseillers.find(
-          (c) => String(c.id) === String(id)
-        );
-      
-        if (!conseiller) return "—";
-      
-        return `${conseiller.prenom} ${conseiller.nom}`;
-      };
+    console.log("ROLE ACTUEL:", role);    
 
     return (
    

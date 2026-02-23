@@ -430,10 +430,7 @@ function Attendance() {
             <div className="min-w-[150px] text-center text-orange-500 font-semibold">{totalGlobal.nouveauxVenus}</div>
             <div className="min-w-[180px] text-center text-orange-500 font-semibold">{totalGlobal.nouveauxConvertis}</div>
             <div className="min-w-[140px]"></div>
-          </div>
-        </div>
-      </div>
-      )}
+          </div>        
 
       <Footer />
 

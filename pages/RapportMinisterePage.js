@@ -62,65 +62,38 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 Récupérer les logs de ministères
-      let logsQuery = supabase
+      const { data, error } = await supabase
         .from("stats_ministere_besoin")
-        .select("valeur, type")
+        .select("type, valeur, date_action")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId)
-        .eq("type", "ministere");
+        .gte("date_action", dateDebut || "1900-01-01")
+        .lte("date_action", dateFin || "2999-12-31");
 
-      if (dateDebut) logsQuery = logsQuery.gte("date_action", dateDebut);
-      if (dateFin) logsQuery = logsQuery.lte("date_action", dateFin);
+      if (error) throw error;
 
-      const { data: logsData, error: logsError } = await logsQuery;
-      if (logsError) throw logsError;
-
-      // 🔹 Compter les ministères
+      // 🔹 Calcul des serviteurs et ministères
       let counts = {};
-      logsData.forEach((log) => {
-        const min = log.valeur?.toString().trim();
-        if (!min) return;
-        if (!counts[min]) counts[min] = 0;
-        counts[min]++;
+      let serviteursCount = 0;
+
+      data.forEach((log) => {
+        if (log.type === "serviteur") {
+          serviteursCount++;
+        } else if (log.type === "ministere") {
+          if (!counts[log.valeur]) counts[log.valeur] = 0;
+          counts[log.valeur]++;
+        }
       });
 
-      // 🔹 Récupérer les membres pour compter les serviteurs
-      let servQuery = supabase
-        .from("membres_complets")
-        .select("star, etat_contact")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
-
-      if (dateDebut) servQuery = servQuery.gte("created_at", dateDebut);
-      if (dateFin) servQuery = servQuery.lte("created_at", dateFin);
-
-      const { data: membresData, error: membresError } = await servQuery;
-      if (membresError) throw membresError;
-
-      let totalServ = 0;
-      let totalMemb = 0;
-      membresData.forEach((m) => {
-        const etat = m.etat_contact?.toString().trim().toLowerCase();
-        const etatOk = ["existant", "nouveau"].includes(etat);
-
-        const isServiteur =
-          m.star === true ||
-          m.star?.toString().trim().toLowerCase() === "true" ||
-          m.star?.toString().trim().toLowerCase() === "oui";
-
-        if (etatOk) totalMemb++;
-        if (etatOk && isServiteur) totalServ++;
-      });
-
+      setTotalServiteurs(serviteursCount);
+      setTotalMembres(serviteursCount); // On peut ajuster si tu veux inclure tous les membres
       setRapports(
         Object.entries(counts).map(([nom, total]) => ({
           ministere: nom,
           total,
         }))
       );
-      setTotalServiteurs(totalServ);
-      setTotalMembres(totalMemb);
+
       setMessage("");
     } catch (err) {
       console.error(err);
@@ -161,36 +134,34 @@ function RapportMinistere() {
       </div>
 
       {/* 🔹 Résumé */}
-      {totalMembres > 0 && (
-        <div className="flex gap-4 mt-6 flex-wrap justify-center">
-          <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
-            <div className="text-sm uppercase font-semibold mb-1">
-              Nombre de serviteurs
-            </div>
-            <div className="text-2xl font-bold text-orange-400">
-              {totalServiteurs}
-            </div>
+      <div className="flex gap-4 mt-6 flex-wrap justify-center">
+        <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
+          <div className="text-sm uppercase font-semibold mb-1">
+            Nombre de serviteurs
           </div>
-
-          <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
-            <div className="text-sm uppercase font-semibold mb-1">
-              % serviteurs / total
-            </div>
-            <div className="text-2xl font-bold text-orange-400">
-              {totalMembres > 0
-                ? ((totalServiteurs / totalMembres) * 100).toFixed(1)
-                : 0}{" "}
-              %
-            </div>
+          <div className="text-2xl font-bold text-orange-400">
+            {totalServiteurs}
           </div>
         </div>
-      )}
+
+        <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
+          <div className="text-sm uppercase font-semibold mb-1">
+            % serviteurs / total
+          </div>
+          <div className="text-2xl font-bold text-orange-400">
+            {totalMembres > 0
+              ? ((totalServiteurs / totalMembres) * 100).toFixed(1)
+              : 0}{" "}
+            %
+          </div>
+        </div>
+      </div>
 
       {/* 🔹 Tableau */}
       <div className="w-full flex justify-center mt-6 mb-6">
         <div className="w-max overflow-x-auto space-y-2">
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[250px]">Serviteurs / Ministère</div>
+            <div className="min-w-[250px]">Ministère / Serviteur</div>
             <div className="min-w-[150px] text-center text-orange-400">
               Nombre
             </div>

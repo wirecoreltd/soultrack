@@ -532,7 +532,7 @@ export default function SuivisEvangelisation() {
                     <p>🎗️ Sexe : {m.sexe || ""}</p>
                     <p>🙏 Prière salut : {m.priere_salut ? "Oui" : "Non"}</p>
                     <p>☀️ Type : {m.type_conversion || ""}</p>
-                    <p>❓ Besoin : {formatBesoin(m.besoin)}</p>
+                    <p>❓ Difficultés / Besoins : {formatBesoin(m.besoin)}</p>
                     <p>📝 Infos : {m.infos_supplementaires || ""}</p>
 
                     {/* Bouton Modifier uniquement si ce n'est pas un refus */}

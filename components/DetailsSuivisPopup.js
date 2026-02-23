@@ -168,7 +168,7 @@ export default function DetailsSuivisPopup({
             <p>🔥 Bapteme de Feu: {m.bapteme_esprit ? "Oui" : "Non"}</p>
             <p>✒️ Formation : {m.Formation || "—"}</p>
             <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>
-            <p>❓ Besoin : {formatMinistere(m.besoin)}</p>
+            <p>❓ Difficultés / Besoins : {formatMinistere(m.besoin)}</p>
             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
             <p>✨ Raison de la venue : {m.statut_initial || "—"}</p>

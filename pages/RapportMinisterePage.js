@@ -47,6 +47,7 @@ function RapportMinistere() {
     fetchUser();
   }, []);
 
+  // 🔹 Générer rapport
   const fetchRapport = async () => {
     setLoading(true);
     setRapports([]);
@@ -61,13 +62,13 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 Récupérer stats ministères uniquement
+      // 🔹 Récupérer les stats_ministere_besoin
       let queryStats = supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, date_action")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId)
-        .eq("type", "ministere"); // seulement ministere
+        .eq("type", "ministere");
 
       if (dateDebut) queryStats = queryStats.gte("date_action", dateDebut);
       if (dateFin) queryStats = queryStats.lte("date_action", dateFin);
@@ -75,7 +76,7 @@ function RapportMinistere() {
       const { data: statsData, error: statsError } = await queryStats;
       if (statsError) throw statsError;
 
-      // 🔹 Récupérer tous les membres pour le % (etat_contact existant ou nouveau)
+      // 🔹 Récupérer les membres pour le total
       let queryMembres = supabase
         .from("membres_complets")
         .select("id, etat_contact")
@@ -88,38 +89,35 @@ function RapportMinistere() {
       const { data: membresData, error: membresError } = await queryMembres;
       if (membresError) throw membresError;
 
-      // 🔹 Total membres = etat_contact existant + nouveau
+      // 🔹 Total membres
       const totalMembresLocal = membresData.filter((m) =>
         ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
       ).length;
       setTotalMembres(totalMembresLocal);
 
-      // 🔹 Comptage serviteurs depuis stats_ministere_besoin
-      const serviteursSet = new Set(); // pour total serviteurs uniques
-      const ministereMap = {}; // pour tableau ministères
+      // 🔹 Comptage serviteurs par date et par ministère
+      const serviteursSet = new Set(); // pour total
+      const counts = {}; // pour les ministères
 
       statsData.forEach((s) => {
-        if (!s.membre_id || !s.valeur || !s.date_action) return;
+        // compte pour le total serviteurs
+        serviteursSet.add(s.membre_id);
 
-        // clé unique membre + date pour éviter doublons
-        const uniqueKey = `${s.membre_id}_${s.date_action}`;
-        serviteursSet.add(uniqueKey);
-
-        // Comptage par ministère
-        if (!ministereMap[s.valeur]) ministereMap[s.valeur] = new Set();
-        ministereMap[s.valeur].add(uniqueKey);
+        // compte par ministère
+        if (!s.valeur) return;
+        if (!counts[s.valeur]) counts[s.valeur] = 0;
+        counts[s.valeur]++;
       });
 
       setTotalServiteurs(serviteursSet.size);
 
-      const rapportsArray = Object.entries(ministereMap).map(
-        ([ministere, setValues]) => ({
+      setRapports(
+        Object.entries(counts).map(([ministere, total]) => ({
           ministere,
-          total: setValues.size,
-        })
+          total,
+        }))
       );
 
-      setRapports(rapportsArray);
       setMessage("");
     } catch (err) {
       console.error(err);
@@ -165,9 +163,7 @@ function RapportMinistere() {
           <div className="text-sm uppercase font-semibold mb-1">
             Nombre total de serviteurs
           </div>
-          <div className="text-2xl font-bold text-orange-400">
-            {totalServiteurs}
-          </div>
+          <div className="text-2xl font-bold text-orange-400">{totalServiteurs}</div>
         </div>
 
         <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
@@ -175,15 +171,12 @@ function RapportMinistere() {
             % de serviteurs / membres
           </div>
           <div className="text-2xl font-bold text-orange-400">
-            {totalMembres > 0
-              ? ((totalServiteurs / totalMembres) * 100).toFixed(1)
-              : 0}{" "}
-            %
+            {totalMembres > 0 ? ((totalServiteurs / totalMembres) * 100).toFixed(1) : 0} %
           </div>
         </div>
       </div>
 
-      {/* 🔹 Tableau ministères */}
+      {/* 🔹 Tableau des ministères */}
       <div className="w-full flex justify-center mt-6 mb-6">
         <div className="w-max overflow-x-auto space-y-2">
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">

@@ -10,104 +10,66 @@ export default function HeaderPages() {
   const [prenom, setPrenom] = useState("Utilisateur");
   const [eglise, setEglise] = useState("Église Principale");
   const [branche, setBranche] = useState("Maurice");
-  const [superviseur, setSuperviseur] = useState(""); 
+  const [superviseur, setSuperviseur] = useState(""); // 🔹 superviseur affiché
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser();
-
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) return;
 
-        // 🔹 Récupération du profil
+        // Récupère le profil
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("prenom, eglise_id, branche_id")
           .eq("id", user.id)
           .single();
-
         if (profileError) throw profileError;
 
         setPrenom(profile?.prenom || "Utilisateur");
 
-        // 🔹 Nom de l'église
+        // Récupère le nom de l'église si eglise_id existe
         if (profile?.eglise_id) {
-          const { data: egliseData } = await supabase
+          const { data: egliseData, error: egliseError } = await supabase
             .from("eglises")
             .select("nom")
             .eq("id", profile.eglise_id)
             .single();
-
-          if (egliseData) setEglise(egliseData.nom);
+          if (!egliseError && egliseData) setEglise(egliseData.nom);
         }
 
-        // 🔹 Nom de la branche
+        // Récupère le nom de la branche si branche_id existe
         if (profile?.branche_id) {
-          const { data: brancheData } = await supabase
+          const { data: brancheData, error: brancheError } = await supabase
             .from("branches")
             .select("nom")
             .eq("id", profile.branche_id)
             .single();
-
-          if (brancheData) setBranche(brancheData.nom);
+          if (!brancheError && brancheData) setBranche(brancheData.nom);
         }
 
-        // 🔹 Récupération de la supervision (église + branche superviseur)
+        // 🔹 Récupérer le superviseur actif de cette église
         if (profile?.eglise_id) {
-          const { data: supervisionData } = await supabase
-  .from("eglise_supervisions")
-  .select(`
-    superviseur_eglise_id,
-    superviseur_branche_id
-  `)
-  .eq("supervisee_eglise_id", profile.eglise_id)
-  .eq("statut", "acceptee")
-  .maybeSingle();
+          const { data: supervisionData, error: supervisionError } = await supabase
+            .from("eglise_supervisions")
+            .select(`
+              superviseur_eglise_id,
+              superviseur_branche_id,
+              eglises(nom),
+              branches(nom)
+            `)
+            .eq("supervisee_eglise_id", profile.eglise_id)
+            .eq("statut", "acceptee")
+            .maybeSingle();
 
-if (supervisionData) {
-  // 🔹 Récupérer nom église superviseur
-  const { data: supEglise } = await supabase
-    .from("eglises")
-    .select("nom")
-    .eq("id", supervisionData.superviseur_eglise_id)
-    .single();
-
-  // 🔹 Récupérer nom branche superviseur
-  const { data: supBranche } = await supabase
-    .from("branches")
-    .select("nom")
-    .eq("id", supervisionData.superviseur_branche_id)
-    .single();
-
-  if (supEglise) {
-    setSuperviseur(
-      supBranche
-        ? `${supEglise.nom} - ${supBranche?.nom || ""}`
-        : supEglise.nom
-    );
-  }
-}
-
-
-          if (!supervisionError && supervisionData) {
-            const nomEglise =
-              supervisionData.superviseur_eglise?.nom || "";
-            const nomBranche =
-              supervisionData.superviseur_branche?.nom || "";
-
-            if (nomEglise) {
-              setSuperviseur(
-                nomBranche
-                  ? `${nomEglise} - ${nomBranche}`
-                  : nomEglise
-              );
-            }
+          if (!supervisionError && supervisionData && supervisionData.eglises) {
+            const supEglise = supervisionData.eglises?.nom || "";
+            const supBranche = supervisionData.branches?.nom || "";
+            setSuperviseur(`${supEglise} - ${supBranche}`);
           }
         }
+
       } catch (err) {
         console.error("Erreur récupération profil :", err);
       } finally {
@@ -142,26 +104,19 @@ if (supervisionData) {
         </button>
       </div>
 
-      {/* User info */}
+      {/* User info en haut à droite */}
       <div className="flex justify-end flex-col text-right space-y-1 mb-2">
         <p className="text-white text-sm">
-          Connecté :{" "}
-          <span className="font-semibold">
-            {loading ? "..." : prenom}
-          </span>
+          Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
         </p>
-
         {superviseur && (
-          <p className="text-white text-xs">
-            Supervision :{" "}
-            <span className="font-semibold">
-              {superviseur}
-            </span>
+          <p className="text-white text-xs italic">
+            Supervision : {superviseur}
           </p>
         )}
       </div>
 
-      {/* Logo */}
+      {/* Logo centré */}
       <div className="flex flex-col items-center mb-4">
         <img
           src="/logo.png"

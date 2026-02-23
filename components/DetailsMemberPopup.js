@@ -245,7 +245,7 @@ export default function DetailsMemberPopup({
           <p>✒️ Formation : {membre.Formation || ""}</p>
           <p>❤️‍🩹 Soin Pastoral : {membre.Soin_Pastoral || ""}</p>
           <p>💢 Ministère : {formatMinistere(membre.Ministere, membre.Autre_Ministere)}</p>
-          <p>❓ Besoin : {formatArrayField(membre.besoin)}</p>
+          <p>❓ Difficultés / Besoins : {formatArrayField(membre.besoin)}</p>
           <p>📝 Infos : {membre.infos_supplementaires || ""}</p>
           <p>🧩 Comment est-il venu : {membre.venu || ""}</p>
           <p>✨ Raison de la venue : {membre.statut_initial || ""}</p>

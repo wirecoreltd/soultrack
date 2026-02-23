@@ -18,11 +18,13 @@ function RapportBesoin() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [besoinsCount, setBesoinsCount] = useState({});
+  const [totalMembres, setTotalMembres] = useState(0);
   const [message, setMessage] = useState("");
 
   const fetchRapport = async () => {
     setMessage("⏳ Chargement...");
-    setBesoinsCount({}); // reset pour éviter doublons
+    setBesoinsCount({});
+    setTotalMembres(0);
 
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -34,45 +36,54 @@ function RapportBesoin() {
         .eq("id", session.session.user.id)
         .single();
 
-      let query = supabase
+      // 🔹 Total membres valides pour %
+      const { data: membres, error: errorMembres } = await supabase
         .from("membres_complets")
-        .select("besoin, created_at")
+        .select("id, etat_contact, created_at")
         .eq("eglise_id", profile.eglise_id)
-        .eq("branche_id", profile.branche_id);
+        .eq("branche_id", profile.branche_id)
+        .gte("created_at", dateDebut || "1900-01-01")
+        .lte("created_at", dateFin || "2999-12-31");
 
-      if (dateDebut) query = query.gte("created_at", dateDebut);
-      if (dateFin) query = query.lte("created_at", dateFin);
+      if (errorMembres) throw errorMembres;
 
-      const { data, error } = await query;
-      if (error) throw error;
+      const totalMembresLocal = membres.filter((m) =>
+        ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
+      ).length;
+      setTotalMembres(totalMembresLocal);
+
+      // 🔹 Compter besoins
+      const { data: besoinsData, error: errorBesoins } = await supabase
+        .from("stats_ministere_besoin")
+        .select("valeur, date_action")
+        .eq("eglise_id", profile.eglise_id)
+        .eq("branche_id", profile.branche_id)
+        .eq("type", "besoin")
+        .gte("date_action", dateDebut || "1900-01-01")
+        .lte("date_action", dateFin || "2999-12-31");
+
+      if (errorBesoins) throw errorBesoins;
 
       const count = {};
-
-      (data || []).forEach((r) => {
-        if (!r.besoin) return;
+      (besoinsData || []).forEach((r) => {
+        if (!r.valeur) return;
 
         let besoinsArray = [];
         try {
-          if (r.besoin.startsWith("[")) {
-            besoinsArray = JSON.parse(r.besoin);
+          if (r.valeur.startsWith("[")) {
+            besoinsArray = JSON.parse(r.valeur);
           } else {
-            besoinsArray = r.besoin.split(",");
+            besoinsArray = r.valeur.split(",");
           }
         } catch {
-          besoinsArray = r.besoin.split(",");
+          besoinsArray = r.valeur.split(",");
         }
 
         besoinsArray.forEach((b) => {
           const clean = b.trim();
           if (!clean) return;
-
-          clean.split(",").forEach((finalBesoin) => {
-            const final = finalBesoin.trim();
-            if (!final) return;
-
-            if (!count[final]) count[final] = 0;
-            count[final]++;
-          });
+          if (!count[clean]) count[clean] = 0;
+          count[clean]++;
         });
       });
 
@@ -86,7 +97,6 @@ function RapportBesoin() {
 
   const labels = Object.keys(besoinsCount);
   const values = Object.values(besoinsCount);
-  const total = values.reduce((a, b) => a + b, 0);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -134,13 +144,13 @@ function RapportBesoin() {
 
       {message && <p className="text-white mb-4">{message}</p>}
 
-      {/* TABLE */}
+      {/* TABLEAU */}
       {labels.length > 0 && (
         <div className="w-full max-w-[600px] bg-white/10 rounded-2xl shadow-lg p-6 mb-8">
           <div className="grid grid-cols-3 text-white font-bold border-b border-white/30 pb-2 mb-2 text-center">
             <div className="text-left pl-2">Besoin</div>
             <div className="text-orange-400">Nombre</div>
-            <div>% du total des membres</div>
+            <div>% du total membres</div>
           </div>
 
           {labels.map((b, i) => (
@@ -151,7 +161,7 @@ function RapportBesoin() {
               <div className="text-left pl-2">{b}</div>
               <div className="text-orange-400 font-semibold">{values[i]}</div>
               <div className="font-semibold">
-                {total > 0 ? ((values[i] / total) * 100).toFixed(1) : 0} %
+                {totalMembres > 0 ? ((values[i] / totalMembres) * 100).toFixed(1) : 0} %
               </div>
             </div>
           ))}

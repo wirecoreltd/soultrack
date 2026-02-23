@@ -47,54 +47,80 @@ function RapportMinistere() {
     fetchUser();
   }, []);
 
-  // 🔹 Générer rapport depuis stats_ministere_besoin
+  // 🔹 Générer rapport
   const fetchRapport = async () => {
-    if (!egliseId || !brancheId) {
-      setMessage("❌ ID de l'église ou branche manquant");
-      return;
-    }
-
     setLoading(true);
     setRapports([]);
     setTotalServiteurs(0);
     setTotalMembres(0);
     setMessage("⏳ Chargement...");
 
+    if (!egliseId || !brancheId) {
+      setMessage("❌ ID de l'église ou branche manquant");
+      setLoading(false);
+      return;
+    }
+
     try {
-      let { data, error } = await supabase
+      // 🔹 Récupérer les logs de ministères
+      let logsQuery = supabase
         .from("stats_ministere_besoin")
-        .select("type, valeur, date_action")
+        .select("valeur, type")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId)
+        .eq("type", "ministere");
+
+      if (dateDebut) logsQuery = logsQuery.gte("date_action", dateDebut);
+      if (dateFin) logsQuery = logsQuery.lte("date_action", dateFin);
+
+      const { data: logsData, error: logsError } = await logsQuery;
+      if (logsError) throw logsError;
+
+      // 🔹 Compter les ministères
+      let counts = {};
+      logsData.forEach((log) => {
+        const min = log.valeur?.toString().trim();
+        if (!min) return;
+        if (!counts[min]) counts[min] = 0;
+        counts[min]++;
+      });
+
+      // 🔹 Récupérer les membres pour compter les serviteurs
+      let servQuery = supabase
+        .from("membres_complets")
+        .select("star, etat_contact")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
 
-      if (error) throw error;
+      if (dateDebut) servQuery = servQuery.gte("created_at", dateDebut);
+      if (dateFin) servQuery = servQuery.lte("created_at", dateFin);
 
-      // 🔹 Filtrer par date
-      if (dateDebut) data = data.filter(d => d.date_action >= dateDebut);
-      if (dateFin) data = data.filter(d => d.date_action <= dateFin);
+      const { data: membresData, error: membresError } = await servQuery;
+      if (membresError) throw membresError;
 
-      // 🔹 Compter les ministères et serviteurs
-      let counts = {};
-      let serviteursCount = 0;
+      let totalServ = 0;
+      let totalMemb = 0;
+      membresData.forEach((m) => {
+        const etat = m.etat_contact?.toString().trim().toLowerCase();
+        const etatOk = ["existant", "nouveau"].includes(etat);
 
-      data.forEach(d => {
-        if (d.type === "ministere") {
-          if (!counts[d.valeur]) counts[d.valeur] = 0;
-          counts[d.valeur]++;
-        } else if (d.type === "serviteur") {
-          serviteursCount++;
-        }
+        const isServiteur =
+          m.star === true ||
+          m.star?.toString().trim().toLowerCase() === "true" ||
+          m.star?.toString().trim().toLowerCase() === "oui";
+
+        if (etatOk) totalMemb++;
+        if (etatOk && isServiteur) totalServ++;
       });
 
       setRapports(
-        Object.entries(counts).map(([ministere, total]) => ({
-          ministere,
+        Object.entries(counts).map(([nom, total]) => ({
+          ministere: nom,
           total,
         }))
       );
-
-      setTotalServiteurs(serviteursCount);
-      setTotalMembres(data.length); // Total logs (ministere + serviteur)
+      setTotalServiteurs(totalServ);
+      setTotalMembres(totalMemb);
       setMessage("");
     } catch (err) {
       console.error(err);
@@ -141,12 +167,14 @@ function RapportMinistere() {
             <div className="text-sm uppercase font-semibold mb-1">
               Nombre de serviteurs
             </div>
-            <div className="text-2xl font-bold text-orange-400">{totalServiteurs}</div>
+            <div className="text-2xl font-bold text-orange-400">
+              {totalServiteurs}
+            </div>
           </div>
 
           <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
             <div className="text-sm uppercase font-semibold mb-1">
-              % de serviteurs / total logs
+              % serviteurs / total
             </div>
             <div className="text-2xl font-bold text-orange-400">
               {totalMembres > 0
@@ -162,9 +190,9 @@ function RapportMinistere() {
       <div className="w-full flex justify-center mt-6 mb-6">
         <div className="w-max overflow-x-auto space-y-2">
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[250px]">Ministère</div>
+            <div className="min-w-[250px]">Serviteurs / Ministère</div>
             <div className="min-w-[150px] text-center text-orange-400">
-              Nombre de logs
+              Nombre
             </div>
           </div>
 

@@ -93,7 +93,7 @@ function RapportBesoin() {
       <HeaderPages />
 
       <h1 className="text-2xl font-bold text-white mt-4 mb-6">
-        Rapport Besoins
+        Rapport Difficultés / Besoins
       </h1>
 
       {/* FILTRES */}

@@ -25,6 +25,7 @@ function RapportMinistere() {
   const [totalMembres, setTotalMembres] = useState(0);
   const [message, setMessage] = useState("");
 
+  // 🔹 Charger profil utilisateur
   useEffect(() => {
     const fetchUser = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -42,9 +43,11 @@ function RapportMinistere() {
         setBrancheId(profile.branche_id);
       }
     };
+
     fetchUser();
   }, []);
 
+  // 🔹 Générer rapport
   const fetchRapport = async () => {
     setLoading(true);
     setRapports([]);
@@ -59,8 +62,23 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 1️⃣ Récupérer les logs stats_ministere_besoin
-      const { data: logs, error: errorLogs } = await supabase
+      // 🔹 Récupérer tous les membres valides pour total
+      const { data: membresValides, error: errorMembres } = await supabase
+        .from("membres_complets")
+        .select("id, etat_contact, sexe")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
+
+      if (errorMembres) throw errorMembres;
+
+      const membresValidesFiltered = membresValides.filter((m) =>
+        ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
+      );
+
+      setTotalMembres(membresValidesFiltered.length);
+
+      // 🔹 Récupérer les logs ministère
+      const { data: ministereLogs, error: errorLogs } = await supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, date_action")
         .eq("eglise_id", egliseId)
@@ -71,36 +89,43 @@ function RapportMinistere() {
 
       if (errorLogs) throw errorLogs;
 
-      const membresServiteurs = new Set(logs.map((log) => log.membre_id));
-      setTotalServiteurs(membresServiteurs.size);
+      const counts = {};
+      let totalServiteursLocal = 0;
 
-      // 🔹 Compter par ministère
-      let counts = {};
-      logs.forEach((log) => {
-        if (!counts[log.valeur]) counts[log.valeur] = 0;
-        counts[log.valeur]++;
+      ministereLogs.forEach((log) => {
+        const membre = membresValides.find((m) => m.id === log.membre_id);
+        const sexe =
+          membre?.sexe?.toLowerCase() === "homme" ? "hommes" : "femmes";
+
+        totalServiteursLocal++;
+
+        let ministeres = [];
+        try {
+          if (log.valeur.startsWith("[")) ministeres = JSON.parse(log.valeur);
+          else ministeres = log.valeur.split(",");
+        } catch {
+          ministeres = log.valeur.split(",");
+        }
+
+        ministeres.forEach((m) => {
+          const clean = m.trim();
+          if (!clean) return;
+          if (!counts[clean])
+            counts[clean] = { total: 0, hommes: 0, femmes: 0 };
+          counts[clean].total++;
+          if (sexe === "hommes") counts[clean].hommes++;
+          else counts[clean].femmes++;
+        });
       });
 
       setRapports(
-        Object.entries(counts).map(([ministere, total]) => ({ ministere, total }))
+        Object.entries(counts).map(([ministere, values]) => ({
+          ministere,
+          ...values,
+        }))
       );
 
-      // 🔹 2️⃣ Récupérer total membres pour calcul % serviteurs
-      const { data: membres, error: errorMembres } = await supabase
-        .from("membres_complets")
-        .select("id, etat_contact, created_at")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .gte("created_at", dateDebut || "1900-01-01")
-        .lte("created_at", dateFin || "2999-12-31");
-
-      if (errorMembres) throw errorMembres;
-
-      const totalMembresLocal = membres.filter((m) =>
-        ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
-      ).length;
-
-      setTotalMembres(totalMembresLocal);
+      setTotalServiteurs(totalServiteursLocal);
       setMessage("");
     } catch (err) {
       console.error(err);
@@ -145,15 +170,22 @@ function RapportMinistere() {
         <div className="flex gap-4 mt-6 flex-wrap justify-center">
           <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
             <div className="text-sm uppercase font-semibold mb-1">
-              Nbre Serviteurs
+              Nombre de serviteurs
             </div>
-            <div className="text-2xl font-bold text-orange-400">{totalServiteurs}</div>
+            <div className="text-2xl font-bold text-orange-400">
+              {totalServiteurs}
+            </div>
           </div>
 
           <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
-            <div className="text-sm uppercase font-semibold mb-1">% Serviteurs</div>
+            <div className="text-sm uppercase font-semibold mb-1">
+              % de serviteurs / total
+            </div>
             <div className="text-2xl font-bold text-orange-400">
-              {((totalServiteurs / totalMembres) * 100).toFixed(1)} %
+              {totalMembres > 0
+                ? ((totalServiteurs / totalMembres) * 100).toFixed(1)
+                : 0}{" "}
+              %
             </div>
           </div>
         </div>
@@ -162,20 +194,30 @@ function RapportMinistere() {
       {/* 🔹 Tableau */}
       <div className="w-full flex justify-center mt-6 mb-6">
         <div className="w-max overflow-x-auto space-y-2">
-          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[250px]">Ministère</div>
-            <div className="min-w-[150px] text-center text-orange-400">Nbre</div>
+          <div className="grid grid-cols-5 text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap text-center">
+            <div className="text-left pl-2 col-span-2">Ministère</div>
+            <div className="text-orange-400">Total</div>
+            <div>Hommes</div>
+            <div>Femmes</div>
           </div>
 
-          {loading && <div className="text-white text-center py-4">Chargement...</div>}
+          {loading && (
+            <div className="text-white text-center py-4 col-span-5">
+              Chargement...
+            </div>
+          )}
 
           {rapports.map((r, index) => (
             <div
               key={index}
-              className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
+              className="grid grid-cols-5 text-white py-2 border-b border-white/10 text-center items-center hover:bg-white/10 rounded-lg"
             >
-              <div className="min-w-[250px] text-white font-semibold">{r.ministere}</div>
-              <div className="min-w-[150px] text-center text-orange-400 font-bold">{r.total}</div>
+              <div className="text-left pl-2 col-span-2 font-semibold">
+                {r.ministere}
+              </div>
+              <div className="text-orange-400 font-bold">{r.total}</div>
+              <div className="font-semibold">{r.hommes}</div>
+              <div className="font-semibold">{r.femmes}</div>
             </div>
           ))}
         </div>

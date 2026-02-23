@@ -47,7 +47,6 @@ function RapportMinistere() {
     fetchUser();
   }, []);
 
-  // 🔹 Générer rapport
   const fetchRapport = async () => {
     setLoading(true);
     setRapports([]);
@@ -62,10 +61,35 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 Récupérer les stats_ministere_besoin
+      // 🔹 Récupérer tous les membres pour total
+      let queryMembres = supabase
+        .from("membres_complets")
+        .select("id, star, etat_contact")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
+
+      if (dateDebut) queryMembres = queryMembres.gte("created_at", dateDebut);
+      if (dateFin) queryMembres = queryMembres.lte("created_at", dateFin);
+
+      const { data: membresData, error: membresError } = await queryMembres;
+      if (membresError) throw membresError;
+
+      // 🔹 Total membres = etat_contact existant ou nouveau
+      const membresFiltres = membresData.filter((m) =>
+        ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
+      );
+      setTotalMembres(membresFiltres.length);
+
+      // 🔹 Total serviteurs = star=true ET etat_contact=existant
+      const serviteursFiltres = membresFiltres.filter(
+        (m) => m.star === true && m.etat_contact?.toLowerCase() === "existant"
+      );
+      setTotalServiteurs(serviteursFiltres.length);
+
+      // 🔹 Récupérer stats_ministere_besoin
       let queryStats = supabase
         .from("stats_ministere_besoin")
-        .select("membre_id, valeur, date_action")
+        .select("membre_id, valeur")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId)
         .eq("type", "ministere");
@@ -76,40 +100,13 @@ function RapportMinistere() {
       const { data: statsData, error: statsError } = await queryStats;
       if (statsError) throw statsError;
 
-      // 🔹 Récupérer les membres pour le total
-      let queryMembres = supabase
-        .from("membres_complets")
-        .select("id, etat_contact")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
-
-      if (dateDebut) queryMembres = queryMembres.gte("created_at", dateDebut);
-      if (dateFin) queryMembres = queryMembres.lte("created_at", dateFin);
-
-      const { data: membresData, error: membresError } = await queryMembres;
-      if (membresError) throw membresError;
-
-      // 🔹 Total membres
-      const totalMembresLocal = membresData.filter((m) =>
-        ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
-      ).length;
-      setTotalMembres(totalMembresLocal);
-
-      // 🔹 Comptage serviteurs par date et par ministère
-      const serviteursSet = new Set(); // pour total
-      const counts = {}; // pour les ministères
-
+      // 🔹 Compter par ministère
+      const counts = {};
       statsData.forEach((s) => {
-        // compte pour le total serviteurs
-        serviteursSet.add(s.membre_id);
-
-        // compte par ministère
         if (!s.valeur) return;
         if (!counts[s.valeur]) counts[s.valeur] = 0;
         counts[s.valeur]++;
       });
-
-      setTotalServiteurs(serviteursSet.size);
 
       setRapports(
         Object.entries(counts).map(([ministere, total]) => ({
@@ -176,7 +173,7 @@ function RapportMinistere() {
         </div>
       </div>
 
-      {/* 🔹 Tableau des ministères */}
+      {/* 🔹 Tableau ministères */}
       <div className="w-full flex justify-center mt-6 mb-6">
         <div className="w-max overflow-x-auto space-y-2">
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">

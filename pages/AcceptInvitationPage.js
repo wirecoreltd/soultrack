@@ -39,13 +39,6 @@ export default function AcceptInvitation() {
     fetchInvitation();
   }, [router.isReady, token]);
 
-  const { data: existing } = await supabase
-  .from("eglise_supervisions")
-  .select("*")
-  .eq("supervisee_eglise_id", invitation.supervisee_eglise_id)
-  .eq("statut", "acceptee")
-  .maybeSingle();
-
 
   const handleSubmit = async () => {
   if (!choice) return;

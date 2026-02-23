@@ -18,12 +18,11 @@ function RapportMinistere() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [rapports, setRapports] = useState([]);
-  const [serviteursParDate, setServiteursParDate] = useState([]);
-  const [totalServiteurs, setTotalServiteurs] = useState(0);
-  const [totalMembres, setTotalMembres] = useState(0);
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [totalServiteurs, setTotalServiteurs] = useState(0);
+  const [totalMembres, setTotalMembres] = useState(0);
   const [message, setMessage] = useState("");
 
   // 🔹 Charger profil utilisateur
@@ -52,7 +51,6 @@ function RapportMinistere() {
   const fetchRapport = async () => {
     setLoading(true);
     setRapports([]);
-    setServiteursParDate([]);
     setTotalServiteurs(0);
     setTotalMembres(0);
     setMessage("⏳ Chargement...");
@@ -64,73 +62,73 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 1️⃣ Récupérer tous les serviteurs par date depuis stats_ministere_besoin
-      let queryServiteurs = supabase
-        .from("stats_ministere_besoin")
-        .select("membre_id, date_action, valeur, type")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .eq("type", "ministere");
-
-      if (dateDebut) queryServiteurs = queryServiteurs.gte("date_action", dateDebut);
-      if (dateFin) queryServiteurs = queryServiteurs.lte("date_action", dateFin);
-
-      const { data: dataServiteurs, error: errorServ } = await queryServiteurs;
-      if (errorServ) throw errorServ;
-
-      // Comptage unique par date
-      let countsParDate = {};
-      const membresSet = new Set(); // total serviteurs uniques
-      dataServiteurs.forEach((row) => {
-        const date = row.date_action.split("T")[0];
-        if (!countsParDate[date]) countsParDate[date] = new Set();
-        countsParDate[date].add(row.membre_id);
-        membresSet.add(row.membre_id);
-      });
-
-      const serviteursDateArray = Object.entries(countsParDate).map(([date, setMembres]) => ({
-        date,
-        total: setMembres.size,
-      }));
-
-      setServiteursParDate(serviteursDateArray);
-      setTotalServiteurs(membresSet.size);
-
-      // 🔹 2️⃣ Récupérer total membres depuis membres_complets
-      let queryMembres = supabase
+      // 🔹 Récupérer les membres pour calculer % de serviteurs
+      let membresQuery = supabase
         .from("membres_complets")
         .select("id, etat_contact")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
 
-      if (dateDebut) queryMembres = queryMembres.gte("created_at", dateDebut);
-      if (dateFin) queryMembres = queryMembres.lte("created_at", dateFin);
+      if (dateDebut) membresQuery = membresQuery.gte("created_at", dateDebut);
+      if (dateFin) membresQuery = membresQuery.lte("created_at", dateFin);
 
-      const { data: dataMembres, error: errorMembres } = await queryMembres;
-      if (errorMembres) throw errorMembres;
+      const { data: membresData, error: membresError } = await membresQuery;
+      if (membresError) throw membresError;
 
-      const membresValides = dataMembres.filter((m) =>
+      const membresValides = membresData.filter((m) =>
         ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
       );
-
       setTotalMembres(membresValides.length);
 
-      // 🔹 3️⃣ Rapport par ministère
-      let countsMinistere = {};
-      dataServiteurs.forEach((row) => {
-        if (!row.valeur) return;
-        if (!countsMinistere[row.valeur]) countsMinistere[row.valeur] = new Set();
-        countsMinistere[row.valeur].add(row.membre_id);
+      // 🔹 Récupérer les stats ministère (serviteurs)
+      let statsQuery = supabase
+        .from("stats_ministere_besoin")
+        .select("membre_id, valeur, date_action")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId)
+        .eq("type", "ministere");
+
+      if (dateDebut) statsQuery = statsQuery.gte("date_action", dateDebut);
+      if (dateFin) statsQuery = statsQuery.lte("date_action", dateFin);
+
+      const { data: statsData, error: statsError } = await statsQuery;
+      if (statsError) throw statsError;
+
+      // 🔹 Nombre total de serviteurs uniques
+      const membresServiteursSet = new Set(statsData.map((s) => s.membre_id));
+      setTotalServiteurs(membresServiteursSet.size);
+
+      // 🔹 Comptage par ministère
+      const counts = {};
+      statsData.forEach((s) => {
+        const min = s.valeur?.trim();
+        if (!min) return;
+        if (!counts[min]) counts[min] = 0;
+        counts[min]++;
       });
 
-      const rapportsMinistere = Object.entries(countsMinistere).map(([ministere, setMembres]) => ({
-        ministere,
-        total: setMembres.size,
-      }));
+      // 🔹 Comptage par date
+      const serviteursParDate = {};
+      statsData.forEach((s) => {
+        const date = s.date_action?.split("T")[0] || s.date_action;
+        if (!serviteursParDate[date]) serviteursParDate[date] = new Set();
+        serviteursParDate[date].add(s.membre_id);
+      });
 
-      setRapports(rapportsMinistere);
+      // 🔹 Transformer les Sets en nombres
+      const serviteursParDateFinal = Object.entries(serviteursParDate).map(
+        ([date, set]) => ({ date, total: set.size })
+      );
 
-      setMessage("");
+      setRapports(
+        Object.entries(counts).map(([ministere, total]) => ({
+          ministere,
+          total,
+        }))
+      );
+
+      setMessage(""); // tout ok
+      console.log("Serviteurs par date:", serviteursParDateFinal); // debug
     } catch (err) {
       console.error(err);
       setMessage("❌ " + err.message);
@@ -175,20 +173,25 @@ function RapportMinistere() {
           <div className="text-sm uppercase font-semibold mb-1">
             Nombre total de serviteurs
           </div>
-          <div className="text-2xl font-bold text-orange-400">{totalServiteurs}</div>
+          <div className="text-2xl font-bold text-orange-400">
+            {totalServiteurs}
+          </div>
         </div>
 
         <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
           <div className="text-sm uppercase font-semibold mb-1">
-            % de serviteurs / membres
+            % de serviteurs / total membres
           </div>
           <div className="text-2xl font-bold text-orange-400">
-            {totalMembres > 0 ? ((totalServiteurs / totalMembres) * 100).toFixed(1) : 0} %
+            {totalMembres > 0
+              ? ((totalServiteurs / totalMembres) * 100).toFixed(1)
+              : 0}{" "}
+            %
           </div>
         </div>
       </div>
 
-      {/* 🔹 Tableau Ministère */}
+      {/* 🔹 Tableau des ministères */}
       <div className="w-full flex justify-center mt-6 mb-6">
         <div className="w-max overflow-x-auto space-y-2">
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
@@ -198,37 +201,21 @@ function RapportMinistere() {
             </div>
           </div>
 
-          {loading && <div className="text-white text-center py-4">Chargement...</div>}
+          {loading && (
+            <div className="text-white text-center py-4">Chargement...</div>
+          )}
 
           {rapports.map((r, index) => (
             <div
               key={index}
               className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
             >
-              <div className="min-w-[250px] text-white font-semibold">{r.ministere}</div>
-              <div className="min-w-[150px] text-center text-orange-400 font-bold">{r.total}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 🔹 Tableau par date */}
-      <div className="w-full flex justify-center mt-6 mb-6">
-        <div className="w-max overflow-x-auto space-y-2">
-          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[250px]">Date</div>
-            <div className="min-w-[150px] text-center text-orange-400">
-              Nombre de serviteurs
-            </div>
-          </div>
-
-          {serviteursParDate.map((r, index) => (
-            <div
-              key={index}
-              className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500"
-            >
-              <div className="min-w-[250px] text-white font-semibold">{r.date}</div>
-              <div className="min-w-[150px] text-center text-orange-400 font-bold">{r.total}</div>
+              <div className="min-w-[250px] text-white font-semibold">
+                {r.ministere}
+              </div>
+              <div className="min-w-[150px] text-center text-orange-400 font-bold">
+                {r.total}
+              </div>
             </div>
           ))}
         </div>

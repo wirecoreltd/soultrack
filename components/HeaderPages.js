@@ -58,16 +58,40 @@ export default function HeaderPages() {
 
         // 🔹 Récupération de la supervision (église + branche superviseur)
         if (profile?.eglise_id) {
-          const { data: supervisionData, error: supervisionError } =
-            await supabase
-              .from("eglise_supervisions")
-              .select(`
-                superviseur_eglise:eglises!eglise_supervisions_superviseur_eglise_id_fkey(nom),
-                superviseur_branche:branches!eglise_supervisions_superviseur_branche_id_fkey(nom)
-              `)
-              .eq("supervisee_eglise_id", profile.eglise_id)
-              .eq("statut", "acceptee")
-              .single();
+          const { data: supervisionData } = await supabase
+  .from("eglise_supervisions")
+  .select(`
+    superviseur_eglise_id,
+    superviseur_branche_id
+  `)
+  .eq("supervisee_eglise_id", profile.eglise_id)
+  .eq("statut", "acceptee")
+  .maybeSingle();
+
+if (supervisionData) {
+  // 🔹 Récupérer nom église superviseur
+  const { data: supEglise } = await supabase
+    .from("eglises")
+    .select("nom")
+    .eq("id", supervisionData.superviseur_eglise_id)
+    .single();
+
+  // 🔹 Récupérer nom branche superviseur
+  const { data: supBranche } = await supabase
+    .from("branches")
+    .select("nom")
+    .eq("id", supervisionData.superviseur_branche_id)
+    .single();
+
+  if (supEglise) {
+    setSuperviseur(
+      supBranche
+        ? `${supEglise.nom} - ${supBranche?.nom || ""}`
+        : supEglise.nom
+    );
+  }
+}
+
 
           if (!supervisionError && supervisionData) {
             const nomEglise =

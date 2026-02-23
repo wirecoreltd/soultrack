@@ -23,6 +23,7 @@ function RapportMinistere() {
   const [loading, setLoading] = useState(false);
   const [totalServiteurs, setTotalServiteurs] = useState(0);
   const [totalMembres, setTotalMembres] = useState(0);
+  const [pourcentage, setPourcentage] = useState(0);
   const [message, setMessage] = useState("");
 
   // 🔹 Charger profil utilisateur
@@ -47,11 +48,13 @@ function RapportMinistere() {
     fetchUser();
   }, []);
 
+  // 🔹 Générer rapport
   const fetchRapport = async () => {
     setLoading(true);
     setRapports([]);
     setTotalServiteurs(0);
     setTotalMembres(0);
+    setPourcentage(0);
     setMessage("⏳ Chargement...");
 
     if (!egliseId || !brancheId) {
@@ -61,12 +64,13 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 Total membres
+      // 🔹 Récupérer les membres pour le total et filtrage
       let queryMembres = supabase
         .from("membres_complets")
-        .select("id, etat_contact")
+        .select("id, etat_contact, created_at")
         .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+        .eq("branche_id", brancheId)
+        .in("etat_contact", ["existant", "nouveau"]);
 
       if (dateDebut) queryMembres = queryMembres.gte("created_at", dateDebut);
       if (dateFin) queryMembres = queryMembres.lte("created_at", dateFin);
@@ -74,40 +78,50 @@ function RapportMinistere() {
       const { data: membresData, error: membresError } = await queryMembres;
       if (membresError) throw membresError;
 
-      const membresFiltres = membresData.filter((m) =>
-        ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
-      );
-      setTotalMembres(membresFiltres.length);
+      setTotalMembres(membresData.length);
 
-      // 🔹 Total serviteurs par membre_id avec déduplication et filtre date
-      let queryServiteurs = supabase
+      // 🔹 IDs des membres valides
+      const membresValidesIds = new Set(membresData.map((m) => m.id));
+
+      // 🔹 Récupérer les stats_ministere_besoin
+      let queryStats = supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, date_action")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId)
         .eq("type", "ministere");
 
-      if (dateDebut) queryServiteurs = queryServiteurs.gte("date_action", dateDebut);
-      if (dateFin) queryServiteurs = queryServiteurs.lte("date_action", dateFin);
+      if (dateDebut) queryStats = queryStats.gte("date_action", dateDebut);
+      if (dateFin) queryStats = queryStats.lte("date_action", dateFin);
 
-      const { data: statsData, error: statsError } = await queryServiteurs;
+      const { data: statsData, error: statsError } = await queryStats;
       if (statsError) throw statsError;
 
-      // 🔹 Déduplication par membre_id
+      // 🔹 Comptage serviteurs par ministère et total serviteurs
       const serviteursSet = new Set();
       const counts = {};
 
       statsData.forEach((s) => {
         if (!s.membre_id || !s.valeur) return;
-        serviteursSet.add(s.membre_id); // total serviteurs
 
-        // Comptage par ministère
+        // 🔹 Filtrer sur membres valides
+        if (!membresValidesIds.has(s.membre_id)) return;
+
+        serviteursSet.add(s.membre_id);
+
         if (!counts[s.valeur]) counts[s.valeur] = 0;
         counts[s.valeur]++;
       });
 
       setTotalServiteurs(serviteursSet.size);
 
+      // 🔹 Calcul du %
+      const pourcent = membresData.length > 0
+        ? ((serviteursSet.size / membresData.length) * 100).toFixed(1)
+        : 0;
+      setPourcentage(pourcent);
+
+      // 🔹 Préparer tableau
       setRapports(
         Object.entries(counts).map(([ministere, total]) => ({
           ministere,
@@ -168,12 +182,12 @@ function RapportMinistere() {
             % de serviteurs / membres
           </div>
           <div className="text-2xl font-bold text-orange-400">
-            {totalMembres > 0 ? ((totalServiteurs / totalMembres) * 100).toFixed(1) : 0} %
+            {pourcentage} %
           </div>
         </div>
       </div>
 
-      {/* 🔹 Tableau ministères */}
+      {/* 🔹 Tableau des ministères */}
       <div className="w-full flex justify-center mt-6 mb-6">
         <div className="w-max overflow-x-auto space-y-2">
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">

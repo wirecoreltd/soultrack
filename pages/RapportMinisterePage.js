@@ -61,7 +61,7 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 Récupérer stats ministères
+      // 🔹 Récupérer stats ministères uniquement
       let queryStats = supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, date_action")
@@ -75,10 +75,10 @@ function RapportMinistere() {
       const { data: statsData, error: statsError } = await queryStats;
       if (statsError) throw statsError;
 
-      // 🔹 Récupérer membres
+      // 🔹 Récupérer tous les membres pour le % (star et état)
       let queryMembres = supabase
         .from("membres_complets")
-        .select("id, etat_contact")
+        .select("id, star, etat_contact")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
 
@@ -88,41 +88,31 @@ function RapportMinistere() {
       const { data: membresData, error: membresError } = await queryMembres;
       if (membresError) throw membresError;
 
-      // 🔹 Total membres
+      // 🔹 Total membres = etat_contact existant + nouveau
       const totalMembresLocal = membresData.filter((m) =>
         ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
       ).length;
 
-      setTotalMembres(totalMembresLocal);
+      // 🔹 Total serviteurs = star = true + etat_contact = existant
+      const totalServiteursLocal = membresData.filter(
+        (m) => m.star === true && m.etat_contact?.toLowerCase() === "existant"
+      ).length;
 
-      // 🔥 CORRECTION IMPORTANTE
-      // Déduplication par membre + date
-      const serviteursGlobalSet = new Set();
+      setTotalMembres(totalMembresLocal);
+      setTotalServiteurs(totalServiteursLocal);
+
+      // 🔹 Comptage par ministère (1 membre par ministère par date)
       const ministereMap = {};
 
       statsData.forEach((s) => {
-        if (!s.membre_id || !s.date_action) return;
+        if (!s.membre_id || !s.valeur || !s.date_action) return;
 
-        // clé unique membre + date
-        const uniqueKey = `${s.membre_id}_${s.date_action}`;
-        serviteursGlobalSet.add(uniqueKey);
+        const key = `${s.membre_id}_${s.date_action}`;
+        if (!ministereMap[s.valeur]) ministereMap[s.valeur] = new Set();
 
-        // Déduplication aussi par ministère
-        if (!s.valeur) return;
-
-        const ministereKey = `${s.valeur}_${uniqueKey}`;
-
-        if (!ministereMap[s.valeur]) {
-          ministereMap[s.valeur] = new Set();
-        }
-
-        ministereMap[s.valeur].add(ministereKey);
+        ministereMap[s.valeur].add(key);
       });
 
-      // Total serviteurs uniques par jour
-      setTotalServiteurs(serviteursGlobalSet.size);
-
-      // Transformer en tableau
       const rapportsArray = Object.entries(ministereMap).map(
         ([ministere, setValues]) => ({
           ministere,
@@ -194,7 +184,7 @@ function RapportMinistere() {
         </div>
       </div>
 
-      {/* 🔹 Tableau */}
+      {/* 🔹 Tableau ministères */}
       <div className="w-full flex justify-center mt-6 mb-6">
         <div className="w-max overflow-x-auto space-y-2">
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">

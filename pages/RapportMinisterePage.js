@@ -23,7 +23,6 @@ function RapportMinistere() {
   const [loading, setLoading] = useState(false);
   const [totalServiteurs, setTotalServiteurs] = useState(0);
   const [totalMembres, setTotalMembres] = useState(0);
-  const [pourcentage, setPourcentage] = useState(0);
   const [message, setMessage] = useState("");
 
   // 🔹 Charger profil utilisateur
@@ -54,7 +53,6 @@ function RapportMinistere() {
     setRapports([]);
     setTotalServiteurs(0);
     setTotalMembres(0);
-    setPourcentage(0);
     setMessage("⏳ Chargement...");
 
     if (!egliseId || !brancheId) {
@@ -64,26 +62,7 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 Récupérer les membres pour le total et filtrage
-      let queryMembres = supabase
-        .from("membres_complets")
-        .select("id, etat_contact, created_at")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .in("etat_contact", ["existant", "nouveau"]);
-
-      if (dateDebut) queryMembres = queryMembres.gte("created_at", dateDebut);
-      if (dateFin) queryMembres = queryMembres.lte("created_at", dateFin);
-
-      const { data: membresData, error: membresError } = await queryMembres;
-      if (membresError) throw membresError;
-
-      setTotalMembres(membresData.length);
-
-      // 🔹 IDs des membres valides
-      const membresValidesIds = new Set(membresData.map((m) => m.id));
-
-      // 🔹 Récupérer les stats_ministere_besoin
+      // 🔹 1️⃣ Récupérer stats ministère dans la période
       let queryStats = supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, date_action")
@@ -97,31 +76,44 @@ function RapportMinistere() {
       const { data: statsData, error: statsError } = await queryStats;
       if (statsError) throw statsError;
 
-      // 🔹 Comptage serviteurs par ministère et total serviteurs
+      // 🔹 2️⃣ Récupérer membres (total) dans la période
+      let queryMembres = supabase
+        .from("membres_complets")
+        .select("id, etat_contact")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
+
+      if (dateDebut) queryMembres = queryMembres.gte("created_at", dateDebut);
+      if (dateFin) queryMembres = queryMembres.lte("created_at", dateFin);
+
+      const { data: membresData, error: membresError } = await queryMembres;
+      if (membresError) throw membresError;
+
+      // 🔹 3️⃣ Total membres
+      const membresValides = membresData.filter((m) =>
+        ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
+      );
+      setTotalMembres(membresValides.length);
+
+      // 🔹 4️⃣ Total serviteurs (déduplication par membre_id)
       const serviteursSet = new Set();
       const counts = {};
 
       statsData.forEach((s) => {
-        if (!s.membre_id || !s.valeur) return;
+        if (!s.membre_id) return;
 
-        // 🔹 Filtrer sur membres valides
-        if (!membresValidesIds.has(s.membre_id)) return;
-
+        // 🔹 Déduplication pour le total serviteurs
         serviteursSet.add(s.membre_id);
 
+        // 🔹 Comptage par ministère
+        if (!s.valeur) return;
         if (!counts[s.valeur]) counts[s.valeur] = 0;
         counts[s.valeur]++;
       });
 
       setTotalServiteurs(serviteursSet.size);
 
-      // 🔹 Calcul du %
-      const pourcent = membresData.length > 0
-        ? ((serviteursSet.size / membresData.length) * 100).toFixed(1)
-        : 0;
-      setPourcentage(pourcent);
-
-      // 🔹 Préparer tableau
+      // 🔹 5️⃣ Préparer le tableau par ministère
       setRapports(
         Object.entries(counts).map(([ministere, total]) => ({
           ministere,
@@ -182,7 +174,9 @@ function RapportMinistere() {
             % de serviteurs / membres
           </div>
           <div className="text-2xl font-bold text-orange-400">
-            {pourcentage} %
+            {totalMembres > 0
+              ? ((totalServiteurs / totalMembres) * 100).toFixed(1)
+              : 0} %
           </div>
         </div>
       </div>

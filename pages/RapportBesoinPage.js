@@ -110,7 +110,8 @@ function RapportBesoin() {
       <HeaderPages />
 
       <h1 className="text-2xl font-bold text-white mt-4 mb-6">
-        Rapport Difficultés / Besoins
+        <span className="text-white">Rapport</span>{" "}
+        <span className="text-amber-300">Difficultés / Besoins</span>       
       </h1>
 
       {/* FILTRES */}
@@ -155,10 +156,10 @@ function RapportBesoin() {
       {labels.length > 0 && (
         <div className="w-full max-w-[700px] bg-white/10 rounded-2xl shadow-lg p-6 mb-8">
           <div className="grid grid-cols-5 text-white font-bold border-b border-white/30 pb-2 mb-2 text-center">
-            <div className="text-left pl-2">Besoin</div>
-            <div className="text-orange-400">Nombre</div>
+            <div className="text-left pl-2">Catégorie</div>            
             <div>Homme</div>
             <div>Femme</div>
+            <div className="text-orange-400">Count</div>
             <div>% du total membres</div>
           </div>
 
@@ -167,10 +168,10 @@ function RapportBesoin() {
               key={b}
               className="grid grid-cols-5 text-white py-2 border-b border-white/10 text-center"
             >
-              <div className="text-left pl-2">{b}</div>
-              <div className="text-orange-400 font-semibold">{values[i].total}</div>
+              <div className="text-left pl-2">{b}</div>              
               <div className="font-semibold">{values[i].hommes}</div>
               <div className="font-semibold">{values[i].femmes}</div>
+              <div className="text-orange-400 font-semibold">{values[i].total}</div>
               <div className="font-semibold">
                 {totalMembres > 0 ? ((values[i].total / totalMembres) * 100).toFixed(1) : 0} %
               </div>

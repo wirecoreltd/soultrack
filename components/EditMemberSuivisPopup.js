@@ -7,7 +7,8 @@ import supabase from "../lib/supabaseClient";
 export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember }) {
   if (!member) return null;
 
-  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+  const besoinsOptions = ["Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits","Addictions / Dépendances",
+  "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"];
   const [autreMinistere, setAutreMinistere] = useState("");
 
   const parseBesoin = (b) => {

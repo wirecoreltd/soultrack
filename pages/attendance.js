@@ -23,6 +23,7 @@ function Attendance() {
 
   const [formData, setFormData] = useState({
     date: "",
+    numero_culte: 1,
     hommes: 0,
     femmes: 0,
     jeunes: 0,
@@ -40,7 +41,6 @@ function Attendance() {
 
   const [expandedMonths, setExpandedMonths] = useState({});
 
-  // Charger eglise/branche du superviseur connecté
   useEffect(() => {
     const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -73,7 +73,7 @@ function Attendance() {
     if (dateDebut) query = query.gte("date", dateDebut);
     if (dateFin) query = query.lte("date", dateFin);
 
-    query = query.order("date", { ascending: true });
+    query = query.order("date", { ascending: true }).order("numero_culte", { ascending: true });
 
     const { data, error } = await query;
     if (error) console.error("❌ Erreur fetch:", error);
@@ -118,6 +118,7 @@ function Attendance() {
 
       setFormData({
         date: "",
+        numero_culte: 1,
         hommes: 0,
         femmes: 0,
         jeunes: 0,
@@ -138,6 +139,7 @@ function Attendance() {
     setEditId(report.id);
     setFormData({
       date: report.date,
+      numero_culte: report.numero_culte || 1,
       hommes: report.hommes,
       femmes: report.femmes,
       jeunes: report.jeunes,
@@ -195,7 +197,6 @@ function Attendance() {
 
   const groupedReports = groupByMonth(reports);
 
-  // TOTAL GLOBAL
   const totalGlobal = reports.reduce((acc, r) => {
     acc.hommes += Number(r.hommes || 0);
     acc.femmes += Number(r.femmes || 0);
@@ -215,7 +216,6 @@ function Attendance() {
     nouveauxConvertis: 0,
   });
 
-  // Couleurs bordures mois
   const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500","border-pink-500","border-indigo-500"];
 
   return (
@@ -231,6 +231,7 @@ function Attendance() {
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[ 
             { label: "Date", name: "date", type: "date" },
+            { label: "Numéro de culte", name: "numero_culte", type: "select" },
             { label: "Hommes", name: "hommes", type: "number" },
             { label: "Femmes", name: "femmes", type: "number" },
             { label: "Jeunes", name: "jeunes", type: "number" },
@@ -241,15 +242,29 @@ function Attendance() {
           ].map((field) => (
             <div key={field.name} className="flex flex-col">
               <label htmlFor={field.name} className="font-medium mb-1 text-white">{field.label}</label>
-              <input
-                type={field.type}
-                name={field.name}
-                id={field.name}
-                value={formData[field.name]}
-                onChange={handleChange}
-                className="input bg-white/20 text-white placeholder-white"
-                required={field.type === "date"}
-              />
+              {field.type === "select" ? (
+                <select
+                  name={field.name}
+                  id={field.name}
+                  value={formData[field.name]}
+                  onChange={handleChange}
+                  className="input bg-white/20 text-white placeholder-white"
+                >
+                  {[1,2,3,4,5,6,7].map((n) => (
+                    <option key={n} value={n}>{n} {n===1 ? "er" : "ème"} Culte</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type={field.type}
+                  name={field.name}
+                  id={field.name}
+                  value={formData[field.name]}
+                  onChange={handleChange}
+                  className="input bg-white/20 text-white placeholder-white"
+                  required={field.type === "date"}
+                />
+              )}
             </div>
           ))}
 
@@ -299,7 +314,7 @@ function Attendance() {
         <div className="w-max space-y-2">
           {/* HEADER */}
           <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[150px] ml-1">Date</div>
+            <div className="min-w-[150px] ml-1">Culte / Date</div>
             <div className="min-w-[120px] text-center">Hommes</div>
             <div className="min-w-[120px] text-center">Femmes</div>
             <div className="min-w-[120px] text-center">Jeunes</div>
@@ -361,9 +376,10 @@ function Attendance() {
 
                 {(isExpanded || monthReports.length === 1) && monthReports.map((r) => {
                   const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
+                  const culteLabel = r.numero_culte === 1 ? "1er Culte" : `${r.numero_culte}ème Culte`;
                   return (
                     <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500">
-                      <div className="min-w-[150px] text-white">{formatDateFR(r.date)}</div>
+                      <div className="min-w-[150px] text-white">{`${culteLabel} : ${formatDateFR(r.date)}`}</div>
                       <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
                       <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
                       <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>

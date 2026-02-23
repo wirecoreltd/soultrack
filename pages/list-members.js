@@ -110,6 +110,53 @@ const canAddMember =
     4: "Refus",
   };
 
+  const logStats = async (member, updatedMember, userProfile) => {
+  if (!userProfile) return;
+
+  const logs = [];
+
+  // 🔹 MINISTERE
+  if (updatedMember.Ministere) {
+    const ministeres =
+      typeof updatedMember.Ministere === "string"
+        ? JSON.parse(updatedMember.Ministere)
+        : updatedMember.Ministere;
+
+    ministeres.forEach((m) => {
+      logs.push({
+        membre_id: member.id,
+        eglise_id: userProfile.eglise_id,
+        branche_id: userProfile.branche_id,
+        type: "ministere",
+        valeur: m,
+      });
+    });
+  }
+
+  // 🔹 BESOIN
+  if (updatedMember.besoin) {
+    const besoins =
+      typeof updatedMember.besoin === "string"
+        ? JSON.parse(updatedMember.besoin)
+        : updatedMember.besoin;
+
+    besoins.forEach((b) => {
+      logs.push({
+        membre_id: member.id,
+        eglise_id: userProfile.eglise_id,
+        branche_id: userProfile.branche_id,
+        type: "besoin",
+        valeur: b,
+      });
+    });
+  }
+
+  if (logs.length > 0) {
+    await supabase.from("stats_ministere_besoin").insert(logs);
+  }
+};
+
+
   const formatDateFr = (dateString) => {
     if (!dateString) return "—";
     const d = new Date(dateString);
@@ -983,13 +1030,22 @@ useEffect(() => {
         <EditMemberPopup
           member={editMember}
           onClose={() => setEditMember(null)}
-          onUpdateMember={(updatedMember) => {
-            setAllMembers(prev =>
-              prev.map(m => (m.id === updatedMember.id ? { ...m, ...updatedMember } : m))
-            );
-            setEditMember(null);
-            showToast("✅ Contact mis à jour !");
-          }}
+          onUpdateMember={async (updatedMember) => {
+
+          await logStats(editMember, updatedMember, userProfile);
+        
+          setAllMembers(prev =>
+            prev.map(m =>
+              m.id === updatedMember.id
+                ? { ...m, ...updatedMember }
+                : m
+            )
+          );
+        
+          setEditMember(null);
+          showToast("✅ Contact mis à jour !");
+        }}
+
         />
       )}
 

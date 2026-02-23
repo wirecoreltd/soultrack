@@ -49,96 +49,157 @@ function RapportMinistere() {
 
   // 🔹 Générer rapport
   const fetchRapport = async () => {
-    setLoading(true);
-    setRapports([]);
-    setTotalServiteurs(0);
-    setTotalMembres(0);
-    setMessage("⏳ Chargement...");
+  setLoading(true);
+  setRapports([]);
+  setTotalServiteurs(0);
+  setTotalMembres(0);
+  setMessage("⏳ Chargement...");
 
-    if (!egliseId || !brancheId) {
-      setMessage("❌ ID de l'église ou branche manquant");
-      setLoading(false);
-      return;
-    }
+  if (!egliseId || !brancheId) {
+    setMessage("❌ ID de l'église ou branche manquant");
+    setLoading(false);
+    return;
+  }
 
-    try {
-      let query = supabase
-        .from("membres_complets")
-        .select("Ministere, star, etat_contact, created_at")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+  try {
+    let query = supabase
+      .from("membres_complets")
+      .select("id, Ministere, star, etat_contact, created_at, besoin")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId);
 
-      if (dateDebut) query = query.gte("created_at", dateDebut);
-      if (dateFin) query = query.lte("created_at", dateFin);
+    if (dateDebut) query = query.gte("created_at", dateDebut);
+    if (dateFin) query = query.lte("created_at", dateFin);
 
-      const { data, error } = await query;
-      if (error) throw error;
+    const { data, error } = await query;
+    if (error) throw error;
 
-      let counts = {};
-      let totalServiteursLocal = 0;
-      let totalMembresLocal = 0;
+    let counts = {};
+    let totalServiteursLocal = 0;
+    let totalMembresLocal = 0;
 
-      data.forEach((membre) => {
-        const etat = membre.etat_contact?.toString().trim().toLowerCase();
-        const etatOk = ["existant", "nouveau"].includes(etat);
+    // 🔹 Préparer les logs
+    let logsToInsert = [];
 
-        const isServiteur =
-          membre.star === true ||
-          membre.star?.toString().trim().toLowerCase() === "true" ||
-          membre.star?.toString().trim().toLowerCase() === "oui";
+    data.forEach((membre) => {
+      const etat = membre.etat_contact?.toString().trim().toLowerCase();
+      const etatOk = ["existant", "nouveau"].includes(etat);
 
-        if (etatOk) totalMembresLocal++;
+      const isServiteur =
+        membre.star === true ||
+        membre.star?.toString().trim().toLowerCase() === "true" ||
+        membre.star?.toString().trim().toLowerCase() === "oui";
 
-        if (etatOk && isServiteur) {
-          totalServiteursLocal++;
+      if (etatOk) totalMembresLocal++;
 
-          if (membre.Ministere) {
-            let ministeres = [];
+      // 🔹 Log serviteur
+      if (etatOk && isServiteur) {
+        totalServiteursLocal++;
+        logsToInsert.push({
+          membre_id: membre.id,
+          eglise_id: egliseId,
+          branche_id: brancheId,
+          type: "serviteur",
+          valeur: null, // pas de valeur particulière, juste le nombre
+          date_action: new Date().toISOString().split("T")[0],
+        });
+      }
 
-            try {
-              if (typeof membre.Ministere === "string") {
-                if (membre.Ministere.startsWith("[")) {
-                  ministeres = JSON.parse(membre.Ministere);
-                } else {
-                  ministeres = membre.Ministere
-                    .split(",")
-                    .map((m) => m.trim());
-                }
-              } else if (Array.isArray(membre.Ministere)) {
-                ministeres = membre.Ministere;
-              }
-            } catch {
+      // 🔹 Compter les ministères
+      if (etatOk && membre.Ministere) {
+        let ministeres = [];
+        try {
+          if (typeof membre.Ministere === "string") {
+            if (membre.Ministere.startsWith("[")) {
+              ministeres = JSON.parse(membre.Ministere);
+            } else {
               ministeres = membre.Ministere
                 .split(",")
                 .map((m) => m.trim());
             }
-
-            ministeres.forEach((min) => {
-              if (!min) return;
-              if (!counts[min]) counts[min] = 0;
-              counts[min]++;
-            });
+          } else if (Array.isArray(membre.Ministere)) {
+            ministeres = membre.Ministere;
           }
+        } catch {
+          ministeres = membre.Ministere
+            .split(",")
+            .map((m) => m.trim());
         }
-      });
 
-      setRapports(
-        Object.entries(counts).map(([nom, total]) => ({
-          ministere: nom,
-          total,
-        }))
-      );
+        ministeres.forEach((min) => {
+          if (!min) return;
+          if (!counts[min]) counts[min] = 0;
+          counts[min]++;
+          // 🔹 Log ministère
+          logsToInsert.push({
+            membre_id: membre.id,
+            eglise_id: egliseId,
+            branche_id: brancheId,
+            type: "ministere",
+            valeur: min,
+            date_action: new Date().toISOString().split("T")[0],
+          });
+        });
+      }
 
-      setTotalServiteurs(totalServiteursLocal);
-      setTotalMembres(totalMembresLocal);
-      setMessage("");
-    } catch (err) {
-      console.error(err);
-      setMessage("❌ " + err.message);
+      // 🔹 Log besoins si besoin (optionnel)
+      if (etatOk && membre.besoin) {
+        let besoins = [];
+        try {
+          if (typeof membre.besoin === "string") {
+            if (membre.besoin.startsWith("[")) {
+              besoins = JSON.parse(membre.besoin);
+            } else {
+              besoins = membre.besoin.split(",").map((b) => b.trim());
+            }
+          } else if (Array.isArray(membre.besoin)) {
+            besoins = membre.besoin;
+          }
+        } catch {
+          besoins = [];
+        }
+
+        besoins.forEach((b) => {
+          if (!b) return;
+          logsToInsert.push({
+            membre_id: membre.id,
+            eglise_id: egliseId,
+            branche_id: brancheId,
+            type: "besoin",
+            valeur: b,
+            date_action: new Date().toISOString().split("T")[0],
+          });
+        });
+      }
+    });
+
+    // 🔹 Insérer les logs dans la table
+    if (logsToInsert.length > 0) {
+      const { error: insertError } = await supabase
+        .from("stats_ministere_besoin")
+        .insert(logsToInsert);
+
+      if (insertError) console.error("Erreur insertion logs:", insertError);
     }
 
-    setLoading(false);
-  };
+    setRapports(
+      Object.entries(counts).map(([nom, total]) => ({
+        ministere: nom,
+        total,
+      }))
+    );
+
+    setTotalServiteurs(totalServiteursLocal);
+    setTotalMembres(totalMembresLocal);
+    setMessage("");
+  } catch (err) {
+    console.error(err);
+    setMessage("❌ " + err.message);
+  }
+
+  setLoading(false);
+};
+
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">

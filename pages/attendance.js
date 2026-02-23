@@ -315,7 +315,7 @@ function Attendance() {
           {/* HEADER */}
           <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
             <div className="min-w-[150px] ml-1">Culte / Date</div>
-            <div className="min-w-[120px] text-center">Hommes</div>
+            <div className="min-w-[120px] text-center ml-2">Hommes</div>
             <div className="min-w-[120px] text-center">Femmes</div>
             <div className="min-w-[120px] text-center">Jeunes</div>
             <div className="min-w-[130px] text-center text-orange-400 font-semibold">Total</div>
@@ -362,16 +362,16 @@ function Attendance() {
                   <div className="min-w-[150px] text-white font-semibold">
                     {isExpanded ? "➖ " : "➕ "} {monthLabel}
                   </div>
-                  <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
-                  <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
-                  <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.jeunes}</div>
+                  <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-2">{totalMonth.hommes}</div>
+                  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.femmes}</div>
+                  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.jeunes}</div>
                   <div className="min-w-[130px] text-center text-orange-400 font-semibold">
                     {totalMonth.hommes + totalMonth.femmes + totalMonth.jeunes}
                   </div>
-                  <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.enfants}</div>
-                  <div className="min-w-[140px] text-center text-white font-bold">{totalMonth.connectes}</div>
-                  <div className="min-w-[150px] text-center text-white font-bold">{totalMonth.nouveauxVenus}</div>
-                  <div className="min-w-[180px] text-center text-white font-bold">{totalMonth.nouveauxConvertis}</div>
+                  <div className="min-w-[120px] text-centert ext-orange-400 font-semibold">{totalMonth.enfants}</div>
+                  <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalMonth.connectes}</div>
+                  <div className="min-w-[150px] text-center text-orange-400 font-semiboldd">{totalMonth.nouveauxVenus}</div>
+                  <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalMonth.nouveauxConvertis}</div>
                 </div>
 
                 {(isExpanded || monthReports.length === 1) && monthReports.map((r) => {
@@ -380,7 +380,7 @@ function Attendance() {
                   return (
                     <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-green-500">
                       <div className="min-w-[150px] text-white">{`${culteLabel} : ${formatDateFR(r.date)}`}</div>
-                      <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                      <div className="min-w-[120px] text-center text-white ml-3">{r.hommes}</div>
                       <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
                       <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
                       <div className="min-w-[130px] text-center text-orange-400 font-semibold">{total}</div>

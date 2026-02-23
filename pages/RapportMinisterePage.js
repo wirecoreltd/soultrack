@@ -48,100 +48,87 @@ function RapportMinistere() {
   }, []);
 
   // 🔹 Générer rapport
-  const fetchRapport = async () => {
-    setLoading(true);
-    setRapports([]);
-    setTotalServiteurs(0);
-    setTotalMembres(0);
-    setMessage("⏳ Chargement...");
+  // 🔹 Générer rapport
+const fetchRapport = async () => {
+  setLoading(true);
+  setRapports([]);
+  setTotalServiteurs(0);
+  setTotalMembres(0);
+  setMessage("⏳ Chargement...");
 
-    if (!egliseId || !brancheId) {
-      setMessage("❌ ID de l'église ou branche manquant");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      // 🔹 Récupérer tous les membres valides pour total membres
-      // 🔹 Charger les membres pour avoir le sexe
-const { data: membres, error: membresError } = await supabase
-  .from("membres_complets")
-  .select("id, sexe")
-  .eq("eglise_id", egliseId)
-  .eq("branche_id", brancheId);
-
-if (membresError) throw membresError;
-
-// Créer le mapping membre_id -> sexe
-const membresMap = {};
-membres.forEach((m) => {
-  const sexe = m.sexe?.toString().trim().toLowerCase();
-  membresMap[m.id] = sexe === "homme" ? "homme" : "femme";
-});
-
-
-      setTotalMembres(membres.length);
-
-      // 🔹 Récupérer tous les logs de serviteurs
-      // 🔹 Récupérer tous les logs de serviteurs
-let query = supabase
-  .from("stats_ministere_besoin")
-  .select("membre_id, valeur")  // ⚡ pas de "as ministere"
-  .eq("eglise_id", egliseId)
-  .eq("branche_id", brancheId)
-  .eq("type", "ministere");
-
-if (dateDebut) query = query.gte("date_action", dateDebut);
-if (dateFin) query = query.lte("date_action", dateFin);
-
-const { data: logs, error: logsError } = await query;
-if (logsError) throw logsError;
-
-// 🔹 Compter serviteurs par ministère, homme/femme
-const counts = {};
-const serviteursIds = new Set(); // éviter double comptage du même serviteur par ministère
-
-logs.forEach((log) => {
-  const membreId = log.membre_id;
-  const ministere = log.valeur || "Non défini"; // ⚡ ici on renomme
-  if (!membreId || !ministere) return;
-
-  const key = ministere;
-
-  // initialiser
-  if (!counts[key]) counts[key] = { hommes: 0, femmes: 0, total: 0 };
-
-  const uniqueKey = `${ministere}_${membreId}`;
-  if (serviteursIds.has(uniqueKey)) return;
-  serviteursIds.add(uniqueKey);
-
-  const sexe = membresMap[membreId];
-  if (sexe === "homme") counts[key].hommes++;
-  else if (sexe === "femme") counts[key].femmes++;
-
-  counts[key].total++;
-});
-
-
-      setRapports(
-        Object.entries(counts).map(([ministere, vals]) => ({
-          ministere,
-          ...vals,
-        }))
-      );
-
-      // total serviteurs global
-      const totalServ = Object.values(counts).reduce((acc, cur) => acc + cur.total, 0);
-      setTotalServiteurs(totalServ);
-
-      setMessage("");
-    } catch (err) {
-      console.error(err);
-      setMessage("❌ " + err.message);
-    }
-
+  if (!egliseId || !brancheId) {
+    setMessage("❌ ID de l'église ou branche manquant");
     setLoading(false);
-  };
+    return;
+  }
+
+  try {
+    let query = supabase
+      .from("stats_ministere_besoin")
+      .select("membre_id, valeur, date_action")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId);
+
+    if (dateDebut) query = query.gte("date_action", dateDebut);
+    if (dateFin) query = query.lte("date_action", dateFin);
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    // 🔹 Pour compter les serviteurs uniques par date
+    const membresParDate = {}; // { '2026-02-21': Set([membre_id,...]) }
+    const counts = {}; // { 'Finance': { hommes: 0, femmes: 0, total: 0 } }
+
+    for (let row of data) {
+      const date = row.date_action?.split("T")[0]; // juste yyyy-mm-dd
+      if (!date) continue;
+
+      if (!membresParDate[date]) membresParDate[date] = new Set();
+      membresParDate[date].add(row.membre_id);
+
+      // Comptage ministères
+      if (!counts[row.valeur]) counts[row.valeur] = { hommes: 0, femmes: 0, total: 0 };
+
+      // On va chercher le sexe depuis la table membres_complets
+      const { data: membreData } = await supabase
+        .from("membres_complets")
+        .select("sexe")
+        .eq("id", row.membre_id)
+        .single();
+
+      if (membreData) {
+        const sexe = membreData.sexe?.toLowerCase();
+        if (sexe === "homme") counts[row.valeur].hommes++;
+        else if (sexe === "femme") counts[row.valeur].femmes++;
+        counts[row.valeur].total++;
+      }
+    }
+
+    // 🔹 Total serviteurs uniques
+    let totalServiteursLocal = 0;
+    Object.values(membresParDate).forEach((setMembres) => {
+      totalServiteursLocal += setMembres.size;
+    });
+
+    setRapports(
+      Object.entries(counts).map(([ministere, v]) => ({
+        ministere,
+        hommes: v.hommes,
+        femmes: v.femmes,
+        total: v.total,
+      }))
+    );
+
+    setTotalServiteurs(totalServiteursLocal);
+    setMessage("");
+  } catch (err) {
+    console.error(err);
+    setMessage("❌ " + err.message);
+  }
+
+  setLoading(false);
+};
+
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">

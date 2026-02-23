@@ -31,7 +31,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const besoinsList = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille", "Paix"];
+  const besoinsList = ["Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits","Addictions / Dépendances",
+  "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"];
 
   // ➤ Récupérer eglise_id et branche_id de l'utilisateur connecté
   useEffect(() => {
@@ -322,7 +323,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
           )}
 
           <div className="mt-4">
-            <p className="font-semibold mb-2">Besoins :</p>
+            <p className="font-semibold mb-2">Difficultés / Besoins :</p>
             {besoinsList.map((b) => (
               <label key={b} className="flex items-center gap-3 mb-2">
                 <input

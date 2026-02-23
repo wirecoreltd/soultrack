@@ -366,7 +366,7 @@ export default function Evangelisation() {
                     <p>🎗️ Sexe : {member.sexe || "—"}</p>
                     <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
                     <p>☀️ Type : {member.type_conversion || "—"}</p>
-                    <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
+                    <p>❓ Difficultés / Besoins : {formatBesoin(member.besoin)}</p>
                     <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
                 
                     {/* CARTE UNIQUE – ACTIONS */}

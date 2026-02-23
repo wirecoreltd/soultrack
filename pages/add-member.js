@@ -32,7 +32,8 @@ export default function AddMember() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+  const besoinsOptions = ["Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits","Addictions / Dépendances",
+  "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement, Dépression / Santé mentale"];
 
   // Récupération eglise_id et branche_id de l'utilisateur connecté
   useEffect(() => {
@@ -325,7 +326,7 @@ export default function AddMember() {
           )}
 
           {/* Besoins */}
-          <label className="text-sm sm:text-base font-bold mb-1">Besoins</label>
+          <label className="text-sm sm:text-base font-bold mb-1">Difficultés / Besoins</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {besoinsOptions.map(item => (
               <label key={item} className="flex items-center gap-1 text-sm">

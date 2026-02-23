@@ -263,8 +263,9 @@ const totalPrincipal =
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-      <h1 className="text-3xl font-bold text-white mt-4">
-        Statistiques Globales
+            <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
+        <span className="text-white">Rapport </span>
+        <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
       {/* FILTRES */}

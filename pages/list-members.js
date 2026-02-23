@@ -151,10 +151,22 @@ const canAddMember =
     });
   }
 
+  // 🔹 SERVITEUR
+  if (updatedMember.star === true && updatedMember.etat_contact === "existant") {
+    logs.push({
+      membre_id: member.id,
+      eglise_id: userProfile.eglise_id,
+      branche_id: userProfile.branche_id,
+      type: "serviteur",
+      valeur: "true",
+    });
+  }
+
   if (logs.length > 0) {
     await supabase.from("stats_ministere_besoin").insert(logs);
   }
 };
+
 
 
   const formatDateFr = (dateString) => {

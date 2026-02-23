@@ -10,66 +10,80 @@ export default function HeaderPages() {
   const [prenom, setPrenom] = useState("Utilisateur");
   const [eglise, setEglise] = useState("Église Principale");
   const [branche, setBranche] = useState("Maurice");
-  const [superviseur, setSuperviseur] = useState(""); // 🔹 superviseur affiché
+  const [superviseur, setSuperviseur] = useState(""); 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
         if (userError || !user) return;
 
-        // Récupère le profil
+        // 🔹 Récupération du profil
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("prenom, eglise_id, branche_id")
           .eq("id", user.id)
           .single();
+
         if (profileError) throw profileError;
 
         setPrenom(profile?.prenom || "Utilisateur");
 
-        // Récupère le nom de l'église si eglise_id existe
+        // 🔹 Nom de l'église
         if (profile?.eglise_id) {
-          const { data: egliseData, error: egliseError } = await supabase
+          const { data: egliseData } = await supabase
             .from("eglises")
             .select("nom")
             .eq("id", profile.eglise_id)
             .single();
-          if (!egliseError && egliseData) setEglise(egliseData.nom);
+
+          if (egliseData) setEglise(egliseData.nom);
         }
 
-        // Récupère le nom de la branche si branche_id existe
+        // 🔹 Nom de la branche
         if (profile?.branche_id) {
-          const { data: brancheData, error: brancheError } = await supabase
+          const { data: brancheData } = await supabase
             .from("branches")
             .select("nom")
             .eq("id", profile.branche_id)
             .single();
-          if (!brancheError && brancheData) setBranche(brancheData.nom);
+
+          if (brancheData) setBranche(brancheData.nom);
         }
 
-        // 🔹 Récupérer le superviseur de cette église
+        // 🔹 Récupération de la supervision (église + branche superviseur)
         if (profile?.eglise_id) {
-          const { data: supervisionData, error: supervisionError } = await supabase
-            .from("eglise_supervisions")
-            .select(`
-              superviseur_eglise_id,
-              superviseur_branche_id,
-              eglises(nom),
-              branches(nom)
-            `)
-            .eq("supervisee_eglise_id", profile.eglise_id)
-            .eq("statut", "accepté")
-            .single();
+          const { data: supervisionData, error: supervisionError } =
+            await supabase
+              .from("eglise_supervisions")
+              .select(`
+                superviseur_eglise:eglises!eglise_supervisions_superviseur_eglise_id_fkey(nom),
+                superviseur_branche:branches!eglise_supervisions_superviseur_branche_id_fkey(nom)
+              `)
+              .eq("supervisee_eglise_id", profile.eglise_id)
+              .eq("statut", "acceptee")
+              .single();
 
           if (!supervisionError && supervisionData) {
-            const supEglise = supervisionData.eglises?.nom || "";
-            const supBranche = supervisionData.branches?.nom || "";
-            setSuperviseur(`Sous la supervision de ${supEglise} - ${supBranche}`);
+            const nomEglise =
+              supervisionData.superviseur_eglise?.nom || "";
+            const nomBranche =
+              supervisionData.superviseur_branche?.nom || "";
+
+            if (nomEglise) {
+              setSuperviseur(
+                nomBranche
+                  ? `${nomEglise} - ${nomBranche}`
+                  : nomEglise
+              );
+            }
           }
         }
-
       } catch (err) {
         console.error("Erreur récupération profil :", err);
       } finally {
@@ -104,17 +118,26 @@ export default function HeaderPages() {
         </button>
       </div>
 
-      {/* User info en haut à droite */}
+      {/* User info */}
       <div className="flex justify-end flex-col text-right space-y-1 mb-2">
         <p className="text-white text-sm">
-          Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
+          Connecté :{" "}
+          <span className="font-semibold">
+            {loading ? "..." : prenom}
+          </span>
         </p>
+
         {superviseur && (
-          <p className="text-white text-xs italic">{superviseur}</p>
+          <p className="text-white text-xs">
+            Supervision :{" "}
+            <span className="font-semibold">
+              {superviseur}
+            </span>
+          </p>
         )}
       </div>
 
-      {/* Logo centré */}
+      {/* Logo */}
       <div className="flex flex-col items-center mb-4">
         <img
           src="/logo.png"

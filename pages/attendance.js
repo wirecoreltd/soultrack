@@ -322,14 +322,14 @@ function Attendance() {
                             whitespace-nowrap border-l-4 border-transparent">
 
               <div className="min-w-[150px] pl-2">Culte / Date</div>
-              <div className="min-w-[120px] text-center ml-3">Hommes</div>
-              <div className="min-w-[120px] text-center">Femmes</div>
-              <div className="min-w-[120px] text-center">Jeunes</div>
+              <div className="min-w-[120px] text-center font-semibold ml-3">Hommes</div>
+              <div className="min-w-[120px] text-center font-semibold">Femmes</div>
+              <div className="min-w-[120px] text-center font-semibold">Jeunes</div>
               <div className="min-w-[130px] text-center text-orange-400 font-semibold -ml-2">Total</div>
-              <div className="min-w-[120px] text-center">Enfants</div>
-              <div className="min-w-[140px] text-center">Connectés</div>
-              <div className="min-w-[150px] text-center">Nouveaux<br />Venus</div>
-              <div className="min-w-[180px] text-center">Nouveaux<br />Convertis</div>
+              <div className="min-w-[120px] text-center font-semibold">Enfants</div>
+              <div className="min-w-[140px] text-center font-semibold">Connectés</div>
+              <div className="min-w-[150px] text-center font-semibold">Nouveaux<br />Venus</div>
+              <div className="min-w-[180px] text-center font-semibold">Nouveaux<br />Convertis</div>
               <div className="min-w-[140px] text-center text-orange-400 font-semibold">Actions</div>
             </div>
        
@@ -393,7 +393,11 @@ function Attendance() {
                                      border-l-4 ${borderColor}`}
                         >
 
-                          <div className={`min-w-[150px] pl-2 font-semibold ${borderColor.replace("border-", "text-")}`}>
+                          //<div className={`min-w-[150px] pl-2 font-semibold ${borderColor.replace("border-", "text-")}`}>
+                           // {`${culteLabel} : ${formatDateFR(r.date)}`}
+                          //</div>
+
+                           <div className="min-w-[150px] pl-2 text-white">
                             {`${culteLabel} : ${formatDateFR(r.date)}`}
                           </div>
 

@@ -59,7 +59,7 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 1️⃣ Serviteurs par ministère
+      // 🔹 Serviteurs par ministère
       const { data: logs, error: errorLogs } = await supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, date_action")
@@ -71,7 +71,7 @@ function RapportMinistere() {
 
       if (errorLogs) throw errorLogs;
 
-      // 🔹 Total serviteurs
+      // 🔹 Total serviteurs uniques
       const membresServiteurs = new Set(logs.map((log) => log.membre_id));
       setTotalServiteurs(membresServiteurs.size);
 
@@ -144,16 +144,17 @@ function RapportMinistere() {
       {totalMembres > 0 && (
         <div className="flex gap-4 mt-6 flex-wrap justify-center">
           <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
-            <div className="text-sm uppercase font-semibold mb-1">
-              Nbre Serviteurs
-            </div>
+            <div className="text-sm uppercase font-semibold mb-1">Nbre Serviteurs</div>
             <div className="text-2xl font-bold text-orange-400">{totalServiteurs}</div>
           </div>
 
           <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
             <div className="text-sm uppercase font-semibold mb-1">% Serviteurs</div>
             <div className="text-2xl font-bold text-orange-400">
-              {((totalServiteurs / totalMembres) * 100).toFixed(1)} %
+              {totalMembres > 0
+                ? ((totalServiteurs / totalMembres) * 100).toFixed(1)
+                : 0}{" "}
+              %
             </div>
           </div>
         </div>

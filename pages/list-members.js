@@ -560,8 +560,11 @@ useEffect(() => {
     
           {/* Nom */}
           <div className="flex flex-col items-center mt-8">
-            <h2 className="text-base font-bold text-center">
-              {m.prenom} {m.nom}
+            <h2 className="text-base font-bold text-center flex items-center justify-center gap-1">
+              <span>{m.prenom} {m.nom}</span>
+              {m.star === true && m.etat_contact?.trim().toLowerCase() === "existant" && (
+                <span className="text-yellow-400">⭐</span>
+              )}
             </h2>
     
             {/* Téléphone */}

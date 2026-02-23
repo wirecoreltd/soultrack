@@ -93,8 +93,12 @@ export default function DetailsMemberPopup({
 
         {/* Header */}
         <div className="flex flex-col items-center text-center">
-          <h2 className="text-lg font-bold">
-            {membre.prenom} {membre.nom} {membre.star && "⭐"}
+          <h2 className="text-lg font-bold flex items-center justify-center gap-1">
+            <span>{membre.prenom} {membre.nom}</span>
+            {membre.star === true &&
+              membre.etat_contact?.trim().toLowerCase() === "existant" && (
+                <span className="text-yellow-400">⭐</span>
+            )}
           </h2>
 
           {/* Téléphone */}

@@ -171,24 +171,52 @@ function StatGlobalPage() {
     setCellulesCount(count || 0);
 
     // ================= SERVITEURS =================
-      let serviteurQuery = supabase
-        .from("membres_complets")
-        .select("id, sexe")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .eq("star", true)
-        .in("etat_contact", ["Existant", "Nouveau"]);
-      
-      if (dateDebut) serviteurQuery = serviteurQuery.gte("created_at", dateDebut);
-      if (dateFin) serviteurQuery = serviteurQuery.lte("created_at", dateFin);
-      
-      const { data: serviteurData } = await serviteurQuery;
-      
-      const serviteurTotals = {
-        hommes: serviteurData?.filter(r => r.sexe === "Homme").length || 0,
-        femmes: serviteurData?.filter(r => r.sexe === "Femme").length || 0,
-      };      
-      setServiteurStats(serviteurTotals);
+    let serviteurQuery = supabase
+      .from("stats_ministere_besoin")
+      .select("membre_id, valeur, date_action")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId)
+      .eq("type", "ministere");
+
+    if (dateDebut) serviteurQuery = serviteurQuery.gte("date_action", dateDebut);
+    if (dateFin) serviteurQuery = serviteurQuery.lte("date_action", dateFin);
+
+    const { data: serviteurData, error: serviteurError } = await serviteurQuery;
+
+    if (serviteurError) {
+      console.error("Erreur Serviteurs:", serviteurError);
+      setServiteurStats({ hommes: 0, femmes: 0 });
+    } else {
+      // 🔹 Déduplication par membre_id
+      const uniqueMembres = new Map();
+
+      serviteurData.forEach((s) => {
+        if (!s.membre_id) return;
+        if (!uniqueMembres.has(s.membre_id)) {
+          uniqueMembres.set(s.membre_id, s.valeur);
+        }
+      });
+
+      // 🔹 Récupérer le sexe du membre depuis membres_complets
+      let hommes = 0;
+      let femmes = 0;
+
+      if (uniqueMembres.size > 0) {
+        const ids = Array.from(uniqueMembres.keys());
+
+        const { data: membresSexe } = await supabase
+          .from("membres_complets")
+          .select("id, sexe")
+          .in("id", ids);
+
+        membresSexe?.forEach((m) => {
+          if (m.sexe === "Homme") hommes++;
+          if (m.sexe === "Femme") femmes++;
+        });
+      }
+
+      setServiteurStats({ hommes, femmes });
+    }
 
     setLoading(false);
   };

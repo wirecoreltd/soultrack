@@ -33,7 +33,7 @@ export default function AddMember() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const besoinsOptions = ["Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits","Addictions / Dépendances",
-  "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement, Dépression / Santé mentale"];
+  "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"];
 
   // Récupération eglise_id et branche_id de l'utilisateur connecté
   useEffect(() => {

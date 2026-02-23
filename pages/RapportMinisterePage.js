@@ -62,72 +62,55 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 Récupérer les membres pour calculer % de serviteurs
-      let membresQuery = supabase
+      // 🔹 1️⃣ Récupérer tous les membres pour le % total
+      const { data: membres, error: errorMembres } = await supabase
         .from("membres_complets")
-        .select("id, etat_contact")
+        .select("etat_contact")
         .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+        .eq("branche_id", brancheId)
+        .gte("created_at", dateDebut || "1900-01-01")
+        .lte("created_at", dateFin || "9999-12-31");
 
-      if (dateDebut) membresQuery = membresQuery.gte("created_at", dateDebut);
-      if (dateFin) membresQuery = membresQuery.lte("created_at", dateFin);
+      if (errorMembres) throw errorMembres;
 
-      const { data: membresData, error: membresError } = await membresQuery;
-      if (membresError) throw membresError;
+      const totalMembresLocal = membres.filter((m) => {
+        const etat = m.etat_contact?.toLowerCase().trim();
+        return ["existant", "nouveau"].includes(etat);
+      }).length;
+      setTotalMembres(totalMembresLocal);
 
-      const membresValides = membresData.filter((m) =>
-        ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
-      );
-      setTotalMembres(membresValides.length);
-
-      // 🔹 Récupérer les stats ministère (serviteurs)
-      let statsQuery = supabase
+      // 🔹 2️⃣ Récupérer stats_ministere_besoin pour les serviteurs
+      const { data: statsData, error: errorStats } = await supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, date_action")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId)
-        .eq("type", "ministere");
+        .eq("type", "ministere")
+        .gte("date_action", dateDebut || "1900-01-01")
+        .lte("date_action", dateFin || "9999-12-31");
 
-      if (dateDebut) statsQuery = statsQuery.gte("date_action", dateDebut);
-      if (dateFin) statsQuery = statsQuery.lte("date_action", dateFin);
+      if (errorStats) throw errorStats;
 
-      const { data: statsData, error: statsError } = await statsQuery;
-      if (statsError) throw statsError;
-
-      // 🔹 Nombre total de serviteurs uniques
-      const membresServiteursSet = new Set(statsData.map((s) => s.membre_id));
-      setTotalServiteurs(membresServiteursSet.size);
-
-      // 🔹 Comptage par ministère
+      // 🔹 3️⃣ Compter serviteurs totaux et par ministère
       const counts = {};
+      const serviteursSet = new Set();
+
       statsData.forEach((s) => {
-        const min = s.valeur?.trim();
-        if (!min) return;
-        if (!counts[min]) counts[min] = 0;
-        counts[min]++;
+        const membreId = s.membre_id;
+        const ministere = s.valeur?.trim();
+        const date = s.date_action?.split("T")[0] || s.date_action;
+
+        serviteursSet.add(membreId); // pour totalServiteurs
+
+        if (ministere) {
+          if (!counts[ministere]) counts[ministere] = 0;
+          counts[ministere]++;
+        }
       });
 
-      // 🔹 Comptage par date
-      const serviteursParDate = {};
-        statsData.forEach((s) => {
-          if (s.type !== "ministere") return; // ne prendre que ministere
-          const date = s.date_action?.split("T")[0] || s.date_action;
-          if (!serviteursParDate[date]) serviteursParDate[date] = new Set();
-          serviteursParDate[date].add(s.membre_id);
-        });
-        
-        // Transformer les Sets en nombres
-        const serviteursParDateFinal = Object.entries(serviteursParDate).map(
-          ([date, set]) => ({ date, total: set.size })
-        );
+      setTotalServiteurs(serviteursSet.size);
 
-        console.log("Serviteurs par date:", serviteursParDateFinal);
-
-      // 🔹 Transformer les Sets en nombres
-      const serviteursParDateFinal = Object.entries(serviteursParDate).map(
-        ([date, set]) => ({ date, total: set.size })
-      );
-
+      // 🔹 4️⃣ Transformer counts en tableau pour affichage
       setRapports(
         Object.entries(counts).map(([ministere, total]) => ({
           ministere,
@@ -135,8 +118,7 @@ function RapportMinistere() {
         }))
       );
 
-      setMessage(""); // tout ok
-      console.log("Serviteurs par date:", serviteursParDateFinal); // debug
+      setMessage("");
     } catch (err) {
       console.error(err);
       setMessage("❌ " + err.message);
@@ -175,7 +157,7 @@ function RapportMinistere() {
         </button>
       </div>
 
-      {/* 🔹 Résumé */}
+      {/* 🔹 Résumé total */}
       <div className="flex gap-4 mt-6 flex-wrap justify-center">
         <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
           <div className="text-sm uppercase font-semibold mb-1">
@@ -199,7 +181,7 @@ function RapportMinistere() {
         </div>
       </div>
 
-      {/* 🔹 Tableau des ministères */}
+      {/* 🔹 Tableau ministères */}
       <div className="w-full flex justify-center mt-6 mb-6">
         <div className="w-max overflow-x-auto space-y-2">
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">

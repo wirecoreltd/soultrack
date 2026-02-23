@@ -59,7 +59,7 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 1️⃣ Récupérer les logs stats_ministere_besoin
+      // 🔹 1️⃣ Serviteurs par ministère
       const { data: logs, error: errorLogs } = await supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, date_action")
@@ -71,21 +71,21 @@ function RapportMinistere() {
 
       if (errorLogs) throw errorLogs;
 
+      // 🔹 Total serviteurs
       const membresServiteurs = new Set(logs.map((log) => log.membre_id));
       setTotalServiteurs(membresServiteurs.size);
 
-      // 🔹 Compter par ministère
+      // 🔹 Compte par ministère
       let counts = {};
       logs.forEach((log) => {
         if (!counts[log.valeur]) counts[log.valeur] = 0;
         counts[log.valeur]++;
       });
-
       setRapports(
         Object.entries(counts).map(([ministere, total]) => ({ ministere, total }))
       );
 
-      // 🔹 2️⃣ Récupérer total membres pour calcul % serviteurs
+      // 🔹 Total membres pour %
       const { data: membres, error: errorMembres } = await supabase
         .from("membres_complets")
         .select("id, etat_contact, created_at")
@@ -99,8 +99,8 @@ function RapportMinistere() {
       const totalMembresLocal = membres.filter((m) =>
         ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
       ).length;
-
       setTotalMembres(totalMembresLocal);
+
       setMessage("");
     } catch (err) {
       console.error(err);
@@ -114,9 +114,8 @@ function RapportMinistere() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
-        <span className="text-white">Rapport </span>
-        <span className="text-amber-300">Ministère</span>
+      <h1 className="text-2xl font-bold text-white mt-4 mb-6 text-center">
+        Rapport Ministère
       </h1>
 
       {/* 🔹 Filtres */}

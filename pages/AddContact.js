@@ -28,7 +28,8 @@ export default function AddContact() {
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+  const besoinsOptions = ["Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits","Addictions / Dépendances",
+  "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"];
 
   // ➤ Récupérer eglise_id et branche_id de l'utilisateur connecté
   useEffect(() => {
@@ -306,7 +307,7 @@ export default function AddContact() {
             )}
             
             {/* Besoins */}
-            <label className="text-sm sm:text-base font-bold mb-1">Besoins</label>
+            <label className="text-sm sm:text-base font-bold mb-1">Difficultés / Besoins</label>
             <div className="flex flex-wrap gap-2 mb-2">
               {besoinsOptions.map((item) => (
                 <label key={item} className="flex items-center gap-1 text-sm">

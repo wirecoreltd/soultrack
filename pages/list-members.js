@@ -767,7 +767,7 @@ useEffect(() => {
                 <p>✒️ Formation : {m.Formation || ""}</p>
                 <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>
                 <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere) || "—"}</p>
-                <p>❓ Besoin : {besoins}</p>
+                <p>❓ Difficultés / Besoins : {besoins}</p>
                 <p>📝 Infos : {m.infos_supplementaires || ""}</p>
                 <p>🧩 Comment est-il venu : {m.venu || ""}</p>
                 <p>✨ Raison de la venue : {m.statut_initial || ""}</p>

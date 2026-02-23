@@ -391,11 +391,7 @@ function Attendance() {
                           className={`flex items-center px-4 py-2 rounded-lg 
                                      bg-white/10 hover:bg-white/20 transition 
                                      border-l-4 ${borderColor}`}
-                        >
-
-                          //<div className={`min-w-[150px] pl-2 font-semibold ${borderColor.replace("border-", "text-")}`}>
-                           // {`${culteLabel} : ${formatDateFR(r.date)}`}
-                          //</div>
+                        >                         
 
                            <div className="min-w-[150px] pl-2 text-white">
                             {`${culteLabel} : ${formatDateFR(r.date)}`}

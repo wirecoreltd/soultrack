@@ -18,11 +18,11 @@ function RapportMinistere() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [rapports, setRapports] = useState([]);
-  const [totalServiteurs, setTotalServiteurs] = useState(0);
-  const [totalMembres, setTotalMembres] = useState(0);
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [totalServiteurs, setTotalServiteurs] = useState(0);
+  const [totalMembres, setTotalMembres] = useState(0);
   const [message, setMessage] = useState("");
 
   // 🔹 Charger profil utilisateur
@@ -43,10 +43,11 @@ function RapportMinistere() {
         setBrancheId(profile.branche_id);
       }
     };
+
     fetchUser();
   }, []);
 
-  // 🔹 Générer rapport depuis les logs stats_ministere_besoin
+  // 🔹 Générer rapport depuis stats_ministere_besoin
   const fetchRapport = async () => {
     if (!egliseId || !brancheId) {
       setMessage("❌ ID de l'église ou branche manquant");
@@ -60,7 +61,6 @@ function RapportMinistere() {
     setMessage("⏳ Chargement...");
 
     try {
-      // Récupérer les logs
       let { data, error } = await supabase
         .from("stats_ministere_besoin")
         .select("type, valeur, date_action")
@@ -69,20 +69,21 @@ function RapportMinistere() {
 
       if (error) throw error;
 
-      // Filtrer par date si besoin
+      // 🔹 Filtrer par date
       if (dateDebut) data = data.filter(d => d.date_action >= dateDebut);
       if (dateFin) data = data.filter(d => d.date_action <= dateFin);
 
-      // Compter
+      // 🔹 Compter les ministères et serviteurs
       let counts = {};
-      let serviteurs = 0;
+      let serviteursCount = 0;
 
       data.forEach(d => {
         if (d.type === "ministere") {
           if (!counts[d.valeur]) counts[d.valeur] = 0;
           counts[d.valeur]++;
+        } else if (d.type === "serviteur") {
+          serviteursCount++;
         }
-        if (d.type === "serviteur") serviteurs++;
       });
 
       setRapports(
@@ -92,7 +93,7 @@ function RapportMinistere() {
         }))
       );
 
-      setTotalServiteurs(serviteurs);
+      setTotalServiteurs(serviteursCount);
       setTotalMembres(data.length); // Total logs (ministere + serviteur)
       setMessage("");
     } catch (err) {
@@ -106,6 +107,7 @@ function RapportMinistere() {
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
+
       <h1 className="text-2xl font-bold text-white mt-4 mb-6 text-center">
         Rapport Ministère
       </h1>
@@ -147,7 +149,10 @@ function RapportMinistere() {
               % de serviteurs / total logs
             </div>
             <div className="text-2xl font-bold text-orange-400">
-              {totalMembres > 0 ? ((totalServiteurs / totalMembres) * 100).toFixed(1) : 0} %
+              {totalMembres > 0
+                ? ((totalServiteurs / totalMembres) * 100).toFixed(1)
+                : 0}{" "}
+              %
             </div>
           </div>
         </div>
@@ -172,14 +177,19 @@ function RapportMinistere() {
               key={index}
               className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
             >
-              <div className="min-w-[250px] text-white font-semibold">{r.ministere}</div>
-              <div className="min-w-[150px] text-center text-orange-400 font-bold">{r.total}</div>
+              <div className="min-w-[250px] text-white font-semibold">
+                {r.ministere}
+              </div>
+              <div className="min-w-[150px] text-center text-orange-400 font-bold">
+                {r.total}
+              </div>
             </div>
           ))}
         </div>
       </div>
 
       {message && <p className="text-white text-center">{message}</p>}
+
       <Footer />
     </div>
   );

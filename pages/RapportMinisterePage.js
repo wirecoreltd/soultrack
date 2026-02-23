@@ -62,55 +62,55 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 1️⃣ Récupérer tous les membres pour le % total
-      const { data: membres, error: errorMembres } = await supabase
-        .from("membres_complets")
-        .select("etat_contact")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .gte("created_at", dateDebut || "1900-01-01")
-        .lte("created_at", dateFin || "9999-12-31");
-
-      if (errorMembres) throw errorMembres;
-
-      const totalMembresLocal = membres.filter((m) => {
-        const etat = m.etat_contact?.toLowerCase().trim();
-        return ["existant", "nouveau"].includes(etat);
-      }).length;
-      setTotalMembres(totalMembresLocal);
-
-      // 🔹 2️⃣ Récupérer stats_ministere_besoin pour les serviteurs
-      const { data: statsData, error: errorStats } = await supabase
+      // 🔹 Récupérer les stats_ministere_besoin
+      let queryStats = supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, date_action")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId)
-        .eq("type", "ministere")
-        .gte("date_action", dateDebut || "1900-01-01")
-        .lte("date_action", dateFin || "9999-12-31");
+        .eq("type", "ministere");
 
-      if (errorStats) throw errorStats;
+      if (dateDebut) queryStats = queryStats.gte("date_action", dateDebut);
+      if (dateFin) queryStats = queryStats.lte("date_action", dateFin);
 
-      // 🔹 3️⃣ Compter serviteurs totaux et par ministère
-      const counts = {};
-      const serviteursSet = new Set();
+      const { data: statsData, error: statsError } = await queryStats;
+      if (statsError) throw statsError;
+
+      // 🔹 Récupérer les membres pour le total
+      let queryMembres = supabase
+        .from("membres_complets")
+        .select("id, etat_contact")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
+
+      if (dateDebut) queryMembres = queryMembres.gte("created_at", dateDebut);
+      if (dateFin) queryMembres = queryMembres.lte("created_at", dateFin);
+
+      const { data: membresData, error: membresError } = await queryMembres;
+      if (membresError) throw membresError;
+
+      // 🔹 Total membres
+      const totalMembresLocal = membresData.filter((m) =>
+        ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
+      ).length;
+      setTotalMembres(totalMembresLocal);
+
+      // 🔹 Comptage serviteurs par date et par ministère
+      const serviteursSet = new Set(); // pour total
+      const counts = {}; // pour les ministères
 
       statsData.forEach((s) => {
-        const membreId = s.membre_id;
-        const ministere = s.valeur?.trim();
-        const date = s.date_action?.split("T")[0] || s.date_action;
+        // compte pour le total serviteurs
+        serviteursSet.add(s.membre_id);
 
-        serviteursSet.add(membreId); // pour totalServiteurs
-
-        if (ministere) {
-          if (!counts[ministere]) counts[ministere] = 0;
-          counts[ministere]++;
-        }
+        // compte par ministère
+        if (!s.valeur) return;
+        if (!counts[s.valeur]) counts[s.valeur] = 0;
+        counts[s.valeur]++;
       });
 
       setTotalServiteurs(serviteursSet.size);
 
-      // 🔹 4️⃣ Transformer counts en tableau pour affichage
       setRapports(
         Object.entries(counts).map(([ministere, total]) => ({
           ministere,
@@ -157,31 +157,26 @@ function RapportMinistere() {
         </button>
       </div>
 
-      {/* 🔹 Résumé total */}
+      {/* 🔹 Résumé */}
       <div className="flex gap-4 mt-6 flex-wrap justify-center">
         <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
           <div className="text-sm uppercase font-semibold mb-1">
             Nombre total de serviteurs
           </div>
-          <div className="text-2xl font-bold text-orange-400">
-            {totalServiteurs}
-          </div>
+          <div className="text-2xl font-bold text-orange-400">{totalServiteurs}</div>
         </div>
 
         <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
           <div className="text-sm uppercase font-semibold mb-1">
-            % de serviteurs / total membres
+            % de serviteurs / membres
           </div>
           <div className="text-2xl font-bold text-orange-400">
-            {totalMembres > 0
-              ? ((totalServiteurs / totalMembres) * 100).toFixed(1)
-              : 0}{" "}
-            %
+            {totalMembres > 0 ? ((totalServiteurs / totalMembres) * 100).toFixed(1) : 0} %
           </div>
         </div>
       </div>
 
-      {/* 🔹 Tableau ministères */}
+      {/* 🔹 Tableau des ministères */}
       <div className="w-full flex justify-center mt-6 mb-6">
         <div className="w-max overflow-x-auto space-y-2">
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">

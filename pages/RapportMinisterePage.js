@@ -61,10 +61,10 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 Récupérer tous les membres pour total
+      // 🔹 Total membres
       let queryMembres = supabase
         .from("membres_complets")
-        .select("id, star, etat_contact")
+        .select("id, etat_contact")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
 
@@ -74,39 +74,39 @@ function RapportMinistere() {
       const { data: membresData, error: membresError } = await queryMembres;
       if (membresError) throw membresError;
 
-      // 🔹 Total membres = etat_contact existant ou nouveau
       const membresFiltres = membresData.filter((m) =>
         ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
       );
       setTotalMembres(membresFiltres.length);
 
-      // 🔹 Total serviteurs = star=true ET etat_contact=existant
-      const serviteursFiltres = membresFiltres.filter(
-        (m) => m.star === true && m.etat_contact?.toLowerCase() === "existant"
-      );
-      setTotalServiteurs(serviteursFiltres.length);
-
-      // 🔹 Récupérer stats_ministere_besoin
-      let queryStats = supabase
+      // 🔹 Total serviteurs par membre_id avec déduplication et filtre date
+      let queryServiteurs = supabase
         .from("stats_ministere_besoin")
-        .select("membre_id, valeur")
+        .select("membre_id, valeur, date_action")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId)
         .eq("type", "ministere");
 
-      if (dateDebut) queryStats = queryStats.gte("date_action", dateDebut);
-      if (dateFin) queryStats = queryStats.lte("date_action", dateFin);
+      if (dateDebut) queryServiteurs = queryServiteurs.gte("date_action", dateDebut);
+      if (dateFin) queryServiteurs = queryServiteurs.lte("date_action", dateFin);
 
-      const { data: statsData, error: statsError } = await queryStats;
+      const { data: statsData, error: statsError } = await queryServiteurs;
       if (statsError) throw statsError;
 
-      // 🔹 Compter par ministère
+      // 🔹 Déduplication par membre_id
+      const serviteursSet = new Set();
       const counts = {};
+
       statsData.forEach((s) => {
-        if (!s.valeur) return;
+        if (!s.membre_id || !s.valeur) return;
+        serviteursSet.add(s.membre_id); // total serviteurs
+
+        // Comptage par ministère
         if (!counts[s.valeur]) counts[s.valeur] = 0;
         counts[s.valeur]++;
       });
+
+      setTotalServiteurs(serviteursSet.size);
 
       setRapports(
         Object.entries(counts).map(([ministere, total]) => ({

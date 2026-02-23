@@ -24,7 +24,6 @@ function RapportMinistere() {
   const [totalServiteurs, setTotalServiteurs] = useState(0);
   const [message, setMessage] = useState("");
 
-  // 🔹 Charger profil utilisateur
   useEffect(() => {
     const fetchUser = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -42,11 +41,9 @@ function RapportMinistere() {
         setBrancheId(profile.branche_id);
       }
     };
-
     fetchUser();
   }, []);
 
-  // 🔹 Générer rapport
   const fetchRapport = async () => {
     setLoading(true);
     setRapports([]);
@@ -60,10 +57,10 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 Récupérer tous les logs 'ministere' filtrés par date
+      // 🔹 récupérer tous les logs de type 'ministere' pour la plage de dates
       const { data, error } = await supabase
         .from("stats_ministere_besoin")
-        .select("valeur, date_action")
+        .select("membre_id, valeur, date_action")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId)
         .eq("type", "ministere")
@@ -72,17 +69,9 @@ function RapportMinistere() {
 
       if (error) throw error;
 
-      // 🔹 Compter le nombre de serviteurs total (distinct membre_id)
-      const { data: totalData, error: totalError } = await supabase
-        .from("stats_ministere_besoin")
-        .select("membre_id", { count: "exact", head: true })
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .eq("type", "ministere")
-        .gte("date_action", dateDebut || "1900-01-01")
-        .lte("date_action", dateFin || "2999-12-31");
-
-      if (totalError) throw totalError;
+      // 🔹 Compter le nombre de serviteurs distincts
+      const membresServiteurs = new Set(data.map((log) => log.membre_id));
+      setTotalServiteurs(membresServiteurs.size);
 
       // 🔹 Compter par ministère
       let counts = {};
@@ -95,7 +84,6 @@ function RapportMinistere() {
         Object.entries(counts).map(([ministere, total]) => ({ ministere, total }))
       );
 
-      setTotalServiteurs(totalData?.count || 0);
       setMessage("");
     } catch (err) {
       console.error(err);
@@ -139,7 +127,7 @@ function RapportMinistere() {
       <div className="flex gap-4 mt-6 flex-wrap justify-center">
         <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
           <div className="text-sm uppercase font-semibold mb-1">
-            Nombre de serviteurs
+            Nbre Serviteurs
           </div>
           <div className="text-2xl font-bold text-orange-400">{totalServiteurs}</div>
         </div>
@@ -150,7 +138,7 @@ function RapportMinistere() {
         <div className="w-max overflow-x-auto space-y-2">
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
             <div className="min-w-[250px]">Ministère</div>
-            <div className="min-w-[150px] text-center text-orange-400">Nombre</div>
+            <div className="min-w-[150px] text-center text-orange-400">Nbre</div>
           </div>
 
           {loading && <div className="text-white text-center py-4">Chargement...</div>}

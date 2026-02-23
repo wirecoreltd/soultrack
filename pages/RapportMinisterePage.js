@@ -25,7 +25,7 @@ function RapportMinistere() {
   const [totalMembres, setTotalMembres] = useState(0);
   const [message, setMessage] = useState("");
 
-  // 🔹 Charger profil utilisateur
+  // Charger profil utilisateur
   useEffect(() => {
     const fetchUser = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -43,10 +43,11 @@ function RapportMinistere() {
         setBrancheId(profile.branche_id);
       }
     };
+
     fetchUser();
   }, []);
 
-  // 🔹 Générer rapport
+  // Générer rapport
   const fetchRapport = async () => {
     setLoading(true);
     setRapports([]);
@@ -61,22 +62,39 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 Membres complets pour total des membres (état_contact "existant" ou "nouveau")
-      const { data: membresData } = await supabase
+      // 1️⃣ Récupérer tous les membres de l'église
+      const { data: membresData, error: membresError } = await supabase
         .from("membres_complets")
-        .select("id")
+        .select("id, sexe, etat_contact")
         .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .in("etat_contact", ["existant", "nouveau"]);
+        .eq("branche_id", brancheId);
 
-      setTotalMembres(membresData?.length || 0);
+      if (membresError) throw membresError;
 
-      // 🔹 Stats ministère depuis stats_ministere_besoin
+      // Créer map pour trouver le sexe d'un membre
+      const membresMap = {};
+      membresData.forEach((m) => {
+        membresMap[m.id] = {
+          sexe: m.sexe,
+          etat_contact: m.etat_contact,
+        };
+      });
+
+      // Total des membres (etat_contact = existant ou nouveau)
+      const membresTotal = membresData.filter(
+        (m) =>
+          m.etat_contact?.toString().trim().toLowerCase() === "existant" ||
+          m.etat_contact?.toString().trim().toLowerCase() === "nouveau"
+      ).length;
+      setTotalMembres(membresTotal);
+
+      // 2️⃣ Récupérer tous les stats_ministere_besoin
       let query = supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, date_action")
         .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+        .eq("branche_id", brancheId)
+        .eq("type", "ministere");
 
       if (dateDebut) query = query.gte("date_action", dateDebut);
       if (dateFin) query = query.lte("date_action", dateFin);
@@ -84,50 +102,39 @@ function RapportMinistere() {
       const { data, error } = await query;
       if (error) throw error;
 
-      // 🔹 Comptage serviteurs uniques et par ministère
-      const membresParDate = {}; // { '2026-02-21': Set([membre_id,...]) }
-      const counts = {}; // { 'Finance': { hommes: 0, femmes: 0, total: 0 } }
+      // 3️⃣ Comptage unique par membre et ministère
+      const counts = {};
+      const serviteursSet = new Set();
 
-      // 🔹 On va récupérer tous les sexes à l'avance pour éviter trop de requêtes
-      const membreIds = Array.from(new Set(data.map((r) => r.membre_id)));
-      const { data: membresInfos } = await supabase
-        .from("membres_complets")
-        .select("id, sexe")
-        .in("id", membreIds);
+      data.forEach((row) => {
+        const membreId = row.membre_id;
+        const ministere = row.valeur?.trim();
+        if (!ministere || !membresMap[membreId]) return;
 
-      const membresMap = {};
-      membresInfos.forEach((m) => (membresMap[m.id] = m.sexe));
+        // Créer un set par ministère pour éviter double comptage
+        const key = `${membreId}|${ministere}`;
+        if (!serviteursSet.has(key)) {
+          serviteursSet.add(key);
 
-      for (let row of data) {
-        const date = row.date_action?.split("T")[0]; // juste yyyy-mm-dd
-        if (!date) continue;
+          if (!counts[ministere]) counts[ministere] = { hommes: 0, femmes: 0, total: 0 };
+          const sexe = membresMap[membreId].sexe?.toLowerCase();
+          if (sexe === "homme") counts[ministere].hommes++;
+          else if (sexe === "femme") counts[ministere].femmes++;
 
-        if (!membresParDate[date]) membresParDate[date] = new Set();
-        membresParDate[date].add(row.membre_id);
-
-        if (!counts[row.valeur]) counts[row.valeur] = { hommes: 0, femmes: 0, total: 0 };
-
-        const sexe = membresMap[row.membre_id]?.toLowerCase();
-        if (sexe === "homme") counts[row.valeur].hommes++;
-        else if (sexe === "femme") counts[row.valeur].femmes++;
-        counts[row.valeur].total++;
-      }
-
-      let totalServiteursLocal = 0;
-      Object.values(membresParDate).forEach((setMembres) => {
-        totalServiteursLocal += setMembres.size;
+          counts[ministere].total++;
+        }
       });
 
       setRapports(
-        Object.entries(counts).map(([ministere, v]) => ({
+        Object.entries(counts).map(([ministere, val]) => ({
           ministere,
-          hommes: v.hommes,
-          femmes: v.femmes,
-          total: v.total,
+          hommes: val.hommes,
+          femmes: val.femmes,
+          total: val.total,
         }))
       );
 
-      setTotalServiteurs(totalServiteursLocal);
+      setTotalServiteurs(serviteursSet.size);
       setMessage("");
     } catch (err) {
       console.error(err);
@@ -142,11 +149,11 @@ function RapportMinistere() {
       <HeaderPages />
 
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
-        <span className="text-white">Rapport </span>
+        <span className="text-white">Rapport</span>{" "}
         <span className="text-amber-300">Ministère</span>
       </h1>
 
-      {/* 🔹 Filtres */}
+      {/* Filtres */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">
         <input
           type="date"
@@ -162,32 +169,30 @@ function RapportMinistere() {
         />
         <button
           onClick={fetchRapport}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition"
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
         >
           Générer
         </button>
       </div>
 
-      {/* 🔹 Résumé serviteurs */}
+      {/* Résumé */}
       {totalMembres > 0 && (
         <div className="flex gap-4 mt-6 flex-wrap justify-center">
           <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
-            <div className="text-sm uppercase font-semibold mb-1">
-              Nombre de serviteurs
-            </div>
+            <div className="text-sm uppercase font-semibold mb-1">Nombre de serviteurs</div>
             <div className="text-2xl font-bold text-orange-400">{totalServiteurs}</div>
           </div>
 
           <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
             <div className="text-sm uppercase font-semibold mb-1">% de serviteurs / total</div>
             <div className="text-2xl font-bold text-orange-400">
-              {((totalServiteurs / totalMembres) * 100).toFixed(1)} %
+              {totalMembres > 0 ? ((totalServiteurs / totalMembres) * 100).toFixed(1) : 0} %
             </div>
           </div>
         </div>
       )}
 
-      {/* 🔹 Tableau ministères */}
+      {/* Tableau */}
       {rapports.length > 0 && (
         <div className="w-full flex justify-center mt-6 mb-6">
           <div className="w-max overflow-x-auto space-y-2">

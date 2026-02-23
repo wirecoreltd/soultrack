@@ -224,8 +224,9 @@ function Attendance() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold text-white mt-4 mb-6 text-center">
-        Rapports d'assistance
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
+        <span className="text-white">Rapport </span>
+        <span className="text-amber-300">Présence Culte</span>
       </h1>
 
       {/* Formulaire */}
@@ -327,11 +328,11 @@ function Attendance() {
               <div className="min-w-[130px] text-center text-orange-400 font-semibold -ml-2">Total</div>
               <div className="min-w-[120px] text-center">Enfants</div>
               <div className="min-w-[140px] text-center">Connectés</div>
-              <div className="min-w-[150px] text-center">Nouveaux Venus</div>
-              <div className="min-w-[180px] text-center">Nouveaux Convertis</div>
+              <div className="min-w-[150px] text-center">Nouveaux<br />Venus</div>
+              <div className="min-w-[180px] text-center">Nouveaux<br />Convertis</div>
               <div className="min-w-[140px] text-center text-orange-400 font-semibold">Actions</div>
             </div>
-
+       
             {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
               const [year, monthIndex] = monthKey.split("-").map(Number);
               const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
@@ -386,11 +387,12 @@ function Attendance() {
 
                       return (
                         <div
-                           key={r.id}
-                            className={`flex items-center px-4 py-2 rounded-lg 
-                                       bg-white/10 hover:bg-white/20 transition 
-                                       border-l-4 ${borderColor}`}
-                          >
+                          key={r.id}
+                          className={`flex items-center px-4 py-2 rounded-lg 
+                                     bg-white/10 hover:bg-white/20 transition 
+                                     border-l-4 ${borderColor}`}
+                        >
+
                           <div className={`min-w-[150px] pl-2 font-semibold ${borderColor.replace("border-", "text-")}`}>
                             {`${culteLabel} : ${formatDateFR(r.date)}`}
                           </div>

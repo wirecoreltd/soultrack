@@ -1,118 +1,137 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import Footer from "../components/Footer";
+import HeaderInvitation from "../components/HeaderInvitation";
 
-export default function AcceptInvitationPage() {
-  const [token, setToken] = useState("");
-  const [loading, setLoading] = useState(false);
+export default function AcceptInvitation() {
+  const router = useRouter();
+  const { token } = router.query;
+
   const [invitation, setInvitation] = useState(null);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [choice, setChoice] = useState(""); // Préremplissage après fetch
+  const [message, setMessage] = useState("");
 
-  // Vérifie le token
-  const handleCheckToken = async () => {
-    if (!token) {
-      setError("⚠️ Veuillez saisir un token.");
-      return;
-    }
+  useEffect(() => {
+    if (!router.isReady || !token) return;
 
-    setLoading(true);
-    setError("");
+    const fetchInvitation = async () => {
+      const { data } = await supabase
+        .from("eglise_supervisions")
+        .select(`
+          *,
+          superviseur_branche:branches(nom, localisation)
+        `)
+        .eq("invitation_token", token)
+        .single();
 
-    const { data, error } = await supabase
-      .from("eglise_supervisions")
-      .select("*")
-      .eq("invitation_token", token)
-      .eq("statut", "pending")
-      .limit(1)
-      .single();
+      if (data) {
+        setInvitation(data);
+        setChoice(data.statut || ""); // préremplit le select avec le statut actuel
+      }
 
-    if (error || !data) {
-      setError("⚠️ Token invalide, expiré ou déjà utilisé.");
-      setInvitation(null);
       setLoading(false);
-      return;
-    }
+    };
 
-    // Si tout est bon, stocke les infos
-    setInvitation(data);
-    setLoading(false);
-  };
+    fetchInvitation();
+  }, [router.isReady, token]);
 
-  // Accepte l'invitation
-  const handleAccept = async () => {
-    if (!invitation) return;
+  const handleSubmit = async () => {
+    if (!choice) return;
 
-    setLoading(true);
+    setSubmitting(true);
 
-    const { error } = await supabase
+    await supabase
       .from("eglise_supervisions")
       .update({
-        supervisee_eglise_id: invitation.supervisee_eglise_id || invitation.supervisee_eglise_id,
-        supervisee_branche_id: invitation.supervisee_branche_id || invitation.supervisee_branche_id,
-        statut: "accepted",
-        approved_at: new Date().toISOString()
+        statut: choice,
+        approved_at: choice === "acceptee" ? new Date().toISOString() : null,
       })
-      .eq("id", invitation.id);
+      .eq("invitation_token", token);
 
-    if (error) {
-      setError("⚠️ Impossible d'accepter l'invitation : " + error.message);
-      setLoading(false);
-      return;
+    if (choice === "acceptee") {
+      setMessage(
+        `Vous êtes maintenant sous la supervision de ${invitation.eglise_nom}`
+      );
+    } else if (choice === "refusee") {
+      setMessage(
+        `Vous avez refusé l’invitation de ${invitation.eglise_nom}`
+      );
+    } else {
+      setMessage(
+        "Invitation laissée en attente. Vous pourrez décider plus tard."
+      );
     }
 
-    setError("");
-    setInvitation({ ...invitation, statut: "accepted" });
-    setLoading(false);
-    alert("✅ Invitation acceptée avec succès !");
+    setTimeout(() => router.push("/"), 3000);
   };
 
+  if (loading) return <div className="p-10">Chargement…</div>;
+  if (!invitation) return <div className="p-10">Invitation introuvable</div>;
+
   return (
-    <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-3xl shadow-lg">
-      {!invitation ? (
-        <>
-          <h2 className="text-xl font-bold mb-4">Entrer votre token</h2>
-          <input
-            type="text"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="Token d'invitation"
-            className="w-full border rounded-xl px-4 py-3 mb-4"
-          />
-          {error && <p className="text-red-500 mb-4">{error}</p>}
-          <button
-            onClick={handleCheckToken}
-            className="w-full py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
-            disabled={loading}
-          >
-            {loading ? "Vérification..." : "Valider le token"}
-          </button>
-        </>
-      ) : (
-        <>
-          <h2 className="text-xl font-bold mb-4">Invitation validée</h2>
-          <p className="mb-2">
-            <strong>Superviseur :</strong> {invitation.responsable_prenom} {invitation.responsable_nom}
-          </p>
-          <p className="mb-4">
-            <strong>Église :</strong> {invitation.eglise_nom} ({invitation.eglise_branche || "—"})
-          </p>
-          {invitation.statut === "accepted" ? (
-            <p className="text-green-600 font-bold">✅ Cette invitation a déjà été acceptée.</p>
-          ) : (
+    <div className="min-h-screen bg-[#333699] flex flex-col items-center p-6">
+      <HeaderInvitation />
+
+      <div className="w-full max-w-md flex justify-between items-center mt-4 mb-6">
+        <h1 className="text-2xl font-bold text-white">
+          Invitation de l'église superviseur
+        </h1>       
+      </div>
+
+      <div className="bg-white rounded-3xl shadow-xl p-6 max-w-md w-full space-y-4">
+
+        <div className="space-y-1">
+          <p><b>Église superviseuse :</b> {invitation.eglise_nom}</p>
+          <p><b>Branche :</b> {invitation.eglise_branche}</p>
+          <p><b>Pays :</b> {invitation.superviseur_branche?.localisation || "Non renseigné"}</p>
+        </div>
+
+        <hr />
+
+        <p>
+          <b>Statut actuel :</b>{" "}
+          <span className="capitalize">{invitation.statut}</span>
+        </p>
+
+        {!message && (
+          <>
+            <div className="mt-4">
+              <label className="block font-semibold mb-1">Votre décision</label>
+              <select
+                value={choice}
+                onChange={(e) => setChoice(e.target.value)}
+                className="w-full border rounded-xl p-2"
+              >
+                <option value="">-- Choisir --</option>
+                <option value="acceptee">Accepter</option>
+                <option value="refusee">Refuser</option>
+                <option value="pending">En attente</option>
+              </select>
+            </div>
+
             <button
-              onClick={handleAccept}
-              className="w-full py-3 bg-green-500 text-white rounded-xl hover:bg-green-600"
-              disabled={loading}
+              onClick={handleSubmit}
+              disabled={submitting || !choice}
+              className="w-full mt-4 bg-[#333699] text-white py-2 rounded-xl font-semibold disabled:opacity-50"
             >
-              {loading ? "Acceptation..." : "Accepter l'invitation"}
+              Confirmer
             </button>
-          )}
-          {error && <p className="text-red-500 mt-4">{error}</p>}
-        </>
-      )}
-<Footer />
+          </>
+        )}
+
+        {message && (
+          <div className="mt-6 text-center font-semibold text-lg text-[#333699]">
+            {message}
+            <p className="text-sm mt-2 text-gray-500">
+              Redirection vers le dashboard…
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

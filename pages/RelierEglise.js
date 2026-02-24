@@ -30,7 +30,7 @@ export default function RelierEglise() {
       // Récupérer le profil complet
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id, role, eglise_id, branche_id")
+        .select("id, role, eglise_id, branche_id, pays")
         .eq("id", user.id)
         .single();
 
@@ -40,6 +40,7 @@ export default function RelierEglise() {
       const { data: allEglises } = await supabase
         .from("eglises")
         .select("id, nom")
+        .eq("pays", profile.pays)
         .neq("id", profile.eglise_id);
 
       if (allEglises) setEglises(allEglises);
@@ -70,6 +71,7 @@ export default function RelierEglise() {
             eglise_recoit_id: selectedEglise,
             token,
             status: "pending",
+            pays: profile.pays,
           },
         ]);
 

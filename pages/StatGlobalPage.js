@@ -168,10 +168,58 @@ function StatGlobalPage() {
           <option value="Serviteur" className="text-black">Serviteur</option>
           <option value="Cellules" className="text-black">Cellules</option>
         </select>
+  
         <button onClick={fetchStats} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
       </div>
 
-      {/* Ici tu peux reprendre ton tableau et total général exactement comme ton code actuel */}
+      {/* TABLE */}
+      {!loading && attendanceStats && (
+        <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+          <div className="w-max space-y-2">
+            {/* HEADER */}
+            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[180px] ml-1">Type</div>
+              <div className="min-w-[120px] text-center">Hommes</div>
+              <div className="min-w-[120px] text-center">Femmes</div>
+              <div className="min-w-[120px] text-center">Jeunes</div>
+              <div className="min-w-[120px] text-center">Enfants</div>
+              <div className="min-w-[140px] text-center">Connectés</div>
+              <div className="min-w-[150px] text-center">Nouveaux Venus</div>
+              <div className="min-w-[180px] text-center">Nouveau Converti</div>
+              <div className="min-w-[160px] text-center">Moissonneurs</div>
+            </div>
+
+            {/* LIGNES */}
+            {rapports.map((r, idx) => (
+              <div key={idx} className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${r.border}`}>
+                <div className="min-w-[180px] text-white font-semibold">{r.label}</div>
+                <div className="min-w-[120px] text-center text-white">{r.data?.hommes ?? "-"}</div>
+                <div className="min-w-[120px] text-center text-white">{r.data?.femmes ?? "-"}</div>
+                <div className="min-w-[120px] text-center text-white">{r.data?.jeunes ?? "-"}</div>
+                <div className="min-w-[120px] text-center text-white">{r.data?.enfants ?? "-"}</div>
+                <div className="min-w-[140px] text-center text-white">{r.data?.connectes ?? "-"}</div>
+                <div className="min-w-[150px] text-center text-white">{r.data?.nouveauxVenus ?? "-"}</div>
+                <div className="min-w-[180px] text-center text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
+                <div className="min-w-[160px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>
+              </div>
+            ))}
+
+            {/* TOTAL GENERAL */}
+            <div className="flex items-center px-4 py-4 mt-3 rounded-xl bg-white/20 border-t border-white/40 font-bold">
+              <div className="min-w-[180px] text-orange-400 font-semibold uppercase ml-1">TOTAL</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.hommes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.femmes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.jeunes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.enfants}</div>
+              <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGeneral.connectes}</div>
+              <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalGeneral.nouveauxVenus}</div>
+              <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGeneral.nouveauxConvertis}</div>
+              <div className="min-w-[160px] text-center text-orange-400 font-semibold">{totalGeneral.moissonneurs}</div>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

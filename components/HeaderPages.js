@@ -96,7 +96,7 @@ export default function HeaderPages() {
         </p>
         {superviseur && (
          <p className="flex justify-end space-x-1 text-right mb-2 text-sm">
-          <span style={{ color: "#c31850" }}>Superviseur :</span>
+          <span style={{ color: "#fcd34d" }}>Superviseur :</span>
           <span className="text-white">{superviseur}</span>
         </p>
         )}

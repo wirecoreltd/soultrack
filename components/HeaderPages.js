@@ -10,7 +10,7 @@ export default function HeaderPages() {
   const [prenom, setPrenom] = useState("Utilisateur");
   const [eglise, setEglise] = useState("Église Principale");
   const [branche, setBranche] = useState("Maurice");
-  const [superviseurs, setSuperviseurs] = useState([]); // 🔹 tableau des supervisions
+  const [superviseur, setSuperviseur] = useState(""); // 🔹 superviseur affiché
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export default function HeaderPages() {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) return;
 
-        // Récupération du profil
+        // Récupère le profil
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("prenom, eglise_id, branche_id")
@@ -29,29 +29,29 @@ export default function HeaderPages() {
 
         setPrenom(profile?.prenom || "Utilisateur");
 
-        // Nom église
+        // Récupère le nom de l'église si eglise_id existe
         if (profile?.eglise_id) {
-          const { data: egliseData } = await supabase
+          const { data: egliseData, error: egliseError } = await supabase
             .from("eglises")
             .select("nom")
             .eq("id", profile.eglise_id)
             .single();
-          if (egliseData) setEglise(egliseData.nom);
+          if (!egliseError && egliseData) setEglise(egliseData.nom);
         }
 
-        // Nom branche
+        // Récupère le nom de la branche si branche_id existe
         if (profile?.branche_id) {
-          const { data: brancheData } = await supabase
+          const { data: brancheData, error: brancheError } = await supabase
             .from("branches")
             .select("nom")
             .eq("id", profile.branche_id)
             .single();
-          if (brancheData) setBranche(brancheData.nom);
+          if (!brancheError && brancheData) setBranche(brancheData.nom);
         }
 
-        // 🔹 Supervisions pour cette église
+        // 🔹 Récupérer le superviseur de cette église
         if (profile?.eglise_id) {
-          const { data: supervisionData } = await supabase
+          const { data: supervisionData, error: supervisionError } = await supabase
             .from("eglise_supervisions")
             .select(`
               superviseur_eglise_id,
@@ -60,15 +60,15 @@ export default function HeaderPages() {
               branches(nom)
             `)
             .eq("supervisee_eglise_id", profile.eglise_id)
-            .eq("statut", "acceptee");
+            .eq("statut", "acceptee") // ✅ statut correct
+            .single();
 
-          if (supervisionData?.length > 0) {
-            const supList = supervisionData.map(s => {
-              const egliseSup = s.eglises?.nom || "";
-              const brancheSup = s.branches?.nom || "";
-              return `${egliseSup} - ${brancheSup}`;
-            });
-            setSuperviseurs(supList);
+          if (!supervisionError && supervisionData) {
+            const supEglise = supervisionData.eglises?.nom || "";
+            const supBranche = supervisionData.branches?.nom || "";
+            if (supEglise && supBranche) {
+              setSuperviseur(`${supEglise} - ${supBranche}`);
+            }
           }
         }
 
@@ -111,14 +111,15 @@ export default function HeaderPages() {
         <p className="text-white text-sm">
           Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
         </p>
-        <p className="text-white text-xs italic">
-          {eglise} - {branche}
+        <p className="text-white text-sm">
+          Église : <span className="font-semibold">{loading ? "..." : eglise}</span> - 
+          <span className="font-semibold">{loading ? "..." : branche}</span>
         </p>
-        {superviseurs.length > 0 && superviseurs.map((s, i) => (
-          <p key={i} className="text-white text-xs italic">
-            Superviseur : {s}
+        {superviseur && (
+          <p className="text-white text-xs italic">
+            Superviseur : {superviseur}
           </p>
-        ))}
+        )}
       </div>
 
       {/* Logo centré */}

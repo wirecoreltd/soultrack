@@ -19,7 +19,6 @@ function StatGlobalPage() {
   const [dateFin, setDateFin] = useState("");
   const [typeRapport, setTypeRapport] = useState("Tous");
 
-  const [userBrancheId, setUserBrancheId] = useState(null);
   const [branchIds, setBranchIds] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +29,7 @@ function StatGlobalPage() {
   const [cellulesCount, setCellulesCount] = useState(0);
   const [serviteurStats, setServiteurStats] = useState(null);
 
-  // 🔹 Récupérer la branche de l'utilisateur + églises filles
+  // 🔹 Récupérer toutes les branches de l'utilisateur et leurs enfants
   useEffect(() => {
     const fetchBranches = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -41,18 +40,25 @@ function StatGlobalPage() {
         .select("branche_id")
         .eq("id", user.id)
         .single();
-
       if (!profile?.branche_id) return;
 
-      setUserBrancheId(profile.branche_id);
+      const mainBranche = profile.branche_id;
+      const allBranchIds = [mainBranche];
 
-      // récupérer toutes les églises sous supervision
-      const { data: childBranches } = await supabase
-        .from("eglises")
-        .select("id")
-        .eq("parent_eglise_id", profile.branche_id);
+      const fetchChildBranches = async (parentIds) => {
+        const { data: children } = await supabase
+          .from("eglises")
+          .select("id")
+          .in("parent_eglise_id", parentIds);
 
-      const allBranchIds = [profile.branche_id, ...(childBranches?.map(b => b.id) || [])];
+        if (children?.length) {
+          const ids = children.map(c => c.id);
+          allBranchIds.push(...ids);
+          await fetchChildBranches(ids);
+        }
+      };
+      await fetchChildBranches([mainBranche]);
+
       setBranchIds(allBranchIds);
     };
     fetchBranches();
@@ -62,10 +68,10 @@ function StatGlobalPage() {
     if (!branchIds.length) return;
     setLoading(true);
 
-    // Fonction utilitaire pour gérer les filtres de dates
-    const applyDateFilter = (query, field) => {
-      if (dateDebut) query = query.gte(field, dateDebut);
-      if (dateFin) query = query.lte(field, dateFin);
+    const applyDateFilter = (query, fieldStart, fieldEnd) => {
+      if (dateDebut) query = query.gte(fieldStart, dateDebut);
+      if (dateFin && fieldEnd) query = query.lte(fieldEnd, dateFin);
+      else if (dateFin) query = query.lte(fieldStart, dateFin);
       return query;
     };
 
@@ -104,7 +110,6 @@ function StatGlobalPage() {
     query = supabase.from("baptemes").select("hommes,femmes").in("branche_id", branchIds);
     query = applyDateFilter(query, "date");
     const { data: baptemeData } = await query;
-
     setBaptemeStats({
       hommes: baptemeData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
       femmes: baptemeData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
@@ -112,10 +117,8 @@ function StatGlobalPage() {
 
     // -------- FORMATION --------
     query = supabase.from("formations").select("hommes,femmes").in("branche_id", branchIds);
-    query = applyDateFilter(query, "date_debut");
-    if (dateFin) query = query.lte("date_fin", dateFin);
+    query = applyDateFilter(query, "date_debut", "date_fin");
     const { data: formationData } = await query;
-
     setFormationStats({
       hommes: formationData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
       femmes: formationData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
@@ -150,7 +153,7 @@ function StatGlobalPage() {
     setLoading(false);
   };
 
-  // 🔹 Préparer les rapports
+  // Préparer les rapports
   const rapports = [
     { label: "Culte", data: attendanceStats, border: "border-blue-400" },
     { label: "Evangelisation", data: evanStats, border: "border-green-400" },
@@ -183,9 +186,9 @@ function StatGlobalPage() {
 
       {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
-        <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
-        <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
-        <select value={typeRapport} onChange={(e) => setTypeRapport(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white">
+        <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
+        <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
+        <select value={typeRapport} onChange={e => setTypeRapport(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white">
           <option value="Tous" className="text-black">Tous</option>
           <option value="Culte" className="text-black">Culte</option>
           <option value="Evangelisation" className="text-black">Evangelisation</option>
@@ -194,19 +197,9 @@ function StatGlobalPage() {
           <option value="Serviteur" className="text-black">Serviteur</option>
           <option value="Cellules" className="text-black">Cellules</option>
         </select>
-        <button
-          onClick={fetchStats}
-          disabled={!branchIds.length || loading}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] disabled:opacity-50"
-        >
-          Générer
-        </button>
+        <button onClick={fetchStats} disabled={loading || !branchIds.length} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] disabled:opacity-50">Générer</button>
       </div>
 
-      {loading && <p className="text-white mt-4">Chargement…</p>}
-      {!loading && !attendanceStats && <p className="text-white mt-4">Aucune donnée disponible pour la période sélectionnée.</p>}
-
-      {/* TABLE */}
       {!loading && attendanceStats && (
         <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
           <div className="w-max space-y-2">
@@ -250,11 +243,11 @@ function StatGlobalPage() {
               <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGeneral.nouveauxConvertis}</div>
               <div className="min-w-[160px] text-center text-orange-400 font-semibold">{totalGeneral.moissonneurs}</div>
             </div>
-
           </div>
         </div>
       )}
 
+      {loading && <p className="text-white mt-4">Chargement…</p>}
       <Footer />
     </div>
   );

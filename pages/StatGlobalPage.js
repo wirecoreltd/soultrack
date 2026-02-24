@@ -19,16 +19,16 @@ function StatGlobalPage() {
   const [dateFin, setDateFin] = useState("");
   const [typeRapport, setTypeRapport] = useState("Tous");
 
-  const [userBrancheId, setUserBrancheId] = useState<string | null>(null);
-  const [branchIds, setBranchIds] = useState<string[]>([]);
+  const [userBrancheId, setUserBrancheId] = useState(null);
+  const [branchIds, setBranchIds] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const [attendanceStats, setAttendanceStats] = useState<any>(null);
-  const [evanStats, setEvanStats] = useState<any>(null);
-  const [baptemeStats, setBaptemeStats] = useState<any>(null);
-  const [formationStats, setFormationStats] = useState<any>(null);
-  const [cellulesCount, setCellulesCount] = useState<number>(0);
-  const [serviteurStats, setServiteurStats] = useState<any>(null);
+  const [attendanceStats, setAttendanceStats] = useState(null);
+  const [evanStats, setEvanStats] = useState(null);
+  const [baptemeStats, setBaptemeStats] = useState(null);
+  const [formationStats, setFormationStats] = useState(null);
+  const [cellulesCount, setCellulesCount] = useState(0);
+  const [serviteurStats, setServiteurStats] = useState(null);
 
   // 🔹 Récupérer la branche de l'utilisateur
   useEffect(() => {
@@ -57,7 +57,7 @@ function StatGlobalPage() {
         console.error("Erreur récupération branches :", error);
         setBranchIds([userBrancheId]);
       } else {
-        const ids = data?.map((b: any) => b.branche_id) || [];
+        const ids = data?.map((b) => b.branche_id) || [];
         setBranchIds([userBrancheId, ...ids]);
       }
     };
@@ -69,13 +69,13 @@ function StatGlobalPage() {
     setLoading(true);
 
     // -------- ATTENDANCE --------
-    let attendanceQuery: any = supabase.from("attendance").select("*").in("branche_id", branchIds);
+    let attendanceQuery = supabase.from("attendance").select("*").in("branche_id", branchIds);
     if (dateDebut) attendanceQuery = attendanceQuery.gte("date", dateDebut);
     if (dateFin) attendanceQuery = attendanceQuery.lte("date", dateFin);
     const { data: attendanceData } = await attendanceQuery;
 
     const attendanceTotals = { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0, moissonneurs: 0 };
-    attendanceData?.forEach((r: any) => {
+    attendanceData?.forEach((r) => {
       attendanceTotals.hommes += Number(r.hommes) || 0;
       attendanceTotals.femmes += Number(r.femmes) || 0;
       attendanceTotals.jeunes += Number(r.jeunes) || 0;
@@ -88,13 +88,13 @@ function StatGlobalPage() {
     setAttendanceStats(attendanceTotals);
 
     // -------- EVANGELISATION --------
-    let evanQuery: any = supabase.from("evangelises").select("*").in("branche_id", branchIds);
+    let evanQuery = supabase.from("evangelises").select("*").in("branche_id", branchIds);
     if (dateDebut) evanQuery = evanQuery.gte("created_at", dateDebut);
     if (dateFin) evanQuery = evanQuery.lte("created_at", dateFin);
     const { data: evanData } = await evanQuery;
 
     const evanTotals = { hommes: 0, femmes: 0, nouveauxConvertis: 0 };
-    evanData?.forEach((r: any) => {
+    evanData?.forEach((r) => {
       if (r.sexe === "Homme") evanTotals.hommes++;
       if (r.sexe === "Femme") evanTotals.femmes++;
       if (r.type_conversion === "Nouveau converti") evanTotals.nouveauxConvertis++;
@@ -102,23 +102,23 @@ function StatGlobalPage() {
     setEvanStats(evanTotals);
 
     // -------- BAPTEME --------
-    let baptemeQuery: any = supabase.from("baptemes").select("hommes,femmes").in("branche_id", branchIds);
+    let baptemeQuery = supabase.from("baptemes").select("hommes,femmes").in("branche_id", branchIds);
     if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
     if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
     const { data: baptemeData } = await baptemeQuery;
     setBaptemeStats({
-      hommes: baptemeData?.reduce((s: number, r: any) => s + Number(r.hommes), 0) || 0,
-      femmes: baptemeData?.reduce((s: number, r: any) => s + Number(r.femmes), 0) || 0,
+      hommes: baptemeData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
+      femmes: baptemeData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
     });
 
     // -------- FORMATION --------
-    let formationQuery: any = supabase.from("formations").select("hommes,femmes").in("branche_id", branchIds);
+    let formationQuery = supabase.from("formations").select("hommes,femmes").in("branche_id", branchIds);
     if (dateDebut) formationQuery = formationQuery.gte("date_debut", dateDebut);
     if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin);
     const { data: formationData } = await formationQuery;
     setFormationStats({
-      hommes: formationData?.reduce((s: number, r: any) => s + Number(r.hommes), 0) || 0,
-      femmes: formationData?.reduce((s: number, r: any) => s + Number(r.femmes), 0) || 0,
+      hommes: formationData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
+      femmes: formationData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
     });
 
     // -------- CELLULES --------
@@ -126,19 +126,19 @@ function StatGlobalPage() {
     setCellulesCount(count || 0);
 
     // -------- SERVITEURS --------
-    let servQuery: any = supabase.from("stats_ministere_besoin").select("membre_id,valeur").in("branche_id", branchIds).eq("type", "ministere");
+    let servQuery = supabase.from("stats_ministere_besoin").select("membre_id,valeur").in("branche_id", branchIds).eq("type", "ministere");
     if (dateDebut) servQuery = servQuery.gte("date_action", dateDebut);
     if (dateFin) servQuery = servQuery.lte("date_action", dateFin);
     const { data: servData } = await servQuery;
 
     const uniqueMembres = new Map();
-    servData?.forEach((s: any) => { if (!uniqueMembres.has(s.membre_id)) uniqueMembres.set(s.membre_id, s.valeur); });
+    servData?.forEach((s) => { if (!uniqueMembres.has(s.membre_id)) uniqueMembres.set(s.membre_id, s.valeur); });
 
     let hommes = 0, femmes = 0;
     if (uniqueMembres.size > 0) {
       const ids = Array.from(uniqueMembres.keys());
       const { data: membresSexe } = await supabase.from("membres_complets").select("id,sexe").in("id", ids);
-      membresSexe?.forEach((m: any) => {
+      membresSexe?.forEach((m) => {
         if (m.sexe === "Homme") hommes++;
         if (m.sexe === "Femme") femmes++;
       });

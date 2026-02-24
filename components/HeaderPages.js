@@ -1,6 +1,3 @@
-corriger c'est bon.
-dans ce header sous connecte es ce que tu peux mettre
-Supervision : (l'eglise supervieur)
 "use client";
 
 import { useEffect, useState } from "react";

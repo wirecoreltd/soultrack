@@ -181,42 +181,51 @@ export default function LinkEglise() {
       </h4>
 
       {/* TABLE ALIGNÉE PARFAITEMENT */}
-      <div className="w-full max-w-5xl">
+<div className="w-full max-w-5xl">
 
-        {/* HEADER */}
-        <div className="grid grid-cols-4 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
-          <div>Église</div>
-          <div>Branche</div>
-          <div>Responsable</div>
-          <div>Statut</div>
-        </div>
+  {/* HEADER */}
+  <div className="grid grid-cols-4 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
+    <div>Superviseur</div>
+    <div>Église</div>
+    <div>Branche</div>
+    <div>Statut</div>
+  </div>
 
-        {/* LIGNES */}
-        {invitations.map((inv) => {
-          const statusStyle = getStatusStyle(inv.statut);
+  {/* LIGNES */}
+  {Object.entries(groupedInvitations).map(([superviseur, invs]) => (
+    <div key={superviseur} className="mb-4">
 
-          return (
-            <div
-              key={inv.id}
-              className={`grid grid-cols-4 px-3 py-2 mt-2 rounded-lg ${statusStyle.border} items-center`}
-            >
-              <div>{inv.eglise_nom}</div>
-              <div>{inv.eglise_branche}</div>
-              <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
-              <div className="flex items-center gap-3">
-                <span>{inv.statut}</span>
-                {statusStyle.button && (
-                  <button
-                    className="text-orange-500 font-semibold text-sm hover:opacity-80"
-                    onClick={() => alert(`${statusStyle.button}`)}
-                  >
-                    {statusStyle.button}
-                  </button>
-                )}
-              </div>
+      {/* Superviseur */}
+      <div className="text-amber-300 font-semibold text-sm pl-3">
+        {superviseur}
+      </div>
+
+      {/* Branches supervisées */}
+      {invs.map((inv) => {
+        const statusStyle = getStatusStyle(inv.statut);
+
+        return (
+          <div
+            key={inv.id}
+            className={`grid grid-cols-4 px-6 py-2 mt-1 rounded-lg ${statusStyle.border} items-center`}
+          >
+            <div>{inv.eglise_nom}</div>
+            <div>{inv.eglise_branche}</div>
+            <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
+            <div className="flex items-center gap-3">
+              <span>{inv.statut}</span>
+              {statusStyle.button && (
+                <button
+                  className="text-orange-500 font-semibold text-sm hover:opacity-80"
+                  onClick={() => alert(`${statusStyle.button}`)}
+                >
+                  {statusStyle.button}
+                </button>
+              )}
             </div>
-          );
-        })}
+          </div>
+        );
+      })}
       </div>
     </div>
   );

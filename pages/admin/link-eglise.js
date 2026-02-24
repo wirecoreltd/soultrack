@@ -31,10 +31,7 @@ export default function LinkEglise() {
   // 🔹 Charger superviseur connecté
   useEffect(() => {
     const loadSuperviseur = async () => {
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data, error } = await supabase
@@ -50,7 +47,7 @@ export default function LinkEglise() {
         .eq("id", user.id)
         .single();
 
-      if (!error) {
+      if (!error && data) {
         setSuperviseur({
           prenom: data.prenom,
           nom: data.nom,
@@ -73,9 +70,9 @@ export default function LinkEglise() {
       .from("eglise_supervisions")
       .select("*")
       .eq("superviseur_eglise_id", superviseur.eglise_id)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: true });
 
-    if (!error) setInvitations(data || []);
+    if (!error && data) setInvitations(data || []);
   };
 
   useEffect(() => {
@@ -85,7 +82,7 @@ export default function LinkEglise() {
   // 🔹 Style selon statut
   const getStatusStyle = (statut) => {
     switch (statut?.toLowerCase()) {
-      case "accepted":
+      case "acceptee":
         return { border: "border-l-4 border-green-600", button: null };
       case "refused":
         return { border: "border-l-4 border-red-600", button: "Renvoyer invitation" };
@@ -96,26 +93,29 @@ export default function LinkEglise() {
     }
   };
 
+  // 🔹 Grouper par superviseur
+  const groupedInvitations = invitations.reduce((acc, inv) => {
+    const key = inv.superviseur_nom || "Aucun superviseur";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(inv);
+    return acc;
+  }, {});
+
   return (
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
 
-      {/* TITRE FORMULAIRE */}
       <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
         Envoyer une invitation pour relier une église
       </h4>
 
-      {/* FORMULAIRE (vertical comme demandé) */}
       <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4 mb-10">
-
         <div>
           <label className="font-semibold">Prénom du responsable</label>
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={responsable.prenom}
-            onChange={(e) =>
-              setResponsable({ ...responsable, prenom: e.target.value })
-            }
+            onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
           />
         </div>
 
@@ -124,9 +124,7 @@ export default function LinkEglise() {
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={responsable.nom}
-            onChange={(e) =>
-              setResponsable({ ...responsable, nom: e.target.value })
-            }
+            onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
           />
         </div>
 
@@ -135,9 +133,7 @@ export default function LinkEglise() {
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={eglise.nom}
-            onChange={(e) =>
-              setEglise({ ...eglise, nom: e.target.value })
-            }
+            onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
           />
         </div>
 
@@ -146,9 +142,7 @@ export default function LinkEglise() {
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={eglise.branche}
-            onChange={(e) =>
-              setEglise({ ...eglise, branche: e.target.value })
-            }
+            onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
           />
         </div>
 
@@ -172,60 +166,50 @@ export default function LinkEglise() {
         />
       </div>
 
-      {/* ESPACE AU-DESSUS */}
       <div className="h-10" />
 
-      {/* TITRE TABLE */}
       <h4 className="text-2xl font-bold mt-2 mb-10 text-center w-full max-w-5xl text-amber-300">
         Liste des églises supervisées
       </h4>
 
-      {/* TABLE ALIGNÉE PARFAITEMENT */}
-<div className="w-full max-w-5xl">
+      <div className="w-full max-w-5xl">
+        <div className="grid grid-cols-4 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
+          <div>Église</div>
+          <div>Branche</div>
+          <div>Responsable</div>
+          <div>Statut</div>
+        </div>
 
-  {/* HEADER */}
-  <div className="grid grid-cols-4 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
-    <div>Superviseur</div>
-    <div>Église</div>
-    <div>Branche</div>
-    <div>Statut</div>
-  </div>
-
-  {/* LIGNES */}
-  {Object.entries(groupedInvitations).map(([superviseur, invs]) => (
-    <div key={superviseur} className="mb-4">
-
-      {/* Superviseur */}
-      <div className="text-amber-300 font-semibold text-sm pl-3">
-        {superviseur}
-      </div>
-
-      {/* Branches supervisées */}
-      {invs.map((inv) => {
-        const statusStyle = getStatusStyle(inv.statut);
-
-        return (
-          <div
-            key={inv.id}
-            className={`grid grid-cols-4 px-6 py-2 mt-1 rounded-lg ${statusStyle.border} items-center`}
-          >
-            <div>{inv.eglise_nom}</div>
-            <div>{inv.eglise_branche}</div>
-            <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
-            <div className="flex items-center gap-3">
-              <span>{inv.statut}</span>
-              {statusStyle.button && (
-                <button
-                  className="text-orange-500 font-semibold text-sm hover:opacity-80"
-                  onClick={() => alert(`${statusStyle.button}`)}
+        {/* 🔹 Affichage groupé */}
+        {Object.entries(groupedInvitations).map(([sup, invs]) => (
+          <div key={sup} className="mb-4">
+            <div className="text-amber-300 font-semibold text-sm pl-3">{sup}</div>
+            {invs.map((inv) => {
+              const statusStyle = getStatusStyle(inv.statut);
+              return (
+                <div
+                  key={inv.id}
+                  className={`grid grid-cols-4 px-6 py-2 mt-1 rounded-lg ${statusStyle.border} items-center`}
                 >
-                  {statusStyle.button}
-                </button>
-              )}
-            </div>
+                  <div>{inv.eglise_nom}</div>
+                  <div>{inv.eglise_branche}</div>
+                  <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
+                  <div className="flex items-center gap-3">
+                    <span>{inv.statut}</span>
+                    {statusStyle.button && (
+                      <button
+                        className="text-orange-500 font-semibold text-sm hover:opacity-80"
+                        onClick={() => alert(`${statusStyle.button}`)}
+                      >
+                        {statusStyle.button}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        );
-      })}
+        ))}
       </div>
     </div>
   );

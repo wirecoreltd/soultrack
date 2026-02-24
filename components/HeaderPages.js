@@ -39,34 +39,19 @@ export default function HeaderPages() {
           if (!egliseError && egliseData) setEglise(egliseData.nom);
         }
 
-        // Récupère le nom de la branche si branche_id existe
+        // 🔹 Récupère le nom de la branche ET le superviseur directement depuis la colonne superviseur_nom
         if (profile?.branche_id) {
           const { data: brancheData, error: brancheError } = await supabase
             .from("branches")
-            .select("nom")
+            .select("nom, superviseur_nom")
             .eq("id", profile.branche_id)
             .single();
-          if (!brancheError && brancheData) setBranche(brancheData.nom);
-        }
 
-        // 🔹 Récupérer le superviseur de cette branche
-        if (profile?.branche_id) {
-          const { data: supervisionData, error: supervisionError } = await supabase
-            .from("eglise_supervisions")
-            .select(`
-              superviseur_eglise_id,
-              superviseur_branche_id,
-              eglises(nom),
-              branches(nom)
-            `)
-            .eq("superviseur_branche_id", profile.branche_id) // 🔹 correct
-            .eq("statut", "acceptee")
-            .single();
-
-          if (!supervisionError && supervisionData) {
-            const supEglise = supervisionData.eglises?.nom || "Église";
-            const supBranche = supervisionData.branches?.nom || "";
-            setSuperviseur(`${supEglise} - ${supBranche}`);
+          if (!brancheError && brancheData) {
+            setBranche(brancheData.nom);
+            if (brancheData.superviseur_nom) {
+              setSuperviseur(brancheData.superviseur_nom);
+            }
           }
         }
 

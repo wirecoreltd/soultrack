@@ -19,7 +19,7 @@ export default function HeaderPages() {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) return;
 
-        // 🔹 Récupère le profil
+        // Récupère le profil
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("prenom, eglise_id, branche_id")
@@ -29,7 +29,7 @@ export default function HeaderPages() {
 
         setPrenom(profile?.prenom || "Utilisateur");
 
-        // 🔹 Récupère le nom de l'église si eglise_id existe
+        // Récupère le nom de l'église si eglise_id existe
         if (profile?.eglise_id) {
           const { data: egliseData, error: egliseError } = await supabase
             .from("eglises")
@@ -39,7 +39,7 @@ export default function HeaderPages() {
           if (!egliseError && egliseData) setEglise(egliseData.nom);
         }
 
-        // 🔹 Récupère le nom de la branche si branche_id existe
+        // Récupère le nom de la branche si branche_id existe
         if (profile?.branche_id) {
           const { data: brancheData, error: brancheError } = await supabase
             .from("branches")
@@ -49,35 +49,36 @@ export default function HeaderPages() {
           if (!brancheError && brancheData) setBranche(brancheData.nom);
         }
 
-        // 🔹 Récupérer le superviseur de cette église (superviseur réel)
-        // 🔹 Récupérer le superviseur de cette église (simple, juste avec IDs)
-if (profile?.eglise_id) {
-  const { data: supervisionData } = await supabase
-    .from("eglise_supervisions")
-    .select("superviseur_eglise_id, superviseur_branche_id")
-    .eq("supervisee_eglise_id", profile.eglise_id)
-    .eq("statut", "acceptee") // 🔹 correction ici
-    .single();
+        // 🔹 Récupérer le superviseur de cette église
+        if (profile?.eglise_id) {
+          const { data: supervisionData } = await supabase
+            .from("eglise_supervisions")
+            .select("superviseur_eglise_id, superviseur_branche_id")
+            .eq("supervisee_eglise_id", profile.eglise_id)
+            .eq("statut", "acceptee") // ✅ statut correct
+            .single();
 
-  if (supervisionData) {
-    const { data: supEgliseData } = await supabase
-      .from("eglises")
-      .select("nom")
-      .eq("id", supervisionData.superviseur_eglise_id)
-      .single();
+          if (supervisionData) {
+            // Récupérer le nom de l'église du superviseur
+            const { data: supEgliseData } = await supabase
+              .from("eglises")
+              .select("nom")
+              .eq("id", supervisionData.superviseur_eglise_id)
+              .single();
 
-    const { data: supBrancheData } = await supabase
-      .from("branches")
-      .select("nom")
-      .eq("id", supervisionData.superviseur_branche_id)
-      .single();
+            // Récupérer le nom de la branche du superviseur
+            const { data: supBrancheData } = await supabase
+              .from("branches")
+              .select("nom")
+              .eq("id", supervisionData.superviseur_branche_id)
+              .single();
 
-    const supEgliseNom = supEgliseData?.nom || "";
-    const supBrancheNom = supBrancheData?.nom || "";
+            const supEgliseNom = supEgliseData?.nom || "";
+            const supBrancheNom = supBrancheData?.nom || "";
 
-    setSuperviseur(`Superviseur : ${supEgliseNom} - ${supBrancheNom}`);
-  }
-}
+            setSuperviseur(`Superviseur : ${supEgliseNom} - ${supBrancheNom}`);
+          }
+        }
 
       } catch (err) {
         console.error("Erreur récupération profil :", err);
@@ -131,8 +132,9 @@ if (profile?.eglise_id) {
           className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
           onClick={() => router.push("/index")}
         />
-        {/* 🔹 Nom de l'église et branche sous le logo */}
-        <p className="text-white text-sm mt-1 font-semibold">{eglise} - {branche}</p>
+        <p className="text-white text-sm font-semibold">
+          {loading ? "..." : `${eglise} - ${branche}`}
+        </p>
       </div>
     </div>
   );

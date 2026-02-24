@@ -3,164 +3,198 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
-import Footer from "../components/Footer";
-import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function StatGlobalPage() {
-  return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "ResponsableFormation"]}>
-      <StatGlobal />
-    </ProtectedRoute>
-  );
-}
+  const [superviseur, setSuperviseur] = useState({ prenom: "", nom: "", eglise_id: null });
+  const [annee, setAnnee] = useState(new Date().getFullYear());
+  const [statsParMois, setStatsParMois] = useState({}); // stats regroupées par mois
+  const [moisOpen, setMoisOpen] = useState({}); // gérer expand/collapse
 
-function StatGlobal() {
-  const [dateDebut, setDateDebut] = useState("");
-  const [dateFin, setDateFin] = useState("");
-  const [reports, setReports] = useState([]);
-  const [showTable, setShowTable] = useState(false);
-  const [expandedMonths, setExpandedMonths] = useState({});
-  const [superviseur, setSuperviseur] = useState({ eglise_id: null, branche_id: null });
-
-  // Récupération user
+  // 🔹 Charger superviseur
   useEffect(() => {
-    const loadUser = async () => {
+    const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
       const { data, error } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("prenom, nom, eglise_id")
         .eq("id", user.id)
         .single();
-      if (!error && data) setSuperviseur({ eglise_id: data.eglise_id, branche_id: data.branche_id });
+
+      if (!error) setSuperviseur({ prenom: data.prenom, nom: data.nom, eglise_id: data.eglise_id });
     };
-    loadUser();
+    loadSuperviseur();
   }, []);
 
-  // Fetch rapports
-  const fetchRapports = async () => {
-    if (!superviseur.eglise_id || !superviseur.branche_id) return;
-    setShowTable(false);
+  // 🔹 Récupérer toutes les églises supervisées
+  const getEglisesCascade = async (egliseId) => {
+    let allEglises = [egliseId];
+    const { data } = await supabase
+      .from("eglise_supervisions")
+      .select("eglise_supervisee_id")
+      .eq("statut", "accepted");
 
-    const types = ["attendance","formations","evangelisation","bapteme"]; // ajoute les autres tables si besoin
-    let allReports = [];
+    let queue = [egliseId];
+    while (queue.length > 0) {
+      const parent = queue.shift();
+      const enfants = data.filter(d => d.superviseur_eglise_id === parent).map(d => d.eglise_supervisee_id);
+      allEglises.push(...enfants);
+      queue.push(...enfants);
+    }
+    return Array.from(new Set(allEglises));
+  };
 
-    for (let table of types) {
-      let query = supabase
-        .from(table)
-        .select("*")
-        .eq("eglise_id", superviseur.eglise_id)
-        .eq("branche_id", superviseur.branche_id);
+  // 🔹 Charger stats pour toute l'année
+  const loadStats = async () => {
+    if (!superviseur.eglise_id) return;
 
-      if (dateDebut) query = query.gte("date", dateDebut).gte("date_debut", dateDebut);
-      if (dateFin) query = query.lte("date", dateFin).lte("date_fin", dateFin);
+    const egliseIds = await getEglisesCascade(superviseur.eglise_id);
 
-      const { data, error } = await query;
-      if (!error && data) {
-        // ajouter type pour identification
-        allReports.push(...data.map(r => ({ ...r, type })));
-      }
+    const { data, error } = await supabase
+      .from("stats_ministere_besoin")
+      .select("*")
+      .in("eglise_id", egliseIds)
+      .eq("annee", annee);
+
+    if (error) {
+      console.error(error);
+      return;
     }
 
-    // trier par date
-    allReports.sort((a,b) => new Date(a.date || a.date_debut) - new Date(b.date || b.date_debut));
+    const statsMois = {};
+    data.forEach(row => {
+      const moisKey = row.mois.padStart(2, "0");
+      if (!statsMois[moisKey]) statsMois[moisKey] = { totalGlobal: {}, parEglise: {} };
 
-    setReports(allReports);
-    setShowTable(true);
-  };
+      // total global
+      if (!statsMois[moisKey].totalGlobal[row.type]) statsMois[moisKey].totalGlobal[row.type] = { hommes: 0, femmes: 0, enfants: 0, visiteurs: 0 };
+      statsMois[moisKey].totalGlobal[row.type].hommes += row.hommes;
+      statsMois[moisKey].totalGlobal[row.type].femmes += row.femmes;
+      statsMois[moisKey].totalGlobal[row.type].enfants += row.enfants;
+      statsMois[moisKey].totalGlobal[row.type].visiteurs += row.visiteurs;
 
-  // Utils
-  const formatDateFR = (d) => {
-    if (!d) return "";
-    const dt = new Date(d);
-    return `${String(dt.getDate()).padStart(2,"0")}/${String(dt.getMonth()+1).padStart(2,"0")}/${dt.getFullYear()}`;
-  };
-
-  const getMonthNameFR = (i) => ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"][i];
-
-  const groupByMonth = (reports) => {
-    const map = {};
-    reports.forEach(r => {
-      const d = new Date(r.date || r.date_debut);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-      if (!map[key]) map[key] = [];
-      map[key].push(r);
+      // stats par église
+      if (!statsMois[moisKey].parEglise[row.eglise_nom]) statsMois[moisKey].parEglise[row.eglise_nom] = {};
+      if (!statsMois[moisKey].parEglise[row.eglise_nom][row.type]) statsMois[moisKey].parEglise[row.eglise_nom][row.type] = { hommes: 0, femmes: 0, enfants: 0, visiteurs: 0 };
+      statsMois[moisKey].parEglise[row.eglise_nom][row.type].hommes += row.hommes;
+      statsMois[moisKey].parEglise[row.eglise_nom][row.type].femmes += row.femmes;
+      statsMois[moisKey].parEglise[row.eglise_nom][row.type].enfants += row.enfants;
+      statsMois[moisKey].parEglise[row.eglise_nom][row.type].visiteurs += row.visiteurs;
     });
-    return map;
+
+    setStatsParMois(statsMois);
   };
 
-  const toggleMonth = (monthKey) => {
-    setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
-  };
-
-  const groupedReports = groupByMonth(reports);
-  const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500"];
+  useEffect(() => { loadStats(); }, [superviseur, annee]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+    <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
-        <span className="text-white">Statistiques</span> <span className="text-amber-300">Globales</span>
-      </h1>
+      <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">Statistiques Globales</h4>
 
-      {/* FILTRE */}
-      <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-4 flex flex-wrap gap-4 justify-center text-white">
-        <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
-        <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
-        <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
+      {/* Filtre année */}
+      <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4 mb-10">
+        <div>
+          <label className="font-semibold">Année</label>
+          <input
+            className="w-full border rounded-xl px-3 py-2"
+            type="number"
+            value={annee}
+            onChange={e => setAnnee(parseInt(e.target.value))}
+          />
+        </div>
+        <button
+          className="w-full py-2 rounded-xl bg-[#ffcc00] text-black font-semibold hover:bg-[#e6b800]"
+          onClick={loadStats}
+        >
+          Générer
+        </button>
       </div>
 
-      {/* TABLEAU */}
-      {showTable && (
-        <div className="max-w-6xl w-full mt-6 flex flex-col gap-2">
-          {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
-            const [year, monthIndex] = monthKey.split("-").map(Number);
-            const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-            const isExpanded = expandedMonths[monthKey] || false;
-            const borderColor = borderColors[idx % borderColors.length];
+      {/* Stats par mois */}
+      <div className="w-full max-w-5xl space-y-6">
+        {Object.keys(statsParMois).sort().map(moisKey => {
+          const moisData = statsParMois[moisKey];
+          const moisName = new Date(0, parseInt(moisKey)-1).toLocaleString('fr-FR', { month: 'long' });
 
-            // Total du mois
-            const totalMonth = monthReports.reduce((acc,r) => {
-              acc.hommes += Number(r.hommes||0);
-              acc.femmes += Number(r.femmes||0);
-              acc.jeunes += Number(r.jeunes||0);
-              acc.enfants += Number(r.enfants||0);
-              acc.connectes += Number(r.connectes||0);
-              acc.nouveauxVenus += Number(r.nouveauxVenus||0);
-              acc.nouveauxConvertis += Number(r.nouveauxConvertis||0);
-              return acc;
-            }, {hommes:0,femmes:0,jeunes:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0});
-
-            return (
-              <div key={monthKey} className="space-y-1">
-                {/* MOIS */}
-                <div className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 ${borderColor}`} onClick={()=>toggleMonth(monthKey)}>
-                  <div className="text-white font-semibold min-w-[200px]">{isExpanded?"➖":"➕"} {monthLabel}</div>
-                  <div className="text-orange-400 font-semibold ml-4">Total Hommes: {totalMonth.hommes}</div>
-                  <div className="text-orange-400 font-semibold ml-4">Total Femmes: {totalMonth.femmes}</div>
-                  <div className="text-orange-400 font-semibold ml-4">Total: {totalMonth.hommes + totalMonth.femmes}</div>
-                </div>
-
-                {isExpanded && monthReports.map((r) => (
-                  <div key={r.id} className={`flex px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border-l-4 ${borderColor}`}>
-                    <div className="min-w-[200px] text-white">{r.eglise_nom || "Église"}</div>
-                    <div className="min-w-[150px] text-white">{r.type}</div>
-                    <div className="min-w-[120px] text-white text-center">{r.hommes}</div>
-                    <div className="min-w-[120px] text-white text-center">{r.femmes}</div>
-                    <div className="min-w-[120px] text-white text-center">{r.jeunes || 0}</div>
-                    <div className="min-w-[120px] text-white text-center">{r.enfants || 0}</div>
-                    <div className="min-w-[120px] text-white text-center">{r.connectes || 0}</div>
-                    <div className="min-w-[120px] text-white text-center">{r.nouveauxVenus || 0}</div>
-                    <div className="min-w-[120px] text-white text-center">{r.nouveauxConvertis || 0}</div>
-                  </div>
-                ))}
+          return (
+            <div key={moisKey} className="bg-white/10 rounded-2xl p-4">
+              <div
+                className="flex justify-between items-center cursor-pointer mb-2"
+                onClick={() => setMoisOpen(prev => ({ ...prev, [moisKey]: !prev[moisKey] }))}
+              >
+                <h5 className="text-lg font-bold">➕ {moisName} {annee}</h5>
+                <span className="text-xl">{moisOpen[moisKey] ? "➖" : "➕"}</span>
               </div>
-            );
-          })}
-        </div>
-      )}
 
-      <Footer />
+              {moisOpen[moisKey] && (
+                <div className="space-y-4">
+                  {/* TOTAL GLOBAL */}
+                  <div>
+                    <h6 className="font-semibold text-amber-300 mb-2">TOTAL GLOBAL — {moisName} {annee}</h6>
+                    <table className="w-full text-sm border bg-white text-black rounded-lg overflow-hidden mb-4">
+                      <thead className="bg-gray-200">
+                        <tr>
+                          <th className="px-3 py-2 border">Type</th>
+                          <th className="px-3 py-2 border">Hommes</th>
+                          <th className="px-3 py-2 border">Femmes</th>
+                          <th className="px-3 py-2 border">Enfants</th>
+                          <th className="px-3 py-2 border">Visiteurs</th>
+                          <th className="px-3 py-2 border">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(moisData.totalGlobal).map(([type, vals]) => (
+                          <tr key={type}>
+                            <td className="px-3 py-2 border">{type}</td>
+                            <td className="px-3 py-2 border">{vals.hommes}</td>
+                            <td className="px-3 py-2 border">{vals.femmes}</td>
+                            <td className="px-3 py-2 border">{vals.enfants}</td>
+                            <td className="px-3 py-2 border">{vals.visiteurs}</td>
+                            <td className="px-3 py-2 border">{vals.hommes + vals.femmes + vals.enfants + vals.visiteurs}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* DÉTAIL PAR ÉGLISE */}
+                  {Object.entries(moisData.parEglise).map(([egliseNom, types]) => (
+                    <div key={egliseNom}>
+                      <h6 className="font-semibold mb-1">📍 {egliseNom}</h6>
+                      <table className="w-full text-sm border bg-white text-black rounded-lg overflow-hidden mb-4">
+                        <thead className="bg-gray-100">
+                          <tr>
+                            <th className="px-3 py-2 border">Type</th>
+                            <th className="px-3 py-2 border">Hommes</th>
+                            <th className="px-3 py-2 border">Femmes</th>
+                            <th className="px-3 py-2 border">Enfants</th>
+                            <th className="px-3 py-2 border">Visiteurs</th>
+                            <th className="px-3 py-2 border">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {Object.entries(types).map(([type, vals]) => (
+                            <tr key={type}>
+                              <td className="px-3 py-2 border">{type}</td>
+                              <td className="px-3 py-2 border">{vals.hommes}</td>
+                              <td className="px-3 py-2 border">{vals.femmes}</td>
+                              <td className="px-3 py-2 border">{vals.enfants}</td>
+                              <td className="px-3 py-2 border">{vals.visiteurs}</td>
+                              <td className="px-3 py-2 border">{vals.hommes + vals.femmes + vals.enfants + vals.visiteurs}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

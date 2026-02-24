@@ -31,7 +31,10 @@ export default function LinkEglise() {
   // 🔹 Charger superviseur connecté
   useEffect(() => {
     const loadSuperviseur = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+
       if (!user) return;
 
       const { data, error } = await supabase
@@ -79,40 +82,37 @@ export default function LinkEglise() {
     loadInvitations();
   }, [superviseur.eglise_id]);
 
-  // 🔹 Regrouper par branche superviseur
-  const groupBySuperviseur = (invitations) => {
-    const map = {};
-    invitations.forEach(inv => {
-      // On considère que les branches avec superviseur_branche_id sont les enfants
-      const parentKey = inv.superviseur_branche_id || inv.id;
-
-      if (!map[parentKey]) {
-        map[parentKey] = { parent: inv, enfants: [] };
-      }
-
-      // Si c'est un enfant (supervisee), on ajoute dans enfants
-      if (inv.superviseur_branche_id && inv.superviseur_branche_id !== inv.id) {
-        map[inv.superviseur_branche_id].enfants.push(inv);
-      }
-    });
-
-    return Object.values(map);
-  };
-
   // 🔹 Style selon statut
   const getStatusStyle = (statut) => {
     switch (statut?.toLowerCase()) {
-      case "accepted":
       case "acceptee":
         return { border: "border-l-4 border-green-600", button: null };
-      case "refused":
+      case "refusee":
         return { border: "border-l-4 border-red-600", button: "Renvoyer invitation" };
-      case "pending":
       case "pending":
         return { border: "border-l-4 border-gray-400", button: "Envoyer rappel" };
       default:
         return { border: "border-l-4 border-gray-300", button: null };
     }
+  };
+
+  // 🔹 Regrouper les invitations par superviseur d'église
+  const groupBySuperviseur = (invitations) => {
+    const map = {};
+
+    invitations.forEach(inv => {
+      const key = inv.superviseur_eglise_id || inv.id;
+
+      if (!map[key]) {
+        map[key] = { parent: inv, enfants: [] };
+      }
+
+      if (inv.id !== map[key].parent.id) {
+        map[key].enfants.push(inv);
+      }
+    });
+
+    return Object.values(map);
   };
 
   return (
@@ -131,7 +131,9 @@ export default function LinkEglise() {
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={responsable.prenom}
-            onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
+            onChange={(e) =>
+              setResponsable({ ...responsable, prenom: e.target.value })
+            }
           />
         </div>
 
@@ -140,7 +142,9 @@ export default function LinkEglise() {
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={responsable.nom}
-            onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
+            onChange={(e) =>
+              setResponsable({ ...responsable, nom: e.target.value })
+            }
           />
         </div>
 
@@ -149,7 +153,9 @@ export default function LinkEglise() {
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={eglise.nom}
-            onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
+            onChange={(e) =>
+              setEglise({ ...eglise, nom: e.target.value })
+            }
           />
         </div>
 
@@ -158,7 +164,9 @@ export default function LinkEglise() {
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={eglise.branche}
-            onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
+            onChange={(e) =>
+              setEglise({ ...eglise, branche: e.target.value })
+            }
           />
         </div>
 
@@ -189,15 +197,13 @@ export default function LinkEglise() {
         Liste des églises supervisées
       </h4>
 
+      {/* TABLE ALIGNÉE PARFAITEMENT */}
       <div className="w-full max-w-5xl">
         {groupBySuperviseur(invitations).map(group => (
-          <div key={group.parent.id} className="mb-3">
-            {/* Branche parent */}
+          <div key={group.parent.id} className="mb-4">
             <div className="font-semibold">
               {group.parent.eglise_nom} {group.parent.eglise_branche}
             </div>
-
-            {/* Branches supervisées */}
             {group.enfants.map(child => (
               <div key={child.id} className="ml-6 text-sm">
                 - {child.eglise_nom} {child.eglise_branche}

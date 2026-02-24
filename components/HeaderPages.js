@@ -29,7 +29,7 @@ export default function HeaderPages() {
 
         setPrenom(profile?.prenom || "Utilisateur");
 
-        // Récupère le nom de l'église si eglise_id existe
+        // 🔹 Garde l'église et branche de l'utilisateur comme avant
         if (profile?.eglise_id) {
           const { data: egliseData, error: egliseError } = await supabase
             .from("eglises")
@@ -39,7 +39,6 @@ export default function HeaderPages() {
           if (!egliseError && egliseData) setEglise(egliseData.nom);
         }
 
-        // Récupère le nom de la branche si branche_id existe
         if (profile?.branche_id) {
           const { data: brancheData, error: brancheError } = await supabase
             .from("branches")
@@ -49,9 +48,8 @@ export default function HeaderPages() {
           if (!brancheError && brancheData) setBranche(brancheData.nom);
         }
 
-        // 🔹 Récupérer le superviseur de cette église
+        // 🔹 Récupérer le superviseur de cette église, seulement si supervisee existe
         if (profile?.eglise_id) {
-          // On cherche la supervision où cette église est supervisée
           const { data: supervisionData, error: supervisionError } = await supabase
             .from("eglise_supervisions")
             .select("superviseur_eglise_id, superviseur_branche_id")
@@ -62,14 +60,12 @@ export default function HeaderPages() {
           if (!supervisionError && supervisionData) {
             const { superviseur_eglise_id, superviseur_branche_id } = supervisionData;
 
-            // Récupérer le nom de l'église superviseur
             const { data: supEgliseData } = await supabase
               .from("eglises")
               .select("nom")
               .eq("id", superviseur_eglise_id)
               .single();
 
-            // Récupérer le nom de la branche superviseur
             const { data: supBrancheData } = await supabase
               .from("branches")
               .select("nom")
@@ -121,6 +117,7 @@ export default function HeaderPages() {
         <p className="text-white text-sm">
           Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
         </p>
+        {/* 🔹 Affiche le superviseur sous connecté, seulement si existe */}
         {superviseur && (
           <p className="text-white text-xs italic">{superviseur}</p>
         )}
@@ -134,6 +131,8 @@ export default function HeaderPages() {
           className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
           onClick={() => router.push("/index")}
         />
+        {/* 🔹 Affiche le nom et branche de l'église connectée comme avant */}
+        <p className="text-white text-sm mt-2">{eglise} - {branche}</p>
       </div>
     </div>
   );

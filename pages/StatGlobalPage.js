@@ -6,7 +6,7 @@ import HeaderPages from "../components/HeaderPages";
 
 export default function StatGlobalPage() {
   const [superviseur, setSuperviseur] = useState({ prenom: "", nom: "", eglise_id: null });
-  const [mois, setMois] = useState("01"); // janvier par défaut
+  const [mois, setMois] = useState("01");
   const [annee, setAnnee] = useState(new Date().getFullYear());
   const [totalGlobal, setTotalGlobal] = useState({});
   const [statsParEglise, setStatsParEglise] = useState({});
@@ -23,36 +23,38 @@ export default function StatGlobalPage() {
         .eq("id", user.id)
         .single();
 
-      if (!error && data) setSuperviseur({ prenom: data.prenom, nom: data.nom, eglise_id: data.eglise_id });
+      if (!error) setSuperviseur({ prenom: data.prenom, nom: data.nom, eglise_id: data.eglise_id });
     };
     loadSuperviseur();
   }, []);
 
   // 🔹 Récupérer toutes les églises en cascade
   const getEglisesCascade = async (egliseId) => {
-    let allEglises = [egliseId];
+    try {
+      const { data, error } = await supabase
+        .from("eglise_supervisions")
+        .select("eglise_id, superviseur_eglise_id")
+        .eq("statut", "accepted");
 
-    const { data, error } = await supabase
-      .from("eglise_supervisions")
-      .select("eglise_supervisee_id, superviseur_eglise_id")
-      .eq("statut", "accepted");
+      if (error) throw error;
 
-    if (error || !data) {
-      console.error("Erreur récupération églises :", error);
-      return [egliseId]; // retourner au moins l'église principale
+      let allEglises = [egliseId];
+      let queue = [egliseId];
+
+      while (queue.length > 0) {
+        const parent = queue.shift();
+        const enfants = data
+          .filter(d => d.superviseur_eglise_id === parent)
+          .map(d => d.eglise_id);
+        allEglises.push(...enfants);
+        queue.push(...enfants);
+      }
+
+      return Array.from(new Set(allEglises));
+    } catch (err) {
+      console.error("Erreur récupération églises :", err);
+      return [egliseId];
     }
-
-    let queue = [egliseId];
-    while (queue.length > 0) {
-      const parent = queue.shift();
-      const enfants = data
-        .filter(d => d.superviseur_eglise_id === parent)
-        .map(d => d.eglise_supervisee_id);
-      allEglises.push(...enfants);
-      queue.push(...enfants);
-    }
-
-    return Array.from(new Set(allEglises));
   };
 
   // 🔹 Charger les stats
@@ -61,40 +63,45 @@ export default function StatGlobalPage() {
 
     const egliseIds = await getEglisesCascade(superviseur.eglise_id);
 
-    const { data, error } = await supabase
-      .from("stats_ministere_besoin")
-      .select("*")
-      .in("eglise_id", egliseIds)
-      .eq("mois", mois)
-      .eq("annee", annee);
+    try {
+      const { data, error } = await supabase
+        .from("stats_ministere_besoin")
+        .select("*")
+        .in("eglise_id", egliseIds)
+        .gte("date_action", `${annee}-${mois}-01`)
+        .lt("date_action", `${annee}-${(parseInt(mois) + 1).toString().padStart(2, "0")}-01`);
 
-    if (error) {
-      console.error("Erreur stats :", error);
-      return;
+      if (error) throw error;
+
+      const total = {};
+      const parEglise = {};
+
+      data.forEach(row => {
+        const type = row.type;
+        // Ici, tu dois ajuster comment tu différencies hommes/femmes/enfants/visiteurs
+        // Exemple : si tu as un champ 'branche_id' qui indique le sexe/groupe :
+        const sexe = row.branche_id; // 'hommes', 'femmes', 'enfants', 'visiteurs'
+
+        if (!total[type]) total[type] = { hommes: 0, femmes: 0, enfants: 0, visiteurs: 0 };
+        if (sexe === "hommes") total[type].hommes += row.valeur;
+        else if (sexe === "femmes") total[type].femmes += row.valeur;
+        else if (sexe === "enfants") total[type].enfants += row.valeur;
+        else if (sexe === "visiteurs") total[type].visiteurs += row.valeur;
+
+        // stats par église
+        if (!parEglise[row.eglise_id]) parEglise[row.eglise_id] = {};
+        if (!parEglise[row.eglise_id][type]) parEglise[row.eglise_id][type] = { hommes: 0, femmes: 0, enfants: 0, visiteurs: 0 };
+        if (sexe === "hommes") parEglise[row.eglise_id][type].hommes += row.valeur;
+        else if (sexe === "femmes") parEglise[row.eglise_id][type].femmes += row.valeur;
+        else if (sexe === "enfants") parEglise[row.eglise_id][type].enfants += row.valeur;
+        else if (sexe === "visiteurs") parEglise[row.eglise_id][type].visiteurs += row.valeur;
+      });
+
+      setTotalGlobal(total);
+      setStatsParEglise(parEglise);
+    } catch (err) {
+      console.error("Erreur stats :", err);
     }
-
-    // Calcul total global
-    const total = {};
-    const parEglise = {};
-    (data || []).forEach(row => {
-      // total global
-      if (!total[row.type]) total[row.type] = { hommes: 0, femmes: 0, enfants: 0, visiteurs: 0 };
-      total[row.type].hommes += row.hommes;
-      total[row.type].femmes += row.femmes;
-      total[row.type].enfants += row.enfants;
-      total[row.type].visiteurs += row.visiteurs;
-
-      // stats par église
-      if (!parEglise[row.eglise_nom]) parEglise[row.eglise_nom] = {};
-      if (!parEglise[row.eglise_nom][row.type]) parEglise[row.eglise_nom][row.type] = { hommes: 0, femmes: 0, enfants: 0, visiteurs: 0 };
-      parEglise[row.eglise_nom][row.type].hommes += row.hommes;
-      parEglise[row.eglise_nom][row.type].femmes += row.femmes;
-      parEglise[row.eglise_nom][row.type].enfants += row.enfants;
-      parEglise[row.eglise_nom][row.type].visiteurs += row.visiteurs;
-    });
-
-    setTotalGlobal(total);
-    setStatsParEglise(parEglise);
   };
 
   useEffect(() => {
@@ -159,9 +166,7 @@ export default function StatGlobalPage() {
                 <td className="px-3 py-2 border">{vals.femmes}</td>
                 <td className="px-3 py-2 border">{vals.enfants}</td>
                 <td className="px-3 py-2 border">{vals.visiteurs}</td>
-                <td className="px-3 py-2 border">
-                  {vals.hommes + vals.femmes + vals.enfants + vals.visiteurs}
-                </td>
+                <td className="px-3 py-2 border">{vals.hommes + vals.femmes + vals.enfants + vals.visiteurs}</td>
               </tr>
             ))}
           </tbody>
@@ -171,9 +176,9 @@ export default function StatGlobalPage() {
       {/* DÉTAIL PAR ÉGLISE */}
       <div className="w-full max-w-5xl mb-10">
         <h4 className="text-xl font-bold text-amber-300 mb-3">DÉTAIL PAR ÉGLISE</h4>
-        {Object.entries(statsParEglise).map(([egliseNom, types]) => (
-          <div key={egliseNom} className="mb-8">
-            <h5 className="text-lg font-semibold mb-2">📍 {egliseNom}</h5>
+        {Object.entries(statsParEglise).map(([egliseId, types]) => (
+          <div key={egliseId} className="mb-8">
+            <h5 className="text-lg font-semibold mb-2">📍 Église ID: {egliseId}</h5>
             <table className="w-full text-sm border bg-white text-black rounded-lg overflow-hidden">
               <thead className="bg-gray-100">
                 <tr>

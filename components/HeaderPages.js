@@ -59,7 +59,7 @@ export default function HeaderPages() {
               eglises(nom),
               branches(nom)
             `)
-            .eq("supervisee_branche_id", profile.branche_id)
+            .eq("superviseur_branche_id", profile.branche_id) // 🔹 correct
             .eq("statut", "acceptee")
             .single();
 
@@ -122,7 +122,7 @@ export default function HeaderPages() {
           className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
           onClick={() => router.push("/index")}
         />
-             {/* Église / Branche sous le logo */}
+        {/* Église / Branche sous le logo */}
         <p className="text-white font-semibold text-lg mt-2">
           {eglise} <span className="text-amber-300">- {branche}</span>
         </p>
